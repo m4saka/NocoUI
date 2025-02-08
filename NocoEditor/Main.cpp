@@ -12,7 +12,7 @@ struct MenuItem
 {
 	String text;
 	std::function<void()> onClick = nullptr;
-	EnabledYN enabled = EnabledYN::Yes;
+	std::function<EnabledYN()> fnIsEnabled = [] { return EnabledYN::Yes; };
 };
 
 struct CheckableMenuItem
@@ -20,7 +20,7 @@ struct CheckableMenuItem
 	String text;
 	std::function<void(CheckedYN)> onClick = nullptr;
 	CheckedYN checked = CheckedYN::No;
-	EnabledYN enabled = EnabledYN::Yes;
+	std::function<EnabledYN()> fnIsEnabled = [] { return EnabledYN::Yes; };
 };
 
 struct MenuSeparator
@@ -92,7 +92,7 @@ public:
 					});
 				itemNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.5 }, 0.05 });
 				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 12, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				itemNode->setInteractable(pItem->enabled.getBool());
+				itemNode->setInteractable(pItem->fnIsEnabled().getBool());
 			}
 			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
 			{
@@ -114,7 +114,7 @@ public:
 					HorizontalAlign::Left,
 					VerticalAlign::Middle,
 					LRTB{ 10, 10, 0, 0 });
-				itemNode->setInteractable(pCheckableItem->enabled.getBool());
+				itemNode->setInteractable(pCheckableItem->fnIsEnabled().getBool());
 			}
 			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
 			{
@@ -371,7 +371,7 @@ public:
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(ItemRectFillColor(), Palette::Black, 0.0);
 				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				itemNode->setInteractable(pItem->enabled.getBool());
+				itemNode->setInteractable(pItem->fnIsEnabled().getBool());
 				m_elementNodes.push_back(itemNode);
 			}
 			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
@@ -397,7 +397,7 @@ public:
 					HorizontalAlign::Left,
 					VerticalAlign::Middle,
 					LRTB{ 10, 10, 0, 0 });
-				itemNode->setInteractable(pCheckableItem->enabled.getBool());
+				itemNode->setInteractable(pCheckableItem->fnIsEnabled().getBool());
 				m_elementNodes.push_back(itemNode);
 			}
 			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
@@ -692,6 +692,11 @@ private:
 		}
 	}
 
+	EnabledYN pasteEnabled() const
+	{
+		return m_copiedNodeJSONs.isEmpty() ? EnabledYN::No : EnabledYN::Yes;
+	}
+
 	Element createElement(const std::shared_ptr<Node>& node, size_t nestLevel)
 	{
 		const auto hierarchyNode = Node::Create(
@@ -713,8 +718,8 @@ private:
 				MenuItem{ U"削除", [this] { onClickDelete(); } },
 				MenuItem{ U"コピー", [this] { onClickCopy(); } },
 				MenuItem{ U"切り取り", [this] { onClickCut(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); } },
-				MenuItem{ U"子として貼り付け", [this, node] { onClickPaste(node); } },
+				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return pasteEnabled(); } },
+				MenuItem{ U"子として貼り付け", [this, node] { onClickPaste(node); }, [this] { return pasteEnabled(); } },
 				MenuSeparator{},
 				MenuItem{ U"上に移動", [this] { onClickMoveUp(); } },
 				MenuItem{ U"下に移動", [this] { onClickMoveDown(); } },
@@ -886,7 +891,7 @@ public:
 			Array<MenuElement>
 			{
 				MenuItem{ U"新規ノード", [this] { onClickNewNode(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); } },
+				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return pasteEnabled(); } },
 			});
 		m_hierarchyRootNode->setLayout(VerticalLayout{ .padding = 2 });
 		m_hierarchyRootNode->setVerticalScrollable(true);
