@@ -29,262 +29,11 @@ struct MenuSeparator
 
 using MenuElement = std::variant<MenuItem, CheckableMenuItem, MenuSeparator>;
 
-class Menu
+[[nodiscard]]
+static PropertyValue<ColorF> MenuItemRectFillColor()
 {
-private:
-	static constexpr int32 MenuElementWidth = 240;
-	static constexpr int32 MenuItemHeight = 30;
-	static constexpr int32 MenuSeparatorHeight = 8;
-
-	std::shared_ptr<Node> m_menuNode;
-	std::shared_ptr<RectRenderer> m_menuRectRenderer;
-	std::shared_ptr<Node> m_subMenuNode;
-	Array<MenuElement> m_elements;
-
-	PropertyValue<ColorF> MenuRectFillColor() const
-	{
-		if (subMenuVisible())
-		{
-			return ColorF{ 0.8 };
-		}
-		else
-		{
-			return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.5 }, 0.05 };
-		}
-	}
-
-public:
-	Menu(const std::shared_ptr<Node>& menuBarRootNode, StringView name, StringView text, const Array<MenuElement>& elements)
-		: m_elements(elements)
-	{
-		m_menuNode = menuBarRootNode->emplaceChild(name, BoxConstraint
-		{
-			.sizeRatio = Vec2{ 0, 1 },
-			.sizeDelta = Vec2{ 80, 0 },
-		});
-		m_menuNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, MenuBarHeight, 0 } }); // メニューバーの高さ分下にずらす
-		m_menuNode->setVerticalScrollable(true);
-		m_menuRectRenderer = m_menuNode->emplaceComponent<RectRenderer>();
-		m_menuNode->emplaceComponent<Label>(text, U"Font14", 12, Palette::Black, HorizontalAlign::Center, VerticalAlign::Middle);
-
-		// サブメニューの親ノードを作成
-		m_subMenuNode = m_menuNode->emplaceChild(
-			U"SubMenuRoot",
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ MenuElementWidth, 0 },
-			});
-		m_subMenuNode->setLayout(VerticalLayout{});
-		m_subMenuNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
-
-		for (size_t i = 0; i < m_elements.size(); ++i)
-		{
-			if (const auto pItem = std::get_if<MenuItem>(&m_elements[i]))
-			{
-				// メニュー項目
-				const auto itemNode = m_subMenuNode->emplaceChild(
-					U"SubMenuItem_{}"_fmt(i),
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, MenuItemHeight },
-					});
-				itemNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.5 }, 0.05 });
-				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 12, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				itemNode->setInteractable(pItem->fnIsEnabled().getBool());
-			}
-			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
-			{
-				// チェック可能なメニュー項目
-				const auto itemNode = m_subMenuNode->emplaceChild(
-					U"SubMenuItem_{}"_fmt(i),
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, MenuItemHeight },
-					});
-				itemNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.5 }, 0.05 });
-				itemNode->emplaceComponent<Label>(pCheckableItem->text, U"Font14", 12, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				itemNode->emplaceComponent<Label>(
-					pCheckableItem->checked ? U"✔" : U"",
-					U"Font14",
-					12,
-					PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }),
-					HorizontalAlign::Left,
-					VerticalAlign::Middle,
-					LRTB{ 10, 10, 0, 0 });
-				itemNode->setInteractable(pCheckableItem->fnIsEnabled().getBool());
-			}
-			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
-			{
-				// セパレータ
-				const auto separatorNode = m_subMenuNode->emplaceChild(
-					U"Separator",
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, MenuSeparatorHeight },
-					},
-					IsHitTargetYN::No);
-				separatorNode->emplaceChild(
-					U"SeparatorLine",
-					AnchorConstraint
-					{
-						.anchorMin = Anchor::MiddleLeft,
-						.anchorMax = Anchor::MiddleRight,
-						.sizeDelta = Vec2{ -10, 1 },
-						.pivot = Anchor::MiddleCenter,
-					},
-					IsHitTargetYN::No)
-					->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
-			}
-		}
-		m_subMenuNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
-
-		// サブメニューは最初は非表示
-		setSubMenuVisible(false);
-	}
-
-	void setSubMenuVisible(bool visible)
-	{
-		m_subMenuNode->setActive(ActiveYN{ visible });
-		m_menuRectRenderer->setFillColor(MenuRectFillColor());
-	}
-
-	bool subMenuVisible() const
-	{
-		return m_subMenuNode->activeSelf().getBool();
-	}
-
-	bool isHoveredRecursive() const
-	{
-		return m_menuNode->isHoveredRecursive();
-	}
-
-	bool isClicked() const
-	{
-		return m_menuNode->isClicked();
-	}
-
-	bool down() const
-	{
-		return m_menuNode->isHovered() && MouseL.down();
-	}
-
-	[[nodiscard]]
-	Optional<StringView> clickedSubMenuItem() const
-	{
-		if (!subMenuVisible())
-		{
-			return none;
-		}
-
-		for (const auto& subMenuItemNode : m_subMenuNode->children())
-		{
-			if (subMenuItemNode->isClicked())
-			{
-				return subMenuItemNode->name();
-			}
-		}
-		return none;
-	}
-};
-
-class MenuBar
-{
-private:
-	std::shared_ptr<Canvas> m_editorCanvas;
-	std::shared_ptr<Node> m_menuBarRootNode;
-	Array<std::shared_ptr<Menu>> m_menus;
-	std::shared_ptr<Menu> m_activeMenu;
-	Optional<String> m_clickedSubMenuItem;
-
-public:
-	explicit MenuBar(const std::shared_ptr<Canvas>& editorCanvas)
-		: m_editorCanvas(editorCanvas)
-		, m_menuBarRootNode(editorCanvas->rootNode()->emplaceChild(
-			U"MenuBar",
-			AnchorConstraint
-			{
-				.anchorMin = Anchor::TopLeft,
-				.anchorMax = Anchor::TopRight,
-				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ 0, MenuBarHeight },
-				.pivot = Anchor::TopLeft,
-			}))
-	{
-		m_menuBarRootNode->setLayout(HorizontalLayout{});
-		m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
-	}
-
-	void addMenu(StringView name, StringView text, const Array<MenuElement>& elements)
-	{
-		m_menus.push_back(std::make_shared<Menu>(m_menuBarRootNode, name, text, elements));
-	}
-
-	void update()
-	{
-		bool menuOpened = false;
-		for (const auto& menu : m_menus)
-		{
-			if (menu->down())
-			{
-				if (m_activeMenu == menu)
-				{
-					// 同じメニューが再度クリックされた場合は非表示
-					m_activeMenu->setSubMenuVisible(false);
-					m_activeMenu = nullptr;
-				}
-				else
-				{
-					// メニューがクリックされた場合は表示を切り替え
-					if (m_activeMenu)
-					{
-						m_activeMenu->setSubMenuVisible(false);
-					}
-					m_activeMenu = menu;
-					m_activeMenu->setSubMenuVisible(true);
-					menuOpened = true;
-				}
-			}
-			else if (menu->isHoveredRecursive() && m_activeMenu && m_activeMenu != menu)
-			{
-				// カーソルが他のメニューに移動した場合はサブメニューを切り替える
-				m_activeMenu->setSubMenuVisible(false);
-				m_activeMenu = menu;
-				m_activeMenu->setSubMenuVisible(true);
-				menuOpened = true;
-			}
-		}
-
-		// メニュー外をクリックした場合は閉じる
-		if (!menuOpened && m_activeMenu && !m_activeMenu->isHoveredRecursive() && (MouseL.down() || MouseM.down() || MouseR.down()))
-		{
-			m_activeMenu->setSubMenuVisible(false);
-			m_activeMenu = nullptr;
-		}
-
-		m_clickedSubMenuItem = none;
-		if (m_activeMenu)
-		{
-			if (const auto clickedSubMenuItem = m_activeMenu->clickedSubMenuItem())
-			{
-				// サブメニューの項目がクリックされた場合は閉じる
-				m_activeMenu->setSubMenuVisible(false);
-				m_activeMenu = nullptr;
-
-				m_clickedSubMenuItem = clickedSubMenuItem;
-			}
-		}
-	}
-
-	[[nodiscard]]
-	const Optional<String>& clickedSubMenuItem() const
-	{
-		return m_clickedSubMenuItem;
-	}
-};
+	return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
+}
 
 class ContextMenu
 {
@@ -300,13 +49,9 @@ private:
 	Array<MenuElement> m_elements;
 	Array<std::shared_ptr<Node>> m_elementNodes;
 
-	bool m_isFirstUpdateSinceShown = false;
+	std::function<void()> m_fnOnHide = nullptr;
 
-	[[nodiscard]]
-	static PropertyValue<ColorF> ItemRectFillColor()
-	{
-		return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
-	}
+	bool m_isFirstUpdateSinceShown = false;
 
 	void clearItems()
 	{
@@ -314,6 +59,7 @@ private:
 		m_elementNodes.clear();
 		m_menuNode->setActive(ActiveYN::No);
 		m_menuNode->removeChildrenAll();
+		m_fnOnHide = nullptr;
 	}
 
 public:
@@ -329,13 +75,13 @@ public:
 				.sizeDelta = Vec2{ 0, 0 },
 				.pivot = Anchor::TopLeft,
 			}))
-		, m_menuNode(m_rootNode->emplaceChild(
-			name,
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ MenuItemWidth, 0 },
-			}))
+			, m_menuNode(m_rootNode->emplaceChild(
+				name,
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ MenuItemWidth, 0 },
+				}))
 	{
 		m_rootNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
@@ -347,12 +93,13 @@ public:
 		editorOverlayCanvas->refreshLayout();
 	}
 
-	void show(const Vec2& pos, const Array<MenuElement>& elements)
+	void show(const Vec2& pos, const Array<MenuElement>& elements, std::function<void()> fnOnHide = nullptr)
 	{
-		// クリアして再生成
-		clearItems();
+		// 前回開いていたメニューを閉じてから表示
+		hide(RefreshesLayoutYN::No);
 		m_elements = elements;
 		m_elementNodes.reserve(m_elements.size());
+		m_fnOnHide = std::move(fnOnHide);
 
 		for (size_t i = 0; i < m_elements.size(); ++i)
 		{
@@ -369,7 +116,7 @@ public:
 					IsHitTargetYN::Yes,
 					InheritChildrenStateFlags::None,
 					RefreshesLayoutYN::No);
-				itemNode->emplaceComponent<RectRenderer>(ItemRectFillColor(), Palette::Black, 0.0);
+				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 				itemNode->setInteractable(pItem->fnIsEnabled().getBool());
 				m_elementNodes.push_back(itemNode);
@@ -387,7 +134,7 @@ public:
 					IsHitTargetYN::Yes,
 					InheritChildrenStateFlags::None,
 					RefreshesLayoutYN::No);
-				itemNode->emplaceComponent<RectRenderer>(ItemRectFillColor(), Palette::Black, 0.0);
+				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 				itemNode->emplaceComponent<Label>(pCheckableItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 				itemNode->emplaceComponent<Label>(
 					pCheckableItem->checked ? U"✔" : U"",
@@ -460,10 +207,15 @@ public:
 		m_isFirstUpdateSinceShown = true;
 	}
 
-	void hide()
+	void hide(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 	{
+		if (m_fnOnHide)
+		{
+			m_fnOnHide();
+			m_fnOnHide = nullptr;
+		}
 		clearItems();
-		m_rootNode->setActive(ActiveYN::No, RefreshesLayoutYN::Yes);
+		m_rootNode->setActive(ActiveYN::No, refreshesLayout);
 		m_isFirstUpdateSinceShown = false;
 	}
 
@@ -513,6 +265,12 @@ public:
 			hide();
 		}
 	}
+
+	[[nodiscard]]
+	bool isHoveredRecursive() const
+	{
+		return m_rootNode->isHoveredRecursive();
+	}
 };
 
 class ContextMenuOpener : public ComponentBase
@@ -545,6 +303,99 @@ public:
 
 	void draw(const Node&) const override
 	{
+	}
+};
+
+struct MenuCategory
+{
+	String text;
+	Array<MenuElement> elements;
+	std::shared_ptr<Node> node;
+};
+
+class MenuBar
+{
+private:
+	std::shared_ptr<Canvas> m_editorCanvas;
+	std::shared_ptr<Node> m_menuBarRootNode;
+	Array<MenuCategory> m_menuCategories;
+	std::shared_ptr<ContextMenu> m_contextMenu;
+	std::shared_ptr<Node> m_activeMenuCategoryNode;
+	bool m_hasMenuClosed = false;
+
+public:
+	explicit MenuBar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu)
+		: m_editorCanvas(editorCanvas)
+		, m_menuBarRootNode(editorCanvas->rootNode()->emplaceChild(
+			U"MenuBar",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::TopRight,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ 0, MenuBarHeight },
+				.pivot = Anchor::TopLeft,
+			}))
+		, m_contextMenu(contextMenu)
+	{
+		m_menuBarRootNode->setLayout(HorizontalLayout{});
+		m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
+	}
+
+	void addMenuCategory(StringView name, StringView text, const Array<MenuElement>& elements)
+	{
+		const auto node = m_menuBarRootNode->emplaceChild(
+			name,
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.sizeDelta = Vec2{ 80, 0 },
+			});
+		node->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
+		node->emplaceComponent<Label>(text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
+
+		m_menuCategories.push_back(MenuCategory
+		{
+			.text = String{ text },
+			.elements = elements,
+			.node = node,
+		});
+	}
+
+	void update()
+	{
+		bool hasMenuOpened = false;
+		for (const auto& menuCategory : m_menuCategories)
+		{
+			if (menuCategory.node->isMouseDown())
+			{
+				if (m_activeMenuCategoryNode == menuCategory.node)
+				{
+					// 同じメニューが再度クリックされた場合は非表示
+					m_contextMenu->hide();
+				}
+				else
+				{
+					// メニューがクリックされた場合は表示を切り替え
+					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, [this] { m_hasMenuClosed = true; });
+					m_activeMenuCategoryNode = menuCategory.node;
+					hasMenuOpened = true;
+				}
+			}
+			else if (menuCategory.node->isHoveredRecursive() && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
+			{
+				// カーソルが他のメニューに移動した場合はサブメニューを切り替える
+				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, [this] { m_hasMenuClosed = true; });
+				m_activeMenuCategoryNode = menuCategory.node;
+				hasMenuOpened = true;
+			}
+		}
+
+		if (m_hasMenuClosed && !hasMenuOpened)
+		{
+			m_activeMenuCategoryNode = nullptr;
+		}
+		m_hasMenuClosed = false;
 	}
 };
 
@@ -3552,29 +3403,28 @@ public:
 		, m_contextMenu(std::make_shared<ContextMenu>(m_editorOverlayCanvas, U"EditorContextMenu"))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu)
 		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, [this] { m_hierarchy.refreshNodeNames(); })
-		, m_menuBar(m_editorCanvas)
+		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_prevSceneSize(Scene::Size())
 	{
-		m_menuBar.addMenu(
+		m_menuBar.addMenuCategory(
 			U"File",
 			U"ファイル",
 			Array<MenuElement>
 			{
-				// TODO: 以前コールバックにNode名を渡していた名残で文字列になっているが、関数を個別に分ける予定
-				MenuItem{ U"新規作成", [this] { onClickMenu(U"New"); } },
+				MenuItem{ U"新規作成", [this] { onClickMenuFileNew(); } },
 				MenuSeparator{},
-				MenuItem{ U"開く", [this] { onClickMenu(U"Open"); } },
-				MenuItem{ U"保存", [this] { onClickMenu(U"Save"); } },
-				MenuItem{ U"名前を付けて保存", [this] { onClickMenu(U"SaveAs"); } },
+				MenuItem{ U"開く", [this] { onClickMenuFileOpen(); } },
+				MenuItem{ U"保存", [this] { onClickMenuFileSave(); } },
+				MenuItem{ U"名前を付けて保存", [this] { onClickMenuFileSaveAs(); } },
 				MenuSeparator{},
-				MenuItem{ U"終了", [this] { onClickMenu(U"Exit"); } },
+				MenuItem{ U"終了", [this] { onClickMenuFileExit(); } },
 			});
-		m_menuBar.addMenu(
+		m_menuBar.addMenuCategory(
 			U"Edit",
 			U"編集",
 			{
 			});
-		m_menuBar.addMenu(
+		m_menuBar.addMenuCategory(
 			U"View",
 			U"表示",
 			{
@@ -3583,12 +3433,6 @@ public:
 
 	void update()
 	{
-		// メニュークリック時はメニューを消すために描画更新したいので、前回フレーム分を更新するためにupdate前に呼ぶ
-		if (const auto clickedSubMenuItem = m_menuBar.clickedSubMenuItem())
-		{
-			onClickMenu(*clickedSubMenuItem);
-		}
-
 		CanvasUpdateContext context{};
 		m_editorOverlayCanvas->update(&context);
 		m_editorCanvas->update(&context);
@@ -3643,15 +3487,15 @@ public:
 			{
 				if (KeyN.down())
 				{
-					onClickMenu(U"New");
+					onClickMenuFileNew();
 				}
 				else if (KeyO.down())
 				{
-					onClickMenu(U"Open");
+					onClickMenuFileOpen();
 				}
 				else if (KeyS.down())
 				{
-					onClickMenu(U"Save");
+					onClickMenuFileSave();
 				}
 				else if (KeyA.down())
 				{
@@ -3664,7 +3508,7 @@ public:
 			{
 				if (KeyS.down())
 				{
-					onClickMenu(U"SaveAs");
+					onClickMenuFileSaveAs();
 				}
 			}
 
@@ -3759,47 +3603,58 @@ public:
 		refreshLayout();
 	}
 
-	void onClickMenu(StringView name)
+	void onClickMenuFileNew()
 	{
-		if (name == U"New")
+		m_filePath = none;
+		m_canvas->removeChildrenAll();
+		refresh();
+	}
+
+	void onClickMenuFileOpen()
+	{
+		if (const auto filePath = Dialog::OpenFile({ FileFilter::JSON() }))
 		{
-			// 新規作成
-			m_filePath = none;
-			m_canvas->removeChildrenAll();
+			JSON json;
+			try
+			{
+				json = JSON::Load(*filePath);
+			}
+			catch (...)
+			{
+				System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
+				return;
+			}
+			m_filePath = filePath;
+			m_canvas->loadFromJSON(json);
 			refresh();
 		}
-		else if (name == U"Open")
+	}
+
+	void onClickMenuFileSave()
+	{
+		Optional<String> filePath = m_filePath;
+		if (filePath == none)
 		{
-			// 開く
-			if (const auto filePath = Dialog::OpenFile({ FileFilter::JSON() }))
-			{
-				JSON json;
-				try
-				{
-					json = JSON::Load(*filePath);
-				}
-				catch (...)
-				{
-					System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
-					return;
-				}
-				m_filePath = filePath;
-				m_canvas->loadFromJSON(json);
-				refresh();
-			}
-		}
-		else if (name == U"Save")
-		{
-			// 保存
-			Optional<String> filePath = m_filePath;
+			filePath = Dialog::SaveFile({ FileFilter::JSON() });
 			if (filePath == none)
 			{
-				filePath = Dialog::SaveFile({ FileFilter::JSON() });
-				if (filePath == none)
-				{
-					return;
-				}
+				return;
 			}
+		}
+		if (m_canvas->toJSON().save(*filePath))
+		{
+			m_filePath = filePath;
+		}
+		else
+		{
+			System::MessageBoxOK(U"エラー", U"保存に失敗しました", MessageBoxStyle::Error);
+		}
+	}
+
+	void onClickMenuFileSaveAs()
+	{
+		if (const auto filePath = Dialog::SaveFile({ FileFilter::JSON() }))
+		{
 			if (m_canvas->toJSON().save(*filePath))
 			{
 				m_filePath = filePath;
@@ -3809,26 +3664,41 @@ public:
 				System::MessageBoxOK(U"エラー", U"保存に失敗しました", MessageBoxStyle::Error);
 			}
 		}
-		else if (name == U"SaveAs")
-		{
-			// 名前を付けて保存
-			if (const auto filePath = Dialog::SaveFile({ FileFilter::JSON() }))
-			{
-				if (m_canvas->toJSON().save(*filePath))
-				{
-					m_filePath = filePath;
-				}
-				else
-				{
-					System::MessageBoxOK(U"エラー", U"保存に失敗しました", MessageBoxStyle::Error);
-				}
-			}
-		}
-		else if (name == U"Exit")
-		{
-			// 終了
-			System::Exit();
-		}
+	}
+
+	void onClickMenuFileExit()
+	{
+		System::Exit();
+	}
+
+	void onClickMenuEditCopy()
+	{
+		m_hierarchy.onClickCopy();
+	}
+
+	void onClickMenuEditPaste()
+	{
+		m_hierarchy.onClickPaste();
+	}
+
+	void onClickMenuEditCut()
+	{
+		m_hierarchy.onClickCut();
+	}
+
+	void onClickMenuEditDuplicate()
+	{
+		m_hierarchy.onClickDuplicate();
+	}
+
+	void onClickMenuEditDelete()
+	{
+		m_hierarchy.onClickDelete();
+	}
+
+	void onClickMenuEditSelectAll()
+	{
+		m_hierarchy.selectAll();
 	}
 };
 
