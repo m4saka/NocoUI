@@ -32,6 +32,7 @@ namespace noco
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
 		InteractableYN m_interactable = InteractableYN::Yes;
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
+		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		ActiveYN m_activeSelf = ActiveYN::Yes;
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
@@ -322,6 +323,13 @@ namespace noco
 		bool verticalScrollable() const;
 
 		void setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+		[[nodiscard]]
+		ClippingEnabledYN clippingEnabled() const;
+
+		void setClippingEnabled(ClippingEnabledYN clippingEnabled);
+
+		void setClippingEnabled(bool clippingEnabled);
 
 		[[nodiscard]]
 		InteractState interactStateSelf() const;

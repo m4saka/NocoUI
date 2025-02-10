@@ -11,6 +11,7 @@ namespace noco
 	using EditorSelectedYN = YesNo<struct EditorSelectedYN_tag>;
 	using RecursiveYN = YesNo<struct RecursiveYN_tag>;
 	using IsHitTargetYN = YesNo<struct IsHitTargetYN_tag>;
+	using ClippingEnabledYN = YesNo<struct ClippingEnabledYN_tag>;
 	using AppliesDisabledStateYN = YesNo<struct AppliesDisabledStateYN_tag>;
 	using RefreshesLayoutYN = YesNo<struct RefreshesLayoutYN_tag>;
 	using FitsWidthYN = YesNo<struct FitsWidthYN_tag>;

@@ -257,9 +257,10 @@ namespace noco
 			{ U"isHitTarget", m_isHitTarget.getBool() },
 			{ U"inheritsChildrenHoveredState", inheritsChildrenHoveredState() },
 			{ U"inheritsChildrenPressedState", inheritsChildrenPressedState() },
+			{ U"interactable", m_interactable.getBool() },
 			{ U"horizontalScrollable", horizontalScrollable() },
 			{ U"verticalScrollable", verticalScrollable() },
-			{ U"interactable", m_interactable.getBool() },
+			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
 
@@ -338,6 +339,10 @@ namespace noco
 		{
 			node->setInheritsChildrenPressedState(json[U"inheritsChildrenPressedState"].getOr<bool>(false));
 		}
+		if (json.contains(U"interactable"))
+		{
+			node->setInteractable(InteractableYN{ json[U"interactable"].getOr<bool>(true) });
+		}
 		if (json.contains(U"horizontalScrollable"))
 		{
 			node->setHorizontalScrollable(json[U"horizontalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
@@ -346,9 +351,9 @@ namespace noco
 		{
 			node->setVerticalScrollable(json[U"verticalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
 		}
-		if (json.contains(U"interactable"))
+		if (json.contains(U"clippingEnabled"))
 		{
-			node->setInteractable(InteractableYN{ json[U"interactable"].getOr<bool>(true) });
+			node->setClippingEnabled(ClippingEnabledYN{ json[U"clippingEnabled"].getOr<bool>(false) });
 		}
 		if (json.contains(U"activeSelf"))
 		{
@@ -938,6 +943,16 @@ namespace noco
 			return;
 		}
 
+		// クリッピング有効の場合はクリッピング範囲を設定
+		Optional<ScopedRenderStates2D> renderStates;
+		if (m_clippingEnabled)
+		{
+			Graphics2D::SetScissorRect(m_effectedRect.asRect());
+			RasterizerState rs = RasterizerState::Default2D;
+			rs.scissorEnable = true;
+			renderStates.emplace(rs);
+		}
+
 		{
 			const auto guard = m_componentsIterGuard.scoped();
 			for (const auto& component : m_components)
@@ -1219,6 +1234,21 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+	}
+
+	ClippingEnabledYN Node::clippingEnabled() const
+	{
+		return m_clippingEnabled;
+	}
+
+	void Node::setClippingEnabled(ClippingEnabledYN clippingEnabled)
+	{
+		m_clippingEnabled = clippingEnabled;
+	}
+
+	void Node::setClippingEnabled(bool clippingEnabled)
+	{
+		setClippingEnabled(ClippingEnabledYN{ clippingEnabled });
 	}
 
 	InteractState Node::interactStateSelf() const
