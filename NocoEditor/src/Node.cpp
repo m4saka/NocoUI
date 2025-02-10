@@ -795,6 +795,11 @@ namespace noco
 		{
 			return nullptr;
 		}
+		const bool mouseOver = m_effectedRect.mouseOver();
+		if (m_clippingEnabled && !mouseOver)
+		{
+			return nullptr;
+		}
 		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
 		{
 			if (const auto hoveredNode = (*it)->hoveredNodeInChildren())
@@ -802,7 +807,7 @@ namespace noco
 				return hoveredNode;
 			}
 		}
-		if (m_isHitTarget && m_effectedRect.mouseOver()) // TODO: layoutAppliedRectを使うオプションを用意
+		if (m_isHitTarget && mouseOver)
 		{
 			return shared_from_this();
 		}
