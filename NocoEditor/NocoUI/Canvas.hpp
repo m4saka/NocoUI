@@ -157,7 +157,8 @@ namespace noco
 				const double wheelH = Mouse::WheelH();
 				if (wheel != 0.0 || wheelH != 0.0)
 				{
-					if (const auto scrollableHoveredNode = hoveredNode->findContainedScrollableNode())
+					const auto scrollableHoveredNode = hoveredNode->findContainedScrollableNode();
+					if (scrollableHoveredNode && scrollableHoveredNode->rect().mouseOver()) // 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
 					{
 						scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
 						scrollableHoveredNodeWeak = scrollableHoveredNode;
