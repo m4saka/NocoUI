@@ -1420,7 +1420,7 @@ public:
 				.pivot = Anchor::MiddleCenter,
 			},
 			IsHitTargetYN::Yes,
-			InheritChildrenStateFlags::Hovered))
+			InheritChildrenStateFlags::Pressed))
 		, m_inspectorRootNode(m_inspectorInnerFrameNode->emplaceChild(
 			U"Inspector",
 			AnchorConstraint
@@ -1431,7 +1431,7 @@ public:
 				.sizeDelta = Vec2{ -10, -10 },
 				.pivot = Anchor::MiddleCenter,
 			},
-			IsHitTargetYN::No))
+			IsHitTargetYN::Yes))
 		, m_contextMenu(contextMenu)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
 	{

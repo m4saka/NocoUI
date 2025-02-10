@@ -237,7 +237,7 @@ namespace noco
 		std::shared_ptr<Node> hoveredNodeInChildren();
 
 		[[nodiscard]]
-		std::shared_ptr<Node> scrollableHoveredNodeInChildren();
+		std::shared_ptr<Node> findContainedScrollableNode();
 
 		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
 

@@ -151,13 +151,13 @@ namespace noco
 			const auto hoveredNode = canHover ? m_rootNode->hoveredNodeInChildren() : nullptr;
 
 			std::weak_ptr<Node> scrollableHoveredNodeWeak;
-			if (canHover)
+			if (hoveredNode)
 			{
 				const double wheel = Mouse::Wheel();
 				const double wheelH = Mouse::WheelH();
 				if (wheel != 0.0 || wheelH != 0.0)
 				{
-					if (const auto scrollableHoveredNode = m_rootNode->scrollableHoveredNodeInChildren())
+					if (const auto scrollableHoveredNode = hoveredNode->findContainedScrollableNode())
 					{
 						scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
 						scrollableHoveredNodeWeak = scrollableHoveredNode;

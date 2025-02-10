@@ -804,22 +804,15 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<Node> Node::scrollableHoveredNodeInChildren()
+	std::shared_ptr<Node> Node::findContainedScrollableNode()
 	{
-		if (!m_activeSelf)
-		{
-			return nullptr;
-		}
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-		{
-			if (const auto hoveredNode = (*it)->scrollableHoveredNodeInChildren())
-			{
-				return hoveredNode;
-			}
-		}
-		if (m_scrollableAxisFlags != ScrollableAxisFlags::None && m_effectedRect.mouseOver()) // TODO: layoutAppliedRectを使うオプションを用意
+		if (horizontalScrollable() || verticalScrollable())
 		{
 			return shared_from_this();
+		}
+		if (const auto parent = m_parent.lock())
+		{
+			return parent->findContainedScrollableNode();
 		}
 		return nullptr;
 	}
