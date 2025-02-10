@@ -4,7 +4,6 @@
 using namespace noco;
 
 using CheckedYN = YesNo<struct CheckedYN_tag>;
-using EnabledYN = YesNo<struct EnabledYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -12,7 +11,7 @@ struct MenuItem
 {
 	String text;
 	std::function<void()> onClick = nullptr;
-	std::function<EnabledYN()> fnIsEnabled = [] { return EnabledYN::Yes; };
+	std::function<bool()> fnIsEnabled = [] { return true; };
 };
 
 struct CheckableMenuItem
@@ -20,7 +19,7 @@ struct CheckableMenuItem
 	String text;
 	std::function<void(CheckedYN)> onClick = nullptr;
 	CheckedYN checked = CheckedYN::No;
-	std::function<EnabledYN()> fnIsEnabled = [] { return EnabledYN::Yes; };
+	std::function<bool()> fnIsEnabled = [] { return true; };
 };
 
 struct MenuSeparator
@@ -118,7 +117,7 @@ public:
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				itemNode->setInteractable(pItem->fnIsEnabled().getBool());
+				itemNode->setInteractable(pItem->fnIsEnabled());
 				m_elementNodes.push_back(itemNode);
 			}
 			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
@@ -144,7 +143,7 @@ public:
 					HorizontalAlign::Left,
 					VerticalAlign::Middle,
 					LRTB{ 10, 10, 0, 0 });
-				itemNode->setInteractable(pCheckableItem->fnIsEnabled().getBool());
+				itemNode->setInteractable(pCheckableItem->fnIsEnabled());
 				m_elementNodes.push_back(itemNode);
 			}
 			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
@@ -543,11 +542,6 @@ private:
 		}
 	}
 
-	EnabledYN pasteEnabled() const
-	{
-		return m_copiedNodeJSONs.isEmpty() ? EnabledYN::No : EnabledYN::Yes;
-	}
-
 	Element createElement(const std::shared_ptr<Node>& node, size_t nestLevel)
 	{
 		const auto hierarchyNode = Node::Create(
@@ -569,8 +563,8 @@ private:
 				MenuItem{ U"削除", [this] { onClickDelete(); } },
 				MenuItem{ U"コピー", [this] { onClickCopy(); } },
 				MenuItem{ U"切り取り", [this] { onClickCut(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return pasteEnabled(); } },
-				MenuItem{ U"子として貼り付け", [this, node] { onClickPaste(node); }, [this] { return pasteEnabled(); } },
+				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return canPaste(); } },
+				MenuItem{ U"子として貼り付け", [this, node] { onClickPaste(node); }, [this] { return canPaste(); } },
 				MenuSeparator{},
 				MenuItem{ U"上に移動", [this] { onClickMoveUp(); } },
 				MenuItem{ U"下に移動", [this] { onClickMoveDown(); } },
@@ -742,7 +736,7 @@ public:
 			Array<MenuElement>
 			{
 				MenuItem{ U"新規ノード", [this] { onClickNewNode(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return pasteEnabled(); } },
+				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return canPaste(); } },
 			});
 		m_hierarchyRootNode->setLayout(VerticalLayout{ .padding = 2 });
 		m_hierarchyRootNode->setVerticalScrollable(true);
@@ -831,6 +825,11 @@ public:
 		}
 	}
 
+	bool hasSelection() const
+	{
+		return std::any_of(m_elements.begin(), m_elements.end(), [](const Element& element) { return element.editorSelected(); });
+	}
+
 	void unfoldForNode(const std::shared_ptr<Node>& node)
 	{
 		if (auto pElement = getElementByNode(node))
@@ -841,6 +840,11 @@ public:
 				unfoldForNode(parentNode);
 			}
 		}
+	}
+
+	bool canPaste() const
+	{
+		return !m_copiedNodeJSONs.empty();
 	}
 
 	void onClickNewNode()
@@ -3423,6 +3427,12 @@ public:
 			U"Edit",
 			U"編集",
 			{
+				MenuItem{ U"コピー", [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"切り取り", [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"貼り付け", [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
+				MenuItem{ U"削除", [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuSeparator{},
+				MenuItem{ U"すべて選択", [this] { m_hierarchy.selectAll(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"View",
