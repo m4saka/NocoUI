@@ -418,7 +418,7 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				node->m_children.push_back(FromJSON(childJSON));
+				node->addChildFromJSON(childJSON, RefreshesLayoutYN::No);
 			}
 		}
 		return node;
