@@ -4,6 +4,7 @@
 using namespace noco;
 
 using CheckedYN = YesNo<struct CheckedYN_tag>;
+using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -44,8 +45,8 @@ public:
 
 private:
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
+	std::shared_ptr<Node> m_screenMaskNode;
 	std::shared_ptr<Node> m_rootNode;
-	std::shared_ptr<Node> m_menuNode;
 
 	Array<MenuElement> m_elements;
 	Array<std::shared_ptr<Node>> m_elementNodes;
@@ -58,16 +59,16 @@ private:
 	{
 		m_elements.clear();
 		m_elementNodes.clear();
-		m_menuNode->setActive(ActiveYN::No);
-		m_menuNode->removeChildrenAll();
+		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
+		m_rootNode->removeChildrenAll(RefreshesLayoutYN::No);
 		m_fnOnHide = nullptr;
 	}
 
 public:
 	explicit ContextMenu(const std::shared_ptr<Canvas>& editorOverlayCanvas, StringView name = U"ContextMenu")
 		: m_editorOverlayCanvas(editorOverlayCanvas)
-		, m_rootNode(editorOverlayCanvas->rootNode()->emplaceChild(
-			U"{}_Root"_fmt(name),
+		, m_screenMaskNode(editorOverlayCanvas->rootNode()->emplaceChild(
+			U"{}_ScreenMask"_fmt(name),
 			AnchorConstraint
 			{
 				.anchorMin = Anchor::TopLeft,
@@ -76,25 +77,27 @@ public:
 				.sizeDelta = Vec2{ 0, 0 },
 				.pivot = Anchor::TopLeft,
 			}))
-			, m_menuNode(m_rootNode->emplaceChild(
-				name,
-				BoxConstraint
-				{
-					.sizeRatio = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ MenuItemWidth, 0 },
-				}))
+		, m_rootNode(m_screenMaskNode->emplaceChild(
+			U"{}_Root"_fmt(name),
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::TopLeft,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ MenuItemWidth, 0 },
+				.pivot = Anchor::TopLeft,
+			}))
 	{
-		m_rootNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
+		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
-		m_menuNode->setLayout(VerticalLayout{}, RefreshesLayoutYN::No);
-		m_menuNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
-		m_menuNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
-		m_menuNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
+		m_rootNode->setLayout(VerticalLayout{}, RefreshesLayoutYN::No);
+		m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
+		m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
 		editorOverlayCanvas->refreshLayout();
 	}
 
-	void show(const Vec2& pos, const Array<MenuElement>& elements, std::function<void()> fnOnHide = nullptr)
+	void show(const Vec2& pos, const Array<MenuElement>& elements, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
 	{
 		// 前回開いていたメニューを閉じてから表示
 		hide(RefreshesLayoutYN::No);
@@ -107,7 +110,7 @@ public:
 			if (const auto pItem = std::get_if<MenuItem>(&m_elements[i]))
 			{
 				// 項目
-				const auto itemNode = m_menuNode->emplaceChild(
+				const auto itemNode = m_rootNode->emplaceChild(
 					U"MenuItem_{}"_fmt(i),
 					BoxConstraint
 					{
@@ -129,7 +132,7 @@ public:
 			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
 			{
 				// チェック可能な項目
-				const auto itemNode = m_menuNode->emplaceChild(
+				const auto itemNode = m_rootNode->emplaceChild(
 					U"CheckableMenuItem_{}"_fmt(i),
 					BoxConstraint
 					{
@@ -159,7 +162,7 @@ public:
 			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
 			{
 				// セパレータ
-				const auto separatorNode = m_menuNode->emplaceChild(
+				const auto separatorNode = m_rootNode->emplaceChild(
 					U"Separator",
 					BoxConstraint
 					{
@@ -194,11 +197,15 @@ public:
 			x = Scene::Width() - MenuItemWidth;
 		}
 
-		m_menuNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-		m_menuNode->setActive(ActiveYN::Yes, RefreshesLayoutYN::No);
+		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
+		{
+			auto newConstraint = *pAnchorConstraint;
+			newConstraint.sizeDelta.y = m_rootNode->fittingSizeToChildren().y;
+			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
+		}
 
 		// 下端にはみ出す場合は上に寄せる
-		const double menuHeight = m_menuNode->boxConstraint()->sizeDelta.y;
+		const double menuHeight = m_rootNode->anchorConstraint()->sizeDelta.y;
 		if (y + menuHeight > Scene::Height())
 		{
 			y = Scene::Height() - menuHeight;
@@ -211,7 +218,8 @@ public:
 			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
 		}
 
-		m_rootNode->setActive(ActiveYN::Yes, RefreshesLayoutYN::Yes);
+		m_screenMaskNode->setIsHitTarget(screenMaskEnabled.getBool());
+		m_screenMaskNode->setActive(ActiveYN::Yes, RefreshesLayoutYN::Yes);
 
 		m_isFirstUpdateSinceShown = true;
 	}
@@ -224,14 +232,14 @@ public:
 			m_fnOnHide = nullptr;
 		}
 		clearItems();
-		m_rootNode->setActive(ActiveYN::No, refreshesLayout);
+		m_screenMaskNode->setActive(ActiveYN::No, refreshesLayout);
 		m_isFirstUpdateSinceShown = false;
 	}
 
 	void update()
 	{
 		// 初回フレームは閉じる判定しない
-		if (!m_menuNode->activeSelf() || m_isFirstUpdateSinceShown)
+		if (!m_screenMaskNode->activeSelf() || m_isFirstUpdateSinceShown)
 		{
 			m_isFirstUpdateSinceShown = false;
 			return;
@@ -269,7 +277,7 @@ public:
 
 		// メニュー外クリックで閉じる
 		// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
-		if (!m_menuNode->isHoveredRecursive() && !m_menuNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
+		if (!m_rootNode->isHoveredRecursive() && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
 		{
 			hide();
 		}
@@ -386,7 +394,7 @@ public:
 				else
 				{
 					// メニューがクリックされた場合は表示を切り替え
-					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, [this] { m_hasMenuClosed = true; });
+					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 					m_activeMenuCategoryNode = menuCategory.node;
 					hasMenuOpened = true;
 				}
@@ -394,7 +402,7 @@ public:
 			else if (menuCategory.node->isHoveredRecursive() && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
 			{
 				// カーソルが他のメニューに移動した場合はサブメニューを切り替える
-				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, [this] { m_hasMenuClosed = true; });
+				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 				m_activeMenuCategoryNode = menuCategory.node;
 				hasMenuOpened = true;
 			}

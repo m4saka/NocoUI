@@ -1,4 +1,4 @@
-﻿#include "NocoUI/Layout/FlowLayout.hpp"
+﻿#include "NocoUI/Layout/VerticalLayout.hpp"
 #include "NocoUI/Node.hpp"
 
 namespace noco
@@ -21,30 +21,33 @@ namespace noco
 		return layout;
 	}
 
-	void VerticalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
+	SizeF VerticalLayout::fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
 		double totalHeight = padding.top + padding.bottom;
 		double maxWidth = 0.0;
-
 		for (const auto& child : children)
 		{
 			if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
 			{
 				continue;
 			}
-
 			if (const auto pBoxConstraint = child->boxConstraint())
 			{
 				const RectF measuredRect = pBoxConstraint->applyConstraint(
-					RectF{ 0, 0, parentRect.w, parentRect.h }, // サイズが分かれば良いので親のサイズだけ渡す
+					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
-				const double childTotalWidth = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
-				const double childTotalHeight = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
-				totalHeight += childTotalHeight;
-				maxWidth = Max(maxWidth, childTotalWidth);
+				const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
+				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
+				totalHeight += childH;
+				maxWidth = Max(maxWidth, childW);
 			}
 		}
+		return { maxWidth, totalHeight };
+	}
 
+	void VerticalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
+	{
+		const auto [maxWidth, totalHeight] = fittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
 		if (const auto pBoxConstraint = node.boxConstraint())

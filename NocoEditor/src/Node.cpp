@@ -222,6 +222,11 @@ namespace noco
 		return std::get_if<VerticalLayout>(&m_layout);
 	}
 
+	SizeF Node::fittingSizeToChildren() const
+	{
+		return std::visit([this](const auto& layout) { return layout.fittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_layout);
+	}
+
 	void Node::setBoxConstraintToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
 	{
 		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setBoxConstraintToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_layout);
