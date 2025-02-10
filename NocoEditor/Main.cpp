@@ -10,6 +10,7 @@ constexpr int32 MenuBarHeight = 26;
 struct MenuItem
 {
 	String text;
+	String hotKeyText;
 	std::function<void()> onClick = nullptr;
 	std::function<bool()> fnIsEnabled = [] { return true; };
 };
@@ -17,6 +18,7 @@ struct MenuItem
 struct CheckableMenuItem
 {
 	String text;
+	String hotKeyText;
 	std::function<void(CheckedYN)> onClick = nullptr;
 	CheckedYN checked = CheckedYN::No;
 	std::function<bool()> fnIsEnabled = [] { return true; };
@@ -117,6 +119,10 @@ public:
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+				if (!pItem->hotKeyText.empty())
+				{
+					itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+				}
 				itemNode->setInteractable(pItem->fnIsEnabled());
 				m_elementNodes.push_back(itemNode);
 			}
@@ -135,6 +141,10 @@ public:
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 				itemNode->emplaceComponent<Label>(pCheckableItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+				if (!pCheckableItem->hotKeyText.empty())
+				{
+					itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+				}
 				itemNode->emplaceComponent<Label>(
 					pCheckableItem->checked ? U"✔" : U"",
 					U"Font14",
@@ -557,20 +567,20 @@ private:
 			m_contextMenu,
 			Array<MenuElement>
 			{
-				MenuItem{ U"新規ノード", [this] { onClickNewNode(); } },
-				MenuItem{ U"子として新規ノード", [this, node] { onClickNewNode(node); } },
+				MenuItem{ U"新規ノード", U"", [this] { onClickNewNode(); } },
+				MenuItem{ U"子として新規ノード", U"", [this, node] { onClickNewNode(node); } },
 				MenuSeparator{},
-				MenuItem{ U"削除", [this] { onClickDelete(); } },
-				MenuItem{ U"コピー", [this] { onClickCopy(); } },
-				MenuItem{ U"切り取り", [this] { onClickCut(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return canPaste(); } },
-				MenuItem{ U"子として貼り付け", [this, node] { onClickPaste(node); }, [this] { return canPaste(); } },
+				MenuItem{ U"切り取り", U"Ctrl+X", [this] { onClickCut(); } },
+				MenuItem{ U"コピー", U"Ctrl+C", [this] { onClickCopy(); } },
+				MenuItem{ U"貼り付け", U"Ctrl+V", [this] { onClickPaste(); }, [this] { return canPaste(); } },
+				MenuItem{ U"子として貼り付け", U"", [this, node] { onClickPaste(node); }, [this] { return canPaste(); } },
+				MenuItem{ U"複製を作成", U"Ctrl+D", [this] { onClickDuplicate(); } },
+				MenuItem{ U"削除", U"Delete", [this] { onClickDelete(); } },
 				MenuSeparator{},
-				MenuItem{ U"上に移動", [this] { onClickMoveUp(); } },
-				MenuItem{ U"下に移動", [this] { onClickMoveDown(); } },
+				MenuItem{ U"上に移動", U"Alt+Up", [this] { onClickMoveUp(); } },
+				MenuItem{ U"下に移動", U"Alt+Down", [this] { onClickMoveDown(); } },
 				MenuSeparator{},
-				MenuItem{ U"複製を作成", [this] { onClickDuplicate(); } },
-				MenuItem{ U"空の親ノードを作成", [this] { onClickCreateEmptyParent(); } },
+				MenuItem{ U"空の親ノードを作成", U"", [this] { onClickCreateEmptyParent(); } },
 			},
 			[this, node]
 			{
@@ -735,8 +745,8 @@ public:
 		m_hierarchyInnerFrameNode->emplaceComponent<ContextMenuOpener>(contextMenu,
 			Array<MenuElement>
 			{
-				MenuItem{ U"新規ノード", [this] { onClickNewNode(); } },
-				MenuItem{ U"貼り付け", [this] { onClickPaste(); }, [this] { return canPaste(); } },
+				MenuItem{ U"新規ノード", U"", [this] { onClickNewNode(); } },
+				MenuItem{ U"貼り付け", U"Ctrl+V", [this] { onClickPaste(); }, [this] { return canPaste(); } },
 			});
 		m_hierarchyRootNode->setLayout(VerticalLayout{ .padding = 2 });
 		m_hierarchyRootNode->setVerticalScrollable(true);
@@ -1430,10 +1440,10 @@ public:
 		m_inspectorInnerFrameNode->emplaceComponent<ContextMenuOpener>(contextMenu,
 			Array<MenuElement>
 			{
-				MenuItem{ U"Sprite を追加", [this] { onClickAddComponent<Sprite>(); } },
-				MenuItem{ U"RectRenderer を追加", [this] { onClickAddComponent<RectRenderer>(); } },
-				MenuItem{ U"TextBox を追加", [this] { onClickAddComponent<TextBox>(); } },
-				MenuItem{ U"Label を追加", [this] { onClickAddComponent<Label>(); } },
+				MenuItem{ U"Sprite を追加", U"", [this] { onClickAddComponent<Sprite>(); } },
+				MenuItem{ U"RectRenderer を追加", U"", [this] { onClickAddComponent<RectRenderer>(); } },
+				MenuItem{ U"TextBox を追加", U"", [this] { onClickAddComponent<TextBox>(); } },
+				MenuItem{ U"Label を追加", U"", [this] { onClickAddComponent<Label>(); } },
 			});
 		m_inspectorRootNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 		m_inspectorRootNode->setVerticalScrollable(true);
@@ -2398,6 +2408,7 @@ public:
 							MenuItem
 							{
 								name,
+								U"",
 								[this, name]
 								{
 									m_currentValue = name;
@@ -3225,9 +3236,9 @@ public:
 			m_contextMenu,
 			Array<MenuElement>
 			{
-				MenuItem{ U"{} を削除"_fmt(component->type()), [this, node, component] { node->removeComponent(component); refreshInspector(); } },
-				MenuItem{ U"{} を上へ移動"_fmt(component->type()), [this, node, component] { node->moveComponentUp(component); refreshInspector(); } },
-				MenuItem{ U"{} を下へ移動"_fmt(component->type()), [this, node, component] { node->moveComponentDown(component); refreshInspector(); } },
+				MenuItem{ U"{} を削除"_fmt(component->type()), U"", [this, node, component] { node->removeComponent(component); refreshInspector(); } },
+				MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", [this, node, component] { node->moveComponentUp(component); refreshInspector(); } },
+				MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", [this, node, component] { node->moveComponentDown(component); refreshInspector(); } },
 			});
 
 		for (const auto& property : component->properties())
@@ -3415,24 +3426,25 @@ public:
 			U"ファイル",
 			Array<MenuElement>
 			{
-				MenuItem{ U"新規作成", [this] { onClickMenuFileNew(); } },
+				MenuItem{ U"新規作成", U"Ctrl+N", [this] { onClickMenuFileNew(); } },
 				MenuSeparator{},
-				MenuItem{ U"開く", [this] { onClickMenuFileOpen(); } },
-				MenuItem{ U"保存", [this] { onClickMenuFileSave(); } },
-				MenuItem{ U"名前を付けて保存", [this] { onClickMenuFileSaveAs(); } },
+				MenuItem{ U"開く", U"Ctrl+O", [this] { onClickMenuFileOpen(); } },
+				MenuItem{ U"保存", U"Ctrl+S", [this] { onClickMenuFileSave(); } },
+				MenuItem{ U"名前を付けて保存", U"Ctrl+Shift+S", [this] { onClickMenuFileSaveAs(); } },
 				MenuSeparator{},
-				MenuItem{ U"終了", [this] { onClickMenuFileExit(); } },
+				MenuItem{ U"終了", U"Alt+F4", [this] { onClickMenuFileExit(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"Edit",
 			U"編集",
 			{
-				MenuItem{ U"コピー", [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
-				MenuItem{ U"切り取り", [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
-				MenuItem{ U"貼り付け", [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
-				MenuItem{ U"削除", [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"切り取り", U"Ctrl+X", [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"コピー", U"Ctrl+C", [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"貼り付け", U"Ctrl+V", [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
+				MenuItem{ U"複製を作成", U"Ctrl+D", [this] { onClickMenuEditDuplicate(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"削除", U"Delete", [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuSeparator{},
-				MenuItem{ U"すべて選択", [this] { m_hierarchy.selectAll(); } },
+				MenuItem{ U"すべて選択", U"Ctrl+A", [this] { m_hierarchy.selectAll(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"View",
@@ -3681,6 +3693,11 @@ public:
 		System::Exit();
 	}
 
+	void onClickMenuEditCut()
+	{
+		m_hierarchy.onClickCut();
+	}
+
 	void onClickMenuEditCopy()
 	{
 		m_hierarchy.onClickCopy();
@@ -3689,11 +3706,6 @@ public:
 	void onClickMenuEditPaste()
 	{
 		m_hierarchy.onClickPaste();
-	}
-
-	void onClickMenuEditCut()
-	{
-		m_hierarchy.onClickCut();
 	}
 
 	void onClickMenuEditDuplicate()
