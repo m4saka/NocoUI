@@ -819,7 +819,15 @@ namespace noco
 	{
 		if (horizontalScrollable() || verticalScrollable())
 		{
-			return shared_from_this();
+			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+			{
+				const RectF& contentRectLocal = *contentRectOpt;
+				if ((horizontalScrollable() && contentRectLocal.w > m_layoutAppliedRect.w) ||
+					(verticalScrollable() && contentRectLocal.h > m_layoutAppliedRect.h))
+				{
+					return shared_from_this();
+				}
+			}
 		}
 		if (const auto parent = m_parent.lock())
 		{
