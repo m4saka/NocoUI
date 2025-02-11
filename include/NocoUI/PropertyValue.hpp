@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "YN.hpp"
 #include "InteractState.hpp"
 #include "Serialization.hpp"
 

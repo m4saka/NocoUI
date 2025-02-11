@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "ComponentBase.hpp"
+#include "../Enums.hpp"
 
 namespace noco
 {
@@ -65,90 +67,7 @@ namespace noco
 
 			Cache() = default;
 
-			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize)
-			{
-				if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize))
-				{
-					return;
-				}
-				prevParams = CacheParams
-				{
-					.text = String{ text },
-					.fontAssetName = String{ fontAssetName },
-					.fontSize = fontSize,
-					.horizontalOverflow = horizontalOverflow,
-					.verticalOverflow = verticalOverflow,
-					.spacing = spacing,
-					.rectSize = rectSize,
-				};
-
-				const Font font = FontAsset(fontAssetName);
-				fontMethod = font.method();
-				const Array<Glyph> glyphs = font.getGlyphs(text);
-				const int32 baseFontSize = font.fontSize();
-				if (baseFontSize == 0)
-				{
-					scale = 1.0;
-				}
-				else
-				{
-					scale = fontSize / baseFontSize;
-				}
-				lineHeight = font.height(fontSize);
-
-				lineCaches.clear();
-
-				double maxWidth = 0.0;
-				Vec2 offset = Vec2::Zero();
-				Array<Glyph> lineGlyphs;
-
-				const auto fnPushLine =
-					[&]() -> bool
-					{
-						if (verticalOverflow == VerticalOverflow::Clip && offset.y + lineHeight > rectSize.y)
-						{
-							// verticalOverflowがClipの場合、矩形の高さを超えたら終了
-							return false;
-						}
-						if (!lineGlyphs.empty())
-						{
-							// 行末文字の右側に余白を入れないため、その分を引く
-							offset.x -= spacing.x;
-						}
-						lineCaches.push_back({ lineGlyphs, offset.x, offset.y });
-						lineGlyphs.clear();
-						maxWidth = Max(maxWidth, offset.x);
-						offset.x = 0;
-						offset.y += lineHeight + spacing.y;
-						return true;
-					};
-
-				for (const auto& glyph : glyphs)
-				{
-					if (glyph.codePoint == U'\n')
-					{
-						if (!fnPushLine())
-						{
-							break;
-						}
-						continue;
-					}
-
-					const double xAdvance = glyph.xAdvance * scale + spacing.x;
-					if (horizontalOverflow == HorizontalOverflow::Wrap && offset.x + xAdvance > rectSize.x)
-					{
-						if (!fnPushLine())
-						{
-							break;
-						}
-					}
-
-					offset.x += xAdvance;
-					lineGlyphs.push_back(glyph);
-				}
-				fnPushLine(); // 最後の行を追加
-				regionSize = { maxWidth, offset.y - spacing.y };
-			}
+			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;

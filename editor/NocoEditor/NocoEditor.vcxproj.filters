@@ -70,9 +70,6 @@
     <Filter Include="Header Files\NocoUI\Component">
       <UniqueIdentifier>{131a4a92-747a-4ea8-b851-f741af9ceb17}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\NocoUI\Coonstraint">
-      <UniqueIdentifier>{ed772971-3fa3-48e1-a582-933d506066b1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\NocoUI\Layout">
       <UniqueIdentifier>{40852a1d-3ff3-4059-879a-5e2562a61944}</UniqueIdentifier>
     </Filter>
@@ -84,6 +81,9 @@
     </Filter>
     <Filter Include="Source Files\NocoUI\Layout">
       <UniqueIdentifier>{f21baa37-df59-4e56-b34e-79a5b4569896}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\NocoUI\Constraint">
+      <UniqueIdentifier>{ed772971-3fa3-48e1-a582-933d506066b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -112,6 +112,9 @@
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Component\TextBox.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Component\Label.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
   </ItemGroup>
@@ -416,101 +419,101 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Anchor.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Canvas.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Enums.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\InteractState.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\LRTB.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\magic_enum.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\MouseTracker.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Node.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Property.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\PropertyValue.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\ScrollableAxisFlags.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Serialization.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Smoothing.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\YN.hpp">
+      <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\NocoUI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Anchor.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Canvas.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\Sprite.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\TextBox.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\UpdaterComponent.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Constraint\AnchorConstraint.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Constraint\BoxConstraint.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Constraint\Constraint.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Enums.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\InteractState.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Layout\FlowLayout.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Layout\HorizontalLayout.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\NocoUI\Layout</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Layout\Layout.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\NocoUI\Layout</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Layout\VerticalLayout.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\NocoUI\Layout</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\LRTB.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Layout\FlowLayout.hpp">
+      <Filter>Header Files\NocoUI\Layout</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\magic_enum.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Constraint\AnchorConstraint.hpp">
+      <Filter>Header Files\NocoUI\Constraint</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\MouseTracker.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Constraint\BoxConstraint.hpp">
+      <Filter>Header Files\NocoUI\Constraint</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Node.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Constraint\Constraint.hpp">
+      <Filter>Header Files\NocoUI\Constraint</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Property.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\PropertyValue.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\ScrollableAxisFlags.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Serialization.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Smoothing.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\Sprite.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\YN.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\NocoUI\Component\TextBox.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\UpdaterComponent.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

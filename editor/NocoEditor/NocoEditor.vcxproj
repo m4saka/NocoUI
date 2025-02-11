@@ -115,6 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Component\Label.cpp" />
     <ClCompile Include="..\..\src\Component\RectRenderer.cpp" />
     <ClCompile Include="..\..\src\Component\Sprite.cpp" />
     <ClCompile Include="..\..\src\Component\TextBox.cpp" />
