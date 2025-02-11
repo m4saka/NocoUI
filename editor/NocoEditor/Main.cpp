@@ -3568,7 +3568,7 @@ public:
 
 	void onClickMenuFileOpen()
 	{
-		if (const auto filePath = Dialog::OpenFile({ FileFilter::JSON() }))
+		if (const auto filePath = Dialog::OpenFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
 		{
 			JSON json;
 			try
@@ -3595,7 +3595,7 @@ public:
 		Optional<String> filePath = m_filePath;
 		if (filePath == none)
 		{
-			filePath = Dialog::SaveFile({ FileFilter::JSON() });
+			filePath = Dialog::SaveFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() });
 			if (filePath == none)
 			{
 				return;
@@ -3613,7 +3613,7 @@ public:
 
 	void onClickMenuFileSaveAs()
 	{
-		if (const auto filePath = Dialog::SaveFile({ FileFilter::JSON() }))
+		if (const auto filePath = Dialog::SaveFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
 		{
 			if (m_canvas->toJSON().save(*filePath))
 			{
