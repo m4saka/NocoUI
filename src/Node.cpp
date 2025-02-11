@@ -281,7 +281,21 @@ namespace noco
 		return result;
 	}
 
-	std::shared_ptr<Node> Node::FromJSON(const JSON& json)
+    std::shared_ptr<Node> Node::LoadFile(FilePathView path, AllowExceptions allowExceptions)
+    {
+        auto json = JSON::Load(path, allowExceptions);
+        if (!json)
+        {
+            if (allowExceptions)
+            {
+                throw Error{ U"Node::LoadFile: Failed to load file '{}'"_fmt(path) };
+            }
+            return nullptr;
+        }
+        return CreateFromJSON(json);
+    }
+
+	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -1426,7 +1440,7 @@ namespace noco
 
 	std::shared_ptr<Node> Node::clone() const
 	{
-		return FromJSON(toJSON());
+		return CreateFromJSON(toJSON());
 	}
 
 	void Node::addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater)

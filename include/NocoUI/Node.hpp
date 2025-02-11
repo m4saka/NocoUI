@@ -159,8 +159,11 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const;
 
+        [[nodiscard]]
+		static std::shared_ptr<Node> LoadFile(FilePathView path, AllowExceptions allowExceptions);
+
 		[[nodiscard]]
-		static std::shared_ptr<Node> FromJSON(const JSON& json);
+		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parent() const;
@@ -441,7 +444,7 @@ namespace noco
 		{
 			throw Error{ U"addChildFromJSON: Cannot add child while iterating" };
 		}
-		auto child = FromJSON(json);
+		auto child = CreateFromJSON(json);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();

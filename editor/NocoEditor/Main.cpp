@@ -3648,7 +3648,7 @@ public:
 			JSON json;
 			try
 			{
-				json = JSON::Load(*filePath);
+				json = JSON::Load(*filePath, AllowExceptions::Yes);
 			}
 			catch (...)
 			{
@@ -3656,7 +3656,11 @@ public:
 				return;
 			}
 			m_filePath = filePath;
-			m_canvas->loadFromJSON(json);
+			if (!m_canvas->tryReadFromJSON(json))
+			{
+				System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
+				return;
+			}
 			refresh();
 		}
 	}

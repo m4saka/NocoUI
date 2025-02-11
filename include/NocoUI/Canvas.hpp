@@ -130,19 +130,26 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> FromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+        static std::shared_ptr<Canvas> LoadFile(FilePathView path, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, AllowExceptions allowExceptions = AllowExceptions::No)
+        {
+            return Create(Node::LoadFile(path, allowExceptions), refreshesLayout);
+        }
+
+		[[nodiscard]]
+		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			return Create(Node::FromJSON(json), refreshesLayout);
+			return Create(Node::CreateFromJSON(json), refreshesLayout);
 		}
 
-		void loadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			m_rootNode = Node::FromJSON(json);
-			m_rootNode->setCanvasRecursive(shared_from_this());
-			if (refreshesLayout)
-			{
-				refreshLayout();
-			}
+			m_rootNode = Node::CreateFromJSON(json);
+            m_rootNode->setCanvasRecursive(shared_from_this());
+            if (refreshesLayout)
+            {
+                refreshLayout();
+            }
+            return true; // TODO: 失敗したらfalseを返す
 		}
 
 		void update(CanvasUpdateContext* pContext = nullptr)
