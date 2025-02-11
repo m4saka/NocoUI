@@ -1000,15 +1000,25 @@ namespace noco
 							const double w = (viewWidth * viewWidth) / contentWidth;
 							const double x = ((m_scrollOffset.x * scale.x) / maxScrollX) * (viewWidth - w);
 							const double thickness = 4.0 * scale.x;
-							const RectF rect
+							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+
+							const RectF backgroundRect
+							{
+								m_effectedRect.x,
+								m_effectedRect.y + m_effectedRect.h - thickness,
+								m_effectedRect.w,
+								thickness
+							};
+							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
+
+							const RectF handleRect
 							{
 								m_effectedRect.x + x,
 								m_effectedRect.y + m_effectedRect.h - thickness,
 								w,
 								thickness
 							};
-							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
-							rect.rounded(roundRadius).draw(ColorF{ 0.7, m_scrollBarAlpha.currentValue() });
+							handleRect.rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
 						}
 					}
 
@@ -1023,15 +1033,25 @@ namespace noco
 							const double h = (viewHeight * viewHeight) / contentHeight;
 							const double y = ((m_scrollOffset.y * scale.y) / maxScrollY) * (viewHeight - h);
 							const double thickness = 4.0 * scale.x;
-							const RectF rect
+							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+
+							const RectF backgroundRect
+							{
+								m_effectedRect.x + m_effectedRect.w - thickness,
+								m_effectedRect.y,
+								thickness,
+								m_effectedRect.h
+							};
+							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
+
+							const RectF handleRect
 							{
 								m_effectedRect.x + m_effectedRect.w - thickness,
 								m_effectedRect.y + y,
 								thickness,
 								h
 							};
-							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
-							rect.rounded(roundRadius).draw(ColorF{ 0.7, m_scrollBarAlpha.currentValue() });
+							handleRect.rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
 						}
 					}
 				}
