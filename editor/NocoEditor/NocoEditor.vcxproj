@@ -49,7 +49,7 @@
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\Debug\Intermediate\</IntDir>
     <TargetName>$(ProjectName)(debug)</TargetName>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)App</LocalDebuggerWorkingDirectory>
-    <IncludePath>$(SIV3D_0_6_15)\include;$(SIV3D_0_6_15)\include\ThirdParty;$(IncludePath);$(ProjectDir)\NocoUI\include</IncludePath>
+    <IncludePath>$(SIV3D_0_6_15)\include;$(SIV3D_0_6_15)\include\ThirdParty;$(IncludePath);$(ProjectDir)\..\..\include</IncludePath>
     <LibraryPath>$(SIV3D_0_6_15)\lib\Windows;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -57,7 +57,7 @@
     <OutDir>$(SolutionDir)Intermediate\$(ProjectName)\Release\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\Release\Intermediate\</IntDir>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)App</LocalDebuggerWorkingDirectory>
-    <IncludePath>$(SIV3D_0_6_15)\include;$(SIV3D_0_6_15)\include\ThirdParty;$(IncludePath);$(ProjectDir)\NocoUI\include</IncludePath>
+    <IncludePath>$(SIV3D_0_6_15)\include;$(SIV3D_0_6_15)\include\ThirdParty;$(IncludePath);$(ProjectDir)\..\..\include</IncludePath>
     <LibraryPath>$(SIV3D_0_6_15)\lib\Windows;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,13 +115,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="NocoUI\src\Component\RectRenderer.cpp" />
-    <ClCompile Include="NocoUI\src\Component\Sprite.cpp" />
-    <ClCompile Include="NocoUI\src\Component\TextBox.cpp" />
-    <ClCompile Include="NocoUI\src\Layout\FlowLayout.cpp" />
-    <ClCompile Include="NocoUI\src\Layout\HorizontalLayout.cpp" />
-    <ClCompile Include="NocoUI\src\Layout\VerticalLayout.cpp" />
-    <ClCompile Include="NocoUI\src\Node.cpp" />
+    <ClCompile Include="..\..\src\Component\RectRenderer.cpp" />
+    <ClCompile Include="..\..\src\Component\Sprite.cpp" />
+    <ClCompile Include="..\..\src\Component\TextBox.cpp" />
+    <ClCompile Include="..\..\src\Layout\FlowLayout.cpp" />
+    <ClCompile Include="..\..\src\Layout\HorizontalLayout.cpp" />
+    <ClCompile Include="..\..\src\Layout\VerticalLayout.cpp" />
+    <ClCompile Include="..\..\src\Node.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -332,38 +332,38 @@
     <Xml Include="App\example\xml\test.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="NocoUI\include\NocoUI.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Anchor.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Canvas.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\Component.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\ComponentBase.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\DrawerComponent.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\Label.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\RectRenderer.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\Sprite.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\TextBox.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Component\UpdaterComponent.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Constraint\AnchorConstraint.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Constraint\BoxConstraint.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Constraint\Constraint.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Enums.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\InheritChildrenStateFlags.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\InteractState.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Layout\FlowLayout.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Layout\HorizontalLayout.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Layout\Layout.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Layout\VerticalLayout.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\LRTB.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\magic_enum.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\MouseTracker.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Node.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Property.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\PropertyValue.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\ScrollableAxisFlags.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Serialization.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\Smoothing.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\TransformEffect.hpp" />
-    <ClInclude Include="NocoUI\include\NocoUI\YN.hpp" />
+    <ClInclude Include="..\..\include\NocoUI.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Canvas.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\Sprite.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\TextBox.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\UpdaterComponent.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Constraint\AnchorConstraint.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Constraint\BoxConstraint.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Constraint\Constraint.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Enums.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\InteractState.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Layout\FlowLayout.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Layout\HorizontalLayout.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Layout\Layout.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Layout\VerticalLayout.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\LRTB.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\magic_enum.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\MouseTracker.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Node.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Property.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\PropertyValue.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\ScrollableAxisFlags.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Serialization.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Smoothing.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\YN.hpp" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
