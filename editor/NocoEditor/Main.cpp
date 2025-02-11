@@ -2689,10 +2689,10 @@ public:
 			};
 		const auto fnAddEnumChild =
 			[this, &layoutNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
-		{
-			auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-			layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()));
-		};
+			{
+				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
+				layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()));
+			};
 		if (const auto pFlowLayout = node->flowLayout())
 		{
 			fnAddEnumChild(
@@ -2845,35 +2845,39 @@ public:
 		}
 		else if (const auto pAnchorConstraint = node->anchorConstraint())
 		{
-			auto setDouble = [this, node](auto setter)
-			{
-				return [this, node, setter](StringView s)
+			auto setDouble =
+				[this, node](auto setter)
 				{
-					if (auto optVal = ParseOpt<double>(s))
-					{
-						if (auto ac = node->anchorConstraint())
+					return
+						[this, node, setter](StringView s)
 						{
-							auto copy = *ac;
-							setter(copy, *optVal);
-							node->setConstraint(copy);
-							m_canvas->refreshLayout();
-						}
-					}
+							if (auto optVal = ParseOpt<double>(s))
+							{
+								if (auto ac = node->anchorConstraint())
+								{
+									auto copy = *ac;
+									setter(copy, *optVal);
+									node->setConstraint(copy);
+									m_canvas->refreshLayout();
+								}
+							}
+						};
 				};
-			};
-			auto setVec2 = [this, node](auto setter)
-			{
-				return [this, node, setter](const Vec2& val)
+			auto setVec2 =
+				[this, node](auto setter)
 				{
-					if (auto ac = node->anchorConstraint())
-					{
-						auto copy = *ac;
-						setter(copy, val);
-						node->setConstraint(copy);
-						m_canvas->refreshLayout();
-					}
+					return
+						[this, node, setter](const Vec2& val)
+						{
+							if (auto ac = node->anchorConstraint())
+							{
+								auto copy = *ac;
+								setter(copy, val);
+								node->setConstraint(copy);
+								m_canvas->refreshLayout();
+							}
+						};
 				};
-			};
 
 			fnAddEnumChild(
 				U"type",

@@ -161,7 +161,7 @@ namespace noco
 			}
 
 			// スクロール実行
-			if (scrollableHoveredNode) 
+			if (scrollableHoveredNode)
 			{
 				const double wheel = Mouse::Wheel();
 				const double wheelH = Mouse::WheelH();
