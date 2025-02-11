@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Component/TextBox.hpp"
 #include "NocoUI/Canvas.hpp"
+#include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
 {
@@ -496,11 +497,7 @@ namespace noco
 		const Vec2 offset = rect.pos + Vec2{ drawOffsetX * effectScale.x, 0.0 };
 
 		{
-			Graphics2D::SetScissorRect(rect.asRect());
-
-			RasterizerState rs = RasterizerState::Default2D;
-			rs.scissorEnable = true;
-			const ScopedRenderStates2D renderStates{ rs };
+			detail::ScopedScissorRect scissorRect{ rect.asRect() };
 
 			// 選択範囲を描画
 			if (m_selectionAnchor != m_cursorIndex)

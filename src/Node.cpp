@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Component/Component.hpp"
+#include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
 {
@@ -947,13 +948,10 @@ namespace noco
 		}
 
 		// クリッピング有効の場合はクリッピング範囲を設定
-		Optional<ScopedRenderStates2D> renderStates;
+		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			Graphics2D::SetScissorRect(m_effectedRect.asRect());
-			RasterizerState rs = RasterizerState::Default2D;
-			rs.scissorEnable = true;
-			renderStates.emplace(rs);
+			scissorRect.emplace(m_effectedRect.asRect());
 		}
 
 		{

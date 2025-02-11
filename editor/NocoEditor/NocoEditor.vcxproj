@@ -250,6 +250,7 @@
     <ClInclude Include="..\..\include\NocoUI\Constraint\AnchorConstraint.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Constraint\BoxConstraint.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Constraint\Constraint.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\detail\ScopedScissorRect.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Enums.hpp" />
     <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp" />
     <ClInclude Include="..\..\include\NocoUI\InteractState.hpp" />

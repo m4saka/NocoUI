@@ -85,6 +85,9 @@
     <Filter Include="Header Files\NocoUI\Constraint">
       <UniqueIdentifier>{ed772971-3fa3-48e1-a582-933d506066b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\NocoUI\detail">
+      <UniqueIdentifier>{87409931-3068-4484-bffb-3badd03aa4bc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -520,6 +523,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Utility.hpp">
       <Filter>Header Files\NocoUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\detail\ScopedScissorRect.hpp">
+      <Filter>Header Files\NocoUI\detail</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
