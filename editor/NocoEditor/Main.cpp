@@ -3387,9 +3387,10 @@ public:
 		CanvasUpdateContext context{};
 		m_editorOverlayCanvas->update(&context);
 		m_editorCanvas->update(&context);
+		const bool editorCanvasHovered = context.isHovered();
 		m_canvas->update(&context);
 
-		if (!context.isScrollableHovered())
+		if (!editorCanvasHovered && !context.isScrollableHovered())
 		{
 			// マウス座標を中心に拡大縮小
 			const Vec2 beforeOffset = m_scrollOffset;
@@ -3715,22 +3716,6 @@ void Main()
 			.pivot = Anchor::TopLeft,
 		});
 	labelNode->emplaceComponent<Label>(U"← 左上にアンカーがある", U"Font", 24, Palette::White, HorizontalAlign::Left, VerticalAlign::Middle);
-
-	/*for (int32 i = 0; i < 100; i++)
-	{
-		const auto buttonNode = editor.rootNode()->emplaceChild(
-			U"Button{}"_fmt(i),
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ Random(70, 110), Random(20, 60) },
-			},
-			IsHitTargetYN::Yes,
-			InheritChildrenStateFlags::None,
-			RefreshesLayoutYN::No);
-		buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ Palette::Black }.withDisabled(ColorF{ 0.5 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ Palette::Skyblue, 0.0 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 2.0, 4.0);
-		buttonNode->emplaceComponent<Label>(U"Button{}"_fmt(i), U"Font14Bold", 24, Palette::White, HorizontalAlign::Center, VerticalAlign::Middle);
-	}*/
 
 	editor.refresh();
 
