@@ -138,36 +138,42 @@ namespace noco
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
 			m_rootNode = Node::CreateFromJSON(json);
-            m_rootNode->setCanvasRecursive(shared_from_this());
-            if (refreshesLayout)
-            {
-                refreshLayout();
-            }
-            return true; // TODO: 失敗したらfalseを返す
+			m_rootNode->setCanvasRecursive(shared_from_this());
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
+			return true; // TODO: 失敗したらfalseを返す
 		}
 
 		void update(CanvasUpdateContext* pContext = nullptr)
 		{
+			// ホバー中ノード取得
 			const bool canHover = (pContext ? pContext->canHover && !pContext->isHovered() : true) && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたい
 			const auto hoveredNode = canHover ? m_rootNode->hoveredNodeInChildren() : nullptr;
 
-			std::weak_ptr<Node> scrollableHoveredNodeWeak;
-			if (hoveredNode)
+			// スクロール可能なホバー中ノード取得
+			auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;
+			if (scrollableHoveredNode && !scrollableHoveredNode->rect().mouseOver())
+			{
+				// 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
+				scrollableHoveredNode = nullptr;
+			}
+
+			// スクロール実行
+			if (scrollableHoveredNode) 
 			{
 				const double wheel = Mouse::Wheel();
 				const double wheelH = Mouse::WheelH();
 				if (wheel != 0.0 || wheelH != 0.0)
 				{
-					const auto scrollableHoveredNode = hoveredNode->findContainedScrollableNode();
-					if (scrollableHoveredNode && scrollableHoveredNode->rect().mouseOver()) // 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
-					{
-						scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
-						scrollableHoveredNodeWeak = scrollableHoveredNode;
-					}
+					scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
 				}
 			}
 
-			m_rootNode->update(pContext, hoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale, InteractableYN::Yes, InteractState::Default, InteractState::Default);
+			// ノード更新
+			m_rootNode->update(pContext, hoveredNode, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale, InteractableYN::Yes, InteractState::Default, InteractState::Default);
+
 			if (pContext)
 			{
 				pContext->canHover = pContext->canHover && hoveredNode == nullptr;
@@ -175,9 +181,9 @@ namespace noco
 				{
 					pContext->hoveredNode = hoveredNode;
 				}
-				if (!scrollableHoveredNodeWeak.expired())
+				if (scrollableHoveredNode)
 				{
-					pContext->scrollableHoveredNode = scrollableHoveredNodeWeak;
+					pContext->scrollableHoveredNode = scrollableHoveredNode;
 				}
 			}
 		}

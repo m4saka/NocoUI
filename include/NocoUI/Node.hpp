@@ -41,8 +41,7 @@ namespace noco
 		/* NonSerialized */ RectF m_effectedRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
-		/* NonSerialized */ Timer m_scrollBarTimerH{ 0.5s };
-		/* NonSerialized */ Timer m_scrollBarTimerV{ 0.5s };
+		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
@@ -242,7 +241,7 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
 
-		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
+		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
 
 		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 

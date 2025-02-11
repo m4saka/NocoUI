@@ -827,7 +827,7 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
+	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
 	{
 		const auto thisNode = shared_from_this();
 
@@ -835,7 +835,7 @@ namespace noco
 		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
 		if (!m_isHitTarget)
 		{
-			// Hovered対象でない場合は親のinteractStateを引き継ぐ
+			// HitTargetでない場合は親のinteractStateを引き継ぐ
 			m_currentInteractState = ApplyOtherInteractState(m_currentInteractState, parentInteractState);
 			m_currentInteractStateRight = ApplyOtherInteractState(m_currentInteractStateRight, parentInteractStateRight);
 		}
@@ -880,12 +880,23 @@ namespace noco
 				component->updateInactive(pContext, thisNode);
 			}
 		}
+		
+		// ホバー中はスクロールバーを表示
+		if (thisNode == scrollableHoveredNode)
+		{
+			m_scrollBarAlpha.update(0.5, 0.1, deltaTime);
+		}
+		else
+		{
+			m_scrollBarAlpha.update(0.0, 0.1, deltaTime);
+		}
+
 		{
 			const auto guard = m_childrenIterGuard.scoped();
 			const InteractableYN interactable{ m_interactable && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->update(pContext, hoveredNode, deltaTime, m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect), m_transformEffect.scale().value() * parentEffectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
+				child->update(pContext, hoveredNode, scrollableHoveredNode, deltaTime, m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect), m_transformEffect.scale().value() * parentEffectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
 			}
 		}
 		m_prevActiveInHierarchy = m_activeInHierarchy;
@@ -926,17 +937,6 @@ namespace noco
 				refreshContainedCanvasLayout();
 			}
 		}
-
-		// 一定時間スクロールバーを表示
-		// (レイアウト更新に時間がかかる場合を考慮して最後に実行)
-		if (scrolledH)
-		{
-			m_scrollBarTimerH.restart();
-		}
-		if (scrolledV)
-		{
-			m_scrollBarTimerV.restart();
-		}
 	}
 
 	void Node::draw() const
@@ -972,60 +972,61 @@ namespace noco
 		}
 
 		// スクロールバー描画
-		const bool needHorizontalScrollBar = (horizontalScrollable() && m_scrollBarTimerH.isRunning());
-		const bool needVerticalScrollBar = (verticalScrollable() && m_scrollBarTimerV.isRunning());
-		if (needHorizontalScrollBar || needVerticalScrollBar)
+		if (m_scrollBarAlpha.currentValue() > 0.0)
 		{
-			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+			const bool needHorizontalScrollBar = horizontalScrollable();
+			const bool needVerticalScrollBar = verticalScrollable();
+			if (needHorizontalScrollBar || needVerticalScrollBar)
 			{
-				const RectF& contentRectLocal = *contentRectOpt;
-				const Vec2 scale = m_effectScale;
-
-				// 横スクロールバー
-				if (needHorizontalScrollBar)
+				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 				{
-					const double viewWidth = m_layoutAppliedRect.w * scale.x;
-					const double contentWidth = contentRectLocal.w * scale.x;
-					const double maxScrollX = (contentWidth > viewWidth) ? (contentWidth - viewWidth) : 0.0;
-					if (maxScrollX > 0.0)
+					const RectF& contentRectLocal = *contentRectOpt;
+					const Vec2 scale = m_effectScale;
+
+					// 横スクロールバー
+					if (needHorizontalScrollBar)
 					{
-						const double w = (viewWidth * viewWidth) / contentWidth;
-						const double x = ((m_scrollOffset.x * scale.x) / maxScrollX) * (viewWidth - w);
-						const double thickness = 4.0 * scale.x;
-						const RectF rect
+						const double viewWidth = m_layoutAppliedRect.w * scale.x;
+						const double contentWidth = contentRectLocal.w * scale.x;
+						const double maxScrollX = (contentWidth > viewWidth) ? (contentWidth - viewWidth) : 0.0;
+						if (maxScrollX > 0.0)
 						{
-							m_effectedRect.x + x,
-							m_effectedRect.y + m_effectedRect.h - thickness,
-							w,
-							thickness
-						};
-						const double lerpRate = Max(m_scrollBarTimerH.progress0_1() - 0.75, 0.0) / 0.25;
-						const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
-						rect.rounded(roundRadius).draw(ColorF(0.7, Math::Lerp(0.5, 0.0, lerpRate)));
+							const double w = (viewWidth * viewWidth) / contentWidth;
+							const double x = ((m_scrollOffset.x * scale.x) / maxScrollX) * (viewWidth - w);
+							const double thickness = 4.0 * scale.x;
+							const RectF rect
+							{
+								m_effectedRect.x + x,
+								m_effectedRect.y + m_effectedRect.h - thickness,
+								w,
+								thickness
+							};
+							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+							rect.rounded(roundRadius).draw(ColorF{ 0.7, m_scrollBarAlpha.currentValue() });
+						}
 					}
-				}
 
-				// 縦スクロールバー
-				if (needVerticalScrollBar)
-				{
-					const double viewHeight = m_layoutAppliedRect.h * scale.y;
-					const double contentHeight = contentRectLocal.h * scale.y;
-					const double maxScrollY = (contentHeight > viewHeight) ? (contentHeight - viewHeight) : 0.0;
-					if (maxScrollY > 0.0)
+					// 縦スクロールバー
+					if (needVerticalScrollBar)
 					{
-						const double h = (viewHeight * viewHeight) / contentHeight;
-						const double y = ((m_scrollOffset.y * scale.y) / maxScrollY) * (viewHeight - h);
-						const double thickness = 4.0 * scale.x;
-						const RectF rect
+						const double viewHeight = m_layoutAppliedRect.h * scale.y;
+						const double contentHeight = contentRectLocal.h * scale.y;
+						const double maxScrollY = (contentHeight > viewHeight) ? (contentHeight - viewHeight) : 0.0;
+						if (maxScrollY > 0.0)
 						{
-							m_effectedRect.x + m_effectedRect.w - thickness,
-							m_effectedRect.y + y,
-							thickness,
-							h
-						};
-						const double lerpRate = Max(m_scrollBarTimerV.progress0_1() - 0.75, 0.0) / 0.25;
-						const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
-						rect.rounded(roundRadius).draw(ColorF(0.7, Math::Lerp(0.5, 0.0, lerpRate)));
+							const double h = (viewHeight * viewHeight) / contentHeight;
+							const double y = ((m_scrollOffset.y * scale.y) / maxScrollY) * (viewHeight - h);
+							const double thickness = 4.0 * scale.x;
+							const RectF rect
+							{
+								m_effectedRect.x + m_effectedRect.w - thickness,
+								m_effectedRect.y + y,
+								thickness,
+								h
+							};
+							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+							rect.rounded(roundRadius).draw(ColorF{ 0.7, m_scrollBarAlpha.currentValue() });
+						}
 					}
 				}
 			}
