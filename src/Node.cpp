@@ -281,20 +281,6 @@ namespace noco
 		return result;
 	}
 
-    std::shared_ptr<Node> Node::LoadFile(FilePathView path, AllowExceptions allowExceptions)
-    {
-        auto json = JSON::Load(path, allowExceptions);
-        if (!json)
-        {
-            if (allowExceptions)
-            {
-                throw Error{ U"Node::LoadFile: Failed to load file '{}'"_fmt(path) };
-            }
-            return nullptr;
-        }
-        return CreateFromJSON(json);
-    }
-
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
 	{
 		auto node = Node::Create();

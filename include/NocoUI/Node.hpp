@@ -159,9 +159,6 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const;
 
-        [[nodiscard]]
-		static std::shared_ptr<Node> LoadFile(FilePathView path, AllowExceptions allowExceptions);
-
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
 

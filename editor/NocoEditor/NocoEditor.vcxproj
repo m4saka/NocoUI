@@ -123,6 +123,7 @@
     <ClCompile Include="..\..\src\Layout\HorizontalLayout.cpp" />
     <ClCompile Include="..\..\src\Layout\VerticalLayout.cpp" />
     <ClCompile Include="..\..\src\Node.cpp" />
+    <ClCompile Include="..\..\src\Utility.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -266,6 +267,7 @@
     <ClInclude Include="..\..\include\NocoUI\Serialization.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Smoothing.hpp" />
     <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Utility.hpp" />
     <ClInclude Include="..\..\include\NocoUI\YN.hpp" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

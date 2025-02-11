@@ -130,12 +130,6 @@ namespace noco
 		}
 
 		[[nodiscard]]
-        static std::shared_ptr<Canvas> LoadFile(FilePathView path, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, AllowExceptions allowExceptions = AllowExceptions::No)
-        {
-            return Create(Node::LoadFile(path, allowExceptions), refreshesLayout);
-        }
-
-		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
 			return Create(Node::CreateFromJSON(json), refreshesLayout);
