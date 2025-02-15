@@ -2715,6 +2715,7 @@ public:
 					}
 				});
 			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->flowLayout(); newLayout.padding = value; node->setLayout(newLayout); });
+			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->flowLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
 		}
 		else if (const auto pHorizontalLayout = node->horizontalLayout())
 		{
@@ -2737,8 +2738,7 @@ public:
 						break;
 					}
 				});
-			fnAddVec2Child(U"padding (left, right)", Vec2{ pHorizontalLayout->padding.left, pHorizontalLayout->padding.right }, [this, node](const Vec2& value) { auto newLayout = *node->horizontalLayout(); newLayout.padding.left = value.x; newLayout.padding.right = value.y; node->setLayout(newLayout); });
-			fnAddVec2Child(U"padding (top, bottom)", Vec2{ pHorizontalLayout->padding.top, pHorizontalLayout->padding.bottom }, [this, node](const Vec2& value) { auto newLayout = *node->horizontalLayout(); newLayout.padding.top = value.x; newLayout.padding.bottom = value.y; node->setLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->horizontalLayout(); newLayout.padding = value; node->setLayout(newLayout); });
 			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->horizontalLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
 		}
 		else if (const auto pVerticalLayout = node->verticalLayout())
@@ -2762,8 +2762,7 @@ public:
 						break;
 					}
 				});
-			fnAddVec2Child(U"padding (left, right)", Vec2{ pVerticalLayout->padding.left, pVerticalLayout->padding.right }, [this, node](const Vec2& value) { auto newLayout = *node->verticalLayout(); newLayout.padding.left = value.x; newLayout.padding.right = value.y; node->setLayout(newLayout); });
-			fnAddVec2Child(U"padding (top, bottom)", Vec2{ pVerticalLayout->padding.top, pVerticalLayout->padding.bottom }, [this, node](const Vec2& value) { auto newLayout = *node->verticalLayout(); newLayout.padding.top = value.x; newLayout.padding.bottom = value.y; node->setLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->verticalLayout(); newLayout.padding = value; node->setLayout(newLayout); });
 			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->verticalLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
 		}
 		else

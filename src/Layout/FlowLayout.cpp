@@ -9,6 +9,7 @@ namespace noco
 		{
 			{ U"type", U"FlowLayout" },
 			{ U"padding", padding.toJSON() },
+			{ U"horizontalAlign", EnumToString(horizontalAlign) },
 		};
 	}
 
@@ -17,6 +18,7 @@ namespace noco
 		return FlowLayout
 		{
 			.padding = json.contains(U"padding") ? LRTB::fromJSON(json[U"padding"]) : LRTB::Zero(),
+			.horizontalAlign = json.contains(U"horizontalAlign") ? StringToEnum<HorizontalAlign>(json[U"horizontalAlign"].getString(), HorizontalAlign::Left) : HorizontalAlign::Left,
 		};
 	}
 
@@ -59,8 +61,10 @@ namespace noco
 				if (measureInfo.lines.back().boxConstraintChildExists &&
 					currentX + childW > availableWidth)
 				{
-					// 行の最大の高さを記録
-					measureInfo.lines.back().maxHeight = currentLineMaxHeight;
+					// 行ごとの幅・高さを記録
+					auto& lastLine = measureInfo.lines.back();
+					lastLine.totalWidth = currentX;
+					lastLine.maxHeight = currentLineMaxHeight;
 
 					// 新しい行へ
 					measureInfo.lines.emplace_back();
@@ -86,7 +90,10 @@ namespace noco
 		}
 		if (!measureInfo.lines.empty())
 		{
-			measureInfo.lines.back().maxHeight = currentLineMaxHeight;
+			// 最後の行の幅・高さを記録
+			auto& lastLine = measureInfo.lines.back();
+			lastLine.totalWidth = currentX;
+			lastLine.maxHeight = currentLineMaxHeight;
 		}
 
 		return measureInfo;

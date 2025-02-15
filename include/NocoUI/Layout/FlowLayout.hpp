@@ -16,6 +16,7 @@ namespace noco
 			struct Line
 			{
 				Array<size_t> childIndices;
+				double totalWidth = 0.0;
 				double maxHeight = 0.0;
 				bool boxConstraintChildExists = false;
 			};
@@ -30,6 +31,8 @@ namespace noco
 		};
 
 		LRTB padding = LRTB::Zero();
+
+		HorizontalAlign horizontalAlign = HorizontalAlign::Left;
 
 		[[nodiscard]]
 		JSON toJSON() const;
@@ -54,12 +57,21 @@ namespace noco
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
 		const auto measureInfo = measure(parentRect, children);
+		const double availableWidth = parentRect.w - (padding.left + padding.right);
 
 		// 実際に配置していく
 		double offsetY = 0.0;
 		for (auto& line : measureInfo.lines)
 		{
 			double offsetX = 0.0;
+			if (horizontalAlign == HorizontalAlign::Center)
+			{
+				offsetX = (availableWidth - line.totalWidth) / 2;
+			}
+			else if (horizontalAlign == HorizontalAlign::Right)
+			{
+				offsetX = availableWidth - line.totalWidth;
+			}
 			const double lineHeight = line.maxHeight;
 			for (size_t index : line.childIndices)
 			{
