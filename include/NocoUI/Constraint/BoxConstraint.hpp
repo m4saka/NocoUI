@@ -8,6 +8,7 @@ namespace noco
 	{
 		Vec2 sizeRatio = Vec2::Zero();
 		Vec2 sizeDelta = Vec2::Zero();
+		double flexibleWeight = 0.0;
 		LRTB margin = LRTB::Zero();
 
 		[[nodiscard]]
@@ -26,6 +27,7 @@ namespace noco
 				{ U"type", U"BoxConstraint" },
 				{ U"sizeRatio", sizeRatio },
 				{ U"sizeDelta", sizeDelta },
+				{ U"flexibleWeight", flexibleWeight },
 				{ U"margin", margin.toJSON() },
 			};
 		}
@@ -37,6 +39,7 @@ namespace noco
 			{
 				.sizeRatio = GetFromJSONOr(json, U"sizeRatio", Vec2::Zero()),
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
+				.flexibleWeight = Max(GetFromJSONOr(json, U"flexibleWeight", 0.0), 0.0),
 				.margin = json.contains(U"margin") ? LRTB::fromJSON(json[U"margin"]) : LRTB::Zero(),
 			};
 		}

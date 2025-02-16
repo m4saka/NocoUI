@@ -32,6 +32,7 @@ namespace noco
 		// 事前計測
 		double currentX = 0.0;
 		double currentLineMaxHeight = 0.0;
+		double currentLineTotalFlexibleWeight = 0.0;
 		const double availableWidth = parentRect.w - (padding.left + padding.right);
 		for (size_t i = 0; i < children.size(); ++i)
 		{
@@ -65,16 +66,19 @@ namespace noco
 					auto& lastLine = measureInfo.lines.back();
 					lastLine.totalWidth = currentX;
 					lastLine.maxHeight = currentLineMaxHeight;
+					lastLine.totalFlexibleWeight = currentLineTotalFlexibleWeight;
 
 					// 新しい行へ
 					measureInfo.lines.emplace_back();
 					currentX = 0.0;
 					currentLineMaxHeight = 0.0;
+					currentLineTotalFlexibleWeight = 0.0;
 				}
 
 				measureInfo.lines.back().childIndices.push_back(i);
 				measureInfo.lines.back().boxConstraintChildExists = true;
 				currentX += childW;
+				currentLineTotalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
 
 				if (childH > currentLineMaxHeight)
 				{
@@ -94,6 +98,41 @@ namespace noco
 			auto& lastLine = measureInfo.lines.back();
 			lastLine.totalWidth = currentX;
 			lastLine.maxHeight = currentLineMaxHeight;
+			lastLine.totalFlexibleWeight = currentLineTotalFlexibleWeight;
+		}
+
+		// flexibleWeightが設定されている場合は残りの幅を分配
+		for (auto& line : measureInfo.lines)
+		{
+			if (!line.boxConstraintChildExists || line.totalFlexibleWeight <= 0.0)
+			{
+				// flexibleWeight不使用の行はスキップ
+				continue;
+			}
+
+			const double remainingWidth = availableWidth - line.totalWidth;
+			if (remainingWidth <= 0.0)
+			{
+				continue;
+			}
+
+			for (const size_t index : line.childIndices)
+			{
+				const auto& child = children[index];
+				if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
+				{
+					continue;
+				}
+				if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+				{
+					if (pBoxConstraint->flexibleWeight <= 0.0)
+					{
+						continue;
+					}
+					measureInfo.measuredChildren[index].size.x += remainingWidth * pBoxConstraint->flexibleWeight / line.totalFlexibleWeight;
+				}
+			}
+			line.totalWidth = availableWidth;
 		}
 
 		return measureInfo;

@@ -553,6 +553,9 @@ namespace noco
 
 		double totalWidth = 0.0;
 		double maxHeight = 0.0;
+		double totalFlexibleWeight = 0.0;
+		const double availableWidth = parentRect.w - (padding.left + padding.right);
+		const double availableHeight = parentRect.h - (padding.top + padding.bottom);
 
 		for (const auto& child : children)
 		{
@@ -562,11 +565,10 @@ namespace noco
 				margins.push_back(LRTB::Zero());
 				continue;
 			}
-
 			if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
 			{
 				const RectF measuredRect = pBoxConstraint->applyConstraint(
-					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
+					RectF{ 0, 0, availableWidth, availableHeight }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
 				sizes.push_back(measuredRect.size);
 				margins.push_back(pBoxConstraint->margin);
@@ -575,6 +577,7 @@ namespace noco
 				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
 				totalWidth += childW;
 				maxHeight = Max(maxHeight, childH);
+				totalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
 			}
 			else
 			{
@@ -584,31 +587,47 @@ namespace noco
 			}
 		}
 
-		const double heightRemain = parentRect.h - (maxHeight + padding.top + padding.bottom);
-		double baseY;
+		if (totalFlexibleWeight > 0.0)
+		{
+			// flexibleWeightが設定されている場合は残りの幅を分配
+			const double widthRemain = availableWidth - totalWidth;
+			if (widthRemain > 0.0)
+			{
+				for (size_t i = 0; i < children.size(); ++i)
+				{
+					const auto& child = children[i];
+					if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
+					{
+						continue;
+					}
+					if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+					{
+						if (pBoxConstraint->flexibleWeight <= 0.0)
+						{
+							continue;
+						}
+						sizes[i].x += widthRemain * pBoxConstraint->flexibleWeight / totalFlexibleWeight;
+					}
+				}
+			}
+		}
+
+		const double heightRemain = availableHeight - maxHeight;
+		double baseY = parentRect.y + padding.top;
 		if (heightRemain > 0.0)
 		{
 			switch (verticalAlign)
 			{
-			case VerticalAlign::Top:
-				baseY = parentRect.y;
-				break;
 			case VerticalAlign::Middle:
-				baseY = parentRect.y + (heightRemain / 2.0);
+				baseY += heightRemain / 2;
 				break;
 			case VerticalAlign::Bottom:
-				baseY = parentRect.y + heightRemain;
+				baseY += heightRemain;
 				break;
-			default:
-				throw Error{ U"HorizontalLayout::execute: Invalid verticalAlign" };
 			}
 		}
-		else
-		{
-			baseY = parentRect.y;
-		}
 
-		double currentX = parentRect.x;
+		double currentX = parentRect.x + padding.left;
 		for (size_t i = 0; i < children.size(); ++i)
 		{
 			const auto& child = children[i];
@@ -618,13 +637,11 @@ namespace noco
 			}
 			const SizeF& childSize = sizes[i];
 			const LRTB& margin = margins[i];
-
 			if (const auto pBoxConstraint = child->boxConstraint())
 			{
 				const double childX = currentX + margin.left;
 				const double childTotalHeight = childSize.y + margin.top + margin.bottom;
 				const double shiftY = (maxHeight - childTotalHeight);
-
 				double verticalRatio;
 				switch (verticalAlign)
 				{
@@ -641,14 +658,7 @@ namespace noco
 					throw Error{ U"HorizontalLayout::execute: Invalid verticalAlign" };
 				}
 				const double childY = baseY + margin.top + shiftY * verticalRatio;
-				const RectF parentRectInsidePadding
-				{
-					parentRect.x + padding.left,
-					parentRect.y + padding.top,
-					parentRect.w - (padding.left + padding.right),
-					parentRect.h - (padding.top + padding.bottom)
-				};
-				const RectF finalRect = pBoxConstraint->applyConstraint(parentRectInsidePadding, Vec2{ childX - parentRect.x, childY - parentRect.y });
+				const RectF finalRect{ childX, childY, childSize.x, childSize.y };
 				fnSetRect(child, finalRect);
 				currentX += (childSize.x + margin.left + margin.right);
 			}
@@ -657,6 +667,10 @@ namespace noco
 				// AnchorConstraintはオフセット無視
 				const RectF finalRect = pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
 				fnSetRect(child, finalRect);
+			}
+			else
+			{
+				throw Error{ U"HorizontalLayout::execute: Unknown constraint" };
 			}
 		}
 	}
@@ -673,6 +687,9 @@ namespace noco
 
 		double totalHeight = 0.0;
 		double maxWidth = 0.0;
+		double totalFlexibleWeight = 0.0;
+		const double availableWidth = parentRect.w - (padding.left + padding.right);
+		const double availableHeight = parentRect.h - (padding.top + padding.bottom);
 
 		for (const auto& child : children)
 		{
@@ -682,11 +699,10 @@ namespace noco
 				margins.push_back(LRTB::Zero());
 				continue;
 			}
-
 			if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
 			{
 				const RectF measuredRect = pBoxConstraint->applyConstraint(
-					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
+					RectF{ 0, 0, availableWidth, availableHeight }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
 				sizes.push_back(measuredRect.size);
 				margins.push_back(pBoxConstraint->margin);
@@ -695,6 +711,7 @@ namespace noco
 				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
 				totalHeight += childH;
 				maxWidth = Max(maxWidth, childW);
+				totalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
 			}
 			else
 			{
@@ -704,31 +721,47 @@ namespace noco
 			}
 		}
 
-		const double widthRemain = parentRect.w - (maxWidth + padding.left + padding.right);
-		double baseX;
+		if (totalFlexibleWeight > 0.0)
+		{
+			// flexibleWeightが設定されている場合は残りの高さを分配
+			const double heightRemain = availableHeight - totalHeight;
+			if (heightRemain > 0.0)
+			{
+				for (size_t i = 0; i < children.size(); ++i)
+				{
+					const auto& child = children[i];
+					if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
+					{
+						continue;
+					}
+					if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+					{
+						if (pBoxConstraint->flexibleWeight <= 0.0)
+						{
+							continue;
+						}
+						sizes[i].y += heightRemain * pBoxConstraint->flexibleWeight / totalFlexibleWeight;
+					}
+				}
+			}
+		}
+
+		const double widthRemain = availableWidth - maxWidth;
+		double baseX = parentRect.x + padding.left;
 		if (widthRemain > 0.0)
 		{
 			switch (horizontalAlign)
 			{
-			case HorizontalAlign::Left:
-				baseX = parentRect.x;
-				break;
 			case HorizontalAlign::Center:
-				baseX = parentRect.x + (widthRemain / 2.0);
+				baseX += widthRemain / 2;
 				break;
 			case HorizontalAlign::Right:
-				baseX = parentRect.x + widthRemain;
+				baseX += widthRemain;
 				break;
-			default:
-				throw Error{ U"VerticalLayout::execute: Invalid horizontalAlign" };
 			}
 		}
-		else
-		{
-			baseX = parentRect.x;
-		}
 
-		double currentY = parentRect.y;
+		double currentY = parentRect.y + padding.top;
 		for (size_t i = 0; i < children.size(); ++i)
 		{
 			const auto& child = children[i];
@@ -738,13 +771,11 @@ namespace noco
 			}
 			const SizeF& childSize = sizes[i];
 			const LRTB& margin = margins[i];
-
 			if (const auto pBoxConstraint = child->boxConstraint())
 			{
 				const double childY = currentY + margin.top;
 				const double childTotalWidth = childSize.x + margin.left + margin.right;
 				const double shiftX = (maxWidth - childTotalWidth);
-
 				double horizontalRatio;
 				switch (horizontalAlign)
 				{
@@ -761,14 +792,7 @@ namespace noco
 					throw Error{ U"VerticalLayout::execute: Invalid horizontalAlign" };
 				}
 				const double childX = baseX + margin.left + shiftX * horizontalRatio;
-				const RectF parentRectInsidePadding
-				{
-					parentRect.x + padding.left,
-					parentRect.y + padding.top,
-					parentRect.w - (padding.left + padding.right),
-					parentRect.h - (padding.top + padding.bottom)
-				};
-				const RectF finalRect = pBoxConstraint->applyConstraint(parentRectInsidePadding, Vec2{ childX - parentRect.x, childY - parentRect.y });
+				const RectF finalRect{ childX, childY, childSize.x, childSize.y };
 				fnSetRect(child, finalRect);
 				currentY += (childSize.y + margin.top + margin.bottom);
 			}
@@ -777,6 +801,10 @@ namespace noco
 				// AnchorConstraintはオフセット無視
 				const RectF finalRect = pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
 				fnSetRect(child, finalRect);
+			}
+			else
+			{
+				throw Error{ U"VerticalLayout::execute: Unknown constraint" };
 			}
 		}
 	}

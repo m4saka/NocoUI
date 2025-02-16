@@ -18,6 +18,7 @@ namespace noco
 				Array<size_t> childIndices;
 				double totalWidth = 0.0;
 				double maxHeight = 0.0;
+				double totalFlexibleWeight = 0.0;
 				bool boxConstraintChildExists = false;
 			};
 			Array<Line> lines;
@@ -60,17 +61,17 @@ namespace noco
 		const double availableWidth = parentRect.w - (padding.left + padding.right);
 
 		// 実際に配置していく
-		double offsetY = 0.0;
+		double offsetY = padding.top;
 		for (auto& line : measureInfo.lines)
 		{
-			double offsetX = 0.0;
+			double offsetX = padding.left;
 			if (horizontalAlign == HorizontalAlign::Center)
 			{
-				offsetX = (availableWidth - line.totalWidth) / 2;
+				offsetX += (availableWidth - line.totalWidth) / 2;
 			}
 			else if (horizontalAlign == HorizontalAlign::Right)
 			{
-				offsetX = availableWidth - line.totalWidth;
+				offsetX += availableWidth - line.totalWidth;
 			}
 			const double lineHeight = line.maxHeight;
 			for (size_t index : line.childIndices)
@@ -88,15 +89,8 @@ namespace noco
 					const double marginBottom = measuredChild.margin.bottom;
 
 					const double shiftY = lineHeight - (h + marginTop + marginBottom);
-					const Vec2 childOffset{ offsetX + marginLeft, offsetY + marginTop + shiftY };
-					const RectF parentRectInsidePadding
-					{
-						parentRect.x + padding.left,
-						parentRect.y + padding.top,
-						parentRect.w - (padding.left + padding.right),
-						parentRect.h - (padding.top + padding.bottom)
-					};
-					const RectF finalRect = pBoxConstraint->applyConstraint(parentRectInsidePadding, childOffset);
+					const Vec2 pos = parentRect.pos + Vec2{ offsetX + marginLeft, offsetY + marginTop + shiftY };
+					const RectF finalRect{ pos, measuredChild.size };
 					fnSetRect(child, finalRect);
 
 					offsetX += (w + marginLeft + marginRight);

@@ -2801,6 +2801,11 @@ public:
 			{
 				constraintNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue));
 			};
+		const auto fnAddDoubleChild =
+			[&constraintNode](StringView name, double currentValue, auto fnSetValue)
+			{
+				constraintNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }));
+			};
 		const auto fnAddEnumChild =
 			[this, &constraintNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 			{
@@ -2839,6 +2844,7 @@ public:
 				});
 			fnAddVec2Child(U"sizeRatio", pBoxConstraint->sizeRatio, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeRatio = value; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"sizeDelta", pBoxConstraint->sizeDelta, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeDelta = value; node->setConstraint(newConstraint); });
+			fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { auto newConstraint = *node->boxConstraint(); newConstraint.flexibleWeight = value; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"margin (left, right)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"margin (top, bottom)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
 		}
