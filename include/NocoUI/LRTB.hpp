@@ -16,7 +16,7 @@ namespace noco
 		{
 			if (left == right && right == top && top == bottom)
 			{
-				return JSON{ left };
+				return JSON(left); // JSON{ left }にしてはいけない(引数がinitializer_listになるため配列扱いになってしまう)
 			}
 			else
 			{
