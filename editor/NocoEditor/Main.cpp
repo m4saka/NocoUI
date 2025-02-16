@@ -1596,7 +1596,9 @@ public:
 	[[nodiscard]]
 	static std::shared_ptr<Node> CreateNodeNameTextboxNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue)
 	{
-		const auto propertyNode = Node::Create(name, BoxConstraint
+		const auto propertyNode = Node::Create(
+			name,
+			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = Vec2{ -24, 32 },
@@ -1622,33 +1624,40 @@ public:
 	[[nodiscard]]
 	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue)
 	{
-		const auto propertyNode = Node::Create(name, BoxConstraint
+		const auto propertyNode = Node::Create(
+			name,
+			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = Vec2{ 0, 32 },
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
+		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
-		propertyNode->emplaceComponent<Label>(
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			});
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
-			LRTB{ 15, 5, 5, 5 },
+			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
 		const auto textBoxNode = propertyNode->emplaceChild(
 			U"TextBox",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::MiddleRight,
-				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, 26 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			});
 		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
@@ -1672,44 +1681,49 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-
+		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
 
-		propertyNode->emplaceComponent<Label>(
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			});
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
-			LRTB{ 15, 5, 5, 5 },
+			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::MiddleRight,
-				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, 26 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
+		textBoxParentNode->setLayout(HorizontalLayout{});
 
 		// X
 		const auto textBoxXNode = textBoxParentNode->emplaceChild(
 			U"TextBoxX",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -1722,8 +1736,8 @@ public:
 			U"TextBoxY",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -1799,44 +1813,48 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
 
-		propertyNode->emplaceComponent<Label>(
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			});
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
-			LRTB{ 15, 5, 5, 5 },
+			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::MiddleRight,
-				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, 26 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
+		textBoxParentNode->setLayout(HorizontalLayout{});
 
 		// X
 		const auto textBoxXNode = textBoxParentNode->emplaceChild(
 			U"TextBoxX",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -1849,9 +1867,9 @@ public:
 			U"TextBoxY",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
-				.margin = LRTB{ 2, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 2, 0, 0 },
 			});
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
@@ -1863,9 +1881,9 @@ public:
 			U"TextBoxZ",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
-				.margin = LRTB{ 2, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 2, 0, 0 },
 			});
 		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
@@ -1877,8 +1895,8 @@ public:
 			U"TextBoxW",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
 		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -1964,51 +1982,61 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
+		propertyNode->setLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
-		propertyNode->emplaceComponent<Label>(
+
+		const auto line1 = propertyNode->emplaceChild(
+			U"Line1",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.flexibleWeight = 1,
+			},
+			IsHitTargetYN::No,
+			InheritChildrenStateFlags::Hovered);
+		line1->setLayout(HorizontalLayout{});
+
+		const auto line1LabelNode =
+			line1->emplaceChild(
+				U"Label",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.flexibleWeight = 0.85,
+				});
+		line1LabelNode->emplaceComponent<Label>(
 			U"{} (left, right)"_fmt(name),
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
-			LRTB{ 15, 5, 5, 5 },
+			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
-		propertyNode->emplaceComponent<Label>(
-			U"{} (top, bottom)"_fmt(name),
-			U"Font14",
-			14,
-			Palette::White,
-			HorizontalAlign::Left,
-			VerticalAlign::Top,
-			LRTB{ 15, 5, 5 + LineHeight, 5 },
-			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
-		const auto textBoxParentNode = propertyNode->emplaceChild(
+
+		const auto line1TextBoxParentNode = line1->emplaceChild(
 			U"TextBoxParent",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::TopRight,
-				.anchorMax = Anchor::BottomRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, -6 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
+		line1TextBoxParentNode->setLayout(HorizontalLayout{});
 
 		// L
-		const auto textBoxLNode = textBoxParentNode->emplaceChild(
+		const auto textBoxLNode = line1TextBoxParentNode->emplaceChild(
 			U"TextBoxL",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 0 },
-				.sizeDelta = Vec2{ -2, 26 },
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 6 },
 			});
 		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -2017,26 +2045,67 @@ public:
 		textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
 
 		// R
-		const auto textBoxRNode = textBoxParentNode->emplaceChild(
+		const auto textBoxRNode = line1TextBoxParentNode->emplaceChild(
 			U"TextBoxR",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 0 },
-				.sizeDelta = Vec2{ -2, 26 },
-				.margin = LRTB{ 0, 2, 0, 6 },
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 0, 0, 6 },
 			});
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
 
+		const auto line2 = propertyNode->emplaceChild(
+			U"Line2",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.flexibleWeight = 1,
+			},
+			IsHitTargetYN::No,
+			InheritChildrenStateFlags::Hovered);
+		line2->setLayout(HorizontalLayout{});
+
+		const auto line2LabelNode =
+			line2->emplaceChild(
+				U"Label",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.flexibleWeight = 0.85,
+				});
+		line2LabelNode->emplaceComponent<Label>(
+			U"{} (top, bottom)"_fmt(name),
+			U"Font14",
+			14,
+			Palette::White,
+			HorizontalAlign::Left,
+			VerticalAlign::Top,
+			LRTB{ 5, 5, 5, 5 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip);
+
+		const auto line2TextBoxParentNode = line2->emplaceChild(
+			U"TextBoxParent",
+			BoxConstraint
+			{
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
+			},
+			IsHitTargetYN::No,
+			InheritChildrenStateFlags::Hovered);
+		line2TextBoxParentNode->setLayout(HorizontalLayout{});
+
 		// T
-		const auto textBoxTNode = textBoxParentNode->emplaceChild(
+		const auto textBoxTNode = line2TextBoxParentNode->emplaceChild(
 			U"TextBoxT",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 0 },
-				.sizeDelta = Vec2{ -2, 26 },
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
 		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -2045,13 +2114,13 @@ public:
 		textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
 
 		// B
-		const auto textBoxBNode = textBoxParentNode->emplaceChild(
+		const auto textBoxBNode = line2TextBoxParentNode->emplaceChild(
 			U"TextBoxB",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.5, 0 },
-				.sizeDelta = Vec2{ -2, 26 },
-				.margin = LRTB{ 0, 2, 0, 0 },
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 0, 0, 0 },
 			});
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
@@ -2085,6 +2154,7 @@ public:
 				, m_prevValue(initialValue)
 			{
 			}
+
 			void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
 			{
 				const double l = ParseOpt<double>(m_textBoxL->text()).value_or(m_prevValue.left);
@@ -2101,6 +2171,7 @@ public:
 					}
 				}
 			}
+
 			void draw(const Node&) const override
 			{
 			}
@@ -2132,28 +2203,35 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
+		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
-		propertyNode->emplaceComponent<Label>(
+
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			});
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 15, 5, 5, 5 });
+			LRTB{ 5, 5, 5, 5 });
 
 		const auto rowNode = propertyNode->emplaceChild(
 			U"ColorPropertyRow",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::MiddleRight,
-				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, 26 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
+		rowNode->setLayout(HorizontalLayout{});
 
 		const auto previewRootNode = rowNode->emplaceChild(
 			U"ColorPreviewRoot",
@@ -2201,9 +2279,8 @@ public:
 			U"TextBoxParent",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 1, 1 },
-				.sizeDelta = Vec2{ -28, 0 },
-				.margin = LRTB{ 0, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
@@ -2213,9 +2290,9 @@ public:
 			U"TextBoxR",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
-				.margin = LRTB{ 2, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 2, 0, 0 },
 			});
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
@@ -2227,9 +2304,9 @@ public:
 			U"TextBoxG",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
-				.margin = LRTB{ 2, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 2, 0, 0 },
 			});
 		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
@@ -2241,9 +2318,9 @@ public:
 			U"TextBoxB",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
-				.margin = LRTB{ 2, 0, 0, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 2, 2, 0, 0 },
 			});
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
@@ -2255,8 +2332,8 @@ public:
 			U"TextBoxA",
 			BoxConstraint
 			{
-				.sizeRatio = Vec2{ 0.25, 1 },
-				.sizeDelta = Vec2{ -2, 0 },
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
 		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -2346,29 +2423,33 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-
+		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
-		propertyNode->emplaceComponent<Label>(
+		const auto labelNode =
+			propertyNode->emplaceChild(
+				U"Label",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.flexibleWeight = 0.85,
+				});
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 15, 5, 5, 5 });
+			LRTB{ 5, 5, 5, 5 });
 
 		const auto comboBoxNode = propertyNode->emplaceChild(
 			U"ComboBox",
-			AnchorConstraint
+			BoxConstraint
 			{
-				.anchorMin = Anchor::MiddleRight,
-				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -8, 0 },
-				.sizeDelta = Vec2{ 200, 26 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDelta = Vec2{ 0, 26 },
+				.flexibleWeight = 1,
 			});
-
 		comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
 
 		const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
@@ -2466,7 +2547,7 @@ public:
 
 		checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 
-		auto checkLabel = checkboxNode->emplaceComponent<Label>(
+		const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 			initialValue ? U"✓" : U"",
 			U"Font14",
 			14,
@@ -2501,7 +2582,7 @@ public:
 				bool isClicked = false;
 				if (m_useParentHoverState)
 				{
-					if (const auto parent = node->parent())
+					if (const auto parent = node->findHoverTargetParent())
 					{
 						isClicked = parent->isClicked();
 					}
@@ -2543,37 +2624,52 @@ public:
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = Vec2{ 0, 32 },
-			},
-			IsHitTargetYN::Yes,
-			InheritChildrenStateFlags::Hovered);
+			});
+		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
 
-		propertyNode->emplaceComponent<Label>(
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			},
+			IsHitTargetYN::No);
+		labelNode->emplaceComponent<Label>(
 			name,
 			U"Font14",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
-			LRTB{ 15, 5, 5, 5 },
+			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
 
+		const auto checkboxParentNode = propertyNode->emplaceChild(
+			U"CheckboxParent",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1,
+			},
+			IsHitTargetYN::No);
 		const auto checkboxNode = CreateCheckboxNode(currentValue, fnSetValue, true);
 		checkboxNode->setConstraint(
 			AnchorConstraint
 			{
 				.anchorMin = Anchor::MiddleRight,
 				.anchorMax = Anchor::MiddleRight,
-				.posDelta = Vec2{ -12, 0 },
+				.posDelta = Vec2{ -6, 0 },
 				.sizeDelta = Vec2{ 18, 18 },
 				.pivot = Anchor::MiddleRight,
 			});
-		propertyNode->addChild(checkboxNode);
+		checkboxParentNode->addChild(checkboxNode);
 
 		return propertyNode;
 	}
