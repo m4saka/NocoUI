@@ -6,15 +6,15 @@ namespace noco
 	void Sprite::draw(const Node& node) const
 	{
 		const RectF& rect = node.rect();
-		const String& assetName = m_assetName.value();
+		const String& textureAssetName = m_textureAssetName.value();
 		const ColorF& color = m_color.value();
 		if (m_preserveAspect.value())
 		{
-			TextureAsset(assetName).fitted(rect.size).drawAt(rect.center(), color);
+			TextureAsset(textureAssetName).fitted(rect.size).drawAt(rect.center(), color);
 		}
 		else
 		{
-			TextureAsset(assetName).resized(rect.size).draw(rect.pos, color);
+			TextureAsset(textureAssetName).resized(rect.size).draw(rect.pos, color);
 		}
 	}
 }
