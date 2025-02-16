@@ -2812,6 +2812,7 @@ public:
 				});
 			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->flowLayout(); newLayout.padding = value; node->setLayout(newLayout); });
 			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->flowLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
+			fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->flowLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
 		}
 		else if (const auto pHorizontalLayout = node->horizontalLayout())
 		{

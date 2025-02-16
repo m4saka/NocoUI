@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "Enums.hpp"
 
 namespace noco
 {
@@ -14,6 +15,41 @@ namespace noco
 		constexpr Vec2 BottomLeft{ 0.0, 1.0 };
 		constexpr Vec2 BottomCenter{ 0.5, 1.0 };
 		constexpr Vec2 BottomRight{ 1.0, 1.0 };
+
+		inline Vec2 FromAlign(HorizontalAlign horizontalAlign, VerticalAlign verticalAlign)
+		{
+			double x;
+			switch (horizontalAlign)
+			{
+			case HorizontalAlign::Left:
+				x = 0.0;
+				break;
+			case HorizontalAlign::Center:
+				x = 0.5;
+				break;
+			case HorizontalAlign::Right:
+				x = 1.0;
+				break;
+			default:
+				throw Error{ U"Anchor::FromAlign: Invalid horizontalAlign" };
+			}
+			double y = 0.0;
+			switch (verticalAlign)
+			{
+			case VerticalAlign::Top:
+				y = 0.0;
+				break;
+			case VerticalAlign::Middle:
+				y = 0.5;
+				break;
+			case VerticalAlign::Bottom:
+				y = 1.0;
+				break;
+			default:
+				throw Error{ U"Anchor::FromAlign: Invalid verticalAlign" };
+			}
+			return Vec2{ x, y };
+		}
 	}
 
 	enum class AnchorPreset

@@ -644,7 +644,7 @@ namespace noco
 			{
 				const double childX = currentX + margin.left;
 				const double childTotalHeight = childSize.y + margin.top + margin.bottom;
-				const double shiftY = (maxHeight - childTotalHeight);
+				const double shiftY = maxHeight - childTotalHeight;
 				double verticalRatio;
 				switch (verticalAlign)
 				{
@@ -778,7 +778,7 @@ namespace noco
 			{
 				const double childY = currentY + margin.top;
 				const double childTotalWidth = childSize.x + margin.left + margin.right;
-				const double shiftX = (maxWidth - childTotalWidth);
+				const double shiftX = maxWidth - childTotalWidth;
 				double horizontalRatio;
 				switch (horizontalAlign)
 				{

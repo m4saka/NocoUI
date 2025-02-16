@@ -3,6 +3,7 @@
 #include "../Serialization.hpp"
 #include "../LRTB.hpp"
 #include "../YN.hpp"
+#include "../Anchor.hpp"
 #include "../Enums.hpp"
 
 namespace noco
@@ -12,6 +13,7 @@ namespace noco
 	struct VerticalLayout
 	{
 		LRTB padding = LRTB::Zero();
+
 		HorizontalAlign horizontalAlign = HorizontalAlign::Center;
 
 		[[nodiscard]]
@@ -28,5 +30,12 @@ namespace noco
 		SizeF fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const;
 
 		void setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const;
+		
+		[[nodiscard]]
+		Vec2 scrollOffsetAnchor() const
+		{
+			// TODO: 要精査
+			return Anchor::TopLeft;
+		}
 	};
 }

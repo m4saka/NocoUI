@@ -3,6 +3,7 @@
 #include "../Serialization.hpp"
 #include "../LRTB.hpp"
 #include "../YN.hpp"
+#include "../Anchor.hpp"
 #include "../Enums.hpp"
 
 namespace noco
@@ -35,6 +36,8 @@ namespace noco
 
 		HorizontalAlign horizontalAlign = HorizontalAlign::Left;
 
+		VerticalAlign verticalAlign = VerticalAlign::Top;
+
 		[[nodiscard]]
 		JSON toJSON() const;
 
@@ -51,6 +54,12 @@ namespace noco
 		SizeF fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const;
 
 		void setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const;
+		
+		[[nodiscard]]
+		Vec2 scrollOffsetAnchor() const
+		{
+			return Anchor::FromAlign(horizontalAlign, verticalAlign);
+		}
 	};
 
 	template <class Fty>
@@ -62,6 +71,23 @@ namespace noco
 
 		// 実際に配置していく
 		double offsetY = padding.top;
+		if (verticalAlign == VerticalAlign::Middle || verticalAlign == VerticalAlign::Bottom)
+		{
+			const double totalHeight = std::accumulate(
+				measureInfo.lines.begin(),
+				measureInfo.lines.end(),
+				0.0,
+				[](double sum, const auto& line) { return sum + line.maxHeight; });
+			const double availableHeight = parentRect.h - (padding.top + padding.bottom);
+			if (verticalAlign == VerticalAlign::Middle)
+			{
+				offsetY += (availableHeight - totalHeight) / 2;
+			}
+			else if (verticalAlign == VerticalAlign::Bottom)
+			{
+				offsetY += availableHeight - totalHeight;
+			}
+		}
 		for (auto& line : measureInfo.lines)
 		{
 			double offsetX = padding.left;

@@ -142,17 +142,17 @@ namespace noco
 
 		const double viewWidth = m_layoutAppliedRect.w;
 		const double viewHeight = m_layoutAppliedRect.h;
+		const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
+		const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
+		if (maxScrollX <= 0.0 && maxScrollY <= 0.0)
+		{
+			m_scrollOffset = Vec2::Zero();
+			return;
+		}
 
-		const double maxScrollX = contentRect.w > viewWidth
-			? contentRect.w - viewWidth
-			: 0.0;
-
-		const double maxScrollY = contentRect.h > viewHeight
-			? contentRect.h - viewHeight
-			: 0.0;
-
-		m_scrollOffset.x = Clamp(m_scrollOffset.x, 0.0, maxScrollX);
-		m_scrollOffset.y = Clamp(m_scrollOffset.y, 0.0, maxScrollY);
+		const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_layout);
+		m_scrollOffset.x = Clamp(m_scrollOffset.x, -maxScrollX * scrollOffsetAnchor.x, maxScrollX * (1.0 - scrollOffsetAnchor.x));
+		m_scrollOffset.y = Clamp(m_scrollOffset.y, -maxScrollY * scrollOffsetAnchor.y, maxScrollY * (1.0 - scrollOffsetAnchor.y));
 	}
 
 	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -1001,6 +1001,12 @@ namespace noco
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
 					const Vec2 scale = m_effectScale;
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_layout);
+					const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+
+					// 背景より手前にするためにハンドル部分は後で描画
+					Optional<RectF> horizontalHandleRect = none;
+					Optional<RectF> verticalHandleRect = none;
 
 					// 横スクロールバー
 					if (needHorizontalScrollBar)
@@ -1011,9 +1017,9 @@ namespace noco
 						if (maxScrollX > 0.0)
 						{
 							const double w = (viewWidth * viewWidth) / contentWidth;
-							const double x = ((m_scrollOffset.x * scale.x) / maxScrollX) * (viewWidth - w);
-							const double thickness = 4.0 * scale.x;
-							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+							const double scrolledRatio = (m_scrollOffset.x * scale.x + maxScrollX * scrollOffsetAnchor.x) / maxScrollX;
+							const double x = scrolledRatio * (viewWidth - w);
+							const double thickness = 4.0 * scale.y;
 
 							const RectF backgroundRect
 							{
@@ -1024,14 +1030,13 @@ namespace noco
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
-							const RectF handleRect
+							horizontalHandleRect = RectF
 							{
 								m_effectedRect.x + x,
 								m_effectedRect.y + m_effectedRect.h - thickness,
 								w,
 								thickness
 							};
-							handleRect.rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
 						}
 					}
 
@@ -1044,7 +1049,8 @@ namespace noco
 						if (maxScrollY > 0.0)
 						{
 							const double h = (viewHeight * viewHeight) / contentHeight;
-							const double y = ((m_scrollOffset.y * scale.y) / maxScrollY) * (viewHeight - h);
+							const double scrolledRatio = (m_scrollOffset.y * scale.y + maxScrollY * scrollOffsetAnchor.y) / maxScrollY;
+							const double y = scrolledRatio * (viewHeight - h);
 							const double thickness = 4.0 * scale.x;
 							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
 
@@ -1057,15 +1063,24 @@ namespace noco
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
-							const RectF handleRect
+							verticalHandleRect = RectF
 							{
 								m_effectedRect.x + m_effectedRect.w - thickness,
 								m_effectedRect.y + y,
 								thickness,
 								h
 							};
-							handleRect.rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
 						}
+					}
+
+					// ハンドル部分を描画
+					if (horizontalHandleRect)
+					{
+						horizontalHandleRect->rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
+					}
+					if (verticalHandleRect)
+					{
+						verticalHandleRect->rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
 					}
 				}
 			}
