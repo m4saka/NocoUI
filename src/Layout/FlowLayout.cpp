@@ -140,7 +140,7 @@ namespace noco
 		return measureInfo;
 	}
 
-	SizeF FlowLayout::fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
+	SizeF FlowLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
 		const auto measureInfo = measure(parentRect, children);
 
@@ -165,7 +165,7 @@ namespace noco
 
 	void FlowLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
 	{
-		const auto [maxWidth, totalHeight] = fittingSizeToChildren(parentRect, children);
+		const auto [maxWidth, totalHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
 		if (const auto pBoxConstraint = node.boxConstraint())

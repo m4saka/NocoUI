@@ -145,7 +145,7 @@ namespace noco
 		const VerticalLayout* verticalLayout() const;
 
 		[[nodiscard]]
-		SizeF fittingSizeToChildren() const;
+		SizeF getFittingSizeToChildren() const;
 
 		void setBoxConstraintToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

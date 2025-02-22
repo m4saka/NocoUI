@@ -200,7 +200,7 @@ public:
 		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
 		{
 			auto newConstraint = *pAnchorConstraint;
-			newConstraint.sizeDelta.y = m_rootNode->fittingSizeToChildren().y;
+			newConstraint.sizeDelta.y = m_rootNode->getFittingSizeToChildren().y;
 			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
 		}
 

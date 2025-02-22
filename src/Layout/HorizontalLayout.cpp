@@ -23,7 +23,7 @@ namespace noco
 		return layout;
 	}
 
-	SizeF HorizontalLayout::fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
+	SizeF HorizontalLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
 		double totalWidth = padding.left + padding.right;
 		double maxHeight = 0.0;
@@ -49,7 +49,7 @@ namespace noco
 
 	void HorizontalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
 	{
-		const auto [totalWidth, maxHeight] = fittingSizeToChildren(parentRect, children);
+		const auto [totalWidth, maxHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
 		if (const auto pBoxConstraint = node.boxConstraint())

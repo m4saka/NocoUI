@@ -23,7 +23,7 @@ namespace noco
 		return layout;
 	}
 
-	SizeF VerticalLayout::fittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
+	SizeF VerticalLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
 		double totalHeight = padding.top + padding.bottom;
 		double maxWidth = 0.0;
@@ -49,7 +49,7 @@ namespace noco
 
 	void VerticalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
 	{
-		const auto [maxWidth, totalHeight] = fittingSizeToChildren(parentRect, children);
+		const auto [maxWidth, totalHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
 		if (const auto pBoxConstraint = node.boxConstraint())
