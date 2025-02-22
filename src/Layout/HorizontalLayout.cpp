@@ -19,7 +19,7 @@ namespace noco
 		HorizontalLayout layout;
 		layout.padding = json.contains(U"padding") ? LRTB::fromJSON(json[U"padding"]) : LRTB::Zero();
 		layout.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Left);
-		layout.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top);
+		layout.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Middle);
 		return layout;
 	}
 
