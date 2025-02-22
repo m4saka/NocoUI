@@ -14,6 +14,8 @@ namespace noco
 	{
 		LRTB padding = LRTB::Zero();
 
+		HorizontalAlign horizontalAlign = HorizontalAlign::Left;
+
 		VerticalAlign verticalAlign = VerticalAlign::Middle;
 
 		[[nodiscard]]
@@ -34,8 +36,7 @@ namespace noco
 		[[nodiscard]]
 		Vec2 scrollOffsetAnchor() const
 		{
-			// TODO: 要精査
-			return Anchor::TopLeft;
+			return Anchor::FromAlign(horizontalAlign, VerticalAlign::Top);
 		}
 	};
 }
