@@ -952,12 +952,15 @@ namespace noco
 			m_scrollBarAlpha.update(0.0, 0.1, deltaTime);
 		}
 
+		if (!m_children.empty())
 		{
 			const auto guard = m_childrenIterGuard.scoped();
 			const InteractableYN interactable{ m_interactable && parentInteractable };
+			const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
+			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
 			for (const auto& child : m_children)
 			{
-				child->update(pContext, hoveredNode, scrollableHoveredNode, deltaTime, m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect), m_transformEffect.scale().value() * parentEffectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
+				child->update(pContext, hoveredNode, scrollableHoveredNode, deltaTime, effectMat, effectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
 			}
 		}
 		m_prevActiveInHierarchy = m_activeInHierarchy;
