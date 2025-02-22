@@ -10,6 +10,7 @@ namespace noco
 			{ U"type", U"VerticalLayout" },
 			{ U"padding", padding.toJSON() },
 			{ U"horizontalAlign", EnumToString(horizontalAlign) },
+			{ U"verticalAlign", EnumToString(verticalAlign) },
 		};
 	}
 
@@ -18,6 +19,7 @@ namespace noco
 		VerticalLayout layout;
 		layout.padding = json.contains(U"padding") ? LRTB::fromJSON(json[U"padding"]) : LRTB::Zero();
 		layout.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Left);
+		layout.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top);
 		return layout;
 	}
 

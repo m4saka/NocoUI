@@ -759,6 +759,7 @@ namespace noco
 					}
 				}
 			}
+			totalHeight = availableHeight;
 		}
 
 		const double widthRemain = availableWidth - maxWidth;
@@ -776,7 +777,18 @@ namespace noco
 			}
 		}
 
-		double currentY = parentRect.y + padding.top;
+		// 垂直方向の配置
+		double offsetY = padding.top;
+		if (verticalAlign == VerticalAlign::Middle)
+		{
+			offsetY += (availableHeight - totalHeight) / 2;
+		}
+		else if (verticalAlign == VerticalAlign::Bottom)
+		{
+			offsetY += availableHeight - totalHeight;
+		}
+
+		double currentY = parentRect.y + offsetY;
 		for (size_t i = 0; i < children.size(); ++i)
 		{
 			const auto& child = children[i];

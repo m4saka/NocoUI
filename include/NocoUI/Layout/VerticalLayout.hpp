@@ -16,6 +16,8 @@ namespace noco
 
 		HorizontalAlign horizontalAlign = HorizontalAlign::Center;
 
+		VerticalAlign verticalAlign = VerticalAlign::Top;
+		
 		[[nodiscard]]
 		JSON toJSON() const;
 
@@ -34,8 +36,7 @@ namespace noco
 		[[nodiscard]]
 		Vec2 scrollOffsetAnchor() const
 		{
-			// TODO: 要精査
-			return Anchor::TopLeft;
+			return Anchor::FromAlign(HorizontalAlign::Left, verticalAlign);
 		}
 	};
 }

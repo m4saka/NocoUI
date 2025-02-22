@@ -2862,6 +2862,7 @@ public:
 				});
 			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->verticalLayout(); newLayout.padding = value; node->setLayout(newLayout); });
 			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->verticalLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
+			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->verticalLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
 		}
 		else
 		{
