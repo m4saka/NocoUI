@@ -3328,7 +3328,6 @@ public:
 		fnAddVec2Child(U"position", pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"scale", pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"pivot", pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
-		fnAddChild(U"rotation", pTransformEffect->rotation(), [this, pTransformEffect](double value) { pTransformEffect->setRotation(value); m_canvas->refreshLayout(); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 

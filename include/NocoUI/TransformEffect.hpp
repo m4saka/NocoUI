@@ -26,18 +26,15 @@ namespace noco
 		SmoothProperty<Vec2> m_position;
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
-		SmoothProperty<double> m_rotation;
 
 	public:
 		TransformEffect(
 			const PropertyValue<Vec2>& position = Vec2::Zero(),
 			const PropertyValue<Vec2>& scale = Vec2::One(),
-			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
-			const PropertyValue<double>& rotation = 0.0)
+			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter)
 			: m_position{ U"position", position }
 			, m_scale{ U"scale", scale }
 			, m_pivot{ U"pivot", pivot }
-			, m_rotation{ U"rotation", rotation }
 		{
 		}
 
@@ -74,23 +71,11 @@ namespace noco
 			m_pivot.setPropertyValue(pivot);
 		}
 
-		[[nodiscard]]
-		const SmoothProperty<double>& rotation() const
-		{
-			return m_rotation;
-		}
-
-		void setRotation(const PropertyValue<double>& rotation)
-		{
-			m_rotation.setPropertyValue(rotation);
-		}
-
 		void update(InteractState interactState, SelectedYN selected, double deltaTime)
 		{
 			m_position.update(interactState, selected, deltaTime);
 			m_scale.update(interactState, selected, deltaTime);
 			m_pivot.update(interactState, selected, deltaTime);
-			m_rotation.update(interactState, selected, deltaTime);
 		}
 
 		[[nodiscard]]
@@ -99,16 +84,8 @@ namespace noco
 			const Vec2& position = m_position.value();
 			const Vec2& scale = m_scale.value();
 			const Vec2& pivot = m_pivot.value();
-			const double rotation = m_rotation.value();
 			const Vec2 pivotPos = rect.pos + rect.size * pivot;
-			if (rotation == 0.0)
-			{
-				return Mat3x2::Scale(scale, pivotPos).translated(position) * parentMat;
-			}
-			else
-			{
-				return Mat3x2::Rotate(rotation, pivotPos).scaled(scale, pivotPos).translated(position) * parentMat;
-			}
+			return Mat3x2::Scale(scale, pivotPos).translated(position) * parentMat;
 		}
 
 		[[nodiscard]]
@@ -118,7 +95,6 @@ namespace noco
 			m_position.appendJSON(json);
 			m_scale.appendJSON(json);
 			m_pivot.appendJSON(json);
-			m_rotation.appendJSON(json);
 			return json;
 		}
 
@@ -127,7 +103,6 @@ namespace noco
 			m_position.readFromJSON(json);
 			m_scale.readFromJSON(json);
 			m_pivot.readFromJSON(json);
-			m_rotation.readFromJSON(json);
 		}
 	};
 }
