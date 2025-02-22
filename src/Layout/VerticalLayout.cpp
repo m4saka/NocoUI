@@ -67,7 +67,7 @@ namespace noco
 			node.setConstraint(
 				BoxConstraint
 				{
-					.sizeDelta = Vec2{ fitsWidth ? maxWidth : node.layoutAppliedRect().x, fitsHeight ? totalHeight : node.layoutAppliedRect().y },
+					.sizeDelta = Vec2{ fitsWidth ? maxWidth : node.layoutAppliedRect().w, fitsHeight ? totalHeight : node.layoutAppliedRect().h },
 				});
 		}
 
