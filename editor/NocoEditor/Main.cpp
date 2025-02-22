@@ -55,15 +55,6 @@ private:
 
 	bool m_isFirstUpdateSinceShown = false;
 
-	void clearItems()
-	{
-		m_elements.clear();
-		m_elementNodes.clear();
-		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
-		m_rootNode->removeChildrenAll(RefreshesLayoutYN::No);
-		m_fnOnHide = nullptr;
-	}
-
 public:
 	explicit ContextMenu(const std::shared_ptr<Canvas>& editorOverlayCanvas, StringView name = U"ContextMenu")
 		: m_editorOverlayCanvas(editorOverlayCanvas)
@@ -231,9 +222,15 @@ public:
 			m_fnOnHide();
 			m_fnOnHide = nullptr;
 		}
-		clearItems();
-		m_screenMaskNode->setActive(ActiveYN::No, refreshesLayout);
+		m_elements.clear();
+		m_elementNodes.clear();
+		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
+		m_rootNode->removeChildrenAll(RefreshesLayoutYN::No);
 		m_isFirstUpdateSinceShown = false;
+		if (refreshesLayout)
+		{
+			m_editorOverlayCanvas->refreshLayout();
+		}
 	}
 
 	void update()
