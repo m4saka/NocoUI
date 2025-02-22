@@ -75,7 +75,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ 0, 0 },
-				.pivot = Anchor::TopLeft,
+				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 		, m_rootNode(m_screenMaskNode->emplaceChild(
 			U"{}_Root"_fmt(name),
@@ -85,7 +85,7 @@ public:
 				.anchorMax = Anchor::TopLeft,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ MenuItemWidth, 0 },
-				.pivot = Anchor::TopLeft,
+				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 	{
 		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
@@ -179,7 +179,7 @@ public:
 						.anchorMin = Anchor::MiddleLeft,
 						.anchorMax = Anchor::MiddleRight,
 						.sizeDelta = Vec2{ -10, 1 },
-						.pivot = Anchor::MiddleCenter,
+						.sizeDeltaPivot = Anchor::MiddleCenter,
 					},
 					IsHitTargetYN::No)
 					->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
@@ -351,7 +351,7 @@ public:
 				.anchorMax = Anchor::TopRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ 0, MenuBarHeight },
-				.pivot = Anchor::TopLeft,
+				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 		, m_contextMenu(contextMenu)
 	{
@@ -640,7 +640,7 @@ private:
 				.anchorMax = Anchor::BottomLeft,
 				.posDelta = Vec2{ 10 + nestLevel * 20, 0 },
 				.sizeDelta = Vec2{ 30, 0 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			});
 		toggleFoldedNode->setActive(node->hasChildren() ? ActiveYN::Yes : ActiveYN::No);
 		toggleFoldedNode->addOnClick([this, node](const std::shared_ptr<Node>&)
@@ -721,7 +721,7 @@ public:
 				.anchorMax = Anchor::BottomLeft,
 				.posDelta = Vec2{ 0, MenuBarHeight },
 				.sizeDelta = Vec2{ 300, -MenuBarHeight },
-				.pivot = Anchor::TopLeft,
+				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 		, m_hierarchyInnerFrameNode(m_hierarchyFrameNode->emplaceChild(
 			U"HierarchyInnerFrame",
@@ -731,7 +731,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ -2, -2 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered | InheritChildrenStateFlags::Pressed))
@@ -743,7 +743,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ -10, -14 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			}))
 		, m_editorCanvas(editorCanvas)
 		, m_contextMenu(contextMenu)
@@ -1084,7 +1084,7 @@ public:
 			.anchorMax = Anchor::MiddleCenter,
 			.posDelta = Vec2{ 0, 0 },
 			.sizeDelta = originalCalculatedRect.size,
-			.pivot = Anchor::MiddleCenter,
+			.sizeDeltaPivot = Anchor::MiddleCenter,
 		});
 
 		refreshNodeList();
@@ -1415,7 +1415,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, MenuBarHeight },
 				.sizeDelta = Vec2{ 400, -MenuBarHeight },
-				.pivot = Anchor::TopRight,
+				.sizeDeltaPivot = Anchor::TopRight,
 			}))
 		, m_inspectorInnerFrameNode(m_inspectorFrameNode->emplaceChild(
 			U"InspectorInnerFrame",
@@ -1425,7 +1425,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ -2, -2 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Pressed))
@@ -1437,7 +1437,7 @@ public:
 				.anchorMax = Anchor::BottomRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ -10, -10 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			},
 			IsHitTargetYN::Yes))
 		, m_contextMenu(contextMenu)
@@ -1612,7 +1612,7 @@ public:
 				.anchorMax = Anchor::MiddleRight,
 				.posDelta = Vec2{ 0, 0 },
 				.sizeDelta = Vec2{ -16, 26 },
-				.pivot = Anchor::MiddleCenter,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
 			});
 		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
@@ -2256,7 +2256,7 @@ public:
 					{
 						.anchorMin = { static_cast<double>(x) / GridSize, static_cast<double>(y) / GridSize },
 						.anchorMax = { static_cast<double>(x + 1) / GridSize, static_cast<double>(y + 1) / GridSize },
-						.pivot = Anchor::TopLeft,
+						.sizeDeltaPivot = Anchor::TopLeft,
 					},
 					IsHitTargetYN::No)
 					->emplaceComponent<RectRenderer>(ColorF{ isOdd ? 0.9 : 1.0 });
@@ -2667,7 +2667,7 @@ public:
 				.anchorMax = Anchor::MiddleRight,
 				.posDelta = Vec2{ -6, 0 },
 				.sizeDelta = Vec2{ 18, 18 },
-				.pivot = Anchor::MiddleRight,
+				.sizeDeltaPivot = Anchor::MiddleRight,
 			});
 		checkboxParentNode->addChild(checkboxNode);
 
@@ -2935,7 +2935,7 @@ public:
 							.anchorMax = Anchor::MiddleCenter,
 							.posDelta = Vec2::Zero(),
 							.sizeDelta = node->layoutAppliedRect().size,
-							.pivot = Vec2{ 0.5, 0.5 },
+							.sizeDeltaPivot = Vec2{ 0.5, 0.5 },
 						});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
@@ -3007,7 +3007,7 @@ public:
 			const AnchorPreset anchorPreset =
 				pAnchorConstraint->isCustomAnchorInEditor
 					? AnchorPreset::Custom
-					: ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->pivot);
+					: ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->sizeDeltaPivot);
 
 			fnAddEnumChild(
 				U"anchor",
@@ -3020,7 +3020,7 @@ public:
 						if (const auto tuple = FromAnchorPreset(preset))
 						{
 							// プリセットを選んだ場合
-							std::tie(copy.anchorMin, copy.anchorMax, copy.pivot) = *tuple;
+							std::tie(copy.anchorMin, copy.anchorMax, copy.sizeDeltaPivot) = *tuple;
 							copy.isCustomAnchorInEditor = false;
 						}
 						else
@@ -3034,7 +3034,7 @@ public:
 						{
 							if (!copy.isCustomAnchorInEditor)
 							{
-								const auto beforePreset = ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->pivot);
+								const auto beforePreset = ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->sizeDeltaPivot);
 
 								// 横ストレッチに変更した場合はleftとrightを0にする
 								const auto fnIsHorizontalStretch = [](AnchorPreset preset)
@@ -3283,7 +3283,7 @@ public:
 			default:
 				fnAddVec2Child(U"anchorMin", pAnchorConstraint->anchorMin, setVec2([](AnchorConstraint& c, const Vec2& val) { c.anchorMin = val; }));
 				fnAddVec2Child(U"anchorMax", pAnchorConstraint->anchorMax, setVec2([](AnchorConstraint& c, const Vec2& val) { c.anchorMax = val; }));
-				fnAddVec2Child(U"pivot", pAnchorConstraint->pivot, setVec2([](AnchorConstraint& c, const Vec2& val) { c.pivot = val; }));
+				fnAddVec2Child(U"sizeDeltaPivot", pAnchorConstraint->sizeDeltaPivot, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
 				fnAddVec2Child(U"posDelta", pAnchorConstraint->posDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.posDelta = val; }));
 				fnAddVec2Child(U"sizeDelta", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDelta = val; }));
 				break;
@@ -3794,7 +3794,7 @@ void Main()
 			.anchorMax = Anchor::MiddleCenter,
 			.posDelta = Vec2{ 0, 0 },
 			.sizeDelta = Vec2{ 200, 46 },
-			.pivot = Anchor::MiddleCenter,
+			.sizeDeltaPivot = Anchor::MiddleCenter,
 		});
 	const auto rectRenderer = textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ Palette::White }.withDisabled(ColorF{ 0.5 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ Palette::Skyblue, 0.0 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 2.0, 4.0);
 	textBoxNode->emplaceComponent<TextBox>(U"Font14Bold", 24);
@@ -3808,7 +3808,7 @@ void Main()
 			.anchorMax = Anchor::TopLeft,
 			.posDelta = Vec2{ 0, 0 },
 			.sizeDelta = Vec2{ 200, 200 },
-			.pivot = Anchor::TopLeft,
+			.sizeDeltaPivot = Anchor::TopLeft,
 		});
 	charaNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.0, 0.2 } }.withHover(ColorF{ Palette::Yellow, 0.2 }).withPressed(ColorF{ Palette::Red, 0.2 }).withSmoothTime(0.1));
 	charaNode->emplaceComponent<Sprite>(U"Chara");
@@ -3821,7 +3821,7 @@ void Main()
 			.anchorMax = Anchor::TopLeft,
 			.posDelta = Vec2{ 220, 0 },
 			.sizeDelta = Vec2{ 200, 200 },
-			.pivot = Anchor::TopLeft,
+			.sizeDeltaPivot = Anchor::TopLeft,
 		});
 	labelNode->emplaceComponent<Label>(U"← 左上にアンカーがある", U"Font", 24, Palette::White, HorizontalAlign::Left, VerticalAlign::Middle);
 

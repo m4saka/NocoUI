@@ -51,7 +51,7 @@ namespace noco
 					.anchorMax = Anchor::BottomRight,
 					.posDelta = Vec2{ 0, 0 },
 					.sizeDelta = Vec2{ 0, 0 },
-					.pivot = Anchor::MiddleCenter,
+					.sizeDeltaPivot = Anchor::MiddleCenter,
 				},
 				IsHitTargetYN::No) }
 		{
