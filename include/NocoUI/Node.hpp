@@ -167,6 +167,9 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findHoverTargetParent();
 
+		[[nodiscard]]
+		bool isAncestorOf(const std::shared_ptr<Node>& node) const;
+
 		bool removeFromParent();
 
 		void addComponent(std::shared_ptr<ComponentBase>&& component);

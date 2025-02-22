@@ -448,6 +448,20 @@ namespace noco
 		return nullptr;
 	}
 
+	bool Node::isAncestorOf(const std::shared_ptr<Node>& node) const
+	{
+		if (node->m_parent.expired())
+		{
+			return false;
+		}
+		const auto nodeParent = node->m_parent.lock();
+		if (nodeParent.get() == this)
+		{
+			return true;
+		}
+		return isAncestorOf(nodeParent);
+	}
+
 	bool Node::removeFromParent()
 	{
 		if (const auto parent = m_parent.lock())
@@ -537,6 +551,14 @@ namespace noco
 		{
 			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
 		}
+		if (child.get() == this)
+		{
+			throw Error{ U"addChild: Cannot add child to itself" };
+		}
+		if (child->isAncestorOf(shared_from_this()))
+		{
+			throw Error{ U"addChild: Cannot add child to its descendant" };
+		}
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
@@ -557,6 +579,14 @@ namespace noco
 		if (!child->m_parent.expired())
 		{
 			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
+		}
+		if (child.get() == this)
+		{
+			throw Error{ U"addChild: Cannot add child to itself" };
+		}
+		if (child->isAncestorOf(shared_from_this()))
+		{
+			throw Error{ U"addChild: Cannot add child to its descendant" };
 		}
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
@@ -597,6 +627,15 @@ namespace noco
 		{
 			throw Error{ U"addChildAtIndex: Child node '{}' already has a parent"_fmt(child->m_name) };
 		}
+		if (child.get() == this)
+		{
+			throw Error{ U"addChildAtIndex: Cannot add child to itself" };
+		}
+		if (child->isAncestorOf(shared_from_this()))
+		{
+			throw Error{ U"addChildAtIndex: Cannot add child to its descendant" };
+		}
+
 		if (index > m_children.size())
 		{
 			index = m_children.size();
