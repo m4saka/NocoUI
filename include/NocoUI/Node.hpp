@@ -616,22 +616,6 @@ namespace noco
 			totalWidth = availableWidth;
 		}
 
-		const double heightRemain = availableHeight - maxHeight;
-		double baseY = parentRect.y + padding.top;
-		if (heightRemain > 0.0)
-		{
-			switch (verticalAlign)
-			{
-			case VerticalAlign::Middle:
-				baseY += heightRemain / 2;
-				break;
-			case VerticalAlign::Bottom:
-				baseY += heightRemain;
-				break;
-			}
-		}
-
-		// 水平方向の配置
 		double offsetX = padding.left;
 		if (horizontalAlign == HorizontalAlign::Center)
 		{
@@ -640,6 +624,16 @@ namespace noco
 		else if (horizontalAlign == HorizontalAlign::Right)
 		{
 			offsetX += availableWidth - totalWidth;
+		}
+
+		double offsetY = padding.top;
+		if (verticalAlign == VerticalAlign::Middle)
+		{
+			offsetY += (availableHeight - maxHeight) / 2;
+		}
+		else if (verticalAlign == VerticalAlign::Bottom)
+		{
+			offsetY += availableHeight - maxHeight;
 		}
 
 		double currentX = parentRect.x + offsetX;
@@ -672,10 +666,10 @@ namespace noco
 				default:
 					throw Error{ U"HorizontalLayout::execute: Invalid verticalAlign" };
 				}
-				const double childY = baseY + margin.top + shiftY * verticalRatio;
+				const double childY = parentRect.y + offsetY + margin.top + shiftY * verticalRatio;
 				const RectF finalRect{ childX, childY, childSize.x, childSize.y };
 				fnSetRect(child, finalRect);
-				currentX += (childSize.x + margin.left + margin.right);
+				currentX += childSize.x + margin.left + margin.right;
 			}
 			else if (const auto pAnchorConstraint = child->anchorConstraint())
 			{
@@ -762,22 +756,6 @@ namespace noco
 			totalHeight = availableHeight;
 		}
 
-		const double widthRemain = availableWidth - maxWidth;
-		double baseX = parentRect.x + padding.left;
-		if (widthRemain > 0.0)
-		{
-			switch (horizontalAlign)
-			{
-			case HorizontalAlign::Center:
-				baseX += widthRemain / 2;
-				break;
-			case HorizontalAlign::Right:
-				baseX += widthRemain;
-				break;
-			}
-		}
-
-		// 垂直方向の配置
 		double offsetY = padding.top;
 		if (verticalAlign == VerticalAlign::Middle)
 		{
@@ -786,6 +764,16 @@ namespace noco
 		else if (verticalAlign == VerticalAlign::Bottom)
 		{
 			offsetY += availableHeight - totalHeight;
+		}
+
+		double offsetX = padding.left;
+		if (horizontalAlign == HorizontalAlign::Center)
+		{
+			offsetX += (availableWidth - maxWidth) / 2;
+		}
+		else if (horizontalAlign == HorizontalAlign::Right)
+		{
+			offsetX += availableWidth - maxWidth;
 		}
 
 		double currentY = parentRect.y + offsetY;
@@ -818,10 +806,10 @@ namespace noco
 				default:
 					throw Error{ U"VerticalLayout::execute: Invalid horizontalAlign" };
 				}
-				const double childX = baseX + margin.left + shiftX * horizontalRatio;
+				const double childX = parentRect.x + offsetX + margin.left + shiftX * horizontalRatio;
 				const RectF finalRect{ childX, childY, childSize.x, childSize.y };
 				fnSetRect(child, finalRect);
-				currentY += (childSize.y + margin.top + margin.bottom);
+				currentY += childSize.y + margin.top + margin.bottom;
 			}
 			else if (const auto pAnchorConstraint = child->anchorConstraint())
 			{

@@ -36,7 +36,7 @@ namespace noco
 		[[nodiscard]]
 		Vec2 scrollOffsetAnchor() const
 		{
-			return Anchor::FromAlign(horizontalAlign, VerticalAlign::Top);
+			return Anchor::FromAlign(horizontalAlign, verticalAlign);
 		}
 	};
 }
