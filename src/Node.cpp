@@ -467,14 +467,56 @@ namespace noco
 		return isAncestorOf(nodeParent);
 	}
 
-	bool Node::removeFromParent()
+	void Node::setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout)
+	{
+		if (!m_parent.expired())
+		{
+			removeFromParent(RefreshesLayoutYN{ refreshesLayout && parent->m_canvas.lock() != m_canvas.lock() });
+		}
+		parent->addChild(shared_from_this(), refreshesLayout);
+	}
+
+	bool Node::removeFromParent(RefreshesLayoutYN refreshesLayout)
 	{
 		if (const auto parent = m_parent.lock())
 		{
-			parent->removeChild(shared_from_this());
+			parent->removeChild(shared_from_this(), refreshesLayout);
 			return true;
 		}
 		return false;
+	}
+
+	size_t Node::siblingIndex() const
+	{
+		if (const auto parent = m_parent.lock())
+		{
+			const auto it = std::find(parent->m_children.begin(), parent->m_children.end(), shared_from_this());
+			if (it != parent->m_children.end())
+			{
+				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
+			}
+			else
+			{
+				throw Error{ U"Node::siblingIndex: Node '{}' is not a child of its parent"_fmt(m_name) };
+			}
+		}
+		else
+		{
+			throw Error{ U"Node::siblingIndex: Node '{}' has no parent"_fmt(m_name) };
+		}
+	}
+
+	Optional<size_t> Node::siblingIndexOpt() const
+	{
+		if (const auto parent = m_parent.lock())
+		{
+			const auto it = std::find(parent->m_children.begin(), parent->m_children.end(), shared_from_this());
+			if (it != parent->m_children.end())
+			{
+				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
+			}
+		}
+		return none;
 	}
 
 	void Node::addComponent(std::shared_ptr<ComponentBase>&& component)
@@ -894,6 +936,8 @@ namespace noco
 				}
 			}
 		}
+
+		// コンポーネントのupdate実行
 		if (m_activeInHierarchy)
 		{
 			for (const auto& component : m_componentTempBuffer)
@@ -945,6 +989,57 @@ namespace noco
 		}
 
 		m_prevActiveInHierarchy = m_activeInHierarchy;
+	}
+
+	void Node::lateUpdate(CanvasUpdateContext* pContext)
+	{
+		const auto thisNode = shared_from_this();
+
+		if (!m_components.empty())
+		{
+			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_componentTempBuffer.clear();
+			m_componentTempBuffer.reserve(m_components.size());
+			for (const auto& component : m_components)
+			{
+				m_componentTempBuffer.push_back(component);
+			}
+
+			// コンポーネントのlateUpdate実行
+			if (m_activeInHierarchy)
+			{
+				for (const auto& component : m_componentTempBuffer)
+				{
+					component->lateUpdate(pContext, thisNode);
+				}
+			}
+			else
+			{
+				for (const auto& component : m_componentTempBuffer)
+				{
+					component->lateUpdateInactive(pContext, thisNode);
+				}
+			}
+			m_componentTempBuffer.clear();
+		}
+
+		if (!m_children.empty())
+		{
+			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_childrenTempBuffer.clear();
+			m_childrenTempBuffer.reserve(m_children.size());
+			for (const auto& child : m_children)
+			{
+				m_childrenTempBuffer.push_back(child);
+			}
+
+			// 子ノードのlateUpdate実行
+			for (const auto& child : m_childrenTempBuffer)
+			{
+				child->lateUpdate(pContext);
+			}
+			m_childrenTempBuffer.clear();
+		}
 	}
 
 	void Node::refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
@@ -1529,6 +1624,26 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+	}
+
+	size_t Node::indexOfChild(const std::shared_ptr<Node>& child) const
+	{
+		const auto it = std::find(m_children.begin(), m_children.end(), child);
+		if (it == m_children.end())
+		{
+			throw Error{ U"indexOfChild: Child node not found in node '{}'"_fmt(m_name) };
+		}
+		return static_cast<size_t>(std::distance(m_children.begin(), it));
+	}
+
+	Optional<size_t> Node::indexOfChildOpt(const std::shared_ptr<Node>& child) const
+	{
+		const auto it = std::find(m_children.begin(), m_children.end(), child);
+		if (it == m_children.end())
+		{
+			return none;
+		}
+		return static_cast<size_t>(std::distance(m_children.begin(), it));
 	}
 
 	std::shared_ptr<Node> Node::clone() const

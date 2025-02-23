@@ -6,3 +6,5 @@
 #include "TextBox.hpp"
 #include "UpdaterComponent.hpp"
 #include "DrawerComponent.hpp"
+#include "DragDropSource.hpp"
+#include "DragDropTarget.hpp"

@@ -549,11 +549,16 @@ private:
 		}
 
 		m_elements.push_back(createElement(node, nestLevel));
-		m_hierarchyRootNode->addChild(m_elements.back().elementDetail().hierarchyNode, refreshesLayout);
+		m_hierarchyRootNode->addChild(m_elements.back().elementDetail().hierarchyNode, RefreshesLayoutYN::No);
 
 		for (const auto& child : node->children())
 		{
-			addElementRecursive(child, nestLevel + 1, refreshesLayout);
+			addElementRecursive(child, nestLevel + 1, RefreshesLayoutYN::No);
+		}
+
+		if (refreshesLayout)
+		{
+			m_canvas->refreshLayout();
 		}
 	}
 
@@ -607,6 +612,178 @@ private:
 				m_shiftSelectOriginNode = node;
 			});
 		hierarchyNode->emplaceComponent<RectRenderer>(Element::HierarchyRectFillColor(EditorSelectedYN::No), Element::HierarchyRectOutlineColor(EditorSelectedYN::No), 1.0, 3.0);
+		hierarchyNode->emplaceComponent<DragDropSource>([this, hierarchyNode]() -> Array<std::shared_ptr<Node>>
+			{
+				// 未選択のノードをドラッグ開始した場合は単一選択
+				if (const auto pElement = getElementByHierarchyNode(hierarchyNode))
+				{
+					if (!pElement->editorSelected())
+					{
+						selectSingleNode(pElement->node());
+					}
+				}
+
+				// 選択中ノードを返す(親子関係にあるノードは子ノードを除く)
+				return getSelectedNodesExcludingChildren().map([this](const auto& node) { return getElementByNode(node)->hierarchyNode(); });
+			});
+
+		constexpr double MoveAsSiblingThresholdPixels = 6.0;
+		hierarchyNode->emplaceComponent<DragDropTarget>([this, hierarchyNode](const Array<std::shared_ptr<Node>>& sourceNodes)
+			{
+				const auto pTargetElement = getElementByHierarchyNode(hierarchyNode);
+				if (pTargetElement == nullptr)
+				{
+					return;
+				}
+				const auto& targetElement = *pTargetElement;
+
+				Array<std::shared_ptr<Node>> newSelection;
+				newSelection.reserve(sourceNodes.size());
+
+				const auto rect = hierarchyNode->rect();
+				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
+					moveAsSiblingRectTop.mouseOver())
+				{
+					// targetの上に兄弟ノードとして移動
+					for (const auto& sourceNode : sourceNodes)
+					{
+						const auto pSourceElement = getElementByHierarchyNode(sourceNode);
+						if (pSourceElement == nullptr)
+						{
+							return;
+						}
+						const auto& sourceElement = *pSourceElement;
+						if (sourceElement.node() == targetElement.node())
+						{
+							// 自分自身には移動不可
+							return;
+						}
+						if (sourceElement.node()->isAncestorOf(targetElement.node()))
+						{
+							// 子孫には移動不可
+							return;
+						}
+						const auto pTargetParent = targetElement.node()->parent();
+						if (pTargetParent == nullptr)
+						{
+							return;
+						}
+						sourceElement.node()->removeFromParent();
+						const size_t index = pTargetParent->indexOfChild(targetElement.node());
+						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+
+						newSelection.push_back(sourceElement.node());
+					}
+				}
+				else if (const auto moveAsSiblingRectBottom = RectF{ rect.x, rect.y + rect.h - MoveAsSiblingThresholdPixels, rect.w, MoveAsSiblingThresholdPixels };
+					moveAsSiblingRectBottom.mouseOver())
+				{
+					// targetの下に兄弟ノードとして移動
+					for (const auto& sourceNode : sourceNodes)
+					{
+						const auto pSourceElement = getElementByHierarchyNode(sourceNode);
+						if (pSourceElement == nullptr)
+						{
+							return;
+						}
+						const auto& sourceElement = *pSourceElement;
+						if (sourceElement.node() == nullptr || targetElement.node() == nullptr)
+						{
+							return;
+						}
+						if (sourceElement.node() == targetElement.node())
+						{
+							// 自分自身には移動不可
+							return;
+						}
+						if (sourceElement.node()->isAncestorOf(targetElement.node()))
+						{
+							// 子孫には移動不可
+							return;
+						}
+						const auto pTargetParent = targetElement.node()->parent();
+						if (pTargetParent == nullptr)
+						{
+							return;
+						}
+						sourceElement.node()->removeFromParent();
+						const size_t index = pTargetParent->indexOfChild(targetElement.node()) + 1;
+						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+
+						newSelection.push_back(sourceElement.node());
+					}
+				}
+				else
+				{
+					// 子ノードとして移動
+					for (const auto& sourceNode : sourceNodes)
+					{
+						const auto pSourceElement = getElementByHierarchyNode(sourceNode);
+						if (pSourceElement == nullptr)
+						{
+							return;
+						}
+						const auto& sourceElement = *pSourceElement;
+						if (sourceElement.node() == nullptr || targetElement.node() == nullptr)
+						{
+							return;
+						}
+						if (sourceElement.node() == targetElement.node())
+						{
+							// 自分自身には移動不可
+							return;
+						}
+						if (sourceElement.node()->isAncestorOf(targetElement.node()))
+						{
+							// 子孫には移動不可
+							return;
+						}
+						if (sourceElement.node()->parent() == targetElement.node())
+						{
+							// 親子関係が既にある場合は移動不可
+							return;
+						}
+						sourceElement.node()->setParent(targetElement.node());
+
+						newSelection.push_back(sourceElement.node());
+					}
+				}
+				refreshNodeList();
+				selectNodes(newSelection);
+			},
+			[this, hierarchyNode](const Array<std::shared_ptr<Node>>& sourceNodes) -> bool
+			{
+				// ドラッグ中のノードが全てHierarchy上の要素の場合のみドロップ操作を受け付ける
+				return sourceNodes.all([&](const auto& sourceNode)
+					{
+						return getElementByHierarchyNode(sourceNode) != nullptr;
+					});
+			},
+			[nestLevel](const Node& node)
+			{
+				constexpr double Thickness = 4.0;
+				const auto rect = node.rect();
+				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
+					moveAsSiblingRectTop.mouseOver())
+				{
+					const Line line{ rect.tl() + Vec2::Right(15 + 20 * nestLevel), rect.tr() };
+					line.draw(Thickness, Palette::Orange);
+					Circle{ line.begin, Thickness }.draw(Palette::Orange);
+					Circle{ line.end, Thickness }.draw(Palette::Orange);
+				}
+				else if (const auto moveAsSiblingRectBottom = RectF{ rect.x, rect.y + rect.h - MoveAsSiblingThresholdPixels, rect.w, MoveAsSiblingThresholdPixels };
+					moveAsSiblingRectBottom.mouseOver())
+				{
+					const Line line{ rect.bl() + Vec2::Right(15 + 20 * nestLevel), rect.br() };
+					line.draw(Thickness, Palette::Orange);
+					Circle{ line.begin, Thickness }.draw(Palette::Orange);
+					Circle{ line.end, Thickness }.draw(Palette::Orange);
+				}
+				else
+				{
+					rect.draw(ColorF{ 1.0, 0.3 });
+				}
+			});
 		const auto nameLabel = hierarchyNode->emplaceComponent<Label>(
 			node->name(),
 			U"Font14Bold",
@@ -685,6 +862,21 @@ private:
 		}
 		const auto it = std::find_if(m_elements.begin(), m_elements.end(),
 			[node](const auto& e) { return e.node() == node; });
+		if (it == m_elements.end())
+		{
+			return nullptr;
+		}
+		return &(*it);
+	}
+
+	Element* getElementByHierarchyNode(const std::shared_ptr<Node>& hierarchyNode)
+	{
+		if (hierarchyNode == nullptr)
+		{
+			return nullptr;
+		}
+		const auto it = std::find_if(m_elements.begin(), m_elements.end(),
+			[hierarchyNode](const auto& e) { return e.hierarchyNode() == hierarchyNode; });
 		if (it == m_elements.end())
 		{
 			return nullptr;
@@ -774,7 +966,7 @@ public:
 		clearSelection();
 		m_elements.clear();
 		m_hierarchyRootNode->removeChildrenAll();
-		addElementRecursive(m_canvas->rootNode(), 0, RefreshesLayoutYN::Yes);
+		addElementRecursive(m_canvas->rootNode(), 0, RefreshesLayoutYN::No);
 
 		for (const auto& node : foldedNodes)
 		{
@@ -782,6 +974,11 @@ public:
 			{
 				pElement->setFolded(FoldedYN::Yes);
 			}
+		}
+
+		if (const auto editorCanvas = m_editorCanvas.lock())
+		{
+			editorCanvas->refreshLayout();
 		}
 	}
 
@@ -930,7 +1127,8 @@ public:
 		onClickDelete();
 	}
 
-	Array<std::shared_ptr<Node>> getSelectedNodesForCopy() const
+	[[nodiscard]]
+	Array<std::shared_ptr<Node>> getSelectedNodesExcludingChildren() const
 	{
 		// 選択中のノードを列挙
 		// ただし、親が選択中の場合は子は含めない
@@ -962,7 +1160,7 @@ public:
 		m_copiedNodeJSONs.clear();
 
 		// 選択中のノードをコピー
-		const auto selectedNodes = getSelectedNodesForCopy();
+		const auto selectedNodes = getSelectedNodesExcludingChildren();
 		m_copiedNodeJSONs.reserve(selectedNodes.size());
 		for (const auto& selectedNode : selectedNodes)
 		{
@@ -972,7 +1170,7 @@ public:
 
 	void onClickDuplicate()
 	{
-		const auto selectedNodes = getSelectedNodesForCopy();
+		const auto selectedNodes = getSelectedNodesExcludingChildren();
 		if (selectedNodes.empty())
 		{
 			return;
@@ -3536,7 +3734,7 @@ public:
 
 		// ショートカットキー
 		const bool isWindowActive = Window::GetState().focused;
-		if (isWindowActive)
+		if (isWindowActive && context.draggingNode.expired()) // ドラッグ中は無視
 		{
 			const bool ctrl = KeyControl.pressed();
 			const bool alt = KeyAlt.pressed();

@@ -147,9 +147,6 @@ namespace noco
 			}
 		}
 
-		// ノード更新
-		m_rootNode->update(pContext, hoveredNode, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale, InteractableYN::Yes, InteractState::Default, InteractState::Default);
-
 		if (pContext)
 		{
 			pContext->canHover = pContext->canHover && hoveredNode == nullptr;
@@ -162,6 +159,10 @@ namespace noco
 				pContext->scrollableHoveredNode = scrollableHoveredNode;
 			}
 		}
+
+		// ノード更新
+		m_rootNode->update(pContext, hoveredNode, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale, InteractableYN::Yes, InteractState::Default, InteractState::Default);
+		m_rootNode->lateUpdate(pContext);
 	}
 	
 	void Canvas::draw() const

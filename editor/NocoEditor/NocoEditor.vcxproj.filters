@@ -126,6 +126,12 @@
     <ClCompile Include="..\..\src\Canvas.cpp">
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Component\DragDropTarget.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Component\DragDropSource.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -529,6 +535,12 @@
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\detail\ScopedScissorRect.hpp">
       <Filter>Header Files\NocoUI\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\DragDropSource.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\DragDropTarget.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

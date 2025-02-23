@@ -12,6 +12,7 @@ namespace noco
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<TextBox> editingTextBox;
+		std::weak_ptr<Node> draggingNode;
 
 		bool isScrollableHovered() const
 		{

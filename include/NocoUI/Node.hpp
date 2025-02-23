@@ -135,7 +135,15 @@ namespace noco
 		[[nodiscard]]
 		bool isAncestorOf(const std::shared_ptr<Node>& node) const;
 
-		bool removeFromParent();
+		void setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+		bool removeFromParent(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+		[[nodiscard]]
+		size_t siblingIndex() const;
+
+		[[nodiscard]]
+		Optional<size_t> siblingIndexOpt() const;
 
 		void addComponent(std::shared_ptr<ComponentBase>&& component);
 
@@ -213,6 +221,8 @@ namespace noco
 		std::shared_ptr<Node> findContainedScrollableNode();
 
 		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
+
+		void lateUpdate(CanvasUpdateContext* pContext);
 
 		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 
@@ -380,6 +390,12 @@ namespace noco
 		void swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+		[[nodiscard]]
+		size_t indexOfChild(const std::shared_ptr<Node>& child) const;
+
+		[[nodiscard]]
+		Optional<size_t> indexOfChildOpt(const std::shared_ptr<Node>& child) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> clone() const;

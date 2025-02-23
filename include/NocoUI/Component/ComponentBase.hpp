@@ -39,6 +39,14 @@ namespace noco
 		{
 		}
 
+		virtual void lateUpdate(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		{
+		}
+
+		virtual void lateUpdateInactive(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		{
+		}
+
 		virtual void draw(const Node&) const
 		{
 		}

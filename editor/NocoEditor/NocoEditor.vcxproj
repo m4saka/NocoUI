@@ -116,6 +116,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Canvas.cpp" />
+    <ClCompile Include="..\..\src\Component\DragDropSource.cpp" />
+    <ClCompile Include="..\..\src\Component\DragDropTarget.cpp" />
     <ClCompile Include="..\..\src\Component\Label.cpp" />
     <ClCompile Include="..\..\src\Component\RectRenderer.cpp" />
     <ClCompile Include="..\..\src\Component\Sprite.cpp" />
@@ -242,6 +244,8 @@
     <ClInclude Include="..\..\include\NocoUI\Canvas.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\DragDropSource.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\DragDropTarget.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp" />
