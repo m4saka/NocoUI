@@ -49,43 +49,8 @@ namespace noco
 		/* NonSerialized */ SelectedYN m_selected = SelectedYN::No;
 		/* NonSerialized */ InteractState m_currentInteractState = InteractState::Default;
 		/* NonSerialized */ InteractState m_currentInteractStateRight = InteractState::Default;
-
-		// イテレーション中の追加・削除で例外を送出するためのガード
-		// (ユーザーコードの呼び出しを含むonActivated/onDeactivated/update/drawのみ対応。シングルスレッドのみ想定)
-		struct IterationGuard
-		{
-			size_t count = 0;
-
-			struct ScopedIterationGuard
-			{
-				IterationGuard& guard;
-
-				ScopedIterationGuard(IterationGuard& _guard)
-					: guard{ _guard }
-				{
-					++guard.count;
-				}
-
-				~ScopedIterationGuard()
-				{
-					--guard.count;
-				}
-			};
-
-			[[nodiscard]]
-			bool isIterating() const
-			{
-				return count > 0;
-			}
-
-			[[nodiscard]]
-			ScopedIterationGuard scoped()
-			{
-				return ScopedIterationGuard{ *this };
-			}
-		};
-		/* NonSerialized */ mutable IterationGuard m_childrenIterGuard;
-		/* NonSerialized */ mutable IterationGuard m_componentsIterGuard;
+		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
+		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
@@ -432,10 +397,6 @@ namespace noco
 	std::shared_ptr<TComponent> Node::emplaceComponent(Args && ...args)
 		requires std::derived_from<TComponent, ComponentBase>&& std::is_constructible_v<TComponent, Args...>
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"emplaceComponent: Cannot emplace component while iterating" };
-		}
 		auto component = std::make_shared<TComponent>(std::forward<Args>(args)...);
 		addComponent(component);
 		return component;
@@ -444,10 +405,6 @@ namespace noco
 	template<class ...Args>
 	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"addChildFromJSON: Cannot add child while iterating" };
-		}
 		auto child = CreateFromJSON(json);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();

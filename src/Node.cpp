@@ -473,37 +473,21 @@ namespace noco
 
 	void Node::addComponent(std::shared_ptr<ComponentBase>&& component)
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"addComponent: Cannot add component while iterating" };
-		}
 		m_components.push_back(std::move(component));
 	}
 
 	void Node::addComponent(const std::shared_ptr<ComponentBase>& component)
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"addComponent: Cannot add component while iterating" };
-		}
 		m_components.push_back(component);
 	}
 
 	void Node::removeComponent(const std::shared_ptr<ComponentBase>& component)
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"removeComponent: Cannot remove component while iterating" };
-		}
 		m_components.remove(component);
 	}
 
 	bool Node::moveComponentUp(const std::shared_ptr<ComponentBase>& component)
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"moveComponentUp: Cannot move component while iterating" };
-		}
 		const auto it = std::find(m_components.begin(), m_components.end(), component);
 		if (it == m_components.end())
 		{
@@ -521,10 +505,6 @@ namespace noco
 
 	bool Node::moveComponentDown(const std::shared_ptr<ComponentBase>& component)
 	{
-		if (m_componentsIterGuard.isIterating())
-		{
-			throw Error{ U"moveComponentDown: Cannot move component while iterating" };
-		}
 		const auto it = std::find(m_components.begin(), m_components.end(), component);
 		if (it == m_components.end())
 		{
@@ -542,10 +522,6 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChild(std::shared_ptr<Node>&& child, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"addChild: Cannot add child while iterating" };
-		}
 		if (!child->m_parent.expired())
 		{
 			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
@@ -571,10 +547,6 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"addChild: Cannot add child while iterating" };
-		}
 		if (!child->m_parent.expired())
 		{
 			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
@@ -600,10 +572,6 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::emplaceChild(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"emplaceChild: Cannot emplace child while iterating" };
-		}
 		auto child = Node::Create(name, constraint, isHitTarget, inheritChildrenStateFlags);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
@@ -618,10 +586,6 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"addChildAtIndex: Cannot add child while iterating" };
-		}
 		if (!child->m_parent.expired())
 		{
 			throw Error{ U"addChildAtIndex: Child node '{}' already has a parent"_fmt(child->m_name) };
@@ -655,10 +619,6 @@ namespace noco
 
 	void Node::removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"removeChild: Cannot remove child while iterating" };
-		}
 		if (!m_children.contains(child))
 		{
 			throw Error{ U"removeChild: Child node '{}' not found in node '{}'"_fmt(child->m_name, m_name) };
@@ -890,6 +850,14 @@ namespace noco
 	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
 	{
 		const auto thisNode = shared_from_this();
+		
+		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+		m_componentTempBuffer.clear();
+		m_componentTempBuffer.reserve(m_components.size());
+		for (const auto& component : m_components)
+		{
+			m_componentTempBuffer.push_back(component);
+		}
 
 		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
 		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
@@ -899,7 +867,7 @@ namespace noco
 			m_currentInteractState = ApplyOtherInteractState(m_currentInteractState, parentInteractState);
 			m_currentInteractStateRight = ApplyOtherInteractState(m_currentInteractStateRight, parentInteractStateRight);
 		}
-		for (const auto& component : m_components)
+		for (const auto& component : m_componentTempBuffer)
 		{
 			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
 		}
@@ -907,16 +875,14 @@ namespace noco
 		{
 			if (m_activeInHierarchy)
 			{
-				const auto guard = m_componentsIterGuard.scoped();
-				for (const auto& component : m_components)
+				for (const auto& component : m_componentTempBuffer)
 				{
 					component->onActivated(pContext, thisNode);
 				}
 			}
 			else
 			{
-				const auto guard = m_componentsIterGuard.scoped();
-				for (const auto& component : m_components)
+				for (const auto& component : m_componentTempBuffer)
 				{
 					component->onDeactivated(pContext, thisNode);
 				}
@@ -924,8 +890,7 @@ namespace noco
 		}
 		if (m_activeInHierarchy)
 		{
-			const auto guard = m_componentsIterGuard.scoped();
-			for (const auto& component : m_components)
+			for (const auto& component : m_componentTempBuffer)
 			{
 				component->update(pContext, thisNode);
 			}
@@ -934,12 +899,12 @@ namespace noco
 		}
 		else
 		{
-			const auto guard = m_componentsIterGuard.scoped();
-			for (const auto& component : m_components)
+			for (const auto& component : m_componentTempBuffer)
 			{
 				component->updateInactive(pContext, thisNode);
 			}
 		}
+		m_componentTempBuffer.clear();
 
 		// ホバー中はスクロールバーを表示
 		if (thisNode == scrollableHoveredNode)
@@ -953,15 +918,26 @@ namespace noco
 
 		if (!m_children.empty())
 		{
-			const auto guard = m_childrenIterGuard.scoped();
+			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_childrenTempBuffer.clear();
+			m_childrenTempBuffer.reserve(m_children.size());
+			for (const auto& child : m_children)
+			{
+				m_childrenTempBuffer.push_back(child);
+			}
+
+			// 子ノードのupdate実行
 			const InteractableYN interactable{ m_interactable && parentInteractable };
 			const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
-			for (const auto& child : m_children)
+			for (const auto& child : m_childrenTempBuffer)
 			{
 				child->update(pContext, hoveredNode, scrollableHoveredNode, deltaTime, effectMat, effectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
 			}
+
+			m_childrenTempBuffer.clear();
 		}
+
 		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
@@ -1016,15 +992,14 @@ namespace noco
 			scissorRect.emplace(m_effectedRect.asRect());
 		}
 
+		// draw関数はconstのため、addComponentやaddChild等によるイテレータ破壊は考慮不要とする
 		{
-			const auto guard = m_componentsIterGuard.scoped();
 			for (const auto& component : m_components)
 			{
 				component->draw(*this);
 			}
 		}
 		{
-			const auto guard = m_childrenIterGuard.scoped();
 			for (const auto& child : m_children)
 			{
 				child->draw();
@@ -1467,10 +1442,6 @@ namespace noco
 
 	void Node::removeChildrenAll(RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"removeChildrenAll: Cannot remove children while iterating" };
-		}
 		for (const auto& child : m_children)
 		{
 			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
@@ -1486,10 +1457,6 @@ namespace noco
 
 	void Node::swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"swapChildren: Cannot swap children while iterating" };
-		}
 		const auto it1 = std::find(m_children.begin(), m_children.end(), child1);
 		const auto it2 = std::find(m_children.begin(), m_children.end(), child2);
 		if (it1 == m_children.end() || it2 == m_children.end())
@@ -1505,10 +1472,6 @@ namespace noco
 
 	void Node::swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout)
 	{
-		if (m_childrenIterGuard.isIterating())
-		{
-			throw Error{ U"swapChildren: Cannot swap children while iterating" };
-		}
 		if (index1 >= m_children.size() || index2 >= m_children.size())
 		{
 			throw Error{ U"swapChildren: Index out of range" };
