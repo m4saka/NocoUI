@@ -123,6 +123,9 @@
     <ClCompile Include="..\..\src\Utility.cpp">
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Canvas.cpp">
+      <Filter>Source Files\NocoUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
