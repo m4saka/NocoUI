@@ -3782,8 +3782,6 @@ void Main()
 	FontAsset::Register(U"Font14", FontMethod::MSDF, 14);
 	FontAsset::Register(U"Font14Bold", FontMethod::MSDF, 14, Typeface::Bold);
 
-	TextureAsset::Register(U"Chara", U"example/siv3d-kun.png");
-
 	Editor editor;
 	editor.rootNode()->setConstraint(AnchorConstraint
 	{
@@ -3792,46 +3790,6 @@ void Main()
 		.posDelta = Vec2{ 0, 0 },
 		.sizeDelta = Vec2{ 800, 600 },
 	});
-	editor.rootNode()->setLayout(FlowLayout{ .padding = { 10, 10, 10, 10 } });
-	const auto textBoxNode = editor.rootNode()->emplaceChild(
-		U"TextBox",
-		AnchorConstraint
-		{
-			.anchorMin = Anchor::MiddleCenter,
-			.anchorMax = Anchor::MiddleCenter,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = Vec2{ 200, 46 },
-			.sizeDeltaPivot = Anchor::MiddleCenter,
-		});
-	const auto rectRenderer = textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ Palette::White }.withDisabled(ColorF{ 0.5 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ Palette::Skyblue, 0.0 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 2.0, 4.0);
-	textBoxNode->emplaceComponent<TextBox>(U"Font14Bold", 24);
-	textBoxNode->transformEffect().setScale(PropertyValue(Vec2::One()).withHover(Vec2{ 2.0, 2.0 }).withSelectedDefault(Vec2{ 2.0, 2.0 }).withSmoothTime(0.1));
-
-	const auto charaNode = editor.rootNode()->emplaceChild(
-		U"Sprite",
-		AnchorConstraint
-		{
-			.anchorMin = Anchor::TopLeft,
-			.anchorMax = Anchor::TopLeft,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = Vec2{ 200, 200 },
-			.sizeDeltaPivot = Anchor::TopLeft,
-		});
-	charaNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.0, 0.2 } }.withHover(ColorF{ Palette::Yellow, 0.2 }).withPressed(ColorF{ Palette::Red, 0.2 }).withSmoothTime(0.1));
-	charaNode->emplaceComponent<Sprite>(U"Chara");
-
-	const auto labelNode = editor.rootNode()->emplaceChild(
-		U"Label",
-		AnchorConstraint
-		{
-			.anchorMin = Anchor::TopLeft,
-			.anchorMax = Anchor::TopLeft,
-			.posDelta = Vec2{ 220, 0 },
-			.sizeDelta = Vec2{ 200, 200 },
-			.sizeDeltaPivot = Anchor::TopLeft,
-		});
-	labelNode->emplaceComponent<Label>(U"← 左上にアンカーがある", U"Font", 24, Palette::White, HorizontalAlign::Left, VerticalAlign::Middle);
-
 	editor.refresh();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
