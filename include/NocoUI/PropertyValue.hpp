@@ -264,28 +264,16 @@ namespace noco
 				{
 					auto propertyValue = PropertyValue<T>
 					{
-						StringToEnum(json[U"default"].getString(), defaultValue),
-						json.contains(U"hovered") ? StringToEnum(json[U"hovered"].getString(), defaultValue) : Optional<T>{ none },
-						json.contains(U"pressed") ? StringToEnum(json[U"pressed"].getString(), defaultValue) : Optional<T>{ none },
-						json.contains(U"disabled") ? StringToEnum(json[U"disabled"].getString(), defaultValue) : Optional<T>{ none },
-						json.contains(U"smoothTime") ? json[U"smoothTime"].getOr<double>(0.0) : 0.0,
+						GetFromJSONOr(json, U"default", defaultValue),
+						GetFromJSONOpt<T>(json, U"hovered"),
+						GetFromJSONOpt<T>(json, U"pressed"),
+						GetFromJSONOpt<T>(json, U"disabled"),
+						GetFromJSONOr(json, U"smoothTime", 0.0),
 					};
-					if (json.contains(U"selectedDefault"))
-					{
-						propertyValue.selectedDefaultValue = StringToEnum(json[U"selectedDefault"].getString(), defaultValue);
-					}
-					if (json.contains(U"selectedHovered"))
-					{
-						propertyValue.selectedHoveredValue = StringToEnum(json[U"selectedHovered"].getString(), defaultValue);
-					}
-					if (json.contains(U"selectedPressed"))
-					{
-						propertyValue.selectedPressedValue = StringToEnum(json[U"selectedPressed"].getString(), defaultValue);
-					}
-					if (json.contains(U"selectedDisabled"))
-					{
-						propertyValue.selectedDisabledValue = StringToEnum(json[U"selectedDisabled"].getString(), defaultValue);
-					}
+					propertyValue.selectedDefaultValue = GetFromJSONOpt<T>(json, U"selectedDefault");
+					propertyValue.selectedHoveredValue = GetFromJSONOpt<T>(json, U"selectedHovered");
+					propertyValue.selectedPressedValue = GetFromJSONOpt<T>(json, U"selectedPressed");
+					propertyValue.selectedDisabledValue = GetFromJSONOpt<T>(json, U"selectedDisabled");
 					return propertyValue;
 				}
 				return PropertyValue<T>{ defaultValue };
@@ -328,28 +316,16 @@ namespace noco
 				{
 					auto propertyValue = PropertyValue<T>
 					{
-						json[U"default"].getOr<T>(defaultValue),
-						json.contains(U"hovered") ? json[U"hovered"].getOpt<T>() : Optional<T>{ none },
-						json.contains(U"pressed") ? json[U"pressed"].getOpt<T>() : Optional<T>{ none },
-						json.contains(U"disabled") ? json[U"disabled"].getOpt<T>() : Optional<T>{ none },
-						json.contains(U"smoothTime") ? json[U"smoothTime"].getOr<double>(0.0) : 0.0,
+						GetFromJSONOr(json, U"default", defaultValue),
+						GetFromJSONOpt<T>(json, U"hovered"),
+						GetFromJSONOpt<T>(json, U"pressed"),
+						GetFromJSONOpt<T>(json, U"disabled"),
+						GetFromJSONOr(json, U"smoothTime", 0.0),
 					};
-					if (json.contains(U"selectedDefault"))
-					{
-						propertyValue.selectedDefaultValue = json[U"selectedDefault"].getOpt<T>();
-					}
-					if (json.contains(U"selectedHovered"))
-					{
-						propertyValue.selectedHoveredValue = json[U"selectedHovered"].getOpt<T>();
-					}
-					if (json.contains(U"selectedPressed"))
-					{
-						propertyValue.selectedPressedValue = json[U"selectedPressed"].getOpt<T>();
-					}
-					if (json.contains(U"selectedDisabled"))
-					{
-						propertyValue.selectedDisabledValue = json[U"selectedDisabled"].getOpt<T>();
-					}
+					propertyValue.selectedDefaultValue = GetFromJSONOpt<T>(json, U"selectedDefault");
+					propertyValue.selectedHoveredValue = GetFromJSONOpt<T>(json, U"selectedHovered");
+					propertyValue.selectedPressedValue = GetFromJSONOpt<T>(json, U"selectedPressed");
+					propertyValue.selectedDisabledValue = GetFromJSONOpt<T>(json, U"selectedDisabled");
 					return propertyValue;
 				}
 				return PropertyValue<T>{ json.getOr<T>(defaultValue) };

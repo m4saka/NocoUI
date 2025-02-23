@@ -18,9 +18,9 @@ namespace noco
 	{
 		return FlowLayout
 		{
-			.padding = json.contains(U"padding") ? LRTB::fromJSON(json[U"padding"]) : LRTB::Zero(),
-			.horizontalAlign = json.contains(U"horizontalAlign") ? StringToEnum<HorizontalAlign>(json[U"horizontalAlign"].getString(), HorizontalAlign::Left) : HorizontalAlign::Left,
-			.verticalAlign = json.contains(U"verticalAlign") ? StringToEnum<VerticalAlign>(json[U"verticalAlign"].getString(), VerticalAlign::Top) : VerticalAlign::Top,
+			.padding = GetFromJSONOr(json, U"padding", LRTB::Zero()),
+			.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Left),
+			.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top),
 		};
 	}
 

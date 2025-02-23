@@ -41,11 +41,11 @@ namespace noco
 		{
 			return AnchorConstraint
 			{
-				.anchorMin = json[U"anchorMin"].getOr<Vec2>(Anchor::MiddleCenter),
-				.anchorMax = json[U"anchorMax"].getOr<Vec2>(Anchor::MiddleCenter),
-				.posDelta = json[U"posDelta"].getOr<Vec2>(Vec2::Zero()),
-				.sizeDelta = json[U"sizeDelta"].getOr<Vec2>(Vec2::Zero()),
-				.sizeDeltaPivot = json[U"sizeDeltaPivot"].getOr<Vec2>(Anchor::MiddleCenter),
+				.anchorMin = GetFromJSONOr(json, U"anchorMin", Anchor::MiddleCenter),
+				.anchorMax = GetFromJSONOr(json, U"anchorMax", Anchor::MiddleCenter),
+				.posDelta = GetFromJSONOr(json, U"posDelta", Vec2::Zero()),
+				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
+				.sizeDeltaPivot = GetFromJSONOr(json, U"sizeDeltaPivot", Anchor::MiddleCenter),
 			};
 		}
 

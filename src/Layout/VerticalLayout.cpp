@@ -17,7 +17,7 @@ namespace noco
 	VerticalLayout VerticalLayout::FromJSON(const JSON& json)
 	{
 		VerticalLayout layout;
-		layout.padding = json.contains(U"padding") ? LRTB::fromJSON(json[U"padding"]) : LRTB::Zero();
+		layout.padding = GetFromJSONOr(json, U"padding", LRTB::Zero());
 		layout.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Center);
 		layout.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top);
 		return layout;

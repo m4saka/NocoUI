@@ -40,7 +40,7 @@ namespace noco
 				.sizeRatio = GetFromJSONOr(json, U"sizeRatio", Vec2::Zero()),
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
 				.flexibleWeight = Max(GetFromJSONOr(json, U"flexibleWeight", 0.0), 0.0),
-				.margin = json.contains(U"margin") ? LRTB::fromJSON(json[U"margin"]) : LRTB::Zero(),
+				.margin = GetFromJSONOr(json, U"margin", LRTB::Zero()),
 			};
 		}
 
