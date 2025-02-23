@@ -11,7 +11,7 @@ namespace noco
 
 	public:
 		explicit UpdaterComponent(std::function<void(const std::shared_ptr<Node>&)> function)
-			: ComponentBase{ U"UpdaterComponent", {} }
+			: ComponentBase{ {} }
 			, m_function{ std::move(function) }
 		{
 		}

@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	class TextBox : public ComponentBase, public std::enable_shared_from_this<TextBox>
+	class TextBox : public SerializableComponentBase, public std::enable_shared_from_this<TextBox>
 	{
 	private:
 		static constexpr double CursorWidth = 1.5;
@@ -94,7 +94,7 @@ namespace noco
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
 			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified)
-			: ComponentBase{ U"TextBox", { &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			: SerializableComponentBase{ U"TextBox", { &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
 			, m_color{ U"color", color }

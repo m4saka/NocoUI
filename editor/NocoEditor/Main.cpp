@@ -296,7 +296,7 @@ private:
 
 public:
 	explicit ContextMenuOpener(const std::shared_ptr<ContextMenu>& contextMenu, Array<MenuElement> menuElements, std::function<void()> fnBeforeOpen = nullptr)
-		: ComponentBase{ U"ContextMenuOpener", {} }
+		: ComponentBase{ {} }
 		, m_contextMenu{ contextMenu }
 		, m_menuElements{ std::move(menuElements) }
 		, m_fnBeforeOpen{ std::move(fnBeforeOpen) }
@@ -1483,10 +1483,13 @@ public:
 			const auto transformEffectNode = createTransformEffectNode(&targetNode->transformEffect());
 			m_inspectorRootNode->addChild(transformEffectNode);
 
-			for (const auto& component : targetNode->components())
+			for (const std::shared_ptr<ComponentBase>& component : targetNode->components())
 			{
-				const auto componentNode = createComponentNode(targetNode, component);
-				m_inspectorRootNode->addChild(componentNode);
+				if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
+				{
+					const auto componentNode = createComponentNode(targetNode, serializableComponent);
+					m_inspectorRootNode->addChild(componentNode);
+				}
 			}
 		}
 	}
@@ -1583,7 +1586,7 @@ public:
 
 	public:
 		explicit PropertyTextBox(const std::shared_ptr<TextBox>& textBox, std::function<void(StringView)> fnSetValue)
-			: ComponentBase{ U"PropertyTextBoxUpdater", {} }
+			: ComponentBase{ {} }
 			, m_textBox(textBox)
 			, m_fnSetValue(std::move(fnSetValue))
 		{
@@ -1756,7 +1759,7 @@ public:
 				const std::shared_ptr<TextBox>& textBoxY,
 				std::function<void(const Vec2&)> fnSetValue,
 				const Vec2& initialValue)
-				: ComponentBase{ U"Vec2PropertyTextBox", {} }
+				: ComponentBase{ {} }
 				, m_textBoxX(textBoxX)
 				, m_textBoxY(textBoxY)
 				, m_fnSetValue(std::move(fnSetValue))
@@ -1919,7 +1922,7 @@ public:
 				const std::shared_ptr<TextBox>& textBoxW,
 				std::function<void(const Vec4&)> fnSetValue,
 				const Vec4& initialValue)
-				: ComponentBase{ U"Vec4PropertyTextBox", {} }
+				: ComponentBase{ {} }
 				, m_textBoxX(textBoxX)
 				, m_textBoxY(textBoxY)
 				, m_textBoxZ(textBoxZ)
@@ -2142,7 +2145,7 @@ public:
 				const std::shared_ptr<TextBox>& textBoxB,
 				std::function<void(const LRTB&)> fnSetValue,
 				const LRTB& initialValue)
-				: ComponentBase{ U"LRTBPropertyTextBox", {} }
+				: ComponentBase{ {} }
 				, m_textBoxL(textBoxL)
 				, m_textBoxR(textBoxR)
 				, m_textBoxT(textBoxT)
@@ -2360,7 +2363,7 @@ public:
 				const std::shared_ptr<RectRenderer>& previewRect,
 				std::function<void(const ColorF&)> fnSetValue,
 				const ColorF& initialColor)
-				: ComponentBase{ U"ColorPropertyTextBox", {} }
+				: ComponentBase{ {} }
 				, m_textBoxR(r)
 				, m_textBoxG(g)
 				, m_textBoxB(b)
@@ -2474,7 +2477,7 @@ public:
 				const std::shared_ptr<Label>& label,
 				const std::shared_ptr<ContextMenu>& contextMenu,
 				const Array<String>& enumCandidates)
-				: ComponentBase{ U"EnumPropertyComboBox", {} }
+				: ComponentBase{ {} }
 				, m_currentValue(initialValue)
 				, m_onSetValue(std::move(onSetValue))
 				, m_label(label)
@@ -2565,7 +2568,7 @@ public:
 				std::function<void(bool)> fnSetValue,
 				const std::shared_ptr<Label>& checkLabel,
 				bool useParentHoverState)
-				: ComponentBase(U"CheckboxToggler", {})
+				: ComponentBase{ {} }
 				, m_value(initialValue)
 				, m_fnSetValue(std::move(fnSetValue))
 				, m_checkLabel(checkLabel)
@@ -3332,7 +3335,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<ComponentBase>& component)
+	std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<SerializableComponentBase>& component)
 	{
 		auto componentNode = Node::Create(
 			component->type(),

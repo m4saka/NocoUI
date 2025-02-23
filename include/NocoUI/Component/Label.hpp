@@ -5,7 +5,7 @@
 
 namespace noco
 {
-	class Label : public ComponentBase
+	class Label : public SerializableComponentBase
 	{
 	private:
 		Property<String> m_text;
@@ -84,7 +84,7 @@ namespace noco
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
 			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
 			const PropertyValue<Vec2>& spacing = Vec2::Zero())
-			: ComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_spacing } }
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_spacing } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }

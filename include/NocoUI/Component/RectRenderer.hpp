@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	class RectRenderer : public ComponentBase
+	class RectRenderer : public SerializableComponentBase
 	{
 	private:
 		SmoothProperty<ColorF> m_fillColor;
@@ -26,7 +26,7 @@ namespace noco
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
 			const PropertyValue<double>& shadowSpread = 0.0)
-			: ComponentBase{ U"RectRenderer", { &m_fillColor, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+			: SerializableComponentBase{ U"RectRenderer", { &m_fillColor, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
 			, m_fillColor{ U"fillColor", fillColor }
 			, m_outlineColor{ U"outlineColor", outlineColor }
 			, m_outlineThickness{ U"outlineThickness", outlineThickness }

@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	class Sprite : public ComponentBase
+	class Sprite : public SerializableComponentBase
 	{
 	private:
 		Property<String> m_textureAssetName;
@@ -13,7 +13,7 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: ComponentBase{ U"Sprite", { &m_textureAssetName, &m_color, &m_preserveAspect } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureAssetName, &m_color, &m_preserveAspect } }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }

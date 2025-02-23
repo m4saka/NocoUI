@@ -270,12 +270,11 @@ namespace noco
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
 
-		for (const auto& component : m_components)
+		for (const std::shared_ptr<ComponentBase>& component : m_components)
 		{
-			auto json = component->toJSON();
-			if (!json.isNull())
+			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				result[U"components"].push_back(json);
+				result[U"components"].push_back(serializableComponent->toJSON());
 			}
 		}
 

@@ -11,7 +11,7 @@ namespace noco
 
 	public:
 		explicit DrawerComponent(std::function<void(const Node&)> function)
-			: ComponentBase{ U"DrawerComponent", {} }
+			: ComponentBase{ {} }
 			, m_function{ std::move(function) }
 		{
 		}

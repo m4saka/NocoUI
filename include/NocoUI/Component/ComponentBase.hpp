@@ -13,15 +13,14 @@ namespace noco
 	class ComponentBase
 	{
 	private:
-		String m_type;
 		Array<IProperty*> m_properties;
 
 	public:
-		explicit ComponentBase(StringView type, const Array<IProperty*>& properties)
-			: m_type{ type }
-			, m_properties{ properties }
+		explicit ComponentBase(const Array<IProperty*>& properties)
+			: m_properties{ properties }
 		{
 		}
+
 		virtual ~ComponentBase() = 0;
 
 		virtual void onActivated(CanvasUpdateContext*, const std::shared_ptr<Node>&)
@@ -44,12 +43,49 @@ namespace noco
 		{
 		}
 
+		void updateProperties(InteractState interactState, SelectedYN selected, double deltaTime)
+		{
+			for (IProperty* property : m_properties)
+			{
+				property->update(interactState, selected, deltaTime);
+			}
+		}
+
+		[[nodiscard]]
+		const Array<IProperty*>& properties() const
+		{
+			return m_properties;
+		}
+	};
+
+	inline ComponentBase::~ComponentBase() = default;
+
+	class SerializableComponentBase : public ComponentBase
+	{
+	private:
+		String m_type;
+
+	public:
+		explicit SerializableComponentBase(StringView type, const Array<IProperty*>& properties)
+			: ComponentBase{ properties }
+			, m_type{ type }
+		{
+		}
+
+		virtual ~SerializableComponentBase() = 0;
+
+		[[nodiscard]]
+		const String& type() const
+		{
+			return m_type;
+		}
+
 		[[nodiscard]]
 		JSON toJSON() const
 		{
 			JSON json;
 			json[U"type"] = m_type;
-			for (const auto property : m_properties)
+			for (const IProperty* property : properties())
 			{
 				property->appendJSON(json);
 			}
@@ -62,33 +98,13 @@ namespace noco
 			{
 				return false;
 			}
-			for (auto* property : m_properties)
+			for (IProperty* property : properties())
 			{
 				property->readFromJSON(json);
 			}
 			return true;
 		}
-
-		void updateProperties(InteractState interactState, SelectedYN selected, double deltaTime)
-		{
-			for (auto* property : m_properties)
-			{
-				property->update(interactState, selected, deltaTime);
-			}
-		}
-
-		[[nodiscard]]
-		const String& type() const
-		{
-			return m_type;
-		}
-
-		[[nodiscard]]
-		const Array<IProperty*>& properties() const
-		{
-			return m_properties;
-		}
 	};
 
-	inline ComponentBase::~ComponentBase() = default;
+	inline SerializableComponentBase::~SerializableComponentBase() = default;
 }
