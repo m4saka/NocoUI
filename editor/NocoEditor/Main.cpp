@@ -676,7 +676,7 @@ private:
 					}
 				}
 				else if (const auto moveAsSiblingRectBottom = RectF{ rect.x, rect.y + rect.h - MoveAsSiblingThresholdPixels, rect.w, MoveAsSiblingThresholdPixels };
-					moveAsSiblingRectBottom.mouseOver())
+					moveAsSiblingRectBottom.mouseOver() && (targetElement.folded() || !targetElement.node()->hasChildren()))
 				{
 					// targetの下に兄弟ノードとして移動
 					for (const auto& sourceNode : sourceNodes)
@@ -759,22 +759,29 @@ private:
 						return getElementByHierarchyNode(sourceNode) != nullptr;
 					});
 			},
-			[nestLevel](const Node& node)
+			[this, nestLevel, hierarchyNode](const Node& node)
 			{
+				const auto pTargetElement = getElementByHierarchyNode(hierarchyNode);
+				if (pTargetElement == nullptr)
+				{
+					return;
+				}
+				const auto& targetElement = *pTargetElement;
+
 				constexpr double Thickness = 4.0;
 				const auto rect = node.rect();
 				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
 					moveAsSiblingRectTop.mouseOver())
 				{
-					const Line line{ rect.tl() + Vec2::Right(15 + 20 * nestLevel), rect.tr() };
+					const Line line{ rect.tl() + Vec2::Right(15 + 20 * static_cast<double>(nestLevel)), rect.tr() };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
 				}
 				else if (const auto moveAsSiblingRectBottom = RectF{ rect.x, rect.y + rect.h - MoveAsSiblingThresholdPixels, rect.w, MoveAsSiblingThresholdPixels };
-					moveAsSiblingRectBottom.mouseOver())
+					moveAsSiblingRectBottom.mouseOver() && (targetElement.folded() || !targetElement.node()->hasChildren()))
 				{
-					const Line line{ rect.bl() + Vec2::Right(15 + 20 * nestLevel), rect.br() };
+					const Line line{ rect.bl() + Vec2::Right(15 + 20 * static_cast<double>(nestLevel)), rect.br() };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
