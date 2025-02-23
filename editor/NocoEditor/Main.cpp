@@ -3483,6 +3483,7 @@ public:
 			U"View",
 			U"表示",
 			{
+				MenuItem{ U"表示位置をリセット", U"Ctrl+0", [this] { onClickMenuViewResetPosition(); } },
 			});
 	}
 
@@ -3568,8 +3569,7 @@ public:
 				}
 			}
 
-			// Hierarchy操作
-			// (テキストボックス編集中は実行しない)
+			// テキストボックス編集中は実行しない操作
 			if (context.editingTextBox.expired())
 			{
 				// Ctrl + ○○
@@ -3590,6 +3590,10 @@ public:
 					else if (KeyD.down())
 					{
 						m_hierarchy.onClickDuplicate();
+					}
+					else if (Key0.down())
+					{
+						onClickMenuViewResetPosition();
 					}
 				}
 
@@ -3759,6 +3763,13 @@ public:
 	void onClickMenuEditSelectAll()
 	{
 		m_hierarchy.selectAll();
+	}
+
+	void onClickMenuViewResetPosition()
+	{
+		m_scrollOffset = Vec2::Zero();
+		m_scrollScale = 1.0;
+		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 };
 
