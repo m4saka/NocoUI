@@ -7,19 +7,6 @@
 
 namespace noco
 {
-	struct TransformEffectValue
-	{
-		Vec2 position = Vec2::Zero();
-		Vec2 scale = Vec2::One();
-		Vec2 pivot = Anchor::MiddleCenter;
-
-		[[nodiscard]]
-		Mat3x2 applyTransform(const Mat3x2& mat, const RectF& rect) const
-		{
-			return mat * Mat3x2::Scale(scale, rect.pos + rect.size * pivot).translated(position);
-		}
-	};
-
 	class TransformEffect
 	{
 	private:
