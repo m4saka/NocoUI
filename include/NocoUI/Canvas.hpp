@@ -67,7 +67,7 @@ namespace noco
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> Create()
 		{
-			std::shared_ptr<Canvas> canvas{ new Canvas() };
+			std::shared_ptr<Canvas> canvas{ new Canvas{} };
 
 			// コンストラクタ内ではshared_from_this()が使えないためここで設定
 			canvas->rootNode()->setCanvasRecursive(canvas);
@@ -76,14 +76,21 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> Create(const std::shared_ptr<Node>& rootNode, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		static std::shared_ptr<Canvas> Create(const std::shared_ptr<Node>& rootNode, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes)
 		{
-			std::shared_ptr<Canvas> canvas{ new Canvas(rootNode) };
+			std::shared_ptr<Canvas> canvas{ new Canvas{ rootNode } };
 
-			// コンストラクタ内ではshared_from_this()が使えないためここで設定
-			canvas->rootNode()->setCanvasRecursive(canvas);
+			// rootNodeは同一インスタンスになる想定
+			assert(canvas->rootNode().get() == rootNode.get());
+			
+			rootNode->setCanvasRecursive(canvas); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 
-			if (refreshesLayout)
+			if (refreshesLayoutPre)
+			{
+				canvas->refreshLayout();
+			}
+			rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No);
+			if (refreshesLayoutPost)
 			{
 				canvas->refreshLayout();
 			}
@@ -135,11 +142,16 @@ namespace noco
 			return Create(Node::CreateFromJSON(json), refreshesLayout);
 		}
 
-		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes)
 		{
 			m_rootNode = Node::CreateFromJSON(json);
-			m_rootNode->setCanvasRecursive(shared_from_this());
-			if (refreshesLayout)
+			m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
+			if (refreshesLayoutPre)
+			{
+				refreshLayout();
+			}
+			m_rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+			if (refreshesLayoutPost)
 			{
 				refreshLayout();
 			}
@@ -233,6 +245,15 @@ namespace noco
 			m_offset = offset;
 			m_scale = scale;
 			m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		}
+
+		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		{
+			m_rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No);
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
 		}
 	};
 }

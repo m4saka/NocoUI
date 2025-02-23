@@ -7,5 +7,5 @@ namespace noco
 	std::shared_ptr<Node> LoadNode(FilePathView path, AllowExceptions allowExceptions = AllowExceptions::No);
 
 	[[nodiscard]]
-	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, AllowExceptions allowExceptions = AllowExceptions::No);
+	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, AllowExceptions allowExceptions = AllowExceptions::No);
 }

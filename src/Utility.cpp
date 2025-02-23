@@ -16,11 +16,11 @@ namespace noco
 		return Node::CreateFromJSON(json);
 	}
 
-	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, RefreshesLayoutYN refreshesLayout, AllowExceptions allowExceptions)
+	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, AllowExceptions allowExceptions)
 	{
 		if (const auto node = LoadNode(path, allowExceptions))
 		{
-			return Canvas::Create(node, refreshesLayout);
+			return Canvas::Create(node, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes);
 		}
 		return nullptr;
 	}

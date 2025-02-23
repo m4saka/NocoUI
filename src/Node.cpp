@@ -114,6 +114,12 @@ namespace noco
 			return;
 		}
 
+		if (m_children.empty())
+		{
+			m_scrollOffset = Vec2::Zero();
+			return;
+		}
+
 		const bool horizontalScrollableValue = horizontalScrollable();
 		const bool verticalScrollableValue = verticalScrollable();
 		if (!horizontalScrollableValue && !verticalScrollableValue)
@@ -975,6 +981,49 @@ namespace noco
 			{
 				refreshContainedCanvasLayout();
 			}
+		}
+	}
+
+	void Node::resetScrollOffset(RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	{
+		if (refreshesLayoutPre)
+		{
+			refreshContainedCanvasLayout();
+		}
+
+		if (m_children.empty())
+		{
+			m_scrollOffset = Vec2::Zero();
+		}
+		else
+		{
+			// 最小値を設定してからClamp
+			m_scrollOffset = Vec2::All(std::numeric_limits<double>::lowest());
+			clampScrollOffset();
+		}
+
+		if (refreshesLayoutPost)
+		{
+			refreshContainedCanvasLayout();
+		}
+	}
+
+	void Node::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	{
+		if (refreshesLayoutPre)
+		{
+			refreshContainedCanvasLayout();
+		}
+
+		resetScrollOffset(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		for (const auto& child : m_children)
+		{
+			child->resetScrollOffsetRecursive(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		}
+
+		if (refreshesLayoutPost)
+		{
+			refreshContainedCanvasLayout();
 		}
 	}
 
