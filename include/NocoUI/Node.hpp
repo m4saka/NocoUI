@@ -243,8 +243,6 @@ namespace noco
 		[[nodiscard]]
 		const Array<std::shared_ptr<ComponentBase>>& components() const;
 
-		Array<std::shared_ptr<SerializableComponentBase>> serializableComponents() const;
-
 		[[nodiscard]]
 		InteractableYN interactable() const;
 

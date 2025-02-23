@@ -1068,7 +1068,6 @@ namespace noco
 							const double scrolledRatio = (m_scrollOffset.y * scale.y + maxScrollY * scrollOffsetAnchor.y) / maxScrollY;
 							const double y = scrolledRatio * (viewHeight - h);
 							const double thickness = 4.0 * scale.x;
-							const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
 
 							const RectF backgroundRect
 							{
