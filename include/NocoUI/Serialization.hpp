@@ -41,18 +41,21 @@ namespace noco
 	}
 
 	template <typename T>
+	[[nodiscard]]
 	String EnumToString(T value) requires std::is_enum_v<T>
 	{
 		return Unicode::FromUTF8(magic_enum::enum_name(value));
 	}
 
 	template <typename T>
+	[[nodiscard]]
 	bool EnumContains(StringView value) requires std::is_enum_v<T>
 	{
 		return magic_enum::enum_contains<T>(value.toUTF8());
 	}
 
 	template <typename T>
+	[[nodiscard]]
 	T StringToEnum(StringView value, T defaultValue) requires std::is_enum_v<T>
 	{
 		const auto u8Value = value.toUTF8();
@@ -64,6 +67,7 @@ namespace noco
 	}
 
 	template <typename T>
+	[[nodiscard]]
 	Optional<T> StringToEnumOpt(StringView value) requires std::is_enum_v<T>
 	{
 		const auto u8Value = value.toUTF8();
@@ -75,6 +79,7 @@ namespace noco
 	}
 
 	template <typename T>
+	[[nodiscard]]
 	Array<String> EnumNames() requires std::is_enum_v<T>
 	{
 		Array<String> result;
@@ -84,6 +89,24 @@ namespace noco
 			result.push_back(Unicode::FromUTF8(name));
 		}
 		return result;
+	}
+
+	template <typename T>
+	[[nodiscard]]
+	Optional<T> StringToValueOpt(StringView value)
+	{
+		if constexpr (std::is_enum_v<T>)
+		{
+			return StringToEnumOpt<T>(value);
+		}
+		else if constexpr (std::same_as<T, String>)
+		{
+			return String{ value };
+		}
+		else
+		{
+			return ParseOpt<T>(value);
+		}
 	}
 
 	template <class T>

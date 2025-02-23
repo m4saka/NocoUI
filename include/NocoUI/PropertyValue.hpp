@@ -501,30 +501,14 @@ namespace noco
 			return str;
 		}
 
-		// TODO: hovered/pressed/disabled/selectedへの対応
 		bool trySetValueString(StringView value)
 		{
-			if constexpr (std::is_enum_v<T>)
+			const Optional<T> parsedValue = StringToValueOpt<T>(value);
+			if (!parsedValue)
 			{
-				if (!EnumContains<T>(value))
-				{
-					return false;
-				}
-				defaultValue = StringToEnum(value, defaultValue);
+				return false;
 			}
-			else if constexpr (std::same_as<T, String>)
-			{
-				defaultValue = String{ value };
-			}
-			else
-			{
-				const auto resultOpt = ParseOpt<T>(value);
-				if (!resultOpt)
-				{
-					return false;
-				}
-				defaultValue = *resultOpt;
-			}
+			defaultValue = *parsedValue;
 			hoveredValue = none;
 			pressedValue = none;
 			disabledValue = none;
@@ -534,6 +518,79 @@ namespace noco
 			selectedDisabledValue = none;
 			smoothTime = 0.0;
 			return true;
+		}
+
+		bool trySetValueStringOf(StringView value, InteractState interactState, SelectedYN selected)
+		{
+			if (selected)
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						selectedDefaultValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Hovered:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						selectedHoveredValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Pressed:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						selectedPressedValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Disabled:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						selectedDisabledValue = *parsedValue;
+						return true;
+					}
+					break;
+				}
+			}
+			else
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						defaultValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Hovered:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						hoveredValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Pressed:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						pressedValue = *parsedValue;
+						return true;
+					}
+					break;
+				case InteractState::Disabled:
+					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
+					{
+						disabledValue = *parsedValue;
+						return true;
+					}
+					break;
+				}
+			}
+			return false;
 		}
 	};
 }
