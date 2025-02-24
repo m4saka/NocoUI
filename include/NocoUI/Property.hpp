@@ -103,7 +103,6 @@ namespace noco
 			m_selected = selected;
 		}
 
-		[[nodiscard]]
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
@@ -234,7 +233,6 @@ namespace noco
 			m_smoothing.update(m_propertyValue.value(interactState, selected), m_propertyValue.smoothTime, deltaTime);
 		}
 
-		[[nodiscard]]
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();

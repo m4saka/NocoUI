@@ -31,7 +31,6 @@ namespace noco
 		{
 		}
 
-		[[nodiscard]]
 		void update(const T& targetValue, double smoothTime, double deltaTime)
 		{
 			if (smoothTime <= 0.0)
