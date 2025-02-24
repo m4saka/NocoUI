@@ -60,6 +60,9 @@ namespace noco
 		{
 			return Anchor::FromAlign(horizontalAlign, verticalAlign);
 		}
+
+	private:
+		RectF executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const;
 	};
 
 	template <class Fty>
@@ -103,31 +106,9 @@ namespace noco
 			for (size_t index : line.childIndices)
 			{
 				const auto& child = children[index];
-				if (const auto pBoxConstraint = child->boxConstraint())
-				{
-					const auto& measuredChild = measureInfo.measuredChildren[index];
-
-					const double w = measuredChild.size.x;
-					const double h = measuredChild.size.y;
-					const double marginLeft = measuredChild.margin.left;
-					const double marginRight = measuredChild.margin.right;
-					const double marginTop = measuredChild.margin.top;
-					const double marginBottom = measuredChild.margin.bottom;
-
-					const double shiftY = lineHeight - (h + marginTop + marginBottom);
-					const Vec2 pos = parentRect.pos + Vec2{ offsetX + marginLeft, offsetY + marginTop + shiftY };
-					const RectF finalRect{ pos, measuredChild.size };
-					fnSetRect(child, finalRect);
-
-					offsetX += (w + marginLeft + marginRight);
-				}
-				else if (const auto pAnchorConstraint = child->anchorConstraint())
-				{
-					const RectF finalRect = pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
-					fnSetRect(child, finalRect);
-				}
+				const RectF finalRect = executeChild(parentRect, child, measureInfo.measuredChildren[index], offsetY, lineHeight, &offsetX);
+				fnSetRect(child, finalRect);
 			}
-
 			offsetY += lineHeight;
 		}
 	}

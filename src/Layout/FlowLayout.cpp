@@ -192,4 +192,31 @@ namespace noco
 			node.refreshContainedCanvasLayout();
 		}
 	}
+
+	RectF FlowLayout::executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const
+	{
+		if (const auto pBoxConstraint = child->boxConstraint())
+		{
+			const double w = measuredChild.size.x;
+			const double h = measuredChild.size.y;
+			const double marginLeft = measuredChild.margin.left;
+			const double marginRight = measuredChild.margin.right;
+			const double marginTop = measuredChild.margin.top;
+			const double marginBottom = measuredChild.margin.bottom;
+
+			const double shiftY = lineHeight - (h + marginTop + marginBottom);
+			const Vec2 pos = parentRect.pos + Vec2{ *pOffsetX + marginLeft, offsetY + marginTop + shiftY };
+			*pOffsetX += w + marginLeft + marginRight;
+			return RectF{ pos, measuredChild.size };
+		}
+		else if (const auto pAnchorConstraint = child->anchorConstraint())
+		{
+			return pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
+		}
+		else
+		{
+			// TODO: コンパイルエラーにする
+			throw Error{ U"FlowLayout::executeChild: Invalid constraint" };
+		}
+	}
 }

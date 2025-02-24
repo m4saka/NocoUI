@@ -15,6 +15,8 @@
 
 namespace noco
 {
+	class Canvas;
+
 	struct CanvasUpdateContext;
 
 	class Node : public std::enable_shared_from_this<Node>
@@ -179,7 +181,7 @@ namespace noco
 		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
 
 		template <class Fty>
-		Array<std::weak_ptr<Node>> findAll(Fty predicate) const;
+		Array<std::weak_ptr<Node>> findAll(Fty predicate);
 
 		template <class TComponent>
 		[[nodiscard]]
@@ -436,13 +438,13 @@ namespace noco
 	}
 
 	template <class Fty>
-	Array<std::weak_ptr<Node>> Node::findAll(Fty predicate) const
+	Array<std::weak_ptr<Node>> Node::findAll(Fty predicate)
 	{
 		// 自分自身が条件を満たすかどうか
 		Array<std::weak_ptr<Node>> result;
 		if (predicate(shared_from_this()))
 		{
-			result.push_back(shared_from_this());
+			result.push_back(weak_from_this());
 		}
 
 		// 子ノードを再帰的に検索
