@@ -6,6 +6,30 @@ namespace noco
 {
 	template <typename T>
 	[[nodiscard]]
+	T StringToEnum(StringView value, T defaultValue) requires std::is_enum_v<T>
+	{
+		const auto u8Value = value.toUTF8();
+		if (magic_enum::enum_contains<T>(u8Value))
+		{
+			return magic_enum::enum_cast<T>(u8Value).value();
+		}
+		return defaultValue;
+	}
+
+	template <typename T>
+	[[nodiscard]]
+	Optional<T> StringToEnumOpt(StringView value) requires std::is_enum_v<T>
+	{
+		const auto u8Value = value.toUTF8();
+		if (magic_enum::enum_contains<T>(u8Value))
+		{
+			return magic_enum::enum_cast<T>(u8Value).value();
+		}
+		return none;
+	}
+
+	template <typename T>
+	[[nodiscard]]
 	T GetFromJSONOr(const JSON& json, const String& key, const T& defaultValue)
 	{
 		if (json.isObject() && json.contains(key))
@@ -52,30 +76,6 @@ namespace noco
 	bool EnumContains(StringView value) requires std::is_enum_v<T>
 	{
 		return magic_enum::enum_contains<T>(value.toUTF8());
-	}
-
-	template <typename T>
-	[[nodiscard]]
-	T StringToEnum(StringView value, T defaultValue) requires std::is_enum_v<T>
-	{
-		const auto u8Value = value.toUTF8();
-		if (magic_enum::enum_contains<T>(u8Value))
-		{
-			return magic_enum::enum_cast<T>(u8Value).value();
-		}
-		return defaultValue;
-	}
-
-	template <typename T>
-	[[nodiscard]]
-	Optional<T> StringToEnumOpt(StringView value) requires std::is_enum_v<T>
-	{
-		const auto u8Value = value.toUTF8();
-		if (magic_enum::enum_contains<T>(u8Value))
-		{
-			return magic_enum::enum_cast<T>(u8Value).value();
-		}
-		return none;
 	}
 
 	template <typename T>
