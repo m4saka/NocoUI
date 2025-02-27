@@ -413,3 +413,5 @@ gmon.out
 #**/App/example
 #**/App/engine
 #**/App/dll
+
+/NocoEditor/NocoEditor
