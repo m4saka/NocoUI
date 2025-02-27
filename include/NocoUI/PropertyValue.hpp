@@ -350,7 +350,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		PropertyValue<T> withHover(const T& newHoveredValue) const
+		PropertyValue<T> withHovered(const T& newHoveredValue) const
 		{
 			auto value = *this;
 			value.hoveredValue = newHoveredValue;
@@ -359,7 +359,7 @@ namespace noco
 
 		template <class U>
 		[[nodiscard]]
-		PropertyValue<T> withHover(const U& newHoveredValue) const requires std::convertible_to<U, T>
+		PropertyValue<T> withHovered(const U& newHoveredValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
 			value.hoveredValue = static_cast<T>(newHoveredValue);
@@ -418,7 +418,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		PropertyValue<T> withSelectedHover(const T& newSelectedHoveredValue) const
+		PropertyValue<T> withSelectedHovered(const T& newSelectedHoveredValue) const
 		{
 			auto value = *this;
 			value.selectedHoveredValue = newSelectedHoveredValue;
@@ -427,7 +427,7 @@ namespace noco
 
 		template <class U>
 		[[nodiscard]]
-		PropertyValue<T> withSelectedHover(const U& newSelectedHoveredValue) const requires std::convertible_to<U, T>
+		PropertyValue<T> withSelectedHovered(const U& newSelectedHoveredValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
 			value.selectedHoveredValue = static_cast<T>(newSelectedHoveredValue);

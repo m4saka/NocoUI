@@ -522,7 +522,7 @@ private:
 			}
 			else
 			{
-				return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHover(ColorF{ 1.0, 0.2 });
+				return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.2 });
 			}
 		}
 
@@ -535,7 +535,7 @@ private:
 			}
 			else
 			{
-				return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHover(ColorF{ 1.0, 0.6 });
+				return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.6 });
 			}
 		}
 	};
@@ -1709,7 +1709,7 @@ public:
 				.margin = LRTB{ 0, 0, 0, 0 },
 			});
 		headingNode->emplaceComponent<RectRenderer>(
-			PropertyValue<ColorF>(ColorF{ color, 0.8 }).withHover(ColorF{ color + ColorF{ 0.05 }, 0.8 }).withPressed(ColorF{ color - ColorF{ 0.05 }, 0.8 }),
+			PropertyValue<ColorF>(ColorF{ color, 0.8 }).withHovered(ColorF{ color + ColorF{ 0.05 }, 0.8 }).withPressed(ColorF{ color - ColorF{ 0.05 }, 0.8 }),
 			Palette::Black,
 			0.0,
 			3.0);
@@ -1819,7 +1819,7 @@ public:
 				.sizeDelta = Vec2{ -16, 26 },
 				.sizeDeltaPivot = Anchor::MiddleCenter,
 			});
-		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
@@ -1839,7 +1839,7 @@ public:
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 		const auto labelNode = propertyNode->emplaceChild(
 			U"Label",
 			BoxConstraint
@@ -1864,7 +1864,7 @@ public:
 				.sizeDelta = Vec2{ 0, 26 },
 				.flexibleWeight = 1,
 			});
-		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
@@ -1888,7 +1888,7 @@ public:
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
-			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
+			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
@@ -1931,7 +1931,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
@@ -1945,7 +1945,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
@@ -2019,7 +2019,7 @@ public:
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->emplaceComponent<RectRenderer>(
-			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
+			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
@@ -2062,7 +2062,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
@@ -2076,7 +2076,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
@@ -2090,7 +2090,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
@@ -2104,7 +2104,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
@@ -2189,7 +2189,7 @@ public:
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
-			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
+			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
@@ -2244,7 +2244,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 6 },
 			});
-		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
@@ -2258,7 +2258,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 6 },
 			});
-		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
@@ -2313,7 +2313,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
@@ -2327,7 +2327,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
@@ -2409,7 +2409,7 @@ public:
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 		const auto labelNode = propertyNode->emplaceChild(
 			U"Label",
@@ -2499,7 +2499,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
@@ -2513,7 +2513,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
@@ -2527,7 +2527,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
@@ -2541,7 +2541,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
@@ -2629,7 +2629,7 @@ public:
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 		const auto labelNode =
 			propertyNode->emplaceChild(
@@ -2655,7 +2655,7 @@ public:
 				.sizeDelta = Vec2{ 0, 26 },
 				.flexibleWeight = 1,
 			});
-		comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+		comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
 
 		const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
 			currentValue,
@@ -2750,7 +2750,7 @@ public:
 			},
 			useParentHoverState ? IsHitTargetYN::No : IsHitTargetYN::Yes);
 
-		checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHover(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 
 		const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 			initialValue ? U"✓" : U"",
@@ -2832,7 +2832,7 @@ public:
 			});
 		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
-			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHover(ColorF{ 1.0, 0.1 }),
+			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
 			0.0,
 			3.0);
