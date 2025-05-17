@@ -3,6 +3,85 @@
 
 namespace noco
 {
+	Canvas::EventRegistry::EventRegistry()
+	{
+		m_events.reserve(InitialCapacity);
+	}
+
+	void Canvas::EventRegistry::addEvent(const Event& event)
+	{
+		const int32 frameCount = Scene::FrameCount();
+		if (m_prevFrameCount != frameCount)
+		{
+			// フレームが変わったらイベントをクリア
+			m_events.clear();
+		}
+
+		m_events.push_back(event);
+		m_prevFrameCount = frameCount;
+	}
+
+	bool Canvas::EventRegistry::isEventFiredWithTag(StringView tag) const
+	{
+		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		{
+			return false;
+		}
+		for (const auto& event : m_events)
+		{
+			if (event.tag == tag)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	Optional<Event> Canvas::EventRegistry::getFiredEventWithTag(StringView tag) const
+	{
+		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		{
+			return none;
+		}
+		for (const auto& event : m_events)
+		{
+			if (event.tag == tag)
+			{
+				return event;
+			}
+		}
+		return none;
+	}
+
+	Array<Event> Canvas::EventRegistry::getFiredEventsWithTag(StringView tag) const
+	{
+		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		{
+			return {};
+		}
+		Array<Event> events;
+		for (const auto& event : m_events)
+		{
+			if (event.tag == tag)
+			{
+				events.push_back(event);
+			}
+		}
+		return events;
+	}
+
+	const Array<Event>& Canvas::EventRegistry::getFiredEventsAll() const
+	{
+		if (m_prevFrameCount != Scene::FrameCount())
+		{
+			return m_emptyEvents;
+		}
+		else
+		{
+			return m_events;
+		}
+	}
+
 	Mat3x2 Canvas::rootEffectMat() const
 	{
 		if (m_scale == Vec2::One() && m_offset == Vec2::Zero())
@@ -206,5 +285,30 @@ namespace noco
 		{
 			refreshLayout();
 		}
+	}
+	
+	void Canvas::fireEvent(const Event& event)
+	{
+		m_eventRegistry.addEvent(event);
+	}
+
+	bool Canvas::isEventFiredWithTag(StringView tag) const
+	{
+		return m_eventRegistry.isEventFiredWithTag(tag);
+	}
+
+	Optional<Event> Canvas::getFiredEventWithTag(StringView tag) const
+	{
+		return m_eventRegistry.getFiredEventWithTag(tag);
+	}
+
+	Array<Event> Canvas::getFiredEventsWithTag(StringView tag) const
+	{
+		return m_eventRegistry.getFiredEventsWithTag(tag);
+	}
+
+	const Array<Event>& Canvas::getFiredEventsAll() const
+	{
+		return m_eventRegistry.getFiredEventsAll();
 	}
 }

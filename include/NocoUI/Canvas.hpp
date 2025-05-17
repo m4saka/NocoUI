@@ -25,15 +25,61 @@ namespace noco
 		}
 	};
 
+	enum class EventType : uint8
+	{
+		None = 0,
+		Click,
+		HoverStart,
+		HoverEnd,
+		PressStart,
+		PressEnd,
+	};
+
+	struct Event
+	{
+		EventType type = EventType::None;
+		String tag;
+		std::weak_ptr<Node> sourceNode;
+	};
+
 	class Canvas : public std::enable_shared_from_this<Canvas>
 	{
 		friend class Node;
 
 	private:
+		class EventRegistry
+		{
+		private:
+			constexpr static size_t InitialCapacity = 16;
+
+			int32 m_prevFrameCount = -1;
+			Array<Event> m_events;
+			Array<Event> m_emptyEvents; // フレームが変わった際にm_eventsをclearせずに空配列のconst参照を返すためのダミー配列
+
+		public:
+			EventRegistry();
+
+			void addEvent(const Event& event);
+
+			[[nodiscard]]
+			bool isEventFiredWithTag(StringView tag) const;
+
+			[[nodiscard]]
+			Optional<Event> getFiredEventWithTag(StringView tag) const;
+
+			[[nodiscard]]
+			Array<Event> getFiredEventsWithTag(StringView tag) const;
+
+			[[nodiscard]]
+			const Array<Event>& getFiredEventsAll() const;
+		};
+
 		std::shared_ptr<Node> m_rootNode;
 		Vec2 m_offset = Vec2::Zero();
 		Vec2 m_scale = Vec2::One();
+		EventRegistry m_eventRegistry;
 
+		[[nodiscard]]
 		Mat3x2 rootEffectMat() const;
 
 		Canvas();
@@ -90,5 +136,19 @@ namespace noco
 		void setOffsetScale(const Vec2& offset, const Vec2& scale);
 
 		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+		void fireEvent(const Event& event);
+
+		[[nodiscard]]
+		bool isEventFiredWithTag(StringView tag) const;
+
+		[[nodiscard]]
+		Optional<Event> getFiredEventWithTag(StringView tag) const;
+
+		[[nodiscard]]
+		Array<Event> getFiredEventsWithTag(StringView tag) const;
+
+		[[nodiscard]]
+		const Array<Event>& getFiredEventsAll() const;
 	};
 }

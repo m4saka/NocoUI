@@ -286,4 +286,137 @@ namespace noco
 			throw Error{ U"enumCandidates() called for non-enum property" };
 		}
 	};
+
+	template <class T>
+	class PropertyNoInteract : public IProperty
+	{
+	private:
+		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
+		T m_value;
+		/*NonSerialized*/ InteractState m_interactState = InteractState::Default;
+		/*NonSerialized*/ SelectedYN m_selected = SelectedYN::No;
+
+	public:
+		template <class U>
+		PropertyNoInteract(const char32_t* name, const U& value) requires std::convertible_to<U, T>
+			: m_name{ name }
+			, m_value{ value }
+		{
+		}
+
+		PropertyNoInteract(const char32_t* name, StringView value) requires std::same_as<T, String>
+			: m_name{ name }
+			, m_value{ String{ value } }
+		{
+		}
+
+		[[nodiscard]]
+		StringView name() const override
+		{
+			return m_name;
+		}
+
+		[[nodiscard]]
+		const T& value() const
+		{
+			return m_value;
+		}
+
+		void update(InteractState, SelectedYN, double) override
+		{
+		}
+
+		void appendJSON(JSON& json) const override
+		{
+			if constexpr (std::is_enum_v<T>)
+			{
+				json[m_name] = EnumToString(m_value);
+			}
+			else if constexpr (HasToJSON<T>)
+			{
+				json[m_name] = m_value.toJSON();
+			}
+			else
+			{
+				json[m_name] = m_value;
+			}
+		}
+
+		void readFromJSON(const JSON& json) override
+		{
+			if (!json.contains(m_name))
+			{
+				return;
+			}
+
+			// Propertyが後からPropertyNoInteractに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
+			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue;
+		}
+
+		[[nodiscard]]
+		String propertyValueString() const override
+		{
+			if constexpr (std::is_enum_v<T>)
+			{
+				return EnumToString(m_value);
+			}
+			else
+			{
+				return Format(m_value);
+			}
+		}
+
+		bool trySetPropertyValueString(StringView value) override
+		{
+			const Optional<T> parsedValue = StringToValueOpt<T>(value);
+			if (!parsedValue)
+			{
+				return false;
+			}
+			m_value = *parsedValue;
+			return true;
+		}
+
+		[[nodiscard]]
+		PropertyEditType editType() const override
+		{
+			if constexpr (std::same_as<T, bool>)
+			{
+				return PropertyEditType::Bool;
+			}
+			else if constexpr (std::is_enum_v<T>)
+			{
+				return PropertyEditType::Enum;
+			}
+			else if constexpr (std::same_as<T, Vec2>)
+			{
+				return PropertyEditType::Vec2;
+			}
+			else if constexpr (std::same_as<T, ColorF>)
+			{
+				return PropertyEditType::Color;
+			}
+			else if constexpr (std::same_as<T, LRTB>)
+			{
+				return PropertyEditType::LRTB;
+			}
+			else
+			{
+				return PropertyEditType::Text;
+			}
+		}
+
+		[[nodiscard]]
+		Array<String> enumCandidates() const override
+		{
+			if constexpr (std::is_enum_v<T>)
+			{
+				return EnumNames<T>();
+			}
+			else
+			{
+				throw Error{ U"enumCandidates() called for non-enum property" };
+			}
+		}
+	};
 }

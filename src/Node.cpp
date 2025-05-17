@@ -421,6 +421,17 @@ namespace noco
 					continue;
 				}
 
+				if (type == U"EventTrigger")
+				{
+					auto eventTrigger = std::make_shared<EventTrigger>();
+					if (!eventTrigger->tryReadFromJSON(componentJSON))
+					{
+						throw Error{ U"Failed to read EventTrigger component from JSON" };
+					}
+					node->addComponent(std::move(eventTrigger));
+					continue;
+				}
+
 				// TODO: 不明なコンポーネントの場合は警告を出力
 			}
 		}
@@ -517,6 +528,11 @@ namespace noco
 			}
 		}
 		return none;
+	}
+
+	std::shared_ptr<Canvas> Node::containedCanvas() const
+	{
+		return m_canvas.lock();
 	}
 
 	void Node::addComponent(std::shared_ptr<ComponentBase>&& component)

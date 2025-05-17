@@ -147,6 +147,9 @@ namespace noco
 		[[nodiscard]]
 		Optional<size_t> siblingIndexOpt() const;
 
+		[[nodiscard]]
+		std::shared_ptr<Canvas> containedCanvas() const;
+
 		void addComponent(std::shared_ptr<ComponentBase>&& component);
 
 		void addComponent(const std::shared_ptr<ComponentBase>& component);

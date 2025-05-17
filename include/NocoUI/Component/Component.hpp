@@ -4,6 +4,7 @@
 #include "Sprite.hpp"
 #include "RectRenderer.hpp"
 #include "TextBox.hpp"
+#include "EventTrigger.hpp"
 #include "UpdaterComponent.hpp"
 #include "DrawerComponent.hpp"
 #include "DragDropSource.hpp"

@@ -542,5 +542,8 @@
     <ClInclude Include="..\..\include\NocoUI\Component\DragDropTarget.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\EventTrigger.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
