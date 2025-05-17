@@ -807,12 +807,20 @@ namespace noco
 		clampScrollOffset();
 		if (m_scrollOffset != prevScrollOffset)
 		{
+			std::visit([this](const auto& layout)
+				{
+					layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
+						{
+							child->m_layoutAppliedRect = rect;
+							if (child->isParentLayoutAffected())
+							{
+								child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
+							}
+						});
+				}, m_layout);
 			for (const auto& child : m_children)
 			{
-				if (child->isParentLayoutAffected())
-				{
-					child->m_layoutAppliedRect.moveBy(prevScrollOffset - m_scrollOffset);
-				}
+				child->refreshChildrenLayout();
 			}
 		}
 	}
