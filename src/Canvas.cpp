@@ -167,11 +167,19 @@ namespace noco
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
 	{
+		if (m_rootNode->name() == nodeName)
+		{
+			return true;
+		}
 		return m_rootNode->containsChildByName(nodeName, RecursiveYN::Yes);
 	}
 	
 	std::shared_ptr<Node> Canvas::getNodeByName(const String& nodeName) const
 	{
+		if (m_rootNode->name() == nodeName)
+		{
+			return m_rootNode;
+		}
 		return m_rootNode->getChildByName(nodeName, RecursiveYN::Yes);
 	}
 	
