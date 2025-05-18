@@ -501,6 +501,94 @@ namespace noco
 			return str;
 		}
 
+		[[nodiscard]]
+		Optional<String> getValueStringOf(InteractState interactState, SelectedYN selected) const
+		{
+			const auto fnGetStr = [](const T& value)
+				{
+					if constexpr (std::is_enum_v<T>)
+					{
+						return EnumToString(value);
+					}
+					else
+					{
+						return Format(value);
+					}
+				};
+
+			if (selected)
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					if (selectedDefaultValue)
+					{
+						return fnGetStr(*selectedDefaultValue);
+					}
+					break;
+				case InteractState::Hovered:
+					if (selectedHoveredValue)
+					{
+						return fnGetStr(*selectedHoveredValue);
+					}
+					break;
+				case InteractState::Pressed:
+					if (selectedPressedValue)
+					{
+						return fnGetStr(*selectedPressedValue);
+					}
+					break;
+				case InteractState::Disabled:
+					if (selectedDisabledValue)
+					{
+						return fnGetStr(*selectedDisabledValue);
+					}
+					break;
+				}
+			}
+			else
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					return fnGetStr(defaultValue);
+				case InteractState::Hovered:
+					if (hoveredValue)
+					{
+						return fnGetStr(*hoveredValue);
+					}
+					break;
+				case InteractState::Pressed:
+					if (pressedValue)
+					{
+						return fnGetStr(*pressedValue);
+					}
+					break;
+				case InteractState::Disabled:
+					if (disabledValue)
+					{
+						return fnGetStr(*disabledValue);
+					}
+					break;
+				}
+			}
+			return none;
+		}
+
+		[[nodiscard]]
+		String getValueStringOfFallback(InteractState interactState, SelectedYN selected) const
+		{
+			const T v = value(interactState, selected);
+			if constexpr (std::is_enum_v<T>)
+			{
+				return EnumToString(v);
+			}
+			else
+			{
+				return Format(v);
+			}
+		}
+
 		bool trySetValueString(StringView value)
 		{
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
@@ -588,6 +676,80 @@ namespace noco
 						return true;
 					}
 					break;
+				}
+			}
+			return false;
+		}
+
+		bool tryUnsetValueOf(InteractState interactState, SelectedYN selected)
+		{
+			if (selected)
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					selectedDefaultValue = none;
+					return true;
+				case InteractState::Hovered:
+					selectedHoveredValue = none;
+					return true;
+				case InteractState::Pressed:
+					selectedPressedValue = none;
+					return true;
+				case InteractState::Disabled:
+					selectedDisabledValue = none;
+					return true;
+				}
+			}
+			else
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					return false;
+				case InteractState::Hovered:
+					hoveredValue = none;
+					return true;
+				case InteractState::Pressed:
+					pressedValue = none;
+					return true;
+				case InteractState::Disabled:
+					disabledValue = none;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		[[nodiscard]]
+		bool hasValueOf(InteractState interactState, SelectedYN selected) const
+		{
+			if (selected)
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					return selectedDefaultValue.has_value();
+				case InteractState::Hovered:
+					return selectedHoveredValue.has_value();
+				case InteractState::Pressed:
+					return selectedPressedValue.has_value();
+				case InteractState::Disabled:
+					return selectedDisabledValue.has_value();
+				}
+			}
+			else
+			{
+				switch (interactState)
+				{
+				case InteractState::Default:
+					return true;
+				case InteractState::Hovered:
+					return hoveredValue.has_value();
+				case InteractState::Pressed:
+					return pressedValue.has_value();
+				case InteractState::Disabled:
+					return disabledValue.has_value();
 				}
 			}
 			return false;

@@ -27,7 +27,12 @@ namespace noco
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueString() const = 0;
+		virtual Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) = 0;
+		virtual String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) = 0;
 		virtual bool trySetPropertyValueString(StringView value) = 0;
+		virtual bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) = 0;
+		virtual bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) = 0;
+		virtual bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const = 0;
 		virtual PropertyEditType editType() const = 0;
 		virtual Array<String> enumCandidates() const
 		{
@@ -37,7 +42,40 @@ namespace noco
 			}
 			return {};
 		}
+		virtual bool isInteractiveProperty() const = 0;
+		virtual bool isSmoothProperty() const = 0;
+		virtual double smoothTime() const = 0;
+		virtual bool trySetSmoothTime(double smoothTime) = 0;
 	};
+
+	template <typename T>
+	PropertyEditType PropertyEditTypeOf()
+	{
+		if constexpr (std::same_as<T, bool>)
+		{
+			return PropertyEditType::Bool;
+		}
+		else if constexpr (std::is_enum_v<T>)
+		{
+			return PropertyEditType::Enum;
+		}
+		else if constexpr (std::same_as<T, Vec2>)
+		{
+			return PropertyEditType::Vec2;
+		}
+		else if constexpr (std::same_as<T, ColorF>)
+		{
+			return PropertyEditType::Color;
+		}
+		else if constexpr (std::same_as<T, LRTB>)
+		{
+			return PropertyEditType::LRTB;
+		}
+		else
+		{
+			return PropertyEditType::Text;
+		}
+	}
 
 	template <class T>
 	class Property : public IProperty
@@ -123,38 +161,43 @@ namespace noco
 			return m_propertyValue.getValueString();
 		}
 
+		[[nodiscard]]
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.getValueStringOf(interactState, selected);
+		}
+
+		[[nodiscard]]
+		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.getValueStringOfFallback(interactState, selected);
+		}
+
 		bool trySetPropertyValueString(StringView value) override
 		{
 			return m_propertyValue.trySetValueString(value);
 		}
 
+		bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.trySetValueStringOf(value, interactState, selected);
+		}
+
+		bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.tryUnsetValueOf(interactState, selected);
+		}
+
+		[[nodiscard]]
+		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		{
+			return m_propertyValue.hasValueOf(interactState, selected);
+		}
+
 		[[nodiscard]]
 		PropertyEditType editType() const override
 		{
-			if constexpr (std::same_as<T, bool>)
-			{
-				return PropertyEditType::Bool;
-			}
-			else if constexpr (std::is_enum_v<T>)
-			{
-				return PropertyEditType::Enum;
-			}
-			else if constexpr (std::same_as<T, Vec2>)
-			{
-				return PropertyEditType::Vec2;
-			}
-			else if constexpr (std::same_as<T, ColorF>)
-			{
-				return PropertyEditType::Color;
-			}
-			else if constexpr (std::same_as<T, LRTB>)
-			{
-				return PropertyEditType::LRTB;
-			}
-			else
-			{
-				return PropertyEditType::Text;
-			}
+			return PropertyEditTypeOf<T>();
 		}
 
 		[[nodiscard]]
@@ -168,6 +211,30 @@ namespace noco
 			{
 				throw Error{ U"enumCandidates() called for non-enum property" };
 			}
+		}
+
+		[[nodiscard]]
+		bool isInteractiveProperty() const override
+		{
+			return true;
+		}
+
+		[[nodiscard]]
+		bool isSmoothProperty() const override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		double smoothTime() const override
+		{
+			return m_propertyValue.smoothTime;
+		}
+
+		bool trySetSmoothTime(double smoothTime) override
+		{
+			m_propertyValue.smoothTime = smoothTime;
+			return true;
 		}
 	};
 
@@ -254,9 +321,37 @@ namespace noco
 			return m_propertyValue.getValueString();
 		}
 
+		[[nodiscard]]
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.getValueStringOf(interactState, selected);
+		}
+
+		[[nodiscard]]
+		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.getValueStringOfFallback(interactState, selected);
+		}
+
 		bool trySetPropertyValueString(StringView value) override
 		{
 			return m_propertyValue.trySetValueString(value);
+		}
+
+		bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.trySetValueStringOf(value, interactState, selected);
+		}
+
+		bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) override
+		{
+			return m_propertyValue.tryUnsetValueOf(interactState, selected);
+		}
+
+		[[nodiscard]]
+		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		{
+			return m_propertyValue.hasValueOf(interactState, selected);
 		}
 
 		[[nodiscard]]
@@ -285,10 +380,34 @@ namespace noco
 		{
 			throw Error{ U"enumCandidates() called for non-enum property" };
 		}
+
+		[[nodiscard]]
+		bool isInteractiveProperty() const override
+		{
+			return true;
+		}
+
+		[[nodiscard]]
+		bool isSmoothProperty() const override
+		{
+			return true;
+		}
+
+		[[nodiscard]]
+		double smoothTime() const override
+		{
+			return m_propertyValue.smoothTime;
+		}
+
+		bool trySetSmoothTime(double smoothTime) override
+		{
+			m_propertyValue.smoothTime = smoothTime;
+			return true;
+		}
 	};
 
 	template <class T>
-	class PropertyNoInteract : public IProperty
+	class PropertyNonInteractive : public IProperty
 	{
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
@@ -298,13 +417,13 @@ namespace noco
 
 	public:
 		template <class U>
-		PropertyNoInteract(const char32_t* name, const U& value) requires std::convertible_to<U, T>
+		PropertyNonInteractive(const char32_t* name, const U& value) requires std::convertible_to<U, T>
 			: m_name{ name }
 			, m_value{ value }
 		{
 		}
 
-		PropertyNoInteract(const char32_t* name, StringView value) requires std::same_as<T, String>
+		PropertyNonInteractive(const char32_t* name, StringView value) requires std::same_as<T, String>
 			: m_name{ name }
 			, m_value{ String{ value } }
 		{
@@ -349,7 +468,7 @@ namespace noco
 				return;
 			}
 
-			// Propertyが後からPropertyNoInteractに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
+			// Propertyが後からPropertyNonInteractiveに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
 			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue;
 		}
 
@@ -366,6 +485,25 @@ namespace noco
 			}
 		}
 
+		[[nodiscard]]
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		{
+			if (interactState == InteractState::Default && selected == SelectedYN::No)
+			{
+				return propertyValueString();
+			}
+			else
+			{
+				return none;
+			}
+		}
+
+		[[nodiscard]]
+		String propertyValueStringOfFallback(InteractState, SelectedYN) override
+		{
+			return propertyValueString();
+		}
+
 		bool trySetPropertyValueString(StringView value) override
 		{
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
@@ -375,6 +513,29 @@ namespace noco
 			}
 			m_value = *parsedValue;
 			return true;
+		}
+
+		bool trySetPropertyValueStringOf(StringView, InteractState, SelectedYN) override
+		{
+			throw Error{ U"trySetPropertyValueStringOf() called for non-interactive property" };
+		}
+
+		bool tryUnsetPropertyValueOf(InteractState, SelectedYN) override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		{
+			if (interactState == InteractState::Default && selected == SelectedYN::No)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		[[nodiscard]]
@@ -417,6 +578,29 @@ namespace noco
 			{
 				throw Error{ U"enumCandidates() called for non-enum property" };
 			}
+		}
+
+		[[nodiscard]]
+		bool isInteractiveProperty() const override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		bool isSmoothProperty() const override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		double smoothTime() const override
+		{
+			return 0.0;
+		}
+
+		bool trySetSmoothTime(double) override
+		{
+			return false;
 		}
 	};
 }

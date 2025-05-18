@@ -5,6 +5,7 @@ using namespace noco;
 
 using CheckedYN = YesNo<struct CheckedYN_tag>;
 using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
+using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -293,19 +294,21 @@ private:
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	Array<MenuElement> m_menuElements;
 	std::function<void()> m_fnBeforeOpen;
+	RecursiveYN m_recursive;
 
 public:
-	explicit ContextMenuOpener(const std::shared_ptr<ContextMenu>& contextMenu, Array<MenuElement> menuElements, std::function<void()> fnBeforeOpen = nullptr)
+	explicit ContextMenuOpener(const std::shared_ptr<ContextMenu>& contextMenu, Array<MenuElement> menuElements, std::function<void()> fnBeforeOpen = nullptr, RecursiveYN recursive = RecursiveYN::No)
 		: ComponentBase{ {} }
 		, m_contextMenu{ contextMenu }
 		, m_menuElements{ std::move(menuElements) }
 		, m_fnBeforeOpen{ std::move(fnBeforeOpen) }
+		, m_recursive{ recursive }
 	{
 	}
 
 	void update(CanvasUpdateContext*, const std::shared_ptr<Node>& node) override
 	{
-		if (node->isRightClicked())
+		if (m_recursive ? node->isRightClickedRecursive() : node->isRightClicked())
 		{
 			if (m_fnBeforeOpen)
 			{
@@ -1581,6 +1584,271 @@ public:
 	}
 };
 
+std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
+{
+	auto buttonNode = Node::Create(
+		U"Button",
+		constraint,
+		IsHitTargetYN::Yes);
+	buttonNode->setLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
+	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>&) { if (onClick) onClick(); });
+	const auto labelNode = buttonNode->emplaceChild(
+		U"ButtonLabel",
+		BoxConstraint
+		{
+			.sizeRatio = Vec2{ 1, 1 },
+			.margin = LRTB{ 0, 0, 0, 0 },
+		},
+		IsHitTargetYN::No);
+	labelNode->emplaceComponent<Label>(
+		text,
+		U"Font14",
+		14,
+		Palette::White,
+		HorizontalAlign::Center,
+		VerticalAlign::Middle);
+	return buttonNode;
+}
+
+class IDialog
+{
+public:
+	virtual ~IDialog() = default;
+
+	virtual double dialogWidth() const = 0;
+
+	virtual Array<String> buttonTexts() const = 0;
+
+	virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) = 0;
+
+	virtual void onResult(StringView resultButtonText) = 0;
+};
+
+class DialogFrame
+{
+private:
+	std::shared_ptr<Canvas> m_dialogCanvas;
+	std::shared_ptr<Node> m_screenMaskNode;
+	std::shared_ptr<Node> m_dialogNode;
+	std::shared_ptr<Node> m_contentRootNode;
+	std::shared_ptr<Node> m_buttonRootNode;
+	std::function<void(StringView)> m_onResult;
+
+public:
+	explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, double dialogWidth, const std::function<void(StringView)>& onResult, const Array<String>& buttons)
+		: m_dialogCanvas(dialogCanvas)
+		, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
+			U"Dialog_ScreenMask",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::BottomRight,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ 0, 0 },
+				.sizeDeltaPivot = Anchor::TopLeft,
+			}))
+			, m_dialogNode(m_screenMaskNode->emplaceChild(
+				U"Dialog",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ dialogWidth, 0 },
+					.margin = LRTB{ 0, 0, 0, 0 },
+				}))
+				, m_contentRootNode(m_dialogNode->emplaceChild(
+					U"Dialog_ContentRoot",
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.margin = LRTB{ 0, 0, 0, 0 },
+					}))
+					, m_buttonRootNode(m_dialogNode->emplaceChild(
+						U"Dialog_ButtonRoot",
+						BoxConstraint
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.margin = LRTB{ 0, 0, 0, 0 },
+						}))
+						, m_onResult(onResult)
+	{
+		// ダイアログ背面を暗くする
+		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
+		m_screenMaskNode->setLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
+
+		m_dialogNode->setLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
+		m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
+
+		const auto buttonParentNode = m_dialogNode->emplaceChild(
+			U"Dialog_ButtonParent",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 8, 0 },
+			});
+		buttonParentNode->setLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
+		for (const auto& button : buttons)
+		{
+			buttonParentNode->addChild(
+				CreateDialogButtonNode(
+					button,
+					BoxConstraint
+					{
+						.sizeDelta = Vec2{ 100, 24 },
+						.margin = LRTB{ 4, 4, 0, 0 },
+					},
+					[this, button]()
+					{
+						m_screenMaskNode->removeFromParent();
+						if (m_onResult)
+						{
+							m_onResult(button);
+						}
+					}),
+				RefreshesLayoutYN::No);
+		}
+		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+		m_dialogCanvas->refreshLayout();
+	}
+
+	virtual ~DialogFrame() = default;
+
+	std::shared_ptr<Node> contentRootNode() const
+	{
+		return m_contentRootNode;
+	}
+
+	void refreshLayoutForContent()
+	{
+		m_contentRootNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogCanvas->refreshLayout();
+	}
+};
+
+class DialogOpener
+{
+private:
+	size_t m_nextDialogId = 1;
+	std::shared_ptr<Canvas> m_dialogCanvas;
+	std::shared_ptr<ContextMenu> m_dialogContextMenu;
+	HashTable<size_t, std::shared_ptr<DialogFrame>> m_openedDialogFrames;
+
+public:
+	explicit DialogOpener(const std::shared_ptr<Canvas>& dialogCanvas, const std::shared_ptr<ContextMenu>& dialogContextMenu)
+		: m_dialogCanvas(dialogCanvas)
+		, m_dialogContextMenu(dialogContextMenu)
+	{
+	}
+
+	void openDialog(const std::shared_ptr<IDialog>& dialog)
+	{
+		auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogWidth(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonTexts());
+		dialog->createDialogContent(dialogFrame->contentRootNode(), m_dialogContextMenu);
+		dialogFrame->refreshLayoutForContent();
+		m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
+		++m_nextDialogId;
+	}
+};
+
+class SimpleDialog : public IDialog
+{
+private:
+	String m_text;
+	std::function<void(StringView)> m_onResult;
+	Array<String> m_buttonTexts;
+
+public:
+	SimpleDialog(StringView text, const std::function<void(StringView)>& onResult, const Array<String>& buttonTexts)
+		: m_text(text)
+		, m_onResult(onResult)
+		, m_buttonTexts(buttonTexts)
+	{
+	}
+
+	double dialogWidth() const override
+	{
+		return 400;
+	}
+
+	Array<String> buttonTexts() const override
+	{
+		return m_buttonTexts;
+	}
+
+	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
+	{
+		const auto labelNode = contentRootNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = SizeF{ 0, 48 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			});
+		labelNode->emplaceComponent<Label>(
+			m_text,
+			U"Font14",
+			14,
+			Palette::White,
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+	}
+
+	void onResult(StringView resultButtonText) override
+	{
+		if (m_onResult)
+		{
+			m_onResult(resultButtonText);
+		}
+	}
+};
+
+class InteractivePropertyValueDialog : public IDialog
+{
+private:
+	IProperty* m_pProperty;
+	Array<String> m_buttonTexts;
+	std::function<void()> m_onChange;
+
+public:
+	InteractivePropertyValueDialog(IProperty* pProperty, std::function<void()> onChange)
+		: m_pProperty(pProperty)
+		, m_onChange(std::move(onChange))
+	{
+		if (!m_pProperty)
+		{
+			throw Error{ U"Property is nullptr" };
+		}
+		if (!m_pProperty->isInteractiveProperty())
+		{
+			throw Error{ U"Property is not interactive" };
+		}
+	}
+
+	double dialogWidth() const override
+	{
+		return m_pProperty->editType() == PropertyEditType::LRTB ? 640 : 500;
+	}
+
+	Array<String> buttonTexts() const override
+	{
+		return { U"OK" };
+	}
+
+	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override;
+
+	void onResult(StringView) override
+	{
+		if (m_onChange)
+		{
+			m_onChange();
+		}
+	}
+};
+
 class Inspector
 {
 private:
@@ -1590,6 +1858,7 @@ private:
 	std::shared_ptr<Node> m_inspectorInnerFrameNode;
 	std::shared_ptr<Node> m_inspectorRootNode;
 	std::shared_ptr<ContextMenu> m_contextMenu;
+	std::shared_ptr<DialogOpener> m_dialogOpener;
 	std::weak_ptr<Node> m_targetNode;
 	std::function<void()> m_onChangeNodeName;
 
@@ -1606,7 +1875,7 @@ private:
 	}
 
 public:
-	Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, std::function<void()> onChangeNodeName)
+	Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
 		: m_canvas(canvas)
 		, m_editorCanvas(editorCanvas)
 		, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
@@ -1643,6 +1912,7 @@ public:
 			},
 			IsHitTargetYN::Yes))
 		, m_contextMenu(contextMenu)
+		, m_dialogOpener(dialogOpener)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
@@ -1660,9 +1930,15 @@ public:
 		m_inspectorRootNode->setVerticalScrollable(true);
 	}
 
-	void refreshInspector()
+	void refreshInspector(PreserveScrollYN preserveScroll = PreserveScrollYN::Yes)
 	{
+		const double scrollY = m_inspectorRootNode->scrollOffset().y;
 		setTargetNode(m_targetNode.lock());
+		if (preserveScroll)
+		{
+			m_inspectorRootNode->resetScrollOffset(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+			m_inspectorRootNode->scroll(Vec2{ 0, scrollY }, RefreshesLayoutYN::No);
+		}
 		m_editorCanvas->refreshLayout();
 	}
 
@@ -1820,7 +2096,7 @@ public:
 				.sizeDelta = Vec2{ -16, 26 },
 				.sizeDeltaPivot = Anchor::MiddleCenter,
 			});
-		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
@@ -1865,7 +2141,7 @@ public:
 				.sizeDelta = Vec2{ 0, 26 },
 				.flexibleWeight = 1,
 			});
-		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
@@ -1932,7 +2208,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
@@ -1946,7 +2222,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
@@ -2063,7 +2339,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
@@ -2077,7 +2353,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
@@ -2091,7 +2367,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
@@ -2105,7 +2381,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
@@ -2245,7 +2521,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 6 },
 			});
-		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
@@ -2259,7 +2535,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 6 },
 			});
-		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
@@ -2314,7 +2590,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 0, 2, 0, 0 },
 			});
-		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
@@ -2328,7 +2604,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
@@ -2395,7 +2671,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> CreateColorPropertyNode(
+	static std::shared_ptr<Node> CreateColorPropertyNode(
 		StringView name,
 		const ColorF& currentValue,
 		std::function<void(const ColorF&)> fnSetValue)
@@ -2500,7 +2776,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
@@ -2514,7 +2790,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
@@ -2528,7 +2804,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 2, 0, 0 },
 			});
-		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
@@ -2542,7 +2818,7 @@ public:
 				.flexibleWeight = 1,
 				.margin = LRTB{ 2, 0, 0, 0 },
 			});
-		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
@@ -2656,7 +2932,7 @@ public:
 				.sizeDelta = Vec2{ 0, 26 },
 				.flexibleWeight = 1,
 			});
-		comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+		comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
 
 		const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
 			currentValue,
@@ -2751,7 +3027,7 @@ public:
 			},
 			useParentHoverState ? IsHitTargetYN::No : IsHitTargetYN::Yes);
 
-		checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 
 		const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 			initialValue ? U"✓" : U"",
@@ -3520,20 +3796,16 @@ public:
 
 		transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }));
 
-		const auto fnAddChild =
-			[&transformEffectNode](StringView name, const SmoothProperty<double>& currentValue, auto fnSetValue)
-			{
-				transformEffectNode->addChild(CreatePropertyNode(name, currentValue.propertyValueString(), [fnSetValue](StringView value) { fnSetValue(ParseOr<double>(value, 0.0)); }));
-			};
 		const auto fnAddVec2Child =
-			[&transformEffectNode](StringView name, const SmoothProperty<Vec2>& currentValue, auto fnSetValue)
+			[this, &transformEffectNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 			{
-				// TODO: hovered/pressed/selectedの値を入出力可能にする
-				transformEffectNode->addChild(CreateVec2PropertyNode(name, currentValue.propertyValue().defaultValue, fnSetValue));
+				const auto propertyNode = transformEffectNode->addChild(CreateVec2PropertyNode(name, pProperty->propertyValue().defaultValue, fnSetValue));
+				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
-		fnAddVec2Child(U"position", pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
-		fnAddVec2Child(U"scale", pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
-		fnAddVec2Child(U"pivot", pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
+		// Note: アクセサからポインタを取得しているので注意が必要
+		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
+		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
+		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 
@@ -3565,45 +3837,47 @@ public:
 
 		for (const auto& property : component->properties())
 		{
-			switch (property->editType())
+			const PropertyEditType editType = property->editType();
+			std::shared_ptr<Node> propertyNode;
+			switch (editType)
 			{
 			case PropertyEditType::Text:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreatePropertyNode(
 						property->name(),
 						property->propertyValueString(),
 						[property](StringView value) { property->trySetPropertyValueString(value); }));
 				break;
 			case PropertyEditType::Bool:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreateBoolPropertyNode(
 						property->name(),
 						ParseOr<bool>(property->propertyValueString(), false),
 						[property](bool value) { property->trySetPropertyValueString(Format(value)); }));
 				break;
 			case PropertyEditType::Vec2:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreateVec2PropertyNode(
 						property->name(),
 						ParseOr<Vec2>(property->propertyValueString(), Vec2{ 0, 0 }),
 						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); }));
 				break;
 			case PropertyEditType::Color:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreateColorPropertyNode(
 						property->name(),
 						ParseOr<ColorF>(property->propertyValueString(), ColorF{ 0, 0, 0, 1 }),
 						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); }));
 				break;
 			case PropertyEditType::LRTB:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreateLRTBPropertyNode(
 						property->name(),
 						ParseOr<LRTB>(property->propertyValueString(), LRTB{ 0, 0, 0, 0 }),
 						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); }));
 				break;
 			case PropertyEditType::Enum:
-				componentNode->addChild(
+				propertyNode = componentNode->addChild(
 					CreateEnumPropertyNode(
 						property->name(),
 						property->propertyValueString(),
@@ -3611,6 +3885,22 @@ public:
 						m_contextMenu,
 						property->enumCandidates()));
 				break;
+			}
+			if (!propertyNode)
+			{
+				throw Error{ U"Failed to create property node" };
+			}
+
+			if (property->isInteractiveProperty())
+			{
+				propertyNode->emplaceComponent<ContextMenuOpener>(
+					m_contextMenu,
+					Array<MenuElement>
+					{
+						MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); })); } },
+					},
+					nullptr,
+					RecursiveYN::Yes);
 			}
 		}
 
@@ -3635,225 +3925,217 @@ public:
 	}
 };
 
-std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
+void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu)
 {
-	auto buttonNode = Node::Create(
-		U"Button",
-		constraint,
-		IsHitTargetYN::Yes);
-	buttonNode->setLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
-	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
-	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>&) { if (onClick) onClick(); });
-	const auto labelNode = buttonNode->emplaceChild(
-		U"ButtonLabel",
+	if (!m_pProperty)
+	{
+		throw Error{ U"Property is nullptr" };
+	}
+
+	const auto labelNode = contentRootNode->emplaceChild(
+		U"Label",
 		BoxConstraint
 		{
-			.sizeRatio = Vec2{ 1, 1 },
-			.margin = LRTB{ 0, 0, 0, 0 },
-		},
-		IsHitTargetYN::No);
+			.sizeRatio = Vec2{ 1, 0 },
+			.sizeDelta = SizeF{ 0, 36 },
+			.margin = LRTB{ 0, 0, 0, 8 },
+		});
 	labelNode->emplaceComponent<Label>(
-		text,
+		m_pProperty->name(),
 		U"Font14",
 		14,
 		Palette::White,
 		HorizontalAlign::Center,
 		VerticalAlign::Middle);
-	return buttonNode;
-}
 
-class IDialog
-{
-public:
-	virtual ~IDialog() = default;
-
-	virtual SizeF dialogSize() = 0;
-
-	virtual Array<String> buttonTexts() = 0;
-
-	virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode) = 0;
-
-	virtual void onResult(StringView resultButtonText) = 0;
-};
-
-class DialogFrame
-{
-private:
-	std::shared_ptr<Canvas> m_dialogCanvas;
-	std::shared_ptr<Node> m_screenMaskNode;
-	std::shared_ptr<Node> m_dialogNode;
-	std::shared_ptr<Node> m_contentRootNode;
-	std::shared_ptr<Node> m_buttonRootNode;
-	std::function<void(StringView)> m_onResult;
-
-public:
-	explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, const SizeF& dialogSize, const std::function<void(StringView)>& onResult, const Array<String>& buttons)
-		: m_dialogCanvas(dialogCanvas)
-		, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
-			U"Dialog_ScreenMask",
-			AnchorConstraint
-			{
-				.anchorMin = Anchor::TopLeft,
-				.anchorMax = Anchor::BottomRight,
-				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ 0, 0 },
-				.sizeDeltaPivot = Anchor::TopLeft,
-			}))
-		, m_dialogNode(m_screenMaskNode->emplaceChild(
-			U"Dialog",
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 0, 0 },
-				.sizeDelta = dialogSize,
-				.margin = LRTB{ 0, 0, 0, 0 },
-			}))
-		, m_contentRootNode(m_dialogNode->emplaceChild(
-			U"Dialog_ContentRoot",
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 1, 0 },
-				.margin = LRTB{ 0, 0, 0, 0 },
-			}))
-		, m_buttonRootNode(m_dialogNode->emplaceChild(
-			U"Dialog_ButtonRoot",
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 1, 0 },
-				.margin = LRTB{ 0, 0, 0, 0 },
-			}))
-		, m_onResult(onResult)
+	for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
 	{
-		// ダイアログ背面を暗くする
-		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
-		m_screenMaskNode->setLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
-
-		m_dialogNode->setLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
-		m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
-
-		const auto buttonParentNode = m_dialogNode->emplaceChild(
-			U"Dialog_ButtonParent",
-			BoxConstraint
-			{
-				.sizeRatio = Vec2{ 1, 0 },
-				.margin = LRTB{ 0, 0, 8, 0 },
-			});
-		buttonParentNode->setLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
-		for (const auto& button : buttons)
+		for (const auto interactState : { InteractState::Default, InteractState::Hovered, InteractState::Pressed, InteractState::Disabled })
 		{
-			buttonParentNode->addChild(
-				CreateDialogButtonNode(
-					button,
-					BoxConstraint
-					{
-						.sizeDelta = Vec2{ 100, 20 },
-						.margin = LRTB{ 4, 4, 0, 0 },
-					},
-					[this, button]()
-					{
-						m_screenMaskNode->removeFromParent();
-						if (m_onResult)
+			const String headingText = EnumToString(interactState) + (selected.yesNo ? U" & Selected" : U"");
+
+			const auto propertyNode = contentRootNode->emplaceChild(
+				U"Property",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ -20, 0 },
+					.margin = LRTB{ 0, 0, 0, 8 },
+				});
+			propertyNode->emplaceChild(
+				U"Spacing",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = SizeF{ 8, 0 },
+				});
+			propertyNode->setLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
+			std::shared_ptr<Node> propertyValueNode;
+			switch (m_pProperty->editType())
+			{
+			case PropertyEditType::Text:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreatePropertyNode(
+						headingText,
+						m_pProperty->propertyValueStringOfFallback(interactState, selected),
+						[this, interactState, selected](StringView value)
 						{
-							m_onResult(button);
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactState, selected))
+							{
+								if (m_onChange)
+								{
+									m_onChange();
+								}
+							}
+						}),
+					RefreshesLayoutYN::No);
+				break;
+			case PropertyEditType::Bool:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreateBoolPropertyNode(
+						headingText,
+						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactState, selected), false),
+						[this, interactState, selected](bool value)
+						{
+							if (m_pProperty->trySetPropertyValueStringOf(Format(value), interactState, selected))
+							{
+								if (m_onChange)
+								{
+									m_onChange();
+								}
+							}
+						}),
+					RefreshesLayoutYN::No);
+				break;
+			case PropertyEditType::Vec2:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreateVec2PropertyNode(
+						headingText,
+						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactState, selected), Vec2{ 0, 0 }),
+						[this, interactState, selected](const Vec2& value)
+						{
+							if (m_pProperty->trySetPropertyValueStringOf(Format(value), interactState, selected))
+							{
+								if (m_onChange) m_onChange();
+							}
+						}),
+					RefreshesLayoutYN::No);
+				break;
+			case PropertyEditType::Color:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreateColorPropertyNode(
+						headingText,
+						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactState, selected), ColorF{ 0, 0, 0, 1 }),
+						[this, interactState, selected](const ColorF& value)
+						{
+							if (m_pProperty->trySetPropertyValueStringOf(Format(value), interactState, selected))
+							{
+								if (m_onChange)
+								{
+									m_onChange();
+								}
+							}
+						}),
+					RefreshesLayoutYN::No);
+				break;
+			case PropertyEditType::LRTB:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreateLRTBPropertyNode(
+						headingText,
+						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactState, selected), LRTB{ 0, 0, 0, 0 }),
+						[this, interactState, selected](const LRTB& value)
+						{
+							if (m_pProperty->trySetPropertyValueStringOf(Format(value), interactState, selected))
+							{
+								if (m_onChange)
+								{
+									m_onChange();
+								}
+							}
+						}),
+					RefreshesLayoutYN::No);
+				break;
+			case PropertyEditType::Enum:
+				propertyValueNode = propertyNode->addChild(
+					Inspector::CreateEnumPropertyNode(
+						headingText,
+						m_pProperty->propertyValueStringOfFallback(interactState, selected),
+						[this, interactState, selected](StringView value)
+						{
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactState, selected))
+							{
+								if (m_onChange)
+								{
+									m_onChange();
+								}
+							}
+						},
+						dialogContextMenu,
+						m_pProperty->enumCandidates()),
+					RefreshesLayoutYN::No);
+				break;
+			}
+			if (!propertyValueNode)
+			{
+				throw Error{ U"Property value node is nullptr" };
+			}
+			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
+				m_pProperty->hasPropertyValueOf(interactState, selected),
+				[this, interactState, selected, propertyValueNode](bool value)
+				{
+					if (value)
+					{
+						if (m_pProperty->trySetPropertyValueStringOf(m_pProperty->propertyValueStringOfFallback(interactState, selected), interactState, selected))
+						{
+							propertyValueNode->setInteractable(true);
+							if (m_onChange)
+							{
+								m_onChange();
+							}
 						}
-					}),
+					}
+					else
+					{
+						if (m_pProperty->tryUnsetPropertyValueOf(interactState, selected))
+						{
+							propertyValueNode->setInteractable(false);
+							if (m_onChange)
+							{
+								m_onChange();
+							}
+						}
+					}
+				}),
+				0,
 				RefreshesLayoutYN::No);
+			checkboxNode->setInteractable(interactState != InteractState::Default || selected.yesNo); // Defaultは必ず存在するのでチェックボックスは無効
+			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactState, selected));
+			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		}
-		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-
-		m_dialogCanvas->refreshLayout();
 	}
 
-	virtual ~DialogFrame() = default;
-
-	std::shared_ptr<Node> contentRootNode() const
+	// SmoothPropertyの場合はsmoothTimeの項目を追加
+	if (m_pProperty->isSmoothProperty())
 	{
-		return m_contentRootNode;
-	}
-
-	void refreshLayoutForContent()
-	{
-		m_contentRootNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-		m_dialogCanvas->refreshLayout();
-	}
-};
-
-class DialogOpener
-{
-private:
-	size_t m_nextDialogId = 1;
-	std::shared_ptr<Canvas> m_dialogCanvas;
-	HashTable<size_t, std::shared_ptr<DialogFrame>> m_openedDialogFrames;
-
-public:
-	explicit DialogOpener(const std::shared_ptr<Canvas>& dialogCanvas)
-		: m_dialogCanvas(dialogCanvas)
-	{
-	}
-
-	void openDialog(const std::shared_ptr<IDialog>& dialog)
-	{
-		auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogSize(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonTexts());
-		dialog->createDialogContent(dialogFrame->contentRootNode());
-		dialogFrame->refreshLayoutForContent();
-		m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
-		++m_nextDialogId;
-	}
-};
-
-class SimpleDialog : public IDialog
-{
-private:
-	String m_text;
-	std::function<void(StringView)> m_onResult;
-	Array<String> m_buttonTexts;
-
-public:
-	SimpleDialog(StringView text, const std::function<void(StringView)>& onResult, const Array<String>& buttonTexts)
-		: m_text(text)
-		, m_onResult(onResult)
-		, m_buttonTexts(buttonTexts)
-	{
-	}
-
-	SizeF dialogSize() override
-	{
-		return SizeF{ 400, 200 };
-	}
-
-	Array<String> buttonTexts() override
-	{
-		return m_buttonTexts;
-	}
-
-	void createDialogContent(const std::shared_ptr<Node>& contentRootNode) override
-	{
-		const auto labelNode = contentRootNode->emplaceChild(
-			U"Label",
+		const auto propertyNode = contentRootNode->emplaceChild(
+			U"Property",
 			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 1, 0 },
-				.sizeDelta = SizeF{ 0, 48 },
-				.margin = LRTB{ 0, 0, 0, 0 },
+				.sizeDelta = SizeF{ 0, 0 },
+				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		labelNode->emplaceComponent<Label>(
-			m_text,
-			U"Font14",
-			14,
-			Palette::White,
-			HorizontalAlign::Center,
-			VerticalAlign::Middle);
+		propertyNode->addChild(
+			Inspector::CreatePropertyNode(
+				U"smoothTime [sec]",
+				Format(m_pProperty->smoothTime()),
+				[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }),
+			RefreshesLayoutYN::No);
+		propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 	}
 
-	void onResult(StringView resultButtonText) override
-	{
-		if (m_onResult)
-		{
-			m_onResult(resultButtonText);
-		}
-	}
-};
+	contentRootNode->refreshContainedCanvasLayout();
+}
 
 class Editor
 {
@@ -3863,6 +4145,8 @@ private:
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	std::shared_ptr<Canvas> m_dialogCanvas;
+	std::shared_ptr<Canvas> m_dialogOverlayCanvas;
+	std::shared_ptr<ContextMenu> m_dialogContextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
@@ -3881,9 +4165,11 @@ public:
 		, m_editorOverlayCanvas(Canvas::Create())
 		, m_contextMenu(std::make_shared<ContextMenu>(m_editorOverlayCanvas, U"EditorContextMenu"))
 		, m_dialogCanvas(Canvas::Create())
-		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas))
+		, m_dialogOverlayCanvas(Canvas::Create())
+		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
+		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu)
-		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, [this] { m_hierarchy.refreshNodeNames(); })
+		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_prevSceneSize(Scene::Size())
 	{
@@ -3920,9 +4206,12 @@ public:
 			});
 	}
 
+	Property<ColorF> m_testProperty{ U"TestProperty", ColorF{} };
+
 	void update()
 	{
 		CanvasUpdateContext context{};
+		m_dialogOverlayCanvas->update(&context);
 		m_dialogCanvas->update(&context);
 		m_editorOverlayCanvas->update(&context);
 		m_editorCanvas->update(&context);
@@ -3946,6 +4235,7 @@ public:
 			}
 		}
 
+		m_dialogContextMenu->update();
 		m_contextMenu->update();
 		m_menuBar.update();
 		m_hierarchy.update();
@@ -4068,6 +4358,7 @@ public:
 		m_editorCanvas->draw();
 		m_editorOverlayCanvas->draw();
 		m_dialogCanvas->draw();
+		m_dialogOverlayCanvas->draw();
 	}
 
 	const std::shared_ptr<Canvas>& canvas() const
@@ -4090,6 +4381,8 @@ public:
 		m_editorCanvas->refreshLayout();
 		m_editorOverlayCanvas->refreshLayout();
 		m_canvas->refreshLayout();
+		m_dialogCanvas->refreshLayout();
+		m_dialogOverlayCanvas->refreshLayout();
 	}
 
 	void refresh()

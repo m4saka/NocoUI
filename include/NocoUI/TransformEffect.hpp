@@ -31,6 +31,12 @@ namespace noco
 			return m_position;
 		}
 
+		[[nodiscard]]
+		SmoothProperty<Vec2>& position()
+		{
+			return m_position;
+		}
+
 		void setPosition(const PropertyValue<Vec2>& position)
 		{
 			m_position.setPropertyValue(position);
@@ -42,6 +48,12 @@ namespace noco
 			return m_scale;
 		}
 
+		[[nodiscard]]
+		SmoothProperty<Vec2>& scale()
+		{
+			return m_scale;
+		}
+
 		void setScale(const PropertyValue<Vec2>& scale)
 		{
 			m_scale.setPropertyValue(scale);
@@ -49,6 +61,12 @@ namespace noco
 
 		[[nodiscard]]
 		const SmoothProperty<Vec2>& pivot() const
+		{
+			return m_pivot;
+		}
+
+		[[nodiscard]]
+		SmoothProperty<Vec2>& pivot()
 		{
 			return m_pivot;
 		}

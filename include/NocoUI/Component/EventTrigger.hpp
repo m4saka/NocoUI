@@ -9,9 +9,9 @@ namespace noco
 	class EventTrigger : public SerializableComponentBase
 	{
 	private:
-		PropertyNoInteract<String> m_tag;
-		PropertyNoInteract<EventType> m_eventType;
-		PropertyNoInteract<bool> m_isRecursive;
+		PropertyNonInteractive<String> m_tag;
+		PropertyNonInteractive<EventType> m_eventType;
+		PropertyNonInteractive<bool> m_isRecursive;
 
 		// Hoveredのみ初期値はfalseとする
 		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他typeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)

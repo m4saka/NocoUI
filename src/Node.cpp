@@ -1103,6 +1103,11 @@ namespace noco
 		}
 	}
 
+	Vec2 Node::scrollOffset() const
+	{
+		return m_scrollOffset;
+	}
+
 	void Node::resetScrollOffset(RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
 		if (refreshesLayoutPre)

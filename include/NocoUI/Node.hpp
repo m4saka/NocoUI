@@ -233,6 +233,8 @@ namespace noco
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
+		Vec2 scrollOffset() const;
+
 		void resetScrollOffset(RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
