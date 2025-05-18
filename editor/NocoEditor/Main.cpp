@@ -85,7 +85,7 @@ public:
 		m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
 		m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
-		editorOverlayCanvas->refreshLayout();
+		m_editorOverlayCanvas->refreshLayout();
 	}
 
 	void show(const Vec2& pos, const Array<MenuElement>& elements, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
@@ -3635,6 +3635,226 @@ public:
 	}
 };
 
+std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
+{
+	auto buttonNode = Node::Create(
+		U"Button",
+		constraint,
+		IsHitTargetYN::Yes);
+	buttonNode->setLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
+	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.5, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>&) { if (onClick) onClick(); });
+	const auto labelNode = buttonNode->emplaceChild(
+		U"ButtonLabel",
+		BoxConstraint
+		{
+			.sizeRatio = Vec2{ 1, 1 },
+			.margin = LRTB{ 0, 0, 0, 0 },
+		},
+		IsHitTargetYN::No);
+	labelNode->emplaceComponent<Label>(
+		text,
+		U"Font14",
+		14,
+		Palette::White,
+		HorizontalAlign::Center,
+		VerticalAlign::Middle);
+	return buttonNode;
+}
+
+class IDialog
+{
+public:
+	virtual ~IDialog() = default;
+
+	virtual SizeF dialogSize() = 0;
+
+	virtual Array<String> buttonTexts() = 0;
+
+	virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode) = 0;
+
+	virtual void onResult(StringView resultButtonText) = 0;
+};
+
+class DialogFrame
+{
+private:
+	std::shared_ptr<Canvas> m_dialogCanvas;
+	std::shared_ptr<Node> m_screenMaskNode;
+	std::shared_ptr<Node> m_dialogNode;
+	std::shared_ptr<Node> m_contentRootNode;
+	std::shared_ptr<Node> m_buttonRootNode;
+	std::function<void(StringView)> m_onResult;
+
+public:
+	explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, const SizeF& dialogSize, const std::function<void(StringView)>& onResult, const Array<String>& buttons)
+		: m_dialogCanvas(dialogCanvas)
+		, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
+			U"Dialog_ScreenMask",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::BottomRight,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ 0, 0 },
+				.sizeDeltaPivot = Anchor::TopLeft,
+			}))
+		, m_dialogNode(m_screenMaskNode->emplaceChild(
+			U"Dialog",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 0 },
+				.sizeDelta = dialogSize,
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_contentRootNode(m_dialogNode->emplaceChild(
+			U"Dialog_ContentRoot",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_buttonRootNode(m_dialogNode->emplaceChild(
+			U"Dialog_ButtonRoot",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_onResult(onResult)
+	{
+		// ダイアログ背面を暗くする
+		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
+		m_screenMaskNode->setLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
+
+		m_dialogNode->setLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
+		m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
+
+		const auto buttonParentNode = m_dialogNode->emplaceChild(
+			U"Dialog_ButtonParent",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 8, 0 },
+			});
+		buttonParentNode->setLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
+		for (const auto& button : buttons)
+		{
+			buttonParentNode->addChild(
+				CreateDialogButtonNode(
+					button,
+					BoxConstraint
+					{
+						.sizeDelta = Vec2{ 100, 20 },
+						.margin = LRTB{ 4, 4, 0, 0 },
+					},
+					[this, button]()
+					{
+						m_screenMaskNode->removeFromParent();
+						if (m_onResult)
+						{
+							m_onResult(button);
+						}
+					}),
+				RefreshesLayoutYN::No);
+		}
+		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+		m_dialogCanvas->refreshLayout();
+	}
+
+	virtual ~DialogFrame() = default;
+
+	std::shared_ptr<Node> contentRootNode() const
+	{
+		return m_contentRootNode;
+	}
+
+	void refreshLayoutForContent()
+	{
+		m_contentRootNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		m_dialogCanvas->refreshLayout();
+	}
+};
+
+class DialogOpener
+{
+private:
+	size_t m_nextDialogId = 1;
+	std::shared_ptr<Canvas> m_dialogCanvas;
+	HashTable<size_t, std::shared_ptr<DialogFrame>> m_openedDialogFrames;
+
+public:
+	explicit DialogOpener(const std::shared_ptr<Canvas>& dialogCanvas)
+		: m_dialogCanvas(dialogCanvas)
+	{
+	}
+
+	void openDialog(const std::shared_ptr<IDialog>& dialog)
+	{
+		auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogSize(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonTexts());
+		dialog->createDialogContent(dialogFrame->contentRootNode());
+		dialogFrame->refreshLayoutForContent();
+		m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
+		++m_nextDialogId;
+	}
+};
+
+class SimpleDialog : public IDialog
+{
+private:
+	String m_text;
+	std::function<void(StringView)> m_onResult;
+	Array<String> m_buttonTexts;
+
+public:
+	SimpleDialog(StringView text, const std::function<void(StringView)>& onResult, const Array<String>& buttonTexts)
+		: m_text(text)
+		, m_onResult(onResult)
+		, m_buttonTexts(buttonTexts)
+	{
+	}
+
+	SizeF dialogSize() override
+	{
+		return SizeF{ 400, 200 };
+	}
+
+	Array<String> buttonTexts() override
+	{
+		return m_buttonTexts;
+	}
+
+	void createDialogContent(const std::shared_ptr<Node>& contentRootNode) override
+	{
+		const auto labelNode = contentRootNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = SizeF{ 0, 48 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			});
+		labelNode->emplaceComponent<Label>(
+			m_text,
+			U"Font14",
+			14,
+			Palette::White,
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+	}
+
+	void onResult(StringView resultButtonText) override
+	{
+		if (m_onResult)
+		{
+			m_onResult(resultButtonText);
+		}
+	}
+};
+
 class Editor
 {
 private:
@@ -3642,6 +3862,8 @@ private:
 	std::shared_ptr<Canvas> m_editorCanvas;
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
 	std::shared_ptr<ContextMenu> m_contextMenu;
+	std::shared_ptr<Canvas> m_dialogCanvas;
+	std::shared_ptr<DialogOpener> m_dialogOpener;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
 	MenuBar m_menuBar;
@@ -3658,6 +3880,8 @@ public:
 		, m_editorCanvas(Canvas::Create())
 		, m_editorOverlayCanvas(Canvas::Create())
 		, m_contextMenu(std::make_shared<ContextMenu>(m_editorOverlayCanvas, U"EditorContextMenu"))
+		, m_dialogCanvas(Canvas::Create())
+		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu)
 		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
@@ -3699,6 +3923,7 @@ public:
 	void update()
 	{
 		CanvasUpdateContext context{};
+		m_dialogCanvas->update(&context);
 		m_editorOverlayCanvas->update(&context);
 		m_editorCanvas->update(&context);
 		const bool editorCanvasHovered = context.isHovered();
@@ -3842,6 +4067,7 @@ public:
 		m_hierarchy.drawSelectedNodesGizmo();
 		m_editorCanvas->draw();
 		m_editorOverlayCanvas->draw();
+		m_dialogCanvas->draw();
 	}
 
 	const std::shared_ptr<Canvas>& canvas() const
