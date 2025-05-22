@@ -5,7 +5,7 @@
 
 namespace noco
 {
-	enum class UnderlineStyle : uint8
+	enum class LabelUnderlineStyle : uint8
 	{
 		None,
 		Solid,
@@ -24,7 +24,7 @@ namespace noco
 		Property<HorizontalOverflow> m_horizontalOverflow;
 		Property<VerticalOverflow> m_verticalOverflow;
 		SmoothProperty<Vec2> m_spacing;
-		Property<UnderlineStyle> m_underlineStyle;
+		Property<LabelUnderlineStyle> m_underlineStyle;
 		SmoothProperty<ColorF> m_underlineColor;
 		SmoothProperty<double> m_underlineThickness;
 		
@@ -93,7 +93,7 @@ namespace noco
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
 			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
 			const PropertyValue<Vec2>& spacing = Vec2::Zero(),
-			const PropertyValue<UnderlineStyle>& underlineStyle = UnderlineStyle::None,
+			const PropertyValue<LabelUnderlineStyle>& underlineStyle = LabelUnderlineStyle::None,
 			const PropertyValue<ColorF>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0)
 			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_spacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
@@ -230,12 +230,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<UnderlineStyle>& underlineStyle() const
+		const PropertyValue<LabelUnderlineStyle>& underlineStyle() const
 		{
 			return m_underlineStyle.propertyValue();
 		}
 
-		void setUnderlineStyle(const PropertyValue<UnderlineStyle>& underlineStyle)
+		void setUnderlineStyle(const PropertyValue<LabelUnderlineStyle>& underlineStyle)
 		{
 			m_underlineStyle.setPropertyValue(underlineStyle);
 		}

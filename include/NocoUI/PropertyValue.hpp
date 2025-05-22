@@ -754,5 +754,16 @@ namespace noco
 			}
 			return false;
 		}
+
+		bool hasInteractiveValue() const
+		{
+			return hoveredValue.has_value() ||
+				pressedValue.has_value() ||
+				disabledValue.has_value() ||
+				selectedDefaultValue.has_value() ||
+				selectedHoveredValue.has_value() ||
+				selectedPressedValue.has_value() ||
+				selectedDisabledValue.has_value();
+		}
 	};
 }

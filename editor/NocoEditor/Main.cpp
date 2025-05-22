@@ -6,6 +6,7 @@ using namespace noco;
 using CheckedYN = YesNo<struct CheckedYN_tag>;
 using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
 using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
+using HasInteractivePropertyValueYN = YesNo<struct HasInteractivePropertyValueYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -2104,7 +2105,7 @@ public:
 	}
 
 	[[nodiscard]]
-	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue)
+	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -2133,7 +2134,11 @@ public:
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 		const auto textBoxNode = propertyNode->emplaceChild(
 			U"TextBox",
 			BoxConstraint
@@ -2152,7 +2157,8 @@ public:
 	static std::shared_ptr<Node> CreateVec2PropertyNode(
 		StringView name,
 		const Vec2& currentValue,
-		std::function<void(const Vec2&)> fnSetValue)
+		std::function<void(const Vec2&)> fnSetValue,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -2186,7 +2192,11 @@ public:
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
@@ -2284,7 +2294,8 @@ public:
 	static std::shared_ptr<Node> CreateVec4PropertyNode(
 		StringView name,
 		const Vec4& currentValue,
-		std::function<void(const Vec4&)> fnSetValue)
+		std::function<void(const Vec4&)> fnSetValue,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -2317,7 +2328,11 @@ public:
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
@@ -2452,7 +2467,8 @@ public:
 	static std::shared_ptr<Node> CreateLRTBPropertyNode(
 		StringView name,
 		const LRTB& currentValue,
-		std::function<void(const LRTB&)> fnSetValue)
+		std::function<void(const LRTB&)> fnSetValue,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		constexpr int32 LineHeight = 32;
 		const auto propertyNode = Node::Create(
@@ -2499,7 +2515,11 @@ public:
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto line1TextBoxParentNode = line1->emplaceChild(
 			U"TextBoxParent",
@@ -2568,7 +2588,11 @@ public:
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto line2TextBoxParentNode = line2->emplaceChild(
 			U"TextBoxParent",
@@ -2674,7 +2698,8 @@ public:
 	static std::shared_ptr<Node> CreateColorPropertyNode(
 		StringView name,
 		const ColorF& currentValue,
-		std::function<void(const ColorF&)> fnSetValue)
+		std::function<void(const ColorF&)> fnSetValue,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -2702,7 +2727,13 @@ public:
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 5, 5, 5, 5 });
+			LRTB{ 5, 5, 5, 5 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto rowNode = propertyNode->emplaceChild(
 			U"ColorPropertyRow",
@@ -2894,7 +2925,8 @@ public:
 		StringView currentValue,
 		std::function<void(StringView)> fnSetValue,
 		const std::shared_ptr<ContextMenu>& contextMenu,
-		const Array<String>& enumCandidates)
+		const Array<String>& enumCandidates,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -2923,7 +2955,13 @@ public:
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 5, 5, 5, 5 });
+			LRTB{ 5, 5, 5, 5 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto comboBoxNode = propertyNode->emplaceChild(
 			U"ComboBox",
@@ -3098,7 +3136,8 @@ public:
 	static std::shared_ptr<Node> CreateBoolPropertyNode(
 		StringView name,
 		bool currentValue,
-		std::function<void(bool)> fnSetValue)
+		std::function<void(bool)> fnSetValue,
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		auto propertyNode = Node::Create(
 			name,
@@ -3130,8 +3169,12 @@ public:
 			HorizontalAlign::Left,
 			VerticalAlign::Top,
 			LRTB{ 5, 5, 5, 5 },
-			HorizontalOverflow::Wrap,
-			VerticalOverflow::Clip);
+			HorizontalOverflow::Overflow,
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
 
 		const auto checkboxParentNode = propertyNode->emplaceChild(
 			U"CheckboxParent",
@@ -3799,7 +3842,7 @@ public:
 		const auto fnAddVec2Child =
 			[this, &transformEffectNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 			{
-				const auto propertyNode = transformEffectNode->addChild(CreateVec2PropertyNode(name, pProperty->propertyValue().defaultValue, fnSetValue));
+				const auto propertyNode = transformEffectNode->addChild(CreateVec2PropertyNode(name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
 				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
 		// Note: アクセサからポインタを取得しているので注意が必要
@@ -3846,35 +3889,40 @@ public:
 					CreatePropertyNode(
 						property->name(),
 						property->propertyValueString(),
-						[property](StringView value) { property->trySetPropertyValueString(value); }));
+						[property](StringView value) { property->trySetPropertyValueString(value); },
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Bool:
 				propertyNode = componentNode->addChild(
 					CreateBoolPropertyNode(
 						property->name(),
 						ParseOr<bool>(property->propertyValueString(), false),
-						[property](bool value) { property->trySetPropertyValueString(Format(value)); }));
+						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Vec2:
 				propertyNode = componentNode->addChild(
 					CreateVec2PropertyNode(
 						property->name(),
 						ParseOr<Vec2>(property->propertyValueString(), Vec2{ 0, 0 }),
-						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); }));
+						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); },
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Color:
 				propertyNode = componentNode->addChild(
 					CreateColorPropertyNode(
 						property->name(),
 						ParseOr<ColorF>(property->propertyValueString(), ColorF{ 0, 0, 0, 1 }),
-						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); }));
+						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::LRTB:
 				propertyNode = componentNode->addChild(
 					CreateLRTBPropertyNode(
 						property->name(),
 						ParseOr<LRTB>(property->propertyValueString(), LRTB{ 0, 0, 0, 0 }),
-						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); }));
+						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); },
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Enum:
 				propertyNode = componentNode->addChild(
@@ -3883,7 +3931,8 @@ public:
 						property->propertyValueString(),
 						[property](StringView value) { property->trySetPropertyValueString(value); },
 						m_contextMenu,
-						property->enumCandidates()));
+						property->enumCandidates(),
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			}
 			if (!propertyNode)

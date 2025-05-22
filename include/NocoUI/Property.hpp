@@ -43,6 +43,7 @@ namespace noco
 			return {};
 		}
 		virtual bool isInteractiveProperty() const = 0;
+		virtual bool hasInteractivePropertyValue() const = 0;
 		virtual bool isSmoothProperty() const = 0;
 		virtual double smoothTime() const = 0;
 		virtual bool trySetSmoothTime(double smoothTime) = 0;
@@ -220,6 +221,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		bool hasInteractivePropertyValue() const override
+		{
+			return m_propertyValue.hasInteractiveValue();
+		}
+
+		[[nodiscard]]
 		bool isSmoothProperty() const override
 		{
 			return false;
@@ -385,6 +392,12 @@ namespace noco
 		bool isInteractiveProperty() const override
 		{
 			return true;
+		}
+
+		[[nodiscard]]
+		bool hasInteractivePropertyValue() const override
+		{
+			return m_propertyValue.hasInteractiveValue();
 		}
 
 		[[nodiscard]]
@@ -582,6 +595,12 @@ namespace noco
 
 		[[nodiscard]]
 		bool isInteractiveProperty() const override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		bool hasInteractivePropertyValue() const override
 		{
 			return false;
 		}
