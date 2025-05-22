@@ -117,53 +117,80 @@ namespace noco
 			m_verticalOverflow.value(),
 			rect.size / effectScale);
 
-		double posY;
-		const VerticalAlign& verticalAlign = m_verticalAlign.value();
-		switch (verticalAlign)
+		const double startY = [this, &rect, &effectScale]()
+			{
+				const VerticalAlign& verticalAlign = m_verticalAlign.value();
+				switch (verticalAlign)
+				{
+				case VerticalAlign::Top:
+					return rect.y;
+				case VerticalAlign::Middle:
+					return rect.y + (rect.h - m_cache.regionSize.y * effectScale.y) / 2;
+				case VerticalAlign::Bottom:
+					return rect.y + rect.h - m_cache.regionSize.y * effectScale.y;
+				default:
+					throw Error{ U"Invalid VerticalAlign: {}"_fmt(static_cast<std::underlying_type_t<VerticalAlign>>(verticalAlign)) };
+				}
+			}();
+
+		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
+
 		{
-		case VerticalAlign::Top:
-			posY = rect.y;
-			break;
-		case VerticalAlign::Middle:
-			posY = rect.y + (rect.h - m_cache.regionSize.y * effectScale.y) / 2;
-			break;
-		case VerticalAlign::Bottom:
-			posY = rect.y + rect.h - m_cache.regionSize.y * effectScale.y;
-			break;
-		default:
-			throw Error{ U"Invalid VerticalAlign: {}"_fmt(static_cast<std::underlying_type_t<VerticalAlign>>(verticalAlign)) };
+			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
+			for (const auto& lineCache : m_cache.lineCaches)
+			{
+				const double startX = [this, &rect, &effectScale, &lineCache, horizontalAlign]()
+					{
+						switch (horizontalAlign)
+						{
+						case HorizontalAlign::Left:
+							return rect.x;
+						case HorizontalAlign::Center:
+							return rect.x + (rect.w - lineCache.width * effectScale.x) / 2;
+						case HorizontalAlign::Right:
+							return rect.x + rect.w - lineCache.width * effectScale.x;
+						default:
+							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
+						}
+					}();
+
+				double x = 0;
+				for (const auto& glyph : lineCache.glyphs)
+				{
+					if (glyph.codePoint == U'\n')
+					{
+						continue;
+					}
+					const Vec2 pos{ startX + x, startY + lineCache.offsetY * effectScale.y };
+					const ColorF& color = m_color.value();
+					glyph.texture.scaled(m_cache.scale * effectScale).draw(pos + glyph.getOffset(m_cache.scale) * effectScale, color);
+					x += (glyph.xAdvance * m_cache.scale + spacing.x) * effectScale.x;
+				}
+			}
 		}
 
-		const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
-		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
-		for (const auto& lineCache : m_cache.lineCaches)
+		if (m_underlineStyle.value() == LabelUnderlineStyle::Solid)
 		{
-			double posX;
-			switch (horizontalAlign)
+			for (const auto& lineCache : m_cache.lineCaches)
 			{
-			case HorizontalAlign::Left:
-				posX = rect.x;
-				break;
-			case HorizontalAlign::Center:
-				posX = rect.x + (rect.w - lineCache.width * effectScale.x) / 2;
-				break;
-			case HorizontalAlign::Right:
-				posX = rect.x + rect.w - lineCache.width * effectScale.x;
-				break;
-			default:
-				throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
-			}
+				const double startX = [this, &rect, &effectScale, &lineCache, horizontalAlign]()
+					{
+						switch (horizontalAlign)
+						{
+						case HorizontalAlign::Left:
+							return rect.x;
+						case HorizontalAlign::Center:
+							return rect.x + (rect.w - lineCache.width * effectScale.x) / 2;
+						case HorizontalAlign::Right:
+							return rect.x + rect.w - lineCache.width * effectScale.x;
+						default:
+							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
+						}
+					}();
 
-			for (const auto& glyph : lineCache.glyphs)
-			{
-				if (glyph.codePoint == U'\n')
-				{
-					continue;
-				}
-				const Vec2 pos{ posX, posY + lineCache.offsetY * effectScale.y };
-				const ColorF& color = m_color.value();
-				glyph.texture.scaled(m_cache.scale * effectScale).draw(pos + glyph.getOffset(m_cache.scale) * effectScale, color);
-				posX += (glyph.xAdvance * m_cache.scale + spacing.x) * effectScale.x;
+				const double thickness = m_underlineThickness.value() * effectScale.y;
+				const double y = startY + (lineCache.offsetY + m_cache.lineHeight) * effectScale.y;
+				Line{ startX, y, startX + lineCache.width * effectScale.x, y }.draw(thickness, m_underlineColor.value());
 			}
 		}
 	}

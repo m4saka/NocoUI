@@ -5,6 +5,12 @@
 
 namespace noco
 {
+	enum class UnderlineStyle : uint8
+	{
+		None,
+		Solid,
+	};
+
 	class Label : public SerializableComponentBase
 	{
 	private:
@@ -18,7 +24,10 @@ namespace noco
 		Property<HorizontalOverflow> m_horizontalOverflow;
 		Property<VerticalOverflow> m_verticalOverflow;
 		SmoothProperty<Vec2> m_spacing;
-
+		Property<UnderlineStyle> m_underlineStyle;
+		SmoothProperty<ColorF> m_underlineColor;
+		SmoothProperty<double> m_underlineThickness;
+		
 		struct CacheParams
 		{
 			String text;
@@ -83,8 +92,11 @@ namespace noco
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
 			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
-			const PropertyValue<Vec2>& spacing = Vec2::Zero())
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_spacing } }
+			const PropertyValue<Vec2>& spacing = Vec2::Zero(),
+			const PropertyValue<UnderlineStyle>& underlineStyle = UnderlineStyle::None,
+			const PropertyValue<ColorF>& underlineColor = Palette::White,
+			const PropertyValue<double>& underlineThickness = 1.0)
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_spacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -95,6 +107,9 @@ namespace noco
 			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
 			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
 			, m_spacing{ U"spacing", spacing }
+			, m_underlineStyle{ U"underlineStyle", underlineStyle }
+			, m_underlineColor{ U"underlineColor", underlineColor }
+			, m_underlineThickness{ U"underlineThickness", underlineThickness }
 		{
 		}
 
@@ -212,6 +227,28 @@ namespace noco
 		void setSpacing(const PropertyValue<Vec2>& spacing)
 		{
 			m_spacing.setPropertyValue(spacing);
+		}
+
+		[[nodiscard]]
+		const PropertyValue<UnderlineStyle>& underlineStyle() const
+		{
+			return m_underlineStyle.propertyValue();
+		}
+
+		void setUnderlineStyle(const PropertyValue<UnderlineStyle>& underlineStyle)
+		{
+			m_underlineStyle.setPropertyValue(underlineStyle);
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& underlineColor() const
+		{
+			return m_underlineColor.propertyValue();
+		}
+
+		void setUnderlineColor(const PropertyValue<ColorF>& underlineColor)
+		{
+			m_underlineColor.setPropertyValue(underlineColor);
 		}
 	};
 }
