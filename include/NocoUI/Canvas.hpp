@@ -150,5 +150,33 @@ namespace noco
 
 		[[nodiscard]]
 		const Array<Event>& getFiredEventsAll() const;
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 	};
+
+	template <class Fty>
+	void Canvas::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&>
+	{
+		if (m_rootNode)
+		{
+			m_rootNode->enumeratePlaceholdersWithTagRecursive(tag, std::move(func));
+		}
+	}
+
+	template <class Fty>
+	void Canvas::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
+	{
+		if (m_rootNode)
+		{
+			m_rootNode->enumeratePlaceholdersWithTagRecursive(tag, std::move(func));
+		}
+	}
 }

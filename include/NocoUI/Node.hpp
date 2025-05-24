@@ -11,6 +11,7 @@
 #include "Constraint/Constraint.hpp"
 #include "Layout/Layout.hpp"
 #include "Component/ComponentBase.hpp"
+#include "Component/Placeholder.hpp"
 #include "Enums.hpp"
 
 namespace noco
@@ -184,7 +185,7 @@ namespace noco
 		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
 
 		template <class Fty>
-		Array<std::weak_ptr<Node>> findAll(Fty predicate);
+		Array<std::weak_ptr<Node>> findAll(Fty&& predicate);
 
 		template <class TComponent>
 		[[nodiscard]]
@@ -416,6 +417,22 @@ namespace noco
 		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
 
 		void refreshContainedCanvasLayout();
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
+
+		template <class Fty>
+		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 	};
 
 	template<class TComponent, class ...Args>
@@ -443,7 +460,7 @@ namespace noco
 	}
 
 	template <class Fty>
-	Array<std::weak_ptr<Node>> Node::findAll(Fty predicate)
+	Array<std::weak_ptr<Node>> Node::findAll(Fty&& predicate)
 	{
 		// 自分自身が条件を満たすかどうか
 		Array<std::weak_ptr<Node>> result;
@@ -529,6 +546,84 @@ namespace noco
 			}
 		}
 		return nullptr;
+	}
+
+	template <class Fty>
+	void Node::enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&>
+	{
+		for (const auto& child : m_children)
+		{
+			for (const auto& component : child->m_components)
+			{
+				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
+				{
+					if (placeholder->tag() == tag)
+					{
+						func(child);
+					}
+				}
+			}
+		}
+	}
+
+	template <class Fty>
+	void Node::enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
+	{
+		for (const auto& child : m_children)
+		{
+			for (const auto& component : child->m_components)
+			{
+				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
+				{
+					if (placeholder->tag() == tag)
+					{
+						func(child, placeholder->data());
+					}
+				}
+			}
+		}
+	}
+
+	template <class Fty>
+	void Node::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&>
+	{
+		for (const auto& child : m_children)
+		{
+			child->enumeratePlaceholdersWithTagRecursive(tag, func);
+			for (const auto& component : child->m_components)
+			{
+				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
+				{
+					if (placeholder->tag() == tag)
+					{
+						func(child);
+					}
+				}
+			}
+		}
+	}
+
+	template <class Fty>
+	void Node::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
+	{
+		for (const auto& child : m_children)
+		{
+			child->enumeratePlaceholdersWithTagRecursive(tag, func);
+			for (const auto& component : child->m_components)
+			{
+				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
+				{
+					if (placeholder->tag() == tag)
+					{
+						func(child, placeholder->data());
+					}
+				}
+			}
+		}
 	}
 
 	template <class Fty>

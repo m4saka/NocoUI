@@ -1,8 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
-#include "../Node.hpp"
-#include "../Canvas.hpp"
 
 namespace noco
 {
