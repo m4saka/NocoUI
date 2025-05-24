@@ -462,6 +462,19 @@ namespace noco
 		return m_parent.lock();
 	}
 
+	std::shared_ptr<const Node> Node::findHoverTargetParent() const
+	{
+		if (m_isHitTarget)
+		{
+			return shared_from_this();
+		}
+		if (const auto parent = m_parent.lock())
+		{
+			return parent->findHoverTargetParent();
+		}
+		return nullptr;
+	}
+
 	std::shared_ptr<Node> Node::findHoverTargetParent()
 	{
 		if (m_isHitTarget)

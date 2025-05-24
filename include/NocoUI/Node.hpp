@@ -134,6 +134,9 @@ namespace noco
 		std::shared_ptr<Node> parent() const;
 
 		[[nodiscard]]
+		std::shared_ptr<const Node> findHoverTargetParent() const;
+
+		[[nodiscard]]
 		std::shared_ptr<Node> findHoverTargetParent();
 
 		[[nodiscard]]
