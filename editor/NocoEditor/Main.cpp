@@ -7,6 +7,7 @@ using CheckedYN = YesNo<struct CheckedYN_tag>;
 using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
 using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
 using HasInteractivePropertyValueYN = YesNo<struct HasInteractivePropertyValueYN_tag>;
+using IsFoldedYN = YesNo<struct IsFoldedYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -1863,6 +1864,12 @@ private:
 	std::weak_ptr<Node> m_targetNode;
 	std::function<void()> m_onChangeNodeName;
 
+	IsFoldedYN m_isFoldedConstraint = IsFoldedYN::No;
+	IsFoldedYN m_isFoldedNodeSetting = IsFoldedYN::Yes;
+	IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
+	IsFoldedYN m_isFoldedTransformEffect = IsFoldedYN::Yes;
+	Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
+
 	template <class TComponent, class... Args>
 	void onClickAddComponent(Args&&... args)
 	{
@@ -1932,6 +1939,12 @@ public:
 		m_inspectorRootNode->setVerticalScrollable(true);
 	}
 
+	// thisをキャプチャしているのでコピー・ムーブ不可
+	Inspector(const Inspector&) = delete;
+	Inspector(Inspector&&) = delete;
+	Inspector& operator=(const Inspector&) = delete;
+	Inspector&& operator=(Inspector&&) = delete;
+
 	void refreshInspector(PreserveScrollYN preserveScroll = PreserveScrollYN::Yes)
 	{
 		const double scrollY = m_inspectorRootNode->scrollOffset().y;
@@ -1946,6 +1959,12 @@ public:
 
 	void setTargetNode(const std::shared_ptr<Node>& targetNode)
 	{
+		if (!targetNode || targetNode.get() != m_targetNode.lock().get())
+		{
+			// 選択ノードが変更された場合、以前のノード用の折り畳み状況をクリア
+			m_foldedComponents.clear();
+		}
+
 		m_targetNode = targetNode;
 
 		m_inspectorRootNode->removeChildrenAll();
@@ -1955,11 +1974,11 @@ public:
 			const auto nodeNameNode = createNodeNameNode(targetNode);
 			m_inspectorRootNode->addChild(nodeNameNode);
 
-			const auto nodeSettingNode = createNodeSettingNode(targetNode);
-			m_inspectorRootNode->addChild(nodeSettingNode);
-
 			const auto constraintNode = createConstraintNode(targetNode);
 			m_inspectorRootNode->addChild(constraintNode);
+
+			const auto nodeSettingNode = createNodeSettingNode(targetNode);
+			m_inspectorRootNode->addChild(nodeSettingNode);
 
 			const auto layoutNode = createLayoutNode(targetNode);
 			m_inspectorRootNode->addChild(layoutNode);
@@ -1969,9 +1988,22 @@ public:
 
 			for (const std::shared_ptr<ComponentBase>& component : targetNode->components())
 			{
+				const IsFoldedYN isFolded{ m_foldedComponents.contains_if([&component](const auto& c) { return c.lock().get() == component.get(); }) };
+
 				if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 				{
-					const auto componentNode = createComponentNode(targetNode, serializableComponent);
+					const auto componentNode = createComponentNode(targetNode, serializableComponent, isFolded,
+						[this, componentWeak = std::weak_ptr{ component }](IsFoldedYN isFolded)
+						{
+							if (isFolded)
+							{
+								m_foldedComponents.push_back(componentWeak);
+							}
+							else
+							{
+								m_foldedComponents.remove_if([&componentWeak](const auto& c) { return c.lock().get() == componentWeak.lock().get(); });
+							}
+						});
 					m_inspectorRootNode->addChild(componentNode);
 				}
 			}
@@ -1979,7 +2011,7 @@ public:
 	}
 
 	[[nodiscard]]
-	static std::shared_ptr<Node> CreateHeadingNode(StringView name, const ColorF& color)
+	static std::shared_ptr<Node> CreateHeadingNode(StringView name, const ColorF& color, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold = nullptr)
 	{
 		auto headingNode = Node::Create(U"Heading", BoxConstraint
 			{
@@ -1993,7 +2025,7 @@ public:
 			0.0,
 			3.0);
 		const auto arrowLabel = headingNode->emplaceComponent<Label>(
-			U"▼",
+			isFolded ? U"▶" : U"▼",
 			U"Font14Bold",
 			14,
 			ColorF{ 1.0, 0.6 },
@@ -2012,38 +2044,44 @@ public:
 			LRTB{ 25, 5, 0, 0 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip);
-		headingNode->addOnClick([arrowLabel](const std::shared_ptr<Node>& node)
+		headingNode->addOnClick([arrowLabel, onToggleFold = std::move(onToggleFold)](const std::shared_ptr<Node>& node)
 			{
 				if (const auto parent = node->parent())
 				{
-					bool isFolded = false;
+					bool inactiveNodeExists = false;
 
 					// 見出し以外のアクティブを入れ替え
-					for (const auto child : parent->children())
+					for (const auto& child : parent->children())
 					{
 						if (child != node)
 						{
 							child->setActive(!child->activeSelf());
 							if (!child->activeSelf())
 							{
-								isFolded = true;
+								inactiveNodeExists = true;
 							}
 						}
 					}
 
 					// 矢印を回転
-					arrowLabel->setText(isFolded ? U"▶" : U"▼");
+					arrowLabel->setText(inactiveNodeExists ? U"▶" : U"▼");
 
 					// 折り畳み時はpaddingを付けない
-					auto layout = parent->layout();
+					LayoutVariant layout = parent->layout();
 					if (auto pVerticalLayout = std::get_if<VerticalLayout>(&layout))
 					{
-						pVerticalLayout->padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 };
+						pVerticalLayout->padding = inactiveNodeExists ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 };
 					}
 					parent->setLayout(layout, RefreshesLayoutYN::No);
 
 					// 高さをフィットさせる
 					parent->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
+
+					// トグル時処理があれば実行
+					if (onToggleFold)
+					{
+						onToggleFold(IsFoldedYN{ inactiveNodeExists });
+					}
 				}
 			});
 
@@ -3242,10 +3280,14 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		nodeSettingNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 8 } });
+		nodeSettingNode->setLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		nodeSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		nodeSettingNode->addChild(CreateHeadingNode(U"Node", ColorF{ 0.5, 0.3, 0.3 }));
+		nodeSettingNode->addChild(CreateHeadingNode(U"Node Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedNodeSetting,
+			[this](IsFoldedYN isFolded)
+			{
+				m_isFoldedNodeSetting = isFolded;
+			}));
 
 		nodeSettingNode->addChild(
 			Node::Create(
@@ -3254,12 +3296,12 @@ public:
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 8 },
-				}));
+				}))->setActive(!m_isFoldedNodeSetting.getBool());
 
 		const auto fnAddBoolChild =
 			[this, &nodeSettingNode](StringView name, bool currentValue, auto fnSetValue)
 			{
-				nodeSettingNode->addChild(CreateBoolPropertyNode(name, currentValue, fnSetValue));
+				nodeSettingNode->addChild(CreateBoolPropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
 			};
 		fnAddBoolChild(U"isHitTarget", node->isHitTarget().getBool(), [node](bool value) { node->setIsHitTarget(value); });
 		fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
@@ -3291,29 +3333,33 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		layoutNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 8 } });
+		layoutNode->setLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
-		layoutNode->addChild(CreateHeadingNode(U"Layout (children)", ColorF{ 0.5, 0.3, 0.3 }));
-		const auto fnAddChild =
-			[&layoutNode](StringView name, const auto& value, auto fnSetValue)
+		layoutNode->addChild(CreateHeadingNode(U"Layout (children)", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
+			[this](IsFoldedYN isFolded)
 			{
-				layoutNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue));
+				m_isFoldedLayout = isFolded;
+			}));
+		const auto fnAddChild =
+			[this, &layoutNode](StringView name, const auto& value, auto fnSetValue)
+			{
+				layoutNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddVec2Child =
-			[&layoutNode](StringView name, const Vec2& currentValue, auto fnSetValue)
+			[this, &layoutNode](StringView name, const Vec2& currentValue, auto fnSetValue)
 			{
-				layoutNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue));
+				layoutNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddLRTBChild =
-			[&layoutNode](StringView name, const LRTB& currentValue, auto fnSetValue)
+			[this, &layoutNode](StringView name, const LRTB& currentValue, auto fnSetValue)
 			{
-				layoutNode->addChild(CreateLRTBPropertyNode(name, currentValue, fnSetValue));
+				layoutNode->addChild(CreateLRTBPropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddEnumChild =
 			[this, &layoutNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 			{
 				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-				layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()));
+				layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedLayout.getBool());
 			};
 		if (const auto pFlowLayout = node->flowLayout())
 		{
@@ -3416,31 +3462,35 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		constraintNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 8 } });
+		constraintNode->setLayout(VerticalLayout{ .padding = m_isFoldedConstraint ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		constraintNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		constraintNode->addChild(CreateHeadingNode(U"Constraint", ColorF{ 0.5, 0.3, 0.3 }));
+		constraintNode->addChild(CreateHeadingNode(U"Constraint", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedConstraint,
+			[this](IsFoldedYN isFolded)
+			{
+				m_isFoldedConstraint = isFolded;
+			}));
 
 		const auto fnAddChild =
-			[&constraintNode](StringView name, const auto& value, auto fnSetValue)
+			[this, &constraintNode](StringView name, const auto& value, auto fnSetValue)
 			{
-				constraintNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue));
+				constraintNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddDoubleChild =
-			[&constraintNode](StringView name, double currentValue, auto fnSetValue)
+			[this, &constraintNode](StringView name, double currentValue, auto fnSetValue)
 			{
-				constraintNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }));
+				constraintNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddEnumChild =
 			[this, &constraintNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 			{
 				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-				constraintNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()));
+				constraintNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddVec2Child =
-			[&constraintNode](StringView name, const Vec2& currentValue, auto fnSetValue)
+			[this, &constraintNode](StringView name, const Vec2& currentValue, auto fnSetValue)
 			{
-				constraintNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue));
+				constraintNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
 			};
 
 		if (const auto pBoxConstraint = node->boxConstraint())
@@ -3835,15 +3885,20 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		transformEffectNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 8 } });
+		transformEffectNode->setLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		transformEffectNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }));
+		transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransformEffect,
+			[this](IsFoldedYN isFolded)
+			{
+				m_isFoldedTransformEffect = isFolded;
+			}));
 
 		const auto fnAddVec2Child =
 			[this, &transformEffectNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 			{
 				const auto propertyNode = transformEffectNode->addChild(CreateVec2PropertyNode(name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
 				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
 		// Note: アクセサからポインタを取得しているので注意が必要
@@ -3857,7 +3912,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<SerializableComponentBase>& component)
+	std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<SerializableComponentBase>& component, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold)
 	{
 		auto componentNode = Node::Create(
 			component->type(),
@@ -3866,10 +3921,10 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		componentNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 8 } });
+		componentNode->setLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }));
+		const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
 		headingNode->emplaceComponent<ContextMenuOpener>(
 			m_contextMenu,
 			Array<MenuElement>
@@ -3941,6 +3996,11 @@ public:
 				throw Error{ U"Failed to create property node" };
 			}
 
+			if (isFolded)
+			{
+				propertyNode->setActive(false);
+			}
+			
 			if (property->isInteractiveProperty())
 			{
 				propertyNode->emplaceComponent<ContextMenuOpener>(
