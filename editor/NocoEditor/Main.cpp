@@ -4256,8 +4256,6 @@ public:
 			});
 	}
 
-	Property<ColorF> m_testProperty{ U"TestProperty", ColorF{} };
-
 	void update()
 	{
 		CanvasUpdateContext context{};
