@@ -519,13 +519,15 @@ namespace noco
 
 		bool trySetPropertyValueString(StringView value) override
 		{
-			const Optional<T> parsedValue = StringToValueOpt<T>(value);
-			if (!parsedValue)
+			if (const auto valueOpt = StringToValueOpt<T>(value))
+			{
+				m_value = *valueOpt;
+				return true;
+			}
+			else
 			{
 				return false;
 			}
-			m_value = *parsedValue;
-			return true;
 		}
 
 		bool trySetPropertyValueStringOf(StringView, InteractState, SelectedYN) override
