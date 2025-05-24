@@ -432,6 +432,17 @@ namespace noco
 					continue;
 				}
 
+				if (type == U"Placeholder")
+				{
+					auto placeholder = std::make_shared<Placeholder>();
+					if (!placeholder->tryReadFromJSON(componentJSON))
+					{
+						throw Error{ U"Failed to read Placeholder component from JSON" };
+					}
+					node->addComponent(std::move(placeholder));
+					continue;
+				}
+
 				// TODO: 不明なコンポーネントの場合は警告を出力
 			}
 		}

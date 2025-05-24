@@ -5,6 +5,7 @@
 #include "RectRenderer.hpp"
 #include "TextBox.hpp"
 #include "EventTrigger.hpp"
+#include "Placeholder.hpp"
 #include "UpdaterComponent.hpp"
 #include "DrawerComponent.hpp"
 #include "DragDropSource.hpp"

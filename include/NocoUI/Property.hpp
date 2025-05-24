@@ -286,20 +286,20 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const T& propertyValue(InteractState interactState) const
+		const T& propertyValue(InteractState interactState, SelectedYN selected) const
 		{
-			return m_propertyValue.value(interactState);
+			return m_propertyValue.value(interactState, selected);
+		}
+
+		void setPropertyValue(const PropertyValue<T>& propertyValue)
+		{
+			m_propertyValue = propertyValue;
 		}
 
 		[[nodiscard]]
 		const T& value() const
 		{
 			return m_smoothing.currentValue();
-		}
-
-		void setPropertyValue(const PropertyValue<T>& propertyValue)
-		{
-			m_propertyValue = propertyValue;
 		}
 
 		void update(InteractState interactState, SelectedYN selected, double deltaTime) override
@@ -446,6 +446,17 @@ namespace noco
 		StringView name() const override
 		{
 			return m_name;
+		}
+
+		template <typename U>
+		void setValue(const U& value) requires std::convertible_to<U, T>
+		{
+			m_value = value;
+		}
+
+		void setValue(StringView value) requires std::same_as<T, String>
+		{
+			m_value = String{ value };
 		}
 
 		[[nodiscard]]

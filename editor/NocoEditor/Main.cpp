@@ -1926,6 +1926,7 @@ public:
 				MenuItem{ U"TextBox を追加", U"", [this] { onClickAddComponent<TextBox>(); } },
 				MenuItem{ U"Label を追加", U"", [this] { onClickAddComponent<Label>(); } },
 				MenuItem{ U"EventTrigger を追加", U"", [this] { onClickAddComponent<EventTrigger>(); } },
+				MenuItem{ U"Placeholder を追加", U"", [this] { onClickAddComponent<Placeholder>(); } },
 			});
 		m_inspectorRootNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 		m_inspectorRootNode->setVerticalScrollable(true);
