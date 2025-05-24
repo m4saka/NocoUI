@@ -84,7 +84,7 @@ public:
 	{
 		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
-		m_rootNode->setLayout(VerticalLayout{}, RefreshesLayoutYN::No);
+		m_rootNode->setChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
 		m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
 		m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
@@ -357,7 +357,7 @@ public:
 			}))
 		, m_contextMenu(contextMenu)
 	{
-		m_menuBarRootNode->setLayout(HorizontalLayout{});
+		m_menuBarRootNode->setChildrenLayout(HorizontalLayout{});
 		m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
 	}
 
@@ -957,7 +957,7 @@ public:
 				MenuItem{ U"新規ノード", U"", [this] { onClickNewNode(); } },
 				MenuItem{ U"貼り付け", U"Ctrl+V", [this] { onClickPaste(); }, [this] { return canPaste(); } },
 			});
-		m_hierarchyRootNode->setLayout(VerticalLayout{ .padding = 2 });
+		m_hierarchyRootNode->setChildrenLayout(VerticalLayout{ .padding = 2 });
 		m_hierarchyRootNode->setVerticalScrollable(true);
 
 		refreshNodeList();
@@ -1592,7 +1592,7 @@ std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVa
 		U"Button",
 		constraint,
 		IsHitTargetYN::Yes);
-	buttonNode->setLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
+	buttonNode->setChildrenLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
 	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
 	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>&) { if (onClick) onClick(); });
 	const auto labelNode = buttonNode->emplaceChild(
@@ -1676,9 +1676,9 @@ public:
 	{
 		// ダイアログ背面を暗くする
 		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
-		m_screenMaskNode->setLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
+		m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
 
-		m_dialogNode->setLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
+		m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
 		m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 		const auto buttonParentNode = m_dialogNode->emplaceChild(
@@ -1688,7 +1688,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 8, 0 },
 			});
-		buttonParentNode->setLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
+		buttonParentNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
 		for (const auto& button : buttons)
 		{
 			buttonParentNode->addChild(
@@ -1935,7 +1935,7 @@ public:
 				MenuItem{ U"EventTrigger を追加", U"", [this] { onClickAddComponent<EventTrigger>(); } },
 				MenuItem{ U"Placeholder を追加", U"", [this] { onClickAddComponent<Placeholder>(); } },
 			});
-		m_inspectorRootNode->setLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
+		m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 		m_inspectorRootNode->setVerticalScrollable(true);
 	}
 
@@ -1980,7 +1980,7 @@ public:
 			const auto nodeSettingNode = createNodeSettingNode(targetNode);
 			m_inspectorRootNode->addChild(nodeSettingNode);
 
-			const auto layoutNode = createLayoutNode(targetNode);
+			const auto layoutNode = createChildrenLayoutNode(targetNode);
 			m_inspectorRootNode->addChild(layoutNode);
 
 			const auto transformEffectNode = createTransformEffectNode(&targetNode->transformEffect());
@@ -2067,12 +2067,12 @@ public:
 					arrowLabel->setText(inactiveNodeExists ? U"▶" : U"▼");
 
 					// 折り畳み時はpaddingを付けない
-					LayoutVariant layout = parent->layout();
+					LayoutVariant layout = parent->childrenLayout();
 					if (auto pVerticalLayout = std::get_if<VerticalLayout>(&layout))
 					{
 						pVerticalLayout->padding = inactiveNodeExists ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 };
 					}
-					parent->setLayout(layout, RefreshesLayoutYN::No);
+					parent->setChildrenLayout(layout, RefreshesLayoutYN::No);
 
 					// 高さをフィットさせる
 					parent->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
@@ -2155,7 +2155,7 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 		const auto labelNode = propertyNode->emplaceChild(
 			U"Label",
@@ -2208,7 +2208,7 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
@@ -2246,7 +2246,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		textBoxParentNode->setLayout(HorizontalLayout{});
+		textBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 		// X
 		const auto textBoxXNode = textBoxParentNode->emplaceChild(
@@ -2382,7 +2382,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		textBoxParentNode->setLayout(HorizontalLayout{});
+		textBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 		// X
 		const auto textBoxXNode = textBoxParentNode->emplaceChild(
@@ -2519,7 +2519,7 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		propertyNode->setLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
@@ -2535,7 +2535,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		line1->setLayout(HorizontalLayout{});
+		line1->setChildrenLayout(HorizontalLayout{});
 
 		const auto line1LabelNode =
 			line1->emplaceChild(
@@ -2569,7 +2569,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		line1TextBoxParentNode->setLayout(HorizontalLayout{});
+		line1TextBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 		// L
 		const auto textBoxLNode = line1TextBoxParentNode->emplaceChild(
@@ -2608,7 +2608,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		line2->setLayout(HorizontalLayout{});
+		line2->setChildrenLayout(HorizontalLayout{});
 
 		const auto line2LabelNode =
 			line2->emplaceChild(
@@ -2642,7 +2642,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		line2TextBoxParentNode->setLayout(HorizontalLayout{});
+		line2TextBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 		// T
 		const auto textBoxTNode = line2TextBoxParentNode->emplaceChild(
@@ -2749,7 +2749,7 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 		const auto labelNode = propertyNode->emplaceChild(
@@ -2783,7 +2783,7 @@ public:
 			},
 			IsHitTargetYN::No,
 			InheritChildrenStateFlags::Hovered);
-		rowNode->setLayout(HorizontalLayout{});
+		rowNode->setChildrenLayout(HorizontalLayout{});
 
 		const auto previewRootNode = rowNode->emplaceChild(
 			U"ColorPreviewRoot",
@@ -2976,7 +2976,7 @@ public:
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 		const auto labelNode =
@@ -3185,7 +3185,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = Vec2{ 0, 32 },
 			});
-		propertyNode->setLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(
 			PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,
@@ -3249,7 +3249,7 @@ public:
 				.sizeDelta = Vec2{ 0, 40 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		nodeNameNode->setLayout(HorizontalLayout{ .padding = 6 });
+		nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6 });
 		nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		nodeNameNode->addChild(CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); }));
@@ -3280,7 +3280,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		nodeSettingNode->setLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+		nodeSettingNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		nodeSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		nodeSettingNode->addChild(CreateHeadingNode(U"Node Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedNodeSetting,
@@ -3324,18 +3324,18 @@ public:
 	};
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createLayoutNode(const std::shared_ptr<Node>& node)
+	std::shared_ptr<Node> createChildrenLayoutNode(const std::shared_ptr<Node>& node)
 	{
 		auto layoutNode = Node::Create(
-			U"Layout",
+			U"ChildrenLayout",
 			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		layoutNode->setLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+		layoutNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
-		layoutNode->addChild(CreateHeadingNode(U"Layout (children)", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
+		layoutNode->addChild(CreateHeadingNode(U"Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
 			[this](IsFoldedYN isFolded)
 			{
 				m_isFoldedLayout = isFolded;
@@ -3361,7 +3361,7 @@ public:
 				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
 				layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedLayout.getBool());
 			};
-		if (const auto pFlowLayout = node->flowLayout())
+		if (const auto pFlowLayout = node->childrenFlowLayout())
 		{
 			fnAddEnumChild(
 				U"type",
@@ -3373,20 +3373,20 @@ public:
 					case LayoutType::FlowLayout:
 						break;
 					case LayoutType::HorizontalLayout:
-						node->setLayout(HorizontalLayout{});
+						node->setChildrenLayout(HorizontalLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					case LayoutType::VerticalLayout:
-						node->setLayout(VerticalLayout{});
+						node->setChildrenLayout(VerticalLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->flowLayout(); newLayout.padding = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->flowLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->flowLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 		}
-		else if (const auto pHorizontalLayout = node->horizontalLayout())
+		else if (const auto pHorizontalLayout = node->childrenHorizontalLayout())
 		{
 			fnAddEnumChild(
 				U"type",
@@ -3396,22 +3396,22 @@ public:
 					switch (type)
 					{
 					case LayoutType::FlowLayout:
-						node->setLayout(FlowLayout{});
+						node->setChildrenLayout(FlowLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					case LayoutType::HorizontalLayout:
 						break;
 					case LayoutType::VerticalLayout:
-						node->setLayout(VerticalLayout{});
+						node->setChildrenLayout(VerticalLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->horizontalLayout(); newLayout.padding = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->horizontalLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->horizontalLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 		}
-		else if (const auto pVerticalLayout = node->verticalLayout())
+		else if (const auto pVerticalLayout = node->childrenVerticalLayout())
 		{
 			fnAddEnumChild(
 				U"type",
@@ -3421,20 +3421,20 @@ public:
 					switch (type)
 					{
 					case LayoutType::FlowLayout:
-						node->setLayout(FlowLayout{});
+						node->setChildrenLayout(FlowLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					case LayoutType::HorizontalLayout:
-						node->setLayout(HorizontalLayout{});
+						node->setChildrenLayout(HorizontalLayout{});
 						refreshInspector(); // 項目に変更があるため更新
 						break;
 					case LayoutType::VerticalLayout:
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->verticalLayout(); newLayout.padding = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->verticalLayout(); newLayout.horizontalAlign = value; node->setLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->verticalLayout(); newLayout.verticalAlign = value; node->setLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 		}
 		else
 		{
@@ -3462,7 +3462,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		constraintNode->setLayout(VerticalLayout{ .padding = m_isFoldedConstraint ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+		constraintNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedConstraint ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		constraintNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		constraintNode->addChild(CreateHeadingNode(U"Constraint", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedConstraint,
@@ -3885,7 +3885,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		transformEffectNode->setLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+		transformEffectNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		transformEffectNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransformEffect,
@@ -3921,7 +3921,7 @@ public:
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		componentNode->setLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+		componentNode->setChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 		componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
@@ -4079,7 +4079,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					.sizeRatio = Vec2{ 0, 0 },
 					.sizeDelta = SizeF{ 8, 0 },
 				});
-			propertyNode->setLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
+			propertyNode->setChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
 			{

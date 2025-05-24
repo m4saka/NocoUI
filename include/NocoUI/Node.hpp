@@ -29,7 +29,7 @@ namespace noco
 		String m_name;
 		ConstraintVariant m_constraint;
 		TransformEffect m_transformEffect;
-		LayoutVariant m_layout;
+		LayoutVariant m_childrenLayout;
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
@@ -100,18 +100,18 @@ namespace noco
 		const TransformEffect& transformEffect() const;
 
 		[[nodiscard]]
-		const LayoutVariant& layout() const;
+		const LayoutVariant& childrenLayout() const;
 
-		void setLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
-
-		[[nodiscard]]
-		const FlowLayout* flowLayout() const;
+		void setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
-		const HorizontalLayout* horizontalLayout() const;
+		const FlowLayout* childrenFlowLayout() const;
 
 		[[nodiscard]]
-		const VerticalLayout* verticalLayout() const;
+		const HorizontalLayout* childrenHorizontalLayout() const;
+
+		[[nodiscard]]
+		const VerticalLayout* childrenVerticalLayout() const;
 
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren() const;
@@ -122,7 +122,7 @@ namespace noco
 		const LRTB& layoutPadding() const;
 
 		[[nodiscard]]
-		bool isParentLayoutAffected() const;
+		bool isLayoutAffected() const;
 
 		[[nodiscard]]
 		JSON toJSON() const;
