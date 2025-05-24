@@ -12,6 +12,7 @@
 #include "Layout/Layout.hpp"
 #include "Component/ComponentBase.hpp"
 #include "Component/Placeholder.hpp"
+#include "Component/DataStore.hpp"
 #include "Enums.hpp"
 
 namespace noco
@@ -189,22 +190,22 @@ namespace noco
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponent()
+		std::shared_ptr<TComponent> getComponent() const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentOrNull()
+		std::shared_ptr<TComponent> getComponentOrNull() const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentRecursive()
+		std::shared_ptr<TComponent> getComponentRecursive() const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentRecursiveOrNull()
+		std::shared_ptr<TComponent> getComponentRecursiveOrNull() const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		[[nodiscard]]
@@ -433,6 +434,21 @@ namespace noco
 		template <class Fty>
 		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
+
+		template <typename TData>
+		void storeData(const TData& value);
+
+		template <typename TData>
+		[[nodiscard]]
+		const TData& getStoredData() const;
+
+		template <typename TData>
+		[[nodiscard]]
+		Optional<TData> getStoredDataOpt() const;
+
+		template <typename TData>
+		[[nodiscard]]	
+		TData getStoredDataOr(const TData& defaultValue) const;
 	};
 
 	template<class TComponent, class ...Args>
@@ -482,7 +498,7 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponent()
+	std::shared_ptr<TComponent> Node::getComponent() const
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		for (const auto& component : m_components)
@@ -497,7 +513,7 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentOrNull()
+	std::shared_ptr<TComponent> Node::getComponentOrNull() const
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		for (const auto& component : m_components)
@@ -512,7 +528,7 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentRecursive()
+	std::shared_ptr<TComponent> Node::getComponentRecursive() const
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		if (const auto component = getComponentOrNull<TComponent>())
@@ -531,7 +547,7 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentRecursiveOrNull()
+	std::shared_ptr<TComponent> Node::getComponentRecursiveOrNull() const
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		if (const auto component = getComponentOrNull<TComponent>())
@@ -623,6 +639,58 @@ namespace noco
 					}
 				}
 			}
+		}
+	}
+
+	template<typename TData>
+	void Node::storeData(const TData& value)
+	{
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		{
+			dataStore->setValue(value);
+		}
+		else
+		{
+			emplaceComponent<DataStore<TData>>(value);
+		}
+	}
+
+	template<typename TData>
+	const TData& Node::getStoredData() const
+	{
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		{
+			return dataStore->value();
+		}
+		else
+		{
+			throw Error{ U"Node::getStoredData: Node '{}' has no DataStore component of specified data type"_fmt(m_name) };
+		}
+	}
+
+	template<typename TData>
+	Optional<TData> Node::getStoredDataOpt() const
+	{
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		{
+			return dataStore->value();
+		}
+		else
+		{
+			return none;
+		}
+	}
+
+	template<typename TData>
+	TData Node::getStoredDataOr(const TData& defaultValue) const
+	{
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		{
+			return dataStore->value();
+		}
+		else
+		{
+			return defaultValue;
 		}
 	}
 
