@@ -548,5 +548,8 @@
     <ClInclude Include="..\..\include\NocoUI\Component\Placeholder.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

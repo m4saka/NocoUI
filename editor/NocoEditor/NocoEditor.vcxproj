@@ -239,6 +239,7 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Canvas.hpp" />
