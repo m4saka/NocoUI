@@ -597,8 +597,14 @@ private:
 				MenuSeparator{},
 				MenuItem{ U"空の親ノードを作成", U"", [this] { onClickCreateEmptyParent(); } },
 			},
-			[this, node]
+			[this, nodeWeak = std::weak_ptr{ node }]
 			{
+				const std::shared_ptr<Node> node = nodeWeak.lock();
+				if (!node)
+				{
+					return;
+				}
+
 				Element* const pElement = getElementByNode(node);
 				if (pElement == nullptr)
 				{
