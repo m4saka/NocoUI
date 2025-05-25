@@ -4470,6 +4470,18 @@ public:
 					{
 						m_hierarchy.onClickMoveDown();
 					}
+					else
+					{
+						// 手のひらツール
+						Cursor::RequestStyle(U"Hand");
+
+						// 前回との差分を取るため、最初のフレーム(downがtrue)は無視
+						if (MouseL.pressed() && !MouseL.down())
+						{
+							m_canvas->setOffset(m_canvas->offset() + Cursor::DeltaF());
+							m_scrollOffset = -m_canvas->offset();
+						}
+					}
 				}
 
 				// Ctrl + Alt + ○○
@@ -4733,6 +4745,8 @@ void Main()
 {
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
+
+	Cursor::RegisterCustomCursorStyle(U"Hand", Icon::CreateImage(0xF182DU, 32), Point{ 16, 16 });
 
 	System::SetTerminationTriggers(UserAction::NoAction);
 
