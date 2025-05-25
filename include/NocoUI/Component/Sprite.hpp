@@ -7,13 +7,15 @@ namespace noco
 	class Sprite : public SerializableComponentBase
 	{
 	private:
+		Property<String> m_textureFilePath;
 		Property<String> m_textureAssetName;
 		SmoothProperty<ColorF> m_color;
 		Property<bool> m_preserveAspect;
 
 	public:
-		explicit Sprite(const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureAssetName, &m_color, &m_preserveAspect } }
+		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect } }
+			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }
@@ -21,6 +23,17 @@ namespace noco
 		}
 
 		void draw(const Node& node) const override;
+
+		[[nodiscard]]
+		const PropertyValue<String>& textureFilePath() const
+		{
+			return m_textureFilePath.propertyValue();
+		}
+
+		void setTextureFilePath(const PropertyValue<String>& textureFilePath)
+		{
+			m_textureFilePath.setPropertyValue(textureFilePath);
+		}
 
 		[[nodiscard]]
 		const PropertyValue<String>& textureAssetName() const
