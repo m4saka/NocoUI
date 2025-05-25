@@ -5,6 +5,12 @@
 
 namespace noco
 {
+	enum class FontAssetSource : uint8
+	{
+		Default,
+		FontAsset,
+	};
+
 	enum class LabelUnderlineStyle : uint8
 	{
 		None,
@@ -15,6 +21,7 @@ namespace noco
 	{
 	private:
 		Property<String> m_text;
+		PropertyNonInteractive<FontAssetSource> m_fontAssetSource;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
 		SmoothProperty<ColorF> m_color;

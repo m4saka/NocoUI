@@ -4615,14 +4615,24 @@ public:
 	}
 };
 
+namespace Asset
+{
+	namespace detail
+	{
+	}
+}
+
 void Main()
 {
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
 
-	FontAsset::Register(U"Font", FontMethod::MSDF, 60);
-	FontAsset::Register(U"Font14", FontMethod::MSDF, 14);
-	FontAsset::Register(U"Font14Bold", FontMethod::MSDF, 14, Typeface::Bold);
+	FontAsset::Register(U"noco::FontDefault24", FontMethod::MSDF, 24);
+	FontAsset::Register(U"noco::FontDefaultBold24", FontMethod::MSDF, 24, Typeface::Bold);
+	FontAsset::Register(U"noco::FontDefault48", FontMethod::MSDF, 48);
+	FontAsset::Register(U"noco::FontDefaultBold48", FontMethod::MSDF, 48, Typeface::Bold);
+	FontAsset::Register(U"noco::FontDefault96", FontMethod::MSDF, 96);
+	FontAsset::Register(U"noco::FontDefaultBold96", FontMethod::MSDF, 96, Typeface::Bold);
 
 	Editor editor;
 	editor.rootNode()->setConstraint(AnchorConstraint
