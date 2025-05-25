@@ -871,7 +871,7 @@ namespace noco
 			}
 			exists = true;
 
-			const RectF& childRect = child->layoutAppliedRect();
+			const RectF& childRect = child->layoutAppliedRectWithMargin();
 			left = Min(left, childRect.x);
 			top = Min(top, childRect.y);
 			right = Max(right, childRect.x + childRect.w);
@@ -1324,6 +1324,25 @@ namespace noco
 	const RectF& Node::layoutAppliedRect() const
 	{
 		return m_layoutAppliedRect;
+	}
+
+	const RectF& Node::layoutAppliedRectWithMargin() const
+	{
+		if (const BoxConstraint* pBoxConstraint = boxConstraint())
+		{
+			const LRTB& margin = pBoxConstraint->margin;
+			return RectF
+			{
+				m_layoutAppliedRect.x - margin.left,
+				m_layoutAppliedRect.y - margin.top,
+				m_layoutAppliedRect.w + margin.left + margin.right,
+				m_layoutAppliedRect.h + margin.top + margin.bottom,
+			};
+		}
+		else
+		{
+			return m_layoutAppliedRect;
+		}
 	}
 
 	const Array<std::shared_ptr<Node>>& Node::children() const
