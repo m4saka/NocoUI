@@ -132,6 +132,9 @@
     <ClCompile Include="..\..\src\Component\DragDropSource.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Asset.cpp">
+      <Filter>Source Files\NocoUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -550,6 +553,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Asset.hpp">
+      <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Component/Sprite.hpp"
 #include "NocoUI/Node.hpp"
+#include "NocoUI/Asset.hpp"
 
 namespace noco
 {
@@ -18,11 +19,7 @@ namespace noco
 			}
 			else if (!textureFilePath.empty())
 			{
-				if (!TextureAsset::IsRegistered(FormatTextureAssetName(textureFilePath)) && FileSystem::IsFile(textureFilePath))
-				{
-					TextureAsset::Register(FormatTextureAssetName(textureFilePath), textureFilePath);
-				}
-				return TextureAsset(FormatTextureAssetName(textureFilePath));
+				return noco::Asset::GetOrLoadTexture(textureFilePath);
 			}
 			else
 			{

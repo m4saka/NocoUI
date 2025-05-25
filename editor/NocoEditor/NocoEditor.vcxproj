@@ -115,6 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Asset.cpp" />
     <ClCompile Include="..\..\src\Canvas.cpp" />
     <ClCompile Include="..\..\src\Component\DragDropSource.cpp" />
     <ClCompile Include="..\..\src\Component\DragDropTarget.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Asset.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Canvas.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp" />

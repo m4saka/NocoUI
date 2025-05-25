@@ -43,7 +43,7 @@ static PropertyValue<ColorF> MenuItemRectFillColor()
 class ContextMenu
 {
 public:
-	static constexpr int32 MenuItemWidth = 300;
+	static constexpr int32 DefaultMenuItemWidth = 300;
 	static constexpr int32 MenuItemHeight = 30;
 
 private:
@@ -78,7 +78,7 @@ public:
 				.anchorMin = Anchor::TopLeft,
 				.anchorMax = Anchor::TopLeft,
 				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ MenuItemWidth, 0 },
+				.sizeDelta = Vec2{ DefaultMenuItemWidth, 0 },
 				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 	{
@@ -91,13 +91,20 @@ public:
 		m_editorOverlayCanvas->refreshLayout();
 	}
 
-	void show(const Vec2& pos, const Array<MenuElement>& elements, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
+	void show(const Vec2& pos, const Array<MenuElement>& elements, int32 menuItemWidth = DefaultMenuItemWidth, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
 	{
 		// 前回開いていたメニューを閉じてから表示
 		hide(RefreshesLayoutYN::No);
 		m_elements = elements;
 		m_elementNodes.reserve(m_elements.size());
 		m_fnOnHide = std::move(fnOnHide);
+
+		if (const AnchorConstraint* pAnchorConstraint = m_rootNode->anchorConstraint())
+		{
+			AnchorConstraint newConstraint = *pAnchorConstraint;
+			newConstraint.sizeDelta.x = menuItemWidth;
+			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
+		}
 
 		for (size_t i = 0; i < m_elements.size(); ++i)
 		{
@@ -186,9 +193,9 @@ public:
 		double y = pos.y;
 
 		// 右端にはみ出す場合は左に寄せる
-		if (x + MenuItemWidth > Scene::Width())
+		if (x + DefaultMenuItemWidth > Scene::Width())
 		{
-			x = Scene::Width() - MenuItemWidth;
+			x = Scene::Width() - DefaultMenuItemWidth;
 		}
 
 		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
@@ -330,11 +337,14 @@ struct MenuCategory
 	String text;
 	Array<MenuElement> elements;
 	std::shared_ptr<Node> node;
+	int32 subMenuWidth;
 };
 
 class MenuBar
 {
 private:
+	static constexpr int32 DefaultSubMenuWidth = 300;
+
 	std::shared_ptr<Canvas> m_editorCanvas;
 	std::shared_ptr<Node> m_menuBarRootNode;
 	Array<MenuCategory> m_menuCategories;
@@ -361,7 +371,7 @@ public:
 		m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
 	}
 
-	void addMenuCategory(StringView name, StringView text, const Array<MenuElement>& elements)
+	void addMenuCategory(StringView name, StringView text, const Array<MenuElement>& elements, int32 subMenuWidth = DefaultSubMenuWidth)
 	{
 		const auto node = m_menuBarRootNode->emplaceChild(
 			name,
@@ -378,6 +388,7 @@ public:
 			.text = String{ text },
 			.elements = elements,
 			.node = node,
+			.subMenuWidth = subMenuWidth,
 		});
 	}
 
@@ -396,7 +407,7 @@ public:
 				else
 				{
 					// メニューがクリックされた場合は表示を切り替え
-					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
+					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 					m_activeMenuCategoryNode = menuCategory.node;
 					hasMenuOpened = true;
 				}
@@ -404,7 +415,7 @@ public:
 			else if (menuCategory.node->isHoveredRecursive() && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
 			{
 				// カーソルが他のメニューに移動した場合はサブメニューを切り替える
-				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
+				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 				m_activeMenuCategoryNode = menuCategory.node;
 				hasMenuOpened = true;
 			}
@@ -4320,6 +4331,13 @@ public:
 			{
 				MenuItem{ U"表示位置をリセット", U"Ctrl+0", [this] { onClickMenuViewResetPosition(); } },
 			});
+		m_menuBar.addMenuCategory(
+			U"Tool",
+			U"ツール",
+			{
+				MenuItem{ U"アセットのルートディレクトリを変更...", U"Ctrl+Alt+O", [this] { onClickMenuToolChangeAssetDirectory(); } },
+			},
+			380);
 	}
 
 	void update()
@@ -4392,10 +4410,6 @@ public:
 				{
 					onClickMenuFileSave();
 				}
-				else if (KeyA.down())
-				{
-					m_hierarchy.selectAll();
-				}
 			}
 
 			// Ctrl + Shift + ○○
@@ -4413,7 +4427,11 @@ public:
 				// Ctrl + ○○
 				if (ctrl && !alt && !shift)
 				{
-					if (KeyC.down())
+					if (KeyA.down())
+					{
+						m_hierarchy.selectAll();
+					}
+					else if (KeyC.down())
 					{
 						m_hierarchy.onClickCopy();
 					}
@@ -4445,6 +4463,15 @@ public:
 					else if (KeyDown.down())
 					{
 						m_hierarchy.onClickMoveDown();
+					}
+				}
+
+				// Ctrl + Alt + ○○
+				if (ctrl && alt && !shift)
+				{
+					if (KeyO.down())
+					{
+						onClickMenuToolChangeAssetDirectory();
 					}
 				}
 
@@ -4612,6 +4639,15 @@ public:
 		m_scrollOffset = Vec2::Zero();
 		m_scrollScale = 1.0;
 		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+	}
+
+	void onClickMenuToolChangeAssetDirectory()
+	{
+		if (Optional<String> pathOpt = Dialog::SelectFolder(noco::Asset::GetBaseDirectoryPath(), U"アセットのルートディレクトリを選択"))
+		{
+			const String path = *pathOpt;
+			noco::Asset::SetBaseDirectoryPath(path);
+		}
 	}
 };
 

@@ -4,4 +4,5 @@
 #include "NocoUI/Constraint/Constraint.hpp"
 #include "NocoUI/Layout/Layout.hpp"
 #include "NocoUI/Component/Component.hpp"
+#include "NocoUI/Asset.hpp"
 #include "NocoUI/Utility.hpp"
