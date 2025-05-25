@@ -1770,6 +1770,11 @@ public:
 		m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
 		++m_nextDialogId;
 	}
+
+	bool anyDialogOpened() const
+	{
+		return !m_openedDialogFrames.empty();
+	}
 };
 
 class SimpleDialog : public IDialog
@@ -1805,7 +1810,7 @@ public:
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = SizeF{ 0, 48 },
-				.margin = LRTB{ 0, 0, 0, 0 },
+				.margin = LRTB{ 0, 0, 16, 16 },
 			});
 		labelNode->emplaceComponent<Label>(
 			m_text,
@@ -4282,6 +4287,7 @@ private:
 	std::weak_ptr<Node> m_prevSelectedNode;
 	bool m_prevSelectedNodeExists = false;
 	Optional<String> m_filePath = none;
+	uint64 m_savedHash = 0;
 	Vec2 m_scrollOffset = Vec2::Zero();
 	double m_scrollScale = 1.0;
 
@@ -4350,7 +4356,7 @@ public:
 		const bool editorCanvasHovered = context.isHovered();
 		m_canvas->update(&context);
 
-		if (!editorCanvasHovered && !context.isScrollableHovered())
+		if (Cursor::OnClientRect() && !editorCanvasHovered && !context.isScrollableHovered())
 		{
 			// マウス座標を中心に拡大縮小
 			const Vec2 beforeOffset = m_scrollOffset;
@@ -4389,7 +4395,7 @@ public:
 
 		// ショートカットキー
 		const bool isWindowActive = Window::GetState().focused;
-		if (isWindowActive && context.draggingNode.expired()) // ドラッグ中は無視
+		if (isWindowActive && context.draggingNode.expired() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
 		{
 			const bool ctrl = KeyControl.pressed();
 			const bool alt = KeyAlt.pressed();
@@ -4486,6 +4492,12 @@ public:
 			}
 		}
 
+		// ウィンドウを閉じようとした場合
+		if ((System::GetUserActions() & UserAction::CloseButtonClicked))
+		{
+			showConfirmSaveIfDirty([] { System::Exit(); });
+		}
+
 		m_prevSelectedNode = selectedNode;
 		m_prevSelectedNodeExists = selectedNode != nullptr;
 	}
@@ -4532,6 +4544,58 @@ public:
 		refreshLayout();
 	}
 
+	bool isDirty() const
+	{
+		return m_savedHash != m_canvas->toJSON().formatMinimum().hash();
+	}
+
+	void resetDirty()
+	{
+		m_savedHash = m_canvas->toJSON().formatMinimum().hash();
+	}
+
+	void showConfirmSaveIfDirty(std::function<void()> callback)
+	{
+		if (!isDirty())
+		{
+			if (callback)
+			{
+				callback();
+			}
+			return;
+		}
+
+		const String text = m_filePath.has_value()
+			? U"'{}'には、保存されていない変更があります。\n上書き保存しますか？"_fmt(FileSystem::FileName(*m_filePath))
+			: U"保存されていない変更があります。\n名前を付けて保存しますか？"_s;
+
+		m_dialogOpener->openDialog(
+			std::make_shared<SimpleDialog>(
+				text,
+				[this, callback = std::move(callback)](StringView buttonText)
+				{
+					if (buttonText == U"キャンセル")
+					{
+						return;
+					}
+
+					if (buttonText == U"はい")
+					{
+						const bool saved = onClickMenuFileSave();
+						if (!saved)
+						{
+							return;
+						}
+					}
+
+					if (callback)
+					{
+						callback();
+					}
+				},
+				Array<String>{ U"はい", U"いいえ", U"キャンセル" }));
+	}
+
 	void onClickMenuFileNew()
 	{
 		m_filePath = none;
@@ -4541,29 +4605,33 @@ public:
 
 	void onClickMenuFileOpen()
 	{
-		if (const auto filePath = Dialog::OpenFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
-		{
-			JSON json;
-			try
+		showConfirmSaveIfDirty(
+			[this]
 			{
-				json = JSON::Load(*filePath, AllowExceptions::Yes);
-			}
-			catch (...)
-			{
-				System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
-				return;
-			}
-			m_filePath = filePath;
-			if (!m_canvas->tryReadFromJSON(json))
-			{
-				System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
-				return;
-			}
-			refresh();
-		}
+				if (const auto filePath = Dialog::OpenFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
+				{
+					JSON json;
+					try
+					{
+						json = JSON::Load(*filePath, AllowExceptions::Yes);
+					}
+					catch (...)
+					{
+						System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
+						return;
+					}
+					m_filePath = filePath;
+					if (!m_canvas->tryReadFromJSON(json))
+					{
+						System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
+						return;
+					}
+					refresh();
+				}
+			});
 	}
 
-	void onClickMenuFileSave()
+	bool onClickMenuFileSave()
 	{
 		Optional<String> filePath = m_filePath;
 		if (filePath == none)
@@ -4571,16 +4639,20 @@ public:
 			filePath = Dialog::SaveFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() });
 			if (filePath == none)
 			{
-				return;
+				return false;
 			}
 		}
-		if (m_canvas->toJSON().save(*filePath))
+		const auto json = m_canvas->toJSON();
+		if (json.save(*filePath))
 		{
 			m_filePath = filePath;
+			m_savedHash = json.formatMinimum().hash();
+			return true;
 		}
 		else
 		{
 			System::MessageBoxOK(U"エラー", U"保存に失敗しました", MessageBoxStyle::Error);
+			return false;
 		}
 	}
 
@@ -4588,9 +4660,11 @@ public:
 	{
 		if (const auto filePath = Dialog::SaveFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
 		{
-			if (m_canvas->toJSON().save(*filePath))
+			const auto json = m_canvas->toJSON();
+			if (json.save(*filePath))
 			{
 				m_filePath = filePath;
+				m_savedHash = json.formatMinimum().hash();
 			}
 			else
 			{
@@ -4601,7 +4675,11 @@ public:
 
 	void onClickMenuFileExit()
 	{
-		System::Exit();
+		showConfirmSaveIfDirty(
+			[]
+			{
+				System::Exit();
+			});
 	}
 
 	void onClickMenuEditCut()
@@ -4656,6 +4734,8 @@ void Main()
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
 
+	System::SetTerminationTriggers(UserAction::NoAction);
+
 	Editor editor;
 	editor.rootNode()->setConstraint(AnchorConstraint
 	{
@@ -4665,6 +4745,7 @@ void Main()
 		.sizeDelta = Vec2{ 800, 600 },
 	});
 	editor.refresh();
+	editor.resetDirty();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
 

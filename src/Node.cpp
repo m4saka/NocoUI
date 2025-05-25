@@ -35,8 +35,9 @@ namespace noco
 		}
 		if (interactable)
 		{
-			const bool mouseOverForHovered = m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
-			const bool mouseOverForPressed = m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
+			const bool onClientRect = Cursor::OnClientRect();
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
 			m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed);
 			return ApplyOtherInteractState(m_mouseLTracker.interactStateSelf(), inheritedInteractState);
 		}
@@ -77,8 +78,9 @@ namespace noco
 		}
 		if (interactable)
 		{
-			const bool mouseOverForHovered = m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
-			const bool mouseOverForPressed = m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
+			const bool onClientRect = Cursor::OnClientRect();
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
 			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed);
 			return ApplyOtherInteractState(m_mouseRTracker.interactStateSelf(), inheritedInteractState);
 		}
