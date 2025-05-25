@@ -319,16 +319,21 @@ public:
 	{
 		if (m_recursive ? node->isRightClickedRecursive() : node->isRightClicked())
 		{
-			if (m_fnBeforeOpen)
-			{
-				m_fnBeforeOpen();
-			}
-			m_contextMenu->show(Cursor::PosF(), m_menuElements);
+			openManually();
 		}
 	}
 
 	void draw(const Node&) const override
 	{
+	}
+
+	void openManually() const
+	{
+		if (m_fnBeforeOpen)
+		{
+			m_fnBeforeOpen();
+		}
+		m_contextMenu->show(Cursor::PosF(), m_menuElements);
 	}
 };
 
@@ -1603,7 +1608,7 @@ public:
 	}
 };
 
-std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
+std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
 {
 	auto buttonNode = Node::Create(
 		U"Button",
@@ -1709,7 +1714,7 @@ public:
 		for (const auto& button : buttons)
 		{
 			buttonParentNode->addChild(
-				CreateDialogButtonNode(
+				CreateButtonNode(
 					button,
 					BoxConstraint
 					{
@@ -2029,6 +2034,18 @@ public:
 					m_inspectorRootNode->addChild(componentNode);
 				}
 			}
+
+			m_inspectorRootNode->addChild(CreateButtonNode(
+				U"＋ コンポーネントを追加",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 200, 24 },
+					.margin = LRTB{ 0, 0, 24, 24 },
+				},
+				[this]
+				{
+					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually();
+				}));
 		}
 	}
 
