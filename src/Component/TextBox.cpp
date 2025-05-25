@@ -18,7 +18,7 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = FontAsset(fontAssetName);
+		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont();
 		fontMethod = font.method();
 		glyphs = font.getGlyphs(text);
 		const int32 baseFontSize = font.fontSize();

@@ -115,10 +115,10 @@ public:
 					InheritChildrenStateFlags::None,
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-				itemNode->emplaceComponent<Label>(pItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+				itemNode->emplaceComponent<Label>(pItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 				if (!pItem->hotKeyText.empty())
 				{
-					itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+					itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
 				}
 				itemNode->setInteractable(pItem->fnIsEnabled());
 				m_elementNodes.push_back(itemNode);
@@ -137,14 +137,14 @@ public:
 					InheritChildrenStateFlags::None,
 					RefreshesLayoutYN::No);
 				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-				itemNode->emplaceComponent<Label>(pCheckableItem->text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+				itemNode->emplaceComponent<Label>(pCheckableItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 				if (!pCheckableItem->hotKeyText.empty())
 				{
-					itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+					itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
 				}
 				itemNode->emplaceComponent<Label>(
 					pCheckableItem->checked ? U"✔" : U"",
-					U"Font14",
+					U"",
 					14,
 					PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }),
 					HorizontalAlign::Left,
@@ -371,7 +371,7 @@ public:
 				.sizeDelta = Vec2{ 80, 0 },
 			});
 		node->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-		node->emplaceComponent<Label>(text, U"Font14", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
+		node->emplaceComponent<Label>(text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
 
 		m_menuCategories.push_back(MenuCategory
 		{
@@ -804,7 +804,7 @@ private:
 			});
 		const auto nameLabel = hierarchyNode->emplaceComponent<Label>(
 			node->name(),
-			U"Font14Bold",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -815,7 +815,7 @@ private:
 
 		const auto stateLabel = hierarchyNode->emplaceComponent<Label>(
 			U"",
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Right,
@@ -850,7 +850,7 @@ private:
 			});
 		const auto toggleFoldedLabel = toggleFoldedNode->emplaceComponent<Label>(
 			U"▼",
-			U"Font14",
+			U"",
 			10,
 			ColorF{ 1.0, 0.6 },
 			HorizontalAlign::Center,
@@ -1611,7 +1611,7 @@ std::shared_ptr<Node> CreateDialogButtonNode(StringView text, const ConstraintVa
 		IsHitTargetYN::No);
 	labelNode->emplaceComponent<Label>(
 		text,
-		U"Font14",
+		U"",
 		14,
 		Palette::White,
 		HorizontalAlign::Center,
@@ -1798,7 +1798,7 @@ public:
 			});
 		labelNode->emplaceComponent<Label>(
 			m_text,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Center,
@@ -2032,7 +2032,7 @@ public:
 			3.0);
 		const auto arrowLabel = headingNode->emplaceComponent<Label>(
 			isFolded ? U"▶" : U"▼",
-			U"Font14Bold",
+			U"",
 			14,
 			ColorF{ 1.0, 0.6 },
 			HorizontalAlign::Left,
@@ -2042,7 +2042,7 @@ public:
 			VerticalOverflow::Clip);
 		headingNode->emplaceComponent<Label>(
 			name,
-			U"Font14Bold",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2143,7 +2143,7 @@ public:
 				.sizeDeltaPivot = Anchor::MiddleCenter,
 			});
 		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
-		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
 		return propertyNode;
@@ -2172,7 +2172,7 @@ public:
 			});
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2192,7 +2192,7 @@ public:
 				.flexibleWeight = 1,
 			});
 		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
-		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
 		return propertyNode;
@@ -2230,7 +2230,7 @@ public:
 			});
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2265,7 +2265,7 @@ public:
 			});
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 		// Y
@@ -2279,7 +2279,7 @@ public:
 			});
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 		class Vec2PropertyTextBox : public ComponentBase
@@ -2366,7 +2366,7 @@ public:
 			});
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2401,7 +2401,7 @@ public:
 			});
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 		// Y
@@ -2415,7 +2415,7 @@ public:
 			});
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 		// Z
@@ -2429,7 +2429,7 @@ public:
 			});
 		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
 
 		// W
@@ -2443,7 +2443,7 @@ public:
 			});
 		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
 
 		class Vec4PropertyTextBox : public ComponentBase
@@ -2553,7 +2553,7 @@ public:
 				});
 		line1LabelNode->emplaceComponent<Label>(
 			U"{} (left, right)"_fmt(name),
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2588,7 +2588,7 @@ public:
 			});
 		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
 
 		// R
@@ -2602,7 +2602,7 @@ public:
 			});
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
 
 		const auto line2 = propertyNode->emplaceChild(
@@ -2626,7 +2626,7 @@ public:
 				});
 		line2LabelNode->emplaceComponent<Label>(
 			U"{} (top, bottom)"_fmt(name),
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2661,7 +2661,7 @@ public:
 			});
 		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
 
 		// B
@@ -2675,7 +2675,7 @@ public:
 			});
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
 		class LRTBPropertyTextBox : public ComponentBase
@@ -2767,7 +2767,7 @@ public:
 			});
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -2854,7 +2854,7 @@ public:
 			});
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
 
 		// G
@@ -2868,7 +2868,7 @@ public:
 			});
 		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
 
 		// B
@@ -2882,7 +2882,7 @@ public:
 			});
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
 
 		// A
@@ -2896,7 +2896,7 @@ public:
 			});
 		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
-			U"Font14", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
 		class ColorPropertyTextBox : public ComponentBase
@@ -2995,7 +2995,7 @@ public:
 				});
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -3019,7 +3019,7 @@ public:
 
 		const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
 			currentValue,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -3085,7 +3085,7 @@ public:
 
 		comboBoxNode->emplaceComponent<Label>(
 			U"▼",
-			U"Font14",
+			U"",
 			10,
 			Palette::White,
 			HorizontalAlign::Right,
@@ -3114,7 +3114,7 @@ public:
 
 		const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 			initialValue ? U"✓" : U"",
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Center,
@@ -3208,7 +3208,7 @@ public:
 			IsHitTargetYN::No);
 		labelNode->emplaceComponent<Label>(
 			name,
-			U"Font14",
+			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
@@ -4058,7 +4058,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 		});
 	labelNode->emplaceComponent<Label>(
 		m_pProperty->name(),
-		U"Font14",
+		U"",
 		14,
 		Palette::White,
 		HorizontalAlign::Center,
@@ -4619,10 +4619,6 @@ void Main()
 {
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
-
-	FontAsset::Register(U"Font", FontMethod::MSDF, 60);
-	FontAsset::Register(U"Font14", FontMethod::MSDF, 14);
-	FontAsset::Register(U"Font14Bold", FontMethod::MSDF, 14, Typeface::Bold);
 
 	Editor editor;
 	editor.rootNode()->setConstraint(AnchorConstraint
