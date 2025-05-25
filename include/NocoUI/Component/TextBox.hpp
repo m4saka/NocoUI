@@ -85,6 +85,18 @@ namespace noco
 
 		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
 
+		bool hasSelection() const;
+
+		std::pair<size_t, size_t> getSelectionRange() const;
+
+		String getSelectedText() const;
+
+		void deleteSelection();
+
+		void insertTextAtCursor(StringView text);
+
+		void handleClipboardShortcut();
+
 	public:
 		explicit TextBox(
 			const PropertyValue<String>& fontAssetName = U"Font14",

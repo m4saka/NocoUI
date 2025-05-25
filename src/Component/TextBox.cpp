@@ -110,6 +110,106 @@ namespace noco
 		return m_cache.getCursorIndex(drawOffsetX, m_scrollOffset, posX);
 	}
 
+
+	bool TextBox::hasSelection() const
+	{
+		return (m_cursorIndex != m_selectionAnchor);
+	}
+
+	std::pair<size_t, size_t> TextBox::getSelectionRange() const
+	{
+		const size_t begin = Min(m_cursorIndex, m_selectionAnchor);
+		const size_t end = Max(m_cursorIndex, m_selectionAnchor);
+		return { begin, end };
+	}
+
+	String TextBox::getSelectedText() const
+	{
+		if (!hasSelection())
+		{
+			return U"";
+		}
+		const auto [b, e] = getSelectionRange();
+		return m_text.substr(b, e - b);
+	}
+
+	void TextBox::deleteSelection()
+	{
+		if (!hasSelection())
+		{
+			return;
+		}
+		const auto [b, e] = getSelectionRange();
+		m_text.erase(b, e - b);
+		m_cursorIndex = m_selectionAnchor = b;
+	}
+
+	void TextBox::insertTextAtCursor(StringView str)
+	{
+		m_text.insert(m_cursorIndex, str);
+		m_cursorIndex += str.size();
+		m_selectionAnchor = m_cursorIndex;
+	}
+
+	void TextBox::handleClipboardShortcut()
+	{
+		if (!m_isEditing)
+		{
+			return;
+		}
+
+		const bool ctrl = KeyControl.pressed();
+		const bool alt = KeyAlt.pressed();
+		const bool shift = KeyShift.pressed();
+
+		const bool ctrlOnly = ctrl && !alt && !shift;
+		if (!ctrlOnly)
+		{
+			return;
+		}
+
+		// Ctrl+C
+		if (KeyC.down())
+		{
+			if (hasSelection())
+			{
+				Clipboard::SetText(getSelectedText());
+			}
+			return;
+		}
+
+		// Ctrl + X
+		if (KeyX.down())
+		{
+			if (hasSelection())
+			{
+				Clipboard::SetText(getSelectedText());
+				deleteSelection();
+				m_isChanged = true;
+			}
+			return;
+		}
+
+		// Ctrl + V
+		if (KeyV.down())
+		{
+			String clip;
+			Clipboard::GetText(clip);
+			if (clip.isEmpty())
+			{
+				return;
+			}
+
+			if (hasSelection())
+			{
+				deleteSelection();
+			}
+			insertTextAtCursor(clip);
+			m_isChanged = true;
+			return;
+		}
+	}
+
 	void TextBox::onDeactivated(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
 	{
 		deselect(node);
@@ -264,8 +364,9 @@ namespace noco
 
 			const size_t prevCursorIndex = m_cursorIndex;
 
-			const bool shift = KeyShift.pressed();
 			const bool ctrl = KeyControl.pressed();
+			const bool alt = KeyAlt.pressed();
+			const bool shift = KeyShift.pressed();
 			bool keyMoveTried = false;
 
 			if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
@@ -348,6 +449,8 @@ namespace noco
 				m_deletePressStopwatch.restart();
 			}
 
+			handleClipboardShortcut();
+
 			for (const auto c : TextInput::GetRawInput())
 			{
 				if (IsControl(c))
@@ -367,7 +470,7 @@ namespace noco
 				m_isChanged = true;
 			}
 
-			if (ctrl && KeyA.down())
+			if (ctrl && !alt && !shift && KeyA.down())
 			{
 				m_cursorIndex = m_text.size();
 				m_selectionAnchor = 0;
