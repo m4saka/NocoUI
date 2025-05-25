@@ -1667,35 +1667,35 @@ public:
 				.sizeDelta = Vec2{ 0, 0 },
 				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
-			, m_dialogNode(m_screenMaskNode->emplaceChild(
-				U"Dialog",
-				BoxConstraint
-				{
-					.sizeRatio = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ dialogWidth, 0 },
-					.margin = LRTB{ 0, 0, 0, 0 },
-				}))
-				, m_contentRootNode(m_dialogNode->emplaceChild(
-					U"Dialog_ContentRoot",
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.margin = LRTB{ 0, 0, 0, 0 },
-					}))
-					, m_buttonRootNode(m_dialogNode->emplaceChild(
-						U"Dialog_ButtonRoot",
-						BoxConstraint
-						{
-							.sizeRatio = Vec2{ 1, 0 },
-							.margin = LRTB{ 0, 0, 0, 0 },
-						}))
-						, m_onResult(onResult)
+		, m_dialogNode(m_screenMaskNode->emplaceChild(
+			U"Dialog",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ dialogWidth, 0 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_contentRootNode(m_dialogNode->emplaceChild(
+			U"Dialog_ContentRoot",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_buttonRootNode(m_dialogNode->emplaceChild(
+			U"Dialog_ButtonRoot",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.margin = LRTB{ 0, 0, 0, 0 },
+			}))
+		, m_onResult(onResult)
 	{
 		// ダイアログ背面を暗くする
 		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
 		m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
 
-		m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 8 } }, RefreshesLayoutYN::No);
+		m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } }, RefreshesLayoutYN::No);
 		m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 		const auto buttonParentNode = m_dialogNode->emplaceChild(
