@@ -674,6 +674,20 @@ namespace noco
 		return m_children.back();
 	}
 
+	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
+	{
+		auto child = CreateFromJSON(json);
+		child->setCanvasRecursive(m_canvas);
+		child->m_parent = shared_from_this();
+		child->refreshActiveInHierarchy();
+		m_children.push_back(std::move(child));
+		if (refreshesLayout)
+		{
+			refreshContainedCanvasLayout();
+		}
+		return m_children.back();
+	}
+
 	const std::shared_ptr<Node>& Node::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
 	{
 		if (!child->m_parent.expired())

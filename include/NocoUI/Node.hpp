@@ -175,7 +175,6 @@ namespace noco
 
 		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Rect", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		template <class... Args>
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
@@ -466,21 +465,6 @@ namespace noco
 		auto component = std::make_shared<TComponent>(std::forward<Args>(args)...);
 		addComponent(component);
 		return component;
-	}
-
-	template<class ...Args>
-	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
-	{
-		auto child = CreateFromJSON(json);
-		child->setCanvasRecursive(m_canvas);
-		child->m_parent = shared_from_this();
-		child->refreshActiveInHierarchy();
-		m_children.push_back(std::move(child));
-		if (refreshesLayout)
-		{
-			refreshContainedCanvasLayout();
-		}
-		return m_children.back();
 	}
 
 	template <class Fty>
