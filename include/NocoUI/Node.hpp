@@ -624,7 +624,6 @@ namespace noco
 	{
 		for (const auto& child : m_children)
 		{
-			child->enumeratePlaceholdersWithTagRecursive(tag, func);
 			for (const auto& component : child->m_components)
 			{
 				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
@@ -635,6 +634,7 @@ namespace noco
 					}
 				}
 			}
+			child->enumeratePlaceholdersWithTagRecursive(tag, func);
 		}
 	}
 
@@ -644,7 +644,6 @@ namespace noco
 	{
 		for (const auto& child : m_children)
 		{
-			child->enumeratePlaceholdersWithTagRecursive(tag, func);
 			for (const auto& component : child->m_components)
 			{
 				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
@@ -655,6 +654,7 @@ namespace noco
 					}
 				}
 			}
+			child->enumeratePlaceholdersWithTagRecursive(tag, func);
 		}
 	}
 
