@@ -261,7 +261,7 @@ namespace noco
 		const RectF& layoutAppliedRect() const;
 
 		[[nodiscard]]
-		const RectF& layoutAppliedRectWithMargin() const;
+		RectF layoutAppliedRectWithMargin() const;
 
 		[[nodiscard]]
 		const Array<std::shared_ptr<Node>>& children() const;

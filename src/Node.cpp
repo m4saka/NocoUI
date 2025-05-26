@@ -1326,7 +1326,7 @@ namespace noco
 		return m_layoutAppliedRect;
 	}
 
-	const RectF& Node::layoutAppliedRectWithMargin() const
+	RectF Node::layoutAppliedRectWithMargin() const
 	{
 		if (const BoxConstraint* pBoxConstraint = boxConstraint())
 		{
