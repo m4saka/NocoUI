@@ -152,31 +152,31 @@ namespace noco
 		const Array<Event>& getFiredEventsAll() const;
 
 		template <class Fty>
-		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		void walkPlaceholders(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class Fty>
-		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		void walkPlaceholders(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 	};
 
 	template <class Fty>
-	void Canvas::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		if (m_rootNode)
 		{
-			m_rootNode->walkPlaceholdersWithTagRecursive(tag, std::move(func));
+			m_rootNode->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
 		}
 	}
 
 	template <class Fty>
-	void Canvas::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
 	{
 		if (m_rootNode)
 		{
-			m_rootNode->walkPlaceholdersWithTagRecursive(tag, std::move(func));
+			m_rootNode->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
 		}
 	}
 }

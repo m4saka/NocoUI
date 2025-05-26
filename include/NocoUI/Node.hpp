@@ -436,19 +436,11 @@ namespace noco
 		void refreshContainedCanvasLayout();
 
 		template <class Fty>
-		void walkPlaceholdersWithTag(StringView tag, Fty&& func) const
+		void walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive = RecursiveYN::Yes) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class Fty>
-		void walkPlaceholdersWithTag(StringView tag, Fty&& func) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
-
-		template <class Fty>
-		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
-
-		template <class Fty>
-		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		void walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive = RecursiveYN::Yes) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		template <typename TData>
@@ -581,7 +573,7 @@ namespace noco
 	}
 
 	template <class Fty>
-	void Node::walkPlaceholdersWithTag(StringView tag, Fty&& func) const
+	void Node::walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		for (const auto& child : m_children)
@@ -596,11 +588,15 @@ namespace noco
 					}
 				}
 			}
+			if (recursive)
+			{
+				child->walkPlaceholders(tag, func, RecursiveYN::Yes);
+			}
 		}
 	}
 
 	template <class Fty>
-	void Node::walkPlaceholdersWithTag(StringView tag, Fty&& func) const
+	void Node::walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
 	{
 		for (const auto& child : m_children)
@@ -615,46 +611,10 @@ namespace noco
 					}
 				}
 			}
-		}
-	}
-
-	template <class Fty>
-	void Node::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&>
-	{
-		for (const auto& child : m_children)
-		{
-			for (const auto& component : child->m_components)
+			if (recursive)
 			{
-				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
-				{
-					if (placeholder->tag() == tag)
-					{
-						func(child);
-					}
-				}
+				child->walkPlaceholders(tag, func, RecursiveYN::Yes);
 			}
-			child->walkPlaceholdersWithTagRecursive(tag, func);
-		}
-	}
-
-	template <class Fty>
-	void Node::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
-	{
-		for (const auto& child : m_children)
-		{
-			for (const auto& component : child->m_components)
-			{
-				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
-				{
-					if (placeholder->tag() == tag)
-					{
-						func(child, placeholder->data());
-					}
-				}
-			}
-			child->walkPlaceholdersWithTagRecursive(tag, func);
 		}
 	}
 
