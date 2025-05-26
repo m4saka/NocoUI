@@ -436,19 +436,19 @@ namespace noco
 		void refreshContainedCanvasLayout();
 
 		template <class Fty>
-		void enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+		void walkPlaceholdersWithTag(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class Fty>
-		void enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+		void walkPlaceholdersWithTag(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		template <class Fty>
-		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class Fty>
-		void enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+		void walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		template <typename TData>
@@ -581,7 +581,7 @@ namespace noco
 	}
 
 	template <class Fty>
-	void Node::enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+	void Node::walkPlaceholdersWithTag(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		for (const auto& child : m_children)
@@ -600,7 +600,7 @@ namespace noco
 	}
 
 	template <class Fty>
-	void Node::enumeratePlaceholdersWithTag(StringView tag, Fty&& func) const
+	void Node::walkPlaceholdersWithTag(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
 	{
 		for (const auto& child : m_children)
@@ -619,7 +619,7 @@ namespace noco
 	}
 
 	template <class Fty>
-	void Node::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+	void Node::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		for (const auto& child : m_children)
@@ -634,12 +634,12 @@ namespace noco
 					}
 				}
 			}
-			child->enumeratePlaceholdersWithTagRecursive(tag, func);
+			child->walkPlaceholdersWithTagRecursive(tag, func);
 		}
 	}
 
 	template <class Fty>
-	void Node::enumeratePlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
+	void Node::walkPlaceholdersWithTagRecursive(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
 	{
 		for (const auto& child : m_children)
@@ -654,7 +654,7 @@ namespace noco
 					}
 				}
 			}
-			child->enumeratePlaceholdersWithTagRecursive(tag, func);
+			child->walkPlaceholdersWithTagRecursive(tag, func);
 		}
 	}
 
