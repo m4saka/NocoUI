@@ -265,7 +265,7 @@ namespace noco
 			{ U"name", m_name },
 			{ U"constraint", std::visit([](const auto& constraint) { return constraint.toJSON(); }, m_constraint) },
 			{ U"transformEffect", m_transformEffect.toJSON() },
-			{ U"layout", std::visit([](const auto& layout) { return layout.toJSON(); }, m_childrenLayout) },
+			{ U"childrenLayout", std::visit([](const auto& childrenLayout) { return childrenLayout.toJSON(); }, m_childrenLayout) },
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
@@ -318,20 +318,20 @@ namespace noco
 		{
 			node->m_transformEffect.readFromJSON(json[U"transformEffect"]);
 		}
-		if (json.contains(U"layout") && json[U"layout"].contains(U"type"))
+		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
-			const auto type = json[U"layout"][U"type"].getString();
+			const auto type = json[U"childrenLayout"][U"type"].getString();
 			if (type == U"FlowLayout")
 			{
-				node->m_childrenLayout = FlowLayout::FromJSON(json[U"layout"]);
+				node->m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"HorizontalLayout")
 			{
-				node->m_childrenLayout = HorizontalLayout::FromJSON(json[U"layout"]);
+				node->m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"VerticalLayout")
 			{
-				node->m_childrenLayout = VerticalLayout::FromJSON(json[U"layout"]);
+				node->m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else
 			{
