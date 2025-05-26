@@ -282,10 +282,21 @@ public:
 			}
 		}
 
-		// メニュー外クリックで閉じる
-		// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
 		if (!m_rootNode->isHoveredRecursive() && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
 		{
+			// メニュー外クリックで閉じる
+			// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
+			hide();
+		}
+		else if (KeyEscape.down())
+		{
+			// Escキーで閉じる
+			// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
+			hide();
+		}
+		else if (!Window::GetState().focused)
+		{
+			// ウィンドウが非アクティブになった場合は閉じる
 			hide();
 		}
 	}
