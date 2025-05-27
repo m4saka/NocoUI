@@ -222,10 +222,20 @@ namespace noco
 		[[nodiscard]]
 		Optional<RectF> getChildrenContentRect() const;
 
+		[[nodiscard]]
 		Optional<RectF> getChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hoveredNodeInChildren();
+		std::shared_ptr<Node> hoveredNodeRecursive();
+
+		[[nodiscard]]
+		std::shared_ptr<Node> hitTest(const Vec2& point);
+
+		[[nodiscard]]
+		std::shared_ptr<const Node> hoveredNodeRecursive() const;
+
+		[[nodiscard]]
+		std::shared_ptr<const Node> hitTest(const Vec2& point) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();

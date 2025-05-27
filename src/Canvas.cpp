@@ -213,7 +213,7 @@ namespace noco
 	{
 		// ホバー中ノード取得
 		const bool canHover = (pContext ? pContext->canHover && !pContext->isHovered() : true) && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたい
-		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeInChildren() : nullptr;
+		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
 
 		// スクロール可能なホバー中ノード取得
 		auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;

@@ -898,26 +898,62 @@ namespace noco
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
-	std::shared_ptr<Node> Node::hoveredNodeInChildren()
+	std::shared_ptr<Node> Node::hoveredNodeRecursive()
+	{
+		return hitTest(Cursor::PosF());
+	}
+
+	std::shared_ptr<Node> Node::hitTest(const Vec2& point)
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf)
 		{
 			return nullptr;
 		}
-		const bool mouseOver = m_effectedRect.mouseOver();
-		if (m_clippingEnabled && !mouseOver)
+		const bool hit = m_effectedRect.contains(point);
+		if (m_clippingEnabled && !hit)
 		{
 			return nullptr;
 		}
 		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
 		{
-			if (const auto hoveredNode = (*it)->hoveredNodeInChildren())
+			if (const auto hoveredNode = (*it)->hitTest(point))
 			{
 				return hoveredNode;
 			}
 		}
-		if (m_isHitTarget && mouseOver)
+		if (m_isHitTarget && hit)
+		{
+			return shared_from_this();
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<const Node> Node::hoveredNodeRecursive() const
+	{
+		return hitTest(Cursor::PosF());
+	}
+
+	std::shared_ptr<const Node> Node::hitTest(const Vec2& point) const
+	{
+		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
+		if (!m_activeSelf)
+		{
+			return nullptr;
+		}
+		const bool hit = m_effectedRect.contains(point);
+		if (m_clippingEnabled && !hit)
+		{
+			return nullptr;
+		}
+		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+		{
+			if (const auto hoveredNode = (*it)->hitTest(point))
+			{
+				return hoveredNode;
+			}
+		}
+		if (m_isHitTarget && hit)
 		{
 			return shared_from_this();
 		}
