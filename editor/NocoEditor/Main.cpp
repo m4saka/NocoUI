@@ -1242,12 +1242,11 @@ public:
 	void onClickPaste()
 	{
 		// 最後に選択したノードの兄弟として貼り付け
-		// TODO: 選択したノードの後ろに貼り付けるように
 		if (const auto lastEditorSelectedNode = m_lastEditorSelectedNode.lock())
 		{
 			if (lastEditorSelectedNode->parent())
 			{
-				onClickPaste(lastEditorSelectedNode->parent());
+				onClickPaste(lastEditorSelectedNode->parent(), lastEditorSelectedNode->siblingIndex() + 1);
 			}
 			else
 			{
@@ -1260,7 +1259,7 @@ public:
 		}
 	}
 
-	void onClickPaste(std::shared_ptr<Node> parentNode)
+	void onClickPaste(std::shared_ptr<Node> parentNode, Optional<size_t> index = none)
 	{
 		if (!parentNode)
 		{
@@ -1274,9 +1273,21 @@ public:
 
 		// 貼り付け実行
 		Array<std::shared_ptr<Node>> newNodes;
-		for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
+		if (index.has_value())
 		{
-			newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
+			size_t indexValue = Min(index.value(), parentNode->children().size());
+			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
+			{
+				newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue, RefreshesLayoutYN::No));
+				++indexValue;
+			}
+		}
+		else
+		{
+			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
+			{
+				newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
+			}
 		}
 		m_canvas->refreshLayout();
 		refreshNodeList();
