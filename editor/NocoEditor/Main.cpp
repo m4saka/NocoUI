@@ -4333,6 +4333,7 @@ private:
 	std::shared_ptr<Canvas> m_dialogOverlayCanvas;
 	std::shared_ptr<ContextMenu> m_dialogContextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
+	bool m_isConfirmDialogShowing = false;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
 	MenuBar m_menuBar;
@@ -4558,7 +4559,7 @@ public:
 		}
 
 		// ウィンドウを閉じようとした場合
-		if ((System::GetUserActions() & UserAction::CloseButtonClicked))
+		if (!m_isConfirmDialogShowing && (System::GetUserActions() & UserAction::CloseButtonClicked))
 		{
 			showConfirmSaveIfDirty([] { System::Exit(); });
 		}
@@ -4630,6 +4631,8 @@ public:
 			return;
 		}
 
+		m_isConfirmDialogShowing = true;
+
 		const String text = m_filePath.has_value()
 			? U"'{}'には、保存されていない変更があります。\n上書き保存しますか？"_fmt(FileSystem::FileName(*m_filePath))
 			: U"保存されていない変更があります。\n名前を付けて保存しますか？"_s;
@@ -4639,6 +4642,8 @@ public:
 				text,
 				[this, callback = std::move(callback)](StringView buttonText)
 				{
+					m_isConfirmDialogShowing = false;
+
 					if (buttonText == U"キャンセル")
 					{
 						return;
