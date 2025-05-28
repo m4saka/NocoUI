@@ -4394,9 +4394,9 @@ public:
 			U"Tool",
 			U"ツール",
 			{
-				MenuItem{ U"アセットのルートディレクトリを変更...", U"Ctrl+Alt+O", [this] { onClickMenuToolChangeAssetDirectory(); } },
+				MenuItem{ U"アセットのルートディレクトリ(プレビュー用)を変更...", U"Ctrl+Alt+O", [this] { onClickMenuToolChangeAssetDirectory(); } },
 			},
-			380);
+			480);
 	}
 
 	void update()
