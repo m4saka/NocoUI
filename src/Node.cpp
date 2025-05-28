@@ -445,7 +445,7 @@ namespace noco
 					continue;
 				}
 
-				// TODO: 不明なコンポーネントの場合は警告を出力
+				Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
 			}
 		}
 
