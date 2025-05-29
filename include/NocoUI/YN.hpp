@@ -17,4 +17,6 @@ namespace noco
 	using FitsWidthYN = YesNo<struct FitsWidthYN_tag>;
 	using FitsHeightYN = YesNo<struct FitsHeightYN_tag>;
 	using FoldedYN = YesNo<struct FoldedYN_tag>;
+	using ClearsInputYN = YesNo<struct ClearsInputYN_tag>;
+	using IgnoresWhileTextEditingYN = YesNo<struct IgnoresWhileTextEditingYN_tag>;
 }

@@ -251,9 +251,12 @@
     <ClInclude Include="..\..\include\NocoUI\Component\DragDropTarget.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\EventTrigger.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\KeyInputClearer.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\InputUpdaterComponent.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Placeholder.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\ShortcutInputHandler.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\Sprite.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\TextBox.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\UpdaterComponent.hpp" />

@@ -30,6 +30,7 @@ namespace noco
 		/* NonSerialized */ Stopwatch m_deletePressStopwatch;
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
 		/* NonSerialized */ size_t m_scrollOffset = 0;
+		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
 		/* NonSerialized */ bool m_isChanged = false;
 
 		enum class FitDirection
@@ -97,6 +98,8 @@ namespace noco
 
 		void handleClipboardShortcut();
 
+		void onDeactivated(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node);
+
 	public:
 		explicit TextBox(
 			const PropertyValue<String>& fontAssetName = U"Font14",
@@ -117,9 +120,9 @@ namespace noco
 		{
 		}
 
-		void onDeactivated(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
-
 		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
+
+		void updateInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
 
 		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
 

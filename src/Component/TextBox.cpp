@@ -222,6 +222,7 @@ namespace noco
 
 	void TextBox::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
 	{
+		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
 
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
@@ -498,6 +499,16 @@ namespace noco
 		{
 			m_isChanged = true;
 			m_prevText = m_text;
+		}
+	}
+
+	void TextBox::updateInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	{
+		if (m_prevActiveInHierarchy)
+		{
+			// 前回はアクティブだったが今回は非アクティブになった場合
+			onDeactivated(pContext, node);
+			m_prevActiveInHierarchy = false;
 		}
 	}
 

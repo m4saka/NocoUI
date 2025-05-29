@@ -2067,7 +2067,7 @@ public:
 				[this]
 				{
 					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually();
-				}));
+				}))->addClickShortcut(KeyA);
 		}
 	}
 

@@ -1014,6 +1014,40 @@ namespace noco
 		return nullptr;
 	}
 
+	void Node::updateInput(CanvasUpdateContext* pContext)
+	{
+		const auto thisNode = shared_from_this();
+
+		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+		m_childrenTempBuffer.clear();
+		m_childrenTempBuffer.reserve(m_children.size());
+		for (const auto& child : m_children)
+		{
+			m_childrenTempBuffer.push_back(child);
+		}
+		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
+		{
+			(*it)->updateInput(pContext);
+		}
+		m_childrenTempBuffer.clear();
+
+		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+		m_componentTempBuffer.clear();
+		m_componentTempBuffer.reserve(m_components.size());
+		for (const auto& component : m_components)
+		{
+			m_componentTempBuffer.push_back(component);
+		}
+		if (m_activeInHierarchy)
+		{
+			for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
+			{
+				(*it)->updateInput(pContext, thisNode);
+			}
+		}
+		m_componentTempBuffer.clear();
+	}
+
 	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
 	{
 		const auto thisNode = shared_from_this();
@@ -1037,23 +1071,6 @@ namespace noco
 		for (const auto& component : m_componentTempBuffer)
 		{
 			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
-		}
-		if (!m_prevActiveInHierarchy.has_value() || m_activeInHierarchy.getBool() != m_prevActiveInHierarchy->getBool()) // YesNoにopetator==がないのでgetBool()を使っている
-		{
-			if (m_activeInHierarchy)
-			{
-				for (const auto& component : m_componentTempBuffer)
-				{
-					component->onActivated(pContext, thisNode);
-				}
-			}
-			else
-			{
-				for (const auto& component : m_componentTempBuffer)
-				{
-					component->onDeactivated(pContext, thisNode);
-				}
-			}
 		}
 
 		// コンポーネントのupdate実行
@@ -1106,8 +1123,6 @@ namespace noco
 
 			m_childrenTempBuffer.clear();
 		}
-
-		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
 	void Node::lateUpdate(CanvasUpdateContext* pContext)
@@ -1156,6 +1171,32 @@ namespace noco
 			for (const auto& child : m_childrenTempBuffer)
 			{
 				child->lateUpdate(pContext);
+			}
+			m_childrenTempBuffer.clear();
+		}
+	}
+
+	void Node::postLateUpdate()
+	{
+		m_clickRequested = false;
+		m_rightClickRequested = false;
+
+		if (!m_children.empty())
+		{
+			const auto thisNode = shared_from_this();
+
+			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_childrenTempBuffer.clear();
+			m_childrenTempBuffer.reserve(m_children.size());
+			for (const auto& child : m_children)
+			{
+				m_childrenTempBuffer.push_back(child);
+			}
+
+			// 子ノードのpostLateUpdate実行
+			for (const auto& child : m_childrenTempBuffer)
+			{
+				child->postLateUpdate();
 			}
 			m_childrenTempBuffer.clear();
 		}
@@ -1368,6 +1409,26 @@ namespace noco
 				}
 			}
 		}
+	}
+
+	void Node::requestClick()
+	{
+		// m_isHitTargetはfalseでも効く仕様とする
+		if (!m_activeInHierarchy || !m_interactable)
+		{
+			return;
+		}
+		m_clickRequested = true;
+	}
+
+	void Node::requestRightClick()
+	{
+		// m_isHitTargetはfalseでも効く仕様とする
+		if (!m_activeInHierarchy || !m_interactable)
+		{
+			return;
+		}
+		m_rightClickRequested = true;
 	}
 
 	const String& Node::name() const
@@ -1678,7 +1739,7 @@ namespace noco
 
 	bool Node::isClicked() const
 	{
-		return m_mouseLTracker.isClicked();
+		return m_clickRequested || m_mouseLTracker.isClicked();
 	}
 
 	bool Node::isClickedRecursive() const
@@ -1718,7 +1779,7 @@ namespace noco
 
 	bool Node::isRightClicked() const
 	{
-		return m_mouseRTracker.isClicked();
+		return m_rightClickRequested || m_mouseRTracker.isClicked();
 	}
 
 	bool Node::isRightClickedRecursive() const
@@ -1794,6 +1855,11 @@ namespace noco
 		return CreateFromJSON(toJSON());
 	}
 
+	void Node::addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater)
+	{
+		emplaceComponent<InputUpdaterComponent>(std::move(inputUpdater));
+	}
+
 	void Node::addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater)
 	{
 		emplaceComponent<UpdaterComponent>(std::move(updater));
@@ -1813,6 +1879,17 @@ namespace noco
 					onClick(node);
 				}
 			});
+	}
+
+	void Node::addClickShortcut(const Input& input, ClearsInputYN clearsInput)
+	{
+		Print << U"addClickShortcut" << input;
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::Click, clearsInput);
+	}
+
+	void Node::addRightClickShortcut(const Input& input, ClearsInputYN clearsInput)
+	{
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::RightClick, clearsInput);
 	}
 
 	void Node::addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick)

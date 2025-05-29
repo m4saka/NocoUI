@@ -23,11 +23,7 @@ namespace noco
 
 		virtual ~ComponentBase() = 0;
 
-		virtual void onActivated(CanvasUpdateContext*, const std::shared_ptr<Node>&)
-		{
-		}
-
-		virtual void onDeactivated(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void updateInput(CanvasUpdateContext*, const std::shared_ptr<Node>&)
 		{
 		}
 

@@ -49,10 +49,11 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
-		/* NonSerialized */ Optional<ActiveYN> m_prevActiveInHierarchy = none;
 		/* NonSerialized */ SelectedYN m_selected = SelectedYN::No;
 		/* NonSerialized */ InteractState m_currentInteractState = InteractState::Default;
 		/* NonSerialized */ InteractState m_currentInteractStateRight = InteractState::Default;
+		/* NonSerialized */ bool m_clickRequested = false;
+		/* NonSerialized */ bool m_rightClickRequested = false;
 		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 
@@ -241,9 +242,13 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
 
+		void updateInput(CanvasUpdateContext* pContext);
+
 		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
 
 		void lateUpdate(CanvasUpdateContext* pContext);
+
+		void postLateUpdate();
 
 		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 
@@ -256,6 +261,10 @@ namespace noco
 		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void draw() const;
+
+		void requestClick();
+
+		void requestRightClick();
 
 		[[nodiscard]]
 		const String& name() const;
@@ -426,11 +435,17 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> clone() const;
 
+		void addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater);
+
 		void addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater);
 
 		void addDrawer(std::function<void(const Node&)> drawer);
 
 		void addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick);
+
+		void addClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+
+		void addRightClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
 		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
 
