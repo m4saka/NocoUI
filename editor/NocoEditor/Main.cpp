@@ -4424,6 +4424,7 @@ private:
 	uint64 m_savedHash = 0;
 	Vec2 m_scrollOffset = Vec2::Zero();
 	double m_scrollScale = 1.0;
+	bool m_isAltScrolling = false;
 
 public:
 	Editor()
@@ -4611,16 +4612,37 @@ public:
 					}
 					else
 					{
-						// 手のひらツール
-						Cursor::RequestStyle(U"Hand");
-
-						// 前回との差分を取るため、最初のフレーム(downがtrue)は無視
-						if (MouseL.pressed() && !MouseL.down())
+						// Alt単体は手のひらツール
+						if (!editorCanvasHovered && MouseL.down())
 						{
-							m_canvas->setOffset(m_canvas->offset() + Cursor::DeltaF());
-							m_scrollOffset = -m_canvas->offset();
+							// ドラッグ開始
+							m_isAltScrolling = true;
+						}
+						if (!MouseL.pressed())
+						{
+							// ドラッグ終了
+							m_isAltScrolling = false;
+						}
+						if (m_isAltScrolling)
+						{
+							// 前回との差分を取るため、最初のフレーム(downがtrue)は無視
+							if (!MouseL.down())
+							{
+								m_canvas->setOffset(m_canvas->offset() + Cursor::DeltaF());
+								m_scrollOffset = -m_canvas->offset();
+							}
+
+							Cursor::RequestStyle(U"HandSmall");
+						}
+						else if (!editorCanvasHovered && Cursor::OnClientRect())
+						{
+							Cursor::RequestStyle(U"Hand");
 						}
 					}
+				}
+				else
+				{
+					m_isAltScrolling = false;
 				}
 
 				// Ctrl + Alt + ○○
@@ -4641,6 +4663,14 @@ public:
 					}
 				}
 			}
+			else
+			{
+				m_isAltScrolling = false;
+			}
+		}
+		else
+		{
+			m_isAltScrolling = false;
 		}
 
 		// ウィンドウを閉じようとした場合
@@ -4907,7 +4937,8 @@ void Main()
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
 
-	Cursor::RegisterCustomCursorStyle(U"Hand", Icon::CreateImage(0xF182DU, 32), Point{ 16, 16 });
+	Cursor::RegisterCustomCursorStyle(U"Hand", Icon::CreateImage(0xF182DU, 40), Point{ 20, 20 });
+	Cursor::RegisterCustomCursorStyle(U"HandSmall", Icon::CreateImage(0xF182DU, 32), Point{ 16, 16 });
 
 	System::SetTerminationTriggers(UserAction::NoAction);
 
