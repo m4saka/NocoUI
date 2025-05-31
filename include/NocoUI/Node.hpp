@@ -405,6 +405,12 @@ namespace noco
 		bool isClickedRecursive() const;
 
 		[[nodiscard]]
+		bool isClickRequested() const;
+
+		[[nodiscard]]
+		bool isClickRequestedRecursive() const;
+
+		[[nodiscard]]
 		bool isRightPressed() const;
 
 		[[nodiscard]]
@@ -427,6 +433,12 @@ namespace noco
 
 		[[nodiscard]]
 		bool isRightClickedRecursive() const;
+
+		[[nodiscard]]
+		bool isRightClickRequested() const;
+
+		[[nodiscard]]
+		bool isRightClickRequestedRecursive() const;
 
 		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -453,9 +465,13 @@ namespace noco
 
 		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
 
-		void addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		void addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		void addClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+
+		void addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+
+		void addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
 		void refreshContainedCanvasLayout();
 

@@ -21,4 +21,7 @@ namespace noco
 	using EnabledWhileTextEditingYN = YesNo<struct EnabledWhileTextEditingYN_tag>;
 	using ClearsArrayYN = YesNo<struct ClearsArrayYN_tag>;
 	using HitTestEnabledYN = YesNo<struct HitTestEnabledYN_tag>;
+	using AltYN = YesNo<struct AltYN_tag>;
+	using CtrlYN = YesNo<struct CtrlYN_tag>;
+	using ShiftYN = YesNo<struct ShiftYN_tag>;
 }

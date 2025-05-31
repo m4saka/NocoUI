@@ -1775,6 +1775,16 @@ namespace noco
 		return isClicked() || m_children.any([](const auto& child) { return child->isClickedRecursive(); });
 	}
 
+	bool Node::isClickRequested() const
+	{
+		return m_clickRequested;
+	}
+
+	bool Node::isClickRequestedRecursive() const
+	{
+		return m_clickRequested || m_children.any([](const auto& child) { return child->isClickRequestedRecursive(); });
+	}
+
 	bool Node::isRightPressed() const
 	{
 		return m_mouseRTracker.isPressed();
@@ -1813,6 +1823,16 @@ namespace noco
 	bool Node::isRightClickedRecursive() const
 	{
 		return isRightClicked() || m_children.any([](const auto& child) { return child->isRightClickedRecursive(); });
+	}
+
+	bool Node::isRightClickRequested() const
+	{
+		return m_rightClickRequested;
+	}
+
+	bool Node::isRightClickRequestedRecursive() const
+	{
+		return m_rightClickRequested || m_children.any([](const auto& child) { return child->isRightClickRequestedRecursive(); });
 	}
 
 	void Node::removeChildrenAll(RefreshesLayoutYN refreshesLayout)
@@ -1922,12 +1942,22 @@ namespace noco
 
 	void Node::addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
-		emplaceComponent<HotKeyInputHandler>(input, HotKeyTarget::Click, enabledWhileTextEditing, clearsInput);
+		addClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+	}
+
+	void Node::addClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	{
+		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::Click, enabledWhileTextEditing, clearsInput);
 	}
 
 	void Node::addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
-		emplaceComponent<HotKeyInputHandler>(input, HotKeyTarget::RightClick, enabledWhileTextEditing, clearsInput);
+		addRightClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+	}
+
+	void Node::addRightClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	{
+		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::RightClick, enabledWhileTextEditing, clearsInput);
 	}
 
 	void Node::refreshContainedCanvasLayout()

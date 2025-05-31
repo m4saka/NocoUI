@@ -381,7 +381,6 @@ public:
 
 struct MenuCategory
 {
-	String text;
 	Array<MenuElement> elements;
 	std::shared_ptr<Node> node;
 	int32 subMenuWidth;
@@ -418,21 +417,22 @@ public:
 		m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
 	}
 
-	void addMenuCategory(StringView name, StringView text, const Array<MenuElement>& elements, int32 subMenuWidth = DefaultSubMenuWidth)
+	void addMenuCategory(StringView name, StringView text, const Input& mnemonicInput, const Array<MenuElement>& elements, int32 width = 80, int32 subMenuWidth = DefaultSubMenuWidth)
 	{
 		const auto node = m_menuBarRootNode->emplaceChild(
 			name,
 			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 0, 1 },
-				.sizeDelta = Vec2{ 80, 0 },
+				.sizeDelta = Vec2{ width, 0 },
 			});
 		node->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-		node->emplaceComponent<Label>(text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
+		const String labelText = U"{}({})"_fmt(text, mnemonicInput.name());
+		node->emplaceComponent<Label>(labelText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
+		node->addClickHotKey(mnemonicInput, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 
 		m_menuCategories.push_back(MenuCategory
 		{
-			.text = String{ text },
 			.elements = elements,
 			.node = node,
 			.subMenuWidth = subMenuWidth,
@@ -444,7 +444,7 @@ public:
 		bool hasMenuOpened = false;
 		for (const auto& menuCategory : m_menuCategories)
 		{
-			if (menuCategory.node->isMouseDown())
+			if (menuCategory.node->isMouseDown() || menuCategory.node->isClickRequested())
 			{
 				if (m_activeMenuCategoryNode == menuCategory.node)
 				{
@@ -4443,6 +4443,7 @@ public:
 		m_menuBar.addMenuCategory(
 			U"File",
 			U"ファイル",
+			KeyF,
 			Array<MenuElement>
 			{
 				MenuItem{ U"新規作成", U"Ctrl+N", KeyN, [this] { onClickMenuFileNew(); } },
@@ -4452,10 +4453,12 @@ public:
 				MenuItem{ U"名前を付けて保存...", U"Ctrl+Shift+S", KeyA, [this] { onClickMenuFileSaveAs(); } },
 				MenuSeparator{},
 				MenuItem{ U"終了", U"Alt+F4", KeyQ, [this] { onClickMenuFileExit(); } },
-			});
+			},
+			100);
 		m_menuBar.addMenuCategory(
 			U"Edit",
 			U"編集",
+			KeyE,
 			{
 				MenuItem{ U"切り取り", U"Ctrl+X", KeyT, [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"コピー", U"Ctrl+C", KeyC, [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
@@ -4468,15 +4471,18 @@ public:
 		m_menuBar.addMenuCategory(
 			U"View",
 			U"表示",
+			KeyV,
 			{
 				MenuItem{ U"表示位置をリセット", U"Ctrl+0", KeyR, [this] { onClickMenuViewResetPosition(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"Tool",
 			U"ツール",
+			KeyT,
 			{
 				MenuItem{ U"アセットのルートディレクトリ(プレビュー用)を設定...", U"Ctrl+Alt+O", KeyA, [this] { onClickMenuToolChangeAssetDirectory(); } },
 			},
+			80,
 			480);
 	}
 
