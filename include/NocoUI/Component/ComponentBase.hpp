@@ -23,27 +23,27 @@ namespace noco
 
 		virtual ~ComponentBase() = 0;
 
-		virtual void updateInput(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void updateInput(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void updateInputInactive(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void updateInputInactive(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void update(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void update(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void updateInactive(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void updateInactive(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void lateUpdate(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void lateUpdate(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void lateUpdateInactive(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		virtual void lateUpdateInactive(const std::shared_ptr<Node>&)
 		{
 		}
 

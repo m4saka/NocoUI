@@ -98,7 +98,7 @@ namespace noco
 
 		void handleClipboardShortcut();
 
-		void onDeactivated(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node);
+		void onDeactivated(const std::shared_ptr<Node>& node);
 
 	public:
 		explicit TextBox(
@@ -120,9 +120,9 @@ namespace noco
 		{
 		}
 
-		void updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
+		void updateInput(const std::shared_ptr<Node>& node) override;
 
-		void updateInputInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
+		void updateInputInactive(const std::shared_ptr<Node>& node) override;
 
 		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
 

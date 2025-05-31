@@ -29,7 +29,7 @@ namespace noco
 		{
 		}
 
-		void update(CanvasUpdateContext*, const std::shared_ptr<Node>& node) override
+		void update(const std::shared_ptr<Node>& node) override
 		{
 			std::shared_ptr<Canvas> canvas = node->containedCanvas();
 			if (!canvas)

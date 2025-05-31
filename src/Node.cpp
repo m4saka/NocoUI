@@ -1040,8 +1040,10 @@ namespace noco
 		}
 	}
 
-	void Node::updateInput(CanvasUpdateContext* pContext)
+	void Node::updateInput()
 	{
+		noco::detail::s_canvasUpdateContext.clearBeforeUpdateInputIfNeeded();
+
 		const auto thisNode = shared_from_this();
 
 		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
@@ -1053,7 +1055,7 @@ namespace noco
 		}
 		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
 		{
-			(*it)->updateInput(pContext);
+			(*it)->updateInput();
 		}
 		m_childrenTempBuffer.clear();
 
@@ -1066,20 +1068,22 @@ namespace noco
 		}
 		for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
 		{
-			if (m_activeInHierarchy && (!pContext || !pContext->inputBlocked)) // updateInput内で更新される場合があるためループ内で分岐が必要
+			if (m_activeInHierarchy && (!detail::s_canvasUpdateContext.inputBlocked)) // updateInput内で更新される場合があるためループ内で分岐が必要
 			{
-				(*it)->updateInput(pContext, thisNode);
+				(*it)->updateInput(thisNode);
 			}
 			else
 			{
-				(*it)->updateInputInactive(pContext, thisNode);
+				(*it)->updateInputInactive(thisNode);
 			}
 		}
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
 	{
+		noco::detail::s_canvasUpdateContext.clearBeforeUpdateIfNeeded();
+		
 		const auto thisNode = shared_from_this();
 		
 		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
@@ -1095,11 +1099,11 @@ namespace noco
 		{
 			if (m_activeInHierarchy) // update内で更新される場合があるためループ内で分岐が必要
 			{
-				component->update(pContext, thisNode);
+				component->update(thisNode);
 			}
 			else
 			{
-				component->updateInactive(pContext, thisNode);
+				component->updateInactive(thisNode);
 			}
 		}
 		m_componentTempBuffer.clear();
@@ -1135,14 +1139,14 @@ namespace noco
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(pContext, scrollableHoveredNode, deltaTime, effectMat, effectScale);
+				child->update(scrollableHoveredNode, deltaTime, effectMat, effectScale);
 			}
 
 			m_childrenTempBuffer.clear();
 		}
 	}
 
-	void Node::lateUpdate(CanvasUpdateContext* pContext)
+	void Node::lateUpdate()
 	{
 		const auto thisNode = shared_from_this();
 
@@ -1161,14 +1165,14 @@ namespace noco
 			{
 				for (const auto& component : m_componentTempBuffer)
 				{
-					component->lateUpdate(pContext, thisNode);
+					component->lateUpdate(thisNode);
 				}
 			}
 			else
 			{
 				for (const auto& component : m_componentTempBuffer)
 				{
-					component->lateUpdateInactive(pContext, thisNode);
+					component->lateUpdateInactive(thisNode);
 				}
 			}
 			m_componentTempBuffer.clear();
@@ -1187,7 +1191,7 @@ namespace noco
 			// 子ノードのlateUpdate実行
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->lateUpdate(pContext);
+				child->lateUpdate();
 			}
 			m_childrenTempBuffer.clear();
 		}

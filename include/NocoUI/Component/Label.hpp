@@ -113,7 +113,7 @@ namespace noco
 		{
 		}
 
-		void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+		void update(const std::shared_ptr<Node>&) override
 		{
 		}
 

@@ -210,28 +210,28 @@ namespace noco
 		}
 	}
 
-	void TextBox::onDeactivated(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
 	{
 		deselect(node);
-		if (pContext)
+		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
 		{
-			pContext->editingTextBox.reset();
+			detail::s_canvasUpdateContext.editingTextBox.reset();
 		}
 		m_isDragging = false;
 	}
 
-	void TextBox::updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	void TextBox::updateInput(const std::shared_ptr<Node>& node)
 	{
 		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
 
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
-		if (m_isEditing && (!node->interactable() || (pContext && !pContext->editingTextBox.expired() && pContext->editingTextBox.lock().get() != this)))
+		if (m_isEditing && (!node->interactable() || (!detail::s_canvasUpdateContext.editingTextBox.expired() && detail::s_canvasUpdateContext.editingTextBox.lock().get() != this)))
 		{
 			deselect(node);
-			if (pContext && pContext->editingTextBox.lock().get() == this)
+			if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
 			{
-				pContext->editingTextBox.reset();
+				detail::s_canvasUpdateContext.editingTextBox.reset();
 			}
 			return;
 		}
@@ -343,9 +343,9 @@ namespace noco
 			{
 				// 領域外をクリックした場合は選択解除
 				deselect(node);
-				if (pContext && pContext->editingTextBox.lock().get() == this)
+				if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
 				{
-					pContext->editingTextBox.reset();
+					detail::s_canvasUpdateContext.editingTextBox.reset();
 				}
 			}
 		}
@@ -358,10 +358,7 @@ namespace noco
 
 		if (m_isEditing)
 		{
-			if (pContext)
-			{
-				pContext->editingTextBox = shared_from_this();
-			}
+			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
 
 			const size_t prevCursorIndex = m_cursorIndex;
 
@@ -502,12 +499,12 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateInputInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	void TextBox::updateInputInactive(const std::shared_ptr<Node>& node)
 	{
 		if (m_prevActiveInHierarchy)
 		{
 			// 前回はアクティブだったが今回は非アクティブになった場合
-			onDeactivated(pContext, node);
+			onDeactivated(node);
 			m_prevActiveInHierarchy = false;
 		}
 	}

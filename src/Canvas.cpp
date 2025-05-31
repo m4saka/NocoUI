@@ -209,10 +209,10 @@ namespace noco
 		return true; // TODO: 失敗したらfalseを返す
 	}
 	
-	void Canvas::update(CanvasUpdateContext* pContext)
+	void Canvas::update()
 	{
 		// ホバー中ノード取得
-		const bool canHover = (pContext ? pContext->canHover && !pContext->isHovered() : true) && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたい
+		const bool canHover = detail::s_canvasUpdateContext.canHover && !detail::s_canvasUpdateContext.isHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたい
 		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
 
 		// スクロール可能なホバー中ノード取得
@@ -234,24 +234,21 @@ namespace noco
 			}
 		}
 
-		if (pContext)
+		detail::s_canvasUpdateContext.canHover = detail::s_canvasUpdateContext.canHover && hoveredNode == nullptr;
+		if (hoveredNode)
 		{
-			pContext->canHover = pContext->canHover && hoveredNode == nullptr;
-			if (hoveredNode)
-			{
-				pContext->hoveredNode = hoveredNode;
-			}
-			if (scrollableHoveredNode)
-			{
-				pContext->scrollableHoveredNode = scrollableHoveredNode;
-			}
+			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
+		}
+		if (scrollableHoveredNode)
+		{
+			detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
 		}
 
 		// ノード更新
 		m_rootNode->updateInteractState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractState::Default, InteractState::Default);
-		m_rootNode->updateInput(pContext);
-		m_rootNode->update(pContext, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale);
-		m_rootNode->lateUpdate(pContext);
+		m_rootNode->updateInput();
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale);
+		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
 	}
 	

@@ -326,7 +326,7 @@ public:
 	{
 	}
 
-	void update(CanvasUpdateContext*, const std::shared_ptr<Node>& node) override
+	void update(const std::shared_ptr<Node>& node) override
 	{
 		if (m_recursive ? node->isRightClickedRecursive() : node->isRightClicked())
 		{
@@ -2155,7 +2155,7 @@ public:
 		std::shared_ptr<TextBox> m_textBox;
 		std::function<void(StringView)> m_fnSetValue;
 
-		void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+		void update(const std::shared_ptr<Node>&) override
 		{
 			if (m_textBox->isChanged())
 			{
@@ -2359,7 +2359,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+			void update(const std::shared_ptr<Node>&) override
 			{
 				const double x = ParseOpt<double>(m_textBoxX->text()).value_or(m_prevValue.x);
 				const double y = ParseOpt<double>(m_textBoxY->text()).value_or(m_prevValue.y);
@@ -2529,7 +2529,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+			void update(const std::shared_ptr<Node>&) override
 			{
 				const double x = ParseOpt<double>(m_textBoxX->text()).value_or(m_prevValue.x);
 				const double y = ParseOpt<double>(m_textBoxY->text()).value_or(m_prevValue.y);
@@ -2761,7 +2761,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+			void update(const std::shared_ptr<Node>&) override
 			{
 				const double l = ParseOpt<double>(m_textBoxL->text()).value_or(m_prevValue.left);
 				const double r = ParseOpt<double>(m_textBoxR->text()).value_or(m_prevValue.right);
@@ -2987,7 +2987,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>&) override
+			void update(const std::shared_ptr<Node>&) override
 			{
 				const double r = Clamp(ParseOpt<double>(m_textBoxR->text()).value_or(m_prevColor.r), 0.0, 1.0);
 				const double g = Clamp(ParseOpt<double>(m_textBoxG->text()).value_or(m_prevColor.g), 0.0, 1.0);
@@ -3106,7 +3106,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>& node) override
+			void update(const std::shared_ptr<Node>& node) override
 			{
 				if (node->isClicked())
 				{
@@ -3196,7 +3196,7 @@ public:
 			{
 			}
 
-			void update(CanvasUpdateContext*, const std::shared_ptr<Node>& node) override
+			void update(const std::shared_ptr<Node>& node) override
 			{
 				// クリックでON/OFFをトグル
 				bool isClicked = false;
@@ -4402,15 +4402,14 @@ public:
 
 	void update()
 	{
-		CanvasUpdateContext context{};
-		m_dialogOverlayCanvas->update(&context);
-		m_dialogCanvas->update(&context);
-		m_editorOverlayCanvas->update(&context);
-		m_editorCanvas->update(&context);
-		const bool editorCanvasHovered = context.isHovered();
-		m_canvas->update(&context);
+		m_dialogOverlayCanvas->update();
+		m_dialogCanvas->update();
+		m_editorOverlayCanvas->update();
+		m_editorCanvas->update();
+		const bool editorCanvasHovered = noco::detail::s_canvasUpdateContext.isHovered();
+		m_canvas->update();
 
-		if (Cursor::OnClientRect() && !editorCanvasHovered && !context.isScrollableHovered())
+		if (Cursor::OnClientRect() && !editorCanvasHovered && !noco::detail::s_canvasUpdateContext.isScrollableHovered())
 		{
 			// マウス座標を中心に拡大縮小
 			const Vec2 beforeOffset = m_scrollOffset;
@@ -4449,7 +4448,7 @@ public:
 
 		// ショートカットキー
 		const bool isWindowActive = Window::GetState().focused;
-		if (isWindowActive && context.draggingNode.expired() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
+		if (isWindowActive && noco::detail::s_canvasUpdateContext.draggingNode.expired() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
 		{
 			const bool ctrl = KeyControl.pressed();
 			const bool alt = KeyAlt.pressed();
@@ -4482,7 +4481,7 @@ public:
 			}
 
 			// テキストボックス編集中は実行しない操作
-			if (context.editingTextBox.expired())
+			if (noco::detail::s_canvasUpdateContext.editingTextBox.expired())
 			{
 				// Ctrl + ○○
 				if (ctrl && !alt && !shift)

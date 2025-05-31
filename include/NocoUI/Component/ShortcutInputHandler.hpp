@@ -34,9 +34,9 @@ namespace noco
 		{
 		}
 
-		void updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override
+		void updateInput(const std::shared_ptr<Node>& node) override
 		{
-			if (!m_enabledWhileTextEditing && pContext && !pContext->editingTextBox.expired()) // FIXME: これだと順序が後ろのテキストボックスの編集中を判定できない
+			if (!m_enabledWhileTextEditing && !detail::s_canvasUpdateContext.editingTextBox.expired()) // FIXME: これだと順序が後ろのテキストボックスの編集中を判定できない
 			{
 				// テキストボックス編集中はキーを無視
 				return;

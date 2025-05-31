@@ -28,7 +28,7 @@ namespace noco
 		{
 		}
 
-		void lateUpdate(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& targetNode) override;
+		void lateUpdate(const std::shared_ptr<Node>& targetNode) override;
 
 		void draw(const Node& node) const override;
 

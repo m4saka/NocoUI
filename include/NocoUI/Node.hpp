@@ -244,11 +244,11 @@ namespace noco
 
 		void updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
 
-		void updateInput(CanvasUpdateContext* pContext);
+		void updateInput();
 
-		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 
-		void lateUpdate(CanvasUpdateContext* pContext);
+		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 

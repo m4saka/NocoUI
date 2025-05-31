@@ -12,9 +12,9 @@ namespace noco
 		return true;
 	}
 	
-	void DragDropTarget::lateUpdate(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& targetNode)
+	void DragDropTarget::lateUpdate(const std::shared_ptr<Node>& targetNode)
 	{
-		const auto draggingNode = pContext->draggingNode.lock();
+		const auto draggingNode = detail::s_canvasUpdateContext.draggingNode.lock();
 		if (!draggingNode)
 		{
 			m_dropFocused = false;
@@ -27,7 +27,7 @@ namespace noco
 			return;
 		}
 		const bool isDraggingOtherNode = draggingNode && draggingNode != targetNode;
-		const bool isHovered = pContext->hoveredNode.lock() == targetNode;
+		const bool isHovered = detail::s_canvasUpdateContext.hoveredNode.lock() == targetNode;
 		m_dropFocused = isDraggingOtherNode && isHovered && isDroppableNodeList(dragDropSource->draggingNodeList());
 		if (m_dropFocused)
 		{

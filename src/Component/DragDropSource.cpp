@@ -15,9 +15,9 @@ namespace noco
 		return { node };
 	}
 	
-	void DragDropSource::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& sourceNode)
+	void DragDropSource::update(const std::shared_ptr<Node>& sourceNode)
 	{
-		const bool canDrag = pContext->draggingNode.expired();
+		const bool canDrag = detail::s_canvasUpdateContext.draggingNode.expired();
 
 		if (canDrag && MouseL.pressed())
 		{
@@ -41,14 +41,14 @@ namespace noco
 			}
 			if (m_isPressed)
 			{
-				pContext->draggingNode = sourceNode;
+				detail::s_canvasUpdateContext.draggingNode = sourceNode;
 			}
 		}
 		else
 		{
 			if (m_isDragging && !MouseL.pressed())
 			{
-				const auto dropTargetNode = pContext->hoveredNode.lock();
+				const auto dropTargetNode = detail::s_canvasUpdateContext.hoveredNode.lock();
 				if (dropTargetNode && dropTargetNode != sourceNode)
 				{
 					if (const auto dropTarget = dropTargetNode->getComponentOrNull<DragDropTarget>())

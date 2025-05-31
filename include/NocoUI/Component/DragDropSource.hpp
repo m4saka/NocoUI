@@ -31,7 +31,7 @@ namespace noco
 		{
 		}
 
-		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& sourceNode) override;
+		void update(const std::shared_ptr<Node>& sourceNode) override;
 
 		[[nodiscard]]
 		const Array<std::shared_ptr<Node>>& draggingNodeList() const

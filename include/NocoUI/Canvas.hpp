@@ -6,16 +6,44 @@ namespace noco
 {
 	class TextBox;
 
-	// TODO: 引数として渡すのではなく、ライブラリ内部に持ち、任意で取得可能にする
-	// TODO: update用とupdateInput用で分ける
 	struct CanvasUpdateContext
 	{
+		int32 lastUpdateFrameCount = -1;
+		int32 lastUpdateInputFrameCount = -1;
 		bool canHover = true;
 		bool inputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<TextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
+
+		void clearBeforeUpdateIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (lastUpdateFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			lastUpdateFrameCount = currentFrameCount;
+
+			canHover = true;
+			hoveredNode.reset();
+			scrollableHoveredNode.reset();
+			draggingNode.reset();
+		}
+
+		void clearBeforeUpdateInputIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (lastUpdateInputFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			lastUpdateInputFrameCount = currentFrameCount;
+
+			inputBlocked = false;
+			editingTextBox.reset();
+		}
 
 		bool isScrollableHovered() const
 		{
@@ -27,6 +55,11 @@ namespace noco
 			return !hoveredNode.expired();
 		}
 	};
+
+	namespace detail
+	{
+		inline CanvasUpdateContext s_canvasUpdateContext;
+	}
 
 	enum class EventType : uint8
 	{
@@ -111,7 +144,7 @@ namespace noco
 
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
-		void update(CanvasUpdateContext* pContext = nullptr);
+		void update();
 
 		void draw() const;
 
