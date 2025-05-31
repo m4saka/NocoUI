@@ -479,6 +479,38 @@ public:
 	}
 };
 
+enum class ConstraintType : uint8
+{
+	AnchorConstraint,
+	BoxConstraint,
+};
+
+struct Defaults
+{
+	ConstraintType constraintType;
+
+	ConstraintVariant defaultConstraint()
+	{
+		switch (constraintType)
+		{
+		case ConstraintType::AnchorConstraint:
+			return AnchorConstraint
+			{
+				.sizeDelta = { 100, 100 },
+			};
+
+		case ConstraintType::BoxConstraint:
+			return BoxConstraint
+			{
+				.sizeDelta = { 100, 100 },
+			};
+
+		default:
+			throw Error{ U"Unknown constraint type: {}"_fmt(static_cast<uint8>(constraintType)) };
+		}
+	}
+};
+
 class Hierarchy
 {
 private:
@@ -492,6 +524,7 @@ private:
 	std::weak_ptr<Node> m_lastEditorSelectedNode;
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	Array<JSON> m_copiedNodeJSONs;
+	std::shared_ptr<Defaults> m_defaults;
 
 	struct ElementDetail
 	{
@@ -979,7 +1012,7 @@ private:
 	}
 
 public:
-	explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu)
+	explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults)
 		: m_canvas(canvas)
 		, m_hierarchyFrameNode(editorCanvas->rootNode()->emplaceChild(
 			U"HierarchyFrame",
@@ -1015,6 +1048,7 @@ public:
 			}))
 		, m_editorCanvas(editorCanvas)
 		, m_contextMenu(contextMenu)
+		, m_defaults(defaults)
 	{
 		m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -1165,12 +1199,10 @@ public:
 			throw Error{ U"Parent node is nullptr" };
 		}
 
-		const auto newNode = parentNode->emplaceChild(
+		// 記憶された種類のConstraintを使用してノードを作成
+		std::shared_ptr<Node> newNode = parentNode->emplaceChild(
 			U"Node",
-			AnchorConstraint
-			{
-				.sizeDelta = { 100, 100 },
-			});
+			m_defaults->defaultConstraint());
 		refreshNodeList();
 		selectSingleNode(newNode);
 	}
@@ -1998,6 +2030,8 @@ private:
 	IsFoldedYN m_isFoldedTransformEffect = IsFoldedYN::Yes;
 	Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
+	std::shared_ptr<Defaults> m_defaults;
+
 	template <class TComponent, class... Args>
 	void onClickAddComponent(Args&&... args)
 	{
@@ -2011,7 +2045,7 @@ private:
 	}
 
 public:
-	Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
+	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
 		: m_canvas(canvas)
 		, m_editorCanvas(editorCanvas)
 		, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
@@ -2048,6 +2082,7 @@ public:
 			},
 			IsHitTargetYN::Yes))
 		, m_contextMenu(contextMenu)
+		, m_defaults(defaults)
 		, m_dialogOpener(dialogOpener)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
 	{
@@ -3589,12 +3624,6 @@ public:
 		return layoutNode;
 	}
 
-	enum class ConstraintType
-	{
-		BoxConstraint,
-		AnchorConstraint,
-	};
-
 	[[nodiscard]]
 	std::shared_ptr<Node> createConstraintNode(const std::shared_ptr<Node>& node)
 	{
@@ -3645,8 +3674,6 @@ public:
 				{
 					switch (type)
 					{
-					case ConstraintType::BoxConstraint:
-						break;
 					case ConstraintType::AnchorConstraint:
 						node->setConstraint(AnchorConstraint
 						{
@@ -3656,7 +3683,10 @@ public:
 							.sizeDelta = node->layoutAppliedRect().size,
 							.sizeDeltaPivot = Vec2{ 0.5, 0.5 },
 						});
+						m_defaults->constraintType = ConstraintType::AnchorConstraint; // 次回のデフォルト値として記憶
 						refreshInspector(); // 項目に変更があるため更新
+						break;
+					case ConstraintType::BoxConstraint:
 						break;
 					}
 				});
@@ -3709,15 +3739,16 @@ public:
 				{
 					switch (type)
 					{
+					case ConstraintType::AnchorConstraint:
+						break;
 					case ConstraintType::BoxConstraint:
 						node->setConstraint(BoxConstraint
 						{
 							.sizeRatio = Vec2::Zero(),
 							.sizeDelta = node->rect().size,
 						});
+						m_defaults->constraintType = ConstraintType::BoxConstraint; // 次回のデフォルト値として記憶
 						refreshInspector(); // 項目に変更があるため更新
-						break;
-					case ConstraintType::AnchorConstraint:
 						break;
 					}
 				}
@@ -4437,6 +4468,7 @@ private:
 	std::shared_ptr<Canvas> m_dialogOverlayCanvas;
 	std::shared_ptr<ContextMenu> m_dialogContextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
+	std::shared_ptr<Defaults> m_defaults = std::make_shared<Defaults>();
 	bool m_isConfirmDialogShowing = false;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
@@ -4460,8 +4492,8 @@ public:
 		, m_dialogOverlayCanvas(Canvas::Create())
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu)
-		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults)
+		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_prevSceneSize(Scene::Size())
 	{
