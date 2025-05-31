@@ -1167,10 +1167,9 @@ public:
 
 		const auto newNode = parentNode->emplaceChild(
 			U"Node",
-			BoxConstraint
+			AnchorConstraint
 			{
-				.sizeRatio = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ 100, 100 },
+				.sizeDelta = { 100, 100 },
 			});
 		refreshNodeList();
 		selectSingleNode(newNode);
