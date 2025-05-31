@@ -191,7 +191,13 @@ namespace noco
 		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
 
 		template <class Fty>
-		Array<std::weak_ptr<Node>> findAll(Fty&& predicate);
+		[[nodiscard]]
+		Array<std::weak_ptr<Node>> findAll(Fty&& predicate)
+			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
+
+		template<class Fty>
+		void findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearsArrayYN clearsArray = ClearsArrayYN::Yes)
+			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class TComponent>
 		[[nodiscard]]
@@ -488,23 +494,38 @@ namespace noco
 
 	template <class Fty>
 	Array<std::weak_ptr<Node>> Node::findAll(Fty&& predicate)
+		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
-		// 自分自身が条件を満たすかどうか
 		Array<std::weak_ptr<Node>> result;
+		findAll(std::forward<Fty>(predicate), &result, ClearsArrayYN::Yes);
+		return result;
+	}
+
+	template <class Fty>
+	void Node::findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearsArrayYN clearsArray)
+		requires std::invocable<Fty, const std::shared_ptr<Node>&>
+	{
+		if (pResults == nullptr)
+		{
+			throw Error{ U"Node::findAll: pResults is nullptr" };
+		}
+
+		if (clearsArray)
+		{
+			pResults->clear();
+		}
+
+		// 自分自身が条件を満たすかどうか
 		if (predicate(shared_from_this()))
 		{
-			result.push_back(weak_from_this());
+			pResults->push_back(weak_from_this());
 		}
 
 		// 子ノードを再帰的に検索
-		// TODO: Array生成を減らす
 		for (const auto& child : m_children)
 		{
-			const auto found = child->findAll(predicate);
-			result.insert(result.end(), found.begin(), found.end());
+			child->findAll(predicate, pResults, ClearsArrayYN::No);
 		}
-
-		return result;
 	}
 
 	template <class TComponent>

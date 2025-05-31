@@ -19,4 +19,5 @@ namespace noco
 	using FoldedYN = YesNo<struct FoldedYN_tag>;
 	using ClearsInputYN = YesNo<struct ClearsInputYN_tag>;
 	using EnabledWhileTextEditingYN = YesNo<struct EnabledWhileTextEditingYN_tag>;
+	using ClearsArrayYN = YesNo<struct ClearsArrayYN_tag>;
 }
