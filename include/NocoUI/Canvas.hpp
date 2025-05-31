@@ -248,7 +248,7 @@ namespace noco
 		return PrevFrame::GetDraggingNode();
 	}
 
-	enum class EventType : uint8
+	enum class TriggerType : uint8
 	{
 		None = 0,
 		Click,
@@ -260,7 +260,7 @@ namespace noco
 
 	struct Event
 	{
-		EventType type = EventType::None;
+		TriggerType triggerType = TriggerType::None;
 		String tag;
 		std::weak_ptr<Node> sourceNode;
 	};

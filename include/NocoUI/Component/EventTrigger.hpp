@@ -10,11 +10,11 @@ namespace noco
 	{
 	private:
 		PropertyNonInteractive<String> m_tag;
-		PropertyNonInteractive<EventType> m_eventType;
+		PropertyNonInteractive<TriggerType> m_triggerType;
 		PropertyNonInteractive<bool> m_isRecursive;
 
 		// Hoveredのみ初期値はfalseとする
-		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他typeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)
+		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他triggerTypeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)
 		/* NonSerialized */ Optional<bool> m_prevHovered = false;
 		/* NonSerialized */ Optional<bool> m_prevPressed = none;
 		/* NonSerialized */ Optional<bool> m_prevHoveredRecursive = false;
@@ -22,9 +22,9 @@ namespace noco
 
 	public:
 		explicit EventTrigger(StringView tag = U"")
-			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_eventType, &m_isRecursive } }
+			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_isRecursive } }
 			, m_tag{ U"tag", tag }
-			, m_eventType{ U"eventType", EventType::Click }
+			, m_triggerType{ U"triggerType", TriggerType::Click }
 			, m_isRecursive{ U"isRecursive", false }
 		{
 		}
@@ -38,17 +38,17 @@ namespace noco
 				return;
 			}
 
-			const auto eventType = m_eventType.value();
+			const auto triggerType = m_triggerType.value();
 			const bool isRecursive = m_isRecursive.value();
-			switch (eventType)
+			switch (triggerType)
 			{
-			case EventType::Click:
+			case TriggerType::Click:
 				if (isRecursive ? node->isClickedRecursive() : node->isClicked())
 				{
 					canvas->fireEvent(
 						Event
 						{
-							.type = EventType::Click,
+							.triggerType = TriggerType::Click,
 							.tag = m_tag.value(),
 							.sourceNode = node,
 						});
@@ -59,7 +59,7 @@ namespace noco
 				m_prevPressedRecursive = none;
 				break;
 
-			case EventType::HoverStart:
+			case TriggerType::HoverStart:
 				if (isRecursive)
 				{
 					if (node->isHoveredRecursive())
@@ -69,7 +69,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::HoverStart,
+									.triggerType = TriggerType::HoverStart,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -93,7 +93,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::HoverStart,
+									.triggerType = TriggerType::HoverStart,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -110,7 +110,7 @@ namespace noco
 				}
 				break;
 
-			case EventType::HoverEnd:
+			case TriggerType::HoverEnd:
 				if (isRecursive)
 				{
 					if (!node->isHoveredRecursive())
@@ -120,7 +120,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::HoverEnd,
+									.triggerType = TriggerType::HoverEnd,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -144,7 +144,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::HoverEnd,
+									.triggerType = TriggerType::HoverEnd,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -161,7 +161,7 @@ namespace noco
 				}
 				break;
 
-			case EventType::PressStart:
+			case TriggerType::PressStart:
 				if (isRecursive)
 				{
 					if (node->isPressedRecursive())
@@ -171,7 +171,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::PressStart,
+									.triggerType = TriggerType::PressStart,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -195,7 +195,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::PressStart,
+									.triggerType = TriggerType::PressStart,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -212,7 +212,7 @@ namespace noco
 				}
 				break;
 
-			case EventType::PressEnd:
+			case TriggerType::PressEnd:
 				if (isRecursive)
 				{
 					if (!node->isPressedRecursive())
@@ -222,7 +222,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::PressEnd,
+									.triggerType = TriggerType::PressEnd,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
@@ -246,7 +246,7 @@ namespace noco
 							canvas->fireEvent(
 								Event
 								{
-									.type = EventType::PressEnd,
+									.triggerType = TriggerType::PressEnd,
 									.tag = m_tag.value(),
 									.sourceNode = node,
 								});
