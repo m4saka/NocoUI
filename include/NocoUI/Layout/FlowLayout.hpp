@@ -34,6 +34,8 @@ namespace noco
 
 		LRTB padding = LRTB::Zero();
 
+		Vec2 spacing = Vec2::Zero();
+
 		HorizontalAlign horizontalAlign = HorizontalAlign::Left;
 
 		VerticalAlign verticalAlign = VerticalAlign::Top;
@@ -64,52 +66,4 @@ namespace noco
 	private:
 		RectF executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const;
 	};
-
-	template <class Fty>
-	void FlowLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
-	{
-		const auto measureInfo = measure(parentRect, children);
-		const double availableWidth = parentRect.w - (padding.left + padding.right);
-
-		// 実際に配置していく
-		double offsetY = padding.top;
-		if (verticalAlign == VerticalAlign::Middle || verticalAlign == VerticalAlign::Bottom)
-		{
-			const double totalHeight = std::accumulate(
-				measureInfo.lines.begin(),
-				measureInfo.lines.end(),
-				0.0,
-				[](double sum, const auto& line) { return sum + line.maxHeight; });
-			const double availableHeight = parentRect.h - (padding.top + padding.bottom);
-			if (verticalAlign == VerticalAlign::Middle)
-			{
-				offsetY += (availableHeight - totalHeight) / 2;
-			}
-			else if (verticalAlign == VerticalAlign::Bottom)
-			{
-				offsetY += availableHeight - totalHeight;
-			}
-		}
-		for (auto& line : measureInfo.lines)
-		{
-			double offsetX = padding.left;
-			if (horizontalAlign == HorizontalAlign::Center)
-			{
-				offsetX += (availableWidth - line.totalWidth) / 2;
-			}
-			else if (horizontalAlign == HorizontalAlign::Right)
-			{
-				offsetX += availableWidth - line.totalWidth;
-			}
-			const double lineHeight = line.maxHeight;
-			for (size_t index : line.childIndices)
-			{
-				const auto& child = children[index];
-				const RectF finalRect = executeChild(parentRect, child, measureInfo.measuredChildren[index], offsetY, lineHeight, &offsetX);
-				fnSetRect(child, finalRect);
-			}
-			offsetY += lineHeight;
-		}
-	}
 }

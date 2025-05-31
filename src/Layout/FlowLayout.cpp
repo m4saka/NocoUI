@@ -9,6 +9,7 @@ namespace noco
 		{
 			{ U"type", U"FlowLayout" },
 			{ U"padding", padding.toJSON() },
+			{ U"spacing", spacing },
 			{ U"horizontalAlign", EnumToString(horizontalAlign) },
 			{ U"verticalAlign", EnumToString(verticalAlign) },
 		};
@@ -19,6 +20,7 @@ namespace noco
 		return FlowLayout
 		{
 			.padding = GetFromJSONOr(json, U"padding", LRTB::Zero()),
+			.spacing = GetFromJSONOr(json, U"spacing", Vec2::Zero()),
 			.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Left),
 			.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top),
 		};
@@ -60,9 +62,16 @@ namespace noco
 				const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
 				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
 
+				// 行の最初の要素でない場合はspacing.xの余白を追加
+				double childWWithSpacing = childW;
+				if (measureInfo.lines.back().boxConstraintChildExists && !measureInfo.lines.back().childIndices.empty())
+				{
+					childWWithSpacing += spacing.x;
+				}
+
 				// 行がはみ出す場合は改行
 				if (measureInfo.lines.back().boxConstraintChildExists &&
-					currentX + childW > availableWidth)
+					currentX + childWWithSpacing > availableWidth)
 				{
 					// 行ごとの幅・高さを記録
 					auto& lastLine = measureInfo.lines.back();
@@ -75,6 +84,12 @@ namespace noco
 					currentX = 0.0;
 					currentLineMaxHeight = 0.0;
 					currentLineTotalFlexibleWeight = 0.0;
+				}
+
+				// 行の最初の要素でない場合はspacing.xの余白を追加
+				if (measureInfo.lines.back().boxConstraintChildExists && !measureInfo.lines.back().childIndices.empty())
+				{
+					currentX += spacing.x;
 				}
 
 				measureInfo.lines.back().childIndices.push_back(i);
@@ -146,12 +161,18 @@ namespace noco
 
 		double maxWidth = 0.0;
 		double totalHeight = padding.top + padding.bottom;
-		for (const auto& line : measureInfo.lines)
+		for (size_t lineIndex = 0; lineIndex < measureInfo.lines.size(); ++lineIndex)
 		{
+			const auto& line = measureInfo.lines[lineIndex];
 			double lineWidth = padding.left + padding.right;
-			for (size_t index : line.childIndices)
+			for (size_t i = 0; i < line.childIndices.size(); ++i)
 			{
+				const size_t index = line.childIndices[i];
 				const auto& measuredChild = measureInfo.measuredChildren[index];
+				if (i > 0)
+				{
+					lineWidth += spacing.x;
+				}
 				lineWidth += measuredChild.size.x + measuredChild.margin.left + measuredChild.margin.right;
 			}
 			if (lineWidth > maxWidth)
@@ -159,6 +180,10 @@ namespace noco
 				maxWidth = lineWidth;
 			}
 			totalHeight += line.maxHeight;
+			if (lineIndex + 1 < measureInfo.lines.size())
+			{
+				totalHeight += spacing.y;
+			}
 		}
 		return { maxWidth, totalHeight };
 	}

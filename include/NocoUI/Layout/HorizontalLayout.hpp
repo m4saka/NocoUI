@@ -14,6 +14,8 @@ namespace noco
 	{
 		LRTB padding = LRTB::Zero();
 
+		Vec2 spacing = Vec2::Zero();
+
 		HorizontalAlign horizontalAlign = HorizontalAlign::Left;
 
 		VerticalAlign verticalAlign = VerticalAlign::Middle;

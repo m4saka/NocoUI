@@ -9,6 +9,7 @@ namespace noco
 		{
 			{ U"type", U"VerticalLayout" },
 			{ U"padding", padding.toJSON() },
+			{ U"spacing", spacing },
 			{ U"horizontalAlign", EnumToString(horizontalAlign) },
 			{ U"verticalAlign", EnumToString(verticalAlign) },
 		};
@@ -18,6 +19,7 @@ namespace noco
 	{
 		VerticalLayout layout;
 		layout.padding = GetFromJSONOr(json, U"padding", LRTB::Zero());
+		layout.spacing = GetFromJSONOr(json, U"spacing", Vec2::Zero());
 		layout.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Center);
 		layout.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top);
 		return layout;
@@ -27,6 +29,7 @@ namespace noco
 	{
 		double totalHeight = padding.top + padding.bottom;
 		double maxWidth = 0.0;
+		bool isFirstBoxConstraintChild = true;
 		for (const auto& child : children)
 		{
 			if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
@@ -40,8 +43,13 @@ namespace noco
 					Vec2::Zero());
 				const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
 				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
+				if (!isFirstBoxConstraintChild)
+				{
+					totalHeight += spacing.y;
+				}
 				totalHeight += childH;
 				maxWidth = Max(maxWidth, childW);
+				isFirstBoxConstraintChild = false;
 			}
 		}
 		return { maxWidth, totalHeight };
