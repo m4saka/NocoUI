@@ -298,7 +298,7 @@ namespace noco
 		}
 		else
 		{
-			if (node->isMouseDown())
+			if (node->isMouseDown() || node->isClickRequested())
 			{
 				// 領域内で左クリックし始めた場合
 				m_cursorBlinkTime = 0.0;
