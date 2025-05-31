@@ -369,13 +369,13 @@ public:
 	{
 	}
 
-	void openManually() const
+	void openManually(const Vec2& pos = Cursor::PosF()) const
 	{
 		if (m_fnBeforeOpen)
 		{
 			m_fnBeforeOpen();
 		}
-		m_contextMenu->show(Cursor::PosF(), m_menuElements);
+		m_contextMenu->show(pos, m_menuElements);
 	}
 };
 
@@ -1661,7 +1661,7 @@ public:
 	}
 };
 
-std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void()> onClick)
+std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void(const std::shared_ptr<Node>&)> onClick)
 {
 	auto buttonNode = Node::Create(
 		U"Button",
@@ -1669,7 +1669,7 @@ std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant&
 		IsHitTargetYN::Yes);
 	buttonNode->setChildrenLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
 	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
-	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>&) { if (onClick) onClick(); });
+	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>& node) { if (onClick) onClick(node); });
 	const auto labelNode = buttonNode->emplaceChild(
 		U"ButtonLabel",
 		BoxConstraint
@@ -1797,7 +1797,7 @@ public:
 						.sizeDelta = Vec2{ 100, 24 },
 						.margin = LRTB{ 4, 4, 0, 0 },
 					},
-					[this, buttonDesc]()
+					[this, buttonDesc](const std::shared_ptr<Node>&)
 					{
 						m_screenMaskNode->removeFromParent();
 						if (m_onResult)
@@ -2137,16 +2137,16 @@ public:
 			}
 
 			m_inspectorRootNode->addChild(CreateButtonNode(
-				U"＋ コンポーネントを追加",
+				U"＋ コンポーネントを追加(A)",
 				BoxConstraint
 				{
 					.sizeDelta = Vec2{ 200, 24 },
 					.margin = LRTB{ 0, 0, 24, 24 },
 				},
-				[this]
+				[this] (const std::shared_ptr<Node>& node)
 				{
-					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually();
-				}));
+					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->rect().center());
+				}))->addClickHotKey(KeyA, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 		}
 	}
 
