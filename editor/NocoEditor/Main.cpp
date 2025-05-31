@@ -8,6 +8,9 @@ using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
 using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
 using HasInteractivePropertyValueYN = YesNo<struct HasInteractivePropertyValueYN_tag>;
 using IsFoldedYN = YesNo<struct IsFoldedYN_tag>;
+using AppendsMnemonicKeyTextYN = YesNo<struct AppendsMnemonicKeyText_tag>;
+using IsDefaultButtonYN = YesNo<struct IsDefaultButtonYN_tag>;
+using IsCancelButtonYN = YesNo<struct IsCancelButtonYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
@@ -1661,14 +1664,14 @@ public:
 	}
 };
 
-std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void(const std::shared_ptr<Node>&)> onClick)
+std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant& constraint, std::function<void(const std::shared_ptr<Node>&)> onClick, IsDefaultButtonYN isDefaultButton = IsDefaultButtonYN::No)
 {
 	auto buttonNode = Node::Create(
 		U"Button",
 		constraint,
 		IsHitTargetYN::Yes);
 	buttonNode->setBoxChildrenLayout(HorizontalLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
-	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+	buttonNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, isDefaultButton ? 0.6 : 0.4 } }.withHovered(ColorF{ 1.0, isDefaultButton ? 0.8 : 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
 	buttonNode->addOnClick([onClick](const std::shared_ptr<Node>& node) { if (onClick) onClick(node); });
 	const auto labelNode = buttonNode->emplaceChild(
 		U"ButtonLabel",
@@ -1692,9 +1695,9 @@ struct DialogButtonDesc
 {
 	String text = U""; // TODO: 現状は単一表示言語想定でダイアログ結果にテキストを流用しているが、将来的にはダイアログ毎の結果型として任意の型を指定可能にして、シンプルな用途のためにYes/No/Cancel用の関数を用意したい
 	Optional<Input> mnemonicInput = none;
-	bool appendsMnemonicKeyText = true; // TODO: 現状は日本語想定でカッコで追加する形にしているが、将来的には「&File」「ファイル(&F)」など&を前につけるとニーモニック扱いされるようにしたい
-	bool isDefaultButton = false;
-	bool isCancelButton = false;
+	AppendsMnemonicKeyTextYN appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::Yes; // TODO: 現状は日本語想定でカッコで追加する形にしているが、将来的には「&File」「ファイル(&F)」など&を前につけるとニーモニック扱いされるようにしたい
+	IsDefaultButtonYN isDefaultButton = IsDefaultButtonYN::No;
+	IsCancelButtonYN isCancelButton = IsCancelButtonYN::No;
 };
 
 class IDialog
@@ -1804,7 +1807,8 @@ public:
 						{
 							m_onResult(buttonDesc.text);
 						}
-					}),
+					},
+					buttonDesc.isDefaultButton),
 				RefreshesLayoutYN::No);
 
 			if (buttonDesc.mnemonicInput.has_value())
@@ -1960,9 +1964,7 @@ public:
 			DialogButtonDesc
 			{
 				.text = U"OK",
-				.mnemonicInput = KeyEnter,
-				.appendsMnemonicKeyText = false,
-				.isDefaultButton = true,
+				.isDefaultButton = IsDefaultButtonYN::Yes,
 			}
 		};
 	}
@@ -4807,7 +4809,7 @@ public:
 					{
 						.text = U"はい",
 						.mnemonicInput = KeyY,
-						.isDefaultButton = true,
+						.isDefaultButton = IsDefaultButtonYN::Yes,
 					},
 					DialogButtonDesc
 					{
@@ -4818,7 +4820,7 @@ public:
 					{
 						.text = U"キャンセル",
 						.mnemonicInput = KeyC,
-						.isCancelButton = true,
+						.isCancelButton = IsCancelButtonYN::Yes,
 					}}));
 	}
 
