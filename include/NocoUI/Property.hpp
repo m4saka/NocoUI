@@ -26,9 +26,9 @@ namespace noco
 		virtual void update(InteractState interactState, SelectedYN selected, double deltaTime) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
-		virtual String propertyValueString() const = 0;
-		virtual Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) = 0;
-		virtual String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) = 0;
+		virtual String propertyValueStringOfDefault() const = 0;
+		virtual Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const = 0;
+		virtual String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const = 0;
 		virtual bool trySetPropertyValueString(StringView value) = 0;
 		virtual bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) = 0;
 		virtual bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) = 0;
@@ -157,19 +157,19 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String propertyValueString() const override
+		String propertyValueStringOfDefault() const override
 		{
-			return m_propertyValue.getValueString();
+			return m_propertyValue.getValueStringOfDefault();
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
 		{
 			return m_propertyValue.getValueStringOf(interactState, selected);
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) override
+		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const override
 		{
 			return m_propertyValue.getValueStringOfFallback(interactState, selected);
 		}
@@ -323,19 +323,19 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String propertyValueString() const override
+		String propertyValueStringOfDefault() const override
 		{
-			return m_propertyValue.getValueString();
+			return m_propertyValue.getValueStringOfDefault();
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
 		{
 			return m_propertyValue.getValueStringOf(interactState, selected);
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) override
+		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const override
 		{
 			return m_propertyValue.getValueStringOfFallback(interactState, selected);
 		}
@@ -497,7 +497,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String propertyValueString() const override
+		String propertyValueStringOfDefault() const override
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
@@ -510,11 +510,11 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) override
+		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
 		{
 			if (interactState == InteractState::Default && selected == SelectedYN::No)
 			{
-				return propertyValueString();
+				return propertyValueStringOfDefault();
 			}
 			else
 			{
@@ -523,9 +523,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState, SelectedYN) override
+		String propertyValueStringOfFallback(InteractState, SelectedYN) const override
 		{
-			return propertyValueString();
+			return propertyValueStringOfDefault();
 		}
 
 		bool trySetPropertyValueString(StringView value) override

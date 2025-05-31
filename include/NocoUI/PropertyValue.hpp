@@ -477,28 +477,16 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String getValueString() const
+		String getValueStringOfDefault() const
 		{
-			const auto fnGetStr = [](const T& value)
-				{
-					if constexpr (std::is_enum_v<T>)
-					{
-						return EnumToString(value);
-					}
-					else
-					{
-						return Format(value);
-					}
-				};
-
-			if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0)
+			if constexpr (std::is_enum_v<T>)
 			{
-				return fnGetStr(defaultValue);
+				return EnumToString(defaultValue);
 			}
-
-			// TODO: Hovered/Pressed/Disabled/Selectedの値を出力可能にする
-			String str = fnGetStr(defaultValue);
-			return str;
+			else
+			{
+				return Format(defaultValue);
+			}
 		}
 
 		[[nodiscard]]

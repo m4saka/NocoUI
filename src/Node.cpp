@@ -310,7 +310,7 @@ namespace noco
 			else
 			{
 				// 不明な場合はBoxConstraint扱いにする
-				// TODO: 不明な場合は警告を出力
+				Logger << U"[NocoUI warning] Unknown constraint type: '{}'"_fmt(type);
 				node->m_constraint = BoxConstraint{};
 			}
 		}
@@ -336,7 +336,7 @@ namespace noco
 			else
 			{
 				// 不明な場合はFlowLayout扱いにする
-				// TODO: 不明な場合は警告を出力
+				Logger << U"[NocoUI warning] Unknown children layout type: '{}'"_fmt(type);
 				node->m_childrenLayout = FlowLayout{};
 			}
 		}

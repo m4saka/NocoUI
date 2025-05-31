@@ -4005,7 +4005,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreatePropertyNode(
 						property->name(),
-						property->propertyValueString(),
+						property->propertyValueStringOfDefault(),
 						[property](StringView value) { property->trySetPropertyValueString(value); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
@@ -4013,7 +4013,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreateBoolPropertyNode(
 						property->name(),
-						ParseOr<bool>(property->propertyValueString(), false),
+						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
@@ -4021,7 +4021,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreateVec2PropertyNode(
 						property->name(),
-						ParseOr<Vec2>(property->propertyValueString(), Vec2{ 0, 0 }),
+						ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
 						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
@@ -4029,7 +4029,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreateColorPropertyNode(
 						property->name(),
-						ParseOr<ColorF>(property->propertyValueString(), ColorF{ 0, 0, 0, 1 }),
+						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
 						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
@@ -4037,7 +4037,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreateLRTBPropertyNode(
 						property->name(),
-						ParseOr<LRTB>(property->propertyValueString(), LRTB{ 0, 0, 0, 0 }),
+						ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
 						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
@@ -4045,7 +4045,7 @@ public:
 				propertyNode = componentNode->addChild(
 					CreateEnumPropertyNode(
 						property->name(),
-						property->propertyValueString(),
+						property->propertyValueStringOfDefault(),
 						[property](StringView value) { property->trySetPropertyValueString(value); },
 						m_contextMenu,
 						property->enumCandidates(),
