@@ -98,7 +98,7 @@ namespace noco
 		}
 
 		const Vec2& effectScale = node.effectScale();
-		const Vec2& spacing = m_spacing.value();
+		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
 		const double leftPadding = padding.left * effectScale.x;
 		const double rightPadding = padding.right * effectScale.x;
@@ -112,7 +112,7 @@ namespace noco
 			text,
 			m_fontAssetName.value(),
 			m_fontSize.value(),
-			spacing,
+			characterSpacing,
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
 			rect.size / effectScale);
@@ -164,7 +164,7 @@ namespace noco
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY * effectScale.y };
 					const ColorF& color = m_color.value();
 					glyph.texture.scaled(m_cache.scale * effectScale).draw(pos + glyph.getOffset(m_cache.scale) * effectScale, color);
-					x += (glyph.xAdvance * m_cache.scale + spacing.x) * effectScale.x;
+					x += (glyph.xAdvance * m_cache.scale + characterSpacing.x) * effectScale.x;
 				}
 			}
 		}
