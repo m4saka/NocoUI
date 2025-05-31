@@ -3528,6 +3528,11 @@ public:
 			{
 				layoutNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
+		const auto fnAddDoubleChild =
+			[this, &layoutNode](StringView name, double currentValue, auto fnSetValue)
+			{
+				layoutNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedLayout.getBool());
+			};
 		const auto fnAddLRTBChild =
 			[this, &layoutNode](StringView name, const LRTB& currentValue, auto fnSetValue)
 			{
@@ -3587,7 +3592,7 @@ public:
 					}
 				});
 			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddVec2Child(U"spacing", pHorizontalLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
+			fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
 			fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
 			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
 		}
@@ -3613,7 +3618,7 @@ public:
 					}
 				});
 			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddVec2Child(U"spacing", pVerticalLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
+			fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
 			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
 			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
 		}

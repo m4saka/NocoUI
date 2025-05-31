@@ -775,7 +775,7 @@ namespace noco
 					const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
 					if (!isFirstBoxConstraintChild)
 					{
-						totalWidth += spacing.x;
+						totalWidth += spacing;
 					}
 					totalWidth += childW;
 					maxHeight = Max(maxHeight, childH);
@@ -853,7 +853,7 @@ namespace noco
 				{
 					if (!isFirstBoxConstraintChild)
 					{
-						currentX += spacing.x;
+						currentX += spacing;
 					}
 					isFirstBoxConstraintChild = false;
 					const double childX = currentX + margin.left;
@@ -931,7 +931,7 @@ namespace noco
 					const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
 					if (!isFirstBoxConstraintChild)
 					{
-						totalHeight += spacing.y;
+						totalHeight += spacing;
 					}
 					totalHeight += childH;
 					maxWidth = Max(maxWidth, childW);
@@ -1009,7 +1009,7 @@ namespace noco
 				{
 					if (!isFirstBoxConstraintChild)
 					{
-						currentY += spacing.y;
+						currentY += spacing;
 					}
 					isFirstBoxConstraintChild = false;
 					const double childY = currentY + margin.top;
