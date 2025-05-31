@@ -4406,10 +4406,10 @@ public:
 		m_dialogCanvas->update();
 		m_editorOverlayCanvas->update();
 		m_editorCanvas->update();
-		const bool editorCanvasHovered = noco::detail::s_canvasUpdateContext.isHovered();
+		const bool editorCanvasHovered = CurrentFrame::AnyNodeHovered();
 		m_canvas->update();
 
-		if (Cursor::OnClientRect() && !editorCanvasHovered && !noco::detail::s_canvasUpdateContext.isScrollableHovered())
+		if (Cursor::OnClientRect() && !editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
 		{
 			// マウス座標を中心に拡大縮小
 			const Vec2 beforeOffset = m_scrollOffset;
@@ -4448,7 +4448,7 @@ public:
 
 		// ショートカットキー
 		const bool isWindowActive = Window::GetState().focused;
-		if (isWindowActive && noco::detail::s_canvasUpdateContext.draggingNode.expired() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
+		if (isWindowActive && !IsDraggingNode() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
 		{
 			const bool ctrl = KeyControl.pressed();
 			const bool alt = KeyAlt.pressed();
@@ -4481,7 +4481,7 @@ public:
 			}
 
 			// テキストボックス編集中は実行しない操作
-			if (noco::detail::s_canvasUpdateContext.editingTextBox.expired())
+			if (!IsEditingTextBox())
 			{
 				// Ctrl + ○○
 				if (ctrl && !alt && !shift)

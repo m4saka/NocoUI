@@ -212,7 +212,7 @@ namespace noco
 	void Canvas::update()
 	{
 		// ホバー中ノード取得
-		const bool canHover = detail::s_canvasUpdateContext.canHover && !detail::s_canvasUpdateContext.isHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたい
+		const bool canHover = !detail::s_canvasUpdateContext.hoverBlocked && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
 		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
 
 		// スクロール可能なホバー中ノード取得
@@ -234,7 +234,6 @@ namespace noco
 			}
 		}
 
-		detail::s_canvasUpdateContext.canHover = detail::s_canvasUpdateContext.canHover && hoveredNode == nullptr;
 		if (hoveredNode)
 		{
 			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;

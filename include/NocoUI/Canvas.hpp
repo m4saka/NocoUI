@@ -8,57 +8,260 @@ namespace noco
 
 	struct CanvasUpdateContext
 	{
-		int32 lastUpdateFrameCount = -1;
-		int32 lastUpdateInputFrameCount = -1;
-		bool canHover = true;
+		bool hoverBlocked = false;
 		bool inputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<TextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
 
-		void clearBeforeUpdateIfNeeded()
+		void clearBeforeUpdateInteractState()
 		{
-			const int32 currentFrameCount = Scene::FrameCount();
-			if (lastUpdateFrameCount == currentFrameCount)
-			{
-				return;
-			}
-			lastUpdateFrameCount = currentFrameCount;
-
-			canHover = true;
-			hoveredNode.reset();
-			scrollableHoveredNode.reset();
-			draggingNode.reset();
+			hoverBlocked = false;
 		}
 
-		void clearBeforeUpdateInputIfNeeded()
+		void clearBeforeUpdateInput()
 		{
-			const int32 currentFrameCount = Scene::FrameCount();
-			if (lastUpdateInputFrameCount == currentFrameCount)
-			{
-				return;
-			}
-			lastUpdateInputFrameCount = currentFrameCount;
-
 			inputBlocked = false;
 			editingTextBox.reset();
 		}
 
-		bool isScrollableHovered() const
+		void clearBeforeUpdate()
 		{
-			return !scrollableHoveredNode.expired();
-		}
-
-		bool isHovered() const
-		{
-			return !hoveredNode.expired();
+			hoveredNode.reset();
+			scrollableHoveredNode.reset();
+			draggingNode.reset();
 		}
 	};
 
 	namespace detail
 	{
+		inline int32 s_lastCopiedCanvasUpdateContextToPrevFrameCount = -1;
+		inline int32 s_lastUpdateInteractStateFrameCount = -1;
+		inline int32 s_lastUpdateInputFrameCount = -1;
+		inline int32 s_lastUpdateFrameCount = -1;
 		inline CanvasUpdateContext s_canvasUpdateContext;
+		inline CanvasUpdateContext s_prevCanvasUpdateContext;
+
+		inline void CopyCanvasUpdateContextToPrevIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (s_lastCopiedCanvasUpdateContextToPrevFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			s_lastCopiedCanvasUpdateContextToPrevFrameCount = currentFrameCount;
+			s_prevCanvasUpdateContext = s_canvasUpdateContext;
+		}
+
+		inline void ClearCanvasUpdateContextBeforeUpdateInteractStateIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (s_lastUpdateInteractStateFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			s_lastUpdateInteractStateFrameCount = currentFrameCount;
+			s_canvasUpdateContext.clearBeforeUpdateInteractState();
+		}
+
+		inline void ClearCanvasUpdateContextBeforeUpdateInputIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (s_lastUpdateInputFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			s_lastUpdateInputFrameCount = currentFrameCount;
+			s_canvasUpdateContext.clearBeforeUpdateInput();
+		}
+
+		inline void ClearCanvasUpdateContextBeforeUpdateIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (s_lastUpdateFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			s_lastUpdateFrameCount = currentFrameCount;
+			s_canvasUpdateContext.clearBeforeUpdate();
+		}
+	}
+
+	namespace CurrentFrame
+	{
+		[[nodiscard]]
+		inline bool AnyNodeHovered()
+		{
+			return !detail::s_canvasUpdateContext.hoveredNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetHoveredNode()
+		{
+			return detail::s_canvasUpdateContext.hoveredNode.lock();
+		}
+
+		[[nodiscard]]
+		inline bool AnyScrollableNodeHovered()
+		{
+			return !detail::s_canvasUpdateContext.scrollableHoveredNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetScrollableHoveredNode()
+		{
+			return detail::s_canvasUpdateContext.scrollableHoveredNode.lock();
+		}
+
+		[[nodiscard]]
+		inline bool IsEditingTextBox()
+		{
+			return !detail::s_canvasUpdateContext.editingTextBox.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<TextBox> GetEditingTextBox()
+		{
+			return detail::s_canvasUpdateContext.editingTextBox.lock();
+		}
+
+		[[nodiscard]]
+		inline bool IsDraggingNode()
+		{
+			return !detail::s_canvasUpdateContext.draggingNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetDraggingNode()
+		{
+			return detail::s_canvasUpdateContext.draggingNode.lock();
+		}
+
+		inline void BlockInput()
+		{
+			detail::s_canvasUpdateContext.inputBlocked = true;
+		}
+
+		inline void BlockHover()
+		{
+			detail::s_canvasUpdateContext.hoverBlocked = true;
+		}
+	}
+
+	namespace PrevFrame
+	{
+		[[nodiscard]]
+		inline bool AnyNodeHovered()
+		{
+			return !detail::s_prevCanvasUpdateContext.hoveredNode.expired();
+		}
+		
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetHoveredNode()
+		{
+			return detail::s_prevCanvasUpdateContext.hoveredNode.lock();
+		}
+		
+		[[nodiscard]]
+		inline bool AnyScrollableNodeHovered()
+		{
+			return !detail::s_prevCanvasUpdateContext.scrollableHoveredNode.expired();
+		}
+		
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetScrollableHoveredNode()
+		{
+			return detail::s_prevCanvasUpdateContext.scrollableHoveredNode.lock();
+		}
+
+		[[nodiscard]]
+		inline bool IsEditingTextBox()
+		{
+			return !detail::s_prevCanvasUpdateContext.editingTextBox.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<TextBox> GetEditingTextBox()
+		{
+			return detail::s_prevCanvasUpdateContext.editingTextBox.lock();
+		}
+
+		[[nodiscard]]
+		inline bool IsDraggingNode()
+		{
+			return !detail::s_prevCanvasUpdateContext.draggingNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetDraggingNode()
+		{
+			return detail::s_prevCanvasUpdateContext.draggingNode.lock();
+		}
+	}
+
+	[[nodiscard]]
+	inline bool AnyNodeHovered()
+	{
+		return CurrentFrame::AnyNodeHovered() || PrevFrame::AnyNodeHovered();
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<Node> GetHoveredNode()
+	{
+		if (auto node = CurrentFrame::GetHoveredNode())
+		{
+			return node;
+		}
+		return PrevFrame::GetHoveredNode();
+	}
+
+	[[nodiscard]]
+	inline bool AnyScrollableNodeHovered()
+	{
+		return CurrentFrame::AnyScrollableNodeHovered() || PrevFrame::AnyScrollableNodeHovered();
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<Node> GetScrollableHoveredNode()
+	{
+		if (auto node = CurrentFrame::GetScrollableHoveredNode())
+		{
+			return node;
+		}
+		return PrevFrame::GetScrollableHoveredNode();
+	}
+
+	[[nodiscard]]
+	inline bool IsEditingTextBox()
+	{
+		return CurrentFrame::IsEditingTextBox() || PrevFrame::IsEditingTextBox();
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<TextBox> GetEditingTextBox()
+	{
+		if (auto textBox = CurrentFrame::GetEditingTextBox())
+		{
+			return textBox;
+		}
+		return PrevFrame::GetEditingTextBox();
+	}
+
+	[[nodiscard]]
+	inline bool IsDraggingNode()
+	{
+		return CurrentFrame::IsDraggingNode() || PrevFrame::IsDraggingNode();
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<Node> GetDraggingNode()
+	{
+		if (auto node = CurrentFrame::GetDraggingNode())
+		{
+			return node;
+		}
+		return PrevFrame::GetDraggingNode();
 	}
 
 	enum class EventType : uint8

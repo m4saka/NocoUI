@@ -213,11 +213,6 @@ namespace noco
 	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
 	{
 		deselect(node);
-		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
-		{
-			detail::s_canvasUpdateContext.editingTextBox.reset();
-		}
-		m_isDragging = false;
 	}
 
 	void TextBox::updateInput(const std::shared_ptr<Node>& node)
@@ -226,13 +221,9 @@ namespace noco
 		m_isChanged = false;
 
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
-		if (m_isEditing && (!node->interactable() || (!detail::s_canvasUpdateContext.editingTextBox.expired() && detail::s_canvasUpdateContext.editingTextBox.lock().get() != this)))
+		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != this))
 		{
 			deselect(node);
-			if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
-			{
-				detail::s_canvasUpdateContext.editingTextBox.reset();
-			}
 			return;
 		}
 
@@ -688,6 +679,10 @@ namespace noco
 		m_isDragging = false;
 		node->setSelected(SelectedYN::No);
 		m_selectionAnchor = m_cursorIndex;
+		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
+		{
+			detail::s_canvasUpdateContext.editingTextBox.reset();
+		}
 	}
 
 	void TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)

@@ -1018,6 +1018,9 @@ namespace noco
 	{
 		// updateInteractStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
+		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
+		noco::detail::ClearCanvasUpdateContextBeforeUpdateIfNeeded();
+
 		const auto thisNode = shared_from_this();
 
 		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
@@ -1042,7 +1045,8 @@ namespace noco
 
 	void Node::updateInput()
 	{
-		noco::detail::s_canvasUpdateContext.clearBeforeUpdateInputIfNeeded();
+		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
+		noco::detail::ClearCanvasUpdateContextBeforeUpdateInputIfNeeded();
 
 		const auto thisNode = shared_from_this();
 
@@ -1082,7 +1086,8 @@ namespace noco
 
 	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
 	{
-		noco::detail::s_canvasUpdateContext.clearBeforeUpdateIfNeeded();
+		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
+		noco::detail::ClearCanvasUpdateContextBeforeUpdateIfNeeded();
 		
 		const auto thisNode = shared_from_this();
 		
