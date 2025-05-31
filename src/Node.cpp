@@ -1031,6 +1031,9 @@ namespace noco
 
 		const auto thisNode = shared_from_this();
 
+		m_clickRequested = false;
+		m_rightClickRequested = false;
+
 		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
 		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
 		if (!m_isHitTarget)
@@ -1219,9 +1222,6 @@ namespace noco
 		{
 			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
 		}
-
-		m_clickRequested = false;
-		m_rightClickRequested = false;
 
 		// 子ノードのpostLateUpdate実行
 		for (const auto& child : m_children)

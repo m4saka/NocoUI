@@ -125,6 +125,12 @@ namespace noco
 		{
 			detail::s_canvasUpdateContext.inputBlocked = true;
 		}
+
+		[[nodiscard]]
+		inline bool HasInputBlocked()
+		{
+			return detail::s_canvasUpdateContext.inputBlocked;
+		}
 	}
 
 	namespace PrevFrame
