@@ -4075,6 +4075,28 @@ public:
 				MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } },
 			});
 
+		if (component->properties().empty())
+		{
+			const auto noPropertyLabelNode = componentNode->emplaceChild(
+				U"NoProperty",
+				BoxConstraint
+				{
+					.sizeRatio = { 1, 0 },
+					.sizeDelta = { 0, 24 },
+					.margin = { .top = 4 },
+				});
+			noPropertyLabelNode->emplaceComponent<Label>(
+				U"(プロパティなし)",
+				U"",
+				14,
+				Palette::White,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			if (isFolded)
+			{
+				noPropertyLabelNode->setActive(false);
+			}
+		}
 		for (const auto& property : component->properties())
 		{
 			const PropertyEditType editType = property->editType();
