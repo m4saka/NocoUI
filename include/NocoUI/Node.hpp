@@ -1093,13 +1093,17 @@ namespace noco
 				offsetX += availableWidth - line.totalWidth;
 			}
 			const double lineHeight = line.maxHeight;
-			for (size_t i = 0; i < line.childIndices.size(); ++i)
+			bool boxConstraintChildPlaced = false;
+			for (const size_t index : line.childIndices)
 			{
-				const size_t index = line.childIndices[i];
 				const auto& child = children[index];
-				if (i > 0 && child->hasBoxConstraint())
+				if (child->hasBoxConstraint())
 				{
-					offsetX += spacing.x;
+					if (boxConstraintChildPlaced)
+					{
+						offsetX += spacing.x;
+					}
+					boxConstraintChildPlaced = true;
 				}
 				const RectF finalRect = executeChild(parentRect, child, measureInfo.measuredChildren[index], offsetY, lineHeight, &offsetX);
 				fnSetRect(child, finalRect);
