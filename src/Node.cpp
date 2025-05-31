@@ -572,16 +572,6 @@ namespace noco
 		return m_canvas.lock();
 	}
 
-	void Node::addComponent(std::shared_ptr<ComponentBase>&& component)
-	{
-		m_components.push_back(std::move(component));
-	}
-
-	void Node::addComponent(const std::shared_ptr<ComponentBase>& component)
-	{
-		m_components.push_back(component);
-	}
-
 	void Node::removeComponent(const std::shared_ptr<ComponentBase>& component)
 	{
 		m_components.remove(component);

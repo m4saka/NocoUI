@@ -156,15 +156,19 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Canvas> containedCanvas() const;
 
-		void addComponent(std::shared_ptr<ComponentBase>&& component);
+		template <typename TComponent>
+		std::shared_ptr<TComponent> addComponent(const std::shared_ptr<TComponent>& component)
+			requires std::derived_from<TComponent, ComponentBase>;
 
-		void addComponent(const std::shared_ptr<ComponentBase>& component);
+		template <typename TComponent>
+		std::shared_ptr<TComponent> addComponentAtIndex(const std::shared_ptr<TComponent>& component, size_t index)
+			requires std::derived_from<TComponent, ComponentBase>;
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
 		template <class TComponent, class... Args>
 		std::shared_ptr<TComponent> emplaceComponent(Args&&... args)
-			requires std::derived_from<TComponent, ComponentBase>&& std::is_constructible_v<TComponent, Args...>;
+			requires std::derived_from<TComponent, ComponentBase> && std::is_constructible_v<TComponent, Args...>;
 
 		bool moveComponentUp(const std::shared_ptr<ComponentBase>& component);
 
@@ -498,6 +502,26 @@ namespace noco
 		[[nodiscard]]	
 		TData getStoredDataOr(const TData& defaultValue) const;
 	};
+
+	template <typename TComponent>
+	std::shared_ptr<TComponent> Node::addComponent(const std::shared_ptr<TComponent>& component)
+		requires std::derived_from<TComponent, ComponentBase>
+	{
+		m_components.push_back(component);
+		return component;
+	}
+
+	template <typename TComponent>
+	std::shared_ptr<TComponent> Node::addComponentAtIndex(const std::shared_ptr<TComponent>& component, size_t index)
+		requires std::derived_from<TComponent, ComponentBase>
+	{
+		if (index > m_components.size())
+		{
+			index = m_components.size();
+		}
+		m_components.insert(m_components.begin() + index, component);
+		return component;
+	}
 
 	template<class TComponent, class ...Args>
 	std::shared_ptr<TComponent> Node::emplaceComponent(Args && ...args)
