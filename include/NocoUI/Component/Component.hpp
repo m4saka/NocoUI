@@ -12,5 +12,5 @@
 #include "DrawerComponent.hpp"
 #include "DragDropSource.hpp"
 #include "DragDropTarget.hpp"
-#include "ShortcutInputHandler.hpp"
+#include "HotKeyInputHandler.hpp"
 #include "DataStore.hpp"

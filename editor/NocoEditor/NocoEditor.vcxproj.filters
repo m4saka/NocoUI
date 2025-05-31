@@ -563,7 +563,7 @@
     <ClInclude Include="..\..\include\NocoUI\Component\InputUpdaterComponent.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\ShortcutInputHandler.hpp">
+    <ClInclude Include="..\..\include\NocoUI\Component\HotKeyInputHandler.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\InputBlocker.hpp">

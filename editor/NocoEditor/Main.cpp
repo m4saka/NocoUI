@@ -1660,9 +1660,9 @@ std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant&
 
 struct DialogButtonDesc
 {
-	String text = U"";
-	Optional<Input> shortcutInput = none;
-	bool appendsShortcutKeyText = true;
+	String text = U""; // TODO: 現状は単一表示言語想定でダイアログ結果にテキストを流用しているが、将来的にはダイアログ毎の結果型として任意の型を指定可能にして、シンプルな用途のためにYes/No/Cancel用の関数を用意したい
+	Optional<Input> mnemonicInput = none;
+	bool appendsMnemonicKeyText = true; // TODO: 現状は日本語想定でカッコで追加する形にしているが、将来的には「&File」「ファイル(&F)」など&を前につけるとニーモニック扱いされるようにしたい
 	bool isDefaultButton = false;
 	bool isCancelButton = false;
 };
@@ -1749,9 +1749,9 @@ public:
 		{
 			const String buttonText = [](const DialogButtonDesc& buttonDesc) -> String
 				{
-					if (buttonDesc.shortcutInput.has_value() && buttonDesc.appendsShortcutKeyText)
+					if (buttonDesc.mnemonicInput.has_value() && buttonDesc.appendsMnemonicKeyText)
 					{
-						return U"{}({})"_fmt(buttonDesc.text, Format(*buttonDesc.shortcutInput));
+						return U"{}({})"_fmt(buttonDesc.text, Format(*buttonDesc.mnemonicInput));
 					}
 					else
 					{
@@ -1777,19 +1777,19 @@ public:
 					}),
 				RefreshesLayoutYN::No);
 
-			if (buttonDesc.shortcutInput.has_value())
+			if (buttonDesc.mnemonicInput.has_value())
 			{
-				buttonNode->addClickShortcut(*buttonDesc.shortcutInput);
+				buttonNode->addClickHotKey(*buttonDesc.mnemonicInput);
 			}
 
 			if (buttonDesc.isDefaultButton)
 			{
-				buttonNode->addClickShortcut(KeyEnter, EnabledWhileTextEditingYN::Yes);
+				buttonNode->addClickHotKey(KeyEnter, EnabledWhileTextEditingYN::Yes);
 			}
 
 			if (buttonDesc.isCancelButton)
 			{
-				buttonNode->addClickShortcut(KeyEscape, EnabledWhileTextEditingYN::Yes);
+				buttonNode->addClickHotKey(KeyEscape, EnabledWhileTextEditingYN::Yes);
 			}
 		}
 		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -1930,8 +1930,8 @@ public:
 			DialogButtonDesc
 			{
 				.text = U"OK",
-				.shortcutInput = KeyEnter,
-				.appendsShortcutKeyText = false,
+				.mnemonicInput = KeyEnter,
+				.appendsMnemonicKeyText = false,
 				.isDefaultButton = true,
 			}
 		};
@@ -4716,18 +4716,18 @@ public:
 					DialogButtonDesc
 					{
 						.text = U"はい",
-						.shortcutInput = KeyY,
+						.mnemonicInput = KeyY,
 						.isDefaultButton = true,
 					},
 					DialogButtonDesc
 					{
 						.text = U"いいえ",
-						.shortcutInput = KeyN,
+						.mnemonicInput = KeyN,
 					},
 					DialogButtonDesc
 					{
 						.text = U"キャンセル",
-						.shortcutInput = KeyC,
+						.mnemonicInput = KeyC,
 						.isCancelButton = true,
 					}}));
 	}
