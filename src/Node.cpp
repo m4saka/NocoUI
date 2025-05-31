@@ -381,56 +381,67 @@ namespace noco
 
 				if (type == U"Label")
 				{
-					auto label = std::make_shared<Label>();
-					if (!label->tryReadFromJSON(componentJSON))
+					auto component = std::make_shared<Label>();
+					if (!component->tryReadFromJSON(componentJSON))
 					{
 						throw Error{ U"Failed to read Label component from JSON" };
 					}
-					node->addComponent(std::move(label));
+					node->addComponent(std::move(component));
 					continue;
 				}
 
 				if (type == U"Sprite")
 				{
-					auto sprite = std::make_shared<Sprite>();
-					if (!sprite->tryReadFromJSON(componentJSON))
+					auto component = std::make_shared<Sprite>();
+					if (!component->tryReadFromJSON(componentJSON))
 					{
 						throw Error{ U"Failed to read Sprite component from JSON" };
 					}
-					node->addComponent(std::move(sprite));
+					node->addComponent(std::move(component));
 					continue;
 				}
 
 				if (type == U"RectRenderer")
 				{
-					auto rectRenderer = std::make_shared<RectRenderer>();
-					if (!rectRenderer->tryReadFromJSON(componentJSON))
+					auto component = std::make_shared<RectRenderer>();
+					if (!component->tryReadFromJSON(componentJSON))
 					{
 						throw Error{ U"Failed to read RectRenderer component from JSON" };
 					}
-					node->addComponent(std::move(rectRenderer));
+					node->addComponent(std::move(component));
 					continue;
 				}
 
 				if (type == U"TextBox")
 				{
-					auto textBox = std::make_shared<TextBox>();
-					if (!textBox->tryReadFromJSON(componentJSON))
+					auto component = std::make_shared<TextBox>();
+					if (!component->tryReadFromJSON(componentJSON))
 					{
 						throw Error{ U"Failed to read TextBox component from JSON" };
 					}
-					node->addComponent(std::move(textBox));
+					node->addComponent(std::move(component));
+					continue;
+				}
+
+				if (type == U"InputBlocker")
+				{
+					auto component = std::make_shared<InputBlocker>();
+					if (!component->tryReadFromJSON(componentJSON))
+					{
+						throw Error{ U"Failed to read InputBlocker component from JSON" };
+					}
+					node->addComponent(std::move(component));
 					continue;
 				}
 
 				if (type == U"EventTrigger")
 				{
-					auto eventTrigger = std::make_shared<EventTrigger>();
-					if (!eventTrigger->tryReadFromJSON(componentJSON))
+					auto component = std::make_shared<EventTrigger>();
+					if (!component->tryReadFromJSON(componentJSON))
 					{
 						throw Error{ U"Failed to read EventTrigger component from JSON" };
 					}
-					node->addComponent(std::move(eventTrigger));
+					node->addComponent(std::move(component));
 					continue;
 				}
 
@@ -1017,9 +1028,6 @@ namespace noco
 	void Node::updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
 	{
 		// updateInteractStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
-
-		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
-		noco::detail::ClearCanvasUpdateContextBeforeUpdateIfNeeded();
 
 		const auto thisNode = shared_from_this();
 

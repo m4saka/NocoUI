@@ -8,17 +8,11 @@ namespace noco
 
 	struct CanvasUpdateContext
 	{
-		bool hoverBlocked = false;
 		bool inputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<TextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
-
-		void clearBeforeUpdateInteractState()
-		{
-			hoverBlocked = false;
-		}
 
 		void clearBeforeUpdateInput()
 		{
@@ -52,17 +46,6 @@ namespace noco
 			}
 			s_lastCopiedCanvasUpdateContextToPrevFrameCount = currentFrameCount;
 			s_prevCanvasUpdateContext = s_canvasUpdateContext;
-		}
-
-		inline void ClearCanvasUpdateContextBeforeUpdateInteractStateIfNeeded()
-		{
-			const int32 currentFrameCount = Scene::FrameCount();
-			if (s_lastUpdateInteractStateFrameCount == currentFrameCount)
-			{
-				return;
-			}
-			s_lastUpdateInteractStateFrameCount = currentFrameCount;
-			s_canvasUpdateContext.clearBeforeUpdateInteractState();
 		}
 
 		inline void ClearCanvasUpdateContextBeforeUpdateInputIfNeeded()
@@ -141,11 +124,6 @@ namespace noco
 		inline void BlockInput()
 		{
 			detail::s_canvasUpdateContext.inputBlocked = true;
-		}
-
-		inline void BlockHover()
-		{
-			detail::s_canvasUpdateContext.hoverBlocked = true;
 		}
 	}
 
@@ -347,7 +325,7 @@ namespace noco
 
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
-		void update();
+		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
 		void draw() const;
 

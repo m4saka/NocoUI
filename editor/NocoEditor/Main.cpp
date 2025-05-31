@@ -82,6 +82,7 @@ public:
 				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 	{
+		m_screenMaskNode->emplaceComponent<InputBlocker>();
 		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
 		m_rootNode->setChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
@@ -1727,6 +1728,8 @@ public:
 			}))
 		, m_onResult(onResult)
 	{
+		m_screenMaskNode->emplaceComponent<InputBlocker>();
+
 		// ダイアログ背面を暗くする
 		m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
 		m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
@@ -2026,6 +2029,7 @@ public:
 				MenuItem{ U"RectRenderer を追加", U"", [this] { onClickAddComponent<RectRenderer>(); } },
 				MenuItem{ U"TextBox を追加", U"", [this] { onClickAddComponent<TextBox>(); } },
 				MenuItem{ U"Label を追加", U"", [this] { onClickAddComponent<Label>(); } },
+				MenuItem{ U"InputBlocker を追加", U"", [this] { onClickAddComponent<InputBlocker>(); } },
 				MenuItem{ U"EventTrigger を追加", U"", [this] { onClickAddComponent<EventTrigger>(); } },
 				MenuItem{ U"Placeholder を追加", U"", [this] { onClickAddComponent<Placeholder>(); } },
 			});
@@ -2112,7 +2116,7 @@ public:
 				[this]
 				{
 					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually();
-				}))->addClickShortcut(KeyA);
+				}));
 		}
 	}
 

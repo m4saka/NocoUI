@@ -209,10 +209,10 @@ namespace noco
 		return true; // TODO: 失敗したらfalseを返す
 	}
 	
-	void Canvas::update()
+	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
 		// ホバー中ノード取得
-		const bool canHover = !detail::s_canvasUpdateContext.hoverBlocked && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
+		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
 		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
 
 		// スクロール可能なホバー中ノード取得

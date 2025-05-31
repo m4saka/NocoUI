@@ -20,4 +20,5 @@ namespace noco
 	using ClearsInputYN = YesNo<struct ClearsInputYN_tag>;
 	using EnabledWhileTextEditingYN = YesNo<struct EnabledWhileTextEditingYN_tag>;
 	using ClearsArrayYN = YesNo<struct ClearsArrayYN_tag>;
+	using HitTestEnabledYN = YesNo<struct HitTestEnabledYN_tag>;
 }
