@@ -17,20 +17,20 @@ namespace noco
 	private:
 		Input m_input;
 		ShortcutInputTarget m_target;
-		ClearsInputYN m_clearsInput;
 		EnabledWhileTextEditingYN m_enabledWhileTextEditing;
+		ClearsInputYN m_clearsInput;
 
 	public:
 		explicit ShortcutInputHandler(
 			const Input& input,
 			ShortcutInputTarget target,
-			ClearsInputYN clearsInput = ClearsInputYN::Yes,
-			EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No)
+			EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No,
+			ClearsInputYN clearsInput = ClearsInputYN::Yes)
 			: ComponentBase{ {} }
 			, m_input{ input }
 			, m_target{ target }
-			, m_clearsInput{ clearsInput }
 			, m_enabledWhileTextEditing{ enabledWhileTextEditing }
+			, m_clearsInput{ clearsInput }
 		{
 		}
 

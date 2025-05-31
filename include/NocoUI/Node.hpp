@@ -453,9 +453,9 @@ namespace noco
 
 		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
 
-		void addClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No);
+		void addClickShortcut(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void addRightClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No);
+		void addRightClickShortcut(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
 		void refreshContainedCanvasLayout();
 

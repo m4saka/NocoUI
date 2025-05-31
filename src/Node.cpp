@@ -1912,14 +1912,14 @@ namespace noco
 			});
 	}
 
-	void Node::addClickShortcut(const Input& input, ClearsInputYN clearsInput, EnabledWhileTextEditingYN enabledWhileTextEditing)
+	void Node::addClickShortcut(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
-		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::Click, clearsInput, enabledWhileTextEditing);
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::Click, enabledWhileTextEditing, clearsInput);
 	}
 
-	void Node::addRightClickShortcut(const Input& input, ClearsInputYN clearsInput, EnabledWhileTextEditingYN enabledWhileTextEditing)
+	void Node::addRightClickShortcut(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
-		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::RightClick, clearsInput, enabledWhileTextEditing);
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::RightClick, enabledWhileTextEditing, clearsInput);
 	}
 
 	void Node::refreshContainedCanvasLayout()

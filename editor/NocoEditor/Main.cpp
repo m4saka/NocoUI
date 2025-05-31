@@ -1657,6 +1657,15 @@ std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant&
 	return buttonNode;
 }
 
+struct DialogButtonDesc
+{
+	String text = U"";
+	Optional<Input> shortcutInput = none;
+	bool appendsShortcutKeyText = true;
+	bool isDefaultButton = false;
+	bool isCancelButton = false;
+};
+
 class IDialog
 {
 public:
@@ -1664,7 +1673,7 @@ public:
 
 	virtual double dialogWidth() const = 0;
 
-	virtual Array<String> buttonTexts() const = 0;
+	virtual Array<DialogButtonDesc> buttonDescs() const = 0;
 
 	virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) = 0;
 
@@ -1682,7 +1691,7 @@ private:
 	std::function<void(StringView)> m_onResult;
 
 public:
-	explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, double dialogWidth, const std::function<void(StringView)>& onResult, const Array<String>& buttons)
+	explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, double dialogWidth, const std::function<void(StringView)>& onResult, const Array<DialogButtonDesc>& buttonDescs)
 		: m_dialogCanvas(dialogCanvas)
 		, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
 			U"Dialog_ScreenMask",
@@ -1733,25 +1742,52 @@ public:
 				.margin = LRTB{ 0, 0, 8, 0 },
 			});
 		buttonParentNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
-		for (const auto& button : buttons)
+		for (const DialogButtonDesc& buttonDesc : buttonDescs)
 		{
-			buttonParentNode->addChild(
+			const String buttonText = [](const DialogButtonDesc& buttonDesc) -> String
+				{
+					if (buttonDesc.shortcutInput.has_value() && buttonDesc.appendsShortcutKeyText)
+					{
+						return U"{}({})"_fmt(buttonDesc.text, Format(*buttonDesc.shortcutInput));
+					}
+					else
+					{
+						return buttonDesc.text;
+					}
+				}(buttonDesc);
+
+			const auto buttonNode = buttonParentNode->addChild(
 				CreateButtonNode(
-					button,
+					buttonText,
 					BoxConstraint
 					{
 						.sizeDelta = Vec2{ 100, 24 },
 						.margin = LRTB{ 4, 4, 0, 0 },
 					},
-					[this, button]()
+					[this, buttonDesc]()
 					{
 						m_screenMaskNode->removeFromParent();
 						if (m_onResult)
 						{
-							m_onResult(button);
+							m_onResult(buttonDesc.text);
 						}
 					}),
 				RefreshesLayoutYN::No);
+
+			if (buttonDesc.shortcutInput.has_value())
+			{
+				buttonNode->addClickShortcut(*buttonDesc.shortcutInput);
+			}
+
+			if (buttonDesc.isDefaultButton)
+			{
+				buttonNode->addClickShortcut(KeyEnter, EnabledWhileTextEditingYN::Yes);
+			}
+
+			if (buttonDesc.isCancelButton)
+			{
+				buttonNode->addClickShortcut(KeyEscape, EnabledWhileTextEditingYN::Yes);
+			}
 		}
 		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -1791,7 +1827,7 @@ public:
 
 	void openDialog(const std::shared_ptr<IDialog>& dialog)
 	{
-		auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogWidth(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonTexts());
+		auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogWidth(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonDescs());
 		dialog->createDialogContent(dialogFrame->contentRootNode(), m_dialogContextMenu);
 		dialogFrame->refreshLayoutForContent();
 		m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
@@ -1809,13 +1845,13 @@ class SimpleDialog : public IDialog
 private:
 	String m_text;
 	std::function<void(StringView)> m_onResult;
-	Array<String> m_buttonTexts;
+	Array<DialogButtonDesc> m_buttonDescs;
 
 public:
-	SimpleDialog(StringView text, const std::function<void(StringView)>& onResult, const Array<String>& buttonTexts)
+	SimpleDialog(StringView text, const std::function<void(StringView)>& onResult, const Array<DialogButtonDesc>& buttonDescs)
 		: m_text(text)
 		, m_onResult(onResult)
-		, m_buttonTexts(buttonTexts)
+		, m_buttonDescs(buttonDescs)
 	{
 	}
 
@@ -1824,9 +1860,9 @@ public:
 		return 400;
 	}
 
-	Array<String> buttonTexts() const override
+	Array<DialogButtonDesc> buttonDescs() const override
 	{
-		return m_buttonTexts;
+		return m_buttonDescs;
 	}
 
 	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
@@ -1884,9 +1920,18 @@ public:
 		return m_pProperty->editType() == PropertyEditType::LRTB ? 640 : 500;
 	}
 
-	Array<String> buttonTexts() const override
+	Array<DialogButtonDesc> buttonDescs() const override
 	{
-		return { U"OK" };
+		return Array<DialogButtonDesc>
+		{
+			DialogButtonDesc
+			{
+				.text = U"OK",
+				.shortcutInput = KeyEnter,
+				.appendsShortcutKeyText = false,
+				.isDefaultButton = true,
+			}
+		};
 	}
 
 	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override;
@@ -4662,7 +4707,25 @@ public:
 						callback();
 					}
 				},
-				Array<String>{ U"はい", U"いいえ", U"キャンセル" }));
+				Array<DialogButtonDesc>
+				{
+					DialogButtonDesc
+					{
+						.text = U"はい",
+						.shortcutInput = KeyY,
+						.isDefaultButton = true,
+					},
+					DialogButtonDesc
+					{
+						.text = U"いいえ",
+						.shortcutInput = KeyN,
+					},
+					DialogButtonDesc
+					{
+						.text = U"キャンセル",
+						.shortcutInput = KeyC,
+						.isCancelButton = true,
+					}}));
 	}
 
 	void onClickMenuFileNew()
