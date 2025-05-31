@@ -120,9 +120,9 @@ namespace noco
 		{
 		}
 
-		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
+		void updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
 
-		void updateInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
+		void updateInputInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override;
 
 		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
 

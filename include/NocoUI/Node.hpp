@@ -242,13 +242,15 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
 
+		void updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
+
 		void updateInput(CanvasUpdateContext* pContext);
 
-		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
+		void update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 
 		void lateUpdate(CanvasUpdateContext* pContext);
 
-		void postLateUpdate();
+		void postLateUpdate(double deltaTime);
 
 		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
 
@@ -443,11 +445,11 @@ namespace noco
 
 		void addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick);
 
-		void addClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes);
-
-		void addRightClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes);
-
 		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
+
+		void addClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No);
+
+		void addRightClickShortcut(const Input& input, ClearsInputYN clearsInput = ClearsInputYN::Yes, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No);
 
 		void refreshContainedCanvasLayout();
 

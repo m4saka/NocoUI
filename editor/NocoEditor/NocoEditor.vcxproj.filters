@@ -563,8 +563,5 @@
     <ClInclude Include="..\..\include\NocoUI\Component\ShortcutInputHandler.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\Component\KeyInputClearer.hpp">
-      <Filter>Header Files\NocoUI\Component</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

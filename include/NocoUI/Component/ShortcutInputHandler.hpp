@@ -18,25 +18,25 @@ namespace noco
 		Input m_input;
 		ShortcutInputTarget m_target;
 		ClearsInputYN m_clearsInput;
-		IgnoresWhileTextEditingYN m_ignoresWhileTextEditing;
+		EnabledWhileTextEditingYN m_enabledWhileTextEditing;
 
 	public:
 		explicit ShortcutInputHandler(
 			const Input& input,
 			ShortcutInputTarget target,
 			ClearsInputYN clearsInput = ClearsInputYN::Yes,
-			IgnoresWhileTextEditingYN ignoresWhileTextEditing = IgnoresWhileTextEditingYN::Yes)
+			EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No)
 			: ComponentBase{ {} }
 			, m_input{ input }
 			, m_target{ target }
 			, m_clearsInput{ clearsInput }
-			, m_ignoresWhileTextEditing{ ignoresWhileTextEditing }
+			, m_enabledWhileTextEditing{ enabledWhileTextEditing }
 		{
 		}
 
 		void updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node) override
 		{
-			if (m_ignoresWhileTextEditing && pContext && pContext->editingTextBox.lock()) // TODO: ←updateInputがupdateより先なので、これだとテキスト編集中か判定できない…
+			if (!m_enabledWhileTextEditing && pContext && !pContext->editingTextBox.expired()) // FIXME: これだと順序が後ろのテキストボックスの編集中を判定できない
 			{
 				// テキストボックス編集中はキーを無視
 				return;

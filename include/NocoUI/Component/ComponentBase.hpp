@@ -27,6 +27,10 @@ namespace noco
 		{
 		}
 
+		virtual void updateInputInactive(CanvasUpdateContext*, const std::shared_ptr<Node>&)
+		{
+		}
+
 		virtual void update(CanvasUpdateContext*, const std::shared_ptr<Node>&)
 		{
 		}

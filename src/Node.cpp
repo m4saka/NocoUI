@@ -1014,6 +1014,32 @@ namespace noco
 		return nullptr;
 	}
 
+	void Node::updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
+	{
+		// updateInteractStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
+
+		const auto thisNode = shared_from_this();
+
+		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
+		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
+		if (!m_isHitTarget)
+		{
+			// HitTargetでない場合は親のinteractStateを引き継ぐ
+			m_currentInteractState = ApplyOtherInteractState(m_currentInteractState, parentInteractState);
+			m_currentInteractStateRight = ApplyOtherInteractState(m_currentInteractStateRight, parentInteractStateRight);
+		}
+
+		if (!m_children.empty())
+		{
+			// 子ノードのupdateInteractState実行
+			const InteractableYN interactable{ m_interactable && parentInteractable };
+			for (const auto& child : m_children)
+			{
+				child->updateInteractState(hoveredNode, deltaTime, interactable, m_currentInteractState, m_currentInteractStateRight);
+			}
+		}
+	}
+
 	void Node::updateInput(CanvasUpdateContext* pContext)
 	{
 		const auto thisNode = shared_from_this();
@@ -1038,17 +1064,21 @@ namespace noco
 		{
 			m_componentTempBuffer.push_back(component);
 		}
-		if (m_activeInHierarchy)
+		for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
 		{
-			for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
+			if (m_activeInHierarchy && (!pContext || !pContext->inputBlocked)) // updateInput内で更新される場合があるためループ内で分岐が必要
 			{
 				(*it)->updateInput(pContext, thisNode);
+			}
+			else
+			{
+				(*it)->updateInputInactive(pContext, thisNode);
 			}
 		}
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& hoveredNode, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
+	void Node::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1060,37 +1090,25 @@ namespace noco
 			m_componentTempBuffer.push_back(component);
 		}
 
-		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
-		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
-		if (!m_isHitTarget)
-		{
-			// HitTargetでない場合は親のinteractStateを引き継ぐ
-			m_currentInteractState = ApplyOtherInteractState(m_currentInteractState, parentInteractState);
-			m_currentInteractStateRight = ApplyOtherInteractState(m_currentInteractStateRight, parentInteractStateRight);
-		}
+		// コンポーネントのupdate実行
 		for (const auto& component : m_componentTempBuffer)
 		{
-			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
-		}
-
-		// コンポーネントのupdate実行
-		if (m_activeInHierarchy)
-		{
-			for (const auto& component : m_componentTempBuffer)
+			if (m_activeInHierarchy) // update内で更新される場合があるためループ内で分岐が必要
 			{
 				component->update(pContext, thisNode);
 			}
-			m_transformEffect.update(m_currentInteractState, m_selected, deltaTime);
-			refreshEffectedRect(parentEffectMat, parentEffectScale);
-		}
-		else
-		{
-			for (const auto& component : m_componentTempBuffer)
+			else
 			{
 				component->updateInactive(pContext, thisNode);
 			}
 		}
 		m_componentTempBuffer.clear();
+
+		if (m_activeInHierarchy)
+		{
+			m_transformEffect.update(m_currentInteractState, m_selected, deltaTime);
+			refreshEffectedRect(parentEffectMat, parentEffectScale);
+		}
 
 		// ホバー中はスクロールバーを表示
 		if (thisNode == scrollableHoveredNode)
@@ -1113,12 +1131,11 @@ namespace noco
 			}
 
 			// 子ノードのupdate実行
-			const InteractableYN interactable{ m_interactable && parentInteractable };
 			const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(pContext, hoveredNode, scrollableHoveredNode, deltaTime, effectMat, effectScale, interactable, m_currentInteractState, m_currentInteractStateRight);
+				child->update(pContext, scrollableHoveredNode, deltaTime, effectMat, effectScale);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1176,29 +1193,23 @@ namespace noco
 		}
 	}
 
-	void Node::postLateUpdate()
+	void Node::postLateUpdate(double deltaTime)
 	{
+		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
+
+		// コンポーネントのプロパティ値更新
+		for (const auto& component : m_components)
+		{
+			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
+		}
+
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
-		if (!m_children.empty())
+		// 子ノードのpostLateUpdate実行
+		for (const auto& child : m_children)
 		{
-			const auto thisNode = shared_from_this();
-
-			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_childrenTempBuffer.clear();
-			m_childrenTempBuffer.reserve(m_children.size());
-			for (const auto& child : m_children)
-			{
-				m_childrenTempBuffer.push_back(child);
-			}
-
-			// 子ノードのpostLateUpdate実行
-			for (const auto& child : m_childrenTempBuffer)
-			{
-				child->postLateUpdate();
-			}
-			m_childrenTempBuffer.clear();
+			child->postLateUpdate(deltaTime);
 		}
 	}
 
@@ -1413,7 +1424,7 @@ namespace noco
 
 	void Node::requestClick()
 	{
-		// m_isHitTargetはfalseでも効く仕様とする
+		// m_isHitTargetがfalseでも効く仕様とする
 		if (!m_activeInHierarchy || !m_interactable)
 		{
 			return;
@@ -1423,7 +1434,7 @@ namespace noco
 
 	void Node::requestRightClick()
 	{
-		// m_isHitTargetはfalseでも効く仕様とする
+		// m_isHitTargetがfalseでも効く仕様とする
 		if (!m_activeInHierarchy || !m_interactable)
 		{
 			return;
@@ -1881,17 +1892,6 @@ namespace noco
 			});
 	}
 
-	void Node::addClickShortcut(const Input& input, ClearsInputYN clearsInput)
-	{
-		Print << U"addClickShortcut" << input;
-		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::Click, clearsInput);
-	}
-
-	void Node::addRightClickShortcut(const Input& input, ClearsInputYN clearsInput)
-	{
-		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::RightClick, clearsInput);
-	}
-
 	void Node::addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick)
 	{
 		emplaceComponent<UpdaterComponent>([onRightClick = std::move(onRightClick)](const std::shared_ptr<Node>& node)
@@ -1901,6 +1901,16 @@ namespace noco
 					onRightClick(node);
 				}
 			});
+	}
+
+	void Node::addClickShortcut(const Input& input, ClearsInputYN clearsInput, EnabledWhileTextEditingYN enabledWhileTextEditing)
+	{
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::Click, clearsInput, enabledWhileTextEditing);
+	}
+
+	void Node::addRightClickShortcut(const Input& input, ClearsInputYN clearsInput, EnabledWhileTextEditingYN enabledWhileTextEditing)
+	{
+		emplaceComponent<ShortcutInputHandler>(input, ShortcutInputTarget::RightClick, clearsInput, enabledWhileTextEditing);
 	}
 
 	void Node::refreshContainedCanvasLayout()

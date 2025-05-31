@@ -220,7 +220,7 @@ namespace noco
 		m_isDragging = false;
 	}
 
-	void TextBox::update(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	void TextBox::updateInput(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
 	{
 		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
@@ -502,7 +502,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
+	void TextBox::updateInputInactive(CanvasUpdateContext* pContext, const std::shared_ptr<Node>& node)
 	{
 		if (m_prevActiveInHierarchy)
 		{

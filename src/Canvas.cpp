@@ -248,10 +248,11 @@ namespace noco
 		}
 
 		// ノード更新
+		m_rootNode->updateInteractState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractState::Default, InteractState::Default);
 		m_rootNode->updateInput(pContext);
-		m_rootNode->update(pContext, hoveredNode, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale, InteractableYN::Yes, InteractState::Default, InteractState::Default);
+		m_rootNode->update(pContext, scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale);
 		m_rootNode->lateUpdate(pContext);
-		m_rootNode->postLateUpdate();
+		m_rootNode->postLateUpdate(Scene::DeltaTime());
 	}
 	
 	void Canvas::draw() const

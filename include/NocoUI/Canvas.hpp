@@ -6,9 +6,12 @@ namespace noco
 {
 	class TextBox;
 
+	// TODO: 引数として渡すのではなく、ライブラリ内部に持ち、任意で取得可能にする
+	// TODO: update用とupdateInput用で分ける
 	struct CanvasUpdateContext
 	{
 		bool canHover = true;
+		bool inputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<TextBox> editingTextBox;
