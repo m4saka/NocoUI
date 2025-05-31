@@ -91,4 +91,27 @@ namespace noco
 
 		m_prevIsDragging = m_isDragging;
 	}
+
+	void DragDropSource::updateInactive(const std::shared_ptr<Node>& sourceNode)
+	{
+		if (m_isDragging)
+		{
+			// ドラッグ中にノードが非アクティブになった場合、ドラッグを終了する
+			m_isDragging = false;
+			m_prevIsDragging = false;
+			m_isPressed = false;
+			for (size_t i = 0; i < m_draggingNodeList.size(); ++i)
+			{
+				const auto& draggingNode = m_draggingNodeList[i];
+				draggingNode->transformEffect().setPosition(Vec2::Zero());
+				draggingNode->setIsHitTarget(m_originalIsHitTargets[i]);
+			}
+			if (detail::s_canvasUpdateContext.draggingNode.lock().get() == sourceNode.get())
+			{
+				detail::s_canvasUpdateContext.draggingNode.reset();
+			}
+			m_draggingNodeList.clear();
+			m_originalIsHitTargets.clear();
+		}
+	}
 }
