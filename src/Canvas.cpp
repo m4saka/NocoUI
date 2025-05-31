@@ -161,7 +161,7 @@ namespace noco
 			throw Error{ U"Unknown root node constraint" };
 		}
 
-		m_rootNode->refreshChildrenLayout();
+		m_rootNode->refreshBoxChildrenLayout();
 		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
 	}
 

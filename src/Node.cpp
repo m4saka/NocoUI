@@ -139,7 +139,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 
-		const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding();
+		const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding();
 		if (!contentRectOpt)
 		{
 			m_scrollOffset = Vec2::Zero();
@@ -158,7 +158,7 @@ namespace noco
 			return;
 		}
 
-		const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
+		const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
 		m_scrollOffset.x = Clamp(m_scrollOffset.x, -maxScrollX * scrollOffsetAnchor.x, maxScrollX * (1.0 - scrollOffsetAnchor.x));
 		m_scrollOffset.y = Clamp(m_scrollOffset.y, -maxScrollY * scrollOffsetAnchor.y, maxScrollY * (1.0 - scrollOffsetAnchor.y));
 	}
@@ -202,14 +202,14 @@ namespace noco
 		return m_transformEffect;
 	}
 
-	const LayoutVariant& Node::childrenLayout() const
+	const LayoutVariant& Node::boxChildrenLayout() const
 	{
-		return m_childrenLayout;
+		return m_boxChildrenLayout;
 	}
 
-	void Node::setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
+	void Node::setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
 	{
-		m_childrenLayout = layout;
+		m_boxChildrenLayout = layout;
 		if (refreshesLayout)
 		{
 			refreshContainedCanvasLayout();
@@ -218,38 +218,42 @@ namespace noco
 
 	const FlowLayout* Node::childrenFlowLayout() const
 	{
-		return std::get_if<FlowLayout>(&m_childrenLayout);
+		return std::get_if<FlowLayout>(&m_boxChildrenLayout);
 	}
 
 	const HorizontalLayout* Node::childrenHorizontalLayout() const
 	{
-		return std::get_if<HorizontalLayout>(&m_childrenLayout);
+		return std::get_if<HorizontalLayout>(&m_boxChildrenLayout);
 	}
 
 	const VerticalLayout* Node::childrenVerticalLayout() const
 	{
-		return std::get_if<VerticalLayout>(&m_childrenLayout);
+		return std::get_if<VerticalLayout>(&m_boxChildrenLayout);
 	}
 
 	SizeF Node::getFittingSizeToChildren() const
 	{
-		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_childrenLayout);
+		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_boxChildrenLayout);
 	}
 
 	void Node::setBoxConstraintToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
 	{
-		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setBoxConstraintToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_childrenLayout);
+		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setBoxConstraintToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_boxChildrenLayout);
 	}
 
-	const LRTB& Node::layoutPadding() const
+	const LRTB& Node::boxChildrenLayoutPadding() const
 	{
-		return std::visit([](const auto& layout) -> const LRTB& { return layout.padding; }, m_childrenLayout);
+		return std::visit([](const auto& layout) -> const LRTB& { return layout.padding; }, m_boxChildrenLayout);
 	}
 
-	bool Node::isLayoutAffected() const
+	bool Node::hasBoxConstraint() const
 	{
-		// AnchorConstraintの場合のみ親のレイアウトの影響を受けない
-		return !std::holds_alternative<AnchorConstraint>(m_constraint);
+		return std::holds_alternative<BoxConstraint>(m_constraint);
+	}
+
+	bool Node::hasAnchorConstraint() const
+	{
+		return std::holds_alternative<AnchorConstraint>(m_constraint);
 	}
 
 	JSON Node::toJSON() const
@@ -265,7 +269,7 @@ namespace noco
 			{ U"name", m_name },
 			{ U"constraint", std::visit([](const auto& constraint) { return constraint.toJSON(); }, m_constraint) },
 			{ U"transformEffect", m_transformEffect.toJSON() },
-			{ U"childrenLayout", std::visit([](const auto& childrenLayout) { return childrenLayout.toJSON(); }, m_childrenLayout) },
+			{ U"boxChildrenLayout", std::visit([](const auto& boxChildrenLayout) { return boxChildrenLayout.toJSON(); }, m_boxChildrenLayout) },
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
@@ -318,26 +322,26 @@ namespace noco
 		{
 			node->m_transformEffect.readFromJSON(json[U"transformEffect"]);
 		}
-		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
+		if (json.contains(U"boxChildrenLayout") && json[U"boxChildrenLayout"].contains(U"type"))
 		{
-			const auto type = json[U"childrenLayout"][U"type"].getString();
+			const auto type = json[U"boxChildrenLayout"][U"type"].getString();
 			if (type == U"FlowLayout")
 			{
-				node->m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
+				node->m_boxChildrenLayout = FlowLayout::FromJSON(json[U"boxChildrenLayout"]);
 			}
 			else if (type == U"HorizontalLayout")
 			{
-				node->m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
+				node->m_boxChildrenLayout = HorizontalLayout::FromJSON(json[U"boxChildrenLayout"]);
 			}
 			else if (type == U"VerticalLayout")
 			{
-				node->m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
+				node->m_boxChildrenLayout = VerticalLayout::FromJSON(json[U"boxChildrenLayout"]);
 			}
 			else
 			{
 				// 不明な場合はFlowLayout扱いにする
-				Logger << U"[NocoUI warning] Unknown children layout type: '{}'"_fmt(type);
-				node->m_childrenLayout = FlowLayout{};
+				Logger << U"[NocoUI warning] Unknown box children layout type: '{}'"_fmt(type);
+				node->m_boxChildrenLayout = FlowLayout{};
 			}
 		}
 		if (json.contains(U"isHitTarget"))
@@ -843,22 +847,22 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::refreshChildrenLayout()
+	void Node::refreshBoxChildrenLayout()
 	{
 		std::visit([this](const auto& layout)
 			{
 				layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 					{
 						child->m_layoutAppliedRect = rect;
-						if (child->isLayoutAffected())
+						if (child->hasBoxConstraint())
 						{
 							child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
 						}
 					});
-			}, m_childrenLayout);
+			}, m_boxChildrenLayout);
 		for (const auto& child : m_children)
 		{
-			child->refreshChildrenLayout();
+			child->refreshBoxChildrenLayout();
 		}
 
 		// レイアウト更新後の状態でスクロールオフセットを制限し、変化があれば反映
@@ -872,20 +876,20 @@ namespace noco
 					layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 						{
 							child->m_layoutAppliedRect = rect;
-							if (child->isLayoutAffected())
+							if (child->hasBoxConstraint())
 							{
 								child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
 							}
 						});
-				}, m_childrenLayout);
+				}, m_boxChildrenLayout);
 			for (const auto& child : m_children)
 			{
-				child->refreshChildrenLayout();
+				child->refreshBoxChildrenLayout();
 			}
 		}
 	}
 
-	Optional<RectF> Node::getChildrenContentRect() const
+	Optional<RectF> Node::getBoxChildrenContentRect() const
 	{
 		if (m_children.empty())
 		{
@@ -899,7 +903,7 @@ namespace noco
 		double bottom = -std::numeric_limits<double>::infinity();
 		for (const auto& child : m_children)
 		{
-			if (!child->isLayoutAffected())
+			if (!child->hasBoxConstraint())
 			{
 				continue;
 			}
@@ -920,15 +924,15 @@ namespace noco
 		return RectF{ left, top, right - left, bottom - top };
 	}
 
-	Optional<RectF> Node::getChildrenContentRectWithPadding() const
+	Optional<RectF> Node::getBoxChildrenContentRectWithPadding() const
 	{
-		const auto contentRectOpt = getChildrenContentRect();
+		const auto contentRectOpt = getBoxChildrenContentRect();
 		if (!contentRectOpt)
 		{
 			return none;
 		}
 		const RectF& contentRect = *contentRectOpt;
-		const LRTB& padding = layoutPadding();
+		const LRTB& padding = boxChildrenLayoutPadding();
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
@@ -998,7 +1002,7 @@ namespace noco
 	{
 		if (horizontalScrollable() || verticalScrollable())
 		{
-			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+			if (const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding())
 			{
 				const RectF& contentRectLocal = *contentRectOpt;
 				if ((horizontalScrollable() && contentRectLocal.w > m_layoutAppliedRect.w) ||
@@ -1340,11 +1344,11 @@ namespace noco
 			const bool needVerticalScrollBar = verticalScrollable();
 			if (needHorizontalScrollBar || needVerticalScrollBar)
 			{
-				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+				if (const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding())
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
 					const Vec2 scale = m_effectScale;
-					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
 					const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
 
 					// 背景より手前にするためにハンドル部分は後で描画

@@ -29,7 +29,7 @@ namespace noco
 		String m_name;
 		ConstraintVariant m_constraint;
 		TransformEffect m_transformEffect;
-		LayoutVariant m_childrenLayout;
+		LayoutVariant m_boxChildrenLayout;
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
@@ -101,9 +101,9 @@ namespace noco
 		const TransformEffect& transformEffect() const;
 
 		[[nodiscard]]
-		const LayoutVariant& childrenLayout() const;
+		const LayoutVariant& boxChildrenLayout() const;
 
-		void setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		const FlowLayout* childrenFlowLayout() const;
@@ -120,10 +120,13 @@ namespace noco
 		void setBoxConstraintToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
-		const LRTB& layoutPadding() const;
+		const LRTB& boxChildrenLayoutPadding() const;
 
 		[[nodiscard]]
-		bool isLayoutAffected() const;
+		bool hasBoxConstraint() const;
+
+		[[nodiscard]]
+		bool hasAnchorConstraint() const;
 
 		[[nodiscard]]
 		JSON toJSON() const;
@@ -229,13 +232,13 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No);
 
-		void refreshChildrenLayout();
+		void refreshBoxChildrenLayout();
 
 		[[nodiscard]]
-		Optional<RectF> getChildrenContentRect() const;
+		Optional<RectF> getBoxChildrenContentRect() const;
 
 		[[nodiscard]]
-		Optional<RectF> getChildrenContentRectWithPadding() const;
+		Optional<RectF> getBoxChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> hoveredNodeRecursive();
