@@ -227,9 +227,9 @@ public:
 		double y = pos.y;
 
 		// 右端にはみ出す場合は左に寄せる
-		if (x + DefaultMenuItemWidth > Scene::Width())
+		if (x + menuItemWidth > Scene::Width())
 		{
-			x = Scene::Width() - DefaultMenuItemWidth;
+			x = Scene::Width() - menuItemWidth;
 		}
 
 		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
