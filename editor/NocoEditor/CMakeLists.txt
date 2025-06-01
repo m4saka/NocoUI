@@ -15,6 +15,11 @@ file(GLOB_RECURSE NOCO_SRC_FILES ../../src/*.cpp)
 
 add_executable(NocoEditor
   Main.cpp
+  Menu.cpp
+  Dialog.cpp
+  Hierarchy.cpp
+  Inspector.cpp
+  EditorUtility.cpp
   ${NOCO_SRC_FILES}
   )
 
