@@ -52,6 +52,7 @@ public:
 	virtual void execute() = 0;
 	virtual void undo() = 0;
 	virtual String getName() const = 0;
+	virtual bool needsNodeListRefresh() const { return false; }
 };
 
 class UndoRedoManager
@@ -136,6 +137,24 @@ public:
 		}
 		return U"";
 	}
+
+	bool lastUndoNeedsNodeListRefresh() const
+	{
+		if (m_currentIndex > 0 && m_currentIndex <= m_history.size())
+		{
+			return m_history[m_currentIndex - 1]->needsNodeListRefresh();
+		}
+		return false;
+	}
+
+	bool lastRedoNeedsNodeListRefresh() const
+	{
+		if (canRedo())
+		{
+			return m_history[m_currentIndex]->needsNodeListRefresh();
+		}
+		return false;
+	}
 };
 
 class CreateNodeCommand : public ICommand
@@ -190,6 +209,8 @@ public:
 	{
 		return U"ノード作成";
 	}
+
+	bool needsNodeListRefresh() const override { return true; }
 
 	std::shared_ptr<Node> getCreatedNode() const
 	{
@@ -266,6 +287,8 @@ public:
 	{
 		return U"ノード削除";
 	}
+
+	bool needsNodeListRefresh() const override { return true; }
 };
 
 class SetConstraintCommand : public ICommand
@@ -309,6 +332,732 @@ public:
 	String getName() const override
 	{
 		return U"制約変更";
+	}
+};
+
+// ノード移動コマンド（ドラッグ&ドロップ、上下移動用）
+class MoveNodeCommand : public ICommand
+{
+private:
+	struct MoveInfo
+	{
+		std::shared_ptr<Node> node;
+		std::shared_ptr<Node> oldParent;
+		std::shared_ptr<Node> newParent;
+		size_t oldIndex;
+		size_t newIndex;
+	};
+	Array<MoveInfo> m_moveInfos;
+	std::function<void()> m_afterExecute;
+
+public:
+	MoveNodeCommand(
+		const Array<std::shared_ptr<Node>>& nodes,
+		std::shared_ptr<Node> newParent,
+		size_t newIndex,
+		std::function<void()> afterExecute = nullptr)
+		: m_afterExecute(afterExecute)
+	{
+		for (const auto& node : nodes)
+		{
+			if (auto oldParent = node->parent())
+			{
+				size_t oldIndex = 0;
+				for (size_t i = 0; i < oldParent->children().size(); ++i)
+				{
+					if (oldParent->children()[i] == node)
+					{
+						oldIndex = i;
+						break;
+					}
+				}
+				m_moveInfos.push_back({
+					node,
+					oldParent,
+					newParent,
+					oldIndex,
+					newIndex
+				});
+			}
+		}
+	}
+
+	void execute() override
+	{
+		// 逆順で処理（インデックスのずれを防ぐため）
+		for (auto it = m_moveInfos.rbegin(); it != m_moveInfos.rend(); ++it)
+		{
+			// 同一親内で前方へ移動する場合、removeFromParentでインデックスが詰まるため調整
+			size_t adjustedNewIndex = it->newIndex;
+			if (it->oldParent == it->newParent && it->oldIndex < it->newIndex)
+			{
+				adjustedNewIndex--;
+			}
+			
+			it->node->removeFromParent();
+			it->newParent->addChildAtIndex(it->node, adjustedNewIndex);
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		// oldIndexの降順でソートしてから復元（インデックスのずれを防ぐため）
+		auto sortedInfos = m_moveInfos;
+		std::sort(sortedInfos.begin(), sortedInfos.end(), [](const MoveInfo& a, const MoveInfo& b) {
+			// 同じ親の場合はoldIndexの降順でソート
+			if (a.oldParent == b.oldParent)
+			{
+				return a.oldIndex > b.oldIndex;
+			}
+			// 異なる親の場合は順序を保持
+			return false;
+		});
+		
+		for (auto& info : sortedInfos)
+		{
+			info.node->removeFromParent();
+			info.oldParent->addChildAtIndex(info.node, info.oldIndex);
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"ノード移動";
+	}
+
+	bool needsNodeListRefresh() const override { return true; }
+};
+
+// ペーストコマンド
+class PasteNodeCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_parentNode;
+	Array<JSON> m_nodeJSONs;
+	Array<std::shared_ptr<Node>> m_pastedNodes;
+	Optional<size_t> m_insertIndex;
+	std::function<void()> m_afterExecute;
+
+public:
+	PasteNodeCommand(
+		std::shared_ptr<Node> parentNode,
+		const Array<JSON>& nodeJSONs,
+		Optional<size_t> insertIndex = none,
+		std::function<void()> afterExecute = nullptr)
+		: m_parentNode(parentNode)
+		, m_nodeJSONs(nodeJSONs)
+		, m_insertIndex(insertIndex)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_pastedNodes.clear();
+		if (m_insertIndex)
+		{
+			size_t index = *m_insertIndex;
+			for (const auto& json : m_nodeJSONs)
+			{
+				m_pastedNodes.push_back(m_parentNode->addChildAtIndexFromJSON(json, index++));
+			}
+		}
+		else
+		{
+			for (const auto& json : m_nodeJSONs)
+			{
+				m_pastedNodes.push_back(m_parentNode->addChildFromJSON(json));
+			}
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		for (auto& node : m_pastedNodes)
+		{
+			node->removeFromParent();
+		}
+		m_pastedNodes.clear();
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"貼り付け";
+	}
+
+	bool needsNodeListRefresh() const override { return true; }
+
+	const Array<std::shared_ptr<Node>>& getPastedNodes() const
+	{
+		return m_pastedNodes;
+	}
+};
+
+// 複製コマンド
+class DuplicateNodeCommand : public ICommand
+{
+private:
+	Array<std::pair<std::shared_ptr<Node>, JSON>> m_sourceNodes;
+	Array<std::shared_ptr<Node>> m_duplicatedNodes;
+	std::function<void()> m_afterExecute;
+
+public:
+	DuplicateNodeCommand(
+		const Array<std::shared_ptr<Node>>& nodes,
+		std::function<void()> afterExecute = nullptr)
+		: m_afterExecute(afterExecute)
+	{
+		for (const auto& node : nodes)
+		{
+			m_sourceNodes.emplace_back(node, node->toJSON());
+		}
+	}
+
+	void execute() override
+	{
+		m_duplicatedNodes.clear();
+		for (const auto& [sourceNode, json] : m_sourceNodes)
+		{
+			if (auto parent = sourceNode->parent())
+			{
+				auto duplicated = parent->addChildFromJSON(json);
+				m_duplicatedNodes.push_back(duplicated);
+			}
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		for (auto& node : m_duplicatedNodes)
+		{
+			node->removeFromParent();
+		}
+		m_duplicatedNodes.clear();
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"複製";
+	}
+
+	bool needsNodeListRefresh() const override { return true; }
+
+	const Array<std::shared_ptr<Node>>& getDuplicatedNodes() const
+	{
+		return m_duplicatedNodes;
+	}
+};
+
+// プロパティ変更の汎用コマンド
+template<typename T>
+class SetPropertyCommand : public ICommand
+{
+private:
+	String m_propertyName;
+	T m_oldValue;
+	T m_newValue;
+	std::function<void(const T&)> m_setter;
+	std::function<void()> m_afterExecute;
+
+public:
+	SetPropertyCommand(
+		StringView propertyName,
+		const T& oldValue,
+		const T& newValue,
+		std::function<void(const T&)> setter,
+		std::function<void()> afterExecute = nullptr)
+		: m_propertyName(propertyName)
+		, m_oldValue(oldValue)
+		, m_newValue(newValue)
+		, m_setter(setter)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_setter(m_newValue);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		m_setter(m_oldValue);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return m_propertyName + U" 変更";
+	}
+};
+
+// レイアウト変更コマンド
+class SetLayoutCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	LayoutVariant m_oldLayout;
+	LayoutVariant m_newLayout;
+	std::function<void()> m_afterExecute;
+
+public:
+	SetLayoutCommand(
+		std::shared_ptr<Node> node,
+		const LayoutVariant& newLayout,
+		std::function<void()> afterExecute = nullptr)
+		: m_node(node)
+		, m_oldLayout(node->boxChildrenLayout())
+		, m_newLayout(newLayout)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_node->setBoxChildrenLayout(m_newLayout);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		m_node->setBoxChildrenLayout(m_oldLayout);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"レイアウト変更";
+	}
+};
+
+// コンポーネントプロパティ変更コマンド
+class SetComponentPropertyCommand : public ICommand
+{
+private:
+	std::weak_ptr<ComponentBase> m_component;
+	String m_propertyName;
+	String m_oldValue;
+	String m_newValue;
+	std::function<void()> m_afterExecute;
+
+public:
+	SetComponentPropertyCommand(
+		std::weak_ptr<ComponentBase> component,
+		StringView propertyName,
+		StringView newValue,
+		std::function<void()> afterExecute = nullptr)
+		: m_component(component)
+		, m_propertyName(propertyName)
+		, m_newValue(newValue)
+		, m_afterExecute(afterExecute)
+	{
+		if (auto comp = m_component.lock())
+		{
+			if (IProperty* property = comp->getPropertyByName(propertyName))
+			{
+				m_oldValue = property->propertyValueStringOfDefault();
+			}
+		}
+	}
+
+	void execute() override
+	{
+		if (auto comp = m_component.lock())
+		{
+			if (IProperty* property = comp->getPropertyByName(m_propertyName))
+			{
+				property->trySetPropertyValueString(m_newValue);
+				if (m_afterExecute)
+				{
+					m_afterExecute();
+				}
+			}
+		}
+	}
+
+	void undo() override
+	{
+		if (auto comp = m_component.lock())
+		{
+			if (IProperty* property = comp->getPropertyByName(m_propertyName))
+			{
+				property->trySetPropertyValueString(m_oldValue);
+				if (m_afterExecute)
+				{
+					m_afterExecute();
+				}
+			}
+		}
+	}
+
+	String getName() const override
+	{
+		return U"プロパティ変更";
+	}
+};
+
+// コンポーネント追加コマンド
+template<typename TComponent, typename... Args>
+class AddComponentCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	std::shared_ptr<TComponent> m_component;
+	std::function<void()> m_afterExecute;
+	std::tuple<Args...> m_args;
+
+public:
+	AddComponentCommand(
+		std::shared_ptr<Node> node,
+		std::function<void()> afterExecute,
+		Args&&... args)
+		: m_node(node)
+		, m_afterExecute(afterExecute)
+		, m_args(std::forward<Args>(args)...)
+	{
+	}
+
+	void execute() override
+	{
+		m_component = std::apply([this](auto&&... args) {
+			return m_node->emplaceComponent<TComponent>(std::forward<decltype(args)>(args)...);
+		}, m_args);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		if (m_component)
+		{
+			m_node->removeComponent(m_component);
+			m_component = nullptr;
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"コンポーネント追加";
+	}
+
+	std::shared_ptr<TComponent> getComponent() const
+	{
+		return m_component;
+	}
+};
+
+// コンポーネント削除コマンド
+class RemoveComponentCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	std::shared_ptr<ComponentBase> m_component;
+	JSON m_componentData;
+	size_t m_componentIndex;
+	std::function<void()> m_afterExecute;
+
+public:
+	RemoveComponentCommand(
+		std::shared_ptr<Node> node,
+		std::shared_ptr<ComponentBase> component,
+		std::function<void()> afterExecute = nullptr)
+		: m_node(node)
+		, m_component(component)
+		, m_afterExecute(afterExecute)
+	{
+		// コンポーネントのインデックスを保存
+		const auto& components = m_node->components();
+		for (size_t i = 0; i < components.size(); ++i)
+		{
+			if (components[i] == m_component)
+			{
+				m_componentIndex = i;
+				break;
+			}
+		}
+		// SerializableComponentBaseの場合、JSONで保存
+		if (auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(m_component))
+		{
+			m_componentData = serializableComponent->toJSON();
+		}
+	}
+
+	void execute() override
+	{
+		m_node->removeComponent(m_component);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		// コンポーネントを元のインデックスに復元
+		if (!m_componentData.isEmpty())
+		{
+			m_node->addComponentAtIndexFromJSON(m_componentData, m_componentIndex);
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"コンポーネント削除";
+	}
+};
+
+// コンポーネント順序変更コマンド
+class MoveComponentUpCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	std::shared_ptr<ComponentBase> m_component;
+	bool m_success = false;
+	std::function<void()> m_afterExecute;
+
+public:
+	MoveComponentUpCommand(
+		std::shared_ptr<Node> node,
+		std::shared_ptr<ComponentBase> component,
+		std::function<void()> afterExecute = nullptr)
+		: m_node(node)
+		, m_component(component)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_success = m_node->moveComponentUp(m_component);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		if (m_success)
+		{
+			m_node->moveComponentDown(m_component);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
+		}
+	}
+
+	String getName() const override
+	{
+		return U"コンポーネントを上へ移動";
+	}
+};
+
+class MoveComponentDownCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	std::shared_ptr<ComponentBase> m_component;
+	bool m_success = false;
+	std::function<void()> m_afterExecute;
+
+public:
+	MoveComponentDownCommand(
+		std::shared_ptr<Node> node,
+		std::shared_ptr<ComponentBase> component,
+		std::function<void()> afterExecute = nullptr)
+		: m_node(node)
+		, m_component(component)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_success = m_node->moveComponentDown(m_component);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		if (m_success)
+		{
+			m_node->moveComponentUp(m_component);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
+		}
+	}
+
+	String getName() const override
+	{
+		return U"コンポーネントを下へ移動";
+	}
+};
+
+// 空の親ノード作成コマンド
+class CreateEmptyParentCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_selectedNode;
+	std::shared_ptr<Node> m_oldParent;
+	std::shared_ptr<Node> m_newParent;
+	size_t m_originalIndex;
+	ConstraintVariant m_originalConstraint;
+	ConstraintVariant m_newConstraint;
+	std::function<void()> m_afterExecute;
+
+public:
+	CreateEmptyParentCommand(
+		std::shared_ptr<Node> selectedNode,
+		std::function<void()> afterExecute = nullptr)
+		: m_selectedNode(selectedNode)
+		, m_oldParent(selectedNode->parent())
+		, m_originalIndex(0)
+		, m_originalConstraint(selectedNode->constraint())
+		, m_afterExecute(afterExecute)
+	{
+		// 元のインデックスを取得
+		if (m_oldParent)
+		{
+			const auto& children = m_oldParent->children();
+			auto it = std::find(children.begin(), children.end(), m_selectedNode);
+			if (it != children.end())
+			{
+				m_originalIndex = std::distance(children.begin(), it);
+			}
+		}
+
+		// 新しいConstraintを準備
+		const RectF originalCalculatedRect = m_selectedNode->layoutAppliedRect();
+		m_newConstraint = AnchorConstraint
+		{
+			.anchorMin = Anchor::MiddleCenter,
+			.anchorMax = Anchor::MiddleCenter,
+			.posDelta = Vec2{ 0, 0 },
+			.sizeDelta = originalCalculatedRect.size,
+			.sizeDeltaPivot = Anchor::MiddleCenter,
+		};
+	}
+
+	void execute() override
+	{
+		if (!m_oldParent)
+		{
+			return;
+		}
+
+		// 親から切り離す
+		m_selectedNode->removeFromParent();
+
+		// 初回実行時のみ新しい親ノードを生成
+		if (!m_newParent)
+		{
+			m_newParent = Node::Create(U"Node", m_originalConstraint);
+		}
+		
+		// 元ノードと同じインデックスに空の親ノードを追加
+		m_oldParent->addChildAtIndex(m_newParent, m_originalIndex);
+
+		// 新しい親のもとへ子として追加
+		m_newParent->addChild(m_selectedNode);
+
+		// 元オブジェクトのConstraintを変更
+		m_selectedNode->setConstraint(m_newConstraint);
+
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		if (!m_oldParent || !m_newParent)
+		{
+			return;
+		}
+
+		// 元のConstraintに戻す
+		m_selectedNode->setConstraint(m_originalConstraint);
+
+		// 親から切り離す
+		m_selectedNode->removeFromParent();
+
+		// 空の親ノードを削除
+		m_newParent->removeFromParent();
+
+		// 元の親の元の位置に戻す
+		m_oldParent->addChildAtIndex(m_selectedNode, m_originalIndex);
+
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"空の親ノードを作成";
+	}
+
+	bool needsNodeListRefresh() const override { return true; }
+
+	[[nodiscard]]
+	std::shared_ptr<Node> getNewParent() const
+	{
+		return m_newParent;
 	}
 };
 
@@ -1041,9 +1790,14 @@ private:
 						{
 							return;
 						}
-						sourceElement.node()->removeFromParent();
-						const size_t index = pTargetParent->indexOfChild(targetElement.node());
-						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+						// MoveNodeCommand を使用
+						const size_t targetIndex = pTargetParent->indexOfChild(targetElement.node());
+						auto command = std::make_unique<MoveNodeCommand>(
+							Array<std::shared_ptr<Node>>{ sourceElement.node() },
+							pTargetParent,
+							targetIndex
+						);
+						m_pUndoRedoManager->execute(std::move(command));
 
 						newSelection.push_back(sourceElement.node());
 					}
@@ -1079,9 +1833,14 @@ private:
 						{
 							return;
 						}
-						sourceElement.node()->removeFromParent();
-						const size_t index = pTargetParent->indexOfChild(targetElement.node()) + 1;
-						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+						// MoveNodeCommand を使用
+						const size_t targetIndex = pTargetParent->indexOfChild(targetElement.node()) + 1;
+						auto command = std::make_unique<MoveNodeCommand>(
+							Array<std::shared_ptr<Node>>{ sourceElement.node() },
+							pTargetParent,
+							targetIndex
+						);
+						m_pUndoRedoManager->execute(std::move(command));
 
 						newSelection.push_back(sourceElement.node());
 					}
@@ -1116,7 +1875,13 @@ private:
 							// 親子関係が既にある場合は移動不可
 							return;
 						}
-						sourceElement.node()->setParent(targetElement.node());
+						// MoveNodeCommand を使用
+						auto command = std::make_unique<MoveNodeCommand>(
+							Array<std::shared_ptr<Node>>{ sourceElement.node() },
+							targetElement.node(),
+							targetElement.node()->children().size()  // 最後に追加
+						);
+						m_pUndoRedoManager->execute(std::move(command));
 
 						newSelection.push_back(sourceElement.node());
 					}
@@ -1571,22 +2336,13 @@ public:
 			return;
 		}
 
-		// 複製実行
-		Array<std::shared_ptr<Node>> newNodes;
-		newNodes.reserve(selectedNodes.size());
-		for (const auto& selectedNode : selectedNodes)
-		{
-			const auto parentNode = selectedNode->parent();
-			if (!parentNode)
-			{
-				continue;
-			}
-			const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON(), RefreshesLayoutYN::No);
-			newNodes.push_back(newNode);
-		}
+		// DuplicateNodeCommand を使用して複製実行
+		auto commandPtr = std::make_unique<DuplicateNodeCommand>(selectedNodes);
+		auto* command = commandPtr.get();
+		m_pUndoRedoManager->execute(std::move(commandPtr));
 		m_canvas->refreshLayout();
 		refreshNodeList();
-		selectNodes(newNodes);
+		selectNodes(command->getDuplicatedNodes());
 	}
 
 	void onClickPaste()
@@ -1621,27 +2377,18 @@ public:
 			return;
 		}
 
-		// 貼り付け実行
-		Array<std::shared_ptr<Node>> newNodes;
-		if (index.has_value())
-		{
-			size_t indexValue = Min(index.value(), parentNode->children().size());
-			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
-			{
-				newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue, RefreshesLayoutYN::No));
-				++indexValue;
-			}
-		}
-		else
-		{
-			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
-			{
-				newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
-			}
-		}
+		// PasteNodeCommand を使用
+		auto commandPtr = std::make_unique<PasteNodeCommand>(
+			parentNode,
+			m_copiedNodeJSONs,
+			index
+		);
+		auto* command = commandPtr.get();
+		m_pUndoRedoManager->execute(std::move(commandPtr));
+		
 		m_canvas->refreshLayout();
 		refreshNodeList();
-		selectNodes(newNodes);
+		selectNodes(command->getPastedNodes());
 	}
 
 	void onClickCreateEmptyParent()
@@ -1658,38 +2405,21 @@ public:
 			return;
 		}
 
-		// selectedNodeが兄弟同士の中で何番目の要素かを調べる
-		auto& siblings = oldParent->children();
-		auto it = std::find(siblings.begin(), siblings.end(), selectedNode);
-		if (it == siblings.end())
+		// CreateEmptyParentCommand を使用
+		auto commandPtr = std::make_unique<CreateEmptyParentCommand>(
+			selectedNode,
+			[this]() { 
+				refreshNodeList();
+			}
+		);
+		auto* command = commandPtr.get();
+		m_pUndoRedoManager->execute(std::move(commandPtr));
+		
+		// 新しい親ノードを選択
+		if (auto newParent = command->getNewParent())
 		{
-			return;
+			selectSingleNode(newParent);
 		}
-		const size_t idx = std::distance(siblings.begin(), it);
-
-		// 親から切り離す
-		selectedNode->removeFromParent();
-
-		// 元ノードと同じインデックスに同じレイアウト設定で空の親ノードを生成
-		const auto newParent = Node::Create(U"Node", selectedNode->constraint());
-		oldParent->addChildAtIndex(newParent, idx);
-
-		// 新しい親のもとへ子として追加
-		newParent->addChild(selectedNode);
-
-		// 元オブジェクトはアンカーがMiddleCenterのAnchorConstraintに変更する
-		const RectF originalCalculatedRect = selectedNode->layoutAppliedRect();
-		selectedNode->setConstraint(AnchorConstraint
-		{
-			.anchorMin = Anchor::MiddleCenter,
-			.anchorMax = Anchor::MiddleCenter,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = originalCalculatedRect.size,
-			.sizeDeltaPivot = Anchor::MiddleCenter,
-		});
-
-		refreshNodeList();
-		selectSingleNode(newParent);
 	}
 
 	void onClickMoveUp()
@@ -1740,7 +2470,13 @@ public:
 			{
 				if (index > 0)
 				{
-					parent->swapChildren(index, index - 1);
+					// MoveNodeCommand を使用
+					auto command = std::make_unique<MoveNodeCommand>(
+						Array<std::shared_ptr<Node>>{ siblings[index] },
+						parent,
+						index - 1
+					);
+					m_pUndoRedoManager->execute(std::move(command));
 				}
 			}
 		}
@@ -1797,7 +2533,13 @@ public:
 			{
 				if (index < siblings.size() - 1)
 				{
-					parent->swapChildren(index, index + 1);
+					// MoveNodeCommand を使用
+					auto command = std::make_unique<MoveNodeCommand>(
+						Array<std::shared_ptr<Node>>{ siblings[index] },
+						parent,
+						index + 1
+					);
+					m_pUndoRedoManager->execute(std::move(command));
 				}
 			}
 		}
@@ -2326,8 +3068,13 @@ private:
 		{
 			return;
 		}
-		node->emplaceComponent<TComponent>(std::forward<Args>(args)...);
-		refreshInspector();
+		// AddComponentCommand を使用
+		auto command = std::make_unique<AddComponentCommand<TComponent, Args...>>(
+			node,
+			[this]() { refreshInspector(); },
+			std::forward<Args>(args)...
+		);
+		m_pUndoRedoManager->execute(std::move(command));
 	}
 
 public:
@@ -3717,19 +4464,32 @@ public:
 		nodeNameNode->setBoxChildrenLayout(HorizontalLayout{ .padding = 6 });
 		nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		nodeNameNode->addChild(CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); }));
+		nodeNameNode->addChild(CreateCheckboxNode(node->activeSelf().getBool(), [this, node](bool value) { 
+			// SetPropertyCommand を使用
+			auto command = std::make_unique<SetPropertyCommand<ActiveYN>>(
+				U"active",
+				node->activeSelf(),
+				ActiveYN{value},
+				[node](const ActiveYN& v) { node->setActive(v); }
+			);
+			m_pUndoRedoManager->execute(std::move(command));
+		}));
 		nodeNameNode->addChild(CreateNodeNameTextboxNode(U"name", node->name(),
 			[this, node](StringView value)
 			{
-				if (value.empty())
+				const String newName = value.empty() ? U"Node" : String(value);
+				if (node->name() != newName)
 				{
-					node->setName(U"Node");
+					// SetPropertyCommand を使用
+					auto command = std::make_unique<SetPropertyCommand<String>>(
+						U"name",
+						node->name(),
+						newName,
+						[node](const String& v) { node->setName(v); }
+					);
+					m_pUndoRedoManager->execute(std::move(command));
+					m_onChangeNodeName();
 				}
-				else
-				{
-					node->setName(value);
-				}
-				m_onChangeNodeName();
 			}));
 
 		return nodeNameNode;
@@ -3843,19 +4603,47 @@ public:
 					case LayoutType::FlowLayout:
 						break;
 					case LayoutType::HorizontalLayout:
-						node->setBoxChildrenLayout(HorizontalLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, HorizontalLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					case LayoutType::VerticalLayout:
-						node->setBoxChildrenLayout(VerticalLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, VerticalLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { 
+				auto newLayout = *node->childrenFlowLayout(); 
+				newLayout.padding = value; 
+				// SetLayoutCommand を使用
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { 
+				auto newLayout = *node->childrenFlowLayout(); 
+				newLayout.spacing = value; 
+				// SetLayoutCommand を使用
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { 
+				auto newLayout = *node->childrenFlowLayout(); 
+				newLayout.horizontalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { 
+				auto newLayout = *node->childrenFlowLayout(); 
+				newLayout.verticalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
 		}
 		else if (const auto pHorizontalLayout = node->childrenHorizontalLayout())
 		{
@@ -3867,21 +4655,47 @@ public:
 					switch (type)
 					{
 					case LayoutType::FlowLayout:
-						node->setBoxChildrenLayout(FlowLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, FlowLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					case LayoutType::HorizontalLayout:
 						break;
 					case LayoutType::VerticalLayout:
-						node->setBoxChildrenLayout(VerticalLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, VerticalLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { 
+				auto newLayout = *node->childrenHorizontalLayout(); 
+				newLayout.padding = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this, node](double value) { 
+				auto newLayout = *node->childrenHorizontalLayout(); 
+				newLayout.spacing = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { 
+				auto newLayout = *node->childrenHorizontalLayout(); 
+				newLayout.horizontalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { 
+				auto newLayout = *node->childrenHorizontalLayout(); 
+				newLayout.verticalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
 		}
 		else if (const auto pVerticalLayout = node->childrenVerticalLayout())
 		{
@@ -3893,21 +4707,47 @@ public:
 					switch (type)
 					{
 					case LayoutType::FlowLayout:
-						node->setBoxChildrenLayout(FlowLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, FlowLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					case LayoutType::HorizontalLayout:
-						node->setBoxChildrenLayout(HorizontalLayout{});
-						refreshInspector(); // 項目に変更があるため更新
+						{
+							auto command = std::make_unique<SetLayoutCommand>(node, HorizontalLayout{});
+							m_pUndoRedoManager->execute(std::move(command));
+							refreshInspector(); // 項目に変更があるため更新
+						}
 						break;
 					case LayoutType::VerticalLayout:
 						break;
 					}
 				});
-			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+			fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { 
+				auto newLayout = *node->childrenVerticalLayout(); 
+				newLayout.padding = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this, node](double value) { 
+				auto newLayout = *node->childrenVerticalLayout(); 
+				newLayout.spacing = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { 
+				auto newLayout = *node->childrenVerticalLayout(); 
+				newLayout.horizontalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { 
+				auto newLayout = *node->childrenVerticalLayout(); 
+				newLayout.verticalAlign = value; 
+				auto command = std::make_unique<SetLayoutCommand>(node, newLayout);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
 		}
 		else
 		{
@@ -3970,26 +4810,63 @@ public:
 					switch (type)
 					{
 					case ConstraintType::AnchorConstraint:
-						node->setConstraint(AnchorConstraint
+					{
+						auto newConstraint = AnchorConstraint
 						{
 							.anchorMin = Anchor::MiddleCenter,
 							.anchorMax = Anchor::MiddleCenter,
 							.posDelta = Vec2::Zero(),
 							.sizeDelta = node->layoutAppliedRect().size,
 							.sizeDeltaPivot = Vec2{ 0.5, 0.5 },
-						});
+						};
+						// SetConstraintCommand を使用
+						auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+						m_pUndoRedoManager->execute(std::move(command));
 						m_defaults->constraintType = ConstraintType::AnchorConstraint; // 次回のデフォルト値として記憶
 						refreshInspector(); // 項目に変更があるため更新
 						break;
+					}
 					case ConstraintType::BoxConstraint:
 						break;
 					}
 				});
-			fnAddVec2Child(U"sizeRatio", pBoxConstraint->sizeRatio, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeRatio = value; node->setConstraint(newConstraint); });
-			fnAddVec2Child(U"sizeDelta", pBoxConstraint->sizeDelta, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeDelta = value; node->setConstraint(newConstraint); });
-			fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { auto newConstraint = *node->boxConstraint(); newConstraint.flexibleWeight = value; node->setConstraint(newConstraint); });
-			fnAddVec2Child(U"margin (left, right)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
-			fnAddVec2Child(U"margin (top, bottom)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
+			fnAddVec2Child(U"sizeRatio", pBoxConstraint->sizeRatio, [this, node](const Vec2& value) { 
+				auto newConstraint = *node->boxConstraint(); 
+				newConstraint.sizeRatio = value; 
+				// SetConstraintCommand を使用
+				auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddVec2Child(U"sizeDelta", pBoxConstraint->sizeDelta, [this, node](const Vec2& value) { 
+				auto newConstraint = *node->boxConstraint(); 
+				newConstraint.sizeDelta = value; 
+				// SetConstraintCommand を使用
+				auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { 
+				auto newConstraint = *node->boxConstraint(); 
+				newConstraint.flexibleWeight = value; 
+				// SetConstraintCommand を使用
+				auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddVec2Child(U"margin (left, right)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { 
+				auto newConstraint = *node->boxConstraint(); 
+				newConstraint.margin.left = value.x; 
+				newConstraint.margin.right = value.y; 
+				// SetConstraintCommand を使用
+				auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
+			fnAddVec2Child(U"margin (top, bottom)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { 
+				auto newConstraint = *node->boxConstraint(); 
+				newConstraint.margin.top = value.x; 
+				newConstraint.margin.bottom = value.y; 
+				// SetConstraintCommand を使用
+				auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+				m_pUndoRedoManager->execute(std::move(command));
+			});
 		}
 		else if (const auto pAnchorConstraint = node->anchorConstraint())
 		{
@@ -4005,8 +4882,9 @@ public:
 								{
 									auto copy = *ac;
 									setter(copy, *optVal);
-									node->setConstraint(copy);
-									m_canvas->refreshLayout();
+									// SetConstraintCommand を使用
+									auto command = std::make_unique<SetConstraintCommand>(node, copy);
+									m_pUndoRedoManager->execute(std::move(command));
 								}
 							}
 						};
@@ -4021,8 +4899,9 @@ public:
 							{
 								auto copy = *ac;
 								setter(copy, val);
-								node->setConstraint(copy);
-								m_canvas->refreshLayout();
+								// SetConstraintCommand を使用
+								auto command = std::make_unique<SetConstraintCommand>(node, copy);
+								m_pUndoRedoManager->execute(std::move(command));
 							}
 						};
 				};
@@ -4037,14 +4916,19 @@ public:
 					case ConstraintType::AnchorConstraint:
 						break;
 					case ConstraintType::BoxConstraint:
-						node->setConstraint(BoxConstraint
+					{
+						auto newConstraint = BoxConstraint
 						{
 							.sizeRatio = Vec2::Zero(),
 							.sizeDelta = node->rect().size,
-						});
+						};
+						// SetConstraintCommand を使用
+						auto command = std::make_unique<SetConstraintCommand>(node, newConstraint);
+						m_pUndoRedoManager->execute(std::move(command));
 						m_defaults->constraintType = ConstraintType::BoxConstraint; // 次回のデフォルト値として記憶
 						refreshInspector(); // 項目に変更があるため更新
 						break;
+					}
 					}
 				}
 			);
@@ -4110,8 +4994,9 @@ public:
 								}
 							}
 
-							node->setConstraint(copy);
-							m_canvas->refreshLayout();
+							// SetConstraintCommand を使用
+							auto command = std::make_unique<SetConstraintCommand>(node, copy);
+							m_pUndoRedoManager->execute(std::move(command));
 							refreshInspector(); // 項目に変更があるため更新
 						}
 					}
@@ -4371,9 +5256,36 @@ public:
 				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
 		// Note: アクセサからポインタを取得しているので注意が必要
-		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
-		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
-		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
+		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { 
+			auto command = std::make_unique<SetPropertyCommand<Vec2>>(
+				U"position",
+				pTransformEffect->position().propertyValue().defaultValue,
+				value,
+				[pTransformEffect](const Vec2& v) { pTransformEffect->setPosition(v); },
+				[this]() { m_canvas->refreshLayout(); }
+			);
+			m_pUndoRedoManager->execute(std::move(command));
+		});
+		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { 
+			auto command = std::make_unique<SetPropertyCommand<Vec2>>(
+				U"scale",
+				pTransformEffect->scale().propertyValue().defaultValue,
+				value,
+				[pTransformEffect](const Vec2& v) { pTransformEffect->setScale(v); },
+				[this]() { m_canvas->refreshLayout(); }
+			);
+			m_pUndoRedoManager->execute(std::move(command));
+		});
+		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { 
+			auto command = std::make_unique<SetPropertyCommand<Vec2>>(
+				U"pivot",
+				pTransformEffect->pivot().propertyValue().defaultValue,
+				value,
+				[pTransformEffect](const Vec2& v) { pTransformEffect->setPivot(v); },
+				[this]() { m_canvas->refreshLayout(); }
+			);
+			m_pUndoRedoManager->execute(std::move(command));
+		});
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 
@@ -4398,9 +5310,20 @@ public:
 			m_contextMenu,
 			Array<MenuElement>
 			{
-				MenuItem{ U"{} を削除"_fmt(component->type()), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } },
-				MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } },
-				MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } },
+				MenuItem{ U"{} を削除"_fmt(component->type()), U"", KeyR, [this, node, component] { 
+					// RemoveComponentCommand を使用
+					auto command = std::make_unique<RemoveComponentCommand>(node, component);
+					m_pUndoRedoManager->execute(std::move(command));
+					refreshInspector(); 
+				} },
+				MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", KeyU, [this, node, component] { 
+					auto command = std::make_unique<MoveComponentUpCommand>(node, component, [this]() { refreshInspector(); });
+					m_pUndoRedoManager->execute(std::move(command));
+				} },
+				MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { 
+					auto command = std::make_unique<MoveComponentDownCommand>(node, component, [this]() { refreshInspector(); });
+					m_pUndoRedoManager->execute(std::move(command));
+				} },
 			});
 
 		if (component->properties().empty())
@@ -4436,7 +5359,15 @@ public:
 					CreatePropertyNode(
 						property->name(),
 						property->propertyValueStringOfDefault(),
-						[property](StringView value) { property->trySetPropertyValueString(value); },
+						[this, component, property](StringView value) { 
+							auto command = std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								value,
+								nullptr
+							);
+							m_pUndoRedoManager->execute(std::move(command));
+						},
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Bool:
@@ -4444,7 +5375,16 @@ public:
 					CreateBoolPropertyNode(
 						property->name(),
 						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
-						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
+						[this, component, property](bool value) {
+						m_pUndoRedoManager->execute(
+							std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								Format(value),
+								nullptr
+							)
+						);
+					},
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Vec2:
@@ -4452,7 +5392,16 @@ public:
 					CreateVec2PropertyNode(
 						property->name(),
 						ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
-						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); },
+						[this, component, property](const Vec2& value) {
+						m_pUndoRedoManager->execute(
+							std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								Format(value),
+								nullptr
+							)
+						);
+					},
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Color:
@@ -4460,7 +5409,16 @@ public:
 					CreateColorPropertyNode(
 						property->name(),
 						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
-						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
+						[this, component, property](const ColorF& value) {
+						m_pUndoRedoManager->execute(
+							std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								Format(value),
+								nullptr
+							)
+						);
+					},
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::LRTB:
@@ -4468,7 +5426,16 @@ public:
 					CreateLRTBPropertyNode(
 						property->name(),
 						ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
-						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); },
+						[this, component, property](const LRTB& value) {
+						m_pUndoRedoManager->execute(
+							std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								Format(value),
+								nullptr
+							)
+						);
+					},
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Enum:
@@ -4476,7 +5443,16 @@ public:
 					CreateEnumPropertyNode(
 						property->name(),
 						property->propertyValueStringOfDefault(),
-						[property](StringView value) { property->trySetPropertyValueString(value); },
+						[this, component, property](StringView value) {
+						m_pUndoRedoManager->execute(
+							std::make_unique<SetComponentPropertyCommand>(
+								std::weak_ptr<ComponentBase>(component),
+								property->name(),
+								value,
+								nullptr
+							)
+						);
+					},
 						m_contextMenu,
 						property->enumCandidates(),
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
@@ -4698,8 +5674,8 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				m_pProperty->hasPropertyValueOf(interactState, selected),
 				[this, interactState, selected, propertyValueNode, currentValueString](bool value)
 				{
-					if (value)
-					{
+						if (value)
+						{
 						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactState, selected))
 						{
 							propertyValueNode->setInteractable(true);
@@ -4708,9 +5684,9 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 								m_onChange();
 							}
 						}
-					}
-					else
-					{
+						}
+						else
+						{
 						if (m_pProperty->tryUnsetPropertyValueOf(interactState, selected))
 						{
 							propertyValueNode->setInteractable(false);
@@ -4858,14 +5834,28 @@ public:
 			{
 				if (m_undoRedoManager.canUndo())
 				{
+					const bool needsNodeListRefresh = m_undoRedoManager.lastUndoNeedsNodeListRefresh();
 					m_undoRedoManager.undo();
+					m_canvas->refreshLayout();
+					if (needsNodeListRefresh)
+					{
+						m_hierarchy.refreshNodeList();
+					}
+					m_inspector.refreshInspector();
 				}
 			}
 			else if (KeyY.down())
 			{
 				if (m_undoRedoManager.canRedo())
 				{
+					const bool needsNodeListRefresh = m_undoRedoManager.lastRedoNeedsNodeListRefresh();
 					m_undoRedoManager.redo();
+					m_canvas->refreshLayout();
+					if (needsNodeListRefresh)
+					{
+						m_hierarchy.refreshNodeList();
+					}
+					m_inspector.refreshInspector();
 				}
 			}
 		}
@@ -5261,12 +6251,26 @@ public:
 
 	void onClickMenuEditUndo()
 	{
+		const bool needsNodeListRefresh = m_undoRedoManager.lastUndoNeedsNodeListRefresh();
 		m_undoRedoManager.undo();
+		m_canvas->refreshLayout();
+		if (needsNodeListRefresh)
+		{
+			m_hierarchy.refreshNodeList();
+		}
+		m_inspector.refreshInspector();
 	}
 
 	void onClickMenuEditRedo()
 	{
+		const bool needsNodeListRefresh = m_undoRedoManager.lastRedoNeedsNodeListRefresh();
 		m_undoRedoManager.redo();
+		m_canvas->refreshLayout();
+		if (needsNodeListRefresh)
+		{
+			m_hierarchy.refreshNodeList();
+		}
+		m_inspector.refreshInspector();
 	}
 
 	void onClickMenuEditCut()

@@ -167,6 +167,10 @@ namespace noco
 		std::shared_ptr<TComponent> addComponentAtIndex(const std::shared_ptr<TComponent>& component, size_t index)
 			requires std::derived_from<TComponent, ComponentBase>;
 
+		std::shared_ptr<ComponentBase> addComponentFromJSON(const JSON& json);
+
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index);
+
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
 		template <class TComponent, class... Args>
