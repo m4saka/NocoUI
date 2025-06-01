@@ -45,6 +45,273 @@ static PropertyValue<ColorF> MenuItemRectFillColor()
 	return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
 }
 
+class ICommand
+{
+public:
+	virtual ~ICommand() = default;
+	virtual void execute() = 0;
+	virtual void undo() = 0;
+	virtual String getName() const = 0;
+};
+
+class UndoRedoManager
+{
+private:
+	static constexpr size_t MaxHistorySize = 100;
+	Array<std::unique_ptr<ICommand>> m_history;
+	size_t m_currentIndex = 0;
+
+public:
+	void execute(std::unique_ptr<ICommand> command)
+	{
+		// 現在位置より後の履歴を削除
+		if (m_currentIndex < m_history.size())
+		{
+			m_history.erase(m_history.begin() + m_currentIndex, m_history.end());
+		}
+
+		// コマンドを実行して履歴に追加
+		command->execute();
+		m_history.push_back(std::move(command));
+		
+		// 履歴サイズ制限
+		if (m_history.size() > MaxHistorySize)
+		{
+			m_history.erase(m_history.begin());
+		}
+		else
+		{
+			m_currentIndex++;
+		}
+	}
+
+	bool canUndo() const
+	{
+		return m_currentIndex > 0;
+	}
+
+	bool canRedo() const
+	{
+		return m_currentIndex < m_history.size();
+	}
+
+	void undo()
+	{
+		if (canUndo())
+		{
+			m_currentIndex--;
+			m_history[m_currentIndex]->undo();
+		}
+	}
+
+	void redo()
+	{
+		if (canRedo())
+		{
+			m_history[m_currentIndex]->execute();
+			m_currentIndex++;
+		}
+	}
+
+	void clear()
+	{
+		m_history.clear();
+		m_currentIndex = 0;
+	}
+
+	String getUndoName() const
+	{
+		if (canUndo())
+		{
+			return m_history[m_currentIndex - 1]->getName();
+		}
+		return U"";
+	}
+
+	String getRedoName() const
+	{
+		if (canRedo())
+		{
+			return m_history[m_currentIndex]->getName();
+		}
+		return U"";
+	}
+};
+
+class CreateNodeCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_parentNode;
+	std::shared_ptr<Node> m_createdNode;
+	String m_nodeName;
+	ConstraintVariant m_constraint;
+	size_t m_insertIndex;
+	std::function<void()> m_afterExecute;
+
+public:
+	explicit CreateNodeCommand(
+		std::shared_ptr<Node> parentNode,
+		StringView nodeName,
+		const ConstraintVariant& constraint,
+		std::function<void()> afterExecute = nullptr)
+		: m_parentNode(parentNode)
+		, m_nodeName(nodeName)
+		, m_constraint(constraint)
+		, m_insertIndex(parentNode ? parentNode->children().size() : 0)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		if (m_parentNode)
+		{
+			m_createdNode = m_parentNode->emplaceChild(m_nodeName, m_constraint);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
+		}
+	}
+
+	void undo() override
+	{
+		if (m_createdNode)
+		{
+			m_createdNode->removeFromParent();
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
+		}
+	}
+
+	String getName() const override
+	{
+		return U"ノード作成";
+	}
+
+	std::shared_ptr<Node> getCreatedNode() const
+	{
+		return m_createdNode;
+	}
+};
+
+class DeleteNodeCommand : public ICommand
+{
+private:
+	struct NodeInfo
+	{
+		std::shared_ptr<Node> node;
+		std::shared_ptr<Node> parent;
+		size_t index;
+		JSON nodeData;
+	};
+	Array<NodeInfo> m_deletedNodes;
+	std::function<void()> m_afterExecute;
+
+public:
+	explicit DeleteNodeCommand(const Array<std::shared_ptr<Node>>& nodes, std::function<void()> afterExecute = nullptr)
+		: m_afterExecute(afterExecute)
+	{
+		for (const auto& node : nodes)
+		{
+			if (auto parent = node->parent())
+			{
+				size_t index = 0;
+				for (size_t i = 0; i < parent->children().size(); ++i)
+				{
+					if (parent->children()[i] == node)
+					{
+						index = i;
+						break;
+					}
+				}
+				m_deletedNodes.push_back({
+					node,
+					parent,
+					index,
+					node->toJSON()
+				});
+			}
+		}
+	}
+
+	void execute() override
+	{
+		for (auto it = m_deletedNodes.begin(); it != m_deletedNodes.end(); ++it)
+		{
+			it->node->removeFromParent(RefreshesLayoutYN{ it == m_deletedNodes.end() - 1 });
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		// 逆順で復元(階層を保つため)
+		for (auto it = m_deletedNodes.rbegin(); it != m_deletedNodes.rend(); ++it)
+		{
+			it->node = it->parent->addChildAtIndexFromJSON(it->nodeData, it->index, RefreshesLayoutYN{ it == m_deletedNodes.rend() - 1 });
+		}
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"ノード削除";
+	}
+};
+
+class SetConstraintCommand : public ICommand
+{
+private:
+	std::shared_ptr<Node> m_node;
+	ConstraintVariant m_oldConstraint;
+	ConstraintVariant m_newConstraint;
+	std::function<void()> m_afterExecute;
+
+public:
+	explicit SetConstraintCommand(
+		std::shared_ptr<Node> node,
+		const ConstraintVariant& newConstraint,
+		std::function<void()> afterExecute = nullptr)
+		: m_node(node)
+		, m_oldConstraint(node->constraint())
+		, m_newConstraint(newConstraint)
+		, m_afterExecute(afterExecute)
+	{
+	}
+
+	void execute() override
+	{
+		m_node->setConstraint(m_newConstraint);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	void undo() override
+	{
+		m_node->setConstraint(m_oldConstraint);
+		if (m_afterExecute)
+		{
+			m_afterExecute();
+		}
+	}
+
+	String getName() const override
+	{
+		return U"制約変更";
+	}
+};
+
 class ContextMenu
 {
 public:
@@ -525,6 +792,7 @@ private:
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	Array<JSON> m_copiedNodeJSONs;
 	std::shared_ptr<Defaults> m_defaults;
+	UndoRedoManager* m_pUndoRedoManager = nullptr;
 
 	struct ElementDetail
 	{
@@ -1012,7 +1280,7 @@ private:
 	}
 
 public:
-	explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults)
+	explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, UndoRedoManager* pUndoRedoManager)
 		: m_canvas(canvas)
 		, m_hierarchyFrameNode(editorCanvas->rootNode()->emplaceChild(
 			U"HierarchyFrame",
@@ -1049,6 +1317,7 @@ public:
 		, m_editorCanvas(editorCanvas)
 		, m_contextMenu(contextMenu)
 		, m_defaults(defaults)
+		, m_pUndoRedoManager(pUndoRedoManager)
 	{
 		m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -1200,35 +1469,51 @@ public:
 		}
 
 		// 記憶された種類のConstraintを使用してノードを作成
-		std::shared_ptr<Node> newNode = parentNode->emplaceChild(
+		auto command = std::make_unique<CreateNodeCommand>(
+			parentNode,
 			U"Node",
-			m_defaults->defaultConstraint());
-		refreshNodeList();
-		selectSingleNode(newNode);
+			m_defaults->defaultConstraint(),
+			[this] { 
+				refreshNodeList();
+			});
+		
+		// コマンドをキャストして保持
+		CreateNodeCommand* pCommand = command.get();
+		m_pUndoRedoManager->execute(std::move(command));
+		
+		// 作成されたノードを選択
+		if (auto createdNode = pCommand->getCreatedNode())
+		{
+			selectSingleNode(createdNode);
+		}
 	}
 
 	void onClickDelete()
 	{
-		for (auto it = m_elements.begin(); it != m_elements.end();)
+		// 選択されているノードを収集
+		Array<std::shared_ptr<Node>> nodesToDelete;
+		for (const auto& element : m_elements)
 		{
-			if (it->editorSelected())
+			if (element.editorSelected())
 			{
-				if (it->node()->removeFromParent())
-				{
-					it = m_elements.erase(it);
-				}
-				else
-				{
-					++it;
-				}
-			}
-			else
-			{
-				++it;
+				nodesToDelete.push_back(element.node());
 			}
 		}
-		refreshNodeList();
-		clearSelection();
+		
+		if (nodesToDelete.isEmpty())
+		{
+			return;
+		}
+		
+		// 削除コマンドを実行
+		auto command = std::make_unique<DeleteNodeCommand>(
+			nodesToDelete,
+			[this] { 
+				refreshNodeList();
+				clearSelection();
+			});
+		
+		m_pUndoRedoManager->execute(std::move(command));
 	}
 
 	void onClickCut()
@@ -2031,6 +2316,7 @@ private:
 	Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
 	std::shared_ptr<Defaults> m_defaults;
+	UndoRedoManager* m_pUndoRedoManager = nullptr;
 
 	template <class TComponent, class... Args>
 	void onClickAddComponent(Args&&... args)
@@ -2045,7 +2331,7 @@ private:
 	}
 
 public:
-	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
+	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, UndoRedoManager* pUndoRedoManager, std::function<void()> onChangeNodeName)
 		: m_canvas(canvas)
 		, m_editorCanvas(editorCanvas)
 		, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
@@ -2084,6 +2370,7 @@ public:
 		, m_contextMenu(contextMenu)
 		, m_defaults(defaults)
 		, m_dialogOpener(dialogOpener)
+		, m_pUndoRedoManager(pUndoRedoManager)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
@@ -4478,6 +4765,7 @@ private:
 	std::shared_ptr<DialogOpener> m_dialogOpener;
 	std::shared_ptr<Defaults> m_defaults = std::make_shared<Defaults>();
 	bool m_isConfirmDialogShowing = false;
+	UndoRedoManager m_undoRedoManager;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
 	MenuBar m_menuBar;
@@ -4500,8 +4788,8 @@ public:
 		, m_dialogOverlayCanvas(Canvas::Create())
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults)
-		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, &m_undoRedoManager)
+		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, &m_undoRedoManager, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_prevSceneSize(Scene::Size())
 	{
@@ -4525,11 +4813,14 @@ public:
 			U"編集",
 			KeyE,
 			{
+				MenuItem{ U"元に戻す", U"Ctrl+Z", KeyU, [this] { onClickMenuEditUndo(); }, [this] { return m_undoRedoManager.canUndo(); } },
+				MenuItem{ U"やり直し", U"Ctrl+Y", KeyR, [this] { onClickMenuEditRedo(); }, [this] { return m_undoRedoManager.canRedo(); } },
+				MenuSeparator{},
 				MenuItem{ U"切り取り", U"Ctrl+X", KeyT, [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"コピー", U"Ctrl+C", KeyC, [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
 				MenuItem{ U"複製を作成", U"Ctrl+D", KeyL, [this] { onClickMenuEditDuplicate(); }, [this] { return m_hierarchy.hasSelection(); } },
-				MenuItem{ U"削除", U"Delete", KeyR, [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"削除", U"Delete", KeyD, [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuSeparator{},
 				MenuItem{ U"すべて選択", U"Ctrl+A", KeyA, [this] { m_hierarchy.selectAll(); } },
 			});
@@ -4559,6 +4850,25 @@ public:
 		m_editorCanvas->update();
 		const bool editorCanvasHovered = CurrentFrame::AnyNodeHovered();
 		m_canvas->update();
+		
+		// キーボードショートカット処理
+		if (KeyControl.pressed())
+		{
+			if (KeyZ.down())
+			{
+				if (m_undoRedoManager.canUndo())
+				{
+					m_undoRedoManager.undo();
+				}
+			}
+			else if (KeyY.down())
+			{
+				if (m_undoRedoManager.canRedo())
+				{
+					m_undoRedoManager.redo();
+				}
+			}
+		}
 
 		if (Cursor::OnClientRect() && !editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
 		{
@@ -4947,6 +5257,16 @@ public:
 			{
 				System::Exit();
 			});
+	}
+
+	void onClickMenuEditUndo()
+	{
+		m_undoRedoManager.undo();
+	}
+
+	void onClickMenuEditRedo()
+	{
+		m_undoRedoManager.redo();
 	}
 
 	void onClickMenuEditCut()

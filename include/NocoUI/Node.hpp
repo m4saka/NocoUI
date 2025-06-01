@@ -185,7 +185,7 @@ namespace noco
 
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, RefreshesLayoutYN refreshesLayout);
+		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
