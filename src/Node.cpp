@@ -5,6 +5,89 @@
 
 namespace noco
 {
+	namespace
+	{
+		std::shared_ptr<ComponentBase> CreateComponentFromJSON(const JSON& json)
+		{
+			const auto type = json[U"type"].getString();
+			if (type == U"Label")
+			{
+				auto component = std::make_shared<Label>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read Label component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"Sprite")
+			{
+				auto component = std::make_shared<Sprite>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read Sprite component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"RectRenderer")
+			{
+				auto component = std::make_shared<RectRenderer>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read RectRenderer component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"TextBox")
+			{
+				auto component = std::make_shared<TextBox>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read TextBox component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"InputBlocker")
+			{
+				auto component = std::make_shared<InputBlocker>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read InputBlocker component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"EventTrigger")
+			{
+				auto component = std::make_shared<EventTrigger>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read EventTrigger component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"Placeholder")
+			{
+				auto component = std::make_shared<Placeholder>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read Placeholder component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
+				return nullptr;
+			}
+		}
+	}
+
 	InteractState Node::updateForCurrentInteractState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
@@ -381,86 +464,7 @@ namespace noco
 		{
 			for (const auto& componentJSON : json[U"components"].arrayView())
 			{
-				const auto type = componentJSON[U"type"].getString();
-
-				if (type == U"Label")
-				{
-					auto component = std::make_shared<Label>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read Label component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"Sprite")
-				{
-					auto component = std::make_shared<Sprite>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read Sprite component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"RectRenderer")
-				{
-					auto component = std::make_shared<RectRenderer>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read RectRenderer component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"TextBox")
-				{
-					auto component = std::make_shared<TextBox>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read TextBox component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"InputBlocker")
-				{
-					auto component = std::make_shared<InputBlocker>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read InputBlocker component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"EventTrigger")
-				{
-					auto component = std::make_shared<EventTrigger>();
-					if (!component->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read EventTrigger component from JSON" };
-					}
-					node->addComponent(std::move(component));
-					continue;
-				}
-
-				if (type == U"Placeholder")
-				{
-					auto placeholder = std::make_shared<Placeholder>();
-					if (!placeholder->tryReadFromJSON(componentJSON))
-					{
-						throw Error{ U"Failed to read Placeholder component from JSON" };
-					}
-					node->addComponent(std::move(placeholder));
-					continue;
-				}
-
-				Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
+				node->addComponentFromJSON(componentJSON);
 			}
 		}
 
@@ -574,6 +578,26 @@ namespace noco
 	std::shared_ptr<Canvas> Node::containedCanvas() const
 	{
 		return m_canvas.lock();
+	}
+
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
+	{
+		auto component = CreateComponentFromJSON(json);
+		if (component)
+		{
+			addComponent(component);
+		}
+		return component;
+	}
+
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
+	{
+		auto component = CreateComponentFromJSON(json);
+		if (component)
+		{
+			addComponentAtIndex(component, index);
+		}
+		return component;
 	}
 
 	void Node::removeComponent(const std::shared_ptr<ComponentBase>& component)
