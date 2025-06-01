@@ -64,6 +64,20 @@ namespace noco
 		{
 			return m_properties;
 		}
+
+
+		[[nodiscard]]
+		IProperty* getPropertyByName(StringView name) const
+		{
+			for (IProperty* property : m_properties)
+			{
+				if (property->name() == name)
+				{
+					return property;
+				}
+			}
+			return nullptr;
+		}
 	};
 
 	inline ComponentBase::~ComponentBase() = default;
