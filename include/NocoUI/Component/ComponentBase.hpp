@@ -3,6 +3,7 @@
 #include "../YN.hpp"
 #include "../Property.hpp"
 #include "../PropertyValue.hpp"
+#include "../IdRegistry.hpp"
 
 namespace noco
 {
@@ -13,15 +14,21 @@ namespace noco
 	class ComponentBase
 	{
 	private:
+		static uint64 s_nextInternalId;
+		uint64 m_internalId;
 		Array<IProperty*> m_properties;
 
 	public:
 		explicit ComponentBase(const Array<IProperty*>& properties)
-			: m_properties{ properties }
+			: m_internalId{ s_nextInternalId++ }
+			, m_properties{ properties }
 		{
 		}
 
 		virtual ~ComponentBase() = 0;
+
+		[[nodiscard]]
+		uint64 internalId() const noexcept { return m_internalId; }
 
 		virtual void updateInput(const std::shared_ptr<Node>&)
 		{
@@ -79,7 +86,10 @@ namespace noco
 		}
 	};
 
-	inline ComponentBase::~ComponentBase() = default;
+	inline ComponentBase::~ComponentBase()
+	{
+		IdRegistry::Unregister(m_internalId);
+	}
 
 	class SerializableComponentBase : public ComponentBase
 	{

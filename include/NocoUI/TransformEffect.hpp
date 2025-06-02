@@ -109,5 +109,13 @@ namespace noco
 			m_scale.readFromJSON(json);
 			m_pivot.readFromJSON(json);
 		}
+
+		[[nodiscard]]
+		static TransformEffect FromJSON(const JSON& json)
+		{
+			TransformEffect transformEffect;
+			transformEffect.readFromJSON(json);
+			return transformEffect;
+		}
 	};
 }

@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "NocoUI/IdRegistry.hpp"
 #include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Constraint/Constraint.hpp"

@@ -5,6 +5,13 @@
 
 namespace noco
 {
+	uint64 Node::s_nextInternalId = 1;
+
+	Node::~Node()
+	{
+		IdRegistry::Unregister(m_internalId);
+	}
+
 	InteractState Node::updateForCurrentInteractState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
@@ -165,7 +172,9 @@ namespace noco
 
 	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
-		return std::shared_ptr<Node>{ new Node{ name, constraint, isHitTarget, inheritChildrenStateFlags } };
+		auto node = std::shared_ptr<Node>{ new Node{ name, constraint, isHitTarget, inheritChildrenStateFlags } };
+		IdRegistry::Register(node->m_internalId, node);
+		return node;
 	}
 
 	const ConstraintVariant& Node::constraint() const
@@ -293,6 +302,35 @@ namespace noco
 		return result;
 	}
 
+	JSON Node::toJSONForCommand() const
+	{
+		JSON result = toJSON();
+		result[U"_id"] = m_internalId;
+		
+		// Update components to include their IDs
+		Array<JSON> componentsWithIds;
+		for (const std::shared_ptr<ComponentBase>& component : m_components)
+		{
+			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
+			{
+				JSON componentJSON = serializableComponent->toJSON();
+				componentJSON[U"_id"] = component->internalId();
+				componentsWithIds.push_back(componentJSON);
+			}
+		}
+		result[U"components"] = componentsWithIds;
+		
+		// Update children to use toJSONForCommand recursively
+		Array<JSON> childrenWithIds;
+		for (const auto& child : m_children)
+		{
+			childrenWithIds.push_back(child->toJSONForCommand());
+		}
+		result[U"children"] = childrenWithIds;
+		
+		return result;
+	}
+
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
 	{
 		auto node = Node::Create();
@@ -392,6 +430,129 @@ namespace noco
 				node->addChildFromJSON(childJSON, RefreshesLayoutYN::No);
 			}
 		}
+		return node;
+	}
+
+	std::shared_ptr<Node> Node::CreateFromJSONForCommand(const JSON& json)
+	{
+		// Create new node
+		auto node = std::shared_ptr<Node>{ new Node{} };
+		
+		// If ID is provided, use it and update the next ID counter
+		if (json.contains(U"_id"))
+		{
+			node->m_internalId = json[U"_id"].get<uint64>();
+			// Ensure next ID is always higher than loaded IDs
+			if (node->m_internalId >= s_nextInternalId)
+			{
+				s_nextInternalId = node->m_internalId + 1;
+			}
+		}
+		
+		// Register the node
+		IdRegistry::Register(node->m_internalId, node);
+		
+		// Continue with regular deserialization
+		if (json.contains(U"name"))
+		{
+			node->m_name = json[U"name"].getString();
+		}
+
+		if (json.contains(U"constraint"))
+		{
+			const auto& constraintJSON = json[U"constraint"];
+			if (constraintJSON[U"type"].getString() == U"BoxConstraint")
+			{
+				node->m_constraint = BoxConstraint::FromJSON(constraintJSON);
+			}
+			else if (constraintJSON[U"type"].getString() == U"AnchorConstraint")
+			{
+				node->m_constraint = AnchorConstraint::FromJSON(constraintJSON);
+			}
+		}
+
+		if (json.contains(U"transformEffect"))
+		{
+			node->m_transformEffect = TransformEffect::FromJSON(json[U"transformEffect"]);
+		}
+
+		if (json.contains(U"boxChildrenLayout"))
+		{
+			const auto& layoutJSON = json[U"boxChildrenLayout"];
+			if (layoutJSON[U"type"].getString() == U"FlowLayout")
+			{
+				node->m_boxChildrenLayout = FlowLayout::FromJSON(layoutJSON);
+			}
+			else if (layoutJSON[U"type"].getString() == U"HorizontalLayout")
+			{
+				node->m_boxChildrenLayout = HorizontalLayout::FromJSON(layoutJSON);
+			}
+			else if (layoutJSON[U"type"].getString() == U"VerticalLayout")
+			{
+				node->m_boxChildrenLayout = VerticalLayout::FromJSON(layoutJSON);
+			}
+		}
+
+		if (json.contains(U"isHitTarget"))
+		{
+			node->m_isHitTarget = IsHitTargetYN{ json[U"isHitTarget"].get<bool>() };
+		}
+
+		if (json.contains(U"inheritsChildrenHoveredState"))
+		{
+			node->setInheritsChildrenHoveredState(json[U"inheritsChildrenHoveredState"].get<bool>());
+		}
+
+		if (json.contains(U"inheritsChildrenPressedState"))
+		{
+			node->setInheritsChildrenPressedState(json[U"inheritsChildrenPressedState"].get<bool>());
+		}
+
+		if (json.contains(U"interactable"))
+		{
+			node->m_interactable = InteractableYN{ json[U"interactable"].get<bool>() };
+		}
+
+		if (json.contains(U"horizontalScrollable"))
+		{
+			node->setHorizontalScrollable(json[U"horizontalScrollable"].get<bool>(), RefreshesLayoutYN::No);
+		}
+
+		if (json.contains(U"verticalScrollable"))
+		{
+			node->setVerticalScrollable(json[U"verticalScrollable"].get<bool>(), RefreshesLayoutYN::No);
+		}
+
+		if (json.contains(U"clippingEnabled"))
+		{
+			node->m_clippingEnabled = ClippingEnabledYN{ json[U"clippingEnabled"].get<bool>() };
+		}
+
+		if (json.contains(U"activeSelf"))
+		{
+			node->m_activeSelf = ActiveYN{ json[U"activeSelf"].get<bool>() };
+		}
+
+		// Handle components with IDs
+		if (json.contains(U"components") && json[U"components"].isArray())
+		{
+			for (const auto& componentJSON : json[U"components"].arrayView())
+			{
+				// TODO: Update component creation to handle IDs
+				node->addComponentFromJSON(componentJSON);
+			}
+		}
+
+		// Handle children recursively with IDs
+		if (json.contains(U"children") && json[U"children"].isArray())
+		{
+			for (const auto& childJSON : json[U"children"].arrayView())
+			{
+				auto child = CreateFromJSONForCommand(childJSON);
+				node->addChild(child, RefreshesLayoutYN::No);
+			}
+		}
+		
 		return node;
 	}
 

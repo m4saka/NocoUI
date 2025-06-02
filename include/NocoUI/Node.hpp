@@ -14,6 +14,7 @@
 #include "Component/Placeholder.hpp"
 #include "Component/DataStore.hpp"
 #include "Enums.hpp"
+#include "IdRegistry.hpp"
 
 namespace noco
 {
@@ -26,6 +27,8 @@ namespace noco
 		friend class Canvas;
 
 	private:
+		static uint64 s_nextInternalId;
+		uint64 m_internalId;
 		String m_name;
 		ConstraintVariant m_constraint;
 		TransformEffect m_transformEffect;
@@ -59,7 +62,8 @@ namespace noco
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
-			: m_name{ name }
+			: m_internalId{ s_nextInternalId++ }
+			, m_name{ name }
 			, m_constraint{ constraint }
 			, m_isHitTarget{ isHitTarget }
 			, m_inheritChildrenStateFlags{ inheritChildrenStateFlags }
@@ -82,6 +86,11 @@ namespace noco
 
 	public:
 		static std::shared_ptr<Node> Create(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None);
+
+		~Node();
+
+		[[nodiscard]]
+		uint64 internalId() const noexcept { return m_internalId; }
 
 		[[nodiscard]]
 		const ConstraintVariant& constraint() const;
@@ -132,7 +141,13 @@ namespace noco
 		JSON toJSON() const;
 
 		[[nodiscard]]
+		JSON toJSONForCommand() const;
+
+		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
+
+		[[nodiscard]]
+		static std::shared_ptr<Node> CreateFromJSONForCommand(const JSON& json);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parent() const;
@@ -515,6 +530,7 @@ namespace noco
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		m_components.push_back(component);
+		IdRegistry::Register(component->internalId(), component);
 		return component;
 	}
 
@@ -527,6 +543,7 @@ namespace noco
 			index = m_components.size();
 		}
 		m_components.insert(m_components.begin() + index, component);
+		IdRegistry::Register(component->internalId(), component);
 		return component;
 	}
 

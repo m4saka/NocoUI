@@ -160,12 +160,22 @@ public:
 class CreateNodeCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_parentNode;
-	std::shared_ptr<Node> m_createdNode;
+	uint64 m_parentNodeId;
+	uint64 m_createdNodeId = 0;
 	String m_nodeName;
 	ConstraintVariant m_constraint;
 	size_t m_insertIndex;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> parentNode() const
+	{
+		return IdRegistry::GetNode(m_parentNodeId);
+	}
+
+	std::shared_ptr<Node> createdNode() const
+	{
+		return m_createdNodeId ? IdRegistry::GetNode(m_createdNodeId) : nullptr;
+	}
 
 public:
 	explicit CreateNodeCommand(
@@ -173,7 +183,7 @@ public:
 		StringView nodeName,
 		const ConstraintVariant& constraint,
 		std::function<void()> afterExecute = nullptr)
-		: m_parentNode(parentNode)
+		: m_parentNodeId(parentNode->internalId())
 		, m_nodeName(nodeName)
 		, m_constraint(constraint)
 		, m_insertIndex(parentNode ? parentNode->children().size() : 0)
@@ -183,9 +193,10 @@ public:
 
 	void execute() override
 	{
-		if (m_parentNode)
+		if (auto parent = parentNode())
 		{
-			m_createdNode = m_parentNode->emplaceChild(m_nodeName, m_constraint);
+			auto newNode = parent->emplaceChild(m_nodeName, m_constraint);
+			m_createdNodeId = newNode->internalId();
 			if (m_afterExecute)
 			{
 				m_afterExecute();
@@ -195,9 +206,9 @@ public:
 
 	void undo() override
 	{
-		if (m_createdNode)
+		if (auto node = createdNode())
 		{
-			m_createdNode->removeFromParent();
+			node->removeFromParent();
 			if (m_afterExecute)
 			{
 				m_afterExecute();
@@ -214,7 +225,7 @@ public:
 
 	std::shared_ptr<Node> getCreatedNode() const
 	{
-		return m_createdNode;
+		return createdNode();
 	}
 };
 
@@ -223,10 +234,10 @@ class DeleteNodeCommand : public ICommand
 private:
 	struct NodeInfo
 	{
-		std::shared_ptr<Node> node;
-		std::shared_ptr<Node> parent;
+		std::shared_ptr<Node> node;  // 削除中は保持（メモリ解放を防ぐ）
+		uint64 parentId;
 		size_t index;
-		JSON nodeData;
+		JSON nodeData;  // toJSONForCommandでID付きで保存
 	};
 	Array<NodeInfo> m_deletedNodes;
 	std::function<void()> m_afterExecute;
@@ -250,9 +261,9 @@ public:
 				}
 				m_deletedNodes.push_back({
 					node,
-					parent,
+					parent->internalId(),
 					index,
-					node->toJSON()
+					node->toJSONForCommand()  // ID付きで保存
 				});
 			}
 		}
@@ -275,7 +286,12 @@ public:
 		// 逆順で復元(階層を保つため)
 		for (auto it = m_deletedNodes.rbegin(); it != m_deletedNodes.rend(); ++it)
 		{
-			it->node = it->parent->addChildAtIndexFromJSON(it->nodeData, it->index, RefreshesLayoutYN{ it == m_deletedNodes.rend() - 1 });
+			if (auto parent = IdRegistry::GetNode(it->parentId))
+			{
+				// CreateFromJSONForCommandでIDを維持したまま復元
+				auto restoredNode = Node::CreateFromJSONForCommand(it->nodeData);
+				parent->addChildAtIndex(restoredNode, it->index, RefreshesLayoutYN{ it == m_deletedNodes.rend() - 1 });
+			}
 		}
 		if (m_afterExecute)
 		{
@@ -294,17 +310,22 @@ public:
 class SetConstraintCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
+	uint64 m_nodeId;
 	ConstraintVariant m_oldConstraint;
 	ConstraintVariant m_newConstraint;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
 
 public:
 	explicit SetConstraintCommand(
 		std::shared_ptr<Node> node,
 		const ConstraintVariant& newConstraint,
 		std::function<void()> afterExecute = nullptr)
-		: m_node(node)
+		: m_nodeId(node->internalId())
 		, m_oldConstraint(node->constraint())
 		, m_newConstraint(newConstraint)
 		, m_afterExecute(afterExecute)
@@ -313,19 +334,25 @@ public:
 
 	void execute() override
 	{
-		m_node->setConstraint(m_newConstraint);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			n->setConstraint(m_newConstraint);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
 	void undo() override
 	{
-		m_node->setConstraint(m_oldConstraint);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			n->setConstraint(m_oldConstraint);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
@@ -341,9 +368,9 @@ class MoveNodeCommand : public ICommand
 private:
 	struct MoveInfo
 	{
-		std::shared_ptr<Node> node;
-		std::shared_ptr<Node> oldParent;
-		std::shared_ptr<Node> newParent;
+		uint64 nodeId;
+		uint64 oldParentId;
+		uint64 newParentId;
 		size_t oldIndex;
 		size_t newIndex;
 	};
@@ -372,9 +399,9 @@ public:
 					}
 				}
 				m_moveInfos.push_back({
-					node,
-					oldParent,
-					newParent,
+					node->internalId(),
+					oldParent->internalId(),
+					newParent->internalId(),
 					oldIndex,
 					newIndex
 				});
@@ -387,15 +414,21 @@ public:
 		// 逆順で処理（インデックスのずれを防ぐため）
 		for (auto it = m_moveInfos.rbegin(); it != m_moveInfos.rend(); ++it)
 		{
+			auto node = IdRegistry::GetNode(it->nodeId);
+			auto oldParent = IdRegistry::GetNode(it->oldParentId);
+			auto newParent = IdRegistry::GetNode(it->newParentId);
+			
+			if (!node || !oldParent || !newParent) continue;
+			
 			// 同一親内で前方へ移動する場合、removeFromParentでインデックスが詰まるため調整
 			size_t adjustedNewIndex = it->newIndex;
-			if (it->oldParent == it->newParent && it->oldIndex < it->newIndex)
+			if (oldParent == newParent && it->oldIndex < it->newIndex)
 			{
 				adjustedNewIndex--;
 			}
 			
-			it->node->removeFromParent();
-			it->newParent->addChildAtIndex(it->node, adjustedNewIndex);
+			node->removeFromParent();
+			newParent->addChildAtIndex(node, adjustedNewIndex);
 		}
 		if (m_afterExecute)
 		{
@@ -409,7 +442,7 @@ public:
 		auto sortedInfos = m_moveInfos;
 		std::sort(sortedInfos.begin(), sortedInfos.end(), [](const MoveInfo& a, const MoveInfo& b) {
 			// 同じ親の場合はoldIndexの降順でソート
-			if (a.oldParent == b.oldParent)
+			if (a.oldParentId == b.oldParentId)
 			{
 				return a.oldIndex > b.oldIndex;
 			}
@@ -419,8 +452,13 @@ public:
 		
 		for (auto& info : sortedInfos)
 		{
-			info.node->removeFromParent();
-			info.oldParent->addChildAtIndex(info.node, info.oldIndex);
+			auto node = IdRegistry::GetNode(info.nodeId);
+			auto oldParent = IdRegistry::GetNode(info.oldParentId);
+			
+			if (!node || !oldParent) continue;
+			
+			node->removeFromParent();
+			oldParent->addChildAtIndex(node, info.oldIndex);
 		}
 		if (m_afterExecute)
 		{
@@ -440,11 +478,16 @@ public:
 class PasteNodeCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_parentNode;
+	uint64 m_parentNodeId;
 	Array<JSON> m_nodeJSONs;
-	Array<std::shared_ptr<Node>> m_pastedNodes;
+	Array<uint64> m_pastedNodeIds;
 	Optional<size_t> m_insertIndex;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> parentNode() const
+	{
+		return IdRegistry::GetNode(m_parentNodeId);
+	}
 
 public:
 	PasteNodeCommand(
@@ -452,7 +495,7 @@ public:
 		const Array<JSON>& nodeJSONs,
 		Optional<size_t> insertIndex = none,
 		std::function<void()> afterExecute = nullptr)
-		: m_parentNode(parentNode)
+		: m_parentNodeId(parentNode->internalId())
 		, m_nodeJSONs(nodeJSONs)
 		, m_insertIndex(insertIndex)
 		, m_afterExecute(afterExecute)
@@ -461,20 +504,25 @@ public:
 
 	void execute() override
 	{
-		m_pastedNodes.clear();
-		if (m_insertIndex)
+		m_pastedNodeIds.clear();
+		if (auto parent = parentNode())
 		{
-			size_t index = *m_insertIndex;
-			for (const auto& json : m_nodeJSONs)
+			if (m_insertIndex)
 			{
-				m_pastedNodes.push_back(m_parentNode->addChildAtIndexFromJSON(json, index++));
+				size_t index = *m_insertIndex;
+				for (const auto& json : m_nodeJSONs)
+				{
+					auto node = parent->addChildAtIndexFromJSON(json, index++);
+					m_pastedNodeIds.push_back(node->internalId());
+				}
 			}
-		}
-		else
-		{
-			for (const auto& json : m_nodeJSONs)
+			else
 			{
-				m_pastedNodes.push_back(m_parentNode->addChildFromJSON(json));
+				for (const auto& json : m_nodeJSONs)
+				{
+					auto node = parent->addChildFromJSON(json);
+					m_pastedNodeIds.push_back(node->internalId());
+				}
 			}
 		}
 		if (m_afterExecute)
@@ -485,11 +533,14 @@ public:
 
 	void undo() override
 	{
-		for (auto& node : m_pastedNodes)
+		for (auto nodeId : m_pastedNodeIds)
 		{
-			node->removeFromParent();
+			if (auto node = IdRegistry::GetNode(nodeId))
+			{
+				node->removeFromParent();
+			}
 		}
-		m_pastedNodes.clear();
+		m_pastedNodeIds.clear();
 		if (m_afterExecute)
 		{
 			m_afterExecute();
@@ -503,9 +554,17 @@ public:
 
 	bool needsNodeListRefresh() const override { return true; }
 
-	const Array<std::shared_ptr<Node>>& getPastedNodes() const
+	Array<std::shared_ptr<Node>> getPastedNodes() const
 	{
-		return m_pastedNodes;
+		Array<std::shared_ptr<Node>> nodes;
+		for (auto nodeId : m_pastedNodeIds)
+		{
+			if (auto node = IdRegistry::GetNode(nodeId))
+			{
+				nodes.push_back(node);
+			}
+		}
+		return nodes;
 	}
 };
 
@@ -513,8 +572,14 @@ public:
 class DuplicateNodeCommand : public ICommand
 {
 private:
-	Array<std::pair<std::shared_ptr<Node>, JSON>> m_sourceNodes;
-	Array<std::shared_ptr<Node>> m_duplicatedNodes;
+	struct SourceNodeInfo
+	{
+		uint64 nodeId;
+		uint64 parentId;
+		JSON nodeData;
+	};
+	Array<SourceNodeInfo> m_sourceNodes;
+	Array<uint64> m_duplicatedNodeIds;
 	std::function<void()> m_afterExecute;
 
 public:
@@ -525,19 +590,26 @@ public:
 	{
 		for (const auto& node : nodes)
 		{
-			m_sourceNodes.emplace_back(node, node->toJSON());
+			if (auto parent = node->parent())
+			{
+				m_sourceNodes.push_back({
+					node->internalId(),
+					parent->internalId(),
+					node->toJSON()
+				});
+			}
 		}
 	}
 
 	void execute() override
 	{
-		m_duplicatedNodes.clear();
-		for (const auto& [sourceNode, json] : m_sourceNodes)
+		m_duplicatedNodeIds.clear();
+		for (const auto& sourceInfo : m_sourceNodes)
 		{
-			if (auto parent = sourceNode->parent())
+			if (auto parent = IdRegistry::GetNode(sourceInfo.parentId))
 			{
-				auto duplicated = parent->addChildFromJSON(json);
-				m_duplicatedNodes.push_back(duplicated);
+				auto duplicated = parent->addChildFromJSON(sourceInfo.nodeData);
+				m_duplicatedNodeIds.push_back(duplicated->internalId());
 			}
 		}
 		if (m_afterExecute)
@@ -548,11 +620,14 @@ public:
 
 	void undo() override
 	{
-		for (auto& node : m_duplicatedNodes)
+		for (auto nodeId : m_duplicatedNodeIds)
 		{
-			node->removeFromParent();
+			if (auto node = IdRegistry::GetNode(nodeId))
+			{
+				node->removeFromParent();
+			}
 		}
-		m_duplicatedNodes.clear();
+		m_duplicatedNodeIds.clear();
 		if (m_afterExecute)
 		{
 			m_afterExecute();
@@ -566,9 +641,17 @@ public:
 
 	bool needsNodeListRefresh() const override { return true; }
 
-	const Array<std::shared_ptr<Node>>& getDuplicatedNodes() const
+	Array<std::shared_ptr<Node>> getDuplicatedNodes() const
 	{
-		return m_duplicatedNodes;
+		Array<std::shared_ptr<Node>> nodes;
+		for (auto nodeId : m_duplicatedNodeIds)
+		{
+			if (auto node = IdRegistry::GetNode(nodeId))
+			{
+				nodes.push_back(node);
+			}
+		}
+		return nodes;
 	}
 };
 
@@ -626,17 +709,22 @@ public:
 class SetLayoutCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
+	uint64 m_nodeId;
 	LayoutVariant m_oldLayout;
 	LayoutVariant m_newLayout;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
 
 public:
 	SetLayoutCommand(
 		std::shared_ptr<Node> node,
 		const LayoutVariant& newLayout,
 		std::function<void()> afterExecute = nullptr)
-		: m_node(node)
+		: m_nodeId(node->internalId())
 		, m_oldLayout(node->boxChildrenLayout())
 		, m_newLayout(newLayout)
 		, m_afterExecute(afterExecute)
@@ -645,19 +733,25 @@ public:
 
 	void execute() override
 	{
-		m_node->setBoxChildrenLayout(m_newLayout);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			n->setBoxChildrenLayout(m_newLayout);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
 	void undo() override
 	{
-		m_node->setBoxChildrenLayout(m_oldLayout);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			n->setBoxChildrenLayout(m_oldLayout);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
@@ -671,11 +765,16 @@ public:
 class SetComponentPropertyCommand : public ICommand
 {
 private:
-	std::weak_ptr<ComponentBase> m_component;
+	uint64 m_componentId;
 	String m_propertyName;
 	String m_oldValue;
 	String m_newValue;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<ComponentBase> component() const
+	{
+		return IdRegistry::GetComponent(m_componentId);
+	}
 
 public:
 	SetComponentPropertyCommand(
@@ -683,13 +782,13 @@ public:
 		StringView propertyName,
 		StringView newValue,
 		std::function<void()> afterExecute = nullptr)
-		: m_component(component)
-		, m_propertyName(propertyName)
+		: m_propertyName(propertyName)
 		, m_newValue(newValue)
 		, m_afterExecute(afterExecute)
 	{
-		if (auto comp = m_component.lock())
+		if (auto comp = component.lock())
 		{
+			m_componentId = comp->internalId();
 			if (IProperty* property = comp->getPropertyByName(propertyName))
 			{
 				m_oldValue = property->propertyValueStringOfDefault();
@@ -699,7 +798,7 @@ public:
 
 	void execute() override
 	{
-		if (auto comp = m_component.lock())
+		if (auto comp = component())
 		{
 			if (IProperty* property = comp->getPropertyByName(m_propertyName))
 			{
@@ -714,7 +813,7 @@ public:
 
 	void undo() override
 	{
-		if (auto comp = m_component.lock())
+		if (auto comp = component())
 		{
 			if (IProperty* property = comp->getPropertyByName(m_propertyName))
 			{
@@ -738,17 +837,27 @@ template<typename TComponent, typename... Args>
 class AddComponentCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
-	std::shared_ptr<TComponent> m_component;
+	uint64 m_nodeId;
+	uint64 m_componentId = 0;
 	std::function<void()> m_afterExecute;
 	std::tuple<Args...> m_args;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
+
+	std::shared_ptr<TComponent> component() const
+	{
+		return m_componentId ? std::dynamic_pointer_cast<TComponent>(IdRegistry::GetComponent(m_componentId)) : nullptr;
+	}
 
 public:
 	AddComponentCommand(
 		std::shared_ptr<Node> node,
 		std::function<void()> afterExecute,
 		Args&&... args)
-		: m_node(node)
+		: m_nodeId(node->internalId())
 		, m_afterExecute(afterExecute)
 		, m_args(std::forward<Args>(args)...)
 	{
@@ -756,21 +865,27 @@ public:
 
 	void execute() override
 	{
-		m_component = std::apply([this](auto&&... args) {
-			return m_node->emplaceComponent<TComponent>(std::forward<decltype(args)>(args)...);
-		}, m_args);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			auto comp = std::apply([n](auto&&... args) -> std::shared_ptr<TComponent> {
+				return n->template emplaceComponent<TComponent>(std::forward<decltype(args)>(args)...);
+			}, m_args);
+			m_componentId = comp->internalId();
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
 	void undo() override
 	{
-		if (m_component)
+		if (auto n = node())
 		{
-			m_node->removeComponent(m_component);
-			m_component = nullptr;
+			if (auto comp = component())
+			{
+				n->removeComponent(comp);
+			}
 		}
 		if (m_afterExecute)
 		{
@@ -785,7 +900,7 @@ public:
 
 	std::shared_ptr<TComponent> getComponent() const
 	{
-		return m_component;
+		return component();
 	}
 };
 
@@ -793,23 +908,28 @@ public:
 class RemoveComponentCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
-	std::shared_ptr<ComponentBase> m_component;
+	uint64 m_nodeId;
+	std::shared_ptr<ComponentBase> m_component;  // 削除中は保持
 	JSON m_componentData;
 	size_t m_componentIndex;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
 
 public:
 	RemoveComponentCommand(
 		std::shared_ptr<Node> node,
 		std::shared_ptr<ComponentBase> component,
 		std::function<void()> afterExecute = nullptr)
-		: m_node(node)
+		: m_nodeId(node->internalId())
 		, m_component(component)
 		, m_afterExecute(afterExecute)
 	{
 		// コンポーネントのインデックスを保存
-		const auto& components = m_node->components();
+		const auto& components = node->components();
 		for (size_t i = 0; i < components.size(); ++i)
 		{
 			if (components[i] == m_component)
@@ -818,32 +938,39 @@ public:
 				break;
 			}
 		}
-		// SerializableComponentBaseの場合、JSONで保存
+		// SerializableComponentBaseの場合、JSONで保存（IDも含める）
 		if (auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(m_component))
 		{
 			m_componentData = serializableComponent->toJSON();
+			m_componentData[U"_id"] = m_component->internalId();
 		}
 	}
 
 	void execute() override
 	{
-		m_node->removeComponent(m_component);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			n->removeComponent(m_component);
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
 	void undo() override
 	{
-		// コンポーネントを元のインデックスに復元
-		if (!m_componentData.isEmpty())
+		if (auto n = node())
 		{
-			m_node->addComponentAtIndexFromJSON(m_componentData, m_componentIndex);
-		}
-		if (m_afterExecute)
-		{
-			m_afterExecute();
+			// コンポーネントを元のインデックスに復元
+			if (!m_componentData.isEmpty())
+			{
+				n->addComponentAtIndexFromJSON(m_componentData, m_componentIndex);
+			}
+			if (m_afterExecute)
+			{
+				m_afterExecute();
+			}
 		}
 	}
 
@@ -857,28 +984,44 @@ public:
 class MoveComponentUpCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
-	std::shared_ptr<ComponentBase> m_component;
+	uint64 m_nodeId;
+	uint64 m_componentId;
 	bool m_success = false;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
+
+	std::shared_ptr<ComponentBase> component() const
+	{
+		return IdRegistry::GetComponent(m_componentId);
+	}
 
 public:
 	MoveComponentUpCommand(
 		std::shared_ptr<Node> node,
 		std::shared_ptr<ComponentBase> component,
 		std::function<void()> afterExecute = nullptr)
-		: m_node(node)
-		, m_component(component)
+		: m_nodeId(node->internalId())
+		, m_componentId(component->internalId())
 		, m_afterExecute(afterExecute)
 	{
 	}
 
 	void execute() override
 	{
-		m_success = m_node->moveComponentUp(m_component);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			if (auto comp = component())
+			{
+				m_success = n->moveComponentUp(comp);
+				if (m_afterExecute)
+				{
+					m_afterExecute();
+				}
+			}
 		}
 	}
 
@@ -886,10 +1029,16 @@ public:
 	{
 		if (m_success)
 		{
-			m_node->moveComponentDown(m_component);
-			if (m_afterExecute)
+			if (auto n = node())
 			{
-				m_afterExecute();
+				if (auto comp = component())
+				{
+					n->moveComponentDown(comp);
+					if (m_afterExecute)
+					{
+						m_afterExecute();
+					}
+				}
 			}
 		}
 	}
@@ -903,28 +1052,44 @@ public:
 class MoveComponentDownCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_node;
-	std::shared_ptr<ComponentBase> m_component;
+	uint64 m_nodeId;
+	uint64 m_componentId;
 	bool m_success = false;
 	std::function<void()> m_afterExecute;
+
+	std::shared_ptr<Node> node() const
+	{
+		return IdRegistry::GetNode(m_nodeId);
+	}
+
+	std::shared_ptr<ComponentBase> component() const
+	{
+		return IdRegistry::GetComponent(m_componentId);
+	}
 
 public:
 	MoveComponentDownCommand(
 		std::shared_ptr<Node> node,
 		std::shared_ptr<ComponentBase> component,
 		std::function<void()> afterExecute = nullptr)
-		: m_node(node)
-		, m_component(component)
+		: m_nodeId(node->internalId())
+		, m_componentId(component->internalId())
 		, m_afterExecute(afterExecute)
 	{
 	}
 
 	void execute() override
 	{
-		m_success = m_node->moveComponentDown(m_component);
-		if (m_afterExecute)
+		if (auto n = node())
 		{
-			m_afterExecute();
+			if (auto comp = component())
+			{
+				m_success = n->moveComponentDown(comp);
+				if (m_afterExecute)
+				{
+					m_afterExecute();
+				}
+			}
 		}
 	}
 
@@ -932,10 +1097,16 @@ public:
 	{
 		if (m_success)
 		{
-			m_node->moveComponentUp(m_component);
-			if (m_afterExecute)
+			if (auto n = node())
 			{
-				m_afterExecute();
+				if (auto comp = component())
+				{
+					n->moveComponentUp(comp);
+					if (m_afterExecute)
+					{
+						m_afterExecute();
+					}
+				}
 			}
 		}
 	}
@@ -950,29 +1121,45 @@ public:
 class CreateEmptyParentCommand : public ICommand
 {
 private:
-	std::shared_ptr<Node> m_selectedNode;
-	std::shared_ptr<Node> m_oldParent;
-	std::shared_ptr<Node> m_newParent;
+	uint64 m_selectedNodeId;
+	uint64 m_oldParentId;
+	uint64 m_newParentId = 0;
 	size_t m_originalIndex;
 	ConstraintVariant m_originalConstraint;
 	ConstraintVariant m_newConstraint;
 	std::function<void()> m_afterExecute;
 
+	std::shared_ptr<Node> selectedNode() const
+	{
+		return IdRegistry::GetNode(m_selectedNodeId);
+	}
+
+	std::shared_ptr<Node> oldParent() const
+	{
+		return IdRegistry::GetNode(m_oldParentId);
+	}
+
+	std::shared_ptr<Node> newParent() const
+	{
+		return m_newParentId ? IdRegistry::GetNode(m_newParentId) : nullptr;
+	}
+
 public:
 	CreateEmptyParentCommand(
 		std::shared_ptr<Node> selectedNode,
 		std::function<void()> afterExecute = nullptr)
-		: m_selectedNode(selectedNode)
-		, m_oldParent(selectedNode->parent())
+		: m_selectedNodeId(selectedNode->internalId())
 		, m_originalIndex(0)
 		, m_originalConstraint(selectedNode->constraint())
 		, m_afterExecute(afterExecute)
 	{
-		// 元のインデックスを取得
-		if (m_oldParent)
+		// 親のIDを保存
+		if (auto parent = selectedNode->parent())
 		{
-			const auto& children = m_oldParent->children();
-			auto it = std::find(children.begin(), children.end(), m_selectedNode);
+			m_oldParentId = parent->internalId();
+			// 元のインデックスを取得
+			const auto& children = parent->children();
+			auto it = std::find(children.begin(), children.end(), selectedNode);
 			if (it != children.end())
 			{
 				m_originalIndex = std::distance(children.begin(), it);
@@ -980,7 +1167,7 @@ public:
 		}
 
 		// 新しいConstraintを準備
-		const RectF originalCalculatedRect = m_selectedNode->layoutAppliedRect();
+		const RectF originalCalculatedRect = selectedNode->layoutAppliedRect();
 		m_newConstraint = AnchorConstraint
 		{
 			.anchorMin = Anchor::MiddleCenter,
@@ -993,28 +1180,42 @@ public:
 
 	void execute() override
 	{
-		if (!m_oldParent)
+		auto selected = selectedNode();
+		auto parent = oldParent();
+		
+		if (!selected || !parent)
 		{
 			return;
 		}
 
 		// 親から切り離す
-		m_selectedNode->removeFromParent();
+		selected->removeFromParent();
 
 		// 初回実行時のみ新しい親ノードを生成
-		if (!m_newParent)
+		if (!m_newParentId)
 		{
-			m_newParent = Node::Create(U"Node", m_originalConstraint);
+			auto np = Node::Create(U"Node", m_originalConstraint);
+			m_newParentId = np->internalId();
+			// 元ノードと同じインデックスに空の親ノードを追加
+			parent->addChildAtIndex(np, m_originalIndex);
 		}
-		
-		// 元ノードと同じインデックスに空の親ノードを追加
-		m_oldParent->addChildAtIndex(m_newParent, m_originalIndex);
+		else
+		{
+			// 既存の親ノードを再度追加
+			if (auto np = newParent())
+			{
+				parent->addChildAtIndex(np, m_originalIndex);
+			}
+		}
 
 		// 新しい親のもとへ子として追加
-		m_newParent->addChild(m_selectedNode);
+		if (auto np = newParent())
+		{
+			np->addChild(selected);
+		}
 
 		// 元オブジェクトのConstraintを変更
-		m_selectedNode->setConstraint(m_newConstraint);
+		selected->setConstraint(m_newConstraint);
 
 		if (m_afterExecute)
 		{
@@ -1024,22 +1225,26 @@ public:
 
 	void undo() override
 	{
-		if (!m_oldParent || !m_newParent)
+		auto selected = selectedNode();
+		auto parent = oldParent();
+		auto np = newParent();
+		
+		if (!selected || !parent || !np)
 		{
 			return;
 		}
 
 		// 元のConstraintに戻す
-		m_selectedNode->setConstraint(m_originalConstraint);
+		selected->setConstraint(m_originalConstraint);
 
 		// 親から切り離す
-		m_selectedNode->removeFromParent();
+		selected->removeFromParent();
 
 		// 空の親ノードを削除
-		m_newParent->removeFromParent();
+		np->removeFromParent();
 
 		// 元の親の元の位置に戻す
-		m_oldParent->addChildAtIndex(m_selectedNode, m_originalIndex);
+		parent->addChildAtIndex(selected, m_originalIndex);
 
 		if (m_afterExecute)
 		{
@@ -1057,7 +1262,7 @@ public:
 	[[nodiscard]]
 	std::shared_ptr<Node> getNewParent() const
 	{
-		return m_newParent;
+		return newParent();
 	}
 };
 
@@ -1930,7 +2135,7 @@ private:
 				}
 			});
 		const auto nameLabel = hierarchyNode->emplaceComponent<Label>(
-			node->name(),
+			node->name() + Format(node->internalId()),
 			U"",
 			14,
 			Palette::White,
