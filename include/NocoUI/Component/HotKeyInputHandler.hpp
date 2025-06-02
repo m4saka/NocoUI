@@ -23,7 +23,8 @@ namespace noco
 		EnabledWhileTextEditingYN m_enabledWhileTextEditing;
 		ClearsInputYN m_clearsInput;
 
-		bool down() const
+		[[nodiscard]]
+		bool getModifiersPressed() const
 		{
 			if (m_ctrl && !KeyControl.pressed())
 			{
@@ -37,7 +38,7 @@ namespace noco
 			{
 				return false;
 			}
-			return m_input.down();
+			return true;
 		}
 
 	public:
@@ -68,20 +69,25 @@ namespace noco
 				return;
 			}
 
-			if (m_target == HotKeyTarget::Click && down())
+			const bool modifiersPressed = getModifiersPressed();
+			const bool inputDown = m_input.down();
+
+			if (m_target == HotKeyTarget::Click && inputDown && modifiersPressed)
 			{
 				node->requestClick();
+				if (m_clearsInput)
+				{
+					m_input.clearInput();
+				}
 			}
 
-			if (m_target == HotKeyTarget::RightClick && down())
+			if (m_target == HotKeyTarget::RightClick && inputDown && modifiersPressed)
 			{
 				node->requestRightClick();
-			}
-
-			// down以外もクリアするため常に実行
-			if (m_clearsInput)
-			{
-				m_input.clearInput();
+				if (m_clearsInput)
+				{
+					m_input.clearInput();
+				}
 			}
 		}
 	};

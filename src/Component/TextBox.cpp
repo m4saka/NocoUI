@@ -221,7 +221,7 @@ namespace noco
 		m_isChanged = false;
 
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
-		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != this))
+		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != static_cast<ITextBox*>(this)))
 		{
 			deselect(node);
 			return;
@@ -334,7 +334,7 @@ namespace noco
 			{
 				// 領域外をクリックした場合は選択解除
 				deselect(node);
-				if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
+				if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == static_cast<ITextBox*>(this))
 				{
 					detail::s_canvasUpdateContext.editingTextBox.reset();
 				}
@@ -358,105 +358,112 @@ namespace noco
 			const bool shift = KeyShift.pressed();
 			bool keyMoveTried = false;
 
-			if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
+			if (TextInput::GetEditingText().empty()) // 未変換テキストがある場合はテキスト編集・カーソル移動しない
 			{
-				if (m_selectionAnchor != m_cursorIndex && !shift)
+				if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
 				{
-					m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
-					m_selectionAnchor = m_cursorIndex;
+					if (m_selectionAnchor != m_cursorIndex && !shift)
+					{
+						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						m_selectionAnchor = m_cursorIndex;
+					}
+					else if (m_cursorIndex > 0)
+					{
+						--m_cursorIndex;
+					}
+					keyMoveTried = true;
+					m_leftPressStopwatch.restart();
 				}
-				else if (m_cursorIndex > 0)
+
+				if (KeyRight.down() || (KeyRight.pressedDuration() > 0.4s && m_rightPressStopwatch.elapsed() > 0.03s))
 				{
-					--m_cursorIndex;
+					if (m_selectionAnchor != m_cursorIndex && !shift)
+					{
+						m_cursorIndex = Max(m_cursorIndex, m_selectionAnchor);
+						m_selectionAnchor = m_cursorIndex;
+					}
+					else if (m_cursorIndex < m_text.size())
+					{
+						++m_cursorIndex;
+					}
+					keyMoveTried = true;
+					m_rightPressStopwatch.restart();
 				}
-				keyMoveTried = true;
-				m_leftPressStopwatch.restart();
+
+				if (KeyHome.down())
+				{
+					m_cursorIndex = 0;
+					keyMoveTried = true;
+				}
+
+				if (KeyEnd.down())
+				{
+					m_cursorIndex = m_text.size();
+					keyMoveTried = true;
+				}
+
+				if (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s))
+				{
+					if (m_cursorIndex != m_selectionAnchor)
+					{
+						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
+						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						m_selectionAnchor = m_cursorIndex;
+						m_isChanged = true;
+					}
+					else if (m_cursorIndex > 0)
+					{
+						m_text.erase(m_cursorIndex - 1, 1);
+						--m_cursorIndex;
+						m_selectionAnchor = m_cursorIndex;
+						m_isChanged = true;
+					}
+					keyMoveTried = true;
+					m_backspacePressStopwatch.restart();
+				}
+
+				if (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s))
+				{
+					if (m_cursorIndex != m_selectionAnchor)
+					{
+						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
+						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						m_selectionAnchor = m_cursorIndex;
+						m_isChanged = true;
+					}
+					else if (m_cursorIndex < m_text.size())
+					{
+						m_text.erase(m_cursorIndex, 1);
+						m_isChanged = true;
+					}
+					keyMoveTried = true;
+					m_deletePressStopwatch.restart();
+				}
+
+				handleClipboardShortcut();
 			}
 
-			if (KeyRight.down() || (KeyRight.pressedDuration() > 0.4s && m_rightPressStopwatch.elapsed() > 0.03s))
+			// CtrlキーまたはAltキーが押されている場合は通常の文字入力を無視
+			if (!ctrl && !alt)
 			{
-				if (m_selectionAnchor != m_cursorIndex && !shift)
+				for (const auto c : TextInput::GetRawInput())
 				{
-					m_cursorIndex = Max(m_cursorIndex, m_selectionAnchor);
-					m_selectionAnchor = m_cursorIndex;
-				}
-				else if (m_cursorIndex < m_text.size())
-				{
+					if (IsControl(c))
+					{
+						// 制御文字は無視
+						continue;
+					}
+
+					if (m_cursorIndex != m_selectionAnchor)
+					{
+						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
+						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+					}
+					m_text = m_text.substrView(0, m_cursorIndex) + c + m_text.substrView(m_cursorIndex);
 					++m_cursorIndex;
-				}
-				keyMoveTried = true;
-				m_rightPressStopwatch.restart();
-			}
-
-			if (KeyHome.down())
-			{
-				m_cursorIndex = 0;
-				keyMoveTried = true;
-			}
-
-			if (KeyEnd.down())
-			{
-				m_cursorIndex = m_text.size();
-				keyMoveTried = true;
-			}
-
-			if (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s))
-			{
-				if (m_cursorIndex != m_selectionAnchor)
-				{
-					m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-					m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
 					m_selectionAnchor = m_cursorIndex;
 					m_isChanged = true;
 				}
-				else if (m_cursorIndex > 0)
-				{
-					m_text.erase(m_cursorIndex - 1, 1);
-					--m_cursorIndex;
-					m_selectionAnchor = m_cursorIndex;
-					m_isChanged = true;
-				}
-				keyMoveTried = true;
-				m_backspacePressStopwatch.restart();
-			}
-
-			if (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s))
-			{
-				if (m_cursorIndex != m_selectionAnchor)
-				{
-					m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-					m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
-					m_selectionAnchor = m_cursorIndex;
-					m_isChanged = true;
-				}
-				else if (m_cursorIndex < m_text.size())
-				{
-					m_text.erase(m_cursorIndex, 1);
-					m_isChanged = true;
-				}
-				keyMoveTried = true;
-				m_deletePressStopwatch.restart();
-			}
-
-			handleClipboardShortcut();
-
-			for (const auto c : TextInput::GetRawInput())
-			{
-				if (IsControl(c))
-				{
-					// 制御文字は無視
-					continue;
-				}
-
-				if (m_cursorIndex != m_selectionAnchor)
-				{
-					m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-					m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
-				}
-				m_text = m_text.substrView(0, m_cursorIndex) + c + m_text.substrView(m_cursorIndex);
-				++m_cursorIndex;
-				m_selectionAnchor = m_cursorIndex;
-				m_isChanged = true;
 			}
 
 			if (ctrl && !alt && !shift && KeyA.down())
@@ -586,7 +593,7 @@ namespace noco
 		const Vec2& horizontalPadding = m_horizontalPadding.value() * effectScale.x;
 		const Vec2& verticalPadding = m_verticalPadding.value() * effectScale.y;
 
-		// stretchedはtop,rigght,bottom,leftの順
+		// stretchedはtop,right,bottom,leftの順
 		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
@@ -679,7 +686,7 @@ namespace noco
 		m_isDragging = false;
 		node->setSelected(SelectedYN::No);
 		m_selectionAnchor = m_cursorIndex;
-		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == this)
+		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == static_cast<ITextBox*>(this))
 		{
 			detail::s_canvasUpdateContext.editingTextBox.reset();
 		}

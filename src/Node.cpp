@@ -50,6 +50,16 @@ namespace noco
 				}
 				return component;
 			}
+			else if (type == U"TextArea")
+			{
+				auto component = std::make_shared<TextArea>();
+				if (!component->tryReadFromJSON(json))
+				{
+					Logger << U"[NocoUI warning] Failed to read TextArea component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
 			else if (type == U"InputBlocker")
 			{
 				auto component = std::make_shared<InputBlocker>();

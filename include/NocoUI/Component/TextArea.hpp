@@ -5,7 +5,7 @@
 
 namespace noco
 {
-	class TextBox : public SerializableComponentBase, public ITextBox, public std::enable_shared_from_this<TextBox>
+	class TextArea : public SerializableComponentBase, public ITextBox, public std::enable_shared_from_this<TextArea>
 	{
 	private:
 		static constexpr double CursorWidth = 1.5;
@@ -21,25 +21,25 @@ namespace noco
 		/* NonSerialized */ double m_cursorBlinkTime = 0.0;
 		/* NonSerialized */ bool m_isEditing = false;
 		/* NonSerialized */ bool m_isDragging = false;
-		/* NonSerialized */ size_t m_selectionAnchor = 0;
+		/* NonSerialized */ size_t m_selectionAnchorLine = 0;
+		/* NonSerialized */ size_t m_selectionAnchorColumn = 0;
 		/* NonSerialized */ String m_text;
 		/* NonSerialized */ String m_prevText;
-		/* NonSerialized */ size_t m_cursorIndex = 0;
+		/* NonSerialized */ size_t m_cursorLine = 0;
+		/* NonSerialized */ size_t m_cursorColumn = 0;
 		/* NonSerialized */ Stopwatch m_leftPressStopwatch;
 		/* NonSerialized */ Stopwatch m_rightPressStopwatch;
+		/* NonSerialized */ Stopwatch m_upPressStopwatch;
+		/* NonSerialized */ Stopwatch m_downPressStopwatch;
+		/* NonSerialized */ Stopwatch m_pageUpPressStopwatch;
+		/* NonSerialized */ Stopwatch m_pageDownPressStopwatch;
 		/* NonSerialized */ Stopwatch m_backspacePressStopwatch;
 		/* NonSerialized */ Stopwatch m_deletePressStopwatch;
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
-		/* NonSerialized */ size_t m_scrollOffset = 0;
+		/* NonSerialized */ size_t m_scrollOffsetX = 0;
+		/* NonSerialized */ size_t m_scrollOffsetY = 0;
 		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
 		/* NonSerialized */ bool m_isChanged = false;
-
-		enum class FitDirection
-		{
-			Left,
-			Right,
-		};
-		/* NonSerialized */ FitDirection m_fitDirection = FitDirection::Left;
 
 		struct CacheParams
 		{
@@ -62,9 +62,17 @@ namespace noco
 			}
 		};
 
-		struct Cache
+		struct LineCache
 		{
 			Array<Glyph> glyphs;
+			size_t textBeginIndex;
+			size_t textEndIndex;
+			double width = 0.0;
+		};
+
+		struct Cache
+		{
+			Array<LineCache> lines;
 			double scale = 1.0;
 			double lineHeight = 0.0;
 			SizeF regionSize = SizeF::Zero();
@@ -74,18 +82,22 @@ namespace noco
 			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize);
 
 			[[nodiscard]]
-			double getCursorPosX(double drawOffsetX, size_t scrollOffset, size_t cursorIndex) const;
+			Vec2 getCursorPos(size_t line, size_t column, size_t scrollOffsetX, size_t scrollOffsetY) const;
 
 			[[nodiscard]]
-			size_t getCursorIndex(double drawOffsetX, size_t scrollOffset, double cursorPosX) const;
+			std::pair<size_t, size_t> getCursorIndex(const Vec2& pos, size_t scrollOffsetX, size_t scrollOffsetY) const;
+
+			[[nodiscard]]
+			size_t getLineColumnToIndex(size_t line, size_t column) const;
+
+			[[nodiscard]]
+			std::pair<size_t, size_t> getIndexToLineColumn(size_t index) const;
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
 		/* NonSerialized */ mutable Cache m_editingCache;
 
-		double getDrawOffsetX() const;
-
-		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
+		std::pair<size_t, size_t> moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
 
 		bool hasSelection() const;
 
@@ -95,14 +107,20 @@ namespace noco
 
 		void deleteSelection();
 
-		void insertTextAtCursor(StringView text);
+		std::pair<size_t, size_t> insertTextAtCursor(StringView text);
 
-		void handleClipboardShortcut();
+		std::tuple<bool, size_t, size_t> handleShortcut();
 
 		void onDeactivated(const std::shared_ptr<Node>& node);
 
+		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
+
+		size_t getLineCount() const;
+
+		size_t getColumnCount(size_t line) const;
+
 	public:
-		explicit TextBox(
+		explicit TextArea(
 			const PropertyValue<String>& fontAssetName = U"Font14",
 			const PropertyValue<double>& fontSize = 14.0,
 			const PropertyValue<ColorF>& color = Palette::Black,
@@ -110,7 +128,7 @@ namespace noco
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
 			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified)
-			: SerializableComponentBase{ U"TextBox", { &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			: SerializableComponentBase{ U"TextArea", { &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
 			, m_color{ U"color", color }
@@ -124,8 +142,6 @@ namespace noco
 		void updateInput(const std::shared_ptr<Node>& node) override;
 
 		void updateInputInactive(const std::shared_ptr<Node>& node) override;
-
-		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
 
 		void draw(const Node& node) const override;
 

@@ -2094,6 +2094,7 @@ public:
 				MenuItem{ U"Sprite を追加", U"", KeyS, [this] { onClickAddComponent<Sprite>(); } },
 				MenuItem{ U"RectRenderer を追加", U"", KeyR, [this] { onClickAddComponent<RectRenderer>(); } },
 				MenuItem{ U"TextBox を追加", U"", KeyT, [this] { onClickAddComponent<TextBox>(); } },
+				MenuItem{ U"TextArea を追加", U"", KeyA, [this] { onClickAddComponent<TextArea>(); } },
 				MenuItem{ U"Label を追加", U"", KeyL, [this] { onClickAddComponent<Label>(); } },
 				MenuItem{ U"InputBlocker を追加", U"", KeyI, [this] { onClickAddComponent<InputBlocker>(); } },
 				MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },

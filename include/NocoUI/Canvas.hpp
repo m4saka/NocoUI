@@ -4,14 +4,14 @@
 
 namespace noco
 {
-	class TextBox;
+	class ITextBox;
 
 	struct CanvasUpdateContext
 	{
 		bool inputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
-		std::weak_ptr<TextBox> editingTextBox;
+		std::weak_ptr<ITextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
 
 		void clearBeforeUpdateInput()
@@ -104,7 +104,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		inline std::shared_ptr<TextBox> GetEditingTextBox()
+		inline std::shared_ptr<ITextBox> GetEditingTextBox()
 		{
 			return detail::s_canvasUpdateContext.editingTextBox.lock();
 		}
@@ -166,7 +166,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		inline std::shared_ptr<TextBox> GetEditingTextBox()
+		inline std::shared_ptr<ITextBox> GetEditingTextBox()
 		{
 			return detail::s_prevCanvasUpdateContext.editingTextBox.lock();
 		}
@@ -223,7 +223,7 @@ namespace noco
 	}
 
 	[[nodiscard]]
-	inline std::shared_ptr<TextBox> GetEditingTextBox()
+	inline std::shared_ptr<ITextBox> GetEditingTextBox()
 	{
 		if (auto textBox = CurrentFrame::GetEditingTextBox())
 		{
