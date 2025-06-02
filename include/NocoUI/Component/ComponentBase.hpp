@@ -86,11 +86,16 @@ namespace noco
 	{
 	private:
 		String m_type;
+		uint64 m_internalId;
+
+		// ライブラリレベルでのマルチスレッド対応はしないが、atomicにはしておく
+		static inline std::atomic<uint64> s_nextInternalId = 1;
 
 	public:
 		explicit SerializableComponentBase(StringView type, const Array<IProperty*>& properties)
 			: ComponentBase{ properties }
 			, m_type{ type }
+			, m_internalId{ s_nextInternalId++ }
 		{
 		}
 
@@ -105,16 +110,31 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const
 		{
+			return toJSONImpl(detail::IncludesInternalIdYN::No);
+		}
+
+		[[nodiscard]]
+		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+		{
 			JSON json;
 			json[U"type"] = m_type;
 			for (const IProperty* property : properties())
 			{
 				property->appendJSON(json);
 			}
+			if (includesInternalId)
+			{
+				json[U"_internalId"] = m_internalId;
+			}
 			return json;
 		}
 
 		bool tryReadFromJSON(const JSON& json)
+		{
+			return tryReadFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+		}
+
+		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
 		{
 			if (!json.contains(U"type") || json[U"type"].getString() != m_type)
 			{
@@ -124,7 +144,17 @@ namespace noco
 			{
 				property->readFromJSON(json);
 			}
+			if (includesInternalId && json.contains(U"_internalId"))
+			{
+				m_internalId = json[U"_internalId"].get<uint64>();
+			}
 			return true;
+		}
+
+		[[nodiscard]]
+		uint64 internalId() const
+		{
+			return m_internalId;
 		}
 	};
 

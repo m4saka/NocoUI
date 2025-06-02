@@ -26,6 +26,8 @@ namespace noco
 		friend class Canvas;
 
 	private:
+		static inline uint64_t s_nextInternalId = 1;
+		uint64 m_internalId;
 		String m_name;
 		ConstraintVariant m_constraint;
 		TransformEffect m_transformEffect;
@@ -72,8 +74,9 @@ namespace noco
 		/* NonSerialized */ double m_rubberBandAnimationTime = 0.0; // ラバーバンドアニメーション経過時間
 
 		[[nodiscard]]
-		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
-			: m_name{ name }
+		explicit Node(uint64 internalId, StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
+			: m_internalId{ internalId }
+			, m_name{ name }
 			, m_constraint{ constraint }
 			, m_isHitTarget{ isHitTarget }
 			, m_inheritChildrenStateFlags{ inheritChildrenStateFlags }
@@ -150,7 +153,13 @@ namespace noco
 		JSON toJSON() const;
 
 		[[nodiscard]]
+		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const;
+
+		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
+
+		[[nodiscard]]
+		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parent() const;
@@ -188,6 +197,10 @@ namespace noco
 		std::shared_ptr<ComponentBase> addComponentFromJSON(const JSON& json);
 
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index);
+
+		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
+
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInternalIdYN includesInternalId);
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
@@ -531,6 +544,11 @@ namespace noco
 		template <typename TData>
 		[[nodiscard]]	
 		TData getStoredDataOr(const TData& defaultValue) const;
+
+		uint64 internalId() const
+		{
+			return m_internalId;
+		}
 	};
 
 	template <typename TComponent>

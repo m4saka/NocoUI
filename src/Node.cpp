@@ -5,6 +5,97 @@
 
 namespace noco
 {
+	namespace
+	{
+		// 前方宣言
+		std::shared_ptr<ComponentBase> CreateComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
+
+		std::shared_ptr<ComponentBase> CreateComponentFromJSON(const JSON& json)
+		{
+			return CreateComponentFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+		}
+
+		std::shared_ptr<ComponentBase> CreateComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
+		{
+			const auto type = json[U"type"].getString();
+			if (type == U"Label")
+			{
+				auto component = std::make_shared<Label>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read Label component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"Sprite")
+			{
+				auto component = std::make_shared<Sprite>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read Sprite component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"RectRenderer")
+			{
+				auto component = std::make_shared<RectRenderer>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read RectRenderer component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"TextBox")
+			{
+				auto component = std::make_shared<TextBox>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read TextBox component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"InputBlocker")
+			{
+				auto component = std::make_shared<InputBlocker>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read InputBlocker component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"EventTrigger")
+			{
+				auto component = std::make_shared<EventTrigger>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read EventTrigger component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else if (type == U"Placeholder")
+			{
+				auto component = std::make_shared<Placeholder>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read Placeholder component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
+				return nullptr;
+			}
+		}
+	}
+
 	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
@@ -218,7 +309,7 @@ namespace noco
 
 	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
-		return std::shared_ptr<Node>{ new Node{ name, constraint, isHitTarget, inheritChildrenStateFlags } };
+		return std::shared_ptr<Node>{ new Node{ s_nextInternalId++, name, constraint, isHitTarget, inheritChildrenStateFlags } };
 	}
 
 	const ConstraintVariant& Node::constraint() const
@@ -314,10 +405,15 @@ namespace noco
 
 	JSON Node::toJSON() const
 	{
+		return toJSONImpl(detail::IncludesInternalIdYN::No);
+	}
+
+	JSON Node::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+	{
 		Array<JSON> childrenJSON;
 		for (const auto& child : m_children)
 		{
-			childrenJSON.push_back(child->toJSON());
+			childrenJSON.push_back(child->toJSONImpl(includesInternalId));
 		}
 
 		JSON result
@@ -343,11 +439,16 @@ namespace noco
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
 
+		if (includesInternalId)
+		{
+			result[U"_internalId"] = m_internalId;
+		}
+
 		for (const std::shared_ptr<ComponentBase>& component : m_components)
 		{
 			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				result[U"components"].push_back(serializableComponent->toJSON());
+				result[U"components"].push_back(serializableComponent->toJSONImpl(includesInternalId));
 			}
 		}
 
@@ -355,6 +456,11 @@ namespace noco
 	}
 
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
+	{
+		return CreateFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+	}
+
+	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -457,12 +563,16 @@ namespace noco
 		{
 			node->setActive(ActiveYN{ json[U"activeSelf"].getOr<bool>(true) }, RefreshesLayoutYN::No);
 		}
+		if (includesInternalId && json.contains(U"_internalId"))
+		{
+			node->m_internalId = json[U"_internalId"].get<uint64>();
+		}
 
 		if (json.contains(U"components") && json[U"components"].isArray())
 		{
 			for (const auto& componentJSON : json[U"components"].arrayView())
 			{
-				node->addComponentFromJSON(componentJSON);
+				node->addComponentFromJSONImpl(componentJSON, includesInternalId);
 			}
 		}
 
@@ -470,11 +580,13 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				node->addChildFromJSON(childJSON, RefreshesLayoutYN::No);
+				auto child = CreateFromJSONImpl(childJSON, includesInternalId);
+				node->addChild(child, RefreshesLayoutYN::No);
 			}
 		}
 		return node;
 	}
+
 
 	std::shared_ptr<Node> Node::parent() const
 	{
@@ -583,7 +695,17 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
 	{
-		auto component = CreateComponentFromJSON(json);
+		return addComponentFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+	}
+
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
+	{
+		return addComponentAtIndexFromJSONImpl(json, index, detail::IncludesInternalIdYN::No);
+	}
+
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
+	{
+		auto component = CreateComponentFromJSONImpl(json, includesInternalId);
 		if (component)
 		{
 			addComponent(component);
@@ -591,9 +713,9 @@ namespace noco
 		return component;
 	}
 
-	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInternalIdYN includesInternalId)
 	{
-		auto component = CreateComponentFromJSON(json);
+		auto component = CreateComponentFromJSONImpl(json, includesInternalId);
 		if (component)
 		{
 			addComponentAtIndex(component, index);
