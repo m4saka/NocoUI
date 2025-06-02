@@ -248,7 +248,7 @@ namespace noco
 
 	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
-		return std::shared_ptr<Node>{ new Node{ name, constraint, isHitTarget, inheritChildrenStateFlags } };
+		return std::shared_ptr<Node>{ new Node{ s_nextInternalId++, name, constraint, isHitTarget, inheritChildrenStateFlags } };
 	}
 
 	const ConstraintVariant& Node::constraint() const

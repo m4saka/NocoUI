@@ -26,6 +26,8 @@ namespace noco
 		friend class Canvas;
 
 	private:
+		static inline uint64_t s_nextInternalId = 1;
+		uint64 m_internalId;
 		String m_name;
 		ConstraintVariant m_constraint;
 		TransformEffect m_transformEffect;
@@ -58,8 +60,9 @@ namespace noco
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 
 		[[nodiscard]]
-		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
-			: m_name{ name }
+		explicit Node(uint64 internalId, StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
+			: m_internalId{ internalId }
+			, m_name{ name }
 			, m_constraint{ constraint }
 			, m_isHitTarget{ isHitTarget }
 			, m_inheritChildrenStateFlags{ inheritChildrenStateFlags }
@@ -508,6 +511,11 @@ namespace noco
 		template <typename TData>
 		[[nodiscard]]	
 		TData getStoredDataOr(const TData& defaultValue) const;
+
+		uint64 internalId() const
+		{
+			return m_internalId;
+		}
 	};
 
 	template <typename TComponent>
