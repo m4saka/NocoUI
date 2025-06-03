@@ -85,7 +85,7 @@ namespace noco
 		explicit Label(
 			const PropertyValue<String>& text = U"",
 			const PropertyValue<String>& fontAssetName = U"",
-			const PropertyValue<double>& fontSize = 12.0,
+			const PropertyValue<double>& fontSize = 24.0,
 			const PropertyValue<ColorF>& color = Palette::White,
 			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Left,
 			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Top,

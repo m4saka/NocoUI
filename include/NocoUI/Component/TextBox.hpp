@@ -104,8 +104,8 @@ namespace noco
 
 	public:
 		explicit TextBox(
-			const PropertyValue<String>& fontAssetName = U"Font14",
-			const PropertyValue<double>& fontSize = 14.0,
+			const PropertyValue<String>& fontAssetName = U"",
+			const PropertyValue<double>& fontSize = 24.0,
 			const PropertyValue<ColorF>& color = Palette::Black,
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
