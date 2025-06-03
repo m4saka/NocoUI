@@ -32,6 +32,7 @@ namespace noco
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
 		/* NonSerialized */ size_t m_scrollOffset = 0;
 		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
+		/* NonSerialized */ bool m_prevEditingTextExists = false;
 		/* NonSerialized */ bool m_isChanged = false;
 
 		enum class FitDirection

@@ -40,6 +40,7 @@ namespace noco
 		/* NonSerialized */ size_t m_scrollOffsetY = 0;
 		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
 		/* NonSerialized */ bool m_isChanged = false;
+		/* NonSerialized */ bool m_prevEditingTextExists = false;
 
 		struct CacheParams
 		{

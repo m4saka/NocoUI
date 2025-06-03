@@ -548,7 +548,8 @@ namespace noco
 			bool keyMoveTried = false;
 			bool shortcutActionTried = false;
 
-			if (TextInput::GetEditingText().empty()) // 未変換テキストがある場合はテキスト編集・カーソル移動しない
+			const bool editingTextExists = !TextInput::GetEditingText().empty();
+			if (!m_prevEditingTextExists && !editingTextExists) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)
 			{
 				if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
 				{
@@ -813,6 +814,12 @@ namespace noco
 			{
 				m_cursorBlinkTime -= 1.0;
 			}
+
+			m_prevEditingTextExists = editingTextExists;
+		}
+		else
+		{
+			m_prevEditingTextExists = false;
 		}
 
 		if (m_text != m_prevText)
@@ -829,6 +836,7 @@ namespace noco
 			onDeactivated(node);
 			m_prevActiveInHierarchy = false;
 		}
+		m_prevEditingTextExists = false;
 	}
 
 	void TextArea::draw(const Node& node) const
