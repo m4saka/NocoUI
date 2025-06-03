@@ -138,6 +138,9 @@
     <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\InputBlocker.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Component\TextArea.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -567,6 +570,12 @@
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\InputBlocker.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\TextArea.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\ITextBox.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>
