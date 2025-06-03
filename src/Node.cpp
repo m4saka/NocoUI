@@ -98,89 +98,89 @@ namespace noco
 		}
 	}
 
-	InteractState Node::updateForCurrentInteractState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
+	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
-		InteractState inheritedInteractState = InteractState::Default;
+		InteractionState inheritedInteractionState = InteractionState::Default;
 		bool inheritedIsClicked = false;
 		if (m_inheritChildrenStateFlags != InheritChildrenStateFlags::None)
 		{
 			for (const auto& child : m_children)
 			{
-				InteractState childInteractState = child->updateForCurrentInteractState(hoveredNode, interactable);
+				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable);
 				if (interactable)
 				{
-					if (!inheritsChildrenPressedState() && childInteractState == InteractState::Pressed)
+					if (!inheritsChildrenPressedState() && childInteractionState == InteractionState::Pressed)
 					{
-						childInteractState = InteractState::Hovered;
+						childInteractionState = InteractionState::Hovered;
 					}
-					if (!inheritsChildrenHoveredState() && childInteractState == InteractState::Hovered)
+					if (!inheritsChildrenHoveredState() && childInteractionState == InteractionState::Hovered)
 					{
-						childInteractState = InteractState::Default;
+						childInteractionState = InteractionState::Default;
 					}
 					if (inheritsChildrenPressedState() && child->isClicked())
 					{
 						inheritedIsClicked = true;
 					}
-					inheritedInteractState = ApplyOtherInteractState(inheritedInteractState, childInteractState, AppliesDisabledStateYN::No);
+					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, AppliesDisabledStateYN::No);
 				}
 			}
 		}
 		if (interactable)
 		{
 			const bool onClientRect = Cursor::OnClientRect();
-			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
-			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
 			m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed);
-			return ApplyOtherInteractState(m_mouseLTracker.interactStateSelf(), inheritedInteractState);
+			return ApplyOtherInteractionState(m_mouseLTracker.interactionStateSelf(), inheritedInteractionState);
 		}
 		else
 		{
 			m_mouseLTracker.update(false, false);
-			return InteractState::Disabled;
+			return InteractionState::Disabled;
 		}
 	}
 
-	InteractState Node::updateForCurrentInteractStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
+	InteractionState Node::updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
-		InteractState inheritedInteractState = InteractState::Default;
+		InteractionState inheritedInteractionState = InteractionState::Default;
 		bool inheritedIsRightClicked = false;
 		if (m_inheritChildrenStateFlags != InheritChildrenStateFlags::None)
 		{
 			for (const auto& child : m_children)
 			{
-				InteractState childInteractState = child->updateForCurrentInteractStateRight(hoveredNode, interactable);
+				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable);
 				if (interactable)
 				{
-					if (!inheritsChildrenPressedState() && childInteractState == InteractState::Pressed)
+					if (!inheritsChildrenPressedState() && childInteractionState == InteractionState::Pressed)
 					{
-						childInteractState = InteractState::Hovered;
+						childInteractionState = InteractionState::Hovered;
 					}
-					if (!inheritsChildrenHoveredState() && childInteractState == InteractState::Hovered)
+					if (!inheritsChildrenHoveredState() && childInteractionState == InteractionState::Hovered)
 					{
-						childInteractState = InteractState::Default;
+						childInteractionState = InteractionState::Default;
 					}
 					if (inheritsChildrenPressedState() && child->isRightClicked())
 					{
 						inheritedIsRightClicked = true;
 					}
-					inheritedInteractState = ApplyOtherInteractState(inheritedInteractState, childInteractState, AppliesDisabledStateYN::No);
+					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, AppliesDisabledStateYN::No);
 				}
 			}
 		}
 		if (interactable)
 		{
 			const bool onClientRect = Cursor::OnClientRect();
-			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractState == InteractState::Hovered || inheritedInteractState == InteractState::Pressed)));
-			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractState == InteractState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
 			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed);
-			return ApplyOtherInteractState(m_mouseRTracker.interactStateSelf(), inheritedInteractState);
+			return ApplyOtherInteractionState(m_mouseRTracker.interactionStateSelf(), inheritedInteractionState);
 		}
 		else
 		{
 			m_mouseRTracker.update(false, false);
-			return InteractState::Disabled;
+			return InteractionState::Disabled;
 		}
 	}
 
@@ -1053,31 +1053,31 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight)
+	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight)
 	{
-		// updateInteractStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
+		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
 		const auto thisNode = shared_from_this();
 
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
-		m_currentInteractState = updateForCurrentInteractState(hoveredNode, parentInteractable);
-		m_currentInteractStateRight = updateForCurrentInteractStateRight(hoveredNode, parentInteractable);
+		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable);
+		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable);
 		if (!m_isHitTarget)
 		{
-			// HitTargetでない場合は親のinteractStateを引き継ぐ
-			m_currentInteractState = ApplyOtherInteractState(m_currentInteractState, parentInteractState);
-			m_currentInteractStateRight = ApplyOtherInteractState(m_currentInteractStateRight, parentInteractStateRight);
+			// HitTargetでない場合は親のinteractionStateを引き継ぐ
+			m_currentInteractionState = ApplyOtherInteractionState(m_currentInteractionState, parentInteractionState);
+			m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
 		}
 
 		if (!m_children.empty())
 		{
-			// 子ノードのupdateInteractState実行
+			// 子ノードのupdateInteractionState実行
 			const InteractableYN interactable{ m_interactable && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateInteractState(hoveredNode, deltaTime, interactable, m_currentInteractState, m_currentInteractStateRight);
+				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight);
 			}
 		}
 	}
@@ -1154,7 +1154,7 @@ namespace noco
 
 		if (m_activeInHierarchy)
 		{
-			m_transformEffect.update(m_currentInteractState, m_selected, deltaTime);
+			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
 			refreshEffectedRect(parentEffectMat, parentEffectScale);
 		}
 
@@ -1248,7 +1248,7 @@ namespace noco
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractState, m_selected, deltaTime);
+			component->updateProperties(m_currentInteractionState, m_selected, deltaTime);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -1728,14 +1728,14 @@ namespace noco
 		setClippingEnabled(ClippingEnabledYN{ clippingEnabled });
 	}
 
-	InteractState Node::interactStateSelf() const
+	InteractionState Node::interactionStateSelf() const
 	{
-		return m_mouseLTracker.interactStateSelf();
+		return m_mouseLTracker.interactionStateSelf();
 	}
 
-	InteractState Node::currentInteractState() const
+	InteractionState Node::currentInteractionState() const
 	{
-		return m_currentInteractState;
+		return m_currentInteractionState;
 	}
 
 	SelectedYN Node::selected() const

@@ -51,11 +51,11 @@ namespace noco
 		{
 		}
 
-		void updateProperties(InteractState interactState, SelectedYN selected, double deltaTime)
+		void updateProperties(InteractionState interactionState, SelectedYN selected, double deltaTime)
 		{
 			for (IProperty* property : m_properties)
 			{
-				property->update(interactState, selected, deltaTime);
+				property->update(interactionState, selected, deltaTime);
 			}
 		}
 

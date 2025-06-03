@@ -31,7 +31,7 @@ namespace noco
 	namespace detail
 	{
 		inline int32 s_lastCopiedCanvasUpdateContextToPrevFrameCount = -1;
-		inline int32 s_lastUpdateInteractStateFrameCount = -1;
+		inline int32 s_lastUpdateInteractionStateFrameCount = -1;
 		inline int32 s_lastUpdateInputFrameCount = -1;
 		inline int32 s_lastUpdateFrameCount = -1;
 		inline CanvasUpdateContext s_canvasUpdateContext;

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "YN.hpp"
-#include "InteractState.hpp"
+#include "InteractionState.hpp"
 #include "Serialization.hpp"
 
 namespace noco
@@ -45,19 +45,19 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const T& value(InteractState interactState, SelectedYN selected) const
+		const T& value(InteractionState interactionState, SelectedYN selected) const
 		{
 			if (selected)
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					if (selectedDefaultValue)
 					{
 						return *selectedDefaultValue;
 					}
 					break;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					if (selectedHoveredValue)
 					{
 						return *selectedHoveredValue;
@@ -67,7 +67,7 @@ namespace noco
 						return *selectedDefaultValue;
 					}
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					if (selectedPressedValue)
 					{
 						return *selectedPressedValue;
@@ -81,7 +81,7 @@ namespace noco
 						return *selectedDefaultValue;
 					}
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					if (selectedDisabledValue)
 					{
 						return *selectedDisabledValue;
@@ -90,17 +90,17 @@ namespace noco
 				}
 			}
 
-			switch (interactState)
+			switch (interactionState)
 			{
-			case InteractState::Default:
+			case InteractionState::Default:
 				break;
-			case InteractState::Hovered:
+			case InteractionState::Hovered:
 				if (hoveredValue)
 				{
 					return *hoveredValue;
 				}
 				break;
-			case InteractState::Pressed:
+			case InteractionState::Pressed:
 				if (pressedValue)
 				{
 					return *pressedValue;
@@ -110,7 +110,7 @@ namespace noco
 					return *hoveredValue;
 				}
 				break;
-			case InteractState::Disabled:
+			case InteractionState::Disabled:
 				if (disabledValue)
 				{
 					return *disabledValue;
@@ -490,7 +490,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> getValueStringOf(InteractState interactState, SelectedYN selected) const
+		Optional<String> getValueStringOf(InteractionState interactionState, SelectedYN selected) const
 		{
 			const auto fnGetStr = [](const T& value)
 				{
@@ -506,27 +506,27 @@ namespace noco
 
 			if (selected)
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					if (selectedDefaultValue)
 					{
 						return fnGetStr(*selectedDefaultValue);
 					}
 					break;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					if (selectedHoveredValue)
 					{
 						return fnGetStr(*selectedHoveredValue);
 					}
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					if (selectedPressedValue)
 					{
 						return fnGetStr(*selectedPressedValue);
 					}
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					if (selectedDisabledValue)
 					{
 						return fnGetStr(*selectedDisabledValue);
@@ -536,23 +536,23 @@ namespace noco
 			}
 			else
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					return fnGetStr(defaultValue);
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					if (hoveredValue)
 					{
 						return fnGetStr(*hoveredValue);
 					}
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					if (pressedValue)
 					{
 						return fnGetStr(*pressedValue);
 					}
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					if (disabledValue)
 					{
 						return fnGetStr(*disabledValue);
@@ -564,9 +564,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String getValueStringOfFallback(InteractState interactState, SelectedYN selected) const
+		String getValueStringOfFallback(InteractionState interactionState, SelectedYN selected) const
 		{
-			const T v = value(interactState, selected);
+			const T v = value(interactionState, selected);
 			if constexpr (std::is_enum_v<T>)
 			{
 				return EnumToString(v);
@@ -596,34 +596,34 @@ namespace noco
 			return true;
 		}
 
-		bool trySetValueStringOf(StringView value, InteractState interactState, SelectedYN selected)
+		bool trySetValueStringOf(StringView value, InteractionState interactionState, SelectedYN selected)
 		{
 			if (selected)
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						selectedDefaultValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						selectedHoveredValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						selectedPressedValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						selectedDisabledValue = *parsedValue;
@@ -634,30 +634,30 @@ namespace noco
 			}
 			else
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						defaultValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						hoveredValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						pressedValue = *parsedValue;
 						return true;
 					}
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					if (const Optional<T> parsedValue = StringToValueOpt<T>(value))
 					{
 						disabledValue = *parsedValue;
@@ -669,39 +669,39 @@ namespace noco
 			return false;
 		}
 
-		bool tryUnsetValueOf(InteractState interactState, SelectedYN selected)
+		bool tryUnsetValueOf(InteractionState interactionState, SelectedYN selected)
 		{
 			if (selected)
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					selectedDefaultValue = none;
 					return true;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					selectedHoveredValue = none;
 					return true;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					selectedPressedValue = none;
 					return true;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					selectedDisabledValue = none;
 					return true;
 				}
 			}
 			else
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					return false;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					hoveredValue = none;
 					return true;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					pressedValue = none;
 					return true;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					disabledValue = none;
 					return true;
 				}
@@ -710,33 +710,33 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool hasValueOf(InteractState interactState, SelectedYN selected) const
+		bool hasValueOf(InteractionState interactionState, SelectedYN selected) const
 		{
 			if (selected)
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					return selectedDefaultValue.has_value();
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					return selectedHoveredValue.has_value();
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					return selectedPressedValue.has_value();
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					return selectedDisabledValue.has_value();
 				}
 			}
 			else
 			{
-				switch (interactState)
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					return true;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					return hoveredValue.has_value();
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					return pressedValue.has_value();
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					return disabledValue.has_value();
 				}
 			}

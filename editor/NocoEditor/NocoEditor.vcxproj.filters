@@ -455,7 +455,7 @@
     <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp">
       <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI\InteractState.hpp">
+    <ClInclude Include="..\..\include\NocoUI\InteractionState.hpp">
       <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\LRTB.hpp">

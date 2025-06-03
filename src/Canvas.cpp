@@ -244,7 +244,7 @@ namespace noco
 		}
 
 		// ノード更新
-		m_rootNode->updateInteractState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractState::Default, InteractState::Default);
+		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default);
 		m_rootNode->updateInput();
 		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale);
 		m_rootNode->lateUpdate();

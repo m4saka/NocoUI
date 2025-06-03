@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "Anchor.hpp"
-#include "InteractState.hpp"
+#include "InteractionState.hpp"
 #include "PropertyValue.hpp"
 #include "Property.hpp"
 
@@ -76,11 +76,11 @@ namespace noco
 			m_pivot.setPropertyValue(pivot);
 		}
 
-		void update(InteractState interactState, SelectedYN selected, double deltaTime)
+		void update(InteractionState interactionState, SelectedYN selected, double deltaTime)
 		{
-			m_position.update(interactState, selected, deltaTime);
-			m_scale.update(interactState, selected, deltaTime);
-			m_pivot.update(interactState, selected, deltaTime);
+			m_position.update(interactionState, selected, deltaTime);
+			m_scale.update(interactionState, selected, deltaTime);
+			m_pivot.update(interactionState, selected, deltaTime);
 		}
 
 		[[nodiscard]]

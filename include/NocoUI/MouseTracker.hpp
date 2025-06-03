@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "YN.hpp"
-#include "InteractState.hpp"
+#include "InteractionState.hpp"
 
 namespace noco
 {
@@ -138,28 +138,28 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		InteractState interactStateSelf() const
+		InteractionState interactionStateSelf() const
 		{
 			if (!m_interactable)
 			{
-				return InteractState::Disabled;
+				return InteractionState::Disabled;
 			}
 
 			if (m_mouseOverForHovered)
 			{
 				if (m_isPressed)
 				{
-					return InteractState::Pressed;
+					return InteractionState::Pressed;
 				}
 				else if (m_input.pressed())
 				{
 					// 領域外でクリック開始された場合のマウスオーバーはマウスオーバー扱いにしない
-					return InteractState::Default;
+					return InteractionState::Default;
 				}
-				return InteractState::Hovered;
+				return InteractionState::Hovered;
 			}
 
-			return InteractState::Default;
+			return InteractionState::Default;
 		}
 	};
 }

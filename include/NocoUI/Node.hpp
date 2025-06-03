@@ -5,7 +5,7 @@
 #include "Property.hpp"
 #include "InheritChildrenStateFlags.hpp"
 #include "ScrollableAxisFlags.hpp"
-#include "InteractState.hpp"
+#include "InteractionState.hpp"
 #include "MouseTracker.hpp"
 #include "TransformEffect.hpp"
 #include "Constraint/Constraint.hpp"
@@ -50,8 +50,8 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
 		/* NonSerialized */ SelectedYN m_selected = SelectedYN::No;
-		/* NonSerialized */ InteractState m_currentInteractState = InteractState::Default;
-		/* NonSerialized */ InteractState m_currentInteractStateRight = InteractState::Default;
+		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
+		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
 		/* NonSerialized */ bool m_rightClickRequested = false;
 		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
@@ -69,10 +69,10 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		InteractState updateForCurrentInteractState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable);
+		InteractionState updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable);
 
 		[[nodiscard]]
-		InteractState updateForCurrentInteractStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable);
+		InteractionState updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable);
 
 		void refreshActiveInHierarchy();
 
@@ -259,7 +259,7 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
 
-		void updateInteractState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractState parentInteractState, InteractState parentInteractStateRight);
+		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight);
 
 		void updateInput();
 
@@ -373,10 +373,10 @@ namespace noco
 		void setClippingEnabled(bool clippingEnabled);
 
 		[[nodiscard]]
-		InteractState interactStateSelf() const;
+		InteractionState interactionStateSelf() const;
 
 		[[nodiscard]]
-		InteractState currentInteractState() const;
+		InteractionState currentInteractionState() const;
 
 		[[nodiscard]]
 		SelectedYN selected() const;

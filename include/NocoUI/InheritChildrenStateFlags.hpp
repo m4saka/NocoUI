@@ -3,7 +3,7 @@
 
 namespace noco
 {
-	// 子ノードのInteractStateを継承するかどうかのビットフラグ
+	// 子ノードのInteractionStateを継承するかどうかのビットフラグ
 	enum class InheritChildrenStateFlags : uint8
 	{
 		None = 0,

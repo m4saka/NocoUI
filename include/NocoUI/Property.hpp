@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "PropertyValue.hpp"
-#include "InteractState.hpp"
+#include "InteractionState.hpp"
 #include "YN.hpp"
 #include "Smoothing.hpp"
 #include "LRTB.hpp"
@@ -23,16 +23,16 @@ namespace noco
 	public:
 		virtual ~IProperty() = default;
 		virtual StringView name() const = 0;
-		virtual void update(InteractState interactState, SelectedYN selected, double deltaTime) = 0;
+		virtual void update(InteractionState interactionState, SelectedYN selected, double deltaTime) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueStringOfDefault() const = 0;
-		virtual Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const = 0;
-		virtual String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const = 0;
+		virtual Optional<String> propertyValueStringOf(InteractionState interactionState, SelectedYN selected) const = 0;
+		virtual String propertyValueStringOfFallback(InteractionState interactionState, SelectedYN selected) const = 0;
 		virtual bool trySetPropertyValueString(StringView value) = 0;
-		virtual bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) = 0;
-		virtual bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) = 0;
-		virtual bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const = 0;
+		virtual bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, SelectedYN selected) = 0;
+		virtual bool tryUnsetPropertyValueOf(InteractionState interactionState, SelectedYN selected) = 0;
+		virtual bool hasPropertyValueOf(InteractionState interactionState, SelectedYN selected) const = 0;
 		virtual PropertyEditType editType() const = 0;
 		virtual Array<String> enumCandidates() const
 		{
@@ -84,7 +84,7 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
-		/*NonSerialized*/ InteractState m_interactState = InteractState::Default;
+		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ SelectedYN m_selected = SelectedYN::No;
 
 	public:
@@ -120,9 +120,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const T& propertyValue(InteractState interactState, SelectedYN selected) const
+		const T& propertyValue(InteractionState interactionState, SelectedYN selected) const
 		{
-			return m_propertyValue.value(interactState, selected);
+			return m_propertyValue.value(interactionState, selected);
 		}
 
 		void setPropertyValue(const PropertyValue<T>& propertyValue)
@@ -133,12 +133,12 @@ namespace noco
 		[[nodiscard]]
 		const T& value() const
 		{
-			return m_propertyValue.value(m_interactState, m_selected);
+			return m_propertyValue.value(m_interactionState, m_selected);
 		}
 
-		void update(InteractState interactState, SelectedYN selected, double) override
+		void update(InteractionState interactionState, SelectedYN selected, double) override
 		{
-			m_interactState = interactState;
+			m_interactionState = interactionState;
 			m_selected = selected;
 		}
 
@@ -163,15 +163,15 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
+		Optional<String> propertyValueStringOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.getValueStringOf(interactState, selected);
+			return m_propertyValue.getValueStringOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const override
+		String propertyValueStringOfFallback(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.getValueStringOfFallback(interactState, selected);
+			return m_propertyValue.getValueStringOfFallback(interactionState, selected);
 		}
 
 		bool trySetPropertyValueString(StringView value) override
@@ -179,20 +179,20 @@ namespace noco
 			return m_propertyValue.trySetValueString(value);
 		}
 
-		bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) override
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, SelectedYN selected) override
 		{
-			return m_propertyValue.trySetValueStringOf(value, interactState, selected);
+			return m_propertyValue.trySetValueStringOf(value, interactionState, selected);
 		}
 
-		bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) override
+		bool tryUnsetPropertyValueOf(InteractionState interactionState, SelectedYN selected) override
 		{
-			return m_propertyValue.tryUnsetValueOf(interactState, selected);
+			return m_propertyValue.tryUnsetValueOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		bool hasPropertyValueOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.hasValueOf(interactState, selected);
+			return m_propertyValue.hasValueOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
@@ -261,7 +261,7 @@ namespace noco
 		SmoothProperty(const char32_t* name, const PropertyValue<T>& propertyValue)
 			: m_name{ name }
 			, m_propertyValue{ propertyValue }
-			, m_smoothing{ propertyValue.value(InteractState::Default, SelectedYN::No) }
+			, m_smoothing{ propertyValue.value(InteractionState::Default, SelectedYN::No) }
 		{
 		}
 
@@ -286,9 +286,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const T& propertyValue(InteractState interactState, SelectedYN selected) const
+		const T& propertyValue(InteractionState interactionState, SelectedYN selected) const
 		{
-			return m_propertyValue.value(interactState, selected);
+			return m_propertyValue.value(interactionState, selected);
 		}
 
 		void setPropertyValue(const PropertyValue<T>& propertyValue)
@@ -302,9 +302,9 @@ namespace noco
 			return m_smoothing.currentValue();
 		}
 
-		void update(InteractState interactState, SelectedYN selected, double deltaTime) override
+		void update(InteractionState interactionState, SelectedYN selected, double deltaTime) override
 		{
-			m_smoothing.update(m_propertyValue.value(interactState, selected), m_propertyValue.smoothTime, deltaTime);
+			m_smoothing.update(m_propertyValue.value(interactionState, selected), m_propertyValue.smoothTime, deltaTime);
 		}
 
 		void appendJSON(JSON& json) const override
@@ -319,7 +319,7 @@ namespace noco
 				return;
 			}
 			m_propertyValue = PropertyValue<T>::fromJSON(json[m_name]);
-			m_smoothing = Smoothing<T>{ m_propertyValue.value(InteractState::Default, SelectedYN::No) };
+			m_smoothing = Smoothing<T>{ m_propertyValue.value(InteractionState::Default, SelectedYN::No) };
 		}
 
 		[[nodiscard]]
@@ -329,15 +329,15 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
+		Optional<String> propertyValueStringOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.getValueStringOf(interactState, selected);
+			return m_propertyValue.getValueStringOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState interactState, SelectedYN selected) const override
+		String propertyValueStringOfFallback(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.getValueStringOfFallback(interactState, selected);
+			return m_propertyValue.getValueStringOfFallback(interactionState, selected);
 		}
 
 		bool trySetPropertyValueString(StringView value) override
@@ -345,20 +345,20 @@ namespace noco
 			return m_propertyValue.trySetValueString(value);
 		}
 
-		bool trySetPropertyValueStringOf(StringView value, InteractState interactState, SelectedYN selected) override
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, SelectedYN selected) override
 		{
-			return m_propertyValue.trySetValueStringOf(value, interactState, selected);
+			return m_propertyValue.trySetValueStringOf(value, interactionState, selected);
 		}
 
-		bool tryUnsetPropertyValueOf(InteractState interactState, SelectedYN selected) override
+		bool tryUnsetPropertyValueOf(InteractionState interactionState, SelectedYN selected) override
 		{
-			return m_propertyValue.tryUnsetValueOf(interactState, selected);
+			return m_propertyValue.tryUnsetValueOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		bool hasPropertyValueOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			return m_propertyValue.hasValueOf(interactState, selected);
+			return m_propertyValue.hasValueOf(interactionState, selected);
 		}
 
 		[[nodiscard]]
@@ -425,7 +425,7 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
-		/*NonSerialized*/ InteractState m_interactState = InteractState::Default;
+		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ SelectedYN m_selected = SelectedYN::No;
 
 	public:
@@ -465,7 +465,7 @@ namespace noco
 			return m_value;
 		}
 
-		void update(InteractState, SelectedYN, double) override
+		void update(InteractionState, SelectedYN, double) override
 		{
 		}
 
@@ -510,9 +510,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> propertyValueStringOf(InteractState interactState, SelectedYN selected) const override
+		Optional<String> propertyValueStringOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			if (interactState == InteractState::Default && selected == SelectedYN::No)
+			if (interactionState == InteractionState::Default && selected == SelectedYN::No)
 			{
 				return propertyValueStringOfDefault();
 			}
@@ -523,7 +523,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String propertyValueStringOfFallback(InteractState, SelectedYN) const override
+		String propertyValueStringOfFallback(InteractionState, SelectedYN) const override
 		{
 			return propertyValueStringOfDefault();
 		}
@@ -541,20 +541,20 @@ namespace noco
 			}
 		}
 
-		bool trySetPropertyValueStringOf(StringView, InteractState, SelectedYN) override
+		bool trySetPropertyValueStringOf(StringView, InteractionState, SelectedYN) override
 		{
 			throw Error{ U"trySetPropertyValueStringOf() called for non-interactive property" };
 		}
 
-		bool tryUnsetPropertyValueOf(InteractState, SelectedYN) override
+		bool tryUnsetPropertyValueOf(InteractionState, SelectedYN) override
 		{
 			return false;
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractState interactState, SelectedYN selected) const override
+		bool hasPropertyValueOf(InteractionState interactionState, SelectedYN selected) const override
 		{
-			if (interactState == InteractState::Default && selected == SelectedYN::No)
+			if (interactionState == InteractionState::Default && selected == SelectedYN::No)
 			{
 				return true;
 			}

@@ -1547,23 +1547,23 @@ public:
 
 			if (element.node()->isHitTarget())
 			{
-				const InteractState interactState = element.node()->currentInteractState();
-				switch (interactState)
+				const InteractionState interactionState = element.node()->currentInteractionState();
+				switch (interactionState)
 				{
-				case InteractState::Default:
+				case InteractionState::Default:
 					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected]" : U"[Default]");
 					break;
-				case InteractState::Hovered:
+				case InteractionState::Hovered:
 					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Hovered]" : U"[Hovered]");
 					break;
-				case InteractState::Pressed:
+				case InteractionState::Pressed:
 					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Pressed]" : U"[Pressed]");
 					break;
-				case InteractState::Disabled:
+				case InteractionState::Disabled:
 					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Disabled]" : U"[Disabled]");
 					break;
 				default:
-					throw Error{ U"Invalid InteractState: {}"_fmt(static_cast<std::underlying_type_t<InteractState>>(interactState)) };
+					throw Error{ U"Invalid InteractionState: {}"_fmt(static_cast<std::underlying_type_t<InteractionState>>(interactionState)) };
 				}
 			}
 			else
@@ -4265,9 +4265,9 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 
 	for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
 	{
-		for (const auto interactState : { InteractState::Default, InteractState::Hovered, InteractState::Pressed, InteractState::Disabled })
+		for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 		{
-			const String headingText = EnumToString(interactState) + (selected.yesNo ? U" & Selected" : U"");
+			const String headingText = EnumToString(interactionState) + (selected.yesNo ? U" & Selected" : U"");
 
 			const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",
@@ -4285,7 +4285,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					.sizeDelta = SizeF{ 8, 0 },
 				});
 			propertyNode->setBoxChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
-			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactState, selected));
+			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, selected));
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
 			{
@@ -4293,10 +4293,10 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreatePropertyNode(
 						headingText,
-						m_pProperty->propertyValueStringOfFallback(interactState, selected),
-						[this, interactState, selected, currentValueString](StringView value)
+						m_pProperty->propertyValueStringOfFallback(interactionState, selected),
+						[this, interactionState, selected, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, selected))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -4311,11 +4311,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateBoolPropertyNode(
 						headingText,
-						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactState, selected), false),
-						[this, interactState, selected, currentValueString](bool value)
+						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), false),
+						[this, interactionState, selected, currentValueString](bool value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -4330,11 +4330,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateVec2PropertyNode(
 						headingText,
-						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactState, selected), Vec2{ 0, 0 }),
-						[this, interactState, selected, currentValueString](const Vec2& value)
+						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), Vec2{ 0, 0 }),
+						[this, interactionState, selected, currentValueString](const Vec2& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -4349,11 +4349,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateColorPropertyNode(
 						headingText,
-						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactState, selected), ColorF{ 0, 0, 0, 1 }),
-						[this, interactState, selected, currentValueString](const ColorF& value)
+						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), ColorF{ 0, 0, 0, 1 }),
+						[this, interactionState, selected, currentValueString](const ColorF& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -4368,11 +4368,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateLRTBPropertyNode(
 						headingText,
-						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactState, selected), LRTB{ 0, 0, 0, 0 }),
-						[this, interactState, selected, currentValueString](const LRTB& value)
+						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), LRTB{ 0, 0, 0, 0 }),
+						[this, interactionState, selected, currentValueString](const LRTB& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -4387,10 +4387,10 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateEnumPropertyNode(
 						headingText,
-						m_pProperty->propertyValueStringOfFallback(interactState, selected),
-						[this, interactState, selected, currentValueString](StringView value)
+						m_pProperty->propertyValueStringOfFallback(interactionState, selected),
+						[this, interactionState, selected, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, selected))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -4409,12 +4409,12 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				throw Error{ U"Property value node is nullptr" };
 			}
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
-				m_pProperty->hasPropertyValueOf(interactState, selected),
-				[this, interactState, selected, propertyValueNode, currentValueString](bool value)
+				m_pProperty->hasPropertyValueOf(interactionState, selected),
+				[this, interactionState, selected, propertyValueNode, currentValueString](bool value)
 				{
 					if (value)
 					{
-						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactState, selected))
+						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, selected))
 						{
 							propertyValueNode->setInteractable(true);
 							if (m_onChange)
@@ -4425,7 +4425,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					}
 					else
 					{
-						if (m_pProperty->tryUnsetPropertyValueOf(interactState, selected))
+						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, selected))
 						{
 							propertyValueNode->setInteractable(false);
 							if (m_onChange)
@@ -4437,8 +4437,8 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				}),
 				0,
 				RefreshesLayoutYN::No);
-			checkboxNode->setInteractable(interactState != InteractState::Default || selected.yesNo); // Defaultは必ず存在するのでチェックボックスは無効
-			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactState, selected));
+			checkboxNode->setInteractable(interactionState != InteractionState::Default || selected.yesNo); // Defaultは必ず存在するのでチェックボックスは無効
+			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, selected));
 			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		}
 	}
