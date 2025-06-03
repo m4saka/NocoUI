@@ -11,7 +11,7 @@ namespace noco
 	private:
 		PropertyNonInteractive<String> m_tag;
 		PropertyNonInteractive<TriggerType> m_triggerType;
-		PropertyNonInteractive<bool> m_isRecursive;
+		PropertyNonInteractive<bool> m_childrenTriggerEnabled;
 
 		// Hoveredのみ初期値はfalseとする
 		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他triggerTypeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)
@@ -22,10 +22,10 @@ namespace noco
 
 	public:
 		explicit EventTrigger(StringView tag = U"")
-			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_isRecursive } }
+			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_childrenTriggerEnabled } }
 			, m_tag{ U"tag", tag }
 			, m_triggerType{ U"triggerType", TriggerType::Click }
-			, m_isRecursive{ U"isRecursive", false }
+			, m_childrenTriggerEnabled{ U"childrenTriggerEnabled", false }
 		{
 		}
 
@@ -39,11 +39,11 @@ namespace noco
 			}
 
 			const auto triggerType = m_triggerType.value();
-			const bool isRecursive = m_isRecursive.value();
+			const bool childrenTriggerEnabled = m_childrenTriggerEnabled.value();
 			switch (triggerType)
 			{
 			case TriggerType::Click:
-				if (isRecursive ? node->isClickedRecursive() : node->isClicked())
+				if (childrenTriggerEnabled ? node->isClickedRecursive() : node->isClicked())
 				{
 					canvas->fireEvent(
 						Event
@@ -60,7 +60,7 @@ namespace noco
 				break;
 
 			case TriggerType::HoverStart:
-				if (isRecursive)
+				if (childrenTriggerEnabled)
 				{
 					if (node->isHoveredRecursive())
 					{
@@ -111,7 +111,7 @@ namespace noco
 				break;
 
 			case TriggerType::HoverEnd:
-				if (isRecursive)
+				if (childrenTriggerEnabled)
 				{
 					if (!node->isHoveredRecursive())
 					{
@@ -162,7 +162,7 @@ namespace noco
 				break;
 
 			case TriggerType::PressStart:
-				if (isRecursive)
+				if (childrenTriggerEnabled)
 				{
 					if (node->isPressedRecursive())
 					{
@@ -213,7 +213,7 @@ namespace noco
 				break;
 
 			case TriggerType::PressEnd:
-				if (isRecursive)
+				if (childrenTriggerEnabled)
 				{
 					if (!node->isPressedRecursive())
 					{
