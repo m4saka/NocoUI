@@ -965,7 +965,20 @@ namespace noco
 			return none;
 		}
 
-		return RectF{ left, top, right - left, bottom - top };
+		// 無効な値の場合はnoneを返す
+		if (!std::isfinite(left) || !std::isfinite(top) || !std::isfinite(right) || !std::isfinite(bottom))
+		{
+			return none;
+		}
+
+		const double width = right - left;
+		const double height = bottom - top;
+		if (width < 0.0 || height < 0.0)
+		{
+			return none;
+		}
+
+		return RectF{ left, top, width, height };
 	}
 
 	Optional<RectF> Node::getBoxChildrenContentRectWithPadding() const
