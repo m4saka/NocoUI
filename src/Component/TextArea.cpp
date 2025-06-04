@@ -81,12 +81,11 @@ namespace noco
 		{
 			return Vec2::Zero();
 		}
-		line = Min(line, lines.size() - 1);
-		double y = (static_cast<double>(line) - scrollOffsetY) * lineHeight;
 		if (line >= lines.size())
 		{
-			return { 0.0, y };
+			line = lines.empty() ? 0 : lines.size() - 1;
 		}
+		double y = (static_cast<double>(line) - static_cast<double>(scrollOffsetY)) * lineHeight;
 		const auto& lineCache = lines[line];
 		double x = 0.0;
 		// スクロールオフセットまでの文字幅を計算して減算
@@ -96,7 +95,8 @@ namespace noco
 		}
 		// カーソル位置までの文字幅を加算
 		const size_t glyphCount = Min(column, lineCache.glyphs.size());
-		for (size_t i = scrollOffsetX; i < glyphCount; ++i)
+		const size_t startIndex = Min(scrollOffsetX, lineCache.glyphs.size());
+		for (size_t i = startIndex; i < glyphCount; ++i)
 		{
 			x += lineCache.glyphs[i].xAdvance * scale;
 		}

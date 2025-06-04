@@ -69,6 +69,12 @@ namespace noco
 	{
 		cursorPosX = Max(cursorPosX, 0.0);
 
+		// scrollOffsetの範囲チェック
+		if (scrollOffset > glyphs.size())
+		{
+			return glyphs.size();
+		}
+
 		double posX = drawOffsetX;
 		for (size_t i = scrollOffset; i < glyphs.size(); ++i)
 		{
@@ -365,7 +371,7 @@ namespace noco
 				{
 					if (m_selectionAnchor != m_cursorIndex && !shift)
 					{
-						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						m_cursorIndex = erasePos;
 						m_selectionAnchor = m_cursorIndex;
 					}
 					else if (m_cursorIndex > 0)
@@ -407,8 +413,10 @@ namespace noco
 				{
 					if (m_cursorIndex != m_selectionAnchor)
 					{
-						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
+						m_text.erase(erasePos, eraseLen);
+						m_cursorIndex = erasePos;
 						m_selectionAnchor = m_cursorIndex;
 						m_isChanged = true;
 					}
@@ -427,8 +435,10 @@ namespace noco
 				{
 					if (m_cursorIndex != m_selectionAnchor)
 					{
-						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
+						m_text.erase(erasePos, eraseLen);
+						m_cursorIndex = erasePos;
 						m_selectionAnchor = m_cursorIndex;
 						m_isChanged = true;
 					}
@@ -457,8 +467,10 @@ namespace noco
 
 					if (m_cursorIndex != m_selectionAnchor)
 					{
-						m_text.erase(Min(m_cursorIndex, m_selectionAnchor), Abs(static_cast<int64>(m_cursorIndex) - static_cast<int64>(m_selectionAnchor)));
-						m_cursorIndex = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
+						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
+						m_text.erase(erasePos, eraseLen);
+						m_cursorIndex = erasePos;
 					}
 					m_text = m_text.substrView(0, m_cursorIndex) + c + m_text.substrView(m_cursorIndex);
 					++m_cursorIndex;
@@ -559,7 +571,10 @@ namespace noco
 			}
 			else if (cursorPosX > Max(rect.w - cursorWidth, 0.0))
 			{
-				++m_scrollOffset;
+				if (m_scrollOffset < m_cache.glyphs.size())
+				{
+					++m_scrollOffset;
+				}
 			}
 			else
 			{

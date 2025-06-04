@@ -74,7 +74,8 @@ namespace noco
 			}
 			else if (m_prevIsDragging)
 			{
-				for (size_t i = 0; i < m_draggingNodeList.size(); ++i)
+				const size_t count = Min(m_draggingNodeList.size(), m_originalIsHitTargets.size());
+				for (size_t i = 0; i < count; ++i)
 				{
 					const auto& draggingNode = m_draggingNodeList[i];
 					draggingNode->transformEffect().setPosition(Vec2::Zero());
@@ -100,7 +101,8 @@ namespace noco
 			m_isDragging = false;
 			m_prevIsDragging = false;
 			m_isPressed = false;
-			for (size_t i = 0; i < m_draggingNodeList.size(); ++i)
+			const size_t count = Min(m_draggingNodeList.size(), m_originalIsHitTargets.size());
+			for (size_t i = 0; i < count; ++i)
 			{
 				const auto& draggingNode = m_draggingNodeList[i];
 				draggingNode->transformEffect().setPosition(Vec2::Zero());
