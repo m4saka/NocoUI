@@ -211,6 +211,11 @@ namespace noco
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
+		if (!m_rootNode)
+		{
+			return;
+		}
+		
 		// ホバー中ノード取得
 		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
 		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
@@ -253,7 +258,10 @@ namespace noco
 	
 	void Canvas::draw() const
 	{
-		m_rootNode->draw();
+		if (m_rootNode)
+		{
+			m_rootNode->draw();
+		}
 	}
 	
 	const std::shared_ptr<Node>& Canvas::rootNode() const

@@ -186,7 +186,15 @@ namespace noco
 
 	void Node::refreshActiveInHierarchy()
 	{
-		m_activeInHierarchy = ActiveYN{ m_activeSelf && (m_parent.expired() || m_parent.lock()->m_activeInHierarchy) };
+		if (const auto parent = m_parent.lock())
+		{
+			m_activeInHierarchy = ActiveYN{ m_activeSelf && parent->m_activeInHierarchy };
+		}
+		else
+		{
+			m_activeInHierarchy = m_activeSelf;
+		}
+		
 		for (const auto& child : m_children)
 		{
 			child->refreshActiveInHierarchy();
@@ -576,7 +584,9 @@ namespace noco
 	{
 		if (const auto parent = m_parent.lock())
 		{
-			const auto it = std::find(parent->m_children.begin(), parent->m_children.end(), shared_from_this());
+			// ポインタ比較で検索（shared_from_thisはconstメソッドで問題があるため）
+			const auto it = std::find_if(parent->m_children.begin(), parent->m_children.end(),
+				[this](const std::shared_ptr<Node>& child) { return child.get() == this; });
 			if (it != parent->m_children.end())
 			{
 				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
