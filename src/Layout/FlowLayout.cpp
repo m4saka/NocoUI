@@ -135,6 +135,10 @@ namespace noco
 
 			for (const size_t index : line.childIndices)
 			{
+				if (index >= children.size() || index >= measureInfo.measuredChildren.size())
+				{
+					continue;
+				}
 				const auto& child = children[index];
 				if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
 				{
@@ -168,6 +172,10 @@ namespace noco
 			for (size_t i = 0; i < line.childIndices.size(); ++i)
 			{
 				const size_t index = line.childIndices[i];
+				if (index >= measureInfo.measuredChildren.size())
+				{
+					continue;
+				}
 				const auto& measuredChild = measureInfo.measuredChildren[index];
 				if (i > 0)
 				{

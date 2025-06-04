@@ -14,7 +14,7 @@ namespace noco
 		[[nodiscard]]
 		RectF applyConstraint(const RectF& parentRect, const Vec2& offset) const
 		{
-			const Vec2 size{ parentRect.size * sizeRatio + sizeDelta };
+			const Vec2 size{ Max(parentRect.size * sizeRatio + sizeDelta, Vec2::Zero()) };
 			const Vec2 position{ parentRect.pos + offset + Vec2{ margin.left, margin.top } };
 			return RectF{ position, size };
 		}

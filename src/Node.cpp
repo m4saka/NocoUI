@@ -186,7 +186,15 @@ namespace noco
 
 	void Node::refreshActiveInHierarchy()
 	{
-		m_activeInHierarchy = ActiveYN{ m_activeSelf && (m_parent.expired() || m_parent.lock()->m_activeInHierarchy) };
+		if (const auto parent = m_parent.lock())
+		{
+			m_activeInHierarchy = ActiveYN{ m_activeSelf && parent->m_activeInHierarchy };
+		}
+		else
+		{
+			m_activeInHierarchy = m_activeSelf;
+		}
+		
 		for (const auto& child : m_children)
 		{
 			child->refreshActiveInHierarchy();
@@ -554,21 +562,23 @@ namespace noco
 
 	size_t Node::siblingIndex() const
 	{
-		if (const auto parent = m_parent.lock())
+		const auto parent = m_parent.lock();
+		if (!parent)
 		{
-			const auto it = std::find(parent->m_children.begin(), parent->m_children.end(), shared_from_this());
-			if (it != parent->m_children.end())
-			{
-				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
-			}
-			else
-			{
-				throw Error{ U"Node::siblingIndex: Node '{}' is not a child of its parent"_fmt(m_name) };
-			}
+			throw Error{ U"Node::siblingIndex: Node '{}' has no parent"_fmt(m_name) };
+		}
+		
+		// ポインタ比較で検索（shared_from_thisはconstメソッドで問題があるため）
+		const auto it = std::find_if(parent->m_children.begin(), parent->m_children.end(),
+			[this](const std::shared_ptr<Node>& child) { return child.get() == this; });
+		
+		if (it != parent->m_children.end())
+		{
+			return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
 		}
 		else
 		{
-			throw Error{ U"Node::siblingIndex: Node '{}' has no parent"_fmt(m_name) };
+			throw Error{ U"Node::siblingIndex: Node '{}' is not a child of its parent"_fmt(m_name) };
 		}
 	}
 
@@ -576,7 +586,9 @@ namespace noco
 	{
 		if (const auto parent = m_parent.lock())
 		{
-			const auto it = std::find(parent->m_children.begin(), parent->m_children.end(), shared_from_this());
+			// ポインタ比較で検索（shared_from_thisはconstメソッドで問題があるため）
+			const auto it = std::find_if(parent->m_children.begin(), parent->m_children.end(),
+				[this](const std::shared_ptr<Node>& child) { return child.get() == this; });
 			if (it != parent->m_children.end())
 			{
 				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
@@ -955,7 +967,20 @@ namespace noco
 			return none;
 		}
 
-		return RectF{ left, top, right - left, bottom - top };
+		// 無効な値の場合はnoneを返す
+		if (!std::isfinite(left) || !std::isfinite(top) || !std::isfinite(right) || !std::isfinite(bottom))
+		{
+			return none;
+		}
+
+		const double width = right - left;
+		const double height = bottom - top;
+		if (width < 0.0 || height < 0.0)
+		{
+			return none;
+		}
+
+		return RectF{ left, top, width, height };
 	}
 
 	Optional<RectF> Node::getBoxChildrenContentRectWithPadding() const
@@ -1395,7 +1420,7 @@ namespace noco
 						const double viewWidth = m_layoutAppliedRect.w * scale.x;
 						const double contentWidth = contentRectLocal.w * scale.x;
 						const double maxScrollX = (contentWidth > viewWidth) ? (contentWidth - viewWidth) : 0.0;
-						if (maxScrollX > 0.0)
+						if (maxScrollX > 0.0 && contentWidth > 0.0)
 						{
 							const double w = (viewWidth * viewWidth) / contentWidth;
 							const double scrolledRatio = (m_scrollOffset.x * scale.x + maxScrollX * scrollOffsetAnchor.x) / maxScrollX;
@@ -1427,7 +1452,7 @@ namespace noco
 						const double viewHeight = m_layoutAppliedRect.h * scale.y;
 						const double contentHeight = contentRectLocal.h * scale.y;
 						const double maxScrollY = (contentHeight > viewHeight) ? (contentHeight - viewHeight) : 0.0;
-						if (maxScrollY > 0.0)
+						if (maxScrollY > 0.0 && contentHeight > 0.0)
 						{
 							const double h = (viewHeight * viewHeight) / contentHeight;
 							const double scrolledRatio = (m_scrollOffset.y * scale.y + maxScrollY * scrollOffsetAnchor.y) / maxScrollY;
