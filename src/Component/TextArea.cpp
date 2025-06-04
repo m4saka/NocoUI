@@ -387,8 +387,8 @@ namespace noco
 		}
 
 		const Vec2& effectScale = node->effectScale();
-		const Vec2& horizontalPadding = m_horizontalPadding.value() * effectScale.x;
-		const Vec2& verticalPadding = m_verticalPadding.value() * effectScale.y;
+		const Vec2 horizontalPadding = m_horizontalPadding.value() * effectScale.x;
+		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
 
 		// stretchedはtop,right,bottom,leftの順
 		const RectF rect = node->rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
@@ -842,8 +842,8 @@ namespace noco
 	void TextArea::draw(const Node& node) const
 	{
 		const Vec2& effectScale = node.effectScale();
-		const Vec2& horizontalPadding = m_horizontalPadding.value() * effectScale.x;
-		const Vec2& verticalPadding = m_verticalPadding.value() * effectScale.y;
+		const Vec2 horizontalPadding = m_horizontalPadding.value() * effectScale.x;
+		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
 
 		// stretchedはtop,right,bottom,leftの順
 		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
