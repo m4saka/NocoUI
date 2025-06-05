@@ -115,7 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\InputBlocker.cpp" />
+    <ClCompile Include="..\..\src\Component\InputBlocker.cpp" />
     <ClCompile Include="..\..\src\Asset.cpp" />
     <ClCompile Include="..\..\src\Canvas.cpp" />
     <ClCompile Include="..\..\src\Component\DragDropSource.cpp" />
@@ -242,8 +242,8 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp" />
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\InputBlocker.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Asset.hpp" />

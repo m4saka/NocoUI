@@ -135,7 +135,7 @@
     <ClCompile Include="..\..\src\Asset.cpp">
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\InputBlocker.cpp">
+    <ClCompile Include="..\..\src\Component\InputBlocker.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Component\TextArea.cpp">
@@ -557,7 +557,7 @@
     <ClInclude Include="..\..\include\NocoUI\Component\Placeholder.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\DataStore.hpp">
+    <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Asset.hpp">
@@ -569,7 +569,7 @@
     <ClInclude Include="..\..\include\NocoUI\Component\HotKeyInputHandler.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\InputBlocker.hpp">
+    <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Component\TextArea.hpp">

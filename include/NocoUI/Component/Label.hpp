@@ -27,6 +27,8 @@ namespace noco
 		Property<LabelUnderlineStyle> m_underlineStyle;
 		SmoothProperty<ColorF> m_underlineColor;
 		SmoothProperty<double> m_underlineThickness;
+
+		/* NonSerialized */ Optional<Font> m_fontOpt;
 		
 		struct CacheParams
 		{
@@ -76,7 +78,7 @@ namespace noco
 
 			Cache() = default;
 
-			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize);
+			void refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
@@ -250,5 +252,21 @@ namespace noco
 		{
 			m_underlineColor.setPropertyValue(underlineColor);
 		}
+
+		void setFont(const Font& font)
+		{
+			m_fontOpt = font;
+			m_cache.prevParams.reset();
+		}
+
+		void clearFont()
+		{
+			m_fontOpt.reset();
+			m_cache.prevParams.reset();
+		}
+
+		SizeF contentSize() const;
+
+		SizeF contentSize(const SizeF& rectSize) const;
 	};
 }

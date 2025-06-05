@@ -479,6 +479,187 @@ public:
 	}
 };
 
+class Toolbar
+{
+public:
+	static constexpr int32 ToolbarHeight = 32;
+	
+private:
+	static constexpr int32 ButtonSize = 28;
+	static constexpr int32 ButtonMargin = 4;
+	static constexpr int32 BorderLineThickness = 2;
+
+	struct ToolbarButton
+	{
+		std::shared_ptr<Node> node;
+		std::shared_ptr<Node> tooltipNode;
+	};
+
+	std::shared_ptr<Canvas> m_editorCanvas;
+	std::shared_ptr<Canvas> m_editorOverlayCanvas;
+	std::shared_ptr<Node> m_toolbarRootNode;
+	Array<ToolbarButton> m_buttons;
+	Font m_iconFont{ FontMethod::MSDF, 18, Typeface::Icon_MaterialDesign };
+
+public:
+	explicit Toolbar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas)
+		: m_editorCanvas(editorCanvas)
+		, m_editorOverlayCanvas(editorOverlayCanvas)
+		, m_toolbarRootNode(editorCanvas->rootNode()->emplaceChild(
+			U"Toolbar",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::TopRight,
+				.posDelta = Vec2{ 0, MenuBarHeight },
+				.sizeDelta = Vec2{ 0, ToolbarHeight },
+				.sizeDeltaPivot = Anchor::TopLeft,
+			}))
+	{
+		m_toolbarRootNode->setBoxChildrenLayout(
+			HorizontalLayout
+			{
+				.padding = LRTB{ .left = ButtonMargin, .top = BorderLineThickness },
+				.spacing = ButtonMargin,
+				.verticalAlign = VerticalAlign::Middle,
+			});
+		m_toolbarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
+		
+		// MenuBarとの境界線を追加
+		m_toolbarRootNode->emplaceChild(
+			U"BorderLine",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::TopRight,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ 0, BorderLineThickness },
+				.sizeDeltaPivot = Anchor::TopLeft,
+			})
+			->emplaceComponent<RectRenderer>(ColorF{ 0.8 });
+	}
+
+	void addButton(StringView name, StringView icon, StringView tooltip, std::function<void()> onClick)
+	{
+		auto buttonNode = m_toolbarRootNode->emplaceChild(
+			name,
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ ButtonSize, ButtonSize },
+			});
+		
+		// ボタンの背景
+		buttonNode->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>{ ColorF{ 0.95, 0.0 }, ColorF{ 0.88 }, ColorF{ 0.83 }, ColorF{ 0.95, 0.0 }, 0.1 },
+			PropertyValue<ColorF>{ ColorF{ 0.0, 0.0 }, ColorF{ 0.4 }, ColorF{ 0.4 }, ColorF{ 0.0, 0.0 }, 0.1 },
+			0.0,
+			4.0);
+		
+		// アイコンラベル
+		const auto iconLabel = buttonNode->emplaceComponent<Label>(
+			icon,
+			U"",
+			18,
+			PropertyValue<ColorF>{ ColorF{ 0.2 } }.withDisabled(ColorF{ 0.2, 0.5 }),
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+		iconLabel->setFont(m_iconFont);
+		
+		// クリック時の処理
+		buttonNode->addOnClick([onClick = std::move(onClick)](const std::shared_ptr<Node>&)
+		{
+			if (onClick)
+			{
+				onClick();
+			}
+		});
+		
+		// ツールチップ
+		std::shared_ptr<Node> tooltipNode;
+		if (!tooltip.empty())
+		{
+			// サイズ計算のために先にラベルを作成
+			const auto label = std::make_shared<Label>(
+				tooltip,
+				U"",
+				12,
+				ColorF{ 1.0 },
+				HorizontalAlign::Center,
+				VerticalAlign::Middle,
+				LRTB::Zero(),
+				HorizontalOverflow::Wrap,
+				VerticalOverflow::Clip);
+
+			// ノードを作成
+			tooltipNode = m_editorOverlayCanvas->rootNode()->emplaceChild(
+				U"Tooltip_{}_"_fmt(name),
+				AnchorConstraint
+				{
+					.anchorMin = Anchor::TopLeft,
+					.anchorMax = Anchor::TopLeft,
+					.posDelta = Vec2{ 0, 0 },
+					.sizeDelta = label->contentSize() + Vec2{ 20, 10 }, // ラベルのサイズに合わせてツールチップのサイズを調整
+					.sizeDeltaPivot = Anchor::TopLeft,
+				});
+			tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0);
+			tooltipNode->addComponent(label);
+			
+			// 初期は非表示
+			tooltipNode->setActive(ActiveYN::No);
+		}
+		
+		m_buttons.push_back(ToolbarButton
+		{
+			.node = std::move(buttonNode),
+			.tooltipNode = std::move(tooltipNode),
+		});
+	}
+
+	void addSeparator()
+	{
+		m_toolbarRootNode->emplaceChild(
+			U"Separator",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 0.6 },
+				.sizeDelta = Vec2{ 1, 0 },
+			})
+			->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
+	}
+
+	void update()
+	{
+		// ツールチップの表示制御
+		for (const auto& button : m_buttons)
+		{
+			if (!button.tooltipNode)
+			{
+				continue;
+			}
+
+			if (button.node->isHoveredRecursive())
+			{
+				// マウス位置にツールチップを移動して表示
+				const auto constraint = std::get<AnchorConstraint>(button.tooltipNode->constraint());
+				button.tooltipNode->setConstraint(AnchorConstraint
+				{
+					.anchorMin = constraint.anchorMin,
+					.anchorMax = constraint.anchorMax,
+					.posDelta = Cursor::Pos() + Vec2{ 0, 20 },
+					.sizeDelta = constraint.sizeDelta,
+					.sizeDeltaPivot = constraint.sizeDeltaPivot,
+				});
+				button.tooltipNode->setActive(true);
+			}
+			else
+			{
+				button.tooltipNode->setActive(false);
+			}
+		}
+	}
+};
+
 enum class ConstraintType : uint8
 {
 	AnchorConstraint,
@@ -1020,8 +1201,8 @@ public:
 			{
 				.anchorMin = Anchor::TopLeft,
 				.anchorMax = Anchor::BottomLeft,
-				.posDelta = Vec2{ 0, MenuBarHeight },
-				.sizeDelta = Vec2{ 300, -MenuBarHeight },
+				.posDelta = Vec2{ 0, MenuBarHeight + Toolbar::ToolbarHeight },
+				.sizeDelta = Vec2{ 300, -(MenuBarHeight + Toolbar::ToolbarHeight) },
 				.sizeDeltaPivot = Anchor::TopLeft,
 			}))
 		, m_hierarchyInnerFrameNode(m_hierarchyFrameNode->emplaceChild(
@@ -2054,8 +2235,8 @@ public:
 			{
 				.anchorMin = Anchor::TopRight,
 				.anchorMax = Anchor::BottomRight,
-				.posDelta = Vec2{ 0, MenuBarHeight },
-				.sizeDelta = Vec2{ 400, -MenuBarHeight },
+				.posDelta = Vec2{ 0, MenuBarHeight + Toolbar::ToolbarHeight },
+				.sizeDelta = Vec2{ 400, -(MenuBarHeight + Toolbar::ToolbarHeight) },
 				.sizeDeltaPivot = Anchor::TopRight,
 			}))
 		, m_inspectorInnerFrameNode(m_inspectorFrameNode->emplaceChild(
@@ -4482,6 +4663,7 @@ private:
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
 	MenuBar m_menuBar;
+	Toolbar m_toolbar;
 	Size m_prevSceneSize;
 	std::weak_ptr<Node> m_prevSelectedNode;
 	bool m_prevSelectedNodeExists = false;
@@ -4504,6 +4686,7 @@ public:
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults)
 		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
+		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
 	{
 		m_menuBar.addMenuCategory(
@@ -4513,7 +4696,6 @@ public:
 			Array<MenuElement>
 			{
 				MenuItem{ U"新規作成", U"Ctrl+N", KeyN, [this] { onClickMenuFileNew(); } },
-				MenuSeparator{},
 				MenuItem{ U"開く...", U"Ctrl+O", KeyO, [this] { onClickMenuFileOpen(); } },
 				MenuItem{ U"保存", U"Ctrl+S", KeyS, [this] { onClickMenuFileSave(); } },
 				MenuItem{ U"名前を付けて保存...", U"Ctrl+Shift+S", KeyA, [this] { onClickMenuFileSaveAs(); } },
@@ -4550,6 +4732,12 @@ public:
 			},
 			80,
 			480);
+		
+		// ツールバーの初期化
+		m_toolbar.addButton(U"New", U"\xF0224", U"新規作成 (Ctrl+N)", [this] { onClickMenuFileNew(); });
+		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); });
+		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); });
+		m_toolbar.addButton(U"SaveAs", U"\xF0E28‘", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
 	}
 
 	void update()
@@ -4581,6 +4769,7 @@ public:
 		m_dialogContextMenu->update();
 		m_contextMenu->update();
 		m_menuBar.update();
+		m_toolbar.update();
 		m_hierarchy.update();
 		m_inspector.update();
 

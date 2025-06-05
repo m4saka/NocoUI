@@ -3,7 +3,7 @@
 
 namespace noco
 {
-	void Label::Cache::refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize)
+	void Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize))
 		{
@@ -12,6 +12,7 @@ namespace noco
 		prevParams = CacheParams
 		{
 			.text = String{ text },
+			// fontOptの変更はsetFont/clearFontで手動でキャッシュ削除して反映するため、ここには入れない
 			.fontAssetName = String{ fontAssetName },
 			.fontSize = fontSize,
 			.horizontalOverflow = horizontalOverflow,
@@ -20,7 +21,7 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont();
+		const Font font = fontOpt.has_value() ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
 		fontMethod = font.method();
 		const Array<Glyph> glyphs = font.getGlyphs(text);
 		const int32 baseFontSize = font.fontSize();
@@ -110,6 +111,7 @@ namespace noco
 
 		m_cache.refreshIfDirty(
 			text,
+			m_fontOpt,
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			characterSpacing,
@@ -193,5 +195,35 @@ namespace noco
 				Line{ startX, y, startX + lineCache.width * effectScale.x, y }.draw(thickness, m_underlineColor.value());
 			}
 		}
+	}
+
+	SizeF Label::contentSize() const
+	{
+		m_cache.refreshIfDirty(
+			m_text.value(),
+			m_fontOpt,
+			m_fontAssetName.value(),
+			m_fontSize.value(),
+			m_characterSpacing.value(),
+			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
+			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
+			Vec2::Zero());
+
+		return m_cache.regionSize;
+	}
+
+	SizeF Label::contentSize(const SizeF& rectSize) const
+	{
+		m_cache.refreshIfDirty(
+			m_text.value(),
+			m_fontOpt,
+			m_fontAssetName.value(),
+			m_fontSize.value(),
+			m_characterSpacing.value(),
+			m_horizontalOverflow.value(),
+			m_verticalOverflow.value(),
+			rectSize);
+
+		return m_cache.regionSize;
 	}
 }
