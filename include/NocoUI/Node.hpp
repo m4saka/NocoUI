@@ -81,6 +81,7 @@ namespace noco
 		void clampScrollOffset();
 
 	public:
+		[[nodiscard]]
 		static std::shared_ptr<Node> Create(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None);
 
 		[[nodiscard]]
