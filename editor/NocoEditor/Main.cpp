@@ -725,39 +725,64 @@ static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
 		// Nodeのプロパティ
 		{ PropertyTooltipKey{ U"Node", U"Name" }, U"Nodeの名前" },
 		{ PropertyTooltipKey{ U"Node", U"Active" }, U"Nodeの有効/無効状態" },
+		{ PropertyTooltipKey{ U"Node", U"isHitTarget" }, U"マウスのヒット判定を受けるかどうか" },
+		{ PropertyTooltipKey{ U"Node", U"inheritsChildrenHoveredState" }, U"子要素のホバー状態を継承" },
+		{ PropertyTooltipKey{ U"Node", U"inheritsChildrenPressedState" }, U"子要素の押下状態を継承" },
+		{ PropertyTooltipKey{ U"Node", U"interactable" }, U"インタラクション可能かどうか" },
+		{ PropertyTooltipKey{ U"Node", U"horizontalScrollable" }, U"水平方向のスクロール可能" },
+		{ PropertyTooltipKey{ U"Node", U"verticalScrollable" }, U"垂直方向のスクロール可能" },
+		{ PropertyTooltipKey{ U"Node", U"clippingEnabled" }, U"クリッピングの有効/無効" },
 
 		// Constraint関連
+		// AnchorConstraint
 		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMin" }, U"最小アンカー位置 (0,0)が左上、(1,1)が右下" },
 		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMax" }, U"最大アンカー位置 (0,0)が左上、(1,1)が右下" },
 		{ PropertyTooltipKey{ U"AnchorConstraint", U"posDelta" }, U"アンカーからのオフセット位置" },
 		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDelta" }, U"アンカー領域からのサイズオフセット" },
 		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDeltaPivot" }, U"サイズ変更時の中心点" },
+		// AnchorPreset用プロパティ
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"top" }, U"上端からの距離" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"left" }, U"左端からの距離" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"right" }, U"右端からの距離" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"bottom" }, U"下端からの距離" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"size" }, U"サイズ (幅、高さ)" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"width" }, U"幅" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"height" }, U"高さ" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"xDelta" }, U"X軸方向のオフセット" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"yDelta" }, U"Y軸方向のオフセット" },
 
+		// BoxConstraint
 		{ PropertyTooltipKey{ U"BoxConstraint", U"margin" }, U"マージン (左、右、上、下)" },
 		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeRatio" }, U"親要素に対するサイズ比率 (0.0～1.0)" },
 		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeDelta" }, U"固定サイズ (幅、高さ)" },
+		{ PropertyTooltipKey{ U"BoxConstraint", U"flexibleWeight" }, U"フレキシブルレイアウト時の重み" },
 
 		// Layout関連
-		{ PropertyTooltipKey{ U"FlowLayout", U"direction" }, U"配置方向 (横または縦)" },
+		// FlowLayout
 		{ PropertyTooltipKey{ U"FlowLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyTooltipKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔 (X, Y)" },
 		{ PropertyTooltipKey{ U"FlowLayout", U"horizontalAlign" }, U"水平方向の配置" },
 		{ PropertyTooltipKey{ U"FlowLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
+		// HorizontalLayout
 		{ PropertyTooltipKey{ U"HorizontalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
 		{ PropertyTooltipKey{ U"HorizontalLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyTooltipKey{ U"HorizontalLayout", U"horizontalAlign" }, U"水平方向の配置" },
 		{ PropertyTooltipKey{ U"HorizontalLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
+		// VerticalLayout
 		{ PropertyTooltipKey{ U"VerticalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
 		{ PropertyTooltipKey{ U"VerticalLayout", U"spacing" }, U"要素間の間隔" },
 		{ PropertyTooltipKey{ U"VerticalLayout", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyTooltipKey{ U"VerticalLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
 		// TransformEffect関連
-		{ PropertyTooltipKey{ U"TransformEffect", U"translation" }, U"位置のオフセット" },
-		{ PropertyTooltipKey{ U"TransformEffect", U"rotation" }, U"回転角度 (ラジアン)" },
+		{ PropertyTooltipKey{ U"TransformEffect", U"position" }, U"位置のオフセット" },
 		{ PropertyTooltipKey{ U"TransformEffect", U"scale" }, U"スケール" },
+		{ PropertyTooltipKey{ U"TransformEffect", U"pivot" }, U"変形の基準点" },
 
 		// Componentのプロパティ
+		// RectRenderer
 		{ PropertyTooltipKey{ U"RectRenderer", U"fillColor" }, U"塗りつぶし色" },
 		{ PropertyTooltipKey{ U"RectRenderer", U"outlineColor" }, U"アウトライン色" },
 		{ PropertyTooltipKey{ U"RectRenderer", U"outlineThickness" }, U"アウトラインの太さ" },
@@ -765,42 +790,57 @@ static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
 		{ PropertyTooltipKey{ U"RectRenderer", U"shadowColor" }, U"影の色" },
 		{ PropertyTooltipKey{ U"RectRenderer", U"shadowOffset" }, U"影のオフセット" },
 		{ PropertyTooltipKey{ U"RectRenderer", U"shadowBlur" }, U"影のぼかし度合い" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"shadowSpread" }, U"影の拡散サイズ" },
 
+		// Label
 		{ PropertyTooltipKey{ U"Label", U"text" }, U"表示するテキスト" },
 		{ PropertyTooltipKey{ U"Label", U"fontAssetName" }, U"フォントアセット名" },
 		{ PropertyTooltipKey{ U"Label", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"Label", U"textColor" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"Label", U"color" }, U"テキスト色" },
 		{ PropertyTooltipKey{ U"Label", U"horizontalAlign" }, U"水平方向の配置" },
 		{ PropertyTooltipKey{ U"Label", U"verticalAlign" }, U"垂直方向の配置" },
-		{ PropertyTooltipKey{ U"Label", U"padding" }, U"内側余白" },
+		{ PropertyTooltipKey{ U"Label", U"padding" }, U"内側余白 (左、右、上、下)" },
 		{ PropertyTooltipKey{ U"Label", U"horizontalOverflow" }, U"水平方向のオーバーフロー処理" },
 		{ PropertyTooltipKey{ U"Label", U"verticalOverflow" }, U"垂直方向のオーバーフロー処理" },
+		{ PropertyTooltipKey{ U"Label", U"characterSpacing" }, U"文字間隔 (X, Y)" },
+		{ PropertyTooltipKey{ U"Label", U"underlineStyle" }, U"下線のスタイル" },
+		{ PropertyTooltipKey{ U"Label", U"underlineColor" }, U"下線の色" },
+		{ PropertyTooltipKey{ U"Label", U"underlineThickness" }, U"下線の太さ" },
 
-		{ PropertyTooltipKey{ U"Sprite", U"texture" }, U"表示するテクスチャ" },
+		// Sprite
+		{ PropertyTooltipKey{ U"Sprite", U"textureFilePath" }, U"テクスチャファイルパス" },
+		{ PropertyTooltipKey{ U"Sprite", U"textureAssetName" }, U"テクスチャアセット名" },
 		{ PropertyTooltipKey{ U"Sprite", U"color" }, U"スプライトの色" },
 		{ PropertyTooltipKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
 
-		{ PropertyTooltipKey{ U"TextBox", U"text" }, U"入力テキスト" },
-		{ PropertyTooltipKey{ U"TextBox", U"placeholderText" }, U"プレースホルダーテキスト" },
+		// TextBox
 		{ PropertyTooltipKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
 		{ PropertyTooltipKey{ U"TextBox", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"TextBox", U"textColor" }, U"テキスト色" },
-		{ PropertyTooltipKey{ U"TextBox", U"fillColor" }, U"背景色" },
-		{ PropertyTooltipKey{ U"TextBox", U"outlineColor" }, U"アウトライン色" },
-		{ PropertyTooltipKey{ U"TextBox", U"outlineThickness" }, U"アウトラインの太さ" },
-		{ PropertyTooltipKey{ U"TextBox", U"cornerRadius" }, U"角の丸み半径" },
-		{ PropertyTooltipKey{ U"TextBox", U"readOnly" }, U"読み取り専用" },
+		{ PropertyTooltipKey{ U"TextBox", U"color" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"TextBox", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
+		{ PropertyTooltipKey{ U"TextBox", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
+		{ PropertyTooltipKey{ U"TextBox", U"cursorColor" }, U"カーソルの色" },
+		{ PropertyTooltipKey{ U"TextBox", U"selectionColor" }, U"選択範囲の色" },
 
-		{ PropertyTooltipKey{ U"TextArea", U"text" }, U"入力テキスト" },
-		{ PropertyTooltipKey{ U"TextArea", U"placeholderText" }, U"プレースホルダーテキスト" },
+		// TextArea
 		{ PropertyTooltipKey{ U"TextArea", U"fontAssetName" }, U"フォントアセット名" },
 		{ PropertyTooltipKey{ U"TextArea", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"TextArea", U"textColor" }, U"テキスト色" },
-		{ PropertyTooltipKey{ U"TextArea", U"fillColor" }, U"背景色" },
-		{ PropertyTooltipKey{ U"TextArea", U"outlineColor" }, U"アウトライン色" },
-		{ PropertyTooltipKey{ U"TextArea", U"outlineThickness" }, U"アウトラインの太さ" },
-		{ PropertyTooltipKey{ U"TextArea", U"cornerRadius" }, U"角の丸み半径" },
-		{ PropertyTooltipKey{ U"TextArea", U"readOnly" }, U"読み取り専用" },
+		{ PropertyTooltipKey{ U"TextArea", U"color" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"TextArea", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
+		{ PropertyTooltipKey{ U"TextArea", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
+		{ PropertyTooltipKey{ U"TextArea", U"cursorColor" }, U"カーソルの色" },
+		{ PropertyTooltipKey{ U"TextArea", U"selectionColor" }, U"選択範囲の色" },
+
+		// EventTrigger
+		{ PropertyTooltipKey{ U"EventTrigger", U"tag" }, U"イベントのタグ" },
+		{ PropertyTooltipKey{ U"EventTrigger", U"triggerType" }, U"トリガーの種類 (Click/Hover/Press等)" },
+		{ PropertyTooltipKey{ U"EventTrigger", U"childrenTriggerEnabled" }, U"子要素でのトリガーを有効化" },
+
+		// InputBlocker（プロパティなし）
+
+		// Placeholder
+		{ PropertyTooltipKey{ U"Placeholder", U"tag" }, U"プレースホルダーのタグ" },
+		{ PropertyTooltipKey{ U"Placeholder", U"data" }, U"プレースホルダーのデータ" },
 	};
 }
 
@@ -2720,6 +2760,40 @@ public:
 	}
 
 	[[nodiscard]]
+	std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
+		return propertyNode;
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
+		return propertyNode;
+	}
+
+	[[nodiscard]]
 	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
 		const auto propertyNode = Node::Create(
@@ -3829,8 +3903,20 @@ public:
 		nodeNameNode->setBoxChildrenLayout(HorizontalLayout{ .padding = 6 });
 		nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-		nodeNameNode->addChild(CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); }));
-		nodeNameNode->addChild(CreateNodeNameTextboxNode(U"name", node->name(),
+		// Activeチェックボックスを追加
+		const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); });
+		// Activeチェックボックスにツールチップを追加
+		{
+			const PropertyTooltipKey key{ U"Node", U"Active" };
+			if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+			{
+				activeCheckboxNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		nodeNameNode->addChild(activeCheckboxNode);
+		
+		// Nameテキストボックスを追加
+		const auto nameTextboxNode = CreateNodeNameTextboxNode(U"name", node->name(),
 			[this, node](StringView value)
 			{
 				if (value.empty())
@@ -3842,7 +3928,20 @@ public:
 					node->setName(value);
 				}
 				m_onChangeNodeName();
-			}));
+			});
+		// Nameテキストボックスにツールチップを追加
+		{
+			const PropertyTooltipKey key{ U"Node", U"Name" };
+			if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+			{
+				// CreateNodeNameTextboxNodeはLabelを含むNodeを返すので、そのLabelを探す
+				if (const auto labelNode = nameTextboxNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				}
+			}
+		}
+		nodeNameNode->addChild(nameTextboxNode);
 
 		return nodeNameNode;
 	}
@@ -3878,7 +3977,7 @@ public:
 		const auto fnAddBoolChild =
 			[this, &nodeSettingNode](StringView name, bool currentValue, auto fnSetValue)
 			{
-				nodeSettingNode->addChild(CreateBoolPropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
+				nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
 			};
 		fnAddBoolChild(U"isHitTarget", node->isHitTarget().getBool(), [node](bool value) { node->setIsHitTarget(value); });
 		fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
@@ -4563,22 +4662,12 @@ public:
 				break;
 			case PropertyEditType::Bool:
 				propertyNode = componentNode->addChild(
-					CreateBoolPropertyNode(
+					createBoolPropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
-				// ツールチップを追加
-				{
-					const PropertyTooltipKey key{ String(component->type()), String(property->name()) };
-					if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
-					{
-						if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
-						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
-						}
-					}
-				}
 				break;
 			case PropertyEditType::Vec2:
 				propertyNode = componentNode->addChild(
@@ -4591,22 +4680,12 @@ public:
 				break;
 			case PropertyEditType::Color:
 				propertyNode = componentNode->addChild(
-					CreateColorPropertyNode(
+					createColorPropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
 						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
-				// ツールチップを追加
-				{
-					const PropertyTooltipKey key{ String(component->type()), String(property->name()) };
-					if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
-					{
-						if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
-						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
-						}
-					}
-				}
 				break;
 			case PropertyEditType::LRTB:
 				propertyNode = componentNode->addChild(
