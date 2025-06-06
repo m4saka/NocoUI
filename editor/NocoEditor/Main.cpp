@@ -783,153 +783,306 @@ public:
 
 };
 
-// プロパティの説明文を管理するための構造
-struct PropertyTooltipKey
+// 前方宣言
+class Inspector;
+
+// プロパティのメタデータを管理するための構造
+struct PropertyKey
 {
 	String componentName;
 	String propertyName;
 
-	bool operator==(const PropertyTooltipKey& other) const
+	bool operator==(const PropertyKey& other) const
 	{
 		return componentName == other.componentName && propertyName == other.propertyName;
 	}
 };
 
 template <>
-struct std::hash<PropertyTooltipKey>
+struct std::hash<PropertyKey>
 {
-	size_t operator()(const PropertyTooltipKey& key) const
+	size_t operator()(const PropertyKey& key) const
 	{
 		return std::hash<String>{}(key.componentName) ^ (std::hash<String>{}(key.propertyName) << 1);
 	}
 };
 
+// プロパティのメタデータ
+struct PropertyMetadata
+{
+	Optional<String> tooltip;
+	Optional<String> tooltipDetail;  // 詳細な説明文
+	std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件
+	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
+};
+
 // プロパティの説明文を初期化する関数
 [[nodiscard]]
-static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
+static HashTable<PropertyKey, String> InitPropertyTooltips()
 {
-	return HashTable<PropertyTooltipKey, String>
+	return HashTable<PropertyKey, String>
 	{
 		// Nodeのプロパティ
-		{ PropertyTooltipKey{ U"Node", U"name" }, U"Nodeの名前" },
-		{ PropertyTooltipKey{ U"Node", U"activeSelf" }, U"Nodeの有効/無効状態" },
-		{ PropertyTooltipKey{ U"Node", U"isHitTarget" }, U"マウスのヒット判定を受けるかどうか" },
-		{ PropertyTooltipKey{ U"Node", U"inheritsChildrenHoveredState" }, U"子要素のホバー状態を継承" },
-		{ PropertyTooltipKey{ U"Node", U"inheritsChildrenPressedState" }, U"子要素の押下状態を継承" },
-		{ PropertyTooltipKey{ U"Node", U"interactable" }, U"インタラクション可能かどうか" },
-		{ PropertyTooltipKey{ U"Node", U"horizontalScrollable" }, U"水平方向のスクロール可能" },
-		{ PropertyTooltipKey{ U"Node", U"verticalScrollable" }, U"垂直方向のスクロール可能" },
-		{ PropertyTooltipKey{ U"Node", U"clippingEnabled" }, U"クリッピングの有効/無効" },
+		{ PropertyKey{ U"Node", U"name" }, U"Nodeの名前" },
+		{ PropertyKey{ U"Node", U"activeSelf" }, U"Nodeの有効/無効状態" },
+		{ PropertyKey{ U"Node", U"isHitTarget" }, U"マウスのヒット判定を受けるかどうか" },
+		{ PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }, U"子要素のホバー状態を継承" },
+		{ PropertyKey{ U"Node", U"inheritsChildrenPressedState" }, U"子要素の押下状態を継承" },
+		{ PropertyKey{ U"Node", U"interactable" }, U"インタラクション可能かどうか" },
+		{ PropertyKey{ U"Node", U"horizontalScrollable" }, U"水平方向のスクロール可能" },
+		{ PropertyKey{ U"Node", U"verticalScrollable" }, U"垂直方向のスクロール可能" },
+		{ PropertyKey{ U"Node", U"clippingEnabled" }, U"クリッピングの有効/無効" },
 
 		// Constraint関連
 		// AnchorConstraint
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMin" }, U"最小アンカー位置 (0,0)が左上、(1,1)が右下" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMax" }, U"最大アンカー位置 (0,0)が左上、(1,1)が右下" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"posDelta" }, U"アンカーからのオフセット位置" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDelta" }, U"アンカー領域からのサイズオフセット" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDeltaPivot" }, U"サイズ変更時の中心点" },
+		{ PropertyKey{ U"AnchorConstraint", U"anchorMin" }, U"最小アンカー位置 (0,0)が左上、(1,1)が右下" },
+		{ PropertyKey{ U"AnchorConstraint", U"anchorMax" }, U"最大アンカー位置 (0,0)が左上、(1,1)が右下" },
+		{ PropertyKey{ U"AnchorConstraint", U"posDelta" }, U"アンカーからのオフセット位置" },
+		{ PropertyKey{ U"AnchorConstraint", U"sizeDelta" }, U"アンカー領域からのサイズオフセット" },
+		{ PropertyKey{ U"AnchorConstraint", U"sizeDeltaPivot" }, U"サイズ変更時の中心点" },
 		// AnchorPreset用プロパティ
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"top" }, U"上端からの距離" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"left" }, U"左端からの距離" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"right" }, U"右端からの距離" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"bottom" }, U"下端からの距離" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"size" }, U"サイズ (幅、高さ)" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"width" }, U"幅" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"height" }, U"高さ" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"xDelta" }, U"X軸方向のオフセット" },
-		{ PropertyTooltipKey{ U"AnchorConstraint", U"yDelta" }, U"Y軸方向のオフセット" },
+		{ PropertyKey{ U"AnchorConstraint", U"top" }, U"上端からの距離" },
+		{ PropertyKey{ U"AnchorConstraint", U"left" }, U"左端からの距離" },
+		{ PropertyKey{ U"AnchorConstraint", U"right" }, U"右端からの距離" },
+		{ PropertyKey{ U"AnchorConstraint", U"bottom" }, U"下端からの距離" },
+		{ PropertyKey{ U"AnchorConstraint", U"size" }, U"サイズ (幅、高さ)" },
+		{ PropertyKey{ U"AnchorConstraint", U"width" }, U"幅" },
+		{ PropertyKey{ U"AnchorConstraint", U"height" }, U"高さ" },
+		{ PropertyKey{ U"AnchorConstraint", U"xDelta" }, U"X軸方向のオフセット" },
+		{ PropertyKey{ U"AnchorConstraint", U"yDelta" }, U"Y軸方向のオフセット" },
 
 		// BoxConstraint
-		{ PropertyTooltipKey{ U"BoxConstraint", U"margin" }, U"マージン (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeRatio" }, U"親要素に対するサイズ比率 (0.0～1.0)" },
-		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeDelta" }, U"固定サイズ (幅、高さ)" },
-		{ PropertyTooltipKey{ U"BoxConstraint", U"flexibleWeight" }, U"フレキシブルレイアウト時の重み" },
+		{ PropertyKey{ U"BoxConstraint", U"margin" }, U"マージン (左、右、上、下)" },
+		{ PropertyKey{ U"BoxConstraint", U"sizeRatio" }, U"親要素に対するサイズ比率 (0.0～1.0)" },
+		{ PropertyKey{ U"BoxConstraint", U"sizeDelta" }, U"固定サイズ (幅、高さ)" },
+		{ PropertyKey{ U"BoxConstraint", U"flexibleWeight" }, U"フレキシブルレイアウト時の重み" },
 
 		// Layout関連
 		// FlowLayout
-		{ PropertyTooltipKey{ U"FlowLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔 (X, Y)" },
-		{ PropertyTooltipKey{ U"FlowLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyTooltipKey{ U"FlowLayout", U"verticalAlign" }, U"垂直方向の配置" },
+		{ PropertyKey{ U"FlowLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔 (X, Y)" },
+		{ PropertyKey{ U"FlowLayout", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyKey{ U"FlowLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
 		// HorizontalLayout
-		{ PropertyTooltipKey{ U"HorizontalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"HorizontalLayout", U"spacing" }, U"要素間の間隔" },
-		{ PropertyTooltipKey{ U"HorizontalLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyTooltipKey{ U"HorizontalLayout", U"verticalAlign" }, U"垂直方向の配置" },
+		{ PropertyKey{ U"HorizontalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyKey{ U"HorizontalLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyKey{ U"HorizontalLayout", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyKey{ U"HorizontalLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
 		// VerticalLayout
-		{ PropertyTooltipKey{ U"VerticalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"VerticalLayout", U"spacing" }, U"要素間の間隔" },
-		{ PropertyTooltipKey{ U"VerticalLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyTooltipKey{ U"VerticalLayout", U"verticalAlign" }, U"垂直方向の配置" },
+		{ PropertyKey{ U"VerticalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyKey{ U"VerticalLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyKey{ U"VerticalLayout", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyKey{ U"VerticalLayout", U"verticalAlign" }, U"垂直方向の配置" },
 
 		// TransformEffect関連
-		{ PropertyTooltipKey{ U"TransformEffect", U"position" }, U"位置のオフセット" },
-		{ PropertyTooltipKey{ U"TransformEffect", U"scale" }, U"スケール" },
-		{ PropertyTooltipKey{ U"TransformEffect", U"pivot" }, U"変形の基準点" },
+		{ PropertyKey{ U"TransformEffect", U"position" }, U"位置のオフセット" },
+		{ PropertyKey{ U"TransformEffect", U"scale" }, U"スケール" },
+		{ PropertyKey{ U"TransformEffect", U"pivot" }, U"変形の基準点" },
 
 		// Componentのプロパティ
 		// RectRenderer
-		{ PropertyTooltipKey{ U"RectRenderer", U"fillColor" }, U"塗りつぶし色" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"outlineColor" }, U"アウトライン色" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"outlineThickness" }, U"アウトラインの太さ" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"cornerRadius" }, U"角の丸み半径" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"shadowColor" }, U"影の色" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"shadowOffset" }, U"影のオフセット" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"shadowBlur" }, U"影のぼかし度合い" },
-		{ PropertyTooltipKey{ U"RectRenderer", U"shadowSpread" }, U"影の拡散サイズ" },
+		{ PropertyKey{ U"RectRenderer", U"fillColor" }, U"塗りつぶし色" },
+		{ PropertyKey{ U"RectRenderer", U"outlineColor" }, U"アウトライン色" },
+		{ PropertyKey{ U"RectRenderer", U"outlineThickness" }, U"アウトラインの太さ" },
+		{ PropertyKey{ U"RectRenderer", U"cornerRadius" }, U"角の丸み半径" },
+		{ PropertyKey{ U"RectRenderer", U"shadowColor" }, U"影の色" },
+		{ PropertyKey{ U"RectRenderer", U"shadowOffset" }, U"影のオフセット" },
+		{ PropertyKey{ U"RectRenderer", U"shadowBlur" }, U"影のぼかし度合い" },
+		{ PropertyKey{ U"RectRenderer", U"shadowSpread" }, U"影の拡散サイズ" },
 
 		// Label
-		{ PropertyTooltipKey{ U"Label", U"text" }, U"表示するテキスト" },
-		{ PropertyTooltipKey{ U"Label", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyTooltipKey{ U"Label", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"Label", U"color" }, U"テキスト色" },
-		{ PropertyTooltipKey{ U"Label", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyTooltipKey{ U"Label", U"verticalAlign" }, U"垂直方向の配置" },
-		{ PropertyTooltipKey{ U"Label", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyTooltipKey{ U"Label", U"horizontalOverflow" }, U"水平方向のオーバーフロー処理" },
-		{ PropertyTooltipKey{ U"Label", U"verticalOverflow" }, U"垂直方向のオーバーフロー処理" },
-		{ PropertyTooltipKey{ U"Label", U"characterSpacing" }, U"文字間隔 (X, Y)" },
-		{ PropertyTooltipKey{ U"Label", U"underlineStyle" }, U"下線のスタイル" },
-		{ PropertyTooltipKey{ U"Label", U"underlineColor" }, U"下線の色" },
-		{ PropertyTooltipKey{ U"Label", U"underlineThickness" }, U"下線の太さ" },
+		{ PropertyKey{ U"Label", U"text" }, U"表示するテキスト" },
+		{ PropertyKey{ U"Label", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyKey{ U"Label", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyKey{ U"Label", U"color" }, U"テキスト色" },
+		{ PropertyKey{ U"Label", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyKey{ U"Label", U"verticalAlign" }, U"垂直方向の配置" },
+		{ PropertyKey{ U"Label", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyKey{ U"Label", U"horizontalOverflow" }, U"水平方向のオーバーフロー処理" },
+		{ PropertyKey{ U"Label", U"verticalOverflow" }, U"垂直方向のオーバーフロー処理" },
+		{ PropertyKey{ U"Label", U"characterSpacing" }, U"文字間隔 (X, Y)" },
+		{ PropertyKey{ U"Label", U"underlineStyle" }, U"下線のスタイル" },
+		{ PropertyKey{ U"Label", U"underlineColor" }, U"下線の色" },
+		{ PropertyKey{ U"Label", U"underlineThickness" }, U"下線の太さ" },
 
 		// Sprite
-		{ PropertyTooltipKey{ U"Sprite", U"textureFilePath" }, U"テクスチャファイルパス" },
-		{ PropertyTooltipKey{ U"Sprite", U"textureAssetName" }, U"テクスチャアセット名" },
-		{ PropertyTooltipKey{ U"Sprite", U"color" }, U"スプライトの色" },
-		{ PropertyTooltipKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
+		{ PropertyKey{ U"Sprite", U"textureFilePath" }, U"テクスチャファイルパス" },
+		{ PropertyKey{ U"Sprite", U"textureAssetName" }, U"テクスチャアセット名" },
+		{ PropertyKey{ U"Sprite", U"color" }, U"スプライトの色" },
+		{ PropertyKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
+		{ PropertyKey{ U"Sprite", U"nineSliceEnabled" }, U"9スライス機能を有効にするか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceMargin" }, U"9スライスのマージン（素材の端からの距離）" },
+		{ PropertyKey{ U"Sprite", U"nineSliceScale" }, U"9スライスのスケール" },
+		{ PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }, U"中央領域をタイル表示するか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceTopTiled" }, U"上端領域をタイル表示するか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }, U"下端領域をタイル表示するか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }, U"左端領域をタイル表示するか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceRightTiled" }, U"右端領域をタイル表示するか" },
+		{ PropertyKey{ U"Sprite", U"nineSliceFallbackToSimple" }, U"9スライスが無効な場合に通常の描画にフォールバック" },
 
 		// TextBox
-		{ PropertyTooltipKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyTooltipKey{ U"TextBox", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"TextBox", U"color" }, U"テキスト色" },
-		{ PropertyTooltipKey{ U"TextBox", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
-		{ PropertyTooltipKey{ U"TextBox", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
-		{ PropertyTooltipKey{ U"TextBox", U"cursorColor" }, U"カーソルの色" },
-		{ PropertyTooltipKey{ U"TextBox", U"selectionColor" }, U"選択範囲の色" },
+		{ PropertyKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyKey{ U"TextBox", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyKey{ U"TextBox", U"color" }, U"テキスト色" },
+		{ PropertyKey{ U"TextBox", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
+		{ PropertyKey{ U"TextBox", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
+		{ PropertyKey{ U"TextBox", U"cursorColor" }, U"カーソルの色" },
+		{ PropertyKey{ U"TextBox", U"selectionColor" }, U"選択範囲の色" },
 
 		// TextArea
-		{ PropertyTooltipKey{ U"TextArea", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyTooltipKey{ U"TextArea", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyTooltipKey{ U"TextArea", U"color" }, U"テキスト色" },
-		{ PropertyTooltipKey{ U"TextArea", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
-		{ PropertyTooltipKey{ U"TextArea", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
-		{ PropertyTooltipKey{ U"TextArea", U"cursorColor" }, U"カーソルの色" },
-		{ PropertyTooltipKey{ U"TextArea", U"selectionColor" }, U"選択範囲の色" },
+		{ PropertyKey{ U"TextArea", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyKey{ U"TextArea", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyKey{ U"TextArea", U"color" }, U"テキスト色" },
+		{ PropertyKey{ U"TextArea", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
+		{ PropertyKey{ U"TextArea", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
+		{ PropertyKey{ U"TextArea", U"cursorColor" }, U"カーソルの色" },
+		{ PropertyKey{ U"TextArea", U"selectionColor" }, U"選択範囲の色" },
 
 		// EventTrigger
-		{ PropertyTooltipKey{ U"EventTrigger", U"tag" }, U"イベントのタグ" },
-		{ PropertyTooltipKey{ U"EventTrigger", U"triggerType" }, U"トリガーの種類 (Click/Hover/Press等)" },
-		{ PropertyTooltipKey{ U"EventTrigger", U"childrenTriggerEnabled" }, U"子要素でのトリガーを有効化" },
+		{ PropertyKey{ U"EventTrigger", U"tag" }, U"イベントのタグ" },
+		{ PropertyKey{ U"EventTrigger", U"triggerType" }, U"トリガーの種類 (Click/Hover/Press等)" },
+		{ PropertyKey{ U"EventTrigger", U"childrenTriggerEnabled" }, U"子要素でのトリガーを有効化" },
 
 		// InputBlocker（プロパティなし）
 
 		// Placeholder
-		{ PropertyTooltipKey{ U"Placeholder", U"tag" }, U"プレースホルダーのタグ" },
-		{ PropertyTooltipKey{ U"Placeholder", U"data" }, U"プレースホルダーのデータ" },
+		{ PropertyKey{ U"Placeholder", U"tag" }, U"プレースホルダーのタグ" },
+		{ PropertyKey{ U"Placeholder", U"data" }, U"プレースホルダーのデータ" },
 	};
+}
+
+// PropertyValueのいずれかの状態が指定された値と一致するかをチェックする関数
+template <typename T>
+[[nodiscard]]
+static bool HasAnyStateEqualTo(const PropertyValue<T>& propertyValue, const T& targetValue)
+{
+	return propertyValue.value(InteractionState::Default, SelectedYN::No) == targetValue ||
+	       propertyValue.value(InteractionState::Default, SelectedYN::Yes) == targetValue ||
+	       propertyValue.value(InteractionState::Hovered, SelectedYN::No) == targetValue ||
+	       propertyValue.value(InteractionState::Hovered, SelectedYN::Yes) == targetValue ||
+	       propertyValue.value(InteractionState::Pressed, SelectedYN::No) == targetValue ||
+	       propertyValue.value(InteractionState::Pressed, SelectedYN::Yes) == targetValue ||
+	       propertyValue.value(InteractionState::Disabled, SelectedYN::No) == targetValue ||
+	       propertyValue.value(InteractionState::Disabled, SelectedYN::Yes) == targetValue;
+}
+
+// PropertyValueのいずれかの状態でtrueかをチェックする便利関数
+[[nodiscard]]
+static bool HasAnyTrueState(const PropertyValue<bool>& propertyValue)
+{
+	return HasAnyStateEqualTo(propertyValue, true);
+}
+
+// プロパティの表示条件を初期化する関数
+[[nodiscard]]
+static HashTable<PropertyKey, std::function<bool(const ComponentBase&)>> InitPropertyVisibilityConditions()
+{
+	return HashTable<PropertyKey, std::function<bool(const ComponentBase&)>>
+	{
+		// Spriteコンポーネントの9スライス関連プロパティ
+		{ PropertyKey{ U"Sprite", U"nineSliceMargin" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceTopTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceRightTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceScale" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+		{ PropertyKey{ U"Sprite", U"nineSliceFallbackToSimple" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return HasAnyTrueState(sprite->nineSliceEnabled());
+				}
+				return true;
+			}
+		},
+	};
+}
+
+// プロパティのメタデータを初期化する関数
+[[nodiscard]]
+static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
+{
+	// 既存のツールチップデータを取得
+	auto tooltips = InitPropertyTooltips();
+	auto visibilityConditions = InitPropertyVisibilityConditions();
+	
+	HashTable<PropertyKey, PropertyMetadata> metadata;
+	
+	// ツールチップをメタデータに変換
+	for (const auto& [key, tooltip] : tooltips)
+	{
+		metadata[key].tooltip = tooltip;
+	}
+	
+	// 表示条件をメタデータに追加
+	for (const auto& [key, condition] : visibilityConditions)
+	{
+		metadata[key].visibilityCondition = condition;
+	}
+	
+	// SpriteコンポーネントのnineSliceEnabledプロパティの変更時処理
+	metadata[PropertyKey{ U"Sprite", U"nineSliceEnabled" }].refreshInspectorOnChange = true;
+	
+	return metadata;
 }
 
 enum class ConstraintType : uint8
@@ -2475,7 +2628,7 @@ private:
 	std::shared_ptr<Node> m_inspectorRootNode;
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
-	HashTable<PropertyTooltipKey, String> m_propertyTooltips;
+	HashTable<PropertyKey, PropertyMetadata> m_propertyMetadata;
 	std::weak_ptr<Node> m_targetNode;
 	std::function<void()> m_onChangeNodeName;
 
@@ -2541,7 +2694,7 @@ public:
 		, m_defaults(defaults)
 		, m_dialogOpener(dialogOpener)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
-		, m_propertyTooltips(InitPropertyTooltips())
+		, m_propertyMetadata(InitPropertyMetadata())
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -2784,12 +2937,16 @@ public:
 	{
 		const auto propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -2801,12 +2958,16 @@ public:
 	{
 		const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -2818,12 +2979,16 @@ public:
 	{
 		const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -2835,12 +3000,16 @@ public:
 	{
 		const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -2852,12 +3021,16 @@ public:
 	{
 		const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -2869,12 +3042,16 @@ public:
 	{
 		const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
-		// ツールチップの追加
-		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		// メタデータに基づいてツールチップを追加
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
-			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			const auto& metadata = it->second;
+			if (metadata.tooltip)
 			{
-				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				{
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		
@@ -3995,10 +4172,14 @@ public:
 		const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); });
 		// Activeチェックボックスにツールチップを追加
 		{
-			const PropertyTooltipKey key{ U"Node", U"activeSelf" };
-			if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+			const PropertyKey key{ U"Node", U"activeSelf" };
+			if (const auto it = m_propertyMetadata.find(key); it != m_propertyMetadata.end())
 			{
-				activeCheckboxNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+				const auto& metadata = it->second;
+				if (metadata.tooltip)
+				{
+					activeCheckboxNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+				}
 			}
 		}
 		nodeNameNode->addChild(activeCheckboxNode);
@@ -4019,13 +4200,17 @@ public:
 			});
 		// Nameテキストボックスにツールチップを追加
 		{
-			const PropertyTooltipKey key{ U"Node", U"name" };
-			if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+			const PropertyKey key{ U"Node", U"name" };
+			if (const auto it = m_propertyMetadata.find(key); it != m_propertyMetadata.end())
 			{
-				// CreateNodeNameTextboxNodeはLabelを含むNodeを返すので、そのLabelを探す
-				if (const auto labelNode = nameTextboxNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				const auto& metadata = it->second;
+				if (metadata.tooltip)
 				{
-					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+					// CreateNodeNameTextboxNodeはLabelを含むNodeを返すので、そのLabelを探す
+					if (const auto labelNode = nameTextboxNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+					{
+						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					}
 				}
 			}
 		}
@@ -4740,60 +4925,173 @@ public:
 			switch (editType)
 			{
 			case PropertyEditType::Text:
-				propertyNode = componentNode->addChild(
-					createPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						property->propertyValueStringOfDefault(),
-						[property](StringView value) { property->trySetPropertyValueString(value); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](StringView value)
+							{
+								property->trySetPropertyValueString(value);
+								refreshInspector();
+							};
+						}
+					}
+					
+					propertyNode = componentNode->addChild(
+						createPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							property->propertyValueStringOfDefault(),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::Bool:
-				propertyNode = componentNode->addChild(
-					createBoolPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
-						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(bool)> onChange = [property](bool value) { property->trySetPropertyValueString(Format(value)); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](bool value)
+							{
+								property->trySetPropertyValueString(Format(value));
+								refreshInspector();
+							};
+						}
+					}
+					propertyNode = componentNode->addChild(
+						createBoolPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							ParseOr<bool>(property->propertyValueStringOfDefault(), false),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::Vec2:
-				propertyNode = componentNode->addChild(
-					createVec2PropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
-						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(const Vec2&)> onChange = [property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](const Vec2& value)
+							{
+								property->trySetPropertyValueString(Format(value));
+								refreshInspector();
+							};
+						}
+					}
+					
+					propertyNode = componentNode->addChild(
+						createVec2PropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::Color:
-				propertyNode = componentNode->addChild(
-					createColorPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
-						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(const ColorF&)> onChange = [property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](const ColorF& value)
+							{
+								property->trySetPropertyValueString(Format(value));
+								refreshInspector();
+							};
+						}
+					}
+					
+					propertyNode = componentNode->addChild(
+						createColorPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::LRTB:
-				propertyNode = componentNode->addChild(
-					createLRTBPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
-						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(const LRTB&)> onChange = [property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](const LRTB& value)
+							{
+								property->trySetPropertyValueString(Format(value));
+								refreshInspector();
+							};
+						}
+					}
+					
+					propertyNode = componentNode->addChild(
+						createLRTBPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::Enum:
-				propertyNode = componentNode->addChild(
-					createEnumPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						property->propertyValueStringOfDefault(),
-						[property](StringView value) { property->trySetPropertyValueString(value); },
-						m_contextMenu,
-						property->enumCandidates(),
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };
+					
+					// メタデータに基づいて変更時の処理を設定
+					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+					{
+						const auto& metadata = it->second;
+						if (metadata.refreshInspectorOnChange)
+						{
+							onChange = [this, property](StringView value)
+							{
+								property->trySetPropertyValueString(value);
+								refreshInspector();
+							};
+						}
+					}
+					
+					propertyNode = componentNode->addChild(
+						createEnumPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							property->propertyValueStringOfDefault(),
+							onChange,
+							m_contextMenu,
+							property->enumCandidates(),
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			}
 			if (!propertyNode)
@@ -4801,7 +5099,21 @@ public:
 				throw Error{ U"Failed to create property node" };
 			}
 
-			if (isFolded)
+			// 表示条件のチェック
+			const PropertyKey visibilityKey{ String(component->type()), String(property->name()) };
+			if (const auto it = m_propertyMetadata.find(visibilityKey); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.visibilityCondition && !metadata.visibilityCondition(*component))
+				{
+					propertyNode->setActive(false);
+				}
+				else if (isFolded)
+				{
+					propertyNode->setActive(false);
+				}
+			}
+			else if (isFolded)
 			{
 				propertyNode->setActive(false);
 			}
