@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "../LRTB.hpp"
 
 namespace noco
 {
@@ -11,16 +12,30 @@ namespace noco
 		Property<String> m_textureAssetName;
 		SmoothProperty<ColorF> m_color;
 		Property<bool> m_preserveAspect;
+		Property<bool> m_nineSliceEnabled;
+		Property<LRTB> m_nineSliceMargin;
+		Property<bool> m_nineSliceCenterTiled;
+		Property<bool> m_nineSliceTopTiled;
+		Property<bool> m_nineSliceBottomTiled;
+		Property<bool> m_nineSliceLeftTiled;
+		Property<bool> m_nineSliceRightTiled;
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceCenterTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }
+			, m_nineSliceEnabled{ U"nineSliceEnabled", false }
+			, m_nineSliceMargin{ U"nineSliceMargin", LRTB::Zero() }
+			, m_nineSliceCenterTiled{ U"nineSliceCenterTiled", false }
+			, m_nineSliceTopTiled{ U"nineSliceTopTiled", false }
+			, m_nineSliceBottomTiled{ U"nineSliceBottomTiled", false }
+			, m_nineSliceLeftTiled{ U"nineSliceLeftTiled", false }
+			, m_nineSliceRightTiled{ U"nineSliceRightTiled", false }
 		{
 		}
 
@@ -68,6 +83,83 @@ namespace noco
 		void setPreserveAspect(const PropertyValue<bool>& preserveAspect)
 		{
 			m_preserveAspect.setPropertyValue(preserveAspect);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceEnabled() const
+		{
+			return m_nineSliceEnabled.propertyValue();
+		}
+		
+		void setNineSliceEnabled(const PropertyValue<bool>& nineSliceEnabled)
+		{
+			m_nineSliceEnabled.setPropertyValue(nineSliceEnabled);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<LRTB>& nineSliceMargin() const
+		{
+			return m_nineSliceMargin.propertyValue();
+		}
+		
+		void setNineSliceMargin(const PropertyValue<LRTB>& nineSliceMargin)
+		{
+			m_nineSliceMargin.setPropertyValue(nineSliceMargin);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceCenterTiled() const
+		{
+			return m_nineSliceCenterTiled.propertyValue();
+		}
+		
+		void setNineSliceCenterTiled(const PropertyValue<bool>& nineSliceCenterTiled)
+		{
+			m_nineSliceCenterTiled.setPropertyValue(nineSliceCenterTiled);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceTopTiled() const
+		{
+			return m_nineSliceTopTiled.propertyValue();
+		}
+		
+		void setNineSliceTopTiled(const PropertyValue<bool>& nineSliceTopTiled)
+		{
+			m_nineSliceTopTiled.setPropertyValue(nineSliceTopTiled);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceBottomTiled() const
+		{
+			return m_nineSliceBottomTiled.propertyValue();
+		}
+		
+		void setNineSliceBottomTiled(const PropertyValue<bool>& nineSliceBottomTiled)
+		{
+			m_nineSliceBottomTiled.setPropertyValue(nineSliceBottomTiled);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceLeftTiled() const
+		{
+			return m_nineSliceLeftTiled.propertyValue();
+		}
+		
+		void setNineSliceLeftTiled(const PropertyValue<bool>& nineSliceLeftTiled)
+		{
+			m_nineSliceLeftTiled.setPropertyValue(nineSliceLeftTiled);
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& nineSliceRightTiled() const
+		{
+			return m_nineSliceRightTiled.propertyValue();
+		}
+		
+		void setNineSliceRightTiled(const PropertyValue<bool>& nineSliceRightTiled)
+		{
+			m_nineSliceRightTiled.setPropertyValue(nineSliceRightTiled);
 		}
 		
 		void setTexture(const Texture& texture)
