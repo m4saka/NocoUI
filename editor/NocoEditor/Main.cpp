@@ -924,6 +924,13 @@ static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
 		{ PropertyTooltipKey{ U"Sprite", U"textureAssetName" }, U"テクスチャアセット名" },
 		{ PropertyTooltipKey{ U"Sprite", U"color" }, U"スプライトの色" },
 		{ PropertyTooltipKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceEnabled" }, U"9スライス機能を有効にするか" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceMargin" }, U"9スライスのマージン（素材の端からの距離）" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceCenterTiled" }, U"中央領域をタイル表示するか" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceTopTiled" }, U"上端領域をタイル表示するか" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceBottomTiled" }, U"下端領域をタイル表示するか" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceLeftTiled" }, U"左端領域をタイル表示するか" },
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceRightTiled" }, U"右端領域をタイル表示するか" },
 
 		// TextBox
 		{ PropertyTooltipKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
@@ -953,6 +960,70 @@ static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
 		// Placeholder
 		{ PropertyTooltipKey{ U"Placeholder", U"tag" }, U"プレースホルダーのタグ" },
 		{ PropertyTooltipKey{ U"Placeholder", U"data" }, U"プレースホルダーのデータ" },
+	};
+}
+
+// プロパティの表示条件を初期化する関数
+[[nodiscard]]
+static HashTable<PropertyTooltipKey, std::function<bool(const ComponentBase&)>> InitPropertyVisibilityConditions()
+{
+	return HashTable<PropertyTooltipKey, std::function<bool(const ComponentBase&)>>
+	{
+		// Spriteコンポーネントの9スライス関連プロパティ
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceMargin" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceCenterTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceTopTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceBottomTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceLeftTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
+		{ PropertyTooltipKey{ U"Sprite", U"nineSliceRightTiled" }, [](const ComponentBase& component) -> bool
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->nineSliceEnabled().normal();
+				}
+				return true;
+			}
+		},
 	};
 }
 
@@ -2500,6 +2571,7 @@ private:
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
 	HashTable<PropertyTooltipKey, String> m_propertyTooltips;
+	HashTable<PropertyTooltipKey, std::function<bool(const ComponentBase&)>> m_propertyVisibilityConditions;
 	std::weak_ptr<Node> m_targetNode;
 	std::function<void()> m_onChangeNodeName;
 
@@ -2566,6 +2638,7 @@ public:
 		, m_dialogOpener(dialogOpener)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
 		, m_propertyTooltips(InitPropertyTooltips())
+		, m_propertyVisibilityConditions(InitPropertyVisibilityConditions())
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -4773,13 +4846,25 @@ public:
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
 				break;
 			case PropertyEditType::Bool:
-				propertyNode = componentNode->addChild(
-					createBoolPropertyNodeWithTooltip(
-						component->type(),
-						property->name(),
-						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
-						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
-						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				{
+					auto onChange = [property](bool value) { property->trySetPropertyValueString(Format(value)); };
+					// SpriteコンポーネントのnineSliceEnabledプロパティの場合、変更時にInspectorを更新
+					if (component->type() == U"Sprite" && property->name() == U"nineSliceEnabled")
+					{
+						onChange = [this, property](bool value)
+						{
+							property->trySetPropertyValueString(Format(value));
+							refreshInspector();
+						};
+					}
+					propertyNode = componentNode->addChild(
+						createBoolPropertyNodeWithTooltip(
+							component->type(),
+							property->name(),
+							ParseOr<bool>(property->propertyValueStringOfDefault(), false),
+							onChange,
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				}
 				break;
 			case PropertyEditType::Vec2:
 				propertyNode = componentNode->addChild(
@@ -4825,7 +4910,20 @@ public:
 				throw Error{ U"Failed to create property node" };
 			}
 
-			if (isFolded)
+			// 表示条件のチェック
+			const PropertyTooltipKey visibilityKey{ component->type(), property->name() };
+			if (const auto* condition = m_propertyVisibilityConditions.find(visibilityKey))
+			{
+				if (!(*condition)(*component))
+				{
+					propertyNode->setActive(false);
+				}
+				else if (isFolded)
+				{
+					propertyNode->setActive(false);
+				}
+			}
+			else if (isFolded)
 			{
 				propertyNode->setActive(false);
 			}
