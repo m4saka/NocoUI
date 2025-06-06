@@ -388,29 +388,61 @@ private:
 	std::shared_ptr<Canvas> m_overlayCanvas;
 	std::shared_ptr<Node> m_tooltipNode;
 	String m_tooltipText;
+	String m_tooltipDetailText;
 	double m_hoverTime = 0.0;
 	static constexpr double ShowDelay = 0.5; // ツールチップが表示されるまでの遅延時間(秒)
 
+	void updateTooltipSize()
+	{
+		if (!m_tooltipNode) return;
+		
+		// 各子ノードのサイズを取得して最大幅と合計高さを計算
+		double maxWidth = 0;
+		double totalHeight = 0;
+		const auto& layout = m_tooltipNode->boxChildrenLayout();
+		const auto vertLayout = std::get_if<VerticalLayout>(&layout);
+		if (vertLayout)
+		{
+			totalHeight += vertLayout->padding.top + vertLayout->padding.bottom;
+		}
+		
+		for (const auto& child : m_tooltipNode->children())
+		{
+			if (const auto label = child->getComponent<Label>())
+			{
+				const Vec2 contentSize = label->contentSize();
+				maxWidth = Max(maxWidth, contentSize.x);
+				totalHeight += contentSize.y;
+			}
+		}
+		
+		if (vertLayout && m_tooltipNode->children().size() > 1)
+		{
+			totalHeight += vertLayout->spacing * (m_tooltipNode->children().size() - 1);
+		}
+		
+		// ツールチップのサイズを更新
+		if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+		{
+			const Vec2 newSize{ maxWidth + 20, totalHeight };
+			if (pConstraint->sizeDelta != newSize)
+			{
+				AnchorConstraint newConstraint = *pConstraint;
+				newConstraint.sizeDelta = newSize;
+				m_tooltipNode->setConstraint(newConstraint);
+			}
+		}
+	}
+
 public:
-	explicit TooltipOpener(const std::shared_ptr<Canvas>& overlayCanvas, StringView tooltipText)
+	explicit TooltipOpener(const std::shared_ptr<Canvas>& overlayCanvas, StringView tooltipText, StringView tooltipDetailText = U"")
 		: ComponentBase{ {} }
 		, m_overlayCanvas{ overlayCanvas }
 		, m_tooltipText{ tooltipText }
+		, m_tooltipDetailText{ tooltipDetailText }
 	{
 		if (!m_tooltipText.empty())
 		{
-			// サイズ計算のために先にラベルを作成
-			const auto label = std::make_shared<Label>(
-				m_tooltipText,
-				U"",
-				12,
-				ColorF{ 1.0 },
-				HorizontalAlign::Center,
-				VerticalAlign::Middle,
-				LRTB::Zero(),
-				HorizontalOverflow::Wrap,
-				VerticalOverflow::Clip);
-
 			// ノードを作成
 			m_tooltipNode = m_overlayCanvas->rootNode()->emplaceChild(
 				U"Tooltip",
@@ -419,11 +451,55 @@ public:
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopLeft,
 					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = label->contentSize() + Vec2{ 20, 10 }, // ラベルのサイズに合わせてツールチップのサイズを調整
+					.sizeDelta = Vec2{ 200, 50 }, // 初期サイズ（後で調整）
 					.sizeDeltaPivot = Anchor::TopLeft,
 				});
 			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
-			m_tooltipNode->addComponent(label);
+			m_tooltipNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 10, 5, 5 }, .spacing = 5 });
+			
+			// メインテキスト用ノード
+			const auto mainTextNode = m_tooltipNode->emplaceChild(
+				U"MainText",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.flexibleWeight = 0,
+				});
+			const auto mainLabel = mainTextNode->emplaceComponent<Label>(
+				m_tooltipText,
+				U"",
+				12,
+				ColorF{ 1.0 },
+				HorizontalAlign::Left,
+				VerticalAlign::Top,
+				LRTB::Zero(),
+				HorizontalOverflow::Wrap,
+				VerticalOverflow::Clip);
+			
+			// 詳細説明がある場合は追加
+			if (!m_tooltipDetailText.empty())
+			{
+				const auto detailTextNode = m_tooltipNode->emplaceChild(
+					U"DetailText",
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.flexibleWeight = 0,
+					});
+				const auto detailLabel = detailTextNode->emplaceComponent<Label>(
+					m_tooltipDetailText,
+					U"",
+					11,
+					ColorF{ 0.8 },
+					HorizontalAlign::Left,
+					VerticalAlign::Top,
+					LRTB::Zero(),
+					HorizontalOverflow::Wrap,
+					VerticalOverflow::Clip);
+			}
+			
+			// サイズを内容に合わせて調整
+			updateTooltipSize();
 			
 			// 初期は非表示
 			m_tooltipNode->setActive(ActiveYN::No);
@@ -464,26 +540,62 @@ public:
 		}
 	}
 
-	void setTooltipText(StringView text)
+	void setTooltipText(StringView text, StringView detailText = U"")
 	{
 		m_tooltipText = text;
+		m_tooltipDetailText = detailText;
 		if (m_tooltipNode)
 		{
-			if (const auto label = m_tooltipNode->getComponent<Label>())
+			// メインテキストを更新
+			if (const auto mainTextNode = m_tooltipNode->findChild(U"MainText"))
 			{
-				label->setText(m_tooltipText);
-				// サイズを再計算
-				if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+				if (const auto label = mainTextNode->getComponent<Label>())
 				{
-					const Vec2 newSize = label->contentSize() + Vec2{ 20, 10 };
-					if (pConstraint->sizeDelta != newSize)
+					label->setText(m_tooltipText);
+				}
+			}
+			
+			// 詳細テキストノードの追加/削除
+			if (auto detailTextNode = m_tooltipNode->findChild(U"DetailText"))
+			{
+				if (m_tooltipDetailText.empty())
+				{
+					// 詳細説明が空になった場合は削除
+					m_tooltipNode->removeChild(detailTextNode);
+				}
+				else
+				{
+					// 既存の詳細テキストを更新
+					if (const auto label = detailTextNode->getComponent<Label>())
 					{
-						AnchorConstraint newConstraint = *pConstraint;
-						newConstraint.sizeDelta = newSize;
-						m_tooltipNode->setConstraint(newConstraint);
+						label->setText(m_tooltipDetailText);
 					}
 				}
 			}
+			else if (!m_tooltipDetailText.empty())
+			{
+				// 新しく詳細テキストノードを追加
+				const auto detailTextNode = m_tooltipNode->emplaceChild(
+					U"DetailText",
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.flexibleWeight = 0,
+					});
+				detailTextNode->emplaceComponent<Label>(
+					m_tooltipDetailText,
+					U"",
+					11,
+					ColorF{ 0.8 },
+					HorizontalAlign::Left,
+					VerticalAlign::Top,
+					LRTB::Zero(),
+					HorizontalOverflow::Wrap,
+					VerticalOverflow::Clip);
+			}
+			
+			// サイズを再計算
+			updateTooltipSize();
 		}
 	}
 };
