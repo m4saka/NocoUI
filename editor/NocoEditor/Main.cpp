@@ -695,6 +695,115 @@ public:
 
 };
 
+// プロパティの説明文を管理するための構造
+struct PropertyTooltipKey
+{
+	String componentName;
+	String propertyName;
+
+	bool operator==(const PropertyTooltipKey& other) const
+	{
+		return componentName == other.componentName && propertyName == other.propertyName;
+	}
+};
+
+template <>
+struct std::hash<PropertyTooltipKey>
+{
+	size_t operator()(const PropertyTooltipKey& key) const
+	{
+		return std::hash<String>{}(key.componentName) ^ (std::hash<String>{}(key.propertyName) << 1);
+	}
+};
+
+// プロパティの説明文を初期化する関数
+[[nodiscard]]
+static HashTable<PropertyTooltipKey, String> InitPropertyTooltips()
+{
+	return HashTable<PropertyTooltipKey, String>
+	{
+		// Nodeのプロパティ
+		{ PropertyTooltipKey{ U"Node", U"Name" }, U"Nodeの名前" },
+		{ PropertyTooltipKey{ U"Node", U"Active" }, U"Nodeの有効/無効状態" },
+
+		// Constraint関連
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMin" }, U"最小アンカー位置 (0,0)が左上、(1,1)が右下" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"anchorMax" }, U"最大アンカー位置 (0,0)が左上、(1,1)が右下" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"posDelta" }, U"アンカーからのオフセット位置" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDelta" }, U"アンカー領域からのサイズオフセット" },
+		{ PropertyTooltipKey{ U"AnchorConstraint", U"sizeDeltaPivot" }, U"サイズ変更時の中心点" },
+
+		{ PropertyTooltipKey{ U"BoxConstraint", U"margin" }, U"マージン (左、右、上、下)" },
+		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeRatio" }, U"親要素に対するサイズ比率 (0.0～1.0)" },
+		{ PropertyTooltipKey{ U"BoxConstraint", U"sizeDelta" }, U"固定サイズ (幅、高さ)" },
+
+		// Layout関連
+		{ PropertyTooltipKey{ U"FlowLayout", U"direction" }, U"配置方向 (横または縦)" },
+		{ PropertyTooltipKey{ U"FlowLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyTooltipKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyTooltipKey{ U"FlowLayout", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyTooltipKey{ U"FlowLayout", U"verticalAlign" }, U"垂直方向の配置" },
+
+		{ PropertyTooltipKey{ U"HorizontalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyTooltipKey{ U"HorizontalLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyTooltipKey{ U"HorizontalLayout", U"verticalAlign" }, U"垂直方向の配置" },
+
+		{ PropertyTooltipKey{ U"VerticalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
+		{ PropertyTooltipKey{ U"VerticalLayout", U"spacing" }, U"要素間の間隔" },
+		{ PropertyTooltipKey{ U"VerticalLayout", U"horizontalAlign" }, U"水平方向の配置" },
+
+		// TransformEffect関連
+		{ PropertyTooltipKey{ U"TransformEffect", U"translation" }, U"位置のオフセット" },
+		{ PropertyTooltipKey{ U"TransformEffect", U"rotation" }, U"回転角度 (ラジアン)" },
+		{ PropertyTooltipKey{ U"TransformEffect", U"scale" }, U"スケール" },
+
+		// Componentのプロパティ
+		{ PropertyTooltipKey{ U"RectRenderer", U"fillColor" }, U"塗りつぶし色" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"outlineColor" }, U"アウトライン色" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"outlineThickness" }, U"アウトラインの太さ" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"cornerRadius" }, U"角の丸み半径" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"shadowColor" }, U"影の色" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"shadowOffset" }, U"影のオフセット" },
+		{ PropertyTooltipKey{ U"RectRenderer", U"shadowBlur" }, U"影のぼかし度合い" },
+
+		{ PropertyTooltipKey{ U"Label", U"text" }, U"表示するテキスト" },
+		{ PropertyTooltipKey{ U"Label", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyTooltipKey{ U"Label", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyTooltipKey{ U"Label", U"textColor" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"Label", U"horizontalAlign" }, U"水平方向の配置" },
+		{ PropertyTooltipKey{ U"Label", U"verticalAlign" }, U"垂直方向の配置" },
+		{ PropertyTooltipKey{ U"Label", U"padding" }, U"内側余白" },
+		{ PropertyTooltipKey{ U"Label", U"horizontalOverflow" }, U"水平方向のオーバーフロー処理" },
+		{ PropertyTooltipKey{ U"Label", U"verticalOverflow" }, U"垂直方向のオーバーフロー処理" },
+
+		{ PropertyTooltipKey{ U"Sprite", U"texture" }, U"表示するテクスチャ" },
+		{ PropertyTooltipKey{ U"Sprite", U"color" }, U"スプライトの色" },
+		{ PropertyTooltipKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
+
+		{ PropertyTooltipKey{ U"TextBox", U"text" }, U"入力テキスト" },
+		{ PropertyTooltipKey{ U"TextBox", U"placeholderText" }, U"プレースホルダーテキスト" },
+		{ PropertyTooltipKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyTooltipKey{ U"TextBox", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyTooltipKey{ U"TextBox", U"textColor" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"TextBox", U"fillColor" }, U"背景色" },
+		{ PropertyTooltipKey{ U"TextBox", U"outlineColor" }, U"アウトライン色" },
+		{ PropertyTooltipKey{ U"TextBox", U"outlineThickness" }, U"アウトラインの太さ" },
+		{ PropertyTooltipKey{ U"TextBox", U"cornerRadius" }, U"角の丸み半径" },
+		{ PropertyTooltipKey{ U"TextBox", U"readOnly" }, U"読み取り専用" },
+
+		{ PropertyTooltipKey{ U"TextArea", U"text" }, U"入力テキスト" },
+		{ PropertyTooltipKey{ U"TextArea", U"placeholderText" }, U"プレースホルダーテキスト" },
+		{ PropertyTooltipKey{ U"TextArea", U"fontAssetName" }, U"フォントアセット名" },
+		{ PropertyTooltipKey{ U"TextArea", U"fontSize" }, U"フォントサイズ" },
+		{ PropertyTooltipKey{ U"TextArea", U"textColor" }, U"テキスト色" },
+		{ PropertyTooltipKey{ U"TextArea", U"fillColor" }, U"背景色" },
+		{ PropertyTooltipKey{ U"TextArea", U"outlineColor" }, U"アウトライン色" },
+		{ PropertyTooltipKey{ U"TextArea", U"outlineThickness" }, U"アウトラインの太さ" },
+		{ PropertyTooltipKey{ U"TextArea", U"cornerRadius" }, U"角の丸み半径" },
+		{ PropertyTooltipKey{ U"TextArea", U"readOnly" }, U"読み取り専用" },
+	};
+}
+
 enum class ConstraintType : uint8
 {
 	AnchorConstraint,
@@ -2232,11 +2341,13 @@ class Inspector
 private:
 	std::shared_ptr<Canvas> m_canvas;
 	std::shared_ptr<Canvas> m_editorCanvas;
+	std::shared_ptr<Canvas> m_editorOverlayCanvas;
 	std::shared_ptr<Node> m_inspectorFrameNode;
 	std::shared_ptr<Node> m_inspectorInnerFrameNode;
 	std::shared_ptr<Node> m_inspectorRootNode;
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
+	HashTable<PropertyTooltipKey, String> m_propertyTooltips;
 	std::weak_ptr<Node> m_targetNode;
 	std::function<void()> m_onChangeNodeName;
 
@@ -2261,9 +2372,10 @@ private:
 	}
 
 public:
-	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
+	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
 		: m_canvas(canvas)
 		, m_editorCanvas(editorCanvas)
+		, m_editorOverlayCanvas(editorOverlayCanvas)
 		, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
 			U"InspectorFrame",
 			AnchorConstraint
@@ -2301,6 +2413,7 @@ public:
 		, m_defaults(defaults)
 		, m_dialogOpener(dialogOpener)
 		, m_onChangeNodeName(std::move(onChangeNodeName))
+		, m_propertyTooltips(InitPropertyTooltips())
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -2534,6 +2647,75 @@ public:
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
 		textBoxNode->addClickHotKey(KeyF2);
+		return propertyNode;
+	}
+
+	// Inspectorのメンバ関数としてプロパティノードを作成（ツールチップ付き）
+	[[nodiscard]]
+	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
+		return propertyNode;
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
+		return propertyNode;
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
+		return propertyNode;
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	{
+		const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		
+		// ツールチップの追加
+		if (const auto it = m_propertyTooltips.find(PropertyTooltipKey{ String(componentName), String(propertyName) }); it != m_propertyTooltips.end())
+		{
+			if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+			{
+				labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+			}
+		}
+		
 		return propertyNode;
 	}
 
@@ -3735,31 +3917,37 @@ public:
 			{
 				m_isFoldedLayout = isFolded;
 			}));
+		// 現在のLayoutタイプを取得
+		String layoutTypeName;
+		if (node->childrenFlowLayout()) layoutTypeName = U"FlowLayout";
+		else if (node->childrenHorizontalLayout()) layoutTypeName = U"HorizontalLayout";
+		else if (node->childrenVerticalLayout()) layoutTypeName = U"VerticalLayout";
+		
 		const auto fnAddChild =
-			[this, &layoutNode](StringView name, const auto& value, auto fnSetValue)
+			[this, &layoutNode, &layoutTypeName](StringView name, const auto& value, auto fnSetValue)
 			{
-				layoutNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddVec2Child =
-			[this, &layoutNode](StringView name, const Vec2& currentValue, auto fnSetValue)
+			[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
 			{
-				layoutNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddDoubleChild =
-			[this, &layoutNode](StringView name, double currentValue, auto fnSetValue)
+			[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
 			{
-				layoutNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedLayout.getBool());
+				layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddLRTBChild =
-			[this, &layoutNode](StringView name, const LRTB& currentValue, auto fnSetValue)
+			[this, &layoutNode, &layoutTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
 			{
-				layoutNode->addChild(CreateLRTBPropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				layoutNode->addChild(createLRTBPropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 			};
 		const auto fnAddEnumChild =
-			[this, &layoutNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
+			[this, &layoutNode, &layoutTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 			{
 				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-				layoutNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedLayout.getBool());
+				layoutNode->addChild(createEnumPropertyNodeWithTooltip(layoutTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedLayout.getBool());
 			};
 		if (const auto pFlowLayout = node->childrenFlowLayout())
 		{
@@ -3868,26 +4056,29 @@ public:
 				m_isFoldedConstraint = isFolded;
 			}));
 
+		// 現在のConstraintタイプを取得
+		const String constraintTypeName = node->boxConstraint() ? U"BoxConstraint" : U"AnchorConstraint";
+		
 		const auto fnAddChild =
-			[this, &constraintNode](StringView name, const auto& value, auto fnSetValue)
+			[this, &constraintNode, &constraintTypeName](StringView name, const auto& value, auto fnSetValue)
 			{
-				constraintNode->addChild(CreatePropertyNode(name, Format(value), fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
+				constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddDoubleChild =
-			[this, &constraintNode](StringView name, double currentValue, auto fnSetValue)
+			[this, &constraintNode, &constraintTypeName](StringView name, double currentValue, auto fnSetValue)
 			{
-				constraintNode->addChild(CreatePropertyNode(name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedConstraint.getBool());
+				constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddEnumChild =
-			[this, &constraintNode]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
+			[this, &constraintNode, &constraintTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 			{
 				auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-				constraintNode->addChild(CreateEnumPropertyNode(name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedConstraint.getBool());
+				constraintNode->addChild(createEnumPropertyNodeWithTooltip(constraintTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedConstraint.getBool());
 			};
 		const auto fnAddVec2Child =
-			[this, &constraintNode](StringView name, const Vec2& currentValue, auto fnSetValue)
+			[this, &constraintNode, &constraintTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
 			{
-				constraintNode->addChild(CreateVec2PropertyNode(name, currentValue, fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
+				constraintNode->addChild(createVec2PropertyNodeWithTooltip(constraintTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
 			};
 
 		if (const auto pBoxConstraint = node->boxConstraint())
@@ -4296,7 +4487,7 @@ public:
 		const auto fnAddVec2Child =
 			[this, &transformEffectNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 			{
-				const auto propertyNode = transformEffectNode->addChild(CreateVec2PropertyNode(name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+				const auto propertyNode = transformEffectNode->addChild(createVec2PropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
 				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
 				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
@@ -4363,7 +4554,8 @@ public:
 			{
 			case PropertyEditType::Text:
 				propertyNode = componentNode->addChild(
-					CreatePropertyNode(
+					createPropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						property->propertyValueStringOfDefault(),
 						[property](StringView value) { property->trySetPropertyValueString(value); },
@@ -4376,10 +4568,22 @@ public:
 						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 						[property](bool value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				// ツールチップを追加
+				{
+					const PropertyTooltipKey key{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+					{
+						if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+						{
+							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+						}
+					}
+				}
 				break;
 			case PropertyEditType::Vec2:
 				propertyNode = componentNode->addChild(
-					CreateVec2PropertyNode(
+					createVec2PropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
 						[property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); },
@@ -4392,10 +4596,22 @@ public:
 						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
 						[property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); },
 						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+				// ツールチップを追加
+				{
+					const PropertyTooltipKey key{ String(component->type()), String(property->name()) };
+					if (const auto it = m_propertyTooltips.find(key); it != m_propertyTooltips.end())
+					{
+						if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+						{
+							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, it->second);
+						}
+					}
+				}
 				break;
 			case PropertyEditType::LRTB:
 				propertyNode = componentNode->addChild(
-					CreateLRTBPropertyNode(
+					createLRTBPropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
 						[property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); },
@@ -4403,7 +4619,8 @@ public:
 				break;
 			case PropertyEditType::Enum:
 				propertyNode = componentNode->addChild(
-					CreateEnumPropertyNode(
+					createEnumPropertyNodeWithTooltip(
+						component->type(),
 						property->name(),
 						property->propertyValueStringOfDefault(),
 						[property](StringView value) { property->trySetPropertyValueString(value); },
@@ -4719,7 +4936,7 @@ public:
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults)
-		, m_inspector(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
+		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
