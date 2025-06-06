@@ -114,11 +114,15 @@ namespace noco
 			const TextureRegion topRegion = texture(srcTop);
 			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
 			
-			for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+			// tileWidthが0以下の場合はスキップ
+			if (tileWidth > 0)
 			{
-				const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-				const double uvWidth = width / (effectScale.x * nineSliceScale.x);
-				topRegion.resized(uvWidth, topMargin).resized(width, drawTopMargin).draw(x, rect.y, color);
+				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+				{
+					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+					const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+					topRegion.resized(uvWidth, topMargin).resized(width, drawTopMargin).draw(x, rect.y, color);
+				}
 			}
 		}
 		else
@@ -134,11 +138,15 @@ namespace noco
 			const TextureRegion bottomRegion = texture(srcBottom);
 			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
 			
-			for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+			// tileWidthが0以下の場合はスキップ
+			if (tileWidth > 0)
 			{
-				const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-				const double uvWidth = width / (effectScale.x * nineSliceScale.x);
-				bottomRegion.resized(uvWidth, bottomMargin).resized(width, drawBottomMargin).draw(x, rect.y + rect.h - drawBottomMargin, color);
+				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+				{
+					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+					const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+					bottomRegion.resized(uvWidth, bottomMargin).resized(width, drawBottomMargin).draw(x, rect.y + rect.h - drawBottomMargin, color);
+				}
 			}
 		}
 		else
@@ -154,11 +162,15 @@ namespace noco
 			const TextureRegion leftRegion = texture(srcLeft);
 			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
 			
-			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			// tileHeightが0以下の場合はスキップ
+			if (tileHeight > 0)
 			{
-				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
-				leftRegion.resized(leftMargin, uvHeight).resized(drawLeftMargin, height).draw(rect.x, y, color);
+				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+				{
+					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+					const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+					leftRegion.resized(leftMargin, uvHeight).resized(drawLeftMargin, height).draw(rect.x, y, color);
+				}
 			}
 		}
 		else
@@ -174,11 +186,15 @@ namespace noco
 			const TextureRegion rightRegion = texture(srcRight);
 			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
 			
-			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			// tileHeightが0以下の場合はスキップ
+			if (tileHeight > 0)
 			{
-				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
-				rightRegion.resized(rightMargin, uvHeight).resized(drawRightMargin, height).draw(rect.x + rect.w - drawRightMargin, y, color);
+				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+				{
+					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+					const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+					rightRegion.resized(rightMargin, uvHeight).resized(drawRightMargin, height).draw(rect.x + rect.w - drawRightMargin, y, color);
+				}
 			}
 		}
 		else
@@ -195,16 +211,20 @@ namespace noco
 			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
 			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
 			
-			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			// tileWidthまたはtileHeightが0以下の場合はスキップ
+			if (tileWidth > 0 && tileHeight > 0)
 			{
-				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
-				
-				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
-					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-					const double uvWidth = width / (effectScale.x * nineSliceScale.x);
-					centerRegion.resized(uvWidth, uvHeight).resized(width, height).draw(x, y, color);
+					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+					const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+					
+					for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+					{
+						const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+						const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+						centerRegion.resized(uvWidth, uvHeight).resized(width, height).draw(x, y, color);
+					}
 				}
 			}
 		}
