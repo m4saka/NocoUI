@@ -28,6 +28,193 @@ namespace noco
 		}
 	}
 
+	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Vec2& effectScale, const ColorF& color) const
+	{
+		const LRTB& margin = m_nineSliceMargin.value();
+		const Size textureSize = texture.size();
+		
+		// マージンを素材のピクセル単位で適用
+		const double leftMargin = margin.left;
+		const double rightMargin = margin.right;
+		const double topMargin = margin.top;
+		const double bottomMargin = margin.bottom;
+		
+		// 中央領域のサイズを計算
+		const double centerWidth = textureSize.x - leftMargin - rightMargin;
+		const double centerHeight = textureSize.y - topMargin - bottomMargin;
+		
+		// 中央領域が無効な場合は通常描画にフォールバック
+		if (centerWidth <= 0 || centerHeight <= 0)
+		{
+			if (m_preserveAspect.value())
+			{
+				texture.fitted(rect.size).drawAt(rect.center(), color);
+			}
+			else
+			{
+				texture.resized(rect.size).draw(rect.pos, color);
+			}
+			return;
+		}
+		
+		// nineSliceScaleプロパティを取得
+		const Vec2& nineSliceScale = m_nineSliceScale.value();
+		
+		// effectScaleとnineSliceScaleを考慮した描画サイズのマージン
+		const double drawLeftMargin = leftMargin * effectScale.x * nineSliceScale.x;
+		const double drawRightMargin = rightMargin * effectScale.x * nineSliceScale.x;
+		const double drawTopMargin = topMargin * effectScale.y * nineSliceScale.y;
+		const double drawBottomMargin = bottomMargin * effectScale.y * nineSliceScale.y;
+		
+		// フォールバック判定
+		if (m_nineSliceFallbackToSimple.value())
+		{
+			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
+			{
+				// サイズが小さすぎる場合は通常描画
+				texture.resized(rect.size).draw(rect.pos, color);
+				return;
+			}
+		}
+		
+		// 9つの領域を定義(テクスチャ上の座標)
+		const Rect srcTopLeft{ 0, 0, static_cast<int32>(leftMargin), static_cast<int32>(topMargin) };
+		const Rect srcTop{ static_cast<int32>(leftMargin), 0, static_cast<int32>(centerWidth), static_cast<int32>(topMargin) };
+		const Rect srcTopRight{ static_cast<int32>(textureSize.x - rightMargin), 0, static_cast<int32>(rightMargin), static_cast<int32>(topMargin) };
+		
+		const Rect srcLeft{ 0, static_cast<int32>(topMargin), static_cast<int32>(leftMargin), static_cast<int32>(centerHeight) };
+		const Rect srcCenter{ static_cast<int32>(leftMargin), static_cast<int32>(topMargin), static_cast<int32>(centerWidth), static_cast<int32>(centerHeight) };
+		const Rect srcRight{ static_cast<int32>(textureSize.x - rightMargin), static_cast<int32>(topMargin), static_cast<int32>(rightMargin), static_cast<int32>(centerHeight) };
+		
+		const Rect srcBottomLeft{ 0, static_cast<int32>(textureSize.y - bottomMargin), static_cast<int32>(leftMargin), static_cast<int32>(bottomMargin) };
+		const Rect srcBottom{ static_cast<int32>(leftMargin), static_cast<int32>(textureSize.y - bottomMargin), static_cast<int32>(centerWidth), static_cast<int32>(bottomMargin) };
+		const Rect srcBottomRight{ static_cast<int32>(textureSize.x - rightMargin), static_cast<int32>(textureSize.y - bottomMargin), static_cast<int32>(rightMargin), static_cast<int32>(bottomMargin) };
+		
+		// 描画先の領域を定義
+		const double centerDrawWidth = rect.w - drawLeftMargin - drawRightMargin;
+		const double centerDrawHeight = rect.h - drawTopMargin - drawBottomMargin;
+		
+		// タイル設定を取得
+		const bool centerTiled = m_nineSliceCenterTiled.value();
+		const bool leftTiled = m_nineSliceLeftTiled.value();
+		const bool rightTiled = m_nineSliceRightTiled.value();
+		const bool topTiled = m_nineSliceTopTiled.value();
+		const bool bottomTiled = m_nineSliceBottomTiled.value();
+		
+		// 四隅を描画(常に伸縮)
+		texture(srcTopLeft).resized(drawLeftMargin, drawTopMargin).draw(rect.pos, color);
+		texture(srcTopRight).resized(drawRightMargin, drawTopMargin).draw(rect.x + rect.w - drawRightMargin, rect.y, color);
+		texture(srcBottomLeft).resized(drawLeftMargin, drawBottomMargin).draw(rect.x, rect.y + rect.h - drawBottomMargin, color);
+		texture(srcBottomRight).resized(drawRightMargin, drawBottomMargin).draw(rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, color);
+		
+		// 上辺を描画
+		if (topTiled)
+		{
+			// タイル描画
+			const TextureRegion topRegion = texture(srcTop);
+			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
+			
+			for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+			{
+				const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+				const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+				topRegion.resized(uvWidth, topMargin).resized(width, drawTopMargin).draw(x, rect.y, color);
+			}
+		}
+		else
+		{
+			// 伸縮描画
+			texture(srcTop).resized(centerDrawWidth, drawTopMargin).draw(rect.x + drawLeftMargin, rect.y, color);
+		}
+		
+		// 下辺を描画
+		if (bottomTiled)
+		{
+			// タイル描画
+			const TextureRegion bottomRegion = texture(srcBottom);
+			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
+			
+			for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+			{
+				const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+				const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+				bottomRegion.resized(uvWidth, bottomMargin).resized(width, drawBottomMargin).draw(x, rect.y + rect.h - drawBottomMargin, color);
+			}
+		}
+		else
+		{
+			// 伸縮描画
+			texture(srcBottom).resized(centerDrawWidth, drawBottomMargin).draw(rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, color);
+		}
+		
+		// 左辺を描画
+		if (leftTiled)
+		{
+			// タイル描画
+			const TextureRegion leftRegion = texture(srcLeft);
+			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
+			
+			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			{
+				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+				leftRegion.resized(leftMargin, uvHeight).resized(drawLeftMargin, height).draw(rect.x, y, color);
+			}
+		}
+		else
+		{
+			// 伸縮描画
+			texture(srcLeft).resized(drawLeftMargin, centerDrawHeight).draw(rect.x, rect.y + drawTopMargin, color);
+		}
+		
+		// 右辺を描画
+		if (rightTiled)
+		{
+			// タイル描画
+			const TextureRegion rightRegion = texture(srcRight);
+			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
+			
+			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			{
+				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+				rightRegion.resized(rightMargin, uvHeight).resized(drawRightMargin, height).draw(rect.x + rect.w - drawRightMargin, y, color);
+			}
+		}
+		else
+		{
+			// 伸縮描画
+			texture(srcRight).resized(drawRightMargin, centerDrawHeight).draw(rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, color);
+		}
+		
+		// 中央を描画
+		if (centerTiled)
+		{
+			// タイル描画
+			const TextureRegion centerRegion = texture(srcCenter);
+			const double tileWidth = centerWidth * effectScale.x * nineSliceScale.x;
+			const double tileHeight = centerHeight * effectScale.y * nineSliceScale.y;
+			
+			for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
+			{
+				const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
+				const double uvHeight = height / (effectScale.y * nineSliceScale.y);
+				
+				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
+				{
+					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
+					const double uvWidth = width / (effectScale.x * nineSliceScale.x);
+					centerRegion.resized(uvWidth, uvHeight).resized(width, height).draw(x, y, color);
+				}
+			}
+		}
+		else
+		{
+			// 伸縮描画
+			texture(srcCenter).resized(centerDrawWidth, centerDrawHeight).draw(rect.x + drawLeftMargin, rect.y + drawTopMargin, color);
+		}
+	}
+
 	void Sprite::draw(const Node& node) const
 	{
 		Texture texture;
@@ -46,7 +233,13 @@ namespace noco
 		
 		const RectF& rect = node.rect();
 		const ColorF& color = m_color.value();
-		if (m_preserveAspect.value())
+		
+		if (m_nineSliceEnabled.value())
+		{
+			const Vec2& effectScale = node.effectScale();
+			drawNineSlice(texture, rect, effectScale, color);
+		}
+		else if (m_preserveAspect.value())
 		{
 			texture.fitted(rect.size).drawAt(rect.center(), color);
 		}
