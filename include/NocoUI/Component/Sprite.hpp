@@ -11,6 +11,8 @@ namespace noco
 		Property<String> m_textureAssetName;
 		SmoothProperty<ColorF> m_color;
 		Property<bool> m_preserveAspect;
+		
+		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
@@ -66,6 +68,16 @@ namespace noco
 		void setPreserveAspect(const PropertyValue<bool>& preserveAspect)
 		{
 			m_preserveAspect.setPropertyValue(preserveAspect);
+		}
+		
+		void setTexture(const Texture& texture)
+		{
+			m_textureOpt = texture;
+		}
+		
+		void clearTexture()
+		{
+			m_textureOpt.reset();
 		}
 	};
 }

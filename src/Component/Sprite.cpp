@@ -30,9 +30,20 @@ namespace noco
 
 	void Sprite::draw(const Node& node) const
 	{
-		const String& textureFilePath = m_textureFilePath.value();
-		const String& textureAssetName = m_textureAssetName.value();
-		const Texture texture = GetTexture(textureFilePath, textureAssetName);
+		Texture texture;
+		
+		// m_textureOptが設定されている場合は優先的に使用
+		if (m_textureOpt)
+		{
+			texture = *m_textureOpt;
+		}
+		else
+		{
+			const String& textureFilePath = m_textureFilePath.value();
+			const String& textureAssetName = m_textureAssetName.value();
+			texture = GetTexture(textureFilePath, textureAssetName);
+		}
+		
 		const RectF& rect = node.rect();
 		const ColorF& color = m_color.value();
 		if (m_preserveAspect.value())
