@@ -382,6 +382,112 @@ public:
 	}
 };
 
+class TooltipOpener : public ComponentBase
+{
+private:
+	std::shared_ptr<Canvas> m_overlayCanvas;
+	std::shared_ptr<Node> m_tooltipNode;
+	String m_tooltipText;
+	double m_hoverTime = 0.0;
+	static constexpr double ShowDelay = 0.5; // ツールチップが表示されるまでの遅延時間(秒)
+
+public:
+	explicit TooltipOpener(const std::shared_ptr<Canvas>& overlayCanvas, StringView tooltipText)
+		: ComponentBase{ {} }
+		, m_overlayCanvas{ overlayCanvas }
+		, m_tooltipText{ tooltipText }
+	{
+		if (!m_tooltipText.empty())
+		{
+			// サイズ計算のために先にラベルを作成
+			const auto label = std::make_shared<Label>(
+				m_tooltipText,
+				U"",
+				12,
+				ColorF{ 1.0 },
+				HorizontalAlign::Center,
+				VerticalAlign::Middle,
+				LRTB::Zero(),
+				HorizontalOverflow::Wrap,
+				VerticalOverflow::Clip);
+
+			// ノードを作成
+			m_tooltipNode = m_overlayCanvas->rootNode()->emplaceChild(
+				U"Tooltip",
+				AnchorConstraint
+				{
+					.anchorMin = Anchor::TopLeft,
+					.anchorMax = Anchor::TopLeft,
+					.posDelta = Vec2{ 0, 0 },
+					.sizeDelta = label->contentSize() + Vec2{ 20, 10 }, // ラベルのサイズに合わせてツールチップのサイズを調整
+					.sizeDeltaPivot = Anchor::TopLeft,
+				});
+			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
+			m_tooltipNode->addComponent(label);
+			
+			// 初期は非表示
+			m_tooltipNode->setActive(ActiveYN::No);
+		}
+	}
+
+	void update(const std::shared_ptr<Node>& node) override
+	{
+		if (!m_tooltipNode)
+		{
+			return;
+		}
+
+		if (node->isHoveredRecursive())
+		{
+			m_hoverTime += Scene::DeltaTime();
+			
+			if (m_hoverTime >= ShowDelay)
+			{
+				// マウス位置にツールチップを移動して表示
+				if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+				{
+					const Vec2 newPos = Cursor::Pos() + Vec2{ 0, 20 };
+					if (pConstraint->posDelta != newPos)
+					{
+						AnchorConstraint newConstraint = *pConstraint;
+						newConstraint.posDelta = newPos;
+						m_tooltipNode->setConstraint(newConstraint);
+					}
+				}
+				m_tooltipNode->setActive(true);
+			}
+		}
+		else
+		{
+			m_hoverTime = 0.0;
+			m_tooltipNode->setActive(false);
+		}
+	}
+
+	void setTooltipText(StringView text)
+	{
+		m_tooltipText = text;
+		if (m_tooltipNode)
+		{
+			if (const auto label = m_tooltipNode->getComponent<Label>())
+			{
+				label->setText(m_tooltipText);
+				// サイズを再計算
+				if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+				{
+					const Vec2 newSize = label->contentSize() + Vec2{ 20, 10 };
+					if (pConstraint->sizeDelta != newSize)
+					{
+						AnchorConstraint newConstraint = *pConstraint;
+						newConstraint.sizeDelta = newSize;
+						m_tooltipNode->setConstraint(newConstraint);
+					}
+				}
+			}
+		}
+	}
+};
+
 struct MenuCategory
 {
 	Array<MenuElement> elements;
@@ -489,16 +595,9 @@ private:
 	static constexpr int32 ButtonMargin = 4;
 	static constexpr int32 BorderLineThickness = 2;
 
-	struct ToolbarButton
-	{
-		std::shared_ptr<Node> node;
-		std::shared_ptr<Node> tooltipNode;
-	};
-
 	std::shared_ptr<Canvas> m_editorCanvas;
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
 	std::shared_ptr<Node> m_toolbarRootNode;
-	Array<ToolbarButton> m_buttons;
 	Font m_iconFont{ FontMethod::MSDF, 18, Typeface::Icon_MaterialDesign };
 
 public:
@@ -541,7 +640,7 @@ public:
 
 	void addButton(StringView name, StringView icon, StringView tooltip, std::function<void()> onClick)
 	{
-		auto buttonNode = m_toolbarRootNode->emplaceChild(
+		const auto buttonNode = m_toolbarRootNode->emplaceChild(
 			name,
 			BoxConstraint
 			{
@@ -576,44 +675,10 @@ public:
 		});
 		
 		// ツールチップ
-		std::shared_ptr<Node> tooltipNode;
 		if (!tooltip.empty())
 		{
-			// サイズ計算のために先にラベルを作成
-			const auto label = std::make_shared<Label>(
-				tooltip,
-				U"",
-				12,
-				ColorF{ 1.0 },
-				HorizontalAlign::Center,
-				VerticalAlign::Middle,
-				LRTB::Zero(),
-				HorizontalOverflow::Wrap,
-				VerticalOverflow::Clip);
-
-			// ノードを作成
-			tooltipNode = m_editorOverlayCanvas->rootNode()->emplaceChild(
-				U"Tooltip_{}_"_fmt(name),
-				AnchorConstraint
-				{
-					.anchorMin = Anchor::TopLeft,
-					.anchorMax = Anchor::TopLeft,
-					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = label->contentSize() + Vec2{ 20, 10 }, // ラベルのサイズに合わせてツールチップのサイズを調整
-					.sizeDeltaPivot = Anchor::TopLeft,
-				});
-			tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0);
-			tooltipNode->addComponent(label);
-			
-			// 初期は非表示
-			tooltipNode->setActive(ActiveYN::No);
+			buttonNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, tooltip);
 		}
-		
-		m_buttons.push_back(ToolbarButton
-		{
-			.node = std::move(buttonNode),
-			.tooltipNode = std::move(tooltipNode),
-		});
 	}
 
 	void addSeparator()
@@ -628,36 +693,6 @@ public:
 			->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
 	}
 
-	void update()
-	{
-		// ツールチップの表示制御
-		for (const auto& button : m_buttons)
-		{
-			if (!button.tooltipNode)
-			{
-				continue;
-			}
-
-			if (button.node->isHoveredRecursive())
-			{
-				// マウス位置にツールチップを移動して表示
-				const auto constraint = std::get<AnchorConstraint>(button.tooltipNode->constraint());
-				button.tooltipNode->setConstraint(AnchorConstraint
-				{
-					.anchorMin = constraint.anchorMin,
-					.anchorMax = constraint.anchorMax,
-					.posDelta = Cursor::Pos() + Vec2{ 0, 20 },
-					.sizeDelta = constraint.sizeDelta,
-					.sizeDeltaPivot = constraint.sizeDeltaPivot,
-				});
-				button.tooltipNode->setActive(true);
-			}
-			else
-			{
-				button.tooltipNode->setActive(false);
-			}
-		}
-	}
 };
 
 enum class ConstraintType : uint8
@@ -4769,7 +4804,6 @@ public:
 		m_dialogContextMenu->update();
 		m_contextMenu->update();
 		m_menuBar.update();
-		m_toolbar.update();
 		m_hierarchy.update();
 		m_inspector.update();
 
