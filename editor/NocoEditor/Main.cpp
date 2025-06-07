@@ -1099,6 +1099,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"基準点 (X、Y)",
 		.tooltipDetail = U"scaleによる拡大縮小の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
 	};
+	metadata[PropertyKey{ U"TransformEffect", U"rotation" }] = PropertyMetadata{
+		.tooltip = U"回転角度 (度)",
+		.tooltipDetail = U"要素をpivotを中心に回転させる角度を度単位で指定します\n正の値は時計回り、負の値は反時計回りに回転します\n※TransformEffectはレイアウトの再計算を必要としないため、要素を高速に回転できます。そのため、アニメーション等の用途で利用できます\n※現在、マウスカーソルのホバー判定は回転前の矩形領域で行われます",
+	};
 	
 	// Componentのプロパティ
 	// RectRenderer
@@ -5257,6 +5261,12 @@ public:
 		// Note: アクセサからポインタを取得しているので注意が必要
 		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
+
+		// rotation用のUIを追加
+		const auto rotationNode = transformEffectNode->addChild(Inspector::CreatePropertyNodeWithTooltip(U"TransformEffect", U"rotation", Format(pTransformEffect->rotation().propertyValue().defaultValue), [this, pTransformEffect](StringView value) { pTransformEffect->setRotation(ParseFloatOpt<double>(value).value_or(pTransformEffect->rotation().propertyValue().defaultValue)); m_canvas->refreshLayout(); }, HasInteractivePropertyValueYN{ pTransformEffect->rotation().hasInteractivePropertyValue() }));
+		rotationNode->setActive(!m_isFoldedTransformEffect.getBool());
+		rotationNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(U"rotation"), U"", KeyC, [this, pRotation = &pTransformEffect->rotation()] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pRotation, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
+
 		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
