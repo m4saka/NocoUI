@@ -1994,6 +1994,7 @@ public:
 
 	void onClickDelete()
 	{
+		bool hasDeleted = false;
 		for (auto it = m_elements.begin(); it != m_elements.end();)
 		{
 			if (it->editorSelected())
@@ -2001,6 +2002,7 @@ public:
 				if (it->node()->removeFromParent())
 				{
 					it = m_elements.erase(it);
+					hasDeleted = true;
 				}
 				else
 				{
@@ -2011,6 +2013,10 @@ public:
 			{
 				++it;
 			}
+		}
+		if (!hasDeleted)
+		{
+			return;
 		}
 		refreshNodeList();
 		clearSelection();
@@ -5695,6 +5701,22 @@ public:
 		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); });
 		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); });
 		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
+		m_toolbar.addSeparator();
+		m_toolbar.addButton(U"NewNode", U"\xF1200", U"新規ノード (Ctrl+Shift+N)", [this] { m_hierarchy.onClickNewNode(); });
+		m_toolbar.addButton(U"NewNodeAsChild", U"\xF0F97", U"選択ノードの子として新規ノード (Ctrl+Alt+N)",
+			[this]
+			{
+				if (const auto parent = m_hierarchy.selectedNode().lock())
+				{
+					m_hierarchy.onClickNewNode(parent);
+				}
+			});
+		m_toolbar.addSeparator();
+		m_toolbar.addButton(U"CopyNode", U"\xF018F", U"選択ノードをコピー (Ctrl+C)", [this] { m_hierarchy.onClickCopy(); });
+		m_toolbar.addButton(U"PasteNode", U"\xF0192", U"ノードを貼り付け (Ctrl+V)", [this] { m_hierarchy.onClickPaste(); });
+		m_toolbar.addButton(U"CutNode", U"\xF0190", U"選択ノードを切り取り (Ctrl+X)", [this] { m_hierarchy.onClickCut(); });
+		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); });
+		m_toolbar.addSeparator();
 
 		// 初期位置を反映
 		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
