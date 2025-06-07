@@ -490,7 +490,7 @@ namespace noco
 					m_selectionAnchorColumn = column;
 					m_cursorLine = line;
 					m_cursorColumn = column;
-					m_isDragging = false;
+					m_isDragging = true;
 				}
 				else if (!KeyShift.pressed())
 				{
