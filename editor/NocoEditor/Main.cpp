@@ -5512,6 +5512,8 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 	contentRootNode->refreshContainedCanvasLayout();
 }
 
+constexpr Vec2 InitialCanvasScrollOffset{ 0, -(MenuBarHeight + Toolbar::ToolbarHeight) / 2 };
+
 class Editor
 {
 private:
@@ -5534,7 +5536,7 @@ private:
 	bool m_prevSelectedNodeExists = false;
 	Optional<String> m_filePath = none;
 	uint64 m_savedHash = 0;
-	Vec2 m_scrollOffset = Vec2::Zero();
+	Vec2 m_scrollOffset = InitialCanvasScrollOffset;
 	double m_scrollScale = 1.0;
 	bool m_isAltScrolling = false;
 
@@ -5603,6 +5605,9 @@ public:
 		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); });
 		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); });
 		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
+
+		// 初期位置を反映
+		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
 	void update()
@@ -6035,7 +6040,7 @@ public:
 
 	void onClickMenuViewResetPosition()
 	{
-		m_scrollOffset = Vec2::Zero();
+		m_scrollOffset = InitialCanvasScrollOffset;
 		m_scrollScale = 1.0;
 		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
