@@ -141,6 +141,9 @@
     <ClCompile Include="..\..\src\Component\TextArea.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Serialization.cpp">
+      <Filter>Source Files\NocoUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">

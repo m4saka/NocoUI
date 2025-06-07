@@ -120,4 +120,9 @@ namespace noco
 	{
 		{ T::fromJSON(JSON{}, T{}) } -> std::convertible_to<T>;
 	};
+	
+	class ComponentBase;
+	
+	[[nodiscard]]
+	std::shared_ptr<ComponentBase> CreateComponentFromJSON(const JSON& json);
 }

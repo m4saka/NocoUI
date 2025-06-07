@@ -2897,6 +2897,10 @@ private:
 	Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
 	std::shared_ptr<Defaults> m_defaults;
+	
+	// コンポーネントのコピー用クリップボード
+	Optional<JSON> m_copiedComponentJSON;
+	Optional<String> m_copiedComponentType;
 
 	template <class TComponent, class... Args>
 	void onClickAddComponent(Args&&... args)
@@ -2909,6 +2913,55 @@ private:
 		node->emplaceComponent<TComponent>(std::forward<Args>(args)...);
 		refreshInspector();
 	}
+	
+	void onClickCopyComponent(const std::shared_ptr<SerializableComponentBase>& component)
+	{
+		if (!component)
+		{
+			return;
+		}
+		m_copiedComponentJSON = component->toJSON();
+		m_copiedComponentType = component->type();
+		
+		// Inspectorを更新してコンテキストメニューに貼り付けオプションを反映
+		refreshInspector();
+	}
+	
+	void onClickPasteComponentTo(const std::shared_ptr<SerializableComponentBase>& component)
+	{
+		if (!component || !m_copiedComponentJSON.has_value() || !m_copiedComponentType.has_value())
+		{
+			return;
+		}
+		// 同じタイプのコンポーネントにのみ貼り付け可能
+		if (component->type() != *m_copiedComponentType)
+		{
+			return;
+		}
+		component->tryReadFromJSON(*m_copiedComponentJSON);
+		refreshInspector();
+	}
+	
+	void onClickPasteComponentAsNew()
+	{
+		const auto node = m_targetNode.lock();
+		if (!node || !m_copiedComponentJSON || !m_copiedComponentType)
+		{
+			return;
+		}
+		
+		// JSONからコンポーネントを作成
+		auto componentJSON = *m_copiedComponentJSON;
+		componentJSON[U"type"] = *m_copiedComponentType;
+		
+		// CreateComponentFromJSONを使用してコンポーネントを作成
+		if (const auto component = CreateComponentFromJSON(componentJSON))
+		{
+			node->addComponent(component);
+			refreshInspector();
+		}
+	}
+	
 
 public:
 	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
@@ -2956,18 +3009,6 @@ public:
 	{
 		m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 		m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
-		m_inspectorInnerFrameNode->emplaceComponent<ContextMenuOpener>(contextMenu,
-			Array<MenuElement>
-			{
-				MenuItem{ U"Sprite を追加", U"", KeyS, [this] { onClickAddComponent<Sprite>(); } },
-				MenuItem{ U"RectRenderer を追加", U"", KeyR, [this] { onClickAddComponent<RectRenderer>(); } },
-				MenuItem{ U"TextBox を追加", U"", KeyT, [this] { onClickAddComponent<TextBox>(); } },
-				MenuItem{ U"TextArea を追加", U"", KeyA, [this] { onClickAddComponent<TextArea>(); } },
-				MenuItem{ U"Label を追加", U"", KeyL, [this] { onClickAddComponent<Label>(); } },
-				MenuItem{ U"InputBlocker を追加", U"", KeyI, [this] { onClickAddComponent<InputBlocker>(); } },
-				MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },
-				MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
-			});
 		m_inspectorRootNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 		m_inspectorRootNode->setVerticalScrollable(true);
 	}
@@ -3040,6 +3081,33 @@ public:
 					m_inspectorRootNode->addChild(componentNode);
 				}
 			}
+
+			// コンポーネント追加メニューを設定
+			// 既存のContextMenuOpenerを削除
+			m_inspectorInnerFrameNode->removeComponentsIf([](const std::shared_ptr<ComponentBase>& component)
+			{
+				return std::dynamic_pointer_cast<ContextMenuOpener>(component) != nullptr;
+			});
+			
+			Array<MenuElement> menuElements = {
+				MenuItem{ U"Sprite を追加", U"", KeyS, [this] { onClickAddComponent<Sprite>(); } },
+				MenuItem{ U"RectRenderer を追加", U"", KeyR, [this] { onClickAddComponent<RectRenderer>(); } },
+				MenuItem{ U"TextBox を追加", U"", KeyT, [this] { onClickAddComponent<TextBox>(); } },
+				MenuItem{ U"TextArea を追加", U"", KeyA, [this] { onClickAddComponent<TextArea>(); } },
+				MenuItem{ U"Label を追加", U"", KeyL, [this] { onClickAddComponent<Label>(); } },
+				MenuItem{ U"InputBlocker を追加", U"", KeyI, [this] { onClickAddComponent<InputBlocker>(); } },
+				MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },
+				MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
+			};
+			
+			// コピーされたコンポーネントがある場合は貼り付けメニューを追加
+			if (m_copiedComponentType)
+			{
+				menuElements.push_back(MenuSeparator{});
+				menuElements.push_back(MenuItem{ U"{} を貼り付け"_fmt(*m_copiedComponentType), U"", KeyV, [this] { onClickPasteComponentAsNew(); } });
+			}
+			
+			m_inspectorInnerFrameNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements);
 
 			m_inspectorRootNode->addChild(CreateButtonNode(
 				U"＋ コンポーネントを追加(A)",
@@ -5177,14 +5245,21 @@ public:
 		componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 		const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
-		headingNode->emplaceComponent<ContextMenuOpener>(
-			m_contextMenu,
-			Array<MenuElement>
-			{
-				MenuItem{ U"{} を削除"_fmt(component->type()), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } },
-				MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } },
-				MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } },
-			});
+		Array<MenuElement> menuElements;
+		menuElements.push_back(MenuItem{ U"{} を削除"_fmt(component->type()), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } });
+		menuElements.push_back(MenuSeparator{});
+		menuElements.push_back(MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } });
+		menuElements.push_back(MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } });
+		menuElements.push_back(MenuSeparator{});
+		menuElements.push_back(MenuItem{ U"{} の内容をコピー"_fmt(component->type()), U"", KeyC, [this, component] { onClickCopyComponent(component); } });
+		
+		// 同じタイプのコンポーネントがコピーされている場合のみ貼り付けメニューを表示
+		if (m_copiedComponentType.has_value() && *m_copiedComponentType == component->type())
+		{
+			menuElements.push_back(MenuItem{ U"{} の内容を貼り付け"_fmt(component->type()), U"", KeyV, [this, component] { onClickPasteComponentTo(component); } });
+		}
+		
+		headingNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements);
 
 		if (component->properties().empty())
 		{

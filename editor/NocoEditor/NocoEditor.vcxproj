@@ -129,6 +129,7 @@
     <ClCompile Include="..\..\src\Layout\HorizontalLayout.cpp" />
     <ClCompile Include="..\..\src\Layout\VerticalLayout.cpp" />
     <ClCompile Include="..\..\src\Node.cpp" />
+    <ClCompile Include="..\..\src\Serialization.cpp" />
     <ClCompile Include="..\..\src\Utility.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">

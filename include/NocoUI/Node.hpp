@@ -174,6 +174,12 @@ namespace noco
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
+		template <typename Predicate>
+		void removeComponentsIf(Predicate predicate)
+		{
+			m_components.remove_if(std::move(predicate));
+		}
+
 		template <class TComponent, class... Args>
 		std::shared_ptr<TComponent> emplaceComponent(Args&&... args)
 			requires std::derived_from<TComponent, ComponentBase> && std::is_constructible_v<TComponent, Args...>;
