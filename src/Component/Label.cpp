@@ -3,28 +3,33 @@
 
 namespace noco
 {
-	void Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize)
+	bool Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
-		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize))
+		const bool hasCustomFont = fontOpt.has_value();
+		const Font newFont = hasCustomFont ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
+		
+		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
 		{
-			return;
+			return false;
 		}
 		prevParams = CacheParams
 		{
 			.text = String{ text },
-			// fontOptの変更はsetFont/clearFontで手動でキャッシュ削除して反映するため、ここには入れない
 			.fontAssetName = String{ fontAssetName },
 			.fontSize = fontSize,
 			.horizontalOverflow = horizontalOverflow,
 			.verticalOverflow = verticalOverflow,
 			.spacing = spacing,
 			.rectSize = rectSize,
+			.hasCustomFont = hasCustomFont,
+			.customFont = newFont,
+			.sizingMode = newSizingMode,
 		};
 
-		const Font font = fontOpt.has_value() ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
-		fontMethod = font.method();
-		const Array<Glyph> glyphs = font.getGlyphs(text);
-		const int32 baseFontSize = font.fontSize();
+		currentFont = newFont;
+		fontMethod = newFont.method();
+		const Array<Glyph> glyphs = newFont.getGlyphs(text);
+		baseFontSize = newFont.fontSize();
 		if (baseFontSize == 0)
 		{
 			scale = 1.0;
@@ -33,7 +38,7 @@ namespace noco
 		{
 			scale = fontSize / baseFontSize;
 		}
-		lineHeight = font.height(fontSize);
+		lineHeight = newFont.height(fontSize);
 
 		lineCaches.clear();
 
@@ -44,21 +49,28 @@ namespace noco
 		const auto fnPushLine =
 			[&]() -> bool
 			{
-				if (verticalOverflow == VerticalOverflow::Clip && offset.y + lineHeight > rectSize.y)
-				{
-					// verticalOverflowがClipの場合、矩形の高さを超えたら終了
-					return false;
-				}
 				if (!lineGlyphs.empty())
 				{
 					// 行末文字の右側に余白を入れないため、その分を引く
 					offset.x -= spacing.x;
 				}
+				
+				// 空行でも追加する（最後の行を含むため）
 				lineCaches.push_back({ lineGlyphs, offset.x, offset.y });
 				lineGlyphs.clear();
 				maxWidth = Max(maxWidth, offset.x);
 				offset.x = 0;
-				offset.y += lineHeight + spacing.y;
+				
+				// 次の行の開始位置を計算
+				const double nextLineY = offset.y + lineHeight + spacing.y;
+				
+				// verticalOverflowがClipの場合、次の行が矩形の高さを超えるかチェック
+				if (verticalOverflow == VerticalOverflow::Clip && nextLineY > rectSize.y)
+				{
+					return false;
+				}
+				
+				offset.y = nextLineY;
 				return true;
 			};
 
@@ -87,6 +99,7 @@ namespace noco
 		}
 		fnPushLine(); // 最後の行を追加
 		regionSize = { maxWidth, offset.y - spacing.y };
+		return true;
 	}
 
 	void Label::draw(const Node& node) const
@@ -101,15 +114,16 @@ namespace noco
 		const Vec2& effectScale = node.effectScale();
 		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
-		const double leftPadding = padding.left * effectScale.x;
-		const double rightPadding = padding.right * effectScale.x;
-		const double topPadding = padding.top * effectScale.y;
-		const double bottomPadding = padding.bottom * effectScale.y;
 
-		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.rect().stretched(-topPadding, -rightPadding, -bottomPadding, -leftPadding);
+		// node.rect()は既にeffectScaleが適用されているので、paddingもeffectScaleを適用
+		const RectF rect = node.rect().stretched(
+			-padding.top * effectScale.y,
+			-padding.right * effectScale.x,
+			-padding.bottom * effectScale.y,
+			-padding.left * effectScale.x
+		);
 
-		m_cache.refreshIfDirty(
+		const bool wasUpdated = m_cache.refreshIfDirty(
 			text,
 			m_fontOpt,
 			m_fontAssetName.value(),
@@ -117,7 +131,124 @@ namespace noco
 			characterSpacing,
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
-			rect.size / effectScale);
+			rect.size / effectScale,
+			m_sizingMode.value());
+
+		if (m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
+		{
+			const SizeF availableSize = rect.size / effectScale;
+			
+			// フォントサイズはSmoothPropertyなので許容誤差を大きめに取る
+			constexpr double Epsilon = 1e-2;
+			const bool cacheValid = !wasUpdated &&
+			                       (m_cache.sizingMode == LabelSizingMode::ShrinkToFit) &&
+			                       (Abs(m_cache.availableSize.x - availableSize.x) < Epsilon) &&
+			                       (Abs(m_cache.availableSize.y - availableSize.y) < Epsilon) &&
+			                       (Abs(m_cache.originalFontSize - m_fontSize.value()) < Epsilon) &&
+			                       (Abs(m_cache.minFontSize - m_minFontSize.value()) < Epsilon);
+			
+			if (!cacheValid)
+			{
+				m_cache.sizingMode = LabelSizingMode::ShrinkToFit;
+				m_cache.availableSize = availableSize;
+				m_cache.originalFontSize = m_fontSize.value();
+				m_cache.minFontSize = m_minFontSize.value();
+				
+				double effectiveFontSize = m_fontSize.value();
+				const double minFontSize = m_minFontSize.value();
+				
+				while (effectiveFontSize >= minFontSize)
+				{
+					// 現在のフォントサイズで収まるかチェック
+					m_cache.prevParams.reset();
+					m_cache.refreshIfDirty(
+						text,
+						m_fontOpt,
+						m_fontAssetName.value(),
+						effectiveFontSize,
+						characterSpacing,
+						m_horizontalOverflow.value(),
+						VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
+						availableSize,
+						m_sizingMode.value());
+					
+					// 収まっていれば、このサイズで確定
+					if (m_cache.regionSize.x <= availableSize.x && 
+					    m_cache.regionSize.y <= availableSize.y)
+					{
+						break;
+					}
+					
+					// 収まらない場合、フォントサイズを1下げる
+					effectiveFontSize = effectiveFontSize - 1.0;
+					
+					// 最小フォントサイズを下回らないようにする
+					if (effectiveFontSize < minFontSize)
+					{
+						effectiveFontSize = minFontSize;
+						// 最小フォントサイズで再計算して終了
+						m_cache.prevParams.reset();
+						m_cache.refreshIfDirty(
+							text,
+							m_fontOpt,
+							m_fontAssetName.value(),
+							effectiveFontSize,
+							characterSpacing,
+							m_horizontalOverflow.value(),
+							VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
+							availableSize,
+							m_sizingMode.value());
+						break;
+					}
+				}
+				
+				m_cache.effectiveFontSize = effectiveFontSize;
+				
+				// ShrinkToFitの探索ではVerticalOverflow::Overflowで計算したため、
+				// 実際のverticalOverflowプロパティ値で再計算する必要がある
+				if (m_verticalOverflow.value() == VerticalOverflow::Clip)
+				{
+					m_cache.prevParams.reset();
+					m_cache.refreshIfDirty(
+						text,
+						m_fontOpt,
+						m_fontAssetName.value(),
+						effectiveFontSize,
+						characterSpacing,
+						m_horizontalOverflow.value(),
+						m_verticalOverflow.value(),  // 実際のプロパティ値を使用
+						availableSize,
+						m_sizingMode.value());
+				}
+			}
+			else if (m_cache.effectiveFontSize != m_fontSize.value())
+			{
+				// キャッシュされた縮小フォントサイズで再適用（キャッシュはリセットしない）
+				if (m_cache.baseFontSize != 0)
+				{
+					m_cache.scale = m_cache.effectiveFontSize / m_cache.baseFontSize;
+				}
+			}
+		}
+		else
+		{
+			// Fixedモードに切り替わった場合、スケールを元に戻す
+			if (m_cache.sizingMode == LabelSizingMode::ShrinkToFit && m_cache.baseFontSize != 0)
+			{
+				m_cache.scale = m_fontSize.value() / m_cache.baseFontSize;
+			}
+			m_cache.sizingMode = LabelSizingMode::Fixed;
+		}
+
+		// ShrinkToFitモードでは、フォントサイズ探索時にrefreshIfDirtyを呼ぶため、
+		// prevParams->fontSizeが縮小後のフォントサイズで保存される。
+		// 次フレームで元のフォントサイズと比較されると常に変更ありと判定され、
+		// 毎フレーム再計算が発生してしまう。
+		// これを防ぐため、prevParams->fontSizeを元のフォントサイズに戻す。
+		if (m_cache.prevParams.has_value() && m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
+		{
+			m_cache.prevParams->fontSize = m_fontSize.value();
+		}
 
 		const double startY = [this, &rect, &effectScale]()
 			{
@@ -207,7 +338,8 @@ namespace noco
 			m_characterSpacing.value(),
 			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
 			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
-			Vec2::Zero());
+			Vec2::Zero(),
+			m_sizingMode.value());
 
 		return m_cache.regionSize;
 	}
@@ -222,7 +354,8 @@ namespace noco
 			m_characterSpacing.value(),
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
-			rectSize);
+			rectSize,
+			m_sizingMode.value());
 
 		return m_cache.regionSize;
 	}

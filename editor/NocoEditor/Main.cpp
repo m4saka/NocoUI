@@ -848,6 +848,12 @@ struct PropertyMetadata
 	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
 };
 
+// プロパティの可視情報
+struct PropertyVisibilityData
+{
+	bool isVisibleByCondition = true;
+};
+
 // プロパティのメタデータを初期化する関数
 [[nodiscard]]
 static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
@@ -1066,6 +1072,23 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
 		.tooltip = U"フォントサイズ",
 	};
+	metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
+		.tooltip = U"サイズに関するモード",
+		.tooltipDetail = U"Fixed: 通常の描画\nShrinkToFit: ノードサイズに収まるようフォントサイズを自動縮小 (フォントサイズの再計算の負荷が高いため注意)",
+		.refreshInspectorOnChange = true,
+	};
+	metadata[PropertyKey{ U"Label", U"minFontSize" }] = PropertyMetadata{
+		.tooltip = U"最小フォントサイズ",
+		.tooltipDetail = U"ShrinkToFit時の最小フォントサイズ",
+		.visibilityCondition = [](const ComponentBase& component)
+		{
+			if (auto label = dynamic_cast<const Label*>(&component))
+			{
+				return label->sizingMode().defaultValue == LabelSizingMode::ShrinkToFit;
+			}
+			return false;
+		},
+	};
 	metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
 		.tooltip = U"テキスト色",
 	};
@@ -1080,9 +1103,11 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Label", U"horizontalOverflow" }] = PropertyMetadata{
 		.tooltip = U"水平方向にはみ出す場合の処理",
+		.tooltipDetail = U"Wrap: 自動的に折り返す\nOverflow: はみ出して表示",
 	};
 	metadata[PropertyKey{ U"Label", U"verticalOverflow" }] = PropertyMetadata{
 		.tooltip = U"垂直方向にはみ出す場合の処理",
+		.tooltipDetail = U"Clip: ノード領域でクリップする\nOverflow: はみ出して表示",
 	};
 	metadata[PropertyKey{ U"Label", U"characterSpacing" }] = PropertyMetadata{
 		.tooltip = U"文字同士の間隔 (X, Y)",
@@ -1118,7 +1143,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.refreshInspectorOnChange = true,
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceMargin" }] = PropertyMetadata{
-		.tooltip = U"9スライスのマージン（素材の端からの距離）",
+		.tooltip = U"9スライスのマージン(素材の端からの距離)",
 		.tooltipDetail = U"素材画像の端から何ピクセル内側で領域分割するかを指定します",
 		.visibilityCondition = nineSliceVisibilityCondition,
 	};
@@ -2973,15 +2998,38 @@ public:
 				{
 					bool inactiveNodeExists = false;
 
-					// 見出し以外のアクティブを入れ替え
+					// 現在の折り畳み状態
+					bool currentlyFolded = false;
 					for (const auto& child : parent->children())
 					{
 						if (child != node)
 						{
-							child->setActive(!child->activeSelf());
-							if (!child->activeSelf())
+							currentlyFolded = !child->activeSelf();
+							break;
+						}
+					}
+					
+					// 折り畳み状態を反転
+					const bool willBeFolded = !currentlyFolded;
+					inactiveNodeExists = willBeFolded;
+					
+					// 各子ノードの表示状態を更新
+					for (const auto& child : parent->children())
+					{
+						if (child != node)
+						{
+							// 保存された可視情報を取得(デフォルトは表示可能)
+							const auto visibilityData = child->getStoredDataOr<PropertyVisibilityData>({ .isVisibleByCondition = true });
+							
+							// 折り畳まれていない場合は、可視条件に従って表示
+							// 折り畳まれている場合は、可視条件に関わらず非表示
+							if (willBeFolded || !visibilityData.isVisibleByCondition)
 							{
-								inactiveNodeExists = true;
+								child->setActive(false);
+							}
+							else
+							{
+								child->setActive(true);
 							}
 						}
 					}
@@ -3067,7 +3115,7 @@ public:
 		return propertyNode;
 	}
 
-	// Inspectorのメンバ関数としてプロパティノードを作成（ツールチップ付き）
+	// Inspectorのメンバ関数としてプロパティノードを作成(ツールチップ付き)
 	[[nodiscard]]
 	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
@@ -5238,18 +5286,31 @@ public:
 			if (const auto it = m_propertyMetadata.find(visibilityKey); it != m_propertyMetadata.end())
 			{
 				const auto& metadata = it->second;
-				if (metadata.visibilityCondition && !metadata.visibilityCondition(*component))
+				// 可視条件のチェック
+				bool isVisible = true;
+				if (metadata.visibilityCondition)
 				{
-					propertyNode->setActive(false);
+					isVisible = metadata.visibilityCondition(*component);
 				}
-				else if (isFolded)
+				
+				// プロパティの可視情報を保存
+				propertyNode->storeData<PropertyVisibilityData>({ .isVisibleByCondition = isVisible });
+				
+				// 可視条件を満たさない、または折り畳まれている場合は非表示
+				if (!isVisible || isFolded)
 				{
 					propertyNode->setActive(false);
 				}
 			}
-			else if (isFolded)
+			else
 			{
-				propertyNode->setActive(false);
+				// メタデータがない場合は、常に表示可能として扱う
+				propertyNode->storeData<PropertyVisibilityData>({ .isVisibleByCondition = true });
+				
+				if (isFolded)
+				{
+					propertyNode->setActive(false);
+				}
 			}
 			
 			if (property->isInteractiveProperty())

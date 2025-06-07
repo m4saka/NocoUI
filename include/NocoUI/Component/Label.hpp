@@ -11,12 +11,21 @@ namespace noco
 		Solid,
 	};
 
+	enum class LabelSizingMode : uint8
+	{
+		Fixed,
+		ShrinkToFit,
+		// 将来的にテキストに応じてノード側を自動リサイズするモードが追加されることを想定
+	};
+
 	class Label : public SerializableComponentBase
 	{
 	private:
 		Property<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
+		Property<LabelSizingMode> m_sizingMode;
+		SmoothProperty<double> m_minFontSize;
 		SmoothProperty<ColorF> m_color;
 		Property<HorizontalAlign> m_horizontalAlign;
 		Property<VerticalAlign> m_verticalAlign;
@@ -39,6 +48,9 @@ namespace noco
 			VerticalOverflow verticalOverflow;
 			Vec2 spacing;
 			SizeF rectSize;
+			bool hasCustomFont;
+			Font customFont;
+			LabelSizingMode sizingMode;
 
 			[[nodiscard]]
 			bool isDirty(
@@ -48,7 +60,10 @@ namespace noco
 				HorizontalOverflow newHorizontalOverflow,
 				VerticalOverflow newVerticalOverflow,
 				const Vec2& newSpacing,
-				const SizeF& newRectSize) const
+				const SizeF& newRectSize,
+				bool newHasCustomFont,
+				const Font& newCustomFont,
+				LabelSizingMode newSizingMode) const
 			{
 				return text != newText
 					|| fontAssetName != newFontAssetName
@@ -56,7 +71,10 @@ namespace noco
 					|| horizontalOverflow != newHorizontalOverflow
 					|| verticalOverflow != newVerticalOverflow
 					|| spacing != newSpacing
-					|| rectSize != newRectSize;
+					|| rectSize != newRectSize
+					|| hasCustomFont != newHasCustomFont
+					|| (hasCustomFont && customFont != newCustomFont)
+					|| sizingMode != newSizingMode;
 			}
 		};
 
@@ -75,10 +93,19 @@ namespace noco
 			SizeF regionSize = SizeF::Zero();
 			Optional<CacheParams> prevParams = std::nullopt;
 			FontMethod fontMethod = FontMethod::Bitmap;
+			Font currentFont;  // 現在使用中のフォント
+			int32 baseFontSize = 0;  // ベースフォントサイズ
+			
+			// ShrinkToFit用キャッシュ
+			double effectiveFontSize = 0.0;
+			SizeF availableSize = SizeF::Zero();
+			double originalFontSize = 0.0;
+			double minFontSize = 0.0;
+			LabelSizingMode sizingMode = LabelSizingMode::Fixed;
 
 			Cache() = default;
 
-			void refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize);
+			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
@@ -97,11 +124,15 @@ namespace noco
 			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<LabelUnderlineStyle>& underlineStyle = LabelUnderlineStyle::None,
 			const PropertyValue<ColorF>& underlineColor = Palette::White,
-			const PropertyValue<double>& underlineThickness = 1.0)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
+			const PropertyValue<double>& underlineThickness = 1.0,
+			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed,
+			const PropertyValue<double>& minFontSize = 8.0)
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_sizingMode, &m_minFontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
+			, m_sizingMode{ U"sizingMode", sizingMode }
+			, m_minFontSize{ U"minFontSize", minFontSize }
 			, m_color{ U"color", color }
 			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
 			, m_verticalAlign{ U"verticalAlign", verticalAlign }
@@ -251,6 +282,28 @@ namespace noco
 		void setUnderlineColor(const PropertyValue<ColorF>& underlineColor)
 		{
 			m_underlineColor.setPropertyValue(underlineColor);
+		}
+
+		[[nodiscard]]
+		const PropertyValue<LabelSizingMode>& sizingMode() const
+		{
+			return m_sizingMode.propertyValue();
+		}
+
+		void setSizingMode(const PropertyValue<LabelSizingMode>& sizingMode)
+		{
+			m_sizingMode.setPropertyValue(sizingMode);
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& minFontSize() const
+		{
+			return m_minFontSize.propertyValue();
+		}
+
+		void setMinFontSize(const PropertyValue<double>& minFontSize)
+		{
+			m_minFontSize.setPropertyValue(minFontSize);
 		}
 
 		void setFont(const Font& font)
