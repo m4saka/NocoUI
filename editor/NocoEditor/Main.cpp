@@ -877,16 +877,19 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Node", U"isHitTarget" }] = PropertyMetadata{
 		.tooltip = U"マウスホバー判定の対象にするどうか",
-		.tooltipDetail = U"無効にすると、このNodeはマウスカーソルのホバー判定の対象外となり、親要素のInteractionStateを受け継ぎます",
+		.tooltipDetail = U"無効にすると、この要素はマウスカーソルのホバー判定の対象外となり、親要素のInteractionStateを受け継ぎます\n※isHitTargetが無効の場合、TextBox等のマウス操作を利用するコンポーネントも入力を受け付けなくなります",
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
-		.tooltip = U"子要素のホバー状態を継承",
+		.tooltip = U"子要素のホバー状態(Hovered)を継承するかどうか",
+		.tooltipDetail = U"有効にすると、子要素のInteractionStateがHoveredの場合に、このNodeのInteractionStateがHoveredになります\n※このNodeのInsteractionStateがPressed・Disabledの場合は影響を受けません",
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenPressedState" }] = PropertyMetadata{
-		.tooltip = U"子要素の押下状態を継承",
+		.tooltip = U"子要素の押下状態(Pressed)を継承するかどうか",
+		.tooltipDetail = U"有効にすると、子要素のInteractionStateがPressedの場合に、このNodeのInteractionStateがPressedになります\n※このNodeのInsteractionStateがDisabledの場合は影響を受けません",
 	};
 	metadata[PropertyKey{ U"Node", U"interactable" }] = PropertyMetadata{
 		.tooltip = U"インタラクション可能かどうか",
+		.tooltipDetail = U"無効にすると、InteractionStateがDisabledになり、マウスホバーやクリックイベントが無効になります\n※interactableを無効にしても、updateやdrawは実行されます",
 	};
 	metadata[PropertyKey{ U"Node", U"horizontalScrollable" }] = PropertyMetadata{
 		.tooltip = U"水平方向のスクロール可能",
@@ -896,15 +899,16 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 		.tooltip = U"クリッピングの有効/無効",
-		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容がこのNodeの矩形範囲で切り取られます",
+		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",
 	};
 	
 	// Constraint関連 - AnchorConstraint
 	metadata[PropertyKey{ U"AnchorConstraint", U"type" }] = PropertyMetadata{
 		.tooltip = U"Constraintの種類",
+		.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorConstraint: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorConstraintの要素は親要素のboxChildrenLayoutの影響を受けません\nBoxConstraint: 親要素のboxChildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"anchor" }] = PropertyMetadata{
-		.tooltip = U"アンカープリセット",
+		.tooltip = U"アンカー位置",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"anchorMin" }] = PropertyMetadata{
 		.tooltip = U"最小アンカー位置 (0,0)が左上、(1,1)が右下",
@@ -916,7 +920,8 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"位置 (アンカーからの相対位置)",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"sizeDelta" }] = PropertyMetadata{
-		.tooltip = U"サイズ (アンカー領域からの相対サイズ)",
+		.tooltip = U"サイズ (差分値)",
+		.tooltipDetail = U"要素の大きさをピクセル数で指定します。アンカーを基に計算された領域サイズにこのサイズが加算されます",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"sizeDeltaPivot" }] = PropertyMetadata{
 		.tooltip = U"サイズ計算の起点 (X、Y)",
@@ -925,39 +930,37 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	// Constraint関連 - BoxConstraint
 	metadata[PropertyKey{ U"BoxConstraint", U"type" }] = PropertyMetadata{
 		.tooltip = U"Constraintの種類",
+		.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorConstraint: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorConstraintの要素は親要素のboxChildrenLayoutの影響を受けません\nBoxConstraint: 親要素のboxChildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
 	};
 	metadata[PropertyKey{ U"BoxConstraint", U"margin" }] = PropertyMetadata{
 		.tooltip = U"マージン (左、右、上、下)",
-	};
-	metadata[PropertyKey{ U"BoxConstraint", U"margin (left, right)" }] = PropertyMetadata{
-		.tooltip = U"左右のマージン",
-	};
-	metadata[PropertyKey{ U"BoxConstraint", U"margin (top, bottom)" }] = PropertyMetadata{
-		.tooltip = U"上下のマージン",
+		.tooltipDetail = U"要素の外側の余白を指定します\n※全ての子要素間で共通の間隔を設定したい場合は、こちらではなく親要素のboxChildrenLayoutに対してspacingの値を指定してください",
 	};
 	metadata[PropertyKey{ U"BoxConstraint", U"sizeRatio" }] = PropertyMetadata{
 		.tooltip = U"親要素に対するサイズ比率 (0.0～1.0)",
+		.tooltipDetail = U"親要素のサイズに対する比率を指定します。0.0は親要素のサイズを無視し、1.0は親要素のサイズと同じになります\n※要素間で自動的にサイズを分配する必要がある場合、sizeRatioではなくflexibleWeightを使用してください",
 	};
 	metadata[PropertyKey{ U"BoxConstraint", U"sizeDelta" }] = PropertyMetadata{
-		.tooltip = U"サイズ (相対サイズ)",
+		.tooltip = U"サイズ (差分値)",
+		.tooltipDetail = U"要素の大きさをピクセル数で指定します。sizeRatioおよびflexibleWeightと併用した場合、このサイズが差分値として加算されます",
 	};
 	metadata[PropertyKey{ U"BoxConstraint", U"flexibleWeight" }] = PropertyMetadata{
-		.tooltip = U"フレキシブル要素の重み",
-		.tooltipDetail = U"0より大きい値を設定すると、余った空間を他のフレキシブル要素と分け合います",
+		.tooltip = U"フレキシブル要素の伸縮の重み",
+		.tooltipDetail = U"0以外の値を設定すると、余った領域を重みの比率に応じて他のフレキシブル要素と分け合います\n(FlowLayoutとHorizontalLayoutでは横方向、VerticalLayoutでは縦方向の領域を分け合います)\n※例1: 全てのフレキシブル要素に1を指定すると、余った領域を均等に分配します\n※例2: ある要素に2、それ以外の全ての要素に1を指定すると、2を指定した要素は他の要素の2倍の領域が割り当てられます",
 	};
 	
 	// AnchorPreset用プロパティ
 	metadata[PropertyKey{ U"AnchorConstraint", U"top" }] = PropertyMetadata{
-		.tooltip = U"上端からの距離",
+		.tooltip = U"親要素の上端からの距離",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"left" }] = PropertyMetadata{
-		.tooltip = U"左端からの距離",
+		.tooltip = U"親要素の左端からの距離",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"right" }] = PropertyMetadata{
-		.tooltip = U"右端からの距離",
+		.tooltip = U"親要素の右端からの距離",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"bottom" }] = PropertyMetadata{
-		.tooltip = U"下端からの距離",
+		.tooltip = U"親要素の下端からの距離",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"size" }] = PropertyMetadata{
 		.tooltip = U"サイズ (幅、高さ)",
@@ -969,21 +972,23 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"高さ",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"xDelta" }] = PropertyMetadata{
-		.tooltip = U"X軸方向のオフセット",
+		.tooltip = U"X軸の位置",
 	};
 	metadata[PropertyKey{ U"AnchorConstraint", U"yDelta" }] = PropertyMetadata{
-		.tooltip = U"Y軸方向のオフセット",
+		.tooltip = U"Y軸の位置",
 	};
 	
 	// Layout関連
 	metadata[PropertyKey{ U"FlowLayout", U"type" }] = PropertyMetadata{
 		.tooltip = U"レイアウトの種類",
+		.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
 	};
 	metadata[PropertyKey{ U"FlowLayout", U"padding" }] = PropertyMetadata{
 		.tooltip = U"内側の余白 (左、右、上、下)",
 	};
 	metadata[PropertyKey{ U"FlowLayout", U"spacing" }] = PropertyMetadata{
-		.tooltip = U"要素間の間隔 (X, Y)",
+		.tooltip = U"子要素同士の間隔 (X、Y)",
+		.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 	};
 	metadata[PropertyKey{ U"FlowLayout", U"horizontalAlign" }] = PropertyMetadata{
 		.tooltip = U"水平方向の配置",
@@ -994,12 +999,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	metadata[PropertyKey{ U"HorizontalLayout", U"type" }] = PropertyMetadata{
 		.tooltip = U"レイアウトの種類",
+		.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
 	};
 	metadata[PropertyKey{ U"HorizontalLayout", U"padding" }] = PropertyMetadata{
 		.tooltip = U"内側の余白 (左、右、上、下)",
 	};
 	metadata[PropertyKey{ U"HorizontalLayout", U"spacing" }] = PropertyMetadata{
-		.tooltip = U"要素間の間隔",
+		.tooltip = U"子要素同士の間隔 (X、Y)",
+		.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 	};
 	metadata[PropertyKey{ U"HorizontalLayout", U"horizontalAlign" }] = PropertyMetadata{
 		.tooltip = U"水平方向の配置",
@@ -1010,12 +1017,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	metadata[PropertyKey{ U"VerticalLayout", U"type" }] = PropertyMetadata{
 		.tooltip = U"レイアウトの種類",
+		.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
 	};
 	metadata[PropertyKey{ U"VerticalLayout", U"padding" }] = PropertyMetadata{
 		.tooltip = U"内側の余白 (左、右、上、下)",
 	};
 	metadata[PropertyKey{ U"VerticalLayout", U"spacing" }] = PropertyMetadata{
-		.tooltip = U"要素間の間隔",
+		.tooltip = U"子要素同士の間隔 (X、Y)",
+		.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 	};
 	metadata[PropertyKey{ U"VerticalLayout", U"horizontalAlign" }] = PropertyMetadata{
 		.tooltip = U"水平方向の配置",
@@ -1026,13 +1035,16 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	// TransformEffect関連
 	metadata[PropertyKey{ U"TransformEffect", U"position" }] = PropertyMetadata{
-		.tooltip = U"位置のオフセット",
+		.tooltip = U"位置",
+		.tooltipDetail = U"要素の位置を移動させます\nこの値による位置変更はレイアウト計算に影響を与えません\n※TransformEffectはレイアウトの再計算を必要としないため、要素の位置を高速に変更できます。そのため、アニメーション等の用途で利用できます\n※マウスカーソルのホバー判定には移動後の位置が利用されます",
 	};
 	metadata[PropertyKey{ U"TransformEffect", U"scale" }] = PropertyMetadata{
 		.tooltip = U"スケール",
+		.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※TransformEffectはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※マウスカーソルのホバー判定には拡大縮小後のサイズが利用されます",
 	};
 	metadata[PropertyKey{ U"TransformEffect", U"pivot" }] = PropertyMetadata{
-		.tooltip = U"変形の基準点",
+		.tooltip = U"基準点 (X、Y)",
+		.tooltipDetail = U"scaleによる拡大縮小の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
 	};
 	
 	// Componentのプロパティ
@@ -1068,13 +1080,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
 		.tooltip = U"フォントアセット名",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
 	};
 	metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
 		.tooltip = U"フォントサイズ",
 	};
 	metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 		.tooltip = U"サイズに関するモード",
-		.tooltipDetail = U"Fixed: 通常の描画\nShrinkToFit: ノードサイズに収まるようフォントサイズを自動縮小 (フォントサイズの再計算の負荷が高いため注意)",
+		.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nShrinkToFit: ノードサイズに収まるようフォントサイズを自動縮小します\n※ShrinkToFitはテキストやその他の値に変化が発生した時のフォントサイズの再計算にかかる負荷が高いため、自動縮小が不要な場合はなるべくFixedを指定することを推奨します",
 		.refreshInspectorOnChange = true,
 	};
 	metadata[PropertyKey{ U"Label", U"minFontSize" }] = PropertyMetadata{
@@ -1103,11 +1116,11 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Label", U"horizontalOverflow" }] = PropertyMetadata{
 		.tooltip = U"水平方向にはみ出す場合の処理",
-		.tooltipDetail = U"Wrap: 自動的に折り返す\nOverflow: はみ出して表示",
+		.tooltipDetail = U"Wrap: 自動的に折り返します\nOverflow: 右へはみ出して描画します",
 	};
 	metadata[PropertyKey{ U"Label", U"verticalOverflow" }] = PropertyMetadata{
 		.tooltip = U"垂直方向にはみ出す場合の処理",
-		.tooltipDetail = U"Clip: ノード領域でクリップする\nOverflow: はみ出して表示",
+		.tooltipDetail = U"Clip: 領域をはみ出した文字は描画しません\nOverflow: 下へはみ出して描画します",
 	};
 	metadata[PropertyKey{ U"Label", U"characterSpacing" }] = PropertyMetadata{
 		.tooltip = U"文字同士の間隔 (X, Y)",
@@ -1129,13 +1142,15 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Sprite", U"textureAssetName" }] = PropertyMetadata{
 		.tooltip = U"TextureAssetのキー名 (任意)",
-		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でTextureAssetを使用するため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
 	};
 	metadata[PropertyKey{ U"Sprite", U"color" }] = PropertyMetadata{
 		.tooltip = U"スプライトの色",
+		.tooltipDetail = U"テクスチャの色に乗算されます\nアルファ値は透明度を制御します",
 	};
 	metadata[PropertyKey{ U"Sprite", U"preserveAspect" }] = PropertyMetadata{
 		.tooltip = U"アスペクト比を保持",
+		.tooltipDetail = U"有効にすると、テクスチャの縦横比を保持してノードの領域内に収まるように描画されます",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceEnabled" }] = PropertyMetadata{
 		.tooltip = U"9スライス機能を有効にするか",
@@ -1178,7 +1193,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	// TextBox
 	metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
-		.tooltip = U"FontAssetのキー名 (任意",
+		.tooltip = U"FontAssetのキー名 (任意)",
 		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
 	};
 	metadata[PropertyKey{ U"TextBox", U"fontSize" }] = PropertyMetadata{
@@ -1202,7 +1217,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	// TextArea
 	metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
-		.tooltip = U"FontAssetのキー名 (任意",
+		.tooltip = U"FontAssetのキー名 (任意)",
 		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
 	};
 	metadata[PropertyKey{ U"TextArea", U"fontSize" }] = PropertyMetadata{
@@ -1227,6 +1242,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	// EventTrigger
 	metadata[PropertyKey{ U"EventTrigger", U"tag" }] = PropertyMetadata{
 		.tooltip = U"プログラムから参照する際のタグ名",
+		.tooltipDetail = U"EventTriggerはCanvas上で発生したイベントを統一的に管理するためのコンポーネントです\nプログラム上では毎フレーム、isEventFiredWithTag関数. getFiredEvent(s)WithTag関数, getFiredEventsAll関数を呼ぶことで発生したイベントを取得できます\n\nEventTriggerを使うことでプログラム上からノードを直接操作せずにイベントを受け取れるため、ノード構造の異なるCanvasでもイベント処理が再利用しやすくなります",
 	};
 	metadata[PropertyKey{ U"EventTrigger", U"triggerType" }] = PropertyMetadata{
 		.tooltip = U"イベントを発火させる操作の種類",
@@ -1238,9 +1254,11 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	// Placeholder
 	metadata[PropertyKey{ U"Placeholder", U"tag" }] = PropertyMetadata{
 		.tooltip = U"プログラムから参照する際のタグ名",
+		.tooltipDetail = U"Placeholderはプログラム上からコンポーネント追加や編集等の操作を行う目印として使用するコンポーネントです\nプログラム上ではwalkPlaceholders関数を使用して、タグ名をもとにPlaceholderを巡回できます\n例えば、tagに独自に作成したコンポーネントの種類名を入力し、プログラム上からそのコンポーネントを追加する用途で利用できます",
 	};
 	metadata[PropertyKey{ U"Placeholder", U"data" }] = PropertyMetadata{
 		.tooltip = U"プレースホルダーのデータ (任意)",
+		.tooltipDetail = U"自由なデータを文字列で指定できます\nプログラム上ではwalkPlaceholders関数でPlaceholderを巡回し、dataを参照できます",
 	};
 	
 	return metadata;
@@ -3190,9 +3208,20 @@ public:
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
 			{
-				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				// Line1とLine2の両方のLabelノードにツールチップを追加
+				if (const auto line1 = propertyNode->getChildByNameOrNull(U"Line1", RecursiveYN::No))
 				{
-					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					if (const auto labelNode = line1->getChildByNameOrNull(U"Label", RecursiveYN::No))
+					{
+						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					}
+				}
+				if (const auto line2 = propertyNode->getChildByNameOrNull(U"Line2", RecursiveYN::No))
+				{
+					if (const auto labelNode = line2->getChildByNameOrNull(U"Label", RecursiveYN::No))
+					{
+						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					}
 				}
 			}
 		}
