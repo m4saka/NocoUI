@@ -33,17 +33,17 @@ namespace noco
 				}
 			}
 		}
+		const bool onClientRect = Cursor::OnClientRect();
+		const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+		const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
+		m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed);
+		
 		if (interactable)
 		{
-			const bool onClientRect = Cursor::OnClientRect();
-			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
-			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
-			m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed);
 			return ApplyOtherInteractionState(m_mouseLTracker.interactionStateSelf(), inheritedInteractionState);
 		}
 		else
 		{
-			m_mouseLTracker.update(false, false);
 			return InteractionState::Disabled;
 		}
 	}
@@ -1400,7 +1400,7 @@ namespace noco
 	void Node::requestClick()
 	{
 		// m_isHitTargetがfalseでも効く仕様とする
-		if (!m_activeInHierarchy || !m_interactable)
+		if (!m_activeInHierarchy)
 		{
 			return;
 		}
@@ -1410,7 +1410,7 @@ namespace noco
 	void Node::requestRightClick()
 	{
 		// m_isHitTargetがfalseでも効く仕様とする
-		if (!m_activeInHierarchy || !m_interactable)
+		if (!m_activeInHierarchy)
 		{
 			return;
 		}
@@ -1683,114 +1683,130 @@ namespace noco
 		setSelected(SelectedYN{ selected });
 	}
 
-	bool Node::isHovered() const
+	bool Node::isHovered(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseLTracker.isHovered();
+		return m_mouseLTracker.isHovered(includingDisabled);
 	}
 
-	bool Node::isHoveredRecursive() const
+	bool Node::isHoveredRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isHovered() || m_children.any([](const auto& child) { return child->isHoveredRecursive(); });
+		return isHovered(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isHoveredRecursive(includingDisabled); });
 	}
 
-	bool Node::isPressed() const
+	bool Node::isPressed(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseLTracker.isPressed();
+		return m_mouseLTracker.isPressed(includingDisabled);
 	}
 
-	bool Node::isPressedRecursive() const
+	bool Node::isPressedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isPressed() || m_children.any([](const auto& child) { return child->isPressedRecursive(); });
+		return isPressed(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isPressedRecursive(includingDisabled); });
 	}
 
-	bool Node::isPressedHover() const
+	bool Node::isPressedHover(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseLTracker.isPressedHover();
+		return m_mouseLTracker.isPressedHover(includingDisabled);
 	}
 
-	bool Node::isPressedHoverRecursive() const
+	bool Node::isPressedHoverRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isPressedHover() || m_children.any([](const auto& child) { return child->isPressedHoverRecursive(); });
+		return isPressedHover(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isPressedHoverRecursive(includingDisabled); });
 	}
 
-	bool Node::isMouseDown() const
+	bool Node::isMouseDown(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseLTracker.isHovered() && MouseL.down();
+		return m_mouseLTracker.isHovered(includingDisabled) && MouseL.down();
 	}
 
-	bool Node::isMouseDownRecursive() const
+	bool Node::isMouseDownRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isMouseDown() || m_children.any([](const auto& child) { return child->isMouseDownRecursive(); });
+		return isMouseDown(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isMouseDownRecursive(includingDisabled); });
 	}
 
-	bool Node::isClicked() const
+	bool Node::isClicked(IncludingDisabledYN includingDisabled) const
 	{
-		return m_clickRequested || m_mouseLTracker.isClicked();
+		if (!includingDisabled && !m_interactable)
+		{
+			return false;
+		}
+		return m_clickRequested || m_mouseLTracker.isClicked(includingDisabled);
 	}
 
-	bool Node::isClickedRecursive() const
+	bool Node::isClickedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isClicked() || m_children.any([](const auto& child) { return child->isClickedRecursive(); });
+		return isClicked(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isClickedRecursive(includingDisabled); });
 	}
 
-	bool Node::isClickRequested() const
+	bool Node::isClickRequested(IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && !m_interactable)
+		{
+			return false;
+		}
 		return m_clickRequested;
 	}
 
-	bool Node::isClickRequestedRecursive() const
+	bool Node::isClickRequestedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return m_clickRequested || m_children.any([](const auto& child) { return child->isClickRequestedRecursive(); });
+		return isClickRequested(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isClickRequestedRecursive(includingDisabled); });
 	}
 
-	bool Node::isRightPressed() const
+	bool Node::isRightPressed(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseRTracker.isPressed();
+		return m_mouseRTracker.isPressed(includingDisabled);
 	}
 
-	bool Node::isRightPressedRecursive() const
+	bool Node::isRightPressedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isRightPressed() || m_children.any([](const auto& child) { return child->isRightPressedRecursive(); });
+		return isRightPressed(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isRightPressedRecursive(includingDisabled); });
 	}
 
-	bool Node::isRightPressedHover() const
+	bool Node::isRightPressedHover(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseRTracker.isPressedHover();
+		return m_mouseRTracker.isPressedHover(includingDisabled);
 	}
 
-	bool Node::isRightPressedHoverRecursive() const
+	bool Node::isRightPressedHoverRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isRightPressedHover() || m_children.any([](const auto& child) { return child->isRightPressedHoverRecursive(); });
+		return isRightPressedHover(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isRightPressedHoverRecursive(includingDisabled); });
 	}
 
-	bool Node::isRightMouseDown() const
+	bool Node::isRightMouseDown(IncludingDisabledYN includingDisabled) const
 	{
-		return m_mouseRTracker.isHovered() && MouseR.down();
+		return m_mouseRTracker.isHovered(includingDisabled) && MouseR.down();
 	}
 
-	bool Node::isRightMouseDownRecursive() const
+	bool Node::isRightMouseDownRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isRightMouseDown() || m_children.any([](const auto& child) { return child->isRightMouseDownRecursive(); });
+		return isRightMouseDown(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isRightMouseDownRecursive(includingDisabled); });
 	}
 
-	bool Node::isRightClicked() const
+	bool Node::isRightClicked(IncludingDisabledYN includingDisabled) const
 	{
-		return m_rightClickRequested || m_mouseRTracker.isClicked();
+		if (!includingDisabled && !m_interactable)
+		{
+			return false;
+		}
+		return m_rightClickRequested || m_mouseRTracker.isClicked(includingDisabled);
 	}
 
-	bool Node::isRightClickedRecursive() const
+	bool Node::isRightClickedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return isRightClicked() || m_children.any([](const auto& child) { return child->isRightClickedRecursive(); });
+		return isRightClicked(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isRightClickedRecursive(includingDisabled); });
 	}
 
-	bool Node::isRightClickRequested() const
+	bool Node::isRightClickRequested(IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && !m_interactable)
+		{
+			return false;
+		}
 		return m_rightClickRequested;
 	}
 
-	bool Node::isRightClickRequestedRecursive() const
+	bool Node::isRightClickRequestedRecursive(IncludingDisabledYN includingDisabled) const
 	{
-		return m_rightClickRequested || m_children.any([](const auto& child) { return child->isRightClickRequestedRecursive(); });
+		return isRightClickRequested(includingDisabled) || m_children.any([includingDisabled](const auto& child) { return child->isRightClickRequestedRecursive(includingDisabled); });
 	}
 
 	void Node::removeChildrenAll(RefreshesLayoutYN refreshesLayout)

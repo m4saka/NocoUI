@@ -32,15 +32,6 @@ namespace noco
 				return;
 			}
 
-			if (!m_interactable)
-			{
-				m_mouseOverForHovered = false;
-				m_mouseOverForPressed = false;
-				m_isPressed = false;
-				m_isClicked = false;
-				return;
-			}
-
 			m_mouseOverForHovered = mouseOverForHovered;
 			m_mouseOverForPressed = mouseOverForPressed;
 			if (m_mouseOverForPressed)
@@ -96,9 +87,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool isHovered() const
+		bool isHovered(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const
 		{
-			if (!m_interactable)
+			if (!m_interactable && !includingDisabled)
 			{
 				return false;
 			}
@@ -120,21 +111,33 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool isPressed() const
+		bool isPressed(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const
 		{
-			return m_interactable && m_isPressed;
+			if (!m_interactable && !includingDisabled)
+			{
+				return false;
+			}
+			return m_isPressed;
 		}
 
 		[[nodiscard]]
-		bool isPressedHover() const
+		bool isPressedHover(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const
 		{
-			return m_interactable && m_isPressed && isHovered();
+			if (!m_interactable && !includingDisabled)
+			{
+				return false;
+			}
+			return m_isPressed && isHovered(includingDisabled);
 		}
 
 		[[nodiscard]]
-		bool isClicked() const
+		bool isClicked(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const
 		{
-			return m_interactable && m_isClicked;
+			if (!m_interactable && !includingDisabled)
+			{
+				return false;
+			}
+			return m_isClicked;
 		}
 
 		[[nodiscard]]

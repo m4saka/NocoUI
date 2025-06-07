@@ -517,9 +517,25 @@ public:
 		destroyTooltip();
 	}
 
-	void update(const std::shared_ptr<Node>& node) override
+	void updateInput(const std::shared_ptr<Node>& node) override
 	{
-		if (node->isHoveredRecursive())
+		// インプットがブロックされている場合は何もしない
+		if (CurrentFrame::HasInputBlocked())
+		{
+			// ホバーが外れたらツールチップを破棄
+			if (m_isShowing)
+			{
+				destroyTooltip();
+				m_isShowing = false;
+			}
+			m_hoverTime = 0.0;
+			return;
+		}
+		
+		// Disabled時も含むホバー判定を使用
+		const bool isHovered = node->isHoveredRecursive(IncludingDisabledYN::Yes);
+		
+		if (isHovered)
 		{
 			m_hoverTime += Scene::DeltaTime();
 			

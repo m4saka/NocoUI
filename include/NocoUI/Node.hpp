@@ -393,70 +393,70 @@ namespace noco
 		void setSelected(bool selected);
 
 		[[nodiscard]]
-		bool isHovered() const;
+		bool isHovered(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isHoveredRecursive() const;
+		bool isHoveredRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressed() const;
+		bool isPressed(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedRecursive() const;
+		bool isPressedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedHover() const;
+		bool isPressedHover(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedHoverRecursive() const;
+		bool isPressedHoverRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isMouseDown() const;
+		bool isMouseDown(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isMouseDownRecursive() const;
+		bool isMouseDownRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClicked() const;
+		bool isClicked(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClickedRecursive() const;
+		bool isClickedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClickRequested() const;
+		bool isClickRequested(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClickRequestedRecursive() const;
+		bool isClickRequestedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressed() const;
+		bool isRightPressed(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressedRecursive() const;
+		bool isRightPressedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressedHover() const;
+		bool isRightPressedHover(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressedHoverRecursive() const;
+		bool isRightPressedHoverRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightMouseDown() const;
+		bool isRightMouseDown(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightMouseDownRecursive() const;
+		bool isRightMouseDownRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClicked() const;
+		bool isRightClicked(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClickedRecursive() const;
+		bool isRightClickedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClickRequested() const;
+		bool isRightClickRequested(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClickRequestedRecursive() const;
+		bool isRightClickRequestedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
