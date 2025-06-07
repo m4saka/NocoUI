@@ -697,6 +697,17 @@ private:
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
 	std::shared_ptr<Node> m_toolbarRootNode;
 	Font m_iconFont{ FontMethod::MSDF, 18, Typeface::Icon_MaterialDesign };
+	
+	// ボタンノードを管理するためのマップ
+	std::unordered_map<String, std::shared_ptr<Node>> m_buttonNodes;
+	
+	// ボタンの有効/無効を判定する関数
+	struct ButtonInfo
+	{
+		std::shared_ptr<Node> node;
+		std::function<bool()> enableCondition;
+	};
+	std::unordered_map<String, ButtonInfo> m_buttons;
 
 public:
 	explicit Toolbar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas)
@@ -736,9 +747,9 @@ public:
 			->emplaceComponent<RectRenderer>(ColorF{ 0.8 });
 	}
 
-	void addButton(StringView name, StringView icon, StringView tooltip, std::function<void()> onClick)
+	std::shared_ptr<Node> addButton(StringView name, StringView icon, StringView tooltip, std::function<void()> onClick, std::function<bool()> enableCondition = nullptr)
 	{
-		const auto buttonNode = m_toolbarRootNode->emplaceChild(
+		auto buttonNode = m_toolbarRootNode->emplaceChild(
 			name,
 			BoxConstraint
 			{
@@ -777,6 +788,15 @@ public:
 		{
 			buttonNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, tooltip);
 		}
+		
+		m_buttonNodes[String{ name }] = buttonNode;
+		m_buttons[String{ name }] = ButtonInfo{ buttonNode, enableCondition };
+		if (enableCondition)
+		{
+			buttonNode->setInteractable(enableCondition());
+		}
+
+		return buttonNode;
 	}
 
 	void addSeparator()
@@ -789,6 +809,19 @@ public:
 				.sizeDelta = Vec2{ 1, 0 },
 			})
 			->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
+	}
+	
+	void updateButtonStates()
+	{
+		// 各ボタンの有効/無効状態を更新
+		for (auto& [name, buttonInfo] : m_buttons)
+		{
+			if (buttonInfo.enableCondition)
+			{
+				// 判定関数がある場合は、その結果に基づいて有効/無効を設定
+				buttonInfo.node->setInteractable(buttonInfo.enableCondition());
+			}
+		}
 	}
 
 };
@@ -1307,8 +1340,11 @@ private:
 	std::weak_ptr<Node> m_editorHoveredNode;
 	std::weak_ptr<Node> m_shiftSelectOriginNode;
 	std::weak_ptr<Node> m_lastEditorSelectedNode;
+	std::weak_ptr<Node> m_prevCheckedSelectedNode;
+	bool m_prevSelectedNodeExists = false;
 	std::shared_ptr<ContextMenu> m_contextMenu;
 	Array<JSON> m_copiedNodeJSONs;
+	bool m_prevClipboardHasContent = false;
 	std::shared_ptr<Defaults> m_defaults;
 
 	struct ElementDetail
@@ -2438,6 +2474,43 @@ public:
 	const std::weak_ptr<Node>& selectedNode() const
 	{
 		return m_lastEditorSelectedNode;
+	}
+
+	[[nodiscard]]
+	bool hasSelectionChanged()
+	{
+		const auto currentSelectedNode = m_lastEditorSelectedNode.lock();
+		const auto prevSelectedNode = m_prevCheckedSelectedNode.lock();
+		
+		// 選択状態が変化したかチェック
+		const bool currentExists = (currentSelectedNode != nullptr);
+		const bool changed = (currentSelectedNode != prevSelectedNode) || 
+		                    (currentExists != m_prevSelectedNodeExists);
+		
+		// 状態を更新
+		if (changed)
+		{
+			m_prevCheckedSelectedNode = m_lastEditorSelectedNode;
+			m_prevSelectedNodeExists = currentExists;
+		}
+		
+		return changed;
+	}
+	
+	[[nodiscard]]
+	bool toolbarRefreshRequested()
+	{
+		bool refreshNeeded = false;
+		
+		// クリップボードの空/非空状態が変化したかチェック
+		const bool currentHasContent = !m_copiedNodeJSONs.empty();
+		if (currentHasContent != m_prevClipboardHasContent)
+		{
+			m_prevClipboardHasContent = currentHasContent;
+			refreshNeeded = true;
+		}
+		
+		return refreshNeeded;
 	}
 
 	const std::shared_ptr<Node>& hierarchyFrameNode() const
@@ -5628,8 +5701,6 @@ private:
 	MenuBar m_menuBar;
 	Toolbar m_toolbar;
 	Size m_prevSceneSize;
-	std::weak_ptr<Node> m_prevSelectedNode;
-	bool m_prevSelectedNodeExists = false;
 	Optional<String> m_filePath = none;
 	uint64 m_savedHash = 0;
 	Vec2 m_scrollOffset = InitialCanvasScrollOffset;
@@ -5697,12 +5768,12 @@ public:
 			480);
 		
 		// ツールバーの初期化
-		m_toolbar.addButton(U"New", U"\xF0224", U"新規作成 (Ctrl+N)", [this] { onClickMenuFileNew(); });
-		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); });
-		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); });
-		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
+		m_toolbar.addButton(U"New", U"\xF0224", U"新規作成 (Ctrl+N)", [this] { onClickMenuFileNew(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); })->addClickHotKey(KeyO, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); })->addClickHotKey(KeyS, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); })->addClickHotKey(KeyA, CtrlYN::Yes, AltYN::No, ShiftYN::Yes);
 		m_toolbar.addSeparator();
-		m_toolbar.addButton(U"NewNode", U"\xF1200", U"新規ノード (Ctrl+Shift+N)", [this] { m_hierarchy.onClickNewNode(); });
+		m_toolbar.addButton(U"NewNode", U"\xF1200", U"新規ノード (Ctrl+Shift+N)", [this] { m_hierarchy.onClickNewNode(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::Yes);
 		m_toolbar.addButton(U"NewNodeAsChild", U"\xF0F97", U"選択ノードの子として新規ノード (Ctrl+Alt+N)",
 			[this]
 			{
@@ -5710,16 +5781,21 @@ public:
 				{
 					m_hierarchy.onClickNewNode(parent);
 				}
-			});
+			},
+			[this] { return m_hierarchy.hasSelection(); })
+			->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::Yes, ShiftYN::No);
 		m_toolbar.addSeparator();
-		m_toolbar.addButton(U"CopyNode", U"\xF018F", U"選択ノードをコピー (Ctrl+C)", [this] { m_hierarchy.onClickCopy(); });
-		m_toolbar.addButton(U"PasteNode", U"\xF0192", U"ノードを貼り付け (Ctrl+V)", [this] { m_hierarchy.onClickPaste(); });
-		m_toolbar.addButton(U"CutNode", U"\xF0190", U"選択ノードを切り取り (Ctrl+X)", [this] { m_hierarchy.onClickCut(); });
-		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); });
+		m_toolbar.addButton(U"CopyNode", U"\xF018F", U"選択ノードをコピー (Ctrl+C)", [this] { m_hierarchy.onClickCopy(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyC, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"PasteNode", U"\xF0192", U"ノードを貼り付け (Ctrl+V)", [this] { m_hierarchy.onClickPaste(); }, [this] { return m_hierarchy.canPaste(); })->addClickHotKey(KeyV, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"CutNode", U"\xF0190", U"選択ノードを切り取り (Ctrl+X)", [this] { m_hierarchy.onClickCut(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyX, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); }, [this] { return m_hierarchy.hasSelection(); });
 		m_toolbar.addSeparator();
 
 		// 初期位置を反映
 		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		
+		// ツールバーの初期状態を更新
+		m_toolbar.updateButtonStates();
 	}
 
 	void update()
@@ -5754,11 +5830,16 @@ public:
 		m_hierarchy.update();
 		m_inspector.update();
 
-		const auto selectedNode = m_hierarchy.selectedNode().lock();
-		if (selectedNode != m_prevSelectedNode.lock() ||
-			(!selectedNode && m_prevSelectedNodeExists))
+		if (m_hierarchy.hasSelectionChanged())
 		{
-			m_inspector.setTargetNode(selectedNode);
+			m_inspector.setTargetNode(m_hierarchy.selectedNode().lock());
+			m_toolbar.updateButtonStates();
+		}
+		
+		// ツールバーの更新が必要かチェック
+		if (m_hierarchy.toolbarRefreshRequested())
+		{
+			m_toolbar.updateButtonStates();
 		}
 
 		const auto sceneSize = Scene::Size();
@@ -5808,21 +5889,10 @@ public:
 				// Ctrl + ○○
 				if (ctrl && !alt && !shift)
 				{
+					// Ctrl+C, Ctrl+X, Ctrl+VはツールバーのHotKeyで別途処理している
 					if (KeyA.down())
 					{
 						m_hierarchy.selectAll();
-					}
-					else if (KeyC.down())
-					{
-						m_hierarchy.onClickCopy();
-					}
-					else if (KeyV.down())
-					{
-						m_hierarchy.onClickPaste();
-					}
-					else if (KeyX.down())
-					{
-						m_hierarchy.onClickCut();
 					}
 					else if (KeyD.down())
 					{
@@ -5880,9 +5950,17 @@ public:
 					m_isAltScrolling = false;
 				}
 
+				// Ctrl + Shift + ○○
+				if (ctrl && !alt && shift)
+				{
+					// Ctrl+Shift+NはツールバーのHotKeyで別途処理している
+				}
+
 				// Ctrl + Alt + ○○
 				if (ctrl && alt && !shift)
 				{
+					// Ctrl+Alt+NはツールバーのHotKeyで別途処理している
+
 					if (KeyO.down())
 					{
 						onClickMenuToolChangeAssetDirectory();
@@ -5913,9 +5991,6 @@ public:
 		{
 			showConfirmSaveIfDirty([] { System::Exit(); });
 		}
-
-		m_prevSelectedNode = selectedNode;
-		m_prevSelectedNodeExists = selectedNode != nullptr;
 	}
 
 	void draw() const
