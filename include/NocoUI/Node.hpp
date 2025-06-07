@@ -186,7 +186,7 @@ namespace noco
 
 		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Rect", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

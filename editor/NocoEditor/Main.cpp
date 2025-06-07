@@ -6014,9 +6014,14 @@ public:
 
 	void onClickMenuFileNew()
 	{
-		m_filePath = none;
-		m_canvas->removeChildrenAll();
-		refresh();
+		showConfirmSaveIfDirty(
+			[this]
+			{
+				m_filePath = none;
+				m_canvas->removeChildrenAll();
+				refresh();
+				createInitialNode();
+			});
 	}
 
 	void onClickMenuFileOpen()
@@ -6143,6 +6148,11 @@ public:
 			noco::Asset::SetBaseDirectoryPath(path);
 		}
 	}
+
+	void createInitialNode()
+	{
+		m_hierarchy.onClickNewNode();
+	}
 };
 
 void Main()
@@ -6164,6 +6174,7 @@ void Main()
 		.sizeDelta = Vec2{ 800, 600 },
 	});
 	editor.refresh();
+	editor.createInitialNode();
 	editor.resetDirty();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
