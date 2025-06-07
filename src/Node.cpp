@@ -281,6 +281,7 @@ namespace noco
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
+			{ U"hitTestPadding", m_hitTestPadding.toJSON() },
 			{ U"inheritsChildrenHoveredState", inheritsChildrenHoveredState() },
 			{ U"inheritsChildrenPressedState", inheritsChildrenPressedState() },
 			{ U"interactable", m_interactable.getBool() },
@@ -355,6 +356,10 @@ namespace noco
 		if (json.contains(U"isHitTarget"))
 		{
 			node->m_isHitTarget = IsHitTargetYN{ json[U"isHitTarget"].getOr<bool>(true) };
+		}
+		if (json.contains(U"hitTestPadding"))
+		{
+			node->m_hitTestPadding = LRTB::fromJSON(json[U"hitTestPadding"]);
 		}
 		if (json.contains(U"inheritsChildrenHoveredState"))
 		{
@@ -912,8 +917,15 @@ namespace noco
 		{
 			return nullptr;
 		}
-		const bool hit = m_effectedRect.contains(point);
-		if (m_clippingEnabled && !hit)
+		// hitTestPaddingを考慮した当たり判定領域を計算
+		const RectF hitTestRect{
+			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
+			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
+			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
+			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+		};
+		const bool hit = hitTestRect.contains(point);
+		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
 		}
@@ -943,8 +955,15 @@ namespace noco
 		{
 			return nullptr;
 		}
-		const bool hit = m_effectedRect.contains(point);
-		if (m_clippingEnabled && !hit)
+		// hitTestPaddingを考慮した当たり判定領域を計算
+		const RectF hitTestRect{
+			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
+			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
+			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
+			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+		};
+		const bool hit = hitTestRect.contains(point);
+		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
 		}
@@ -1531,6 +1550,16 @@ namespace noco
 	void Node::setIsHitTarget(bool isHitTarget)
 	{
 		setIsHitTarget(IsHitTargetYN{ isHitTarget });
+	}
+
+	const LRTB& Node::hitTestPadding() const
+	{
+		return m_hitTestPadding;
+	}
+
+	void Node::setHitTestPadding(const LRTB& padding)
+	{
+		m_hitTestPadding = padding;
 	}
 
 	InheritChildrenStateFlags Node::inheritChildrenStateFlags() const

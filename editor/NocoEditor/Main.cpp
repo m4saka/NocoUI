@@ -925,8 +925,12 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltipDetail = U"このNodeとその子要素の表示を制御します\n無効の場合、updateの代わりにupdateInactiveが実行され、drawは実行されません",
 	};
 	metadata[PropertyKey{ U"Node", U"isHitTarget" }] = PropertyMetadata{
-		.tooltip = U"マウスホバー判定の対象にするどうか",
-		.tooltipDetail = U"無効にすると、この要素はマウスカーソルのホバー判定の対象外となり、親要素のInteractionStateを受け継ぎます\n※isHitTargetが無効の場合、TextBox等のマウス操作を利用するコンポーネントも入力を受け付けなくなります",
+		.tooltip = U"ヒットテストの対象にするどうか",
+		.tooltipDetail = U"無効にすると、この要素はヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)の対象外となり、親要素のInteractionStateを受け継ぎます\n※無効の場合、ヒットテストでは要素の存在自体が無視されるため、背面にある要素にホバーが可能となります\n※無効の場合、TextBox等のマウス操作を利用するコンポーネントも入力を受け付けなくなります",
+	};
+	metadata[PropertyKey{ U"Node", U"hitTestPadding" }] = PropertyMetadata{
+		.tooltip = U"ヒットテスト領域の拡縮",
+		.tooltipDetail = U"ヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)に使用する領域を、指定されたピクセル数だけ拡大・縮小します\n正の値で領域を拡大、負の値で領域を縮小します\n実際の見た目よりもずれた位置にマウスカーソルがあっても反応させたい場合に使用できます",
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
 		.tooltip = U"子要素のホバー状態(Hovered)を継承するかどうか",
@@ -4626,7 +4630,20 @@ public:
 			{
 				nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
 			};
-		fnAddBoolChild(U"isHitTarget", node->isHitTarget().getBool(), [node](bool value) { node->setIsHitTarget(value); });
+		const auto fnAddLRTBChild =
+			[this, &nodeSettingNode](StringView name, const LRTB& currentValue, auto fnSetValue)
+			{
+				nodeSettingNode->addChild(createLRTBPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
+			};
+		fnAddBoolChild(U"isHitTarget", node->isHitTarget().getBool(), [this, node](bool value) { 
+			node->setIsHitTarget(value); 
+			refreshInspector();
+		});
+		// isHitTargetがtrueの場合のみhitTestPaddingを表示
+		if (node->isHitTarget())
+		{
+			fnAddLRTBChild(U"hitTestPadding", node->hitTestPadding(), [node](const LRTB& value) { node->setHitTestPadding(value); });
+		}
 		fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
 		fnAddBoolChild(U"inheritsChildrenPressedState", node->inheritsChildrenPressedState(), [node](bool value) { node->setInheritsChildrenPressedState(value); });
 		fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });

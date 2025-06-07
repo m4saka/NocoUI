@@ -33,6 +33,7 @@ namespace noco
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
+		LRTB m_hitTestPadding{ 0.0, 0.0, 0.0, 0.0 };
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
 		InteractableYN m_interactable = InteractableYN::Yes;
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
@@ -341,6 +342,11 @@ namespace noco
 		void setIsHitTarget(IsHitTargetYN isHitTarget);
 
 		void setIsHitTarget(bool isHitTarget);
+
+		[[nodiscard]]
+		const LRTB& hitTestPadding() const;
+
+		void setHitTestPadding(const LRTB& padding);
 
 		[[nodiscard]]
 		InheritChildrenStateFlags inheritChildrenStateFlags() const;
