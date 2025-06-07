@@ -49,28 +49,29 @@ namespace noco
 		const auto fnPushLine =
 			[&]() -> bool
 			{
+				// 現在の行の下端位置を計算
+				const double currentLineBottom = offset.y + lineHeight;
+				
+				// Clipモードで現在の行が矩形を超える場合は追加しない
+				if (verticalOverflow == VerticalOverflow::Clip && currentLineBottom > rectSize.y)
+				{
+					return false;
+				}
+				
 				if (!lineGlyphs.empty())
 				{
 					// 行末文字の右側に余白を入れないため、その分を引く
 					offset.x -= spacing.x;
 				}
 				
-				// 空行でも追加する（最後の行を含むため）
+				// 矩形内に収まる行のみキャッシュに追加
 				lineCaches.push_back({ lineGlyphs, offset.x, offset.y });
 				lineGlyphs.clear();
 				maxWidth = Max(maxWidth, offset.x);
 				offset.x = 0;
 				
 				// 次の行の開始位置を計算
-				const double nextLineY = offset.y + lineHeight + spacing.y;
-				
-				// verticalOverflowがClipの場合、次の行が矩形の高さを超えるかチェック
-				if (verticalOverflow == VerticalOverflow::Clip && nextLineY > rectSize.y)
-				{
-					return false;
-				}
-				
-				offset.y = nextLineY;
+				offset.y = currentLineBottom + spacing.y;
 				return true;
 			};
 
@@ -97,7 +98,11 @@ namespace noco
 			offset.x += xAdvance;
 			lineGlyphs.push_back(glyph);
 		}
-		fnPushLine(); // 最後の行を追加
+		// 残っている文字がある場合のみ最後の行を追加
+		if (!lineGlyphs.empty())
+		{
+			fnPushLine();
+		}
 		regionSize = { maxWidth, offset.y - spacing.y };
 		return true;
 	}

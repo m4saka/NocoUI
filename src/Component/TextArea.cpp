@@ -314,7 +314,6 @@ namespace noco
 			m_fontSize.value(),
 			rect.size / effectScale);
 
-		const double cursorWidth = CursorWidth * effectScale.x;
 		const Vec2 cursorPos = m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
 
 		// 現状は水平スクロールは行わない
