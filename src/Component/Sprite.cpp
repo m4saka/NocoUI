@@ -67,7 +67,7 @@ namespace noco
 		const double drawBottomMargin = bottomMargin * effectScale.y * nineSliceScale.y;
 		
 		// フォールバック判定
-		if (m_nineSliceFallbackToSimple.value())
+		if (m_nineSliceFallback.value())
 		{
 			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
 			{

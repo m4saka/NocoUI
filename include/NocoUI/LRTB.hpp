@@ -64,6 +64,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		double totalWidth() const
+		{
+			return left + right;
+		}
+
+		[[nodiscard]]
+		double totalHeight() const
+		{
+			return top + bottom;
+		}
+
+		[[nodiscard]]
+		Vec2 totalSize() const
+		{
+			return Vec2{ left + right, top + bottom };
+		}
+
+		[[nodiscard]]
 		static constexpr LRTB Zero()
 		{
 			return All(0.0);

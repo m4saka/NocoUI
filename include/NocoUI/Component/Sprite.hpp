@@ -20,13 +20,13 @@ namespace noco
 		Property<bool> m_nineSliceRightTiled;
 		Property<bool> m_nineSliceTopTiled;
 		Property<bool> m_nineSliceBottomTiled;
-		Property<bool> m_nineSliceFallbackToSimple;
+		Property<bool> m_nineSliceFallback;
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallbackToSimple } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -39,7 +39,7 @@ namespace noco
 			, m_nineSliceRightTiled{ U"nineSliceRightTiled", false }
 			, m_nineSliceTopTiled{ U"nineSliceTopTiled", false }
 			, m_nineSliceBottomTiled{ U"nineSliceBottomTiled", false }
-			, m_nineSliceFallbackToSimple{ U"nineSliceFallbackToSimple", true }
+			, m_nineSliceFallback{ U"nineSliceFallback", true }
 		{
 		}
 
@@ -178,14 +178,14 @@ namespace noco
 		}
 		
 		[[nodiscard]]
-		const PropertyValue<bool>& nineSliceFallbackToSimple() const
+		const PropertyValue<bool>& nineSliceFallback() const
 		{
-			return m_nineSliceFallbackToSimple.propertyValue();
+			return m_nineSliceFallback.propertyValue();
 		}
 		
-		void setNineSliceFallbackToSimple(const PropertyValue<bool>& nineSliceFallbackToSimple)
+		void setNineSliceFallback(const PropertyValue<bool>& nineSliceFallback)
 		{
-			m_nineSliceFallbackToSimple.setPropertyValue(nineSliceFallbackToSimple);
+			m_nineSliceFallback.setPropertyValue(nineSliceFallback);
 		}
 		
 		void setTexture(const Texture& texture)

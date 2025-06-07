@@ -405,19 +405,24 @@ private:
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopLeft,
 					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ 200, 50 }, // 初期サイズ（後で調整）
+					.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 					.sizeDeltaPivot = Anchor::TopLeft,
 				});
 			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
-			m_tooltipNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 10, 5, 5 }, .spacing = 5 });
+			m_tooltipNode->setBoxChildrenLayout(
+				VerticalLayout
+				{
+					.padding = LRTB{ 10, 10, 5, 5 },
+					.spacing = 5,
+					.horizontalAlign = HorizontalAlign::Left,
+				});
 			
 			// メインテキスト用ノード
 			const auto mainTextNode = m_tooltipNode->emplaceChild(
 				U"MainText",
 				BoxConstraint
 				{
-					.sizeRatio = Vec2{ 1, 0 },
-					.flexibleWeight = 0,
+					.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 				});
 			mainTextNode->emplaceComponent<Label>(
 				m_tooltipText,
@@ -425,7 +430,9 @@ private:
 				12,
 				ColorF{ 1.0 },
 				HorizontalAlign::Left,
-				VerticalAlign::Top);
+				VerticalAlign::Top,
+				LRTB::Zero(),
+				HorizontalOverflow::Overflow);
 			
 			// 詳細説明がある場合は追加
 			if (!m_tooltipDetailText.empty())
@@ -434,8 +441,7 @@ private:
 					U"DetailText",
 					BoxConstraint
 					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.flexibleWeight = 0,
+						.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 					});
 				detailTextNode->emplaceComponent<Label>(
 					m_tooltipDetailText,
@@ -445,8 +451,7 @@ private:
 					HorizontalAlign::Left,
 					VerticalAlign::Top,
 					LRTB::Zero(),
-					HorizontalOverflow::Wrap,
-					VerticalOverflow::Clip);
+					HorizontalOverflow::Overflow);
 			}
 			
 			// サイズを内容に合わせて調整
@@ -469,36 +474,26 @@ private:
 		{
 			return;
 		}
-		
-		// 各子ノードのサイズを取得して最大幅と合計高さを計算
-		double maxWidth = 0;
-		double totalHeight = 0;
-		const auto& layout = m_tooltipNode->boxChildrenLayout();
-		const auto verticalLayout = std::get_if<VerticalLayout>(&layout);
-		if (verticalLayout)
-		{
-			totalHeight += verticalLayout->padding.top + verticalLayout->padding.bottom;
-		}
-		
+
+		// 子要素のサイズを更新
 		for (const auto& child : m_tooltipNode->children())
 		{
 			if (const auto label = child->getComponent<Label>())
 			{
 				const Vec2 contentSize = label->contentSize();
-				maxWidth = Max(maxWidth, contentSize.x);
-				totalHeight += contentSize.y;
+				if (const auto* pBoxConstraint = child->boxConstraint())
+				{
+					auto newConstraint = *pBoxConstraint;
+					newConstraint.sizeDelta = contentSize;
+					child->setConstraint(newConstraint, RefreshesLayoutYN::No);
+				}
 			}
 		}
 		
-		if (verticalLayout && m_tooltipNode->children().size() > 1)
-		{
-			totalHeight += verticalLayout->spacing * (m_tooltipNode->children().size() - 1);
-		}
-		
-		// ツールチップのサイズを更新
+		// ツールチップ全体のサイズを更新
 		if (const auto pConstraint = m_tooltipNode->anchorConstraint())
 		{
-			const Vec2 newSize{ maxWidth + 20, totalHeight };
+			const Vec2 newSize = m_tooltipNode->getFittingSizeToChildren();
 			if (pConstraint->sizeDelta != newSize)
 			{
 				AnchorConstraint newConstraint = *pConstraint;
@@ -540,7 +535,22 @@ public:
 				// マウス位置にツールチップを移動
 				if (const auto pConstraint = m_tooltipNode->anchorConstraint())
 				{
-					const Vec2 newPos = Cursor::Pos() + Vec2{ 0, 20 };
+					Vec2 newPos = Cursor::Pos() + Vec2{ 0, 20 };
+					const Vec2 tooltipSize = pConstraint->sizeDelta;
+					
+					// 右端にはみ出す場合は左に寄せる
+					if (newPos.x + tooltipSize.x > Scene::Width())
+					{
+						newPos.x = Scene::Width() - tooltipSize.x;
+					}
+					
+					// 下端にはみ出す場合は上に寄せる
+					if (newPos.y + tooltipSize.y > Scene::Height())
+					{
+						// マウスカーソルの上側に表示
+						newPos.y = Cursor::Pos().y - tooltipSize.y - 5;
+					}
+					
 					if (pConstraint->posDelta != newPos)
 					{
 						AnchorConstraint newConstraint = *pConstraint;
@@ -807,152 +817,6 @@ struct std::hash<PropertyKey>
 	}
 };
 
-// プロパティのメタデータ
-struct PropertyMetadata
-{
-	Optional<String> tooltip;
-	Optional<String> tooltipDetail;  // 詳細な説明文
-	std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件
-	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
-};
-
-// プロパティの説明文を初期化する関数
-[[nodiscard]]
-static HashTable<PropertyKey, String> InitPropertyTooltips()
-{
-	return HashTable<PropertyKey, String>
-	{
-		// Nodeのプロパティ
-		{ PropertyKey{ U"Node", U"name" }, U"Nodeの名前" },
-		{ PropertyKey{ U"Node", U"activeSelf" }, U"Nodeの有効/無効状態" },
-		{ PropertyKey{ U"Node", U"isHitTarget" }, U"マウスのヒット判定を受けるかどうか" },
-		{ PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }, U"子要素のホバー状態を継承" },
-		{ PropertyKey{ U"Node", U"inheritsChildrenPressedState" }, U"子要素の押下状態を継承" },
-		{ PropertyKey{ U"Node", U"interactable" }, U"インタラクション可能かどうか" },
-		{ PropertyKey{ U"Node", U"horizontalScrollable" }, U"水平方向のスクロール可能" },
-		{ PropertyKey{ U"Node", U"verticalScrollable" }, U"垂直方向のスクロール可能" },
-		{ PropertyKey{ U"Node", U"clippingEnabled" }, U"クリッピングの有効/無効" },
-
-		// Constraint関連
-		// AnchorConstraint
-		{ PropertyKey{ U"AnchorConstraint", U"anchorMin" }, U"最小アンカー位置 (0,0)が左上、(1,1)が右下" },
-		{ PropertyKey{ U"AnchorConstraint", U"anchorMax" }, U"最大アンカー位置 (0,0)が左上、(1,1)が右下" },
-		{ PropertyKey{ U"AnchorConstraint", U"posDelta" }, U"アンカーからのオフセット位置" },
-		{ PropertyKey{ U"AnchorConstraint", U"sizeDelta" }, U"アンカー領域からのサイズオフセット" },
-		{ PropertyKey{ U"AnchorConstraint", U"sizeDeltaPivot" }, U"サイズ変更時の中心点" },
-		// AnchorPreset用プロパティ
-		{ PropertyKey{ U"AnchorConstraint", U"top" }, U"上端からの距離" },
-		{ PropertyKey{ U"AnchorConstraint", U"left" }, U"左端からの距離" },
-		{ PropertyKey{ U"AnchorConstraint", U"right" }, U"右端からの距離" },
-		{ PropertyKey{ U"AnchorConstraint", U"bottom" }, U"下端からの距離" },
-		{ PropertyKey{ U"AnchorConstraint", U"size" }, U"サイズ (幅、高さ)" },
-		{ PropertyKey{ U"AnchorConstraint", U"width" }, U"幅" },
-		{ PropertyKey{ U"AnchorConstraint", U"height" }, U"高さ" },
-		{ PropertyKey{ U"AnchorConstraint", U"xDelta" }, U"X軸方向のオフセット" },
-		{ PropertyKey{ U"AnchorConstraint", U"yDelta" }, U"Y軸方向のオフセット" },
-
-		// BoxConstraint
-		{ PropertyKey{ U"BoxConstraint", U"margin" }, U"マージン (左、右、上、下)" },
-		{ PropertyKey{ U"BoxConstraint", U"sizeRatio" }, U"親要素に対するサイズ比率 (0.0～1.0)" },
-		{ PropertyKey{ U"BoxConstraint", U"sizeDelta" }, U"固定サイズ (幅、高さ)" },
-		{ PropertyKey{ U"BoxConstraint", U"flexibleWeight" }, U"フレキシブルレイアウト時の重み" },
-
-		// Layout関連
-		// FlowLayout
-		{ PropertyKey{ U"FlowLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyKey{ U"FlowLayout", U"spacing" }, U"要素間の間隔 (X, Y)" },
-		{ PropertyKey{ U"FlowLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyKey{ U"FlowLayout", U"verticalAlign" }, U"垂直方向の配置" },
-
-		// HorizontalLayout
-		{ PropertyKey{ U"HorizontalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyKey{ U"HorizontalLayout", U"spacing" }, U"要素間の間隔" },
-		{ PropertyKey{ U"HorizontalLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyKey{ U"HorizontalLayout", U"verticalAlign" }, U"垂直方向の配置" },
-
-		// VerticalLayout
-		{ PropertyKey{ U"VerticalLayout", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyKey{ U"VerticalLayout", U"spacing" }, U"要素間の間隔" },
-		{ PropertyKey{ U"VerticalLayout", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyKey{ U"VerticalLayout", U"verticalAlign" }, U"垂直方向の配置" },
-
-		// TransformEffect関連
-		{ PropertyKey{ U"TransformEffect", U"position" }, U"位置のオフセット" },
-		{ PropertyKey{ U"TransformEffect", U"scale" }, U"スケール" },
-		{ PropertyKey{ U"TransformEffect", U"pivot" }, U"変形の基準点" },
-
-		// Componentのプロパティ
-		// RectRenderer
-		{ PropertyKey{ U"RectRenderer", U"fillColor" }, U"塗りつぶし色" },
-		{ PropertyKey{ U"RectRenderer", U"outlineColor" }, U"アウトライン色" },
-		{ PropertyKey{ U"RectRenderer", U"outlineThickness" }, U"アウトラインの太さ" },
-		{ PropertyKey{ U"RectRenderer", U"cornerRadius" }, U"角の丸み半径" },
-		{ PropertyKey{ U"RectRenderer", U"shadowColor" }, U"影の色" },
-		{ PropertyKey{ U"RectRenderer", U"shadowOffset" }, U"影のオフセット" },
-		{ PropertyKey{ U"RectRenderer", U"shadowBlur" }, U"影のぼかし度合い" },
-		{ PropertyKey{ U"RectRenderer", U"shadowSpread" }, U"影の拡散サイズ" },
-
-		// Label
-		{ PropertyKey{ U"Label", U"text" }, U"表示するテキスト" },
-		{ PropertyKey{ U"Label", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyKey{ U"Label", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyKey{ U"Label", U"color" }, U"テキスト色" },
-		{ PropertyKey{ U"Label", U"horizontalAlign" }, U"水平方向の配置" },
-		{ PropertyKey{ U"Label", U"verticalAlign" }, U"垂直方向の配置" },
-		{ PropertyKey{ U"Label", U"padding" }, U"内側余白 (左、右、上、下)" },
-		{ PropertyKey{ U"Label", U"horizontalOverflow" }, U"水平方向のオーバーフロー処理" },
-		{ PropertyKey{ U"Label", U"verticalOverflow" }, U"垂直方向のオーバーフロー処理" },
-		{ PropertyKey{ U"Label", U"characterSpacing" }, U"文字間隔 (X, Y)" },
-		{ PropertyKey{ U"Label", U"underlineStyle" }, U"下線のスタイル" },
-		{ PropertyKey{ U"Label", U"underlineColor" }, U"下線の色" },
-		{ PropertyKey{ U"Label", U"underlineThickness" }, U"下線の太さ" },
-
-		// Sprite
-		{ PropertyKey{ U"Sprite", U"textureFilePath" }, U"テクスチャファイルパス" },
-		{ PropertyKey{ U"Sprite", U"textureAssetName" }, U"テクスチャアセット名" },
-		{ PropertyKey{ U"Sprite", U"color" }, U"スプライトの色" },
-		{ PropertyKey{ U"Sprite", U"preserveAspect" }, U"アスペクト比を保持" },
-		{ PropertyKey{ U"Sprite", U"nineSliceEnabled" }, U"9スライス機能を有効にするか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceMargin" }, U"9スライスのマージン（素材の端からの距離）" },
-		{ PropertyKey{ U"Sprite", U"nineSliceScale" }, U"9スライスのスケール" },
-		{ PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }, U"中央領域をタイル表示するか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceTopTiled" }, U"上端領域をタイル表示するか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }, U"下端領域をタイル表示するか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }, U"左端領域をタイル表示するか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceRightTiled" }, U"右端領域をタイル表示するか" },
-		{ PropertyKey{ U"Sprite", U"nineSliceFallbackToSimple" }, U"9スライスが無効な場合に通常の描画にフォールバック" },
-
-		// TextBox
-		{ PropertyKey{ U"TextBox", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyKey{ U"TextBox", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyKey{ U"TextBox", U"color" }, U"テキスト色" },
-		{ PropertyKey{ U"TextBox", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
-		{ PropertyKey{ U"TextBox", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
-		{ PropertyKey{ U"TextBox", U"cursorColor" }, U"カーソルの色" },
-		{ PropertyKey{ U"TextBox", U"selectionColor" }, U"選択範囲の色" },
-
-		// TextArea
-		{ PropertyKey{ U"TextArea", U"fontAssetName" }, U"フォントアセット名" },
-		{ PropertyKey{ U"TextArea", U"fontSize" }, U"フォントサイズ" },
-		{ PropertyKey{ U"TextArea", U"color" }, U"テキスト色" },
-		{ PropertyKey{ U"TextArea", U"horizontalPadding" }, U"水平方向の内側余白 (左、右)" },
-		{ PropertyKey{ U"TextArea", U"verticalPadding" }, U"垂直方向の内側余白 (上、下)" },
-		{ PropertyKey{ U"TextArea", U"cursorColor" }, U"カーソルの色" },
-		{ PropertyKey{ U"TextArea", U"selectionColor" }, U"選択範囲の色" },
-
-		// EventTrigger
-		{ PropertyKey{ U"EventTrigger", U"tag" }, U"イベントのタグ" },
-		{ PropertyKey{ U"EventTrigger", U"triggerType" }, U"トリガーの種類 (Click/Hover/Press等)" },
-		{ PropertyKey{ U"EventTrigger", U"childrenTriggerEnabled" }, U"子要素でのトリガーを有効化" },
-
-		// InputBlocker（プロパティなし）
-
-		// Placeholder
-		{ PropertyKey{ U"Placeholder", U"tag" }, U"プレースホルダーのタグ" },
-		{ PropertyKey{ U"Placeholder", U"data" }, U"プレースホルダーのデータ" },
-	};
-}
-
 // PropertyValueのいずれかの状態が指定された値と一致するかをチェックする関数
 template <typename T>
 [[nodiscard]]
@@ -975,112 +839,384 @@ static bool HasAnyTrueState(const PropertyValue<bool>& propertyValue)
 	return HasAnyStateEqualTo(propertyValue, true);
 }
 
-// プロパティの表示条件を初期化する関数
-[[nodiscard]]
-static HashTable<PropertyKey, std::function<bool(const ComponentBase&)>> InitPropertyVisibilityConditions()
+// プロパティのメタデータ
+struct PropertyMetadata
 {
-	return HashTable<PropertyKey, std::function<bool(const ComponentBase&)>>
-	{
-		// Spriteコンポーネントの9スライス関連プロパティ
-		{ PropertyKey{ U"Sprite", U"nineSliceMargin" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceTopTiled" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceRightTiled" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceScale" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-		{ PropertyKey{ U"Sprite", U"nineSliceFallbackToSimple" }, [](const ComponentBase& component) -> bool
-			{
-				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
-				{
-					return HasAnyTrueState(sprite->nineSliceEnabled());
-				}
-				return true;
-			}
-		},
-	};
-}
+	Optional<String> tooltip;
+	Optional<String> tooltipDetail;  // 詳細な説明文
+	std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件
+	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
+};
 
 // プロパティのメタデータを初期化する関数
 [[nodiscard]]
 static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 {
-	// 既存のツールチップデータを取得
-	auto tooltips = InitPropertyTooltips();
-	auto visibilityConditions = InitPropertyVisibilityConditions();
-	
 	HashTable<PropertyKey, PropertyMetadata> metadata;
 	
-	// ツールチップをメタデータに変換
-	for (const auto& [key, tooltip] : tooltips)
+	// 9スライス関連プロパティの表示条件を作成
+	auto nineSliceVisibilityCondition = [](const ComponentBase& component) -> bool
 	{
-		metadata[key].tooltip = tooltip;
-	}
+		if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+		{
+			return HasAnyTrueState(sprite->nineSliceEnabled());
+		}
+		return true;
+	};
 	
-	// 表示条件をメタデータに追加
-	for (const auto& [key, condition] : visibilityConditions)
-	{
-		metadata[key].visibilityCondition = condition;
-	}
+	// Nodeのプロパティ
+	metadata[PropertyKey{ U"Node", U"activeSelf" }] = PropertyMetadata{
+		.tooltip = U"Nodeの有効/無効",
+		.tooltipDetail = U"このNodeとその子要素の表示を制御します\n無効の場合、updateの代わりにupdateInactiveが実行され、drawは実行されません",
+	};
+	metadata[PropertyKey{ U"Node", U"isHitTarget" }] = PropertyMetadata{
+		.tooltip = U"マウスホバー判定の対象にするどうか",
+		.tooltipDetail = U"無効にすると、このNodeはマウスカーソルのホバー判定の対象外となり、親要素のInteractionStateを受け継ぎます",
+	};
+	metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
+		.tooltip = U"子要素のホバー状態を継承",
+	};
+	metadata[PropertyKey{ U"Node", U"inheritsChildrenPressedState" }] = PropertyMetadata{
+		.tooltip = U"子要素の押下状態を継承",
+	};
+	metadata[PropertyKey{ U"Node", U"interactable" }] = PropertyMetadata{
+		.tooltip = U"インタラクション可能かどうか",
+	};
+	metadata[PropertyKey{ U"Node", U"horizontalScrollable" }] = PropertyMetadata{
+		.tooltip = U"水平方向のスクロール可能",
+	};
+	metadata[PropertyKey{ U"Node", U"verticalScrollable" }] = PropertyMetadata{
+		.tooltip = U"垂直方向のスクロール可能",
+	};
+	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
+		.tooltip = U"クリッピングの有効/無効",
+		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容がこのNodeの矩形範囲で切り取られます",
+	};
 	
-	// SpriteコンポーネントのnineSliceEnabledプロパティの変更時処理
-	metadata[PropertyKey{ U"Sprite", U"nineSliceEnabled" }].refreshInspectorOnChange = true;
+	// Constraint関連 - AnchorConstraint
+	metadata[PropertyKey{ U"AnchorConstraint", U"type" }] = PropertyMetadata{
+		.tooltip = U"Constraintの種類",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"anchor" }] = PropertyMetadata{
+		.tooltip = U"アンカープリセット",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"anchorMin" }] = PropertyMetadata{
+		.tooltip = U"最小アンカー位置 (0,0)が左上、(1,1)が右下",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"anchorMax" }] = PropertyMetadata{
+		.tooltip = U"最大アンカー位置 (0,0)が左上、(1,1)が右下",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"posDelta" }] = PropertyMetadata{
+		.tooltip = U"位置 (アンカーからの相対位置)",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"sizeDelta" }] = PropertyMetadata{
+		.tooltip = U"サイズ (アンカー領域からの相対サイズ)",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"sizeDeltaPivot" }] = PropertyMetadata{
+		.tooltip = U"サイズ計算の起点 (X、Y)",
+	};
+	
+	// Constraint関連 - BoxConstraint
+	metadata[PropertyKey{ U"BoxConstraint", U"type" }] = PropertyMetadata{
+		.tooltip = U"Constraintの種類",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"margin" }] = PropertyMetadata{
+		.tooltip = U"マージン (左、右、上、下)",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"margin (left, right)" }] = PropertyMetadata{
+		.tooltip = U"左右のマージン",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"margin (top, bottom)" }] = PropertyMetadata{
+		.tooltip = U"上下のマージン",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"sizeRatio" }] = PropertyMetadata{
+		.tooltip = U"親要素に対するサイズ比率 (0.0～1.0)",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"sizeDelta" }] = PropertyMetadata{
+		.tooltip = U"サイズ (相対サイズ)",
+	};
+	metadata[PropertyKey{ U"BoxConstraint", U"flexibleWeight" }] = PropertyMetadata{
+		.tooltip = U"フレキシブル要素の重み",
+		.tooltipDetail = U"0より大きい値を設定すると、余った空間を他のフレキシブル要素と分け合います",
+	};
+	
+	// AnchorPreset用プロパティ
+	metadata[PropertyKey{ U"AnchorConstraint", U"top" }] = PropertyMetadata{
+		.tooltip = U"上端からの距離",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"left" }] = PropertyMetadata{
+		.tooltip = U"左端からの距離",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"right" }] = PropertyMetadata{
+		.tooltip = U"右端からの距離",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"bottom" }] = PropertyMetadata{
+		.tooltip = U"下端からの距離",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"size" }] = PropertyMetadata{
+		.tooltip = U"サイズ (幅、高さ)",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"width" }] = PropertyMetadata{
+		.tooltip = U"幅",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"height" }] = PropertyMetadata{
+		.tooltip = U"高さ",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"xDelta" }] = PropertyMetadata{
+		.tooltip = U"X軸方向のオフセット",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"yDelta" }] = PropertyMetadata{
+		.tooltip = U"Y軸方向のオフセット",
+	};
+	
+	// Layout関連
+	metadata[PropertyKey{ U"FlowLayout", U"type" }] = PropertyMetadata{
+		.tooltip = U"レイアウトの種類",
+	};
+	metadata[PropertyKey{ U"FlowLayout", U"padding" }] = PropertyMetadata{
+		.tooltip = U"内側の余白 (左、右、上、下)",
+	};
+	metadata[PropertyKey{ U"FlowLayout", U"spacing" }] = PropertyMetadata{
+		.tooltip = U"要素間の間隔 (X, Y)",
+	};
+	metadata[PropertyKey{ U"FlowLayout", U"horizontalAlign" }] = PropertyMetadata{
+		.tooltip = U"水平方向の配置",
+	};
+	metadata[PropertyKey{ U"FlowLayout", U"verticalAlign" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の配置",
+	};
+	
+	metadata[PropertyKey{ U"HorizontalLayout", U"type" }] = PropertyMetadata{
+		.tooltip = U"レイアウトの種類",
+	};
+	metadata[PropertyKey{ U"HorizontalLayout", U"padding" }] = PropertyMetadata{
+		.tooltip = U"内側の余白 (左、右、上、下)",
+	};
+	metadata[PropertyKey{ U"HorizontalLayout", U"spacing" }] = PropertyMetadata{
+		.tooltip = U"要素間の間隔",
+	};
+	metadata[PropertyKey{ U"HorizontalLayout", U"horizontalAlign" }] = PropertyMetadata{
+		.tooltip = U"水平方向の配置",
+	};
+	metadata[PropertyKey{ U"HorizontalLayout", U"verticalAlign" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の配置",
+	};
+	
+	metadata[PropertyKey{ U"VerticalLayout", U"type" }] = PropertyMetadata{
+		.tooltip = U"レイアウトの種類",
+	};
+	metadata[PropertyKey{ U"VerticalLayout", U"padding" }] = PropertyMetadata{
+		.tooltip = U"内側の余白 (左、右、上、下)",
+	};
+	metadata[PropertyKey{ U"VerticalLayout", U"spacing" }] = PropertyMetadata{
+		.tooltip = U"要素間の間隔",
+	};
+	metadata[PropertyKey{ U"VerticalLayout", U"horizontalAlign" }] = PropertyMetadata{
+		.tooltip = U"水平方向の配置",
+	};
+	metadata[PropertyKey{ U"VerticalLayout", U"verticalAlign" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の配置",
+	};
+	
+	// TransformEffect関連
+	metadata[PropertyKey{ U"TransformEffect", U"position" }] = PropertyMetadata{
+		.tooltip = U"位置のオフセット",
+	};
+	metadata[PropertyKey{ U"TransformEffect", U"scale" }] = PropertyMetadata{
+		.tooltip = U"スケール",
+	};
+	metadata[PropertyKey{ U"TransformEffect", U"pivot" }] = PropertyMetadata{
+		.tooltip = U"変形の基準点",
+	};
+	
+	// Componentのプロパティ
+	// RectRenderer
+	metadata[PropertyKey{ U"RectRenderer", U"fillColor" }] = PropertyMetadata{
+		.tooltip = U"塗りつぶし色",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"outlineColor" }] = PropertyMetadata{
+		.tooltip = U"アウトライン色",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"outlineThickness" }] = PropertyMetadata{
+		.tooltip = U"アウトラインの太さ",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"cornerRadius" }] = PropertyMetadata{
+		.tooltip = U"角の丸み半径",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"shadowColor" }] = PropertyMetadata{
+		.tooltip = U"影の色",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"shadowOffset" }] = PropertyMetadata{
+		.tooltip = U"影のオフセット (位置のずらし量)",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"shadowBlur" }] = PropertyMetadata{
+		.tooltip = U"影のぼかし度合い",
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"shadowSpread" }] = PropertyMetadata{
+		.tooltip = U"影の拡散サイズ",
+	};
+	
+	// Label
+	metadata[PropertyKey{ U"Label", U"text" }] = PropertyMetadata{
+		.tooltip = U"表示するテキスト",
+	};
+	metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
+		.tooltip = U"フォントアセット名",
+	};
+	metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
+		.tooltip = U"フォントサイズ",
+	};
+	metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
+		.tooltip = U"テキスト色",
+	};
+	metadata[PropertyKey{ U"Label", U"horizontalAlign" }] = PropertyMetadata{
+		.tooltip = U"水平方向の配置",
+	};
+	metadata[PropertyKey{ U"Label", U"verticalAlign" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の配置",
+	};
+	metadata[PropertyKey{ U"Label", U"padding" }] = PropertyMetadata{
+		.tooltip = U"内側の余白 (左、右、上、下)",
+	};
+	metadata[PropertyKey{ U"Label", U"horizontalOverflow" }] = PropertyMetadata{
+		.tooltip = U"水平方向にはみ出す場合の処理",
+	};
+	metadata[PropertyKey{ U"Label", U"verticalOverflow" }] = PropertyMetadata{
+		.tooltip = U"垂直方向にはみ出す場合の処理",
+	};
+	metadata[PropertyKey{ U"Label", U"characterSpacing" }] = PropertyMetadata{
+		.tooltip = U"文字同士の間隔 (X, Y)",
+	};
+	metadata[PropertyKey{ U"Label", U"underlineStyle" }] = PropertyMetadata{
+		.tooltip = U"下線のスタイル",
+	};
+	metadata[PropertyKey{ U"Label", U"underlineColor" }] = PropertyMetadata{
+		.tooltip = U"下線の色",
+	};
+	metadata[PropertyKey{ U"Label", U"underlineThickness" }] = PropertyMetadata{
+		.tooltip = U"下線の太さ",
+	};
+	
+	// Sprite
+	metadata[PropertyKey{ U"Sprite", U"textureFilePath" }] = PropertyMetadata{
+		.tooltip = U"テクスチャファイルのパス",
+		.tooltipDetail = U"textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+	};
+	metadata[PropertyKey{ U"Sprite", U"textureAssetName" }] = PropertyMetadata{
+		.tooltip = U"TextureAssetのキー名 (任意)",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません",
+	};
+	metadata[PropertyKey{ U"Sprite", U"color" }] = PropertyMetadata{
+		.tooltip = U"スプライトの色",
+	};
+	metadata[PropertyKey{ U"Sprite", U"preserveAspect" }] = PropertyMetadata{
+		.tooltip = U"アスペクト比を保持",
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceEnabled" }] = PropertyMetadata{
+		.tooltip = U"9スライス機能を有効にするか",
+		.tooltipDetail = U"画像を9つの領域に分割し、角を固定サイズで表示しながら辺と中央を伸縮させます",
+		.refreshInspectorOnChange = true,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceMargin" }] = PropertyMetadata{
+		.tooltip = U"9スライスのマージン（素材の端からの距離）",
+		.tooltipDetail = U"素材画像の端から何ピクセル内側で領域分割するかを指定します",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceScale" }] = PropertyMetadata{
+		.tooltip = U"9スライスのスケール",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }] = PropertyMetadata{
+		.tooltip = U"中央領域をタイル表示するか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceTopTiled" }] = PropertyMetadata{
+		.tooltip = U"上端領域をタイル表示するか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }] = PropertyMetadata{
+		.tooltip = U"下端領域をタイル表示するか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }] = PropertyMetadata{
+		.tooltip = U"左端領域をタイル表示するか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceRightTiled" }] = PropertyMetadata{
+		.tooltip = U"右端領域をタイル表示するか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	metadata[PropertyKey{ U"Sprite", U"nineSliceFallback" }] = PropertyMetadata{
+		.tooltip = U"要素が9スライスのマージンより小さい場合に通常描画にフォールバックするかどうか",
+		.visibilityCondition = nineSliceVisibilityCondition,
+	};
+	
+	// TextBox
+	metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
+		.tooltip = U"FontAssetのキー名 (任意",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
+	};
+	metadata[PropertyKey{ U"TextBox", U"fontSize" }] = PropertyMetadata{
+		.tooltip = U"フォントサイズ",
+	};
+	metadata[PropertyKey{ U"TextBox", U"color" }] = PropertyMetadata{
+		.tooltip = U"テキスト色",
+	};
+	metadata[PropertyKey{ U"TextBox", U"horizontalPadding" }] = PropertyMetadata{
+		.tooltip = U"水平方向の内側の余白 (左、右)",
+	};
+	metadata[PropertyKey{ U"TextBox", U"verticalPadding" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の内側の余白 (上、下)",
+	};
+	metadata[PropertyKey{ U"TextBox", U"cursorColor" }] = PropertyMetadata{
+		.tooltip = U"カーソルの色",
+	};
+	metadata[PropertyKey{ U"TextBox", U"selectionColor" }] = PropertyMetadata{
+		.tooltip = U"選択範囲の色",
+	};
+	
+	// TextArea
+	metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
+		.tooltip = U"FontAssetのキー名 (任意",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
+	};
+	metadata[PropertyKey{ U"TextArea", U"fontSize" }] = PropertyMetadata{
+		.tooltip = U"フォントサイズ",
+	};
+	metadata[PropertyKey{ U"TextArea", U"color" }] = PropertyMetadata{
+		.tooltip = U"テキスト色",
+	};
+	metadata[PropertyKey{ U"TextArea", U"horizontalPadding" }] = PropertyMetadata{
+		.tooltip = U"水平方向の内側の余白 (左、右)",
+	};
+	metadata[PropertyKey{ U"TextArea", U"verticalPadding" }] = PropertyMetadata{
+		.tooltip = U"垂直方向の内側の余白 (上、下)",
+	};
+	metadata[PropertyKey{ U"TextArea", U"cursorColor" }] = PropertyMetadata{
+		.tooltip = U"カーソルの色",
+	};
+	metadata[PropertyKey{ U"TextArea", U"selectionColor" }] = PropertyMetadata{
+		.tooltip = U"選択範囲の色",
+	};
+	
+	// EventTrigger
+	metadata[PropertyKey{ U"EventTrigger", U"tag" }] = PropertyMetadata{
+		.tooltip = U"プログラムから参照する際のタグ名",
+	};
+	metadata[PropertyKey{ U"EventTrigger", U"triggerType" }] = PropertyMetadata{
+		.tooltip = U"イベントを発火させる操作の種類",
+	};
+	metadata[PropertyKey{ U"EventTrigger", U"childrenTriggerEnabled" }] = PropertyMetadata{
+		.tooltip = U"子孫要素の操作でもイベント発火するかどうか",
+	};
+	
+	// Placeholder
+	metadata[PropertyKey{ U"Placeholder", U"tag" }] = PropertyMetadata{
+		.tooltip = U"プログラムから参照する際のタグ名",
+	};
+	metadata[PropertyKey{ U"Placeholder", U"data" }] = PropertyMetadata{
+		.tooltip = U"プレースホルダーのデータ (任意)",
+	};
 	
 	return metadata;
 }
@@ -3027,10 +3163,8 @@ public:
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
 			{
-				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
-				{
-					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
-				}
+				// boolプロパティの場合は、propertyNode全体にツールチップを追加
+				propertyNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 			}
 		}
 		
@@ -5468,7 +5602,7 @@ public:
 		m_toolbar.addButton(U"New", U"\xF0224", U"新規作成 (Ctrl+N)", [this] { onClickMenuFileNew(); });
 		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); });
 		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); });
-		m_toolbar.addButton(U"SaveAs", U"\xF0E28‘", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
+		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); });
 	}
 
 	void update()

@@ -52,7 +52,7 @@ namespace noco
 				isFirstBoxConstraintChild = false;
 			}
 		}
-		return { maxWidth, totalHeight };
+		return { maxWidth + padding.left + padding.right, totalHeight };
 	}
 
 	void VerticalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const

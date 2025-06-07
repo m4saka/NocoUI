@@ -371,7 +371,7 @@ namespace noco
 				{
 					if (m_selectionAnchor != m_cursorIndex && !shift)
 					{
-						m_cursorIndex = erasePos;
+						m_cursorIndex = Min(m_selectionAnchor, m_cursorIndex);
 						m_selectionAnchor = m_cursorIndex;
 					}
 					else if (m_cursorIndex > 0)

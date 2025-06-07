@@ -52,7 +52,7 @@ namespace noco
 				isFirstBoxConstraintChild = false;
 			}
 		}
-		return { totalWidth, maxHeight };
+		return { totalWidth, maxHeight + padding.top + padding.bottom };
 	}
 
 	void HorizontalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
