@@ -1487,6 +1487,35 @@ namespace noco
 		return m_hitTestRect;
 	}
 
+	Quad Node::rotatedQuad() const
+	{
+		const double rad = rotationRadians();
+		if (Abs(rad) < 1e-6)
+		{
+			return m_effectedRect.asQuad();
+		}
+		
+		const Vec2& pivot = m_transformEffect.pivot().value();
+		const Vec2 pivotPos = m_effectedRect.pos + m_effectedRect.size * pivot;
+		return m_effectedRect.rotatedAt(pivotPos, rad);
+	}
+
+	double Node::rotation() const
+	{
+		return m_transformEffect.rotation().value();
+	}
+
+	double Node::rotationRadians() const
+	{
+		return Math::ToRadians(rotation());
+	}
+
+	Vec2 Node::pivotPos() const
+	{
+		const Vec2& pivot = m_transformEffect.pivot().value();
+		return m_effectedRect.pos + m_effectedRect.size * pivot;
+	}
+
 	const Vec2& Node::effectScale() const
 	{
 		return m_effectScale;

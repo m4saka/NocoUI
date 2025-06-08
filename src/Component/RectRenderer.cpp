@@ -14,38 +14,83 @@ namespace noco
 		const Vec2& shadowOffset = m_shadowOffset.value() * effectScaleAvg;
 		const double shadowBlur = m_shadowBlur.value() * effectScaleAvg;
 		const double shadowSpread = m_shadowSpread.value() * effectScaleAvg;
+		const double rotation = node.rotationRadians();
 
-		if (cornerRadius == 0.0)
+		if (Abs(rotation) < 1e-6)
 		{
-			const RectF rect = node.rect().stretched(-outlineThickness / 2);
-			if (shadowColor.a > 0.0)
+			// 回転なしの場合
+			if (cornerRadius == 0.0)
 			{
-				rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
-			}
-			if (outlineThickness == 0.0)
-			{
-				rect.draw(fillColor);
+				const RectF rect = node.rect().stretched(-outlineThickness / 2);
+				if (shadowColor.a > 0.0)
+				{
+					rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
+				}
+				if (outlineThickness == 0.0)
+				{
+					rect.draw(fillColor);
+				}
+				else
+				{
+					rect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				}
 			}
 			else
 			{
-				rect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				const RectF rect = node.rect().stretched(-outlineThickness / 2);
+				const RoundRect roundRect = rect.rounded(cornerRadius);
+				if (shadowColor.a > 0.0)
+				{
+					roundRect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
+				}
+				if (outlineThickness == 0.0)
+				{
+					roundRect.draw(fillColor);
+				}
+				else
+				{
+					roundRect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				}
 			}
 		}
 		else
 		{
-			const RectF rect = node.rect().stretched(-outlineThickness / 2);
-			const RoundRect roundRect = rect.rounded(cornerRadius);
-			if (shadowColor.a > 0.0)
+			// 回転ありの場合
+			const Vec2 pivotPos = node.pivotPos();
+			const Transformer2D transformer{ Mat3x2::Rotate(rotation, pivotPos) };
+			
+			if (cornerRadius == 0.0)
 			{
-				roundRect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
-			}
-			if (outlineThickness == 0.0)
-			{
-				roundRect.draw(fillColor);
+				const RectF rect = node.rect().stretched(-outlineThickness / 2);
+				if (shadowColor.a > 0.0)
+				{
+					rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
+				}
+				if (outlineThickness == 0.0)
+				{
+					rect.draw(fillColor);
+				}
+				else
+				{
+					rect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				}
 			}
 			else
 			{
-				roundRect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				const RectF rect = node.rect().stretched(-outlineThickness / 2);
+				const RoundRect roundRect = rect.rounded(cornerRadius);
+				if (shadowColor.a > 0.0)
+				{
+					roundRect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
+				}
+				if (outlineThickness == 0.0)
+				{
+					roundRect.draw(fillColor);
+				}
+				else
+				{
+					roundRect.draw(fillColor).drawFrame(outlineThickness, outlineColor);
+				}
 			}
 		}
 	}

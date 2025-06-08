@@ -306,6 +306,18 @@ namespace noco
 		const RectF& hitTestRect() const;
 
 		[[nodiscard]]
+		Quad rotatedQuad() const;
+
+		[[nodiscard]]
+		double rotation() const;
+
+		[[nodiscard]]
+		double rotationRadians() const;
+
+		[[nodiscard]]
+		Vec2 pivotPos() const;
+
+		[[nodiscard]]
 		const Vec2& effectScale() const;
 
 		[[nodiscard]]

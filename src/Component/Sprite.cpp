@@ -253,19 +253,44 @@ namespace noco
 		
 		const RectF& rect = node.rect();
 		const ColorF& color = m_color.value();
-		
-		if (m_nineSliceEnabled.value())
+		const double rotation = node.rotationRadians();
+
+		if (Abs(rotation) < 1e-6)
 		{
-			const Vec2& effectScale = node.effectScale();
-			drawNineSlice(texture, rect, effectScale, color);
-		}
-		else if (m_preserveAspect.value())
-		{
-			texture.fitted(rect.size).drawAt(rect.center(), color);
+			// 回転なしの場合
+			if (m_nineSliceEnabled.value())
+			{
+				const Vec2& effectScale = node.effectScale();
+				drawNineSlice(texture, rect, effectScale, color);
+			}
+			else if (m_preserveAspect.value())
+			{
+				texture.fitted(rect.size).drawAt(rect.center(), color);
+			}
+			else
+			{
+				texture.resized(rect.size).draw(rect.pos, color);
+			}
 		}
 		else
 		{
-			texture.resized(rect.size).draw(rect.pos, color);
+			// 回転ありの場合
+			const Vec2 pivotPos = node.pivotPos();
+			const Transformer2D transformer{ Mat3x2::Rotate(rotation, pivotPos) };
+			
+			if (m_nineSliceEnabled.value())
+			{
+				const Vec2& effectScale = node.effectScale();
+				drawNineSlice(texture, rect, effectScale, color);
+			}
+			else if (m_preserveAspect.value())
+			{
+				texture.fitted(rect.size).drawAt(rect.center(), color);
+			}
+			else
+			{
+				texture.resized(rect.size).draw(rect.pos, color);
+			}
 		}
 	}
 }
