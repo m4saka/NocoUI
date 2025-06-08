@@ -920,13 +920,36 @@ namespace noco
 		
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const Vec2 effectScale = m_transformEffect.applyScaleToHitTest().value() ? m_effectScale : Vec2::One();
-		const RectF hitTestRectWithPadding{
-			m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
-			m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
-			m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
-			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
-		};
-		const bool hit = hitTestRectWithPadding.contains(point);
+		bool hit = false;
+		
+		// 回転が適用される場合はQuadで判定
+		if (m_transformEffect.applyRotationToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
+		{
+			// paddingを考慮した矩形を作成してから回転を適用
+			const RectF paddedRect{
+				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
+			};
+			
+			const Vec2& pivot = m_transformEffect.pivot().value();
+			const Vec2 pivotPos = m_hitTestRect.pos + m_hitTestRect.size * pivot;
+			const Quad paddedQuad = paddedRect.rotatedAt(pivotPos, rotationRadians());
+			
+			hit = paddedQuad.contains(point);
+		}
+		else
+		{
+			// 回転なしの場合は従来の矩形判定
+			const RectF hitTestRectWithPadding{
+				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
+			};
+			hit = hitTestRectWithPadding.contains(point);
+		}
 		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
@@ -959,13 +982,36 @@ namespace noco
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const Vec2 effectScale = m_transformEffect.applyScaleToHitTest().value() ? m_effectScale : Vec2::One();
-		const RectF hitTestRectWithPadding{
-			m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
-			m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
-			m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
-			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
-		};
-		const bool hit = hitTestRectWithPadding.contains(point);
+		bool hit = false;
+		
+		// 回転が適用される場合はQuadで判定
+		if (m_transformEffect.applyRotationToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
+		{
+			// paddingを考慮した矩形を作成してから回転を適用
+			const RectF paddedRect{
+				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
+			};
+			
+			const Vec2& pivot = m_transformEffect.pivot().value();
+			const Vec2 pivotPos = m_hitTestRect.pos + m_hitTestRect.size * pivot;
+			const Quad paddedQuad = paddedRect.rotatedAt(pivotPos, rotationRadians());
+			
+			hit = paddedQuad.contains(point);
+		}
+		else
+		{
+			// 回転なしの場合は従来の矩形判定
+			const RectF hitTestRectWithPadding{
+				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
+			};
+			hit = hitTestRectWithPadding.contains(point);
+		}
 		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
@@ -1500,6 +1546,24 @@ namespace noco
 		return m_effectedRect.rotatedAt(pivotPos, rad);
 	}
 
+	Quad Node::rotatedHitTestQuad() const
+	{
+		if (!m_transformEffect.applyRotationToHitTest().value())
+		{
+			return m_hitTestRect.asQuad();
+		}
+		
+		const double rad = rotationRadians();
+		if (Abs(rad) < 1e-6)
+		{
+			return m_hitTestRect.asQuad();
+		}
+		
+		const Vec2& pivot = m_transformEffect.pivot().value();
+		const Vec2 pivotPos = m_hitTestRect.pos + m_hitTestRect.size * pivot;
+		return m_hitTestRect.rotatedAt(pivotPos, rad);
+	}
+
 	double Node::rotation() const
 	{
 		return m_transformEffect.rotation().value();
@@ -1507,6 +1571,24 @@ namespace noco
 
 	double Node::rotationRadians() const
 	{
+		return Math::ToRadians(rotation());
+	}
+
+	double Node::hitTestRotation() const
+	{
+		if (!m_transformEffect.applyRotationToHitTest().value())
+		{
+			return 0.0;
+		}
+		return rotation();
+	}
+
+	double Node::hitTestRotationRadians() const
+	{
+		if (!m_transformEffect.applyRotationToHitTest().value())
+		{
+			return 0.0;
+		}
 		return Math::ToRadians(rotation());
 	}
 

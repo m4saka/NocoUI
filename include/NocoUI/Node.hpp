@@ -309,10 +309,19 @@ namespace noco
 		Quad rotatedQuad() const;
 
 		[[nodiscard]]
+		Quad rotatedHitTestQuad() const;
+
+		[[nodiscard]]
 		double rotation() const;
 
 		[[nodiscard]]
 		double rotationRadians() const;
+
+		[[nodiscard]]
+		double hitTestRotation() const;
+
+		[[nodiscard]]
+		double hitTestRotationRadians() const;
 
 		[[nodiscard]]
 		Vec2 pivotPos() const;

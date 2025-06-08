@@ -2557,7 +2557,10 @@ public:
 			const EditorSelectedYN editorSelected = element.editorSelected();
 			if (editorSelected)
 			{
-				node->hitTestRect().stretched(Thickness / 2).drawFrame(Thickness, Palette::Orange);
+				node->hitTestRect()
+					.stretched(Thickness / 2)
+					.rotatedAt(node->pivotPos(), node->hitTestRotationRadians())
+					.drawFrame(Thickness, Palette::Orange);
 
 				// 上下左右にリサイズハンドルを表示
 				// TODO: リサイズ可能にする
@@ -2572,10 +2575,13 @@ public:
 			if (node == editorHoveredNode)
 			{
 				const auto& rect = node->hitTestRect();
-				rect.draw(ColorF{ 1.0, 0.1 });
+				rect.rotatedAt(node->pivotPos(), node->hitTestRotationRadians())
+					.draw(ColorF{ 1.0, 0.1 });
 				if (!editorSelected)
 				{
-					rect.stretched(Thickness / 2).drawFrame(Thickness, ColorF{ 1.0 });
+					rect.stretched(Thickness / 2)
+						.rotatedAt(node->pivotPos(), node->hitTestRotationRadians())
+						.drawFrame(Thickness, ColorF{ 1.0 });
 				}
 			}
 		}
@@ -5376,6 +5382,7 @@ public:
 			};
 		fnAddBoolChild(U"applyPositionToHitTest", &pTransformEffect->applyPositionToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyPositionToHitTest(value); });
 		fnAddBoolChild(U"applyScaleToHitTest", &pTransformEffect->applyScaleToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyScaleToHitTest(value); });
+		fnAddBoolChild(U"applyRotationToHitTest", &pTransformEffect->applyRotationToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyRotationToHitTest(value); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 
