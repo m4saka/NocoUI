@@ -845,7 +845,7 @@ namespace noco
 		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node.drawRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text,

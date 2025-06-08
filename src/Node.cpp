@@ -917,28 +917,77 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitTestPaddingを考慮した当たり判定領域を計算
-		const RectF hitTestRect{
-			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
-			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
-			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
-			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
-		};
-		const bool hit = hitTestRect.contains(point);
-		if (m_clippingEnabled && !m_effectedRect.contains(point))
+		
+		// 回転がない場合は高速な矩形判定を使用
+		if (m_transformEffect.rotation().value() == 0.0)
 		{
-			return nullptr;
-		}
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-		{
-			if (const auto hoveredNode = (*it)->hitTest(point))
+			// hitTestPaddingを考慮した当たり判定領域を計算
+			const RectF hitTestRect{
+				m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
+				m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
+				m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
+				m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+			};
+			const bool hit = hitTestRect.contains(point);
+			if (m_clippingEnabled && !m_effectedRect.contains(point))
 			{
-				return hoveredNode;
+				return nullptr;
+			}
+			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+			{
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
+			}
+			if (m_isHitTarget && hit)
+			{
+				return shared_from_this();
 			}
 		}
-		if (m_isHitTarget && hit)
+		else
 		{
-			return shared_from_this();
+			// 回転がある場合は逆変換を使用した正確な判定
+			// まずバウンディングボックスで大まかな判定
+			if (!m_effectedRect.contains(point))
+			{
+				return nullptr;
+			}
+			
+			if (m_clippingEnabled)
+			{
+				// clippingEnabledの場合もバウンディングボックスで判定
+				return nullptr;
+			}
+			
+			// 子要素を先にチェック
+			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+			{
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
+			}
+			
+			// 逆変換を使用して元の矩形座標系でのポイントを計算
+			if (m_isHitTarget)
+			{
+				const Mat3x2 inverseMat = m_effectMat.inverse();
+				const Vec2 localPoint = inverseMat.transformPoint(point);
+				
+				// hitTestPaddingを考慮した判定領域
+				const RectF hitTestRect{
+					m_layoutAppliedRect.x - m_hitTestPadding.left,
+					m_layoutAppliedRect.y - m_hitTestPadding.top,
+					m_layoutAppliedRect.w + m_hitTestPadding.totalWidth(),
+					m_layoutAppliedRect.h + m_hitTestPadding.totalHeight()
+				};
+				
+				if (hitTestRect.contains(localPoint))
+				{
+					return shared_from_this();
+				}
+			}
 		}
 		return nullptr;
 	}
@@ -955,28 +1004,77 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitTestPaddingを考慮した当たり判定領域を計算
-		const RectF hitTestRect{
-			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
-			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
-			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
-			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
-		};
-		const bool hit = hitTestRect.contains(point);
-		if (m_clippingEnabled && !m_effectedRect.contains(point))
+		
+		// 回転がない場合は高速な矩形判定を使用
+		if (m_transformEffect.rotation().value() == 0.0)
 		{
-			return nullptr;
-		}
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-		{
-			if (const auto hoveredNode = (*it)->hitTest(point))
+			// hitTestPaddingを考慮した当たり判定領域を計算
+			const RectF hitTestRect{
+				m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
+				m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
+				m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
+				m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+			};
+			const bool hit = hitTestRect.contains(point);
+			if (m_clippingEnabled && !m_effectedRect.contains(point))
 			{
-				return hoveredNode;
+				return nullptr;
+			}
+			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+			{
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
+			}
+			if (m_isHitTarget && hit)
+			{
+				return shared_from_this();
 			}
 		}
-		if (m_isHitTarget && hit)
+		else
 		{
-			return shared_from_this();
+			// 回転がある場合は逆変換を使用した正確な判定
+			// まずバウンディングボックスで大まかな判定
+			if (!m_effectedRect.contains(point))
+			{
+				return nullptr;
+			}
+			
+			if (m_clippingEnabled)
+			{
+				// clippingEnabledの場合もバウンディングボックスで判定
+				return nullptr;
+			}
+			
+			// 子要素を先にチェック
+			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+			{
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
+			}
+			
+			// 逆変換を使用して元の矩形座標系でのポイントを計算
+			if (m_isHitTarget)
+			{
+				const Mat3x2 inverseMat = m_effectMat.inverse();
+				const Vec2 localPoint = inverseMat.transformPoint(point);
+				
+				// hitTestPaddingを考慮した判定領域
+				const RectF hitTestRect{
+					m_layoutAppliedRect.x - m_hitTestPadding.left,
+					m_layoutAppliedRect.y - m_hitTestPadding.top,
+					m_layoutAppliedRect.w + m_hitTestPadding.totalWidth(),
+					m_layoutAppliedRect.h + m_hitTestPadding.totalHeight()
+				};
+				
+				if (hitTestRect.contains(localPoint))
+				{
+					return shared_from_this();
+				}
+			}
 		}
 		return nullptr;
 	}
@@ -1209,14 +1307,35 @@ namespace noco
 
 	void Node::refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
 	{
-		const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
-		const Vec2 posLeftTop = effectMat.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 posRightBottom = effectMat.transformPoint(m_layoutAppliedRect.br());
-		m_effectedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
+		m_effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
+		
+		// 回転を考慮して4つの角を変換し、バウンディングボックスを計算
+		const Vec2 corners[4] = {
+			m_effectMat.transformPoint(m_layoutAppliedRect.tl()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.tr()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.br()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.bl())
+		};
+		
+		double minX = corners[0].x;
+		double maxX = corners[0].x;
+		double minY = corners[0].y;
+		double maxY = corners[0].y;
+		
+		for (int i = 1; i < 4; ++i)
+		{
+			minX = Min(minX, corners[i].x);
+			maxX = Max(maxX, corners[i].x);
+			minY = Min(minY, corners[i].y);
+			maxY = Max(maxY, corners[i].y);
+		}
+		
+		m_effectedRect = RectF{ minX, minY, maxX - minX, maxY - minY };
 		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
+		
 		for (const auto& child : m_children)
 		{
-			child->refreshEffectedRect(effectMat, m_effectScale);
+			child->refreshEffectedRect(m_effectMat, m_effectScale);
 		}
 	}
 
@@ -1299,11 +1418,27 @@ namespace noco
 			return;
 		}
 
+		// 変換が必要かチェック（Identity以外の場合のみTransformer2Dを使用）
+		const bool needsTransform = !m_effectMat.isIdentity();
+		Optional<Transformer2D> transformer;
+		if (needsTransform)
+		{
+			transformer.emplace(m_effectMat);
+		}
+
 		// クリッピング有効の場合はクリッピング範囲を設定
 		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			scissorRect.emplace(m_effectedRect.asRect());
+			// 変換が適用されている場合は、ローカル座標でクリッピング
+			if (needsTransform)
+			{
+				scissorRect.emplace(m_layoutAppliedRect.asRect());
+			}
+			else
+			{
+				scissorRect.emplace(m_effectedRect.asRect());
+			}
 		}
 
 		// draw関数はconstのため、addComponentやaddChild等によるイテレータ破壊は考慮不要とする
@@ -1449,6 +1584,20 @@ namespace noco
 	const RectF& Node::rect() const
 	{
 		return m_effectedRect;
+	}
+
+	RectF Node::drawRect() const
+	{
+		// 変換が適用されている場合は、ローカル座標（変換前の矩形）を返す
+		// 変換がない場合は、effectedRect（変換後の矩形）を返す
+		if (!m_effectMat.isIdentity())
+		{
+			return m_layoutAppliedRect;
+		}
+		else
+		{
+			return m_effectedRect;
+		}
 	}
 
 	const Vec2& Node::effectScale() const
