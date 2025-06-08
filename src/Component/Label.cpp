@@ -272,6 +272,10 @@ namespace noco
 			}();
 
 		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
+		const double rotation = node.rotationRadians();
+
+		// 回転ありの場合は先に変換を設定
+		const Optional<Transformer2D> transformer = (Abs(rotation) < 1e-6) ? Optional<Transformer2D>{} : Optional<Transformer2D>{ Mat3x2::Rotate(rotation, node.pivotPos()) };
 
 		{
 			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
