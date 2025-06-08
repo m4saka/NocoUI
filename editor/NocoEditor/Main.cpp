@@ -5380,9 +5380,7 @@ public:
 				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
 				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
-		fnAddBoolChild(U"applyPositionToHitTest", &pTransformEffect->applyPositionToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyPositionToHitTest(value); });
-		fnAddBoolChild(U"applyScaleToHitTest", &pTransformEffect->applyScaleToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyScaleToHitTest(value); });
-		fnAddBoolChild(U"applyRotationToHitTest", &pTransformEffect->applyRotationToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setApplyRotationToHitTest(value); });
+		fnAddBoolChild(U"appliesToHitTest", &pTransformEffect->appliesToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setAppliesToHitTest(value); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 

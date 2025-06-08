@@ -919,11 +919,11 @@ namespace noco
 		}
 		
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const Vec2 effectScale = m_transformEffect.applyScaleToHitTest().value() ? m_effectScale : Vec2::One();
+		const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
 		bool hit = false;
 		
 		// 回転が適用される場合はQuadで判定
-		if (m_transformEffect.applyRotationToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
+		if (m_transformEffect.appliesToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
 		{
 			// paddingを考慮した矩形を作成してから回転を適用
 			const RectF paddedRect{
@@ -981,11 +981,11 @@ namespace noco
 			return nullptr;
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const Vec2 effectScale = m_transformEffect.applyScaleToHitTest().value() ? m_effectScale : Vec2::One();
+		const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
 		bool hit = false;
 		
 		// 回転が適用される場合はQuadで判定
-		if (m_transformEffect.applyRotationToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
+		if (m_transformEffect.appliesToHitTest().value() && Abs(rotationRadians()) >= 1e-6)
 		{
 			// paddingを考慮した矩形を作成してから回転を適用
 			const RectF paddedRect{
@@ -1265,27 +1265,13 @@ namespace noco
 		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
 		
 		// HitTest用の矩形を計算
-		// applyPositionToHitTestとapplyScaleToHitTestの値に応じてeffectMatを構築
+		// appliesToHitTestの値に応じてeffectMatを構築
 		Mat3x2 hitTestEffectMat = parentEffectMat;
 		
-		if (m_transformEffect.applyScaleToHitTest().value() && m_transformEffect.applyPositionToHitTest().value())
+		if (m_transformEffect.appliesToHitTest().value())
 		{
-			// 両方ONの場合は通常のeffectMatと同じ
+			// TransformEffectを適用
 			hitTestEffectMat = effectMat;
-		}
-		else if (m_transformEffect.applyScaleToHitTest().value())
-		{
-			// スケールのみ適用
-			const Vec2& scale = m_transformEffect.scale().value();
-			const Vec2& pivot = m_transformEffect.pivot().value();
-			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
-			hitTestEffectMat = Mat3x2::Scale(scale, pivotPos) * parentEffectMat;
-		}
-		else if (m_transformEffect.applyPositionToHitTest().value())
-		{
-			// 位置のみ適用
-			const Vec2& position = m_transformEffect.position().value();
-			hitTestEffectMat = Mat3x2::Translate(position) * parentEffectMat;
 		}
 		
 		const Vec2 hitTestPosLeftTop = hitTestEffectMat.transformPoint(m_layoutAppliedRect.pos);
@@ -1548,7 +1534,7 @@ namespace noco
 
 	Quad Node::rotatedHitTestQuad() const
 	{
-		if (!m_transformEffect.applyRotationToHitTest().value())
+		if (!m_transformEffect.appliesToHitTest().value())
 		{
 			return m_hitTestRect.asQuad();
 		}
@@ -1576,7 +1562,7 @@ namespace noco
 
 	double Node::hitTestRotation() const
 	{
-		if (!m_transformEffect.applyRotationToHitTest().value())
+		if (!m_transformEffect.appliesToHitTest().value())
 		{
 			return 0.0;
 		}
@@ -1585,7 +1571,7 @@ namespace noco
 
 	double Node::hitTestRotationRadians() const
 	{
-		if (!m_transformEffect.applyRotationToHitTest().value())
+		if (!m_transformEffect.appliesToHitTest().value())
 		{
 			return 0.0;
 		}

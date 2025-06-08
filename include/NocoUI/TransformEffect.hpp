@@ -14,9 +14,7 @@ namespace noco
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<double> m_rotation;
 		SmoothProperty<Vec2> m_pivot;
-		Property<bool> m_applyPositionToHitTest;
-		Property<bool> m_applyScaleToHitTest;
-		Property<bool> m_applyRotationToHitTest;
+		Property<bool> m_appliesToHitTest;
 
 	public:
 		TransformEffect(
@@ -28,9 +26,7 @@ namespace noco
 			, m_scale{ U"scale", scale }
 			, m_rotation{ U"rotation", rotation }
 			, m_pivot{ U"pivot", pivot }
-			, m_applyPositionToHitTest{ U"applyPositionToHitTest", false }
-			, m_applyScaleToHitTest{ U"applyScaleToHitTest", false }
-			, m_applyRotationToHitTest{ U"applyRotationToHitTest", false }
+			, m_appliesToHitTest{ U"appliesToHitTest", false }
 		{
 		}
 
@@ -103,54 +99,20 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const Property<bool>& applyPositionToHitTest() const
+		const Property<bool>& appliesToHitTest() const
 		{
-			return m_applyPositionToHitTest;
+			return m_appliesToHitTest;
 		}
 
 		[[nodiscard]]
-		Property<bool>& applyPositionToHitTest()
+		Property<bool>& appliesToHitTest()
 		{
-			return m_applyPositionToHitTest;
+			return m_appliesToHitTest;
 		}
 
-		void setApplyPositionToHitTest(const PropertyValue<bool>& value)
+		void setAppliesToHitTest(const PropertyValue<bool>& value)
 		{
-			m_applyPositionToHitTest.setPropertyValue(value);
-		}
-
-		[[nodiscard]]
-		const Property<bool>& applyScaleToHitTest() const
-		{
-			return m_applyScaleToHitTest;
-		}
-
-		[[nodiscard]]
-		Property<bool>& applyScaleToHitTest()
-		{
-			return m_applyScaleToHitTest;
-		}
-
-		void setApplyScaleToHitTest(const PropertyValue<bool>& value)
-		{
-			m_applyScaleToHitTest.setPropertyValue(value);
-		}
-
-		[[nodiscard]]
-		const Property<bool>& applyRotationToHitTest() const
-		{
-			return m_applyRotationToHitTest;
-		}
-
-		[[nodiscard]]
-		Property<bool>& applyRotationToHitTest()
-		{
-			return m_applyRotationToHitTest;
-		}
-
-		void setApplyRotationToHitTest(const PropertyValue<bool>& value)
-		{
-			m_applyRotationToHitTest.setPropertyValue(value);
+			m_appliesToHitTest.setPropertyValue(value);
 		}
 
 		void update(InteractionState interactionState, SelectedYN selected, double deltaTime)
@@ -159,9 +121,7 @@ namespace noco
 			m_scale.update(interactionState, selected, deltaTime);
 			m_rotation.update(interactionState, selected, deltaTime);
 			m_pivot.update(interactionState, selected, deltaTime);
-			m_applyPositionToHitTest.update(interactionState, selected, deltaTime);
-			m_applyScaleToHitTest.update(interactionState, selected, deltaTime);
-			m_applyRotationToHitTest.update(interactionState, selected, deltaTime);
+			m_appliesToHitTest.update(interactionState, selected, deltaTime);
 		}
 
 		[[nodiscard]]
@@ -182,9 +142,7 @@ namespace noco
 			m_scale.appendJSON(json);
 			m_rotation.appendJSON(json);
 			m_pivot.appendJSON(json);
-			m_applyPositionToHitTest.appendJSON(json);
-			m_applyScaleToHitTest.appendJSON(json);
-			m_applyRotationToHitTest.appendJSON(json);
+			m_appliesToHitTest.appendJSON(json);
 			return json;
 		}
 
@@ -194,9 +152,7 @@ namespace noco
 			m_scale.readFromJSON(json);
 			m_rotation.readFromJSON(json);
 			m_pivot.readFromJSON(json);
-			m_applyPositionToHitTest.readFromJSON(json);
-			m_applyScaleToHitTest.readFromJSON(json);
-			m_applyRotationToHitTest.readFromJSON(json);
+			m_appliesToHitTest.readFromJSON(json);
 		}
 	};
 }
