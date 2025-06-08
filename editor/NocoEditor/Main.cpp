@@ -5354,9 +5354,17 @@ public:
 				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
 				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 			};
+		const auto fnAddDoubleChild =
+			[this, &transformEffectNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
+			{
+				const auto propertyNode = transformEffectNode->addChild(createPropertyNodeWithTooltip(U"TransformEffect", name, Format(pProperty->propertyValue().defaultValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
+			};
 		// Note: アクセサからポインタを取得しているので注意が必要
 		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
+		fnAddDoubleChild(U"rotation", &pTransformEffect->rotation(), [this, pTransformEffect](double value) { pTransformEffect->setRotation(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
