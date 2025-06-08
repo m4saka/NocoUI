@@ -895,6 +895,7 @@ struct PropertyMetadata
 	Optional<String> tooltipDetail;  // 詳細な説明文
 	std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件
 	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
+	Optional<int32> numTextAreaLines;  // テキストエリアとして表示する場合の行数(未設定の場合はテキストボックス)
 };
 
 // プロパティの可視情報
@@ -1130,6 +1131,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	// Label
 	metadata[PropertyKey{ U"Label", U"text" }] = PropertyMetadata{
 		.tooltip = U"表示するテキスト",
+		.numTextAreaLines = 3,
 	};
 	metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
 		.tooltip = U"フォントアセット名",
@@ -1312,6 +1314,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"Placeholder", U"data" }] = PropertyMetadata{
 		.tooltip = U"プレースホルダーのデータ (任意)",
 		.tooltipDetail = U"自由なデータを文字列で指定できます\nプログラム上ではwalkPlaceholders関数でPlaceholderを巡回し、dataを参照できます",
+		.numTextAreaLines = 3,
 	};
 	
 	return metadata;
@@ -3300,16 +3303,26 @@ public:
 		return propertyNode;
 	}
 
-	// Inspectorのメンバ関数としてプロパティノードを作成(ツールチップ付き)
 	[[nodiscard]]
 	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
 	{
-		const auto propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
-		
-		// メタデータに基づいてツールチップを追加
+		// メタデータをチェックしてTextAreaを使うかどうか判断
+		std::shared_ptr<Node> propertyNode;
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
+			if (metadata.numTextAreaLines.has_value())
+			{
+				// TextAreaを使用
+				propertyNode = CreatePropertyNodeWithTextArea(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines);
+			}
+			else
+			{
+				// 通常のTextBoxを使用
+				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
+			}
+			
+			// ツールチップを追加
 			if (metadata.tooltip)
 			{
 				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
@@ -3318,9 +3331,15 @@ public:
 				}
 			}
 		}
+		else
+		{
+			// メタデータがない場合は通常のTextBoxを使用
+			propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
+		}
 		
 		return propertyNode;
 	}
+
 
 	[[nodiscard]]
 	std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
@@ -3482,6 +3501,87 @@ public:
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
+		return propertyNode;
+	}
+
+	[[nodiscard]]
+	static std::shared_ptr<Node> CreatePropertyNodeWithTextArea(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, int32 numLines = 3)
+	{
+		const double textAreaHeight = numLines * 20.0 + 14.0;
+		const double nodeHeight = textAreaHeight + 6.0;
+		
+		const auto propertyNode = Node::Create(
+			name,
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = Vec2{ 0, nodeHeight },
+			},
+			IsHitTargetYN::Yes,
+			InheritChildrenStateFlags::Hovered);
+		propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+		const auto labelNode = propertyNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 0.85,
+			});
+		labelNode->emplaceComponent<Label>(
+			name,
+			U"",
+			14,
+			Palette::White,
+			HorizontalAlign::Left,
+			VerticalAlign::Top,
+			LRTB{ 5, 5, 5, 5 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip,
+			Vec2::Zero(),
+			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			ColorF{ Palette::Yellow, 0.5 },
+			2.0);
+		const auto textAreaNode = propertyNode->emplaceChild(
+			U"TextArea",
+			BoxConstraint
+			{
+				.sizeDelta = Vec2{ 0, textAreaHeight },
+				.flexibleWeight = 1,
+			});
+		textAreaNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+		const auto textArea = textAreaNode->emplaceComponent<TextArea>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textArea->setText(value, IgnoreIsChangedYN::Yes);
+		
+		// PropertyTextAreaコンポーネントを追加
+		class PropertyTextArea : public ComponentBase
+		{
+		private:
+			std::shared_ptr<TextArea> m_textArea;
+			std::function<void(StringView)> m_fnSetValue;
+
+		public:
+			PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue)
+				: ComponentBase{ {} }
+				, m_textArea{ textArea }
+				, m_fnSetValue{ std::move(fnSetValue) }
+			{
+			}
+
+			void update(const std::shared_ptr<Node>&) override
+			{
+				if (m_textArea->isChanged())
+				{
+					m_fnSetValue(m_textArea->text());
+				}
+			}
+
+			void draw(const Node&) const override
+			{
+			}
+		};
+		
+		textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue)));
 		return propertyNode;
 	}
 
