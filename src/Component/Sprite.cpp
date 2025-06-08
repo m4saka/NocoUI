@@ -251,7 +251,7 @@ namespace noco
 			texture = GetTexture(textureFilePath, textureAssetName);
 		}
 		
-		const RectF rect = node.drawRect();
+		const RectF rect = node.rect();
 		const ColorF& color = m_color.value();
 		
 		if (m_nineSliceEnabled.value())

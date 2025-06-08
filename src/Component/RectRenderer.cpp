@@ -17,7 +17,7 @@ namespace noco
 
 		if (cornerRadius == 0.0)
 		{
-			const RectF rect = node.drawRect().stretched(-outlineThickness / 2);
+			const RectF rect = node.rect().stretched(-outlineThickness / 2);
 			if (shadowColor.a > 0.0)
 			{
 				rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
@@ -33,7 +33,7 @@ namespace noco
 		}
 		else
 		{
-			const RectF rect = node.drawRect().stretched(-outlineThickness / 2);
+			const RectF rect = node.rect().stretched(-outlineThickness / 2);
 			const RoundRect roundRect = rect.rounded(cornerRadius);
 			if (shadowColor.a > 0.0)
 			{

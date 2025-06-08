@@ -1719,7 +1719,7 @@ private:
 				const auto& targetElement = *pTargetElement;
 
 				constexpr double Thickness = 4.0;
-				const auto rect = node.rect();
+				const auto rect = node.boundingBoxRect();
 				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
 					moveAsSiblingRectTop.mouseOver())
 				{
@@ -2558,7 +2558,18 @@ public:
 			const EditorSelectedYN editorSelected = element.editorSelected();
 			if (editorSelected)
 			{
-				node->rect().stretched(Thickness / 2).drawFrame(Thickness, Palette::Orange);
+				// rotatedQuadを使って描画
+				const Quad quad = node->rotatedQuad();
+				// 枠を内側に少し縮めるため、中心から各頂点へのベクトルを調整
+				const Vec2 center = (quad.p0 + quad.p1 + quad.p2 + quad.p3) / 4.0;
+				const double stretchAmount = Thickness / 2;
+				const Quad stretchedQuad{
+					quad.p0 + (center - quad.p0).normalized() * stretchAmount,
+					quad.p1 + (center - quad.p1).normalized() * stretchAmount,
+					quad.p2 + (center - quad.p2).normalized() * stretchAmount,
+					quad.p3 + (center - quad.p3).normalized() * stretchAmount
+				};
+				stretchedQuad.drawFrame(Thickness, Palette::Orange);
 
 				// 上下左右にリサイズハンドルを表示
 				// TODO: リサイズ可能にする
@@ -5263,7 +5274,7 @@ public:
 		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
 
 		// rotation用のUIを追加
-		const auto rotationNode = transformEffectNode->addChild(Inspector::CreatePropertyNodeWithTooltip(U"TransformEffect", U"rotation", Format(pTransformEffect->rotation().propertyValue().defaultValue), [this, pTransformEffect](StringView value) { pTransformEffect->setRotation(ParseFloatOpt<double>(value).value_or(pTransformEffect->rotation().propertyValue().defaultValue)); m_canvas->refreshLayout(); }, HasInteractivePropertyValueYN{ pTransformEffect->rotation().hasInteractivePropertyValue() }));
+		const auto rotationNode = transformEffectNode->addChild(createPropertyNodeWithTooltip(U"TransformEffect", U"rotation", Format(pTransformEffect->rotation().propertyValue().defaultValue), [this, pTransformEffect](StringView value) { pTransformEffect->setRotation(ParseFloatOpt<double>(value).value_or(pTransformEffect->rotation().propertyValue().defaultValue)); m_canvas->refreshLayout(); }, HasInteractivePropertyValueYN{ pTransformEffect->rotation().hasInteractivePropertyValue() }));
 		rotationNode->setActive(!m_isFoldedTransformEffect.getBool());
 		rotationNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(U"rotation"), U"", KeyC, [this, pRotation = &pTransformEffect->rotation()] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pRotation, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
 

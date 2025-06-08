@@ -111,8 +111,8 @@ namespace noco
 			const Vec2& scale = m_scale.value();
 			const double& rotation = m_rotation.value();
 			const Vec2& pivot = m_pivot.value();
+
 			const Vec2 pivotPos = rect.pos + rect.size * pivot;
-			// pivotを中心にスケール、回転、移動を適用（rotationは度からラジアンに変換）
 			return Mat3x2::Scale(scale, pivotPos).rotated(Math::ToRadians(rotation), pivotPos).translated(position) * parentMat;
 		}
 

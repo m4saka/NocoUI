@@ -1136,6 +1136,15 @@ namespace noco
 
 		const auto thisNode = shared_from_this();
 
+		// 回転が適用されている場合のみTransformer2Dを使用
+		const bool hasRotation = (m_transformEffect.rotation().value() != 0.0);
+		Optional<Transformer2D> transformer;
+		if (hasRotation)
+		{
+			// drawと同じ変換を適用
+			transformer.emplace(m_effectMat, TransformCursor::Yes);
+		}
+
 		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
 		m_childrenTempBuffer.clear();
 		m_childrenTempBuffer.reserve(m_children.size());
@@ -1183,6 +1192,15 @@ namespace noco
 		for (const auto& component : m_components)
 		{
 			m_componentTempBuffer.push_back(component);
+		}
+
+		// 回転が適用されている場合のみTransformer2Dを使用
+		const bool hasRotation = (m_transformEffect.rotation().value() != 0.0);
+		Optional<Transformer2D> transformer;
+		if (hasRotation)
+		{
+			// drawと同じ変換を適用
+			transformer.emplace(m_effectMat, TransformCursor::Yes);
 		}
 
 		// コンポーネントのupdate実行
@@ -1418,10 +1436,10 @@ namespace noco
 			return;
 		}
 
-		// 変換が必要かチェック（Identity以外の場合のみTransformer2Dを使用）
-		const bool needsTransform = !m_effectMat.isIdentity();
+		// 回転が適用されている場合のみTransformer2Dを使用
+		const bool hasRotation = (m_transformEffect.rotation().value() != 0.0);
 		Optional<Transformer2D> transformer;
-		if (needsTransform)
+		if (hasRotation)
 		{
 			transformer.emplace(m_effectMat);
 		}
@@ -1430,13 +1448,14 @@ namespace noco
 		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			// 変換が適用されている場合は、ローカル座標でクリッピング
-			if (needsTransform)
+			if (hasRotation)
 			{
-				scissorRect.emplace(m_layoutAppliedRect.asRect());
+				// 回転時は正確なクリッピングができないため、バウンディングボックスを使用
+				scissorRect.emplace(m_effectedRect.asRect());
 			}
 			else
 			{
+				// 回転がない場合は通常のScissorRectを使用
 				scissorRect.emplace(m_effectedRect.asRect());
 			}
 		}
@@ -1581,16 +1600,17 @@ namespace noco
 		m_name = name;
 	}
 
-	const RectF& Node::rect() const
+	const RectF& Node::boundingBoxRect() const
 	{
 		return m_effectedRect;
 	}
 
-	RectF Node::drawRect() const
+	RectF Node::rect() const
 	{
-		// 変換が適用されている場合は、ローカル座標（変換前の矩形）を返す
-		// 変換がない場合は、effectedRect（変換後の矩形）を返す
-		if (!m_effectMat.isIdentity())
+		// コンポーネントの描画で使用される
+		// Transformer2Dが適用されている場合は、ローカル座標を返す必要がある
+		const bool hasRotation = (m_transformEffect.rotation().value() != 0.0);
+		if (hasRotation)
 		{
 			return m_layoutAppliedRect;
 		}
@@ -1600,9 +1620,52 @@ namespace noco
 		}
 	}
 
+	Quad Node::rotatedQuad() const
+	{
+		// 回転がない場合は単純な矩形をQuadとして返す
+		if (m_transformEffect.rotation().value() == 0.0)
+		{
+			return m_effectedRect.asQuad();
+		}
+		
+		// 回転がある場合は変換行列を使って4つの角を変換
+		return Quad
+		{
+			m_effectMat.transformPoint(m_layoutAppliedRect.tl()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.tr()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.br()),
+			m_effectMat.transformPoint(m_layoutAppliedRect.bl()),
+		};
+	}
+
 	const Vec2& Node::effectScale() const
 	{
 		return m_effectScale;
+	}
+
+	Vec2 Node::screenToLocal(const Vec2& screenPos) const
+	{
+		// 回転がない場合は単純な引き算
+		if (m_transformEffect.rotation().value() == 0.0)
+		{
+			return screenPos - m_effectedRect.pos;
+		}
+		
+		// 回転がある場合は逆変換を使用
+		const Mat3x2 inverseMat = m_effectMat.inverse();
+		return inverseMat.transformPoint(screenPos);
+	}
+
+	Vec2 Node::localToScreen(const Vec2& localPos) const
+	{
+		// 回転がない場合は単純な足し算
+		if (m_transformEffect.rotation().value() == 0.0)
+		{
+			return localPos + m_effectedRect.pos;
+		}
+		
+		// 回転がある場合は変換行列を使用
+		return m_effectMat.transformPoint(localPos);
 	}
 
 	const RectF& Node::layoutAppliedRect() const

@@ -86,7 +86,7 @@ namespace noco
 
 		double getDrawOffsetX() const;
 
-		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
+		size_t moveCursorToMousePos(const Node& node, const RectF& rect, const Vec2& effectScale);
 
 		bool hasSelection() const;
 

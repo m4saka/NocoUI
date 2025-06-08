@@ -120,8 +120,8 @@ namespace noco
 		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
 
-		// node.drawRect()は変換が適用されている場合はローカル座標を返すため、paddingは常にeffectScaleを適用
-		const RectF rect = node.drawRect().stretched(
+		// node.rect()は変換が適用されている場合はローカル座標を返すため、paddingは常にeffectScaleを適用
+		const RectF rect = node.rect().stretched(
 			-padding.top * effectScale.y,
 			-padding.right * effectScale.x,
 			-padding.bottom * effectScale.y,

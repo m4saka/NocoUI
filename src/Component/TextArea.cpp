@@ -174,7 +174,7 @@ namespace noco
 		return { 0, 0 };
 	}
 
-	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
+	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const Node&, const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
 			m_text,
@@ -408,12 +408,12 @@ namespace noco
 					{
 						return Max(0.2s / Max(distance / 5, 1.0), 0.01s);
 					};
-				const Vec2 mousePos = Cursor::PosF();
+				const Vec2 mouseLocalPos = Cursor::PosF() - rect.pos;
 				bool needScroll = false;
-				if (mousePos.x < rect.x)
+				if (mouseLocalPos.x < 0)
 				{
 					// テキストボックス左側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(rect.x - mousePos.x);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(-mouseLocalPos.x);
 					if (m_cursorColumn > 0 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						--m_cursorColumn;
@@ -421,10 +421,10 @@ namespace noco
 						m_dragScrollStopwatch.restart();
 					}
 				}
-				else if (mousePos.x > rect.br().x)
+				else if (mouseLocalPos.x > rect.w)
 				{
 					// テキストボックス右側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(mousePos.x - rect.br().x);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(mouseLocalPos.x - rect.w);
 					const size_t maxColumn = getColumnCount(m_cursorLine);
 					if (m_cursorColumn < maxColumn && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
@@ -434,10 +434,10 @@ namespace noco
 					}
 				}
 
-				if (mousePos.y < rect.y)
+				if (mouseLocalPos.y < 0)
 				{
 					// テキストボックス上側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(rect.y - mousePos.y);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(-mouseLocalPos.y);
 					if (m_cursorLine > 0 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						--m_cursorLine;
@@ -446,10 +446,10 @@ namespace noco
 						m_dragScrollStopwatch.restart();
 					}
 				}
-				else if (mousePos.y > rect.br().y)
+				else if (mouseLocalPos.y > rect.h)
 				{
 					// テキストボックス下側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(mousePos.y - rect.br().y);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(mouseLocalPos.y - rect.h);
 					const size_t maxLine = getLineCount();
 					if (m_cursorLine < maxLine - 1 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
@@ -460,10 +460,10 @@ namespace noco
 					}
 				}
 
-				if (!needScroll && rect.contains(mousePos))
+				if (!needScroll && RectF{Vec2::Zero(), rect.size}.contains(mouseLocalPos))
 				{
 					// テキストボックス内にマウスカーソルがある場合のカーソル移動
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale);
+					const auto [line, column] = moveCursorToMousePos(*node, rect, effectScale);
 					m_cursorLine = line;
 					m_cursorColumn = column;
 				}
@@ -485,7 +485,7 @@ namespace noco
 				if (!m_isEditing)
 				{
 					// 初回クリック時
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale);
+					const auto [line, column] = moveCursorToMousePos(*node, rect, effectScale);
 					m_selectionAnchorLine = line;
 					m_selectionAnchorColumn = column;
 					m_cursorLine = line;
@@ -495,7 +495,7 @@ namespace noco
 				else if (!KeyShift.pressed())
 				{
 					// Shiftを押していなければ選択をリセットして選択起点を新たに設定し直す
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale);
+					const auto [line, column] = moveCursorToMousePos(*node, rect, effectScale);
 					m_selectionAnchorLine = line;
 					m_selectionAnchorColumn = column;
 					m_cursorLine = line;
@@ -505,7 +505,7 @@ namespace noco
 				else
 				{
 					// Shiftを押しながらクリックした場合、既存の起点を維持しつつカーソルのみクリック位置へ移動
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale);
+					const auto [line, column] = moveCursorToMousePos(*node, rect, effectScale);
 					m_cursorLine = line;
 					m_cursorColumn = column;
 					m_isDragging = true;
@@ -845,7 +845,7 @@ namespace noco
 		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.drawRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text,
@@ -854,7 +854,18 @@ namespace noco
 			rect.size / effectScale);
 
 		{
-			detail::ScopedScissorRect scissorRect{ rect.asRect() };
+			// 回転が適用されている場合はバウンディングボックスでクリッピング
+			Optional<detail::ScopedScissorRect> scissorRect;
+			if (node.transformEffect().rotation().value() != 0.0)
+			{
+				// 回転時は正確なクリッピングができないため、バウンディングボックスを使用
+				scissorRect.emplace(node.boundingBoxRect().asRect());
+			}
+			else
+			{
+				// 回転がない場合は通常のクリッピング
+				scissorRect.emplace(rect.asRect());
+			}
 
 			// 選択範囲を描画
 			if (hasSelection())

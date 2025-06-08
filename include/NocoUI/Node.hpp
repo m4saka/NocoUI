@@ -300,13 +300,22 @@ namespace noco
 		void setName(StringView name);
 
 		[[nodiscard]]
-		const RectF& rect() const;
+		const RectF& boundingBoxRect() const;
 
 		[[nodiscard]]
-		RectF drawRect() const;
+		RectF rect() const;
+
+		[[nodiscard]]
+		Quad rotatedQuad() const;
 
 		[[nodiscard]]
 		const Vec2& effectScale() const;
+
+		[[nodiscard]]
+		Vec2 screenToLocal(const Vec2& screenPos) const;
+
+		[[nodiscard]]
+		Vec2 localToScreen(const Vec2& localPos) const;
 
 		[[nodiscard]]
 		const RectF& layoutAppliedRect() const;

@@ -103,7 +103,7 @@ namespace noco
 		return 0.0;
 	}
 
-	size_t TextBox::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
+	size_t TextBox::moveCursorToMousePos(const Node&, const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
 			m_text,
@@ -250,11 +250,11 @@ namespace noco
 					{
 						return Max(0.2s / Max(distance / 5, 1.0), 0.01s);
 					};
-				const double mouseCursorPosX = Cursor::PosF().x;
-				if (mouseCursorPosX < rect.x)
+				const double mouseCursorPosX = Cursor::PosF().x - rect.x;
+				if (mouseCursorPosX < 0)
 				{
 					// テキストボックス左側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(rect.x - mouseCursorPosX);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(-mouseCursorPosX);
 					if (m_cursorIndex > 0 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						--m_cursorIndex;
@@ -266,10 +266,10 @@ namespace noco
 						m_dragScrollStopwatch.restart();
 					}
 				}
-				else if (mouseCursorPosX > rect.br().x)
+				else if (mouseCursorPosX > rect.w)
 				{
 					// テキストボックス右側の領域外にマウスカーソルがある場合のカーソル移動
-					const Duration dragScrollInterval = fnGetDragScrollInterval(mouseCursorPosX - rect.br().x);
+					const Duration dragScrollInterval = fnGetDragScrollInterval(mouseCursorPosX - rect.w);
 					if (m_cursorIndex < m_text.size() && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						++m_cursorIndex;
@@ -291,7 +291,7 @@ namespace noco
 				else
 				{
 					// テキストボックス内にマウスカーソルがある場合のカーソル移動
-					m_cursorIndex = moveCursorToMousePos(rect, effectScale);
+					m_cursorIndex = moveCursorToMousePos(*node, rect, effectScale);
 				}
 
 				updateScrollOffset(rect, effectScale);
@@ -319,14 +319,14 @@ namespace noco
 				else if (!KeyShift.pressed())
 				{
 					// Shiftを押していなければ選択をリセットして選択起点を新たに設定し直す
-					m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
+					m_selectionAnchor = moveCursorToMousePos(*node, rect, effectScale);
 					m_cursorIndex = m_selectionAnchor;
 					m_isDragging = true;
 				}
 				else
 				{
 					// Shiftを押しながらクリックした場合、既存の起点を維持しつつカーソルのみクリック位置へ移動
-					m_cursorIndex = moveCursorToMousePos(rect, effectScale);
+					m_cursorIndex = moveCursorToMousePos(*node, rect, effectScale);
 					m_isDragging = true;
 				}
 				m_isEditing = true;
@@ -617,7 +617,7 @@ namespace noco
 		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.drawRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text,
@@ -629,7 +629,18 @@ namespace noco
 		const Vec2 offset = rect.pos + Vec2{ drawOffsetX * effectScale.x, 0.0 };
 
 		{
-			detail::ScopedScissorRect scissorRect{ rect.asRect() };
+			// 回転が適用されている場合はバウンディングボックスでクリッピング
+			Optional<detail::ScopedScissorRect> scissorRect;
+			if (node.transformEffect().rotation().value() != 0.0)
+			{
+				// 回転時は正確なクリッピングができないため、バウンディングボックスを使用
+				scissorRect.emplace(node.boundingBoxRect().asRect());
+			}
+			else
+			{
+				// 回転がない場合は通常のクリッピング
+				scissorRect.emplace(rect.asRect());
+			}
 
 			// 選択範囲を描画
 			if (m_selectionAnchor != m_cursorIndex)
