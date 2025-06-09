@@ -54,6 +54,10 @@ TEST_CASE("Event handling", "[Events]")
 		
 		// イベントが発火したか確認
 		REQUIRE(canvas->isEventFiredWithTag(U"rightClickTest"));
+		auto event = canvas->getFiredEventWithTag(U"rightClickTest");
+		REQUIRE(event.has_value());
+		REQUIRE(event->triggerType == noco::EventTriggerType::RightClick);
+		REQUIRE(event->sourceNode.lock() == node);
 	}
 	
 	SECTION("EventTrigger - Multiple nodes with events")
