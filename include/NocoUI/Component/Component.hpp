@@ -16,3 +16,4 @@
 #include "DragDropTarget.hpp"
 #include "HotKeyInputHandler.hpp"
 #include "DataStore.hpp"
+#include "CursorChanger.hpp"

@@ -86,6 +86,16 @@ namespace noco
 			}
 			return component;
 		}
+		else if (type == U"CursorChanger")
+		{
+			auto component = std::make_shared<CursorChanger>();
+			if (!component->tryReadFromJSON(json))
+			{
+				Logger << U"[NocoUI warning] Failed to read CursorChanger component from JSON";
+				return nullptr;
+			}
+			return component;
+		}
 		else
 		{
 			Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);

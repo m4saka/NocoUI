@@ -1350,6 +1350,18 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"子孫要素の操作でもイベント発火するかどうか",
 	};
 	
+	// CursorChanger
+	metadata[PropertyKey{ U"CursorChanger", U"cursorStyle" }] = PropertyMetadata{
+		.tooltip = U"マウスカーソルのスタイル",
+		.tooltipDetail = U"要素へのマウスカーソルのホバー中に設定するカーソルスタイルを指定します",
+	};
+	metadata[PropertyKey{ U"CursorChanger", U"recursive" }] = PropertyMetadata{
+		.tooltip = U"子孫要素のホバーでもカーソルを変更するかどうか",
+	};
+	metadata[PropertyKey{ U"CursorChanger", U"includingDisabled" }] = PropertyMetadata{
+		.tooltip = U"InteractionStateがDisabledの要素へのホバーでもカーソルを変更するかどうか",
+	};
+	
 	// Placeholder
 	metadata[PropertyKey{ U"Placeholder", U"tag" }] = PropertyMetadata{
 		.tooltip = U"プログラムから参照する際のタグ名",
@@ -3165,6 +3177,7 @@ public:
 				MenuItem{ U"InputBlocker を追加", U"", KeyI, [this] { onClickAddComponent<InputBlocker>(); } },
 				MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },
 				MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
+				MenuItem{ U"CursorChanger を追加", U"", KeyC, [this] { onClickAddComponent<CursorChanger>(); } },
 			};
 			
 			// コピーされたコンポーネントがある場合は貼り付けメニューを追加

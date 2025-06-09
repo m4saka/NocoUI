@@ -147,6 +147,9 @@
     <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\EventTrigger.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\CursorChanger.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -582,6 +585,9 @@
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Component\ITextBox.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\CursorChanger.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>
