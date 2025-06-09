@@ -4,10 +4,20 @@
 
 namespace noco
 {
+	enum class RectFillGradationType : uint8
+	{
+		None,
+		TopBottom,
+		LeftRight,
+	};
+
 	class RectRenderer : public SerializableComponentBase, public std::enable_shared_from_this<RectRenderer>
 	{
 	private:
+		Property<RectFillGradationType> m_fillGradationType;
 		SmoothProperty<ColorF> m_fillColor;
+		SmoothProperty<ColorF> m_fillGradationColor1;
+		SmoothProperty<ColorF> m_fillGradationColor2;
 		SmoothProperty<ColorF> m_outlineColor;
 		SmoothProperty<double> m_outlineThickness;
 		SmoothProperty<double> m_cornerRadius;
@@ -26,8 +36,11 @@ namespace noco
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
 			const PropertyValue<double>& shadowSpread = 0.0)
-			: SerializableComponentBase{ U"RectRenderer", { &m_fillColor, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+			, m_fillGradationType{ U"fillGradationType", RectFillGradationType::None }
 			, m_fillColor{ U"fillColor", fillColor }
+			, m_fillGradationColor1{ U"fillGradationColor1", fillColor }
+			, m_fillGradationColor2{ U"fillGradationColor2", fillColor }
 			, m_outlineColor{ U"outlineColor", outlineColor }
 			, m_outlineThickness{ U"outlineThickness", outlineThickness }
 			, m_cornerRadius{ U"cornerRadius", cornerRadius }
@@ -41,6 +54,18 @@ namespace noco
 		void draw(const Node& node) const override;
 
 		[[nodiscard]]
+		const PropertyValue<RectFillGradationType>& fillGradationType() const
+		{
+			return m_fillGradationType.propertyValue();
+		}
+
+		std::shared_ptr<RectRenderer> setFillGradationType(const PropertyValue<RectFillGradationType>& fillGradationType)
+		{
+			m_fillGradationType.setPropertyValue(fillGradationType);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
 		const PropertyValue<ColorF>& fillColor() const
 		{
 			return m_fillColor.propertyValue();
@@ -49,6 +74,37 @@ namespace noco
 		std::shared_ptr<RectRenderer> setFillColor(const PropertyValue<ColorF>& fillColor)
 		{
 			m_fillColor.setPropertyValue(fillColor);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& fillGradationColor1() const
+		{
+			return m_fillGradationColor1.propertyValue();
+		}
+
+		std::shared_ptr<RectRenderer> setFillGradationColor1(const PropertyValue<ColorF>& fillGradationColor1)
+		{
+			m_fillGradationColor1.setPropertyValue(fillGradationColor1);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& fillGradationColor2() const
+		{
+			return m_fillGradationColor2.propertyValue();
+		}
+
+		std::shared_ptr<RectRenderer> setFillGradationColor2(const PropertyValue<ColorF>& fillGradationColor2)
+		{
+			m_fillGradationColor2.setPropertyValue(fillGradationColor2);
+			return shared_from_this();
+		}
+
+		std::shared_ptr<RectRenderer> setFillGradationColors(const PropertyValue<ColorF>& color1, const PropertyValue<ColorF>& color2)
+		{
+			m_fillGradationColor1.setPropertyValue(color1);
+			m_fillGradationColor2.setPropertyValue(color2);
 			return shared_from_this();
 		}
 

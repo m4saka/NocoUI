@@ -888,6 +888,13 @@ static bool HasAnyTrueState(const PropertyValue<bool>& propertyValue)
 	return HasAnyStateEqualTo(propertyValue, true);
 }
 
+// PropertyValueのいずれかの状態でfalseかをチェックする便利関数
+[[nodiscard]]
+static bool HasAnyFalseState(const PropertyValue<bool>& propertyValue)
+{
+	return HasAnyStateEqualTo(propertyValue, false);
+}
+
 // プロパティのメタデータ
 struct PropertyMetadata
 {
@@ -1103,8 +1110,45 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	
 	// Componentのプロパティ
 	// RectRenderer
+	metadata[PropertyKey{ U"RectRenderer", U"fillGradationType" }] = PropertyMetadata{
+		.tooltip = U"塗りつぶしグラデーションタイプ",
+		.tooltipDetail = U"塗りつぶしのグラデーションタイプを選択します\nNone: 単色塗りつぶし\nTopBottom: 上下グラデーション\nLeftRight: 左右グラデーション",
+		.refreshInspectorOnChange = true,
+	};
 	metadata[PropertyKey{ U"RectRenderer", U"fillColor" }] = PropertyMetadata{
 		.tooltip = U"塗りつぶし色",
+		.visibilityCondition = [](const ComponentBase& component)
+		{
+			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
+			{
+				return HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+			}
+			return false;
+		},
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"fillGradationColor1" }] = PropertyMetadata{
+		.tooltip = U"グラデーション色 1",
+		.tooltipDetail = U"TopBottom: 上側の色\nLeftRight: 左側の色",
+		.visibilityCondition = [](const ComponentBase& component)
+		{
+			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
+			{
+				return !HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+			}
+			return false;
+		},
+	};
+	metadata[PropertyKey{ U"RectRenderer", U"fillGradationColor2" }] = PropertyMetadata{
+		.tooltip = U"グラデーション色 2",
+		.tooltipDetail = U"TopBottom: 下側の色\nLeftRight: 右側の色",
+		.visibilityCondition = [](const ComponentBase& component)
+		{
+			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
+			{
+				return !HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+			}
+			return false;
+		},
 	};
 	metadata[PropertyKey{ U"RectRenderer", U"outlineColor" }] = PropertyMetadata{
 		.tooltip = U"アウトライン色",
