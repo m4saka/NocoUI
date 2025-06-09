@@ -935,11 +935,11 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
 		.tooltip = U"子要素のホバー状態(Hovered)を継承するかどうか",
-		.tooltipDetail = U"有効にすると、子要素のInteractionStateがHoveredの場合に、このNodeのInteractionStateがHoveredになります\n※このNodeのInsteractionStateがPressed・Disabledの場合は影響を受けません",
+		.tooltipDetail = U"有効にすると、子要素のInteractionStateがHoveredの場合に、このNodeのInteractionStateがHoveredになります\n※このNodeのInteractionStateがPressed・Disabledの場合は影響を受けません",
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenPressedState" }] = PropertyMetadata{
 		.tooltip = U"子要素の押下状態(Pressed)を継承するかどうか",
-		.tooltipDetail = U"有効にすると、子要素のInteractionStateがPressedの場合に、このNodeのInteractionStateがPressedになります\n※このNodeのInsteractionStateがDisabledの場合は影響を受けません",
+		.tooltipDetail = U"有効にすると、子要素のInteractionStateがPressedの場合に、このNodeのInteractionStateがPressedになります\n※このNodeのInteractionStateがDisabledの場合は影響を受けません",
 	};
 	metadata[PropertyKey{ U"Node", U"interactable" }] = PropertyMetadata{
 		.tooltip = U"インタラクション可能かどうか",
