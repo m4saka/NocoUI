@@ -448,7 +448,11 @@ namespace noco
 
 		std::shared_ptr<Node> addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick);
 
+		std::shared_ptr<Node> addOnClick(std::function<void()> onClick);
+
 		std::shared_ptr<Node> addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
+
+		std::shared_ptr<Node> addOnRightClick(std::function<void()> onRightClick);
 
 		std::shared_ptr<Node> addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 

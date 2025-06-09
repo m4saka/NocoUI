@@ -148,4 +148,139 @@ TEST_CASE("Event handling", "[Events]")
 		REQUIRE_FALSE(canvas->isEventFiredWithTag(U"button2"));
 		REQUIRE(canvas->isEventFiredWithTag(U"button3"));
 	}
+	
+	SECTION("addOnClick - with Node parameter")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		
+		// クリックハンドラの呼び出しを記録する変数
+		bool clickHandlerCalled = false;
+		std::shared_ptr<noco::Node> clickedNode;
+		
+		// Nodeパラメータ付きのクリックハンドラを追加
+		node->addOnClick([&clickHandlerCalled, &clickedNode](const std::shared_ptr<noco::Node>& n) {
+			clickHandlerCalled = true;
+			clickedNode = n;
+		});
+		
+		canvas->rootNode()->addChild(node);
+		
+		// クリックをシミュレート
+		node->requestClick();
+		canvas->update();
+		
+		// ハンドラが呼ばれたことを確認
+		REQUIRE(clickHandlerCalled);
+		REQUIRE(clickedNode == node);
+	}
+	
+	SECTION("addOnClick - without Node parameter")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		
+		// クリックハンドラの呼び出しを記録する変数
+		bool clickHandlerCalled = false;
+		
+		// Nodeパラメータなしのクリックハンドラを追加
+		node->addOnClick([&clickHandlerCalled]() {
+			clickHandlerCalled = true;
+		});
+		
+		canvas->rootNode()->addChild(node);
+		
+		// クリックをシミュレート
+		node->requestClick();
+		canvas->update();
+		
+		// ハンドラが呼ばれたことを確認
+		REQUIRE(clickHandlerCalled);
+	}
+	
+	SECTION("addOnRightClick - with Node parameter")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		
+		// 右クリックハンドラの呼び出しを記録する変数
+		bool rightClickHandlerCalled = false;
+		std::shared_ptr<noco::Node> rightClickedNode;
+		
+		// Nodeパラメータ付きの右クリックハンドラを追加
+		node->addOnRightClick([&rightClickHandlerCalled, &rightClickedNode](const std::shared_ptr<noco::Node>& n) {
+			rightClickHandlerCalled = true;
+			rightClickedNode = n;
+		});
+		
+		canvas->rootNode()->addChild(node);
+		
+		// 右クリックをシミュレート
+		node->requestRightClick();
+		canvas->update();
+		
+		// ハンドラが呼ばれたことを確認
+		REQUIRE(rightClickHandlerCalled);
+		REQUIRE(rightClickedNode == node);
+	}
+	
+	SECTION("addOnRightClick - without Node parameter")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		
+		// 右クリックハンドラの呼び出しを記録する変数
+		bool rightClickHandlerCalled = false;
+		
+		// Nodeパラメータなしの右クリックハンドラを追加
+		node->addOnRightClick([&rightClickHandlerCalled]() {
+			rightClickHandlerCalled = true;
+		});
+		
+		canvas->rootNode()->addChild(node);
+		
+		// 右クリックをシミュレート
+		node->requestRightClick();
+		canvas->update();
+		
+		// ハンドラが呼ばれたことを確認
+		REQUIRE(rightClickHandlerCalled);
+	}
+	
+	SECTION("addOnClick/addOnRightClick - method chaining")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		
+		int clickCount = 0;
+		int rightClickCount = 0;
+		
+		// メソッドチェインでハンドラを追加
+		node->addOnClick([&clickCount]() { clickCount++; })
+		    ->addOnRightClick([&rightClickCount]() { rightClickCount++; })
+		    ->addOnClick([&clickCount]() { clickCount++; });  // 複数のハンドラを追加
+		
+		canvas->rootNode()->addChild(node);
+		
+		// クリックをシミュレート
+		node->requestClick();
+		canvas->update();
+		
+		// 両方のクリックハンドラが呼ばれることを確認
+		REQUIRE(clickCount == 2);
+		REQUIRE(rightClickCount == 0);
+		
+		// 右クリックをシミュレート
+		node->requestRightClick();
+		canvas->update();
+		
+		// 右クリックハンドラが呼ばれることを確認
+		REQUIRE(clickCount == 2);  // クリック数は変わらない
+		REQUIRE(rightClickCount == 1);
+	}
 }

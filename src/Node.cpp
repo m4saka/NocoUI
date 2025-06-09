@@ -2000,6 +2000,18 @@ namespace noco
 		return shared_from_this();
 	}
 
+	std::shared_ptr<Node> Node::addOnClick(std::function<void()> onClick)
+	{
+		emplaceComponent<UpdaterComponent>([onClick = std::move(onClick)](const std::shared_ptr<Node>& node)
+			{
+				if (node->isClicked())
+				{
+					onClick();
+				}
+			});
+		return shared_from_this();
+	}
+
 	std::shared_ptr<Node> Node::addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick)
 	{
 		emplaceComponent<UpdaterComponent>([onRightClick = std::move(onRightClick)](const std::shared_ptr<Node>& node)
@@ -2007,6 +2019,18 @@ namespace noco
 				if (node->isRightClicked())
 				{
 					onRightClick(node);
+				}
+			});
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Node> Node::addOnRightClick(std::function<void()> onRightClick)
+	{
+		emplaceComponent<UpdaterComponent>([onRightClick = std::move(onRightClick)](const std::shared_ptr<Node>& node)
+			{
+				if (node->isRightClicked())
+				{
+					onRightClick();
 				}
 			});
 		return shared_from_this();
