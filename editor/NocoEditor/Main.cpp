@@ -1302,7 +1302,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"EventTrigger", U"triggerType" }] = PropertyMetadata{
 		.tooltip = U"イベントを発火させる操作の種類",
 	};
-	metadata[PropertyKey{ U"EventTrigger", U"childrenTriggerEnabled" }] = PropertyMetadata{
+	metadata[PropertyKey{ U"EventTrigger", U"recursive" }] = PropertyMetadata{
 		.tooltip = U"子孫要素の操作でもイベント発火するかどうか",
 	};
 	

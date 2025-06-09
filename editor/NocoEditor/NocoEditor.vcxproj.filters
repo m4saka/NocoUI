@@ -144,6 +144,9 @@
     <ClCompile Include="..\..\src\Serialization.cpp">
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\EventTrigger.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
