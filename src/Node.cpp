@@ -1012,6 +1012,8 @@ namespace noco
 
 		const auto thisNode = shared_from_this();
 
+		m_prevClickRequested = m_clickRequested;
+		m_prevRightClickRequested = m_rightClickRequested;
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
@@ -1781,7 +1783,7 @@ namespace noco
 		{
 			return false;
 		}
-		return m_clickRequested || m_mouseLTracker.isClicked(includingDisabled);
+		return m_prevClickRequested || m_mouseLTracker.isClicked(includingDisabled);
 	}
 
 	bool Node::isClickedRecursive(IncludingDisabledYN includingDisabled) const
@@ -1795,7 +1797,7 @@ namespace noco
 		{
 			return false;
 		}
-		return m_clickRequested;
+		return m_prevClickRequested;
 	}
 
 	bool Node::isClickRequestedRecursive(IncludingDisabledYN includingDisabled) const
@@ -1839,7 +1841,7 @@ namespace noco
 		{
 			return false;
 		}
-		return m_rightClickRequested || m_mouseRTracker.isClicked(includingDisabled);
+		return m_prevRightClickRequested || m_mouseRTracker.isClicked(includingDisabled);
 	}
 
 	bool Node::isRightClickedRecursive(IncludingDisabledYN includingDisabled) const
@@ -1853,7 +1855,7 @@ namespace noco
 		{
 			return false;
 		}
-		return m_rightClickRequested;
+		return m_prevRightClickRequested;
 	}
 
 	bool Node::isRightClickRequestedRecursive(IncludingDisabledYN includingDisabled) const

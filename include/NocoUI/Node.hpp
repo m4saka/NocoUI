@@ -56,6 +56,8 @@ namespace noco
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
 		/* NonSerialized */ bool m_rightClickRequested = false;
+		/* NonSerialized */ bool m_prevClickRequested = false;
+		/* NonSerialized */ bool m_prevRightClickRequested = false;
 		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 

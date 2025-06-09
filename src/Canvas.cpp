@@ -3,27 +3,19 @@
 
 namespace noco
 {
-	Canvas::EventRegistry::EventRegistry()
-	{
-		m_events.reserve(InitialCapacity);
-	}
-
 	void Canvas::EventRegistry::addEvent(const Event& event)
 	{
-		const int32 frameCount = Scene::FrameCount();
-		if (m_prevFrameCount != frameCount)
-		{
-			// フレームが変わったらイベントをクリア
-			m_events.clear();
-		}
-
 		m_events.push_back(event);
-		m_prevFrameCount = frameCount;
+	}
+
+	void Canvas::EventRegistry::clear()
+	{
+		m_events.clear();
 	}
 
 	bool Canvas::EventRegistry::isEventFiredWithTag(StringView tag) const
 	{
-		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		if (m_events.empty())
 		{
 			return false;
 		}
@@ -39,7 +31,7 @@ namespace noco
 
 	Optional<Event> Canvas::EventRegistry::getFiredEventWithTag(StringView tag) const
 	{
-		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		if (m_events.empty())
 		{
 			return none;
 		}
@@ -55,7 +47,7 @@ namespace noco
 
 	Array<Event> Canvas::EventRegistry::getFiredEventsWithTag(StringView tag) const
 	{
-		if (m_events.empty() || m_prevFrameCount != Scene::FrameCount())
+		if (m_events.empty())
 		{
 			return {};
 		}
@@ -72,14 +64,7 @@ namespace noco
 
 	const Array<Event>& Canvas::EventRegistry::getFiredEventsAll() const
 	{
-		if (m_prevFrameCount != Scene::FrameCount())
-		{
-			return m_emptyEvents;
-		}
-		else
-		{
-			return m_events;
-		}
+		return m_events;
 	}
 
 	Mat3x2 Canvas::rootEffectMat() const
@@ -211,6 +196,8 @@ namespace noco
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
+		m_eventRegistry.clear();
+
 		if (!m_rootNode)
 		{
 			return;

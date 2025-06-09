@@ -71,7 +71,9 @@ TEST_CASE("Serialization details", "[Serialization]")
 		JSON canvasJson = canvas->toJSON();
 		
 		// 階層構造が保持されているか確認
-		REQUIRE(canvasJson.hasElement(U"rootNode"));
-		REQUIRE(canvasJson[U"rootNode"].hasElement(U"children"));
+		// canvas->toJSON()はrootNodeのJSONを直接返す
+		REQUIRE(canvasJson.hasElement(U"children"));
+		REQUIRE(canvasJson[U"children"].size() == 1);
+		REQUIRE(canvasJson[U"children"][0][U"name"].get<String>() == U"Parent");
 	}
 }

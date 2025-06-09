@@ -248,19 +248,22 @@ namespace noco
 		return PrevFrame::GetDraggingNode();
 	}
 
-	enum class TriggerType : uint8
+	enum class EventTriggerType : uint8
 	{
-		None = 0,
+		None,
 		Click,
+		RightClick,
 		HoverStart,
 		HoverEnd,
 		PressStart,
 		PressEnd,
+		RightPressStart,
+		RightPressEnd,
 	};
 
 	struct Event
 	{
-		TriggerType triggerType = TriggerType::None;
+		EventTriggerType triggerType = EventTriggerType::None;
 		String tag;
 		std::weak_ptr<Node> sourceNode;
 	};
@@ -273,16 +276,14 @@ namespace noco
 		class EventRegistry
 		{
 		private:
-			constexpr static size_t InitialCapacity = 16;
-
-			int32 m_prevFrameCount = -1;
 			Array<Event> m_events;
-			Array<Event> m_emptyEvents; // フレームが変わった際にm_eventsをclearせずに空配列のconst参照を返すためのダミー配列
 
 		public:
-			EventRegistry();
+			EventRegistry() = default;
 
 			void addEvent(const Event& event);
+
+			void clear();
 
 			[[nodiscard]]
 			bool isEventFiredWithTag(StringView tag) const;
