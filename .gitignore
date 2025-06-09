@@ -1,0 +1,33 @@
+# Build directories
+build/
+**/build/
+
+# Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+*.app
+NocoEditor/NocoEditor
+tests/NocoUITests/NocoUITest
+
+# IDE specific files
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.ipch
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Temporary files
+*.tmp
+*.temp
+*~
