@@ -417,6 +417,11 @@ namespace noco
 					if (m_cursorColumn > 0 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						--m_cursorColumn;
+						if (m_scrollOffsetX < m_cursorColumn)
+						{
+							// 遅れて見えないよう見えている範囲の左端までは即座に移動
+							m_cursorColumn = m_scrollOffsetX;
+						}
 						needScroll = true;
 						m_dragScrollStopwatch.restart();
 					}
@@ -429,6 +434,14 @@ namespace noco
 					if (m_cursorColumn < maxColumn && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						++m_cursorColumn;
+						
+						// 遅れて見えないよう見えている範囲の右端までは即座に移動
+						const auto [rightMostLine, rightMostColumn] = m_cache.getCursorIndex(Vec2{ rect.w / effectScale.x, (m_cursorLine - m_scrollOffsetY) * m_cache.lineHeight }, m_scrollOffsetX, m_scrollOffsetY);
+						if (rightMostLine == m_cursorLine && m_cursorColumn < rightMostColumn)
+						{
+							m_cursorColumn = rightMostColumn;
+						}
+						
 						needScroll = true;
 						m_dragScrollStopwatch.restart();
 					}
@@ -441,6 +454,11 @@ namespace noco
 					if (m_cursorLine > 0 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						--m_cursorLine;
+						if (m_scrollOffsetY < m_cursorLine)
+						{
+							// 遅れて見えないよう見えている範囲の上端までは即座に移動
+							m_cursorLine = m_scrollOffsetY;
+						}
 						m_cursorColumn = Min(m_cursorColumn, getColumnCount(m_cursorLine));
 						needScroll = true;
 						m_dragScrollStopwatch.restart();
@@ -454,6 +472,16 @@ namespace noco
 					if (m_cursorLine < maxLine - 1 && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						++m_cursorLine;
+						
+						// 遅れて見えないよう見えている範囲の下端までは即座に移動
+						const double lineHeightScaled = m_cache.lineHeight * effectScale.y;
+						const size_t visibleLines = static_cast<size_t>(Max(1.0, rect.h / lineHeightScaled));
+						const size_t bottomMostLine = Min(m_scrollOffsetY + visibleLines - 1, maxLine - 1);
+						if (m_cursorLine < bottomMostLine)
+						{
+							m_cursorLine = bottomMostLine;
+						}
+						
 						m_cursorColumn = Min(m_cursorColumn, getColumnCount(m_cursorLine));
 						needScroll = true;
 						m_dragScrollStopwatch.restart();
