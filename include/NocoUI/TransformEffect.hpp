@@ -104,7 +104,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Mat3x2 effectMat(const Mat3x2& parentMat, const RectF& rect) const
+		Mat3x2 posScaleMat(const Mat3x2& parentMat, const RectF& rect) const
 		{
 			const Vec2& position = m_position.value();
 			const Vec2& scale = m_scale.value();

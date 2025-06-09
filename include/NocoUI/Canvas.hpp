@@ -304,7 +304,7 @@ namespace noco
 		EventRegistry m_eventRegistry;
 
 		[[nodiscard]]
-		Mat3x2 rootEffectMat() const;
+		Mat3x2 rootPosScaleMat() const;
 
 		Canvas();
 

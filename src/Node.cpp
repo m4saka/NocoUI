@@ -927,7 +927,7 @@ namespace noco
 			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
 		};
 		const bool hit = hitTestRectWithPadding.contains(point);
-		if (m_clippingEnabled && !m_effectedRect.contains(point))
+		if (m_clippingEnabled && !m_posScaleAppliedRect.contains(point))
 		{
 			return nullptr;
 		}
@@ -967,7 +967,7 @@ namespace noco
 			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
 		};
 		const bool hit = hitTestRectWithPadding.contains(point);
-		if (m_clippingEnabled && !m_effectedRect.contains(point))
+		if (m_clippingEnabled && !m_posScaleAppliedRect.contains(point))
 		{
 			return nullptr;
 		}
@@ -1078,7 +1078,7 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale)
 	{
 		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
 		noco::detail::ClearCanvasUpdateContextBeforeUpdateIfNeeded();
@@ -1110,7 +1110,7 @@ namespace noco
 		if (m_activeInHierarchy)
 		{
 			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
-			refreshEffectedRect(parentEffectMat, parentEffectScale);
+			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale);
 		}
 
 		// ホバー中はスクロールバーを表示
@@ -1134,11 +1134,11 @@ namespace noco
 			}
 
 			// 子ノードのupdate実行
-			const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
+			const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(scrollableHoveredNode, deltaTime, effectMat, effectScale);
+				child->update(scrollableHoveredNode, deltaTime, posScaleMat, effectScale);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1213,30 +1213,30 @@ namespace noco
 		}
 	}
 
-	void Node::refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
+	void Node::refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale)
 	{
-		const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
-		const Vec2 posLeftTop = effectMat.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 posRightBottom = effectMat.transformPoint(m_layoutAppliedRect.br());
-		m_effectedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
+		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
+		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
+		const Vec2 posRightBottom = posScaleMat.transformPoint(m_layoutAppliedRect.br());
+		m_posScaleAppliedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
 		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
 		
 		// HitTest用の矩形を計算
-		// appliesToHitTestの値に応じてeffectMatを構築
-		Mat3x2 hitTestEffectMat = parentEffectMat;
+		// appliesToHitTestの値に応じてposScaleMatを構築
+		Mat3x2 hitTestPosScaleMat = parentPosScaleMat;
 		
 		if (m_transformEffect.appliesToHitTest().value())
 		{
 			// TransformEffectを適用
-			hitTestEffectMat = effectMat;
+			hitTestPosScaleMat = posScaleMat;
 		}
 		
-		const Vec2 hitTestPosLeftTop = hitTestEffectMat.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 hitTestPosRightBottom = hitTestEffectMat.transformPoint(m_layoutAppliedRect.br());
+		const Vec2 hitTestPosLeftTop = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.pos);
+		const Vec2 hitTestPosRightBottom = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.br());
 		m_hitTestRect = RectF{ hitTestPosLeftTop, hitTestPosRightBottom - hitTestPosLeftTop };
 		for (const auto& child : m_children)
 		{
-			child->refreshEffectedRect(effectMat, m_effectScale);
+			child->refreshPosScaleAppliedRect(posScaleMat, m_effectScale);
 		}
 	}
 
@@ -1323,7 +1323,7 @@ namespace noco
 		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			scissorRect.emplace(m_effectedRect.asRect());
+			scissorRect.emplace(m_posScaleAppliedRect.asRect());
 		}
 
 		// draw関数はconstのため、addComponentやaddChild等によるイテレータ破壊は考慮不要とする
@@ -1373,17 +1373,17 @@ namespace noco
 
 							const RectF backgroundRect
 							{
-								m_effectedRect.x,
-								m_effectedRect.y + m_effectedRect.h - thickness,
-								m_effectedRect.w,
+								m_posScaleAppliedRect.x,
+								m_posScaleAppliedRect.y + m_posScaleAppliedRect.h - thickness,
+								m_posScaleAppliedRect.w,
 								thickness
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
 							horizontalHandleRect = RectF
 							{
-								m_effectedRect.x + x,
-								m_effectedRect.y + m_effectedRect.h - thickness,
+								m_posScaleAppliedRect.x + x,
+								m_posScaleAppliedRect.y + m_posScaleAppliedRect.h - thickness,
 								w,
 								thickness
 							};
@@ -1405,17 +1405,17 @@ namespace noco
 
 							const RectF backgroundRect
 							{
-								m_effectedRect.x + m_effectedRect.w - thickness,
-								m_effectedRect.y,
+								m_posScaleAppliedRect.x + m_posScaleAppliedRect.w - thickness,
+								m_posScaleAppliedRect.y,
 								thickness,
-								m_effectedRect.h
+								m_posScaleAppliedRect.h
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
 							verticalHandleRect = RectF
 							{
-								m_effectedRect.x + m_effectedRect.w - thickness,
-								m_effectedRect.y + y,
+								m_posScaleAppliedRect.x + m_posScaleAppliedRect.w - thickness,
+								m_posScaleAppliedRect.y + y,
 								thickness,
 								h
 							};
@@ -1468,7 +1468,7 @@ namespace noco
 
 	const RectF& Node::rect() const
 	{
-		return m_effectedRect;
+		return m_posScaleAppliedRect;
 	}
 
 	const RectF& Node::hitTestRect() const

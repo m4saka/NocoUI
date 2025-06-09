@@ -67,7 +67,7 @@ namespace noco
 		return m_events;
 	}
 
-	Mat3x2 Canvas::rootEffectMat() const
+	Mat3x2 Canvas::rootPosScaleMat() const
 	{
 		if (m_scale == Vec2::One() && m_offset == Vec2::Zero())
 		{
@@ -147,7 +147,7 @@ namespace noco
 		}
 
 		m_rootNode->refreshBoxChildrenLayout();
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
@@ -238,7 +238,7 @@ namespace noco
 		// ノード更新
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default);
 		m_rootNode->updateInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootEffectMat(), m_scale);
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale);
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
 	}
@@ -264,20 +264,20 @@ namespace noco
 	void Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
 	}
 	
 	void Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
 	}
 	
 	void Canvas::setOffsetScale(const Vec2& offset, const Vec2& scale)
 	{
 		m_offset = offset;
 		m_scale = scale;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
 	}
 	
 	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)

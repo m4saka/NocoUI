@@ -43,7 +43,7 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_layoutAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ RectF m_effectedRect{ 0.0, 0.0, 0.0, 0.0 };
+		/* NonSerialized */ RectF m_posScaleAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ RectF m_hitTestRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
@@ -274,13 +274,13 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale);
 
 		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
+		void refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
