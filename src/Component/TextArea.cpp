@@ -747,7 +747,7 @@ namespace noco
 					m_deletePressStopwatch.restart();
 				}
 
-				if (KeyEnter.down())
+				if (KeyEnter.down() || (KeyEnter.pressedDuration() > 0.4s && m_enterPressStopwatch.elapsed() > 0.03s))
 				{
 					if (hasSelection())
 					{
@@ -767,6 +767,7 @@ namespace noco
 					m_cursorLine = m_selectionAnchorLine = line;
 					m_cursorColumn = m_selectionAnchorColumn = column;
 					m_isChanged = true;
+					m_enterPressStopwatch.restart();
 				}
 
 				const auto [shortcutActionTriedResult, shortcutInsertIndex, shortcutInsertSize] = handleShortcut();

@@ -35,6 +35,7 @@ namespace noco
 		/* NonSerialized */ Stopwatch m_pageDownPressStopwatch;
 		/* NonSerialized */ Stopwatch m_backspacePressStopwatch;
 		/* NonSerialized */ Stopwatch m_deletePressStopwatch;
+		/* NonSerialized */ Stopwatch m_enterPressStopwatch;
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
 		/* NonSerialized */ size_t m_scrollOffsetX = 0;
 		/* NonSerialized */ size_t m_scrollOffsetY = 0;
