@@ -16,7 +16,5 @@ namespace noco
 
 		[[nodiscard]]
 		virtual StringView text() const = 0;
-
-		virtual void setText(StringView text, IgnoreIsChangedYN ignoreIsChanged = IgnoreIsChangedYN::No) = 0;
 	};
 }

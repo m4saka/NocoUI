@@ -181,13 +181,14 @@ namespace noco
 		return m_constraint;
 	}
 
-	void Node::setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout)
 	{
 		m_constraint = constraint;
 		if (refreshesLayout)
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
 	const BoxConstraint* Node::boxConstraint() const
@@ -215,13 +216,14 @@ namespace noco
 		return m_boxChildrenLayout;
 	}
 
-	void Node::setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
 	{
 		m_boxChildrenLayout = layout;
 		if (refreshesLayout)
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
 	const FlowLayout* Node::childrenFlowLayout() const
@@ -244,9 +246,10 @@ namespace noco
 		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_boxChildrenLayout);
 	}
 
-	void Node::setBoxConstraintToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setBoxConstraintToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
 	{
 		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setBoxConstraintToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_boxChildrenLayout);
+		return shared_from_this();
 	}
 
 	const LRTB& Node::boxChildrenLayoutPadding() const
@@ -453,13 +456,14 @@ namespace noco
 		return isAncestorOf(nodeParent);
 	}
 
-	void Node::setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout)
 	{
 		if (!m_parent.expired())
 		{
 			removeFromParent(RefreshesLayoutYN{ refreshesLayout && parent->m_canvas.lock() != m_canvas.lock() });
 		}
 		parent->addChild(shared_from_this(), refreshesLayout);
+		return shared_from_this();
 	}
 
 	bool Node::removeFromParent(RefreshesLayoutYN refreshesLayout)
@@ -1450,9 +1454,10 @@ namespace noco
 		return m_name;
 	}
 
-	void Node::setName(StringView name)
+	std::shared_ptr<Node> Node::setName(StringView name)
 	{
 		m_name = name;
+		return shared_from_this();
 	}
 
 	const RectF& Node::rect() const
@@ -1514,16 +1519,17 @@ namespace noco
 		return m_interactable;
 	}
 
-	void Node::setInteractable(InteractableYN interactable)
+	std::shared_ptr<Node> Node::setInteractable(InteractableYN interactable)
 	{
 		m_interactable = interactable;
 		m_mouseLTracker.setInteractable(interactable);
 		m_mouseRTracker.setInteractable(interactable);
+		return shared_from_this();
 	}
 
-	void Node::setInteractable(bool interactable)
+	std::shared_ptr<Node> Node::setInteractable(bool interactable)
 	{
-		setInteractable(InteractableYN{ interactable });
+		return setInteractable(InteractableYN{ interactable });
 	}
 
 	ActiveYN Node::activeSelf() const
@@ -1531,7 +1537,7 @@ namespace noco
 		return m_activeSelf;
 	}
 
-	void Node::setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout)
 	{
 		m_activeSelf = activeSelf;
 		refreshActiveInHierarchy();
@@ -1539,11 +1545,12 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
-	void Node::setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout)
 	{
-		setActive(ActiveYN{ activeSelf }, refreshesLayout);
+		return setActive(ActiveYN{ activeSelf }, refreshesLayout);
 	}
 
 	ActiveYN Node::activeInHierarchy() const
@@ -1556,14 +1563,15 @@ namespace noco
 		return m_isHitTarget;
 	}
 
-	void Node::setIsHitTarget(IsHitTargetYN isHitTarget)
+	std::shared_ptr<Node> Node::setIsHitTarget(IsHitTargetYN isHitTarget)
 	{
 		m_isHitTarget = isHitTarget;
+		return shared_from_this();
 	}
 
-	void Node::setIsHitTarget(bool isHitTarget)
+	std::shared_ptr<Node> Node::setIsHitTarget(bool isHitTarget)
 	{
-		setIsHitTarget(IsHitTargetYN{ isHitTarget });
+		return setIsHitTarget(IsHitTargetYN{ isHitTarget });
 	}
 
 	const LRTB& Node::hitTestPadding() const
@@ -1571,9 +1579,10 @@ namespace noco
 		return m_hitTestPadding;
 	}
 
-	void Node::setHitTestPadding(const LRTB& padding)
+	std::shared_ptr<Node> Node::setHitTestPadding(const LRTB& padding)
 	{
 		m_hitTestPadding = padding;
+		return shared_from_this();
 	}
 
 	InheritChildrenStateFlags Node::inheritChildrenStateFlags() const
@@ -1581,9 +1590,10 @@ namespace noco
 		return m_inheritChildrenStateFlags;
 	}
 
-	void Node::setInheritChildrenStateFlags(InheritChildrenStateFlags flags)
+	std::shared_ptr<Node> Node::setInheritChildrenStateFlags(InheritChildrenStateFlags flags)
 	{
 		m_inheritChildrenStateFlags = flags;
+		return shared_from_this();
 	}
 
 	bool Node::inheritsChildrenHoveredState() const
@@ -1591,7 +1601,7 @@ namespace noco
 		return HasFlag(m_inheritChildrenStateFlags, InheritChildrenStateFlags::Hovered);
 	}
 
-	void Node::setInheritsChildrenHoveredState(bool value)
+	std::shared_ptr<Node> Node::setInheritsChildrenHoveredState(bool value)
 	{
 		if (value)
 		{
@@ -1601,6 +1611,7 @@ namespace noco
 		{
 			m_inheritChildrenStateFlags &= ~InheritChildrenStateFlags::Hovered;
 		}
+		return shared_from_this();
 	}
 
 	bool Node::inheritsChildrenPressedState() const
@@ -1608,7 +1619,7 @@ namespace noco
 		return HasFlag(m_inheritChildrenStateFlags, InheritChildrenStateFlags::Pressed);
 	}
 
-	void Node::setInheritsChildrenPressedState(bool value)
+	std::shared_ptr<Node> Node::setInheritsChildrenPressedState(bool value)
 	{
 		if (value)
 		{
@@ -1618,6 +1629,7 @@ namespace noco
 		{
 			m_inheritChildrenStateFlags &= ~InheritChildrenStateFlags::Pressed;
 		}
+		return shared_from_this();
 	}
 
 	ScrollableAxisFlags Node::scrollableAxisFlags() const
@@ -1625,7 +1637,7 @@ namespace noco
 		return m_scrollableAxisFlags;
 	}
 
-	void Node::setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout)
 	{
 		m_scrollableAxisFlags = flags;
 		if (!horizontalScrollable())
@@ -1640,6 +1652,7 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
 	bool Node::horizontalScrollable() const
@@ -1647,7 +1660,7 @@ namespace noco
 		return HasFlag(m_scrollableAxisFlags, ScrollableAxisFlags::Horizontal);
 	}
 
-	void Node::setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
 	{
 		if (scrollable)
 		{
@@ -1662,6 +1675,7 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
 	bool Node::verticalScrollable() const
@@ -1669,7 +1683,7 @@ namespace noco
 		return HasFlag(m_scrollableAxisFlags, ScrollableAxisFlags::Vertical);
 	}
 
-	void Node::setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
 	{
 		if (scrollable)
 		{
@@ -1684,6 +1698,7 @@ namespace noco
 		{
 			refreshContainedCanvasLayout();
 		}
+		return shared_from_this();
 	}
 
 	ClippingEnabledYN Node::clippingEnabled() const
@@ -1691,14 +1706,15 @@ namespace noco
 		return m_clippingEnabled;
 	}
 
-	void Node::setClippingEnabled(ClippingEnabledYN clippingEnabled)
+	std::shared_ptr<Node> Node::setClippingEnabled(ClippingEnabledYN clippingEnabled)
 	{
 		m_clippingEnabled = clippingEnabled;
+		return shared_from_this();
 	}
 
-	void Node::setClippingEnabled(bool clippingEnabled)
+	std::shared_ptr<Node> Node::setClippingEnabled(bool clippingEnabled)
 	{
-		setClippingEnabled(ClippingEnabledYN{ clippingEnabled });
+		return setClippingEnabled(ClippingEnabledYN{ clippingEnabled });
 	}
 
 	InteractionState Node::interactionStateSelf() const
@@ -1716,14 +1732,15 @@ namespace noco
 		return m_selected;
 	}
 
-	void Node::setSelected(SelectedYN selected)
+	std::shared_ptr<Node> Node::setSelected(SelectedYN selected)
 	{
 		m_selected = selected;
+		return shared_from_this();
 	}
 
-	void Node::setSelected(bool selected)
+	std::shared_ptr<Node> Node::setSelected(bool selected)
 	{
-		setSelected(SelectedYN{ selected });
+		return setSelected(SelectedYN{ selected });
 	}
 
 	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
@@ -1953,22 +1970,25 @@ namespace noco
 		return CreateFromJSON(toJSON());
 	}
 
-	void Node::addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater)
+	std::shared_ptr<Node> Node::addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater)
 	{
 		emplaceComponent<InputUpdaterComponent>(std::move(inputUpdater));
+		return shared_from_this();
 	}
 
-	void Node::addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater)
+	std::shared_ptr<Node> Node::addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater)
 	{
 		emplaceComponent<UpdaterComponent>(std::move(updater));
+		return shared_from_this();
 	}
 
-	void Node::addDrawer(std::function<void(const Node&)> drawer)
+	std::shared_ptr<Node> Node::addDrawer(std::function<void(const Node&)> drawer)
 	{
 		emplaceComponent<DrawerComponent>(std::move(drawer));
+		return shared_from_this();
 	}
 
-	void Node::addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick)
+	std::shared_ptr<Node> Node::addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick)
 	{
 		emplaceComponent<UpdaterComponent>([onClick = std::move(onClick)](const std::shared_ptr<Node>& node)
 			{
@@ -1977,9 +1997,10 @@ namespace noco
 					onClick(node);
 				}
 			});
+		return shared_from_this();
 	}
 
-	void Node::addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick)
+	std::shared_ptr<Node> Node::addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick)
 	{
 		emplaceComponent<UpdaterComponent>([onRightClick = std::move(onRightClick)](const std::shared_ptr<Node>& node)
 			{
@@ -1988,26 +2009,31 @@ namespace noco
 					onRightClick(node);
 				}
 			});
+		return shared_from_this();
 	}
 
-	void Node::addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
 		addClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+		return shared_from_this();
 	}
 
-	void Node::addClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
 		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::Click, enabledWhileTextEditing, clearsInput);
+		return shared_from_this();
 	}
 
-	void Node::addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
 		addRightClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+		return shared_from_this();
 	}
 
-	void Node::addRightClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
 	{
 		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::RightClick, enabledWhileTextEditing, clearsInput);
+		return shared_from_this();
 	}
 
 	void Node::refreshContainedCanvasLayout()

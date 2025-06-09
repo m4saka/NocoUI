@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	class RectRenderer : public SerializableComponentBase
+	class RectRenderer : public SerializableComponentBase, public std::enable_shared_from_this<RectRenderer>
 	{
 	private:
 		SmoothProperty<ColorF> m_fillColor;
@@ -46,9 +46,10 @@ namespace noco
 			return m_fillColor.propertyValue();
 		}
 
-		void setFillColor(const PropertyValue<ColorF>& fillColor)
+		std::shared_ptr<RectRenderer> setFillColor(const PropertyValue<ColorF>& fillColor)
 		{
 			m_fillColor.setPropertyValue(fillColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -57,9 +58,10 @@ namespace noco
 			return m_outlineColor.propertyValue();
 		}
 
-		void setOutlineColor(const PropertyValue<ColorF>& outlineColor)
+		std::shared_ptr<RectRenderer> setOutlineColor(const PropertyValue<ColorF>& outlineColor)
 		{
 			m_outlineColor.setPropertyValue(outlineColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -68,9 +70,10 @@ namespace noco
 			return m_outlineThickness.propertyValue();
 		}
 
-		void setOutlineThickness(const PropertyValue<double>& outlineThickness)
+		std::shared_ptr<RectRenderer> setOutlineThickness(const PropertyValue<double>& outlineThickness)
 		{
 			m_outlineThickness.setPropertyValue(outlineThickness);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -79,9 +82,10 @@ namespace noco
 			return m_cornerRadius.propertyValue();
 		}
 
-		void setCornerRadius(const PropertyValue<double>& cornerRadius)
+		std::shared_ptr<RectRenderer> setCornerRadius(const PropertyValue<double>& cornerRadius)
 		{
 			m_cornerRadius.setPropertyValue(cornerRadius);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -90,9 +94,10 @@ namespace noco
 			return m_shadowColor.propertyValue();
 		}
 
-		void setShadowColor(const PropertyValue<ColorF>& shadowColor)
+		std::shared_ptr<RectRenderer> setShadowColor(const PropertyValue<ColorF>& shadowColor)
 		{
 			m_shadowColor.setPropertyValue(shadowColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -101,9 +106,10 @@ namespace noco
 			return m_shadowOffset.propertyValue();
 		}
 
-		void setShadowOffset(const PropertyValue<Vec2>& shadowOffset)
+		std::shared_ptr<RectRenderer> setShadowOffset(const PropertyValue<Vec2>& shadowOffset)
 		{
 			m_shadowOffset.setPropertyValue(shadowOffset);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -112,9 +118,10 @@ namespace noco
 			return m_shadowBlur.propertyValue();
 		}
 
-		void setShadowBlur(const PropertyValue<double>& shadowBlur)
+		std::shared_ptr<RectRenderer> setShadowBlur(const PropertyValue<double>& shadowBlur)
 		{
 			m_shadowBlur.setPropertyValue(shadowBlur);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -123,9 +130,10 @@ namespace noco
 			return m_shadowSpread.propertyValue();
 		}
 
-		void setShadowSpread(const PropertyValue<double>& shadowSpread)
+		std::shared_ptr<RectRenderer> setShadowSpread(const PropertyValue<double>& shadowSpread)
 		{
 			m_shadowSpread.setPropertyValue(shadowSpread);
+			return shared_from_this();
 		}
 	};
 }

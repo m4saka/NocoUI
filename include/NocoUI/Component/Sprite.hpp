@@ -5,7 +5,7 @@
 
 namespace noco
 {
-	class Sprite : public SerializableComponentBase
+	class Sprite : public SerializableComponentBase, public std::enable_shared_from_this<Sprite>
 	{
 	private:
 		Property<String> m_textureFilePath;
@@ -53,9 +53,10 @@ namespace noco
 			return m_textureFilePath.propertyValue();
 		}
 
-		void setTextureFilePath(const PropertyValue<String>& textureFilePath)
+		std::shared_ptr<Sprite> setTextureFilePath(const PropertyValue<String>& textureFilePath)
 		{
 			m_textureFilePath.setPropertyValue(textureFilePath);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -64,9 +65,10 @@ namespace noco
 			return m_textureAssetName.propertyValue();
 		}
 
-		void setTextureAssetName(const PropertyValue<String>& textureAssetName)
+		std::shared_ptr<Sprite> setTextureAssetName(const PropertyValue<String>& textureAssetName)
 		{
 			m_textureAssetName.setPropertyValue(textureAssetName);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -75,9 +77,10 @@ namespace noco
 			return m_color.propertyValue();
 		}
 
-		void setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<Sprite> setColor(const PropertyValue<ColorF>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -86,9 +89,10 @@ namespace noco
 			return m_preserveAspect.propertyValue();
 		}
 
-		void setPreserveAspect(const PropertyValue<bool>& preserveAspect)
+		std::shared_ptr<Sprite> setPreserveAspect(const PropertyValue<bool>& preserveAspect)
 		{
 			m_preserveAspect.setPropertyValue(preserveAspect);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -97,9 +101,10 @@ namespace noco
 			return m_nineSliceEnabled.propertyValue();
 		}
 		
-		void setNineSliceEnabled(const PropertyValue<bool>& nineSliceEnabled)
+		std::shared_ptr<Sprite> setNineSliceEnabled(const PropertyValue<bool>& nineSliceEnabled)
 		{
 			m_nineSliceEnabled.setPropertyValue(nineSliceEnabled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -108,9 +113,10 @@ namespace noco
 			return m_nineSliceMargin.propertyValue();
 		}
 		
-		void setNineSliceMargin(const PropertyValue<LRTB>& nineSliceMargin)
+		std::shared_ptr<Sprite> setNineSliceMargin(const PropertyValue<LRTB>& nineSliceMargin)
 		{
 			m_nineSliceMargin.setPropertyValue(nineSliceMargin);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -119,9 +125,10 @@ namespace noco
 			return m_nineSliceScale.propertyValue();
 		}
 		
-		void setNineSliceScale(const PropertyValue<Vec2>& nineSliceScale)
+		std::shared_ptr<Sprite> setNineSliceScale(const PropertyValue<Vec2>& nineSliceScale)
 		{
 			m_nineSliceScale.setPropertyValue(nineSliceScale);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -130,9 +137,10 @@ namespace noco
 			return m_nineSliceCenterTiled.propertyValue();
 		}
 		
-		void setNineSliceCenterTiled(const PropertyValue<bool>& nineSliceCenterTiled)
+		std::shared_ptr<Sprite> setNineSliceCenterTiled(const PropertyValue<bool>& nineSliceCenterTiled)
 		{
 			m_nineSliceCenterTiled.setPropertyValue(nineSliceCenterTiled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -141,9 +149,10 @@ namespace noco
 			return m_nineSliceLeftTiled.propertyValue();
 		}
 		
-		void setNineSliceLeftTiled(const PropertyValue<bool>& nineSliceLeftTiled)
+		std::shared_ptr<Sprite> setNineSliceLeftTiled(const PropertyValue<bool>& nineSliceLeftTiled)
 		{
 			m_nineSliceLeftTiled.setPropertyValue(nineSliceLeftTiled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -152,9 +161,10 @@ namespace noco
 			return m_nineSliceRightTiled.propertyValue();
 		}
 		
-		void setNineSliceRightTiled(const PropertyValue<bool>& nineSliceRightTiled)
+		std::shared_ptr<Sprite> setNineSliceRightTiled(const PropertyValue<bool>& nineSliceRightTiled)
 		{
 			m_nineSliceRightTiled.setPropertyValue(nineSliceRightTiled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -163,9 +173,10 @@ namespace noco
 			return m_nineSliceTopTiled.propertyValue();
 		}
 		
-		void setNineSliceTopTiled(const PropertyValue<bool>& nineSliceTopTiled)
+		std::shared_ptr<Sprite> setNineSliceTopTiled(const PropertyValue<bool>& nineSliceTopTiled)
 		{
 			m_nineSliceTopTiled.setPropertyValue(nineSliceTopTiled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -174,9 +185,10 @@ namespace noco
 			return m_nineSliceBottomTiled.propertyValue();
 		}
 		
-		void setNineSliceBottomTiled(const PropertyValue<bool>& nineSliceBottomTiled)
+		std::shared_ptr<Sprite> setNineSliceBottomTiled(const PropertyValue<bool>& nineSliceBottomTiled)
 		{
 			m_nineSliceBottomTiled.setPropertyValue(nineSliceBottomTiled);
+			return shared_from_this();
 		}
 		
 		[[nodiscard]]
@@ -185,19 +197,22 @@ namespace noco
 			return m_nineSliceFallback.propertyValue();
 		}
 		
-		void setNineSliceFallback(const PropertyValue<bool>& nineSliceFallback)
+		std::shared_ptr<Sprite> setNineSliceFallback(const PropertyValue<bool>& nineSliceFallback)
 		{
 			m_nineSliceFallback.setPropertyValue(nineSliceFallback);
+			return shared_from_this();
 		}
 		
-		void setTexture(const Texture& texture)
+		std::shared_ptr<Sprite> setTexture(const Texture& texture)
 		{
 			m_textureOpt = texture;
+			return shared_from_this();
 		}
 		
-		void clearTexture()
+		std::shared_ptr<Sprite> clearTexture()
 		{
 			m_textureOpt.reset();
+			return shared_from_this();
 		}
 	};
 }

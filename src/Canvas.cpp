@@ -261,23 +261,26 @@ namespace noco
 		m_rootNode->removeChildrenAll();
 	}
 
-	void Canvas::setOffset(const Vec2& offset)
+	std::shared_ptr<Canvas> Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
 		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		return shared_from_this();
 	}
 	
-	void Canvas::setScale(const Vec2& scale)
+	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
 		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		return shared_from_this();
 	}
 	
-	void Canvas::setOffsetScale(const Vec2& offset, const Vec2& scale)
+	std::shared_ptr<Canvas> Canvas::setOffsetScale(const Vec2& offset, const Vec2& scale)
 	{
 		m_offset = offset;
 		m_scale = scale;
 		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		return shared_from_this();
 	}
 	
 	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)

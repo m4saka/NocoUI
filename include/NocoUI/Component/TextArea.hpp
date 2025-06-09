@@ -154,7 +154,7 @@ namespace noco
 			return m_text;
 		}
 
-		void setText(StringView text, IgnoreIsChangedYN ignoreIsChanged = IgnoreIsChangedYN::No) override;
+		std::shared_ptr<TextArea> setText(StringView text, IgnoreIsChangedYN ignoreIsChanged = IgnoreIsChangedYN::No);
 
 		[[nodiscard]]
 		const PropertyValue<String>& fontAssetName() const
@@ -162,9 +162,10 @@ namespace noco
 			return m_fontAssetName.propertyValue();
 		}
 
-		void setFontAssetName(const PropertyValue<String>& fontAssetName)
+		std::shared_ptr<TextArea> setFontAssetName(const PropertyValue<String>& fontAssetName)
 		{
 			m_fontAssetName.setPropertyValue(fontAssetName);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -173,9 +174,10 @@ namespace noco
 			return m_fontSize.propertyValue();
 		}
 
-		void setFontSize(const PropertyValue<double>& fontSize)
+		std::shared_ptr<TextArea> setFontSize(const PropertyValue<double>& fontSize)
 		{
 			m_fontSize.setPropertyValue(fontSize);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -184,9 +186,10 @@ namespace noco
 			return m_color.propertyValue();
 		}
 
-		void setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<TextArea> setColor(const PropertyValue<ColorF>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -195,9 +198,10 @@ namespace noco
 			return m_horizontalPadding.propertyValue();
 		}
 
-		void setHorizontalPadding(const PropertyValue<Vec2>& horizontalPadding)
+		std::shared_ptr<TextArea> setHorizontalPadding(const PropertyValue<Vec2>& horizontalPadding)
 		{
 			m_horizontalPadding.setPropertyValue(horizontalPadding);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -206,9 +210,10 @@ namespace noco
 			return m_verticalPadding.propertyValue();
 		}
 
-		void setVerticalPadding(const PropertyValue<Vec2>& verticalPadding)
+		std::shared_ptr<TextArea> setVerticalPadding(const PropertyValue<Vec2>& verticalPadding)
 		{
 			m_verticalPadding.setPropertyValue(verticalPadding);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -217,9 +222,10 @@ namespace noco
 			return m_cursorColor.propertyValue();
 		}
 
-		void setCursorColor(const PropertyValue<ColorF>& cursorColor)
+		std::shared_ptr<TextArea> setCursorColor(const PropertyValue<ColorF>& cursorColor)
 		{
 			m_cursorColor.setPropertyValue(cursorColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -228,9 +234,10 @@ namespace noco
 			return m_selectionColor.propertyValue();
 		}
 
-		void setSelectionColor(const PropertyValue<ColorF>& selectionColor)
+		std::shared_ptr<TextArea> setSelectionColor(const PropertyValue<ColorF>& selectionColor)
 		{
 			m_selectionColor.setPropertyValue(selectionColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]

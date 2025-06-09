@@ -91,7 +91,7 @@ namespace noco
 		[[nodiscard]]
 		const ConstraintVariant& constraint() const;
 
-		void setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		const BoxConstraint* boxConstraint() const;
@@ -108,7 +108,7 @@ namespace noco
 		[[nodiscard]]
 		const LayoutVariant& boxChildrenLayout() const;
 
-		void setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		const FlowLayout* childrenFlowLayout() const;
@@ -122,7 +122,7 @@ namespace noco
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren() const;
 
-		void setBoxConstraintToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setBoxConstraintToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		const LRTB& boxChildrenLayoutPadding() const;
@@ -151,7 +151,7 @@ namespace noco
 		[[nodiscard]]
 		bool isAncestorOf(const std::shared_ptr<Node>& node) const;
 
-		void setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		bool removeFromParent(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -287,7 +287,7 @@ namespace noco
 		[[nodiscard]]
 		const String& name() const;
 
-		void setName(StringView name);
+		std::shared_ptr<Node> setName(StringView name);
 
 		[[nodiscard]]
 		const RectF& rect() const;
@@ -316,16 +316,16 @@ namespace noco
 		[[nodiscard]]
 		InteractableYN interactable() const;
 
-		void setInteractable(InteractableYN interactable);
+		std::shared_ptr<Node> setInteractable(InteractableYN interactable);
 
-		void setInteractable(bool interactable);
+		std::shared_ptr<Node> setInteractable(bool interactable);
 
 		[[nodiscard]]
 		ActiveYN activeSelf() const;
 
-		void setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		void setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		ActiveYN activeInHierarchy() const;
@@ -333,51 +333,51 @@ namespace noco
 		[[nodiscard]]
 		IsHitTargetYN isHitTarget() const;
 
-		void setIsHitTarget(IsHitTargetYN isHitTarget);
+		std::shared_ptr<Node> setIsHitTarget(IsHitTargetYN isHitTarget);
 
-		void setIsHitTarget(bool isHitTarget);
+		std::shared_ptr<Node> setIsHitTarget(bool isHitTarget);
 
 		[[nodiscard]]
 		const LRTB& hitTestPadding() const;
 
-		void setHitTestPadding(const LRTB& padding);
+		std::shared_ptr<Node> setHitTestPadding(const LRTB& padding);
 
 		[[nodiscard]]
 		InheritChildrenStateFlags inheritChildrenStateFlags() const;
 
-		void setInheritChildrenStateFlags(InheritChildrenStateFlags flags);
+		std::shared_ptr<Node> setInheritChildrenStateFlags(InheritChildrenStateFlags flags);
 
 		[[nodiscard]]
 		bool inheritsChildrenHoveredState() const;
 
-		void setInheritsChildrenHoveredState(bool value);
+		std::shared_ptr<Node> setInheritsChildrenHoveredState(bool value);
 
 		[[nodiscard]]
 		bool inheritsChildrenPressedState() const;
 
-		void setInheritsChildrenPressedState(bool value);
+		std::shared_ptr<Node> setInheritsChildrenPressedState(bool value);
 
 		[[nodiscard]]
 		ScrollableAxisFlags scrollableAxisFlags() const;
 
-		void setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		bool horizontalScrollable() const;
 
-		void setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		bool verticalScrollable() const;
 
-		void setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		ClippingEnabledYN clippingEnabled() const;
 
-		void setClippingEnabled(ClippingEnabledYN clippingEnabled);
+		std::shared_ptr<Node> setClippingEnabled(ClippingEnabledYN clippingEnabled);
 
-		void setClippingEnabled(bool clippingEnabled);
+		std::shared_ptr<Node> setClippingEnabled(bool clippingEnabled);
 
 		[[nodiscard]]
 		InteractionState interactionStateSelf() const;
@@ -388,9 +388,9 @@ namespace noco
 		[[nodiscard]]
 		SelectedYN selected() const;
 
-		void setSelected(SelectedYN selected);
+		std::shared_ptr<Node> setSelected(SelectedYN selected);
 
-		void setSelected(bool selected);
+		std::shared_ptr<Node> setSelected(bool selected);
 
 		[[nodiscard]]
 		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
@@ -440,23 +440,23 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> clone() const;
 
-		void addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater);
+		std::shared_ptr<Node> addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater);
 
-		void addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater);
+		std::shared_ptr<Node> addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater);
 
-		void addDrawer(std::function<void(const Node&)> drawer);
+		std::shared_ptr<Node> addDrawer(std::function<void(const Node&)> drawer);
 
-		void addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick);
+		std::shared_ptr<Node> addOnClick(std::function<void(const std::shared_ptr<Node>&)> onClick);
 
-		void addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
+		std::shared_ptr<Node> addOnRightClick(std::function<void(const std::shared_ptr<Node>&)> onRightClick);
 
-		void addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void addClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
 		void refreshContainedCanvasLayout();
 

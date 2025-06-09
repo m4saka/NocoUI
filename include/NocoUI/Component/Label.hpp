@@ -18,7 +18,7 @@ namespace noco
 		// 将来的にテキストに応じてノード側を自動リサイズするモードが追加されることを想定
 	};
 
-	class Label : public SerializableComponentBase
+	class Label : public SerializableComponentBase, public std::enable_shared_from_this<Label>
 	{
 	private:
 		Property<String> m_text;
@@ -158,9 +158,10 @@ namespace noco
 			return m_text.propertyValue();
 		}
 
-		void setText(const PropertyValue<String>& text)
+		std::shared_ptr<Label> setText(const PropertyValue<String>& text)
 		{
 			m_text.setPropertyValue(text);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -169,9 +170,10 @@ namespace noco
 			return m_fontAssetName.propertyValue();
 		}
 
-		void setFontAssetName(const PropertyValue<String>& fontAssetName)
+		std::shared_ptr<Label> setFontAssetName(const PropertyValue<String>& fontAssetName)
 		{
 			m_fontAssetName.setPropertyValue(fontAssetName);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -180,9 +182,10 @@ namespace noco
 			return m_fontSize.propertyValue();
 		}
 
-		void setFontSize(const PropertyValue<double>& fontSize)
+		std::shared_ptr<Label> setFontSize(const PropertyValue<double>& fontSize)
 		{
 			m_fontSize.setPropertyValue(fontSize);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -191,9 +194,10 @@ namespace noco
 			return m_color.propertyValue();
 		}
 
-		void setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<Label> setColor(const PropertyValue<ColorF>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -202,9 +206,10 @@ namespace noco
 			return m_horizontalAlign.propertyValue();
 		}
 
-		void setHorizontalAlign(const PropertyValue<HorizontalAlign>& horizontalAlign)
+		std::shared_ptr<Label> setHorizontalAlign(const PropertyValue<HorizontalAlign>& horizontalAlign)
 		{
 			m_horizontalAlign.setPropertyValue(horizontalAlign);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -213,9 +218,10 @@ namespace noco
 			return m_verticalAlign.propertyValue();
 		}
 
-		void setVerticalAlign(const PropertyValue<VerticalAlign>& verticalAlign)
+		std::shared_ptr<Label> setVerticalAlign(const PropertyValue<VerticalAlign>& verticalAlign)
 		{
 			m_verticalAlign.setPropertyValue(verticalAlign);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -224,9 +230,10 @@ namespace noco
 			return m_padding.propertyValue();
 		}
 
-		void setPadding(const PropertyValue<LRTB>& padding)
+		std::shared_ptr<Label> setPadding(const PropertyValue<LRTB>& padding)
 		{
 			m_padding.setPropertyValue(padding);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -235,9 +242,10 @@ namespace noco
 			return m_horizontalOverflow.propertyValue();
 		}
 
-		void setHorizontalOverflow(const PropertyValue<HorizontalOverflow>& horizontalOverflow)
+		std::shared_ptr<Label> setHorizontalOverflow(const PropertyValue<HorizontalOverflow>& horizontalOverflow)
 		{
 			m_horizontalOverflow.setPropertyValue(horizontalOverflow);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -246,9 +254,10 @@ namespace noco
 			return m_verticalOverflow.propertyValue();
 		}
 
-		void setVerticalOverflow(const PropertyValue<VerticalOverflow>& verticalOverflow)
+		std::shared_ptr<Label> setVerticalOverflow(const PropertyValue<VerticalOverflow>& verticalOverflow)
 		{
 			m_verticalOverflow.setPropertyValue(verticalOverflow);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -257,9 +266,10 @@ namespace noco
 			return m_characterSpacing.propertyValue();
 		}
 
-		void setCharacterSpacing(const PropertyValue<Vec2>& characterSpacing)
+		std::shared_ptr<Label> setCharacterSpacing(const PropertyValue<Vec2>& characterSpacing)
 		{
 			m_characterSpacing.setPropertyValue(characterSpacing);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -268,9 +278,10 @@ namespace noco
 			return m_underlineStyle.propertyValue();
 		}
 
-		void setUnderlineStyle(const PropertyValue<LabelUnderlineStyle>& underlineStyle)
+		std::shared_ptr<Label> setUnderlineStyle(const PropertyValue<LabelUnderlineStyle>& underlineStyle)
 		{
 			m_underlineStyle.setPropertyValue(underlineStyle);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -279,9 +290,10 @@ namespace noco
 			return m_underlineColor.propertyValue();
 		}
 
-		void setUnderlineColor(const PropertyValue<ColorF>& underlineColor)
+		std::shared_ptr<Label> setUnderlineColor(const PropertyValue<ColorF>& underlineColor)
 		{
 			m_underlineColor.setPropertyValue(underlineColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -290,9 +302,10 @@ namespace noco
 			return m_sizingMode.propertyValue();
 		}
 
-		void setSizingMode(const PropertyValue<LabelSizingMode>& sizingMode)
+		std::shared_ptr<Label> setSizingMode(const PropertyValue<LabelSizingMode>& sizingMode)
 		{
 			m_sizingMode.setPropertyValue(sizingMode);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]
@@ -301,21 +314,24 @@ namespace noco
 			return m_minFontSize.propertyValue();
 		}
 
-		void setMinFontSize(const PropertyValue<double>& minFontSize)
+		std::shared_ptr<Label> setMinFontSize(const PropertyValue<double>& minFontSize)
 		{
 			m_minFontSize.setPropertyValue(minFontSize);
+			return shared_from_this();
 		}
 
-		void setFont(const Font& font)
+		std::shared_ptr<Label> setFont(const Font& font)
 		{
 			m_fontOpt = font;
 			m_cache.prevParams.reset();
+			return shared_from_this();
 		}
 
-		void clearFont()
+		std::shared_ptr<Label> clearFont()
 		{
 			m_fontOpt.reset();
 			m_cache.prevParams.reset();
+			return shared_from_this();
 		}
 
 		SizeF contentSize() const;

@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	class Placeholder : public SerializableComponentBase
+	class Placeholder : public SerializableComponentBase, public std::enable_shared_from_this<Placeholder>
 	{
 	private:
 		PropertyNonInteractive<String> m_tag;
@@ -23,9 +23,10 @@ namespace noco
 			return m_tag.value();
 		}
 
-		void setTag(StringView tag)
+		std::shared_ptr<Placeholder> setTag(StringView tag)
 		{
 			m_tag.setValue(tag);
+			return shared_from_this();
 		}
 
 		const String& data() const
@@ -33,9 +34,10 @@ namespace noco
 			return m_data.value();
 		}
 
-		void setData(StringView data)
+		std::shared_ptr<Placeholder> setData(StringView data)
 		{
 			m_data.setValue(data);
+			return shared_from_this();
 		}
 	};
 }

@@ -341,7 +341,7 @@ namespace noco
 
 		void removeChildrenAll();
 
-		void setOffset(const Vec2& offset);
+		std::shared_ptr<Canvas> setOffset(const Vec2& offset);
 
 		[[nodiscard]]
 		const Vec2& offset() const
@@ -349,7 +349,7 @@ namespace noco
 			return m_offset;
 		}
 
-		void setScale(const Vec2& scale);
+		std::shared_ptr<Canvas> setScale(const Vec2& scale);
 
 		[[nodiscard]]
 		const Vec2& scale() const
@@ -357,7 +357,7 @@ namespace noco
 			return m_scale;
 		}
 
-		void setOffsetScale(const Vec2& offset, const Vec2& scale);
+		std::shared_ptr<Canvas> setOffsetScale(const Vec2& offset, const Vec2& scale);
 
 		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

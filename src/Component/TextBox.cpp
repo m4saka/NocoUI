@@ -715,7 +715,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
+	std::shared_ptr<TextBox> TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
 		m_text = text;
 		m_cursorIndex = 0;
@@ -725,5 +725,6 @@ namespace noco
 		{
 			m_prevText = text;
 		}
+		return shared_from_this();
 	}
 }

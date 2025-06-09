@@ -5,7 +5,7 @@
 namespace noco
 {
 	template <typename TData>
-	class DataStore : public ComponentBase
+	class DataStore : public ComponentBase, public std::enable_shared_from_this<DataStore<TData>>
 	{
 	private:
 		TData m_value;
@@ -38,14 +38,16 @@ namespace noco
 			return m_value;
 		}
 
-		void setValue(const TData& value)
+		std::shared_ptr<DataStore> setValue(const TData& value)
 		{
 			m_value = value;
+			return this->shared_from_this();
 		}
 
-		void setValue(TData&& data)
+		std::shared_ptr<DataStore> setValue(TData&& data)
 		{
 			m_value = std::move(data);
+			return this->shared_from_this();
 		}
 	};
 }
