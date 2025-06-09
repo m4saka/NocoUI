@@ -13,6 +13,7 @@ namespace noco
 		SmoothProperty<Vec2> m_position;
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
+		Property<bool> m_appliesToHitTest;
 
 	public:
 		TransformEffect(
@@ -22,6 +23,7 @@ namespace noco
 			: m_position{ U"position", position }
 			, m_scale{ U"scale", scale }
 			, m_pivot{ U"pivot", pivot }
+			, m_appliesToHitTest{ U"appliesToHitTest", false }
 		{
 		}
 
@@ -76,11 +78,29 @@ namespace noco
 			m_pivot.setPropertyValue(pivot);
 		}
 
+		[[nodiscard]]
+		const Property<bool>& appliesToHitTest() const
+		{
+			return m_appliesToHitTest;
+		}
+
+		[[nodiscard]]
+		Property<bool>& appliesToHitTest()
+		{
+			return m_appliesToHitTest;
+		}
+
+		void setAppliesToHitTest(const PropertyValue<bool>& value)
+		{
+			m_appliesToHitTest.setPropertyValue(value);
+		}
+
 		void update(InteractionState interactionState, SelectedYN selected, double deltaTime)
 		{
 			m_position.update(interactionState, selected, deltaTime);
 			m_scale.update(interactionState, selected, deltaTime);
 			m_pivot.update(interactionState, selected, deltaTime);
+			m_appliesToHitTest.update(interactionState, selected, deltaTime);
 		}
 
 		[[nodiscard]]
@@ -100,6 +120,7 @@ namespace noco
 			m_position.appendJSON(json);
 			m_scale.appendJSON(json);
 			m_pivot.appendJSON(json);
+			m_appliesToHitTest.appendJSON(json);
 			return json;
 		}
 
@@ -108,6 +129,7 @@ namespace noco
 			m_position.readFromJSON(json);
 			m_scale.readFromJSON(json);
 			m_pivot.readFromJSON(json);
+			m_appliesToHitTest.readFromJSON(json);
 		}
 	};
 }

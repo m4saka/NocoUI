@@ -44,6 +44,7 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_layoutAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ RectF m_effectedRect{ 0.0, 0.0, 0.0, 0.0 };
+		/* NonSerialized */ RectF m_hitTestRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
@@ -300,6 +301,9 @@ namespace noco
 
 		[[nodiscard]]
 		const RectF& rect() const;
+
+		[[nodiscard]]
+		const RectF& hitTestRect() const;
 
 		[[nodiscard]]
 		const Vec2& effectScale() const;

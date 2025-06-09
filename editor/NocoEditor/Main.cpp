@@ -2557,7 +2557,7 @@ public:
 			const EditorSelectedYN editorSelected = element.editorSelected();
 			if (editorSelected)
 			{
-				node->rect().stretched(Thickness / 2).drawFrame(Thickness, Palette::Orange);
+				node->hitTestRect().stretched(Thickness / 2).drawFrame(Thickness, Palette::Orange);
 
 				// 上下左右にリサイズハンドルを表示
 				// TODO: リサイズ可能にする
@@ -2571,7 +2571,7 @@ public:
 
 			if (node == editorHoveredNode)
 			{
-				const auto& rect = node->rect();
+				const auto& rect = node->hitTestRect();
 				rect.draw(ColorF{ 1.0, 0.1 });
 				if (!editorSelected)
 				{
@@ -5358,6 +5358,15 @@ public:
 		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
 		fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
+		
+		const auto fnAddBoolChild =
+			[this, &transformEffectNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
+			{
+				const auto propertyNode = transformEffectNode->addChild(createBoolPropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
+			};
+		fnAddBoolChild(U"appliesToHitTest", &pTransformEffect->appliesToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setAppliesToHitTest(value); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 

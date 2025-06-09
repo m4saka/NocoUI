@@ -918,13 +918,15 @@ namespace noco
 			return nullptr;
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const RectF hitTestRect{
-			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
-			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
-			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
-			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+		const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
+		// 回転なしの場合の矩形判定
+		const RectF hitTestRectWithPadding{
+			m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+			m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+			m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
 		};
-		const bool hit = hitTestRect.contains(point);
+		const bool hit = hitTestRectWithPadding.contains(point);
 		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
@@ -956,13 +958,15 @@ namespace noco
 			return nullptr;
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const RectF hitTestRect{
-			m_effectedRect.x - m_hitTestPadding.left * m_effectScale.x,
-			m_effectedRect.y - m_hitTestPadding.top * m_effectScale.y,
-			m_effectedRect.w + m_hitTestPadding.totalWidth() * m_effectScale.x,
-			m_effectedRect.h + m_hitTestPadding.totalHeight() * m_effectScale.y
+		const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
+		// 回転なしの場合の矩形判定
+		const RectF hitTestRectWithPadding{
+			m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
+			m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
+			m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
+			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
 		};
-		const bool hit = hitTestRect.contains(point);
+		const bool hit = hitTestRectWithPadding.contains(point);
 		if (m_clippingEnabled && !m_effectedRect.contains(point))
 		{
 			return nullptr;
@@ -1214,6 +1218,20 @@ namespace noco
 		const Vec2 posRightBottom = effectMat.transformPoint(m_layoutAppliedRect.br());
 		m_effectedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
 		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
+		
+		// HitTest用の矩形を計算
+		// appliesToHitTestの値に応じてeffectMatを構築
+		Mat3x2 hitTestEffectMat = parentEffectMat;
+		
+		if (m_transformEffect.appliesToHitTest().value())
+		{
+			// TransformEffectを適用
+			hitTestEffectMat = effectMat;
+		}
+		
+		const Vec2 hitTestPosLeftTop = hitTestEffectMat.transformPoint(m_layoutAppliedRect.pos);
+		const Vec2 hitTestPosRightBottom = hitTestEffectMat.transformPoint(m_layoutAppliedRect.br());
+		m_hitTestRect = RectF{ hitTestPosLeftTop, hitTestPosRightBottom - hitTestPosLeftTop };
 		for (const auto& child : m_children)
 		{
 			child->refreshEffectedRect(effectMat, m_effectScale);
@@ -1449,6 +1467,11 @@ namespace noco
 	const RectF& Node::rect() const
 	{
 		return m_effectedRect;
+	}
+
+	const RectF& Node::hitTestRect() const
+	{
+		return m_hitTestRect;
 	}
 
 	const Vec2& Node::effectScale() const
