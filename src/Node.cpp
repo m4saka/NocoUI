@@ -1153,7 +1153,7 @@ namespace noco
 		if (m_activeInHierarchy)
 		{
 			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
-			refreshEffectedRect(parentPosScaleMat, parentEffectScale, m_parentRotation + m_transformEffect.rotation().value());
+			if (m_parent.expired()) refreshEffectedRect(parentPosScaleMat, parentEffectScale, m_parentRotation + m_transformEffect.rotation().value());
 		}
 
 		// ホバー中はスクロールバーを表示
@@ -1275,9 +1275,42 @@ namespace noco
 
 		// 親の回転と自身の回転を合算して子に伝播
 		const double totalRotation = parentRotation + m_transformEffect.rotation().value();
-		for (const auto& child : m_children)
+		
+		// 自身の回転による子の位置変換を計算
+		Mat3x2 childPosScaleMat = posScaleMat;
+		if (m_transformEffect.rotation().value() != 0.0)
 		{
-			child->refreshEffectedRect(posScaleMat, m_effectScale, totalRotation);
+			// 自身のピボット位置を計算
+			const Vec2 myPivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * m_transformEffect.pivot().value();
+			// 自身のピボット位置を親の座標系に変換
+			const Vec2 myPivotPosInParent = posScaleMat.transformPoint(myPivotPos);
+			
+			// 子のピボット位置を基準とした回転変換を追加
+			for (const auto& child : m_children)
+			{
+				// 子のピボット位置を計算
+				const Vec2 childPivot = child->m_transformEffect.pivot().value();
+				const Vec2 childPivotPos = child->m_layoutAppliedRect.pos + child->m_layoutAppliedRect.size * childPivot;
+				
+				// 子のピボット位置を自身の座標系で取得し、親座標系に変換
+				const Vec2 childPivotPosInParent = posScaleMat.transformPoint(childPivotPos);
+				
+				// 自身のピボット中心での回転による子のピボット位置の移動を計算
+				const Vec2 rotatedChildPivotPos = Mat3x2::Rotate(Math::ToRadians(m_transformEffect.rotation().value()), myPivotPosInParent).transformPoint(childPivotPosInParent);
+				const Vec2 rotationOffset = rotatedChildPivotPos - childPivotPosInParent;
+				
+				// 回転による位置変化を含む行列を作成
+				const Mat3x2 childSpecificPosScaleMat = posScaleMat.translated(rotationOffset);
+				child->refreshEffectedRect(childSpecificPosScaleMat, m_effectScale, totalRotation);
+			}
+		}
+		else
+		{
+			// 回転がない場合は通常通り
+			for (const auto& child : m_children)
+			{
+				child->refreshEffectedRect(posScaleMat, m_effectScale, totalRotation);
+			}
 		}
 	}
 
