@@ -930,7 +930,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltipDetail = U"無効にすると、この要素はヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)の対象外となり、親要素のInteractionStateを受け継ぎます\n※無効の場合、ヒットテストでは要素の存在自体が無視されるため、背面にある要素にホバーが可能となります\n※無効の場合、TextBox等のマウス操作を利用するコンポーネントも入力を受け付けなくなります",
 	};
 	metadata[PropertyKey{ U"Node", U"hitTestPadding" }] = PropertyMetadata{
-		.tooltip = U"ヒットテスト領域の拡縮",
+		.tooltip = U"ヒットテスト領域の拡縮 (左、右、上、下)",
 		.tooltipDetail = U"ヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)に使用する領域を、指定されたピクセル数だけ拡大・縮小します\n正の値で領域を拡大、負の値で領域を縮小します\n実際の見た目よりもずれた位置にマウスカーソルがあっても反応させたい場合に使用できます",
 	};
 	metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
@@ -3482,14 +3482,16 @@ public:
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 		const auto textBoxNode = propertyNode->emplaceChild(
 			U"TextBox",
 			BoxConstraint
@@ -3534,14 +3536,16 @@ public:
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 		const auto textAreaNode = propertyNode->emplaceChild(
 			U"TextArea",
 			BoxConstraint
@@ -3621,14 +3625,16 @@ public:
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
@@ -3757,14 +3763,16 @@ public:
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto textBoxParentNode = propertyNode->emplaceChild(
 			U"TextBoxParent",
@@ -3939,19 +3947,21 @@ public:
 					.flexibleWeight = 0.85,
 				});
 		line1LabelNode->emplaceComponent<Label>(
-			U"{} (left, right)"_fmt(name),
+			U"{} (L, R)"_fmt(name),
 			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto line1TextBoxParentNode = line1->emplaceChild(
 			U"TextBoxParent",
@@ -4012,19 +4022,21 @@ public:
 					.flexibleWeight = 0.85,
 				});
 		line2LabelNode->emplaceComponent<Label>(
-			U"{} (top, bottom)"_fmt(name),
+			U"{} (T, B)"_fmt(name),
 			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto line2TextBoxParentNode = line2->emplaceChild(
 			U"TextBoxParent",
@@ -4165,7 +4177,9 @@ public:
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto rowNode = propertyNode->emplaceChild(
 			U"ColorPropertyRow",
@@ -4393,7 +4407,9 @@ public:
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto comboBoxNode = propertyNode->emplaceChild(
 			U"ComboBox",
@@ -4600,14 +4616,16 @@ public:
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
-			VerticalAlign::Top,
+			VerticalAlign::Middle,
 			LRTB{ 5, 5, 5, 5 },
 			HorizontalOverflow::Overflow,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
 			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 			ColorF{ Palette::Yellow, 0.5 },
-			2.0);
+			2.0,
+			LabelSizingMode::ShrinkToFit,
+			8.0);
 
 		const auto checkboxParentNode = propertyNode->emplaceChild(
 			U"CheckboxParent",
@@ -4972,8 +4990,8 @@ public:
 			fnAddVec2Child(U"sizeRatio", pBoxConstraint->sizeRatio, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeRatio = value; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"sizeDelta", pBoxConstraint->sizeDelta, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeDelta = value; node->setConstraint(newConstraint); });
 			fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { auto newConstraint = *node->boxConstraint(); newConstraint.flexibleWeight = value; node->setConstraint(newConstraint); });
-			fnAddVec2Child(U"margin (left, right)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
-			fnAddVec2Child(U"margin (top, bottom)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
+			fnAddVec2Child(U"margin (L, R)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
+			fnAddVec2Child(U"margin (T, B)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
 		}
 		else if (const auto pAnchorConstraint = node->anchorConstraint())
 		{
