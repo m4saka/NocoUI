@@ -1153,8 +1153,7 @@ namespace noco
 		if (m_activeInHierarchy)
 		{
 			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
-			// 自身のrefreshEffectedRectを呼び出す(親から変換行列を受け取る)
-			refreshEffectedRect(parentPosScaleMat, parentEffectScale, m_parentRotation);
+			refreshEffectedRect(parentPosScaleMat, parentEffectScale, m_parentRotation, RecursiveYN::No);
 		}
 
 		// ホバー中はスクロールバーを表示
@@ -1289,7 +1288,7 @@ namespace noco
 		}
 	}
 
-	void Node::refreshEffectedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation)
+	void Node::refreshEffectedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, RecursiveYN recursive)
 	{
 		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
 		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
@@ -1306,7 +1305,13 @@ namespace noco
 		const Vec2 hitTestPosRightBottom = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.br());
 		m_hitTestRect = RectF{ hitTestPosLeftTop, hitTestPosRightBottom - hitTestPosLeftTop };
 
-		// 子ノードへの再帰呼び出しは削除(updateメソッド内で各ノードが自分でrefreshEffectedRectを呼ぶため)
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->refreshEffectedRect(posScaleMat, m_effectScale, m_parentRotation, RecursiveYN::Yes);
+			}
+		}
 	}
 
 	void Node::scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout)

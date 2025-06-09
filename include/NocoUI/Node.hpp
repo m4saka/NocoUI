@@ -279,7 +279,7 @@ namespace noco
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshEffectedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation);
+		void refreshEffectedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, RecursiveYN recursive);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
