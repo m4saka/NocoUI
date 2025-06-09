@@ -46,6 +46,7 @@ namespace noco
 		/* NonSerialized */ RectF m_effectedRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ RectF m_hitTestRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
+		/* NonSerialized */ double m_parentRotation{ 0.0 }; // 親からの累積回転(度)
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
@@ -278,7 +279,7 @@ namespace noco
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale);
+		void refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, double parentRotation);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

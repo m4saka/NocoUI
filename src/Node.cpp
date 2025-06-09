@@ -1153,7 +1153,7 @@ namespace noco
 		if (m_activeInHierarchy)
 		{
 			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
-			refreshEffectedRect(parentEffectMat, parentEffectScale);
+			refreshEffectedRect(parentEffectMat, parentEffectScale, m_parentRotation + m_transformEffect.rotation().value());
 		}
 
 		// ホバー中はスクロールバーを表示
@@ -1256,7 +1256,7 @@ namespace noco
 		}
 	}
 
-	void Node::refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale)
+	void Node::refreshEffectedRect(const Mat3x2& parentEffectMat, const Vec2& parentEffectScale, double parentRotation)
 	{
 		const Mat3x2 effectMat = m_transformEffect.effectMat(parentEffectMat, m_layoutAppliedRect);
 		const Vec2 posLeftTop = effectMat.transformPoint(m_layoutAppliedRect.pos);
@@ -1264,22 +1264,20 @@ namespace noco
 		m_effectedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
 		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
 		
+		// 親の回転を保存
+		m_parentRotation = parentRotation;
+		
 		// HitTest用の矩形を計算
-		// appliesToHitTestの値に応じてeffectMatを構築
-		Mat3x2 hitTestEffectMat = parentEffectMat;
-		
-		if (m_transformEffect.appliesToHitTest().value())
-		{
-			// TransformEffectを適用
-			hitTestEffectMat = effectMat;
-		}
-		
+		const Mat3x2 hitTestEffectMat = m_transformEffect.appliesToHitTest().value() ? parentEffectMat : effectMat;
 		const Vec2 hitTestPosLeftTop = hitTestEffectMat.transformPoint(m_layoutAppliedRect.pos);
 		const Vec2 hitTestPosRightBottom = hitTestEffectMat.transformPoint(m_layoutAppliedRect.br());
 		m_hitTestRect = RectF{ hitTestPosLeftTop, hitTestPosRightBottom - hitTestPosLeftTop };
+
+		// 親の回転と自身の回転を合算して子に伝播
+		const double totalRotation = parentRotation + m_transformEffect.rotation().value();
 		for (const auto& child : m_children)
 		{
-			child->refreshEffectedRect(effectMat, m_effectScale);
+			child->refreshEffectedRect(effectMat, m_effectScale, totalRotation);
 		}
 	}
 
@@ -1534,12 +1532,7 @@ namespace noco
 
 	Quad Node::rotatedHitTestQuad() const
 	{
-		if (!m_transformEffect.appliesToHitTest().value())
-		{
-			return m_hitTestRect.asQuad();
-		}
-		
-		const double rad = rotationRadians();
+		const double rad = hitTestRotationRadians();
 		if (Abs(rad) < 1e-6)
 		{
 			return m_hitTestRect.asQuad();
@@ -1552,7 +1545,7 @@ namespace noco
 
 	double Node::rotation() const
 	{
-		return m_transformEffect.rotation().value();
+		return m_parentRotation + m_transformEffect.rotation().value();
 	}
 
 	double Node::rotationRadians() const
@@ -1564,7 +1557,7 @@ namespace noco
 	{
 		if (!m_transformEffect.appliesToHitTest().value())
 		{
-			return 0.0;
+			return m_parentRotation;
 		}
 		return rotation();
 	}
@@ -1573,7 +1566,7 @@ namespace noco
 	{
 		if (!m_transformEffect.appliesToHitTest().value())
 		{
-			return 0.0;
+			return Math::ToRadians(m_parentRotation);
 		}
 		return Math::ToRadians(rotation());
 	}

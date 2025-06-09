@@ -162,7 +162,7 @@ namespace noco
 		}
 
 		m_rootNode->refreshBoxChildrenLayout();
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale, 0.0);
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
@@ -277,20 +277,20 @@ namespace noco
 	void Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale, 0.0);
 	}
 	
 	void Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale, 0.0);
 	}
 	
 	void Canvas::setOffsetScale(const Vec2& offset, const Vec2& scale)
 	{
 		m_offset = offset;
 		m_scale = scale;
-		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale);
+		m_rootNode->refreshEffectedRect(rootEffectMat(), m_scale, 0.0);
 	}
 	
 	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)
