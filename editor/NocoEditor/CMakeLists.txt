@@ -27,6 +27,8 @@ target_link_libraries(NocoEditor PUBLIC Siv3D::Siv3D)
 
 target_compile_features(NocoEditor PRIVATE cxx_std_20)
 
+target_compile_definitions(NocoEditor PRIVATE NOCO_EDITOR)
+
 if(BUILD_TESTING)
 enable_testing()
 add_test(

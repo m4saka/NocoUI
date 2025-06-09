@@ -24,6 +24,8 @@ namespace noco
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
+		void drawNineSlice(const Texture& texture, const RectF& rect, const Vec2& effectScale, const ColorF& color) const;
+
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
 			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback } }
@@ -197,8 +199,5 @@ namespace noco
 		{
 			m_textureOpt.reset();
 		}
-
-	private:
-		void drawNineSlice(const Texture& texture, const RectF& rect, const Vec2& effectScale, const ColorF& color) const;
 	};
 }

@@ -13,18 +13,21 @@ namespace noco
 
 		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
 		{
-			if (!textureAssetName.empty() && TextureAsset::IsRegistered(textureAssetName))
+#ifdef NOCO_EDITOR
+			// エディタでは除外
+			(void)textureAssetName;
+#else
+			// 気付かないうちにファイルパスが使われるのを避けるため、TextureAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
+			if (!textureAssetName.empty())
 			{
 				return TextureAsset(textureAssetName);
 			}
-			else if (!textureFilePath.empty())
+#endif // NOCO_EDITOR
+			if (!textureFilePath.empty())
 			{
 				return noco::Asset::GetOrLoadTexture(textureFilePath);
 			}
-			else
-			{
-				return Texture{};
-			}
+			return Texture{};
 		}
 	}
 
