@@ -1194,11 +1194,11 @@ namespace noco
 					const Vec2 childPivotPos = child->m_layoutAppliedRect.pos + child->m_layoutAppliedRect.size * childPivot;
 					
 					// 子のピボット位置を自身の座標系で取得し、親座標系に変換
-					const Vec2 childPivotPosInParent = posScaleMat.transformPoint(childPivotPos);
+					// childPivotPosは既に親座標系なので変換不要
 					
 					// 自身のピボット中心での回転による子のピボット位置の移動を計算
-					const Vec2 rotatedChildPivotPos = Mat3x2::Rotate(Math::ToRadians(m_transformEffect.rotation().value()), myPivotPosInParent).transformPoint(childPivotPosInParent);
-					const Vec2 rotationOffset = rotatedChildPivotPos - childPivotPosInParent;
+					const Vec2 rotatedChildPivotPos = Mat3x2::Rotate(Math::ToRadians(m_transformEffect.rotation().value()), myPivotPosInParent).transformPoint(childPivotPos);
+					const Vec2 rotationOffset = rotatedChildPivotPos - childPivotPos;
 					
 					// 回転による位置変化を含む行列を作成
 					const Mat3x2 childSpecificPosScaleMat = posScaleMat.translated(rotationOffset);
