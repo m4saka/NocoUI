@@ -16,7 +16,7 @@ namespace noco
 		switch (triggerType)
 		{
 		case EventTriggerType::Click:
-			if (recursive ? node->isClickedRecursive() : node->isClicked())
+			if (node->isClicked(RecursiveYN{ recursive }))
 			{
 				canvas->fireEvent({ .triggerType = EventTriggerType::Click, .tag = m_tag.value(), .sourceNode = node });
 			}
@@ -29,7 +29,7 @@ namespace noco
 			break;
 
 		case EventTriggerType::RightClick:
-			if (recursive ? node->isRightClickedRecursive() : node->isRightClicked())
+			if (node->isRightClicked(RecursiveYN{ recursive }))
 			{
 				canvas->fireEvent({ .triggerType = EventTriggerType::RightClick, .tag = m_tag.value(), .sourceNode = node });
 			}
@@ -44,7 +44,7 @@ namespace noco
 		case EventTriggerType::HoverStart:
 			if (recursive)
 			{
-				if (node->isHoveredRecursive())
+				if (node->isHovered(RecursiveYN::Yes))
 				{
 					if (m_prevHoveredRecursive.has_value() && !m_prevHoveredRecursive.value())
 					{
@@ -87,7 +87,7 @@ namespace noco
 		case EventTriggerType::HoverEnd:
 			if (recursive)
 			{
-				if (!node->isHoveredRecursive())
+				if (!node->isHovered(RecursiveYN::Yes))
 				{
 					if (m_prevHoveredRecursive.has_value() && m_prevHoveredRecursive.value())
 					{
@@ -130,7 +130,7 @@ namespace noco
 		case EventTriggerType::PressStart:
 			if (recursive)
 			{
-				if (node->isPressedRecursive())
+				if (node->isPressed(RecursiveYN::Yes))
 				{
 					if (m_prevPressedRecursive.has_value() && !m_prevPressedRecursive.value())
 					{
@@ -173,7 +173,7 @@ namespace noco
 		case EventTriggerType::PressEnd:
 			if (recursive)
 			{
-				if (!node->isPressedRecursive())
+				if (!node->isPressed(RecursiveYN::Yes))
 				{
 					if (m_prevPressedRecursive.has_value() && m_prevPressedRecursive.value())
 					{
@@ -216,7 +216,7 @@ namespace noco
 		case EventTriggerType::RightPressStart:
 			if (recursive)
 			{
-				if (node->isRightPressedRecursive())
+				if (node->isRightPressed(RecursiveYN::Yes))
 				{
 					if (m_prevRightPressedRecursive.has_value() && !m_prevRightPressedRecursive.value())
 					{
@@ -259,7 +259,7 @@ namespace noco
 		case EventTriggerType::RightPressEnd:
 			if (recursive)
 			{
-				if (!node->isRightPressedRecursive())
+				if (!node->isRightPressed(RecursiveYN::Yes))
 				{
 					if (m_prevRightPressedRecursive.has_value() && m_prevRightPressedRecursive.value())
 					{

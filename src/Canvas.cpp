@@ -120,7 +120,7 @@ namespace noco
 		{
 			canvas->refreshLayout();
 		}
-		rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No);
+		rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No);
 		if (refreshesLayoutPost)
 		{
 			canvas->refreshLayout();
@@ -186,7 +186,7 @@ namespace noco
 		{
 			refreshLayout();
 		}
-		m_rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
 		if (refreshesLayoutPost)
 		{
 			refreshLayout();
@@ -282,7 +282,7 @@ namespace noco
 	
 	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)
 	{
-		m_rootNode->resetScrollOffsetRecursive(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
 		if (refreshesLayout)
 		{
 			refreshLayout();

@@ -223,22 +223,12 @@ namespace noco
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponent() const
+		std::shared_ptr<TComponent> getComponent(RecursiveYN recursive = RecursiveYN::No) const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentOrNull() const
-			requires std::derived_from<TComponent, ComponentBase>;
-
-		template <class TComponent>
-		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentRecursive() const
-			requires std::derived_from<TComponent, ComponentBase>;
-
-		template <class TComponent>
-		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentRecursiveOrNull() const
+		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		[[nodiscard]]
@@ -286,9 +276,7 @@ namespace noco
 
 		Vec2 scrollOffset() const;
 
-		void resetScrollOffset(RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
-
-		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void draw() const;
 
@@ -405,70 +393,37 @@ namespace noco
 		void setSelected(bool selected);
 
 		[[nodiscard]]
-		bool isHovered(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isHoveredRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressed(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedHover(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedHoverRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isMouseDown(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isMouseDownRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClicked(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClickedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		[[nodiscard]]
-		bool isClickRequested(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isClickRequestedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightPressed(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightPressedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightPressedHover(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightPressedHoverRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightMouseDown(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightMouseDownRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightClicked(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightClickedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightClickRequested(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
-
-		[[nodiscard]]
-		bool isRightClickRequestedRecursive(IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
 		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -596,7 +551,29 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponent() const
+	std::shared_ptr<TComponent> Node::getComponent(RecursiveYN recursive) const
+		requires std::derived_from<TComponent, ComponentBase>
+	{
+		if (const auto component = getComponentOrNull<TComponent>(RecursiveYN::No))
+		{
+			return component;
+		}
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (const auto component = child->getComponent<TComponent>(RecursiveYN::Yes))
+				{
+					return component;
+				}
+			}
+		}
+		throw Error{ U"Component not found in node '{}'"_fmt(m_name) };
+	}
+
+	template <class TComponent>
+	[[nodiscard]]
+	std::shared_ptr<TComponent> Node::getComponentOrNull(RecursiveYN recursive) const
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		for (const auto& component : m_components)
@@ -606,61 +583,19 @@ namespace noco
 				return concreteComponent;
 			}
 		}
-		throw Error{ U"Component not found in node '{}'"_fmt(m_name) };
-	}
-
-	template <class TComponent>
-	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentOrNull() const
-		requires std::derived_from<TComponent, ComponentBase>
-	{
-		for (const auto& component : m_components)
+		if (recursive)
 		{
-			if (auto concreteComponent = std::dynamic_pointer_cast<TComponent>(component))
+			for (const auto& child : m_children)
 			{
-				return concreteComponent;
+				if (const auto component = child->getComponentOrNull<TComponent>(RecursiveYN::Yes))
+				{
+					return component;
+				}
 			}
 		}
 		return nullptr;
 	}
 
-	template <class TComponent>
-	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentRecursive() const
-		requires std::derived_from<TComponent, ComponentBase>
-	{
-		if (const auto component = getComponentOrNull<TComponent>())
-		{
-			return component;
-		}
-		for (const auto& child : m_children)
-		{
-			if (const auto component = child->getComponentRecursive<TComponent>())
-			{
-				return component;
-			}
-		}
-		throw Error{ U"Component not found in node '{}'"_fmt(m_name) };
-	}
-
-	template <class TComponent>
-	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentRecursiveOrNull() const
-		requires std::derived_from<TComponent, ComponentBase>
-	{
-		if (const auto component = getComponentOrNull<TComponent>())
-		{
-			return component;
-		}
-		for (const auto& child : m_children)
-		{
-			if (const auto component = child->getComponentRecursiveOrNull<TComponent>())
-			{
-				return component;
-			}
-		}
-		return nullptr;
-	}
 
 	template <class Fty>
 	void Node::walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive) const
@@ -711,7 +646,7 @@ namespace noco
 	template<typename TData>
 	void Node::storeData(const TData& value)
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
 		{
 			dataStore->setValue(value);
 		}
@@ -724,7 +659,7 @@ namespace noco
 	template<typename TData>
 	const TData& Node::getStoredData() const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}
@@ -737,7 +672,7 @@ namespace noco
 	template<typename TData>
 	Optional<TData> Node::getStoredDataOpt() const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}
@@ -750,7 +685,7 @@ namespace noco
 	template<typename TData>
 	TData Node::getStoredDataOr(const TData& defaultValue) const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>())
+		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}

@@ -316,7 +316,7 @@ public:
 			}
 		}
 
-		if (!m_rootNode->isHoveredRecursive() && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
+		if (!m_rootNode->isHovered(RecursiveYN::Yes) && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
 		{
 			// メニュー外クリックで閉じる
 			// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
@@ -338,7 +338,7 @@ public:
 	[[nodiscard]]
 	bool isHoveredRecursive() const
 	{
-		return m_rootNode->isHoveredRecursive();
+		return m_rootNode->isHovered(RecursiveYN::Yes);
 	}
 };
 
@@ -362,7 +362,7 @@ public:
 
 	void update(const std::shared_ptr<Node>& node) override
 	{
-		if (m_recursive ? node->isRightClickedRecursive() : node->isRightClicked())
+		if (node->isRightClicked(RecursiveYN{ m_recursive }))
 		{
 			openManually();
 		}
@@ -533,7 +533,7 @@ public:
 		}
 		
 		// Disabled時も含むホバー判定を使用
-		const bool isHovered = node->isHoveredRecursive(IncludingDisabledYN::Yes);
+		const bool isHovered = node->isHovered(RecursiveYN::Yes, IncludingDisabledYN::Yes);
 		
 		if (isHovered)
 		{
@@ -682,7 +682,7 @@ public:
 					hasMenuOpened = true;
 				}
 			}
-			else if (menuCategory.node->isHoveredRecursive() && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
+			else if (menuCategory.node->isHovered(RecursiveYN::Yes) && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
 			{
 				// カーソルが他のメニューに移動した場合はサブメニューを切り替える
 				m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
@@ -3048,7 +3048,7 @@ public:
 		setTargetNode(m_targetNode.lock());
 		if (preserveScroll)
 		{
-			m_inspectorRootNode->resetScrollOffset(RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+			m_inspectorRootNode->resetScrollOffset(RecursiveYN::No, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
 			m_inspectorRootNode->scroll(Vec2{ 0, scrollY }, RefreshesLayoutYN::No);
 		}
 		m_editorCanvas->refreshLayout();
