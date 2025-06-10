@@ -305,6 +305,7 @@ namespace noco
 		Vec2 m_offset = Vec2::Zero();
 		Vec2 m_scale = Vec2::One();
 		EventRegistry m_eventRegistry;
+		bool m_prevDragScrollingWithThresholdExceeded = false;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;

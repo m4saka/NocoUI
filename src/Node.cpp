@@ -5,7 +5,7 @@
 
 namespace noco
 {
-	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
+	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
 		InteractionState inheritedInteractionState = InteractionState::Default;
@@ -14,7 +14,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable);
+				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable, isAncestorScrolling);
 				if (interactable)
 				{
 					if (!inheritsChildrenPressedState() && childInteractionState == InteractionState::Pressed)
@@ -36,7 +36,7 @@ namespace noco
 		const bool onClientRect = Cursor::OnClientRect();
 		const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
 		const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
-		m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed);
+		m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 		
 		if (interactable)
 		{
@@ -48,7 +48,7 @@ namespace noco
 		}
 	}
 
-	InteractionState Node::updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable)
+	InteractionState Node::updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
 	{
 		const InteractableYN interactable{ m_interactable && parentInteractable };
 		InteractionState inheritedInteractionState = InteractionState::Default;
@@ -57,7 +57,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable);
+				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable, isAncestorScrolling);
 				if (interactable)
 				{
 					if (!inheritsChildrenPressedState() && childInteractionState == InteractionState::Pressed)
@@ -81,7 +81,7 @@ namespace noco
 			const bool onClientRect = Cursor::OnClientRect();
 			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHoveredState() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
 			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPressedState() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
-			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed);
+			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 			return ApplyOtherInteractionState(m_mouseRTracker.interactionStateSelf(), inheritedInteractionState);
 		}
 		else
@@ -1034,7 +1034,7 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight)
+	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling)
 	{
 		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
@@ -1045,8 +1045,8 @@ namespace noco
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
-		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable);
-		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable);
+		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling);
+		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling);
 		if (!m_isHitTarget)
 		{
 			// HitTargetでない場合は親のinteractionStateを引き継ぐ
@@ -1060,7 +1060,7 @@ namespace noco
 			const InteractableYN interactable{ m_interactable && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight);
+				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling);
 			}
 		}
 	}

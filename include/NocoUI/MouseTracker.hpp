@@ -24,7 +24,7 @@ namespace noco
 		}
 
 		// 1フレームに複数回呼び出した場合、最初の呼び出しのみ実行される
-		void update(bool mouseOverForHovered, bool mouseOverForPressed)
+		void update(bool mouseOverForHovered, bool mouseOverForPressed, IsScrollingYN isScrolling = IsScrollingYN::No)
 		{
 			const int32 currentFrame = Scene::FrameCount();
 			if (currentFrame == m_lastUpdateFrame)
@@ -53,9 +53,9 @@ namespace noco
 
 			if (m_input.up())
 			{
-				if (m_isPressed && m_mouseOverForPressed)
+				if (m_isPressed && m_mouseOverForPressed && !isScrolling)
 				{
-					// 領域内でクリック終了
+					// 領域内でクリック終了(スクロール中でない場合のみ)
 					m_isClicked = true;
 				}
 				m_isPressed = false;

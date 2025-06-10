@@ -243,7 +243,7 @@ namespace noco
 				const Vec2 dragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
 				
 				// ドラッグ閾値の判定
-				constexpr double DragThreshold = 3.0;
+				constexpr double DragThreshold = 4.0;
 				if (!dragScrollingNode->m_dragThresholdExceeded)
 				{
 					if (dragDelta.length() >= DragThreshold)
@@ -301,7 +301,9 @@ namespace noco
 		}
 
 		// ノード更新
-		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default);
+		const bool currentDragScrollingWithThreshold = dragScrollingNode && dragScrollingNode->m_dragThresholdExceeded;
+		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
+		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
 		m_rootNode->updateInput();
 		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale);
 		m_rootNode->lateUpdate();
@@ -318,6 +320,9 @@ namespace noco
 			scrollableHoveredNode->m_dragThresholdExceeded = false; // 閾値フラグを初期化
 			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
 		}
+		
+		// 前フレームの状態を更新
+		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
 	}
 	
 	void Canvas::draw() const
