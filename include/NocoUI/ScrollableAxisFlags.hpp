@@ -10,6 +10,14 @@ namespace noco
 		Horizontal = 1 << 0,
 		Vertical = 1 << 1,
 	};
+	
+	// スクロール方法を示すビットフラグ
+	enum class ScrollMethodFlags : uint8
+	{
+		None = 0,
+		Wheel = 1 << 0,
+		Drag = 1 << 1,
+	};
 
 	constexpr ScrollableAxisFlags operator|(ScrollableAxisFlags lhs, ScrollableAxisFlags rhs)
 	{
@@ -43,6 +51,42 @@ namespace noco
 
 	[[nodiscard]]
 	constexpr bool HasFlag(ScrollableAxisFlags flags, ScrollableAxisFlags flag)
+	{
+		return (flags & flag) == flag;
+	}
+	
+	constexpr ScrollMethodFlags operator|(ScrollMethodFlags lhs, ScrollMethodFlags rhs)
+	{
+		using UnderlyingType = std::underlying_type_t<ScrollMethodFlags>;
+		return static_cast<ScrollMethodFlags>(static_cast<UnderlyingType>(lhs) | static_cast<UnderlyingType>(rhs));
+	}
+
+	constexpr ScrollMethodFlags operator&(ScrollMethodFlags lhs, ScrollMethodFlags rhs)
+	{
+		using UnderlyingType = std::underlying_type_t<ScrollMethodFlags>;
+		return static_cast<ScrollMethodFlags>(static_cast<UnderlyingType>(lhs) & static_cast<UnderlyingType>(rhs));
+	}
+
+	constexpr ScrollMethodFlags operator~(ScrollMethodFlags flags)
+	{
+		using UnderlyingType = std::underlying_type_t<ScrollMethodFlags>;
+		return static_cast<ScrollMethodFlags>(~static_cast<UnderlyingType>(flags));
+	}
+
+	constexpr ScrollMethodFlags operator|=(ScrollMethodFlags& lhs, ScrollMethodFlags rhs)
+	{
+		lhs = lhs | rhs;
+		return lhs;
+	}
+
+	constexpr ScrollMethodFlags operator&=(ScrollMethodFlags& lhs, ScrollMethodFlags rhs)
+	{
+		lhs = lhs & rhs;
+		return lhs;
+	}
+
+	[[nodiscard]]
+	constexpr bool HasFlag(ScrollMethodFlags flags, ScrollMethodFlags flag)
 	{
 		return (flags & flag) == flag;
 	}

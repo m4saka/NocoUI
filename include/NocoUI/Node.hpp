@@ -37,6 +37,7 @@ namespace noco
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
 		InteractableYN m_interactable = InteractableYN::Yes;
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
+		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		ActiveYN m_activeSelf = ActiveYN::Yes;
 
@@ -60,6 +61,8 @@ namespace noco
 		/* NonSerialized */ bool m_prevRightClickRequested = false;
 		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
+		/* NonSerialized */ Optional<Vec2> m_dragStartPos; // ドラッグ開始位置
+		/* NonSerialized */ Vec2 m_dragStartScrollOffset; // ドラッグ開始時のスクロールオフセット
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
@@ -373,6 +376,21 @@ namespace noco
 		bool verticalScrollable() const;
 
 		std::shared_ptr<Node> setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		[[nodiscard]]
+		ScrollMethodFlags scrollMethodFlags() const;
+		
+		std::shared_ptr<Node> setScrollMethodFlags(ScrollMethodFlags flags);
+		
+		[[nodiscard]]
+		bool wheelScrollEnabled() const;
+		
+		std::shared_ptr<Node> setWheelScrollEnabled(bool enabled);
+		
+		[[nodiscard]]
+		bool dragScrollEnabled() const;
+		
+		std::shared_ptr<Node> setDragScrollEnabled(bool enabled);
 
 		[[nodiscard]]
 		ClippingEnabledYN clippingEnabled() const;

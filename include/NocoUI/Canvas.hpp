@@ -14,6 +14,9 @@ namespace noco
 		std::weak_ptr<ITextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
 
+		// フレーム間で引き継ぐためresetしない
+		std::weak_ptr<Node> dragScrollingNode;
+
 		void clearBeforeUpdateInput()
 		{
 			inputBlocked = false;

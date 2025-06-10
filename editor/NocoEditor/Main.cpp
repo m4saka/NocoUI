@@ -958,6 +958,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"Node", U"verticalScrollable" }] = PropertyMetadata{
 		.tooltip = U"垂直方向のスクロール可能",
 	};
+	metadata[PropertyKey{ U"Node", U"wheelScrollEnabled" }] = PropertyMetadata{
+		.tooltip = U"ホイールスクロールの有効/無効",
+		.tooltipDetail = U"有効にすると、マウスホイールでスクロールできます",
+	};
+	metadata[PropertyKey{ U"Node", U"dragScrollEnabled" }] = PropertyMetadata{
+		.tooltip = U"ドラッグスクロールの有効/無効",
+		.tooltipDetail = U"有効にすると、ドラッグ操作でスクロールできます",
+	};
 	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 		.tooltip = U"クリッピングの有効/無効",
 		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",
@@ -4824,6 +4832,8 @@ public:
 		fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });
 		fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
 		fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
+		fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [node](bool value) { node->setWheelScrollEnabled(value); });
+		fnAddBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [node](bool value) { node->setDragScrollEnabled(value); });
 		fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 
 		nodeSettingNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);

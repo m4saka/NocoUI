@@ -215,8 +215,8 @@ namespace noco
 			scrollableHoveredNode = nullptr;
 		}
 
-		// スクロール実行
-		if (scrollableHoveredNode)
+		// ホイールスクロール実行
+		if (scrollableHoveredNode && scrollableHoveredNode->wheelScrollEnabled())
 		{
 			const double wheel = Mouse::Wheel();
 			const double wheelH = Mouse::WheelH();
@@ -224,6 +224,40 @@ namespace noco
 			{
 				scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
 			}
+		}
+		
+		// ドラッグスクロール中の処理
+		const auto dragScrollingNode = detail::s_canvasUpdateContext.dragScrollingNode.lock();
+		if (dragScrollingNode && dragScrollingNode->dragScrollEnabled() && MouseL.pressed())
+		{
+			if (dragScrollingNode->m_dragStartPos)
+			{
+				const Vec2 dragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
+				const Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
+				
+				// スクロール方向の制限
+				Vec2 scrollDelta = newScrollOffset - dragScrollingNode->scrollOffset();
+				if (!dragScrollingNode->horizontalScrollable())
+				{
+					scrollDelta.x = 0;
+				}
+				if (!dragScrollingNode->verticalScrollable())
+				{
+					scrollDelta.y = 0;
+				}
+				
+				if (scrollDelta != Vec2::Zero())
+				{
+					dragScrollingNode->scroll(scrollDelta);
+				}
+			}
+		}
+		
+		// ドラッグスクロール終了判定
+		if (dragScrollingNode && (MouseL.up() || !MouseL.pressed()))
+		{
+			dragScrollingNode->m_dragStartPos.reset();
+			detail::s_canvasUpdateContext.dragScrollingNode.reset();
 		}
 
 		if (hoveredNode)
@@ -241,6 +275,15 @@ namespace noco
 		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale);
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
+
+		// ドラッグスクロール開始判定
+		// (ドラッグアンドドロップと競合しないよう、フレームの最後に実施)
+		if (!IsDraggingNode() && scrollableHoveredNode && scrollableHoveredNode->dragScrollEnabled() && detail::s_canvasUpdateContext.dragScrollingNode.expired() && MouseL.down())
+		{
+			scrollableHoveredNode->m_dragStartPos = Cursor::PosF();
+			scrollableHoveredNode->m_dragStartScrollOffset = scrollableHoveredNode->scrollOffset();
+			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
+		}
 	}
 	
 	void Canvas::draw() const

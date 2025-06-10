@@ -290,6 +290,8 @@ namespace noco
 			{ U"interactable", m_interactable.getBool() },
 			{ U"horizontalScrollable", horizontalScrollable() },
 			{ U"verticalScrollable", verticalScrollable() },
+			{ U"wheelScrollEnabled", wheelScrollEnabled() },
+			{ U"dragScrollEnabled", dragScrollEnabled() },
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
@@ -383,6 +385,14 @@ namespace noco
 		if (json.contains(U"verticalScrollable"))
 		{
 			node->setVerticalScrollable(json[U"verticalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
+		}
+		if (json.contains(U"wheelScrollEnabled"))
+		{
+			node->setWheelScrollEnabled(json[U"wheelScrollEnabled"].getOr<bool>(true));
+		}
+		if (json.contains(U"dragScrollEnabled"))
+		{
+			node->setDragScrollEnabled(json[U"dragScrollEnabled"].getOr<bool>(false));
 		}
 		if (json.contains(U"clippingEnabled"))
 		{
@@ -1729,6 +1739,53 @@ namespace noco
 	std::shared_ptr<Node> Node::setClippingEnabled(bool clippingEnabled)
 	{
 		return setClippingEnabled(ClippingEnabledYN{ clippingEnabled });
+	}
+	
+	ScrollMethodFlags Node::scrollMethodFlags() const
+	{
+		return m_scrollMethodFlags;
+	}
+	
+	std::shared_ptr<Node> Node::setScrollMethodFlags(ScrollMethodFlags flags)
+	{
+		m_scrollMethodFlags = flags;
+		return shared_from_this();
+	}
+	
+	bool Node::wheelScrollEnabled() const
+	{
+		return HasFlag(m_scrollMethodFlags, ScrollMethodFlags::Wheel);
+	}
+	
+	std::shared_ptr<Node> Node::setWheelScrollEnabled(bool enabled)
+	{
+		if (enabled)
+		{
+			m_scrollMethodFlags |= ScrollMethodFlags::Wheel;
+		}
+		else
+		{
+			m_scrollMethodFlags &= ~ScrollMethodFlags::Wheel;
+		}
+		return shared_from_this();
+	}
+	
+	bool Node::dragScrollEnabled() const
+	{
+		return HasFlag(m_scrollMethodFlags, ScrollMethodFlags::Drag);
+	}
+	
+	std::shared_ptr<Node> Node::setDragScrollEnabled(bool enabled)
+	{
+		if (enabled)
+		{
+			m_scrollMethodFlags |= ScrollMethodFlags::Drag;
+		}
+		else
+		{
+			m_scrollMethodFlags &= ~ScrollMethodFlags::Drag;
+		}
+		return shared_from_this();
 	}
 
 	InteractionState Node::interactionStateSelf() const
