@@ -407,7 +407,8 @@ private:
 					.posDelta = Vec2{ 0, 0 },
 					.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 					.sizeDeltaPivot = Anchor::TopLeft,
-				});
+				},
+				IsHitTargetYN::No);
 			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
 			m_tooltipNode->setBoxChildrenLayout(
 				VerticalLayout
@@ -423,7 +424,8 @@ private:
 				BoxConstraint
 				{
 					.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
-				});
+				},
+				IsHitTargetYN::No);
 			mainTextNode->emplaceComponent<Label>(
 				m_tooltipText,
 				U"",
@@ -442,7 +444,8 @@ private:
 					BoxConstraint
 					{
 						.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
-					});
+					},
+					IsHitTargetYN::No);
 				detailTextNode->emplaceComponent<Label>(
 					m_tooltipDetailText,
 					U"",
@@ -519,8 +522,8 @@ public:
 
 	void updateInput(const std::shared_ptr<Node>& node) override
 	{
-		// インプットがブロックされている場合は何もしない
-		if (CurrentFrame::HasInputBlocked())
+		// インプットがブロックされている場合やクリックされた瞬間は何もしない
+		if (CurrentFrame::HasInputBlocked() || MouseL.down() || MouseM.down() || MouseR.down())
 		{
 			// ホバーが外れたらツールチップを破棄
 			if (m_isShowing)
