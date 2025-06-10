@@ -969,6 +969,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"ドラッグスクロールの有効/無効",
 		.tooltipDetail = U"有効にすると、ドラッグ操作でスクロールできます",
 	};
+	metadata[PropertyKey{ U"Node", U"decelerationRate" }] = PropertyMetadata{
+		.tooltip = U"慣性スクロールの減衰率",
+		.tooltipDetail = U"1秒あたりの速度減衰率(0.0~1.0)。値が小さいほど早く停止します",
+	};
 	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 		.tooltip = U"クリッピングの有効/無効",
 		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",
@@ -4836,7 +4840,20 @@ public:
 		fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
 		fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
 		fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [node](bool value) { node->setWheelScrollEnabled(value); });
-		fnAddBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [node](bool value) { node->setDragScrollEnabled(value); });
+		fnAddBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [this, node](bool value) { 
+			node->setDragScrollEnabled(value); 
+			refreshInspector();
+		});
+		// dragScrollEnabledが有効な場合のみ表示
+		if (node->dragScrollEnabled())
+		{
+			const auto fnAddDoubleChild =
+				[this, &nodeSettingNode](StringView name, double currentValue, auto fnSetValue)
+				{
+					nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedNodeSetting.getBool());
+				};
+			fnAddDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
+		}
 		fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 
 		nodeSettingNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);

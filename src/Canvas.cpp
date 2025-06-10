@@ -249,6 +249,28 @@ namespace noco
 				if (scrollDelta != Vec2::Zero())
 				{
 					dragScrollingNode->scroll(scrollDelta);
+					
+					// 速度計算
+					const double deltaTime = dragScrollingNode->m_dragVelocityStopwatch.sF();
+					constexpr double MinDeltaTime = 0.001; // 最小時間を設定して過度な速度を防ぐ
+					if (deltaTime > MinDeltaTime)
+					{
+						// スクロール方向はドラッグ方向と同じ
+						const Vec2 newVelocity = scrollDelta / deltaTime;
+						// 速度を適切な範囲に制限
+						constexpr double MaxVelocity = 2000.0;
+						if (newVelocity.length() > MaxVelocity)
+						{
+							dragScrollingNode->m_scrollVelocity = newVelocity.normalized() * MaxVelocity;
+						}
+						else
+						{
+							// 移動平均を使用して滑らかに
+							constexpr double SmoothingFactor = 0.2;
+							dragScrollingNode->m_scrollVelocity = dragScrollingNode->m_scrollVelocity * (1.0 - SmoothingFactor) + newVelocity * SmoothingFactor;
+						}
+					}
+					dragScrollingNode->m_dragVelocityStopwatch.restart();
 				}
 			}
 		}
@@ -257,7 +279,9 @@ namespace noco
 		if (dragScrollingNode && (MouseL.up() || !MouseL.pressed()))
 		{
 			dragScrollingNode->m_dragStartPos.reset();
+			dragScrollingNode->m_dragVelocityStopwatch.reset();
 			detail::s_canvasUpdateContext.dragScrollingNode.reset();
+			// 慣性スクロールは各ノードがupdateで処理される
 		}
 
 		// ノード更新
@@ -273,6 +297,8 @@ namespace noco
 		{
 			scrollableHoveredNode->m_dragStartPos = Cursor::PosF();
 			scrollableHoveredNode->m_dragStartScrollOffset = scrollableHoveredNode->scrollOffset();
+			scrollableHoveredNode->m_scrollVelocity = Vec2::Zero(); // ドラッグ開始時に慣性をリセット
+			scrollableHoveredNode->m_dragVelocityStopwatch.restart();
 			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
 		}
 	}

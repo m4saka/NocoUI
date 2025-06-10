@@ -1113,6 +1113,34 @@ namespace noco
 		
 		const auto thisNode = shared_from_this();
 		
+		// 慣性スクロール処理
+		constexpr double MinInertiaVelocity = 1.0;
+		constexpr double MinActualDelta = 0.001;
+		if (m_scrollVelocity.length() > 0.0 && !m_dragStartPos.has_value())
+		{
+			const Vec2 scrollDelta = m_scrollVelocity * deltaTime;
+			if (m_scrollVelocity.length() > MinInertiaVelocity) // 速度が十分小さい場合は停止
+			{
+				const Vec2 oldOffset = m_scrollOffset;
+				scroll(scrollDelta);
+				const Vec2 actualDelta = m_scrollOffset - oldOffset;
+				if (actualDelta.length() < MinActualDelta) // 実際にスクロールできなかった場合
+				{
+					m_scrollVelocity = Vec2::Zero();
+				}
+				else
+				{
+					// 減衰処理(1秒あたりの減衰率)
+					m_scrollVelocity *= Math::Pow(m_decelerationRate, deltaTime);
+				}
+			}
+			else
+			{
+				// 速度が十分小さくなったら停止
+				m_scrollVelocity = Vec2::Zero();
+			}
+		}
+		
 		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
 		m_componentTempBuffer.clear();
 		m_componentTempBuffer.reserve(m_components.size());
@@ -1785,6 +1813,17 @@ namespace noco
 		{
 			m_scrollMethodFlags &= ~ScrollMethodFlags::Drag;
 		}
+		return shared_from_this();
+	}
+	
+	double Node::decelerationRate() const
+	{
+		return m_decelerationRate;
+	}
+	
+	std::shared_ptr<Node> Node::setDecelerationRate(double rate)
+	{
+		m_decelerationRate = rate;
 		return shared_from_this();
 	}
 

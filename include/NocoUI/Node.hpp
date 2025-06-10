@@ -38,6 +38,7 @@ namespace noco
 		InteractableYN m_interactable = InteractableYN::Yes;
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
+		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		ActiveYN m_activeSelf = ActiveYN::Yes;
 
@@ -63,6 +64,8 @@ namespace noco
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 		/* NonSerialized */ Optional<Vec2> m_dragStartPos; // ドラッグ開始位置
 		/* NonSerialized */ Vec2 m_dragStartScrollOffset; // ドラッグ開始時のスクロールオフセット
+		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
+		/* NonSerialized */ Stopwatch m_dragVelocityStopwatch; // ドラッグ速度計算用ストップウォッチ
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
@@ -391,6 +394,11 @@ namespace noco
 		bool dragScrollEnabled() const;
 		
 		std::shared_ptr<Node> setDragScrollEnabled(bool enabled);
+		
+		[[nodiscard]]
+		double decelerationRate() const;
+		
+		std::shared_ptr<Node> setDecelerationRate(double rate);
 
 		[[nodiscard]]
 		ClippingEnabledYN clippingEnabled() const;
