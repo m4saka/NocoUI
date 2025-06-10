@@ -206,6 +206,10 @@ namespace noco
 		// ホバー中ノード取得
 		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
 		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
+		if (hoveredNode)
+		{
+			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
+		}
 
 		// スクロール可能なホバー中ノード取得
 		auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;
@@ -213,6 +217,10 @@ namespace noco
 		{
 			// 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
 			scrollableHoveredNode = nullptr;
+		}
+		if (scrollableHoveredNode)
+		{
+			detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
 		}
 
 		// ホイールスクロール実行
@@ -235,17 +243,9 @@ namespace noco
 				const Vec2 dragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
 				const Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
 				
-				// スクロール方向の制限
+				// scroll関数側でスクロール方向の制限がかかるので、ここでは特に制限しない
+				// (後からスクロール可能になった場合にその軸のスクロール分は即座に反映したいため)
 				Vec2 scrollDelta = newScrollOffset - dragScrollingNode->scrollOffset();
-				if (!dragScrollingNode->horizontalScrollable())
-				{
-					scrollDelta.x = 0;
-				}
-				if (!dragScrollingNode->verticalScrollable())
-				{
-					scrollDelta.y = 0;
-				}
-				
 				if (scrollDelta != Vec2::Zero())
 				{
 					dragScrollingNode->scroll(scrollDelta);
@@ -258,15 +258,6 @@ namespace noco
 		{
 			dragScrollingNode->m_dragStartPos.reset();
 			detail::s_canvasUpdateContext.dragScrollingNode.reset();
-		}
-
-		if (hoveredNode)
-		{
-			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
-		}
-		if (scrollableHoveredNode)
-		{
-			detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
 		}
 
 		// ノード更新
