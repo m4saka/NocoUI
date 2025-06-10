@@ -1169,8 +1169,12 @@ namespace noco
 			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale);
 		}
 
-		// ホバー中はスクロールバーを表示
-		if (thisNode == scrollableHoveredNode)
+		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
+		const auto dragScrollingNode = detail::s_canvasUpdateContext.dragScrollingNode.lock();
+		const bool isInertialScrolling = m_scrollVelocity.length() > 0.0; // 速度が十分小さくなると0.0に設定されるため0.0との比較で問題ない
+		if (thisNode == scrollableHoveredNode || 
+			(dragScrollingNode == thisNode && dragScrollingNode->m_dragThresholdExceeded) ||
+			isInertialScrolling)
 		{
 			m_scrollBarAlpha.update(0.5, 0.1, deltaTime);
 		}
