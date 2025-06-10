@@ -10,6 +10,7 @@ namespace noco
 	private:
 		static constexpr double CursorWidth = 1.5;
 
+		PropertyNonInteractive<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
 		SmoothProperty<ColorF> m_color;
@@ -22,7 +23,6 @@ namespace noco
 		/* NonSerialized */ bool m_isEditing = false;
 		/* NonSerialized */ bool m_isDragging = false;
 		/* NonSerialized */ size_t m_selectionAnchor = 0;
-		/* NonSerialized */ String m_text;
 		/* NonSerialized */ String m_prevText;
 		/* NonSerialized */ size_t m_cursorIndex = 0;
 		/* NonSerialized */ Stopwatch m_leftPressStopwatch;
@@ -111,7 +111,8 @@ namespace noco
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
 			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified)
-			: SerializableComponentBase{ U"TextBox", { &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
 			, m_color{ U"color", color }
@@ -135,7 +136,7 @@ namespace noco
 		[[nodiscard]]
 		StringView text() const override
 		{
-			return m_text;
+			return m_text.value();
 		}
 
 		std::shared_ptr<TextBox> setText(StringView text, IgnoreIsChangedYN ignoreIsChanged = IgnoreIsChangedYN::No);

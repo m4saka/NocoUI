@@ -106,7 +106,7 @@ namespace noco
 	size_t TextBox::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size);
@@ -136,7 +136,7 @@ namespace noco
 			return U"";
 		}
 		const auto [b, e] = getSelectionRange();
-		return m_text.substr(b, e - b);
+		return m_text.value().substr(b, e - b);
 	}
 
 	void TextBox::deleteSelection()
@@ -146,13 +146,17 @@ namespace noco
 			return;
 		}
 		const auto [b, e] = getSelectionRange();
-		m_text.erase(b, e - b);
+		String text = m_text.value();
+		text.erase(b, e - b);
+		m_text.setValue(text);
 		m_cursorIndex = m_selectionAnchor = b;
 	}
 
 	void TextBox::insertTextAtCursor(StringView str)
 	{
-		m_text.insert(m_cursorIndex, str);
+		String text = m_text.value();
+		text.insert(m_cursorIndex, str);
+		m_text.setValue(text);
 		m_cursorIndex += str.size();
 		m_selectionAnchor = m_cursorIndex;
 	}
@@ -270,12 +274,12 @@ namespace noco
 				{
 					// テキストボックス右側の領域外にマウスカーソルがある場合のカーソル移動
 					const Duration dragScrollInterval = fnGetDragScrollInterval(mouseCursorPosX - rect.br().x);
-					if (m_cursorIndex < m_text.size() && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
+					if (m_cursorIndex < m_text.value().size() && (!m_dragScrollStopwatch.isStarted() || m_dragScrollStopwatch.elapsed() > dragScrollInterval))
 					{
 						++m_cursorIndex;
 
 						m_cache.refreshIfDirty(
-							m_text,
+							m_text.value(),
 							m_fontAssetName.value(),
 							m_fontSize.value(),
 							rect.size);
@@ -313,7 +317,7 @@ namespace noco
 				{
 					// 初回クリック時は全て選択
 					m_selectionAnchor = 0;
-					m_cursorIndex = m_text.size();
+					m_cursorIndex = m_text.value().size();
 					m_isDragging = false;
 				}
 				else if (!KeyShift.pressed())
@@ -389,7 +393,7 @@ namespace noco
 						m_cursorIndex = Max(m_cursorIndex, m_selectionAnchor);
 						m_selectionAnchor = m_cursorIndex;
 					}
-					else if (m_cursorIndex < m_text.size())
+					else if (m_cursorIndex < m_text.value().size())
 					{
 						++m_cursorIndex;
 					}
@@ -405,7 +409,7 @@ namespace noco
 
 				if (KeyEnd.down())
 				{
-					m_cursorIndex = m_text.size();
+					m_cursorIndex = m_text.value().size();
 					keyMoveTried = true;
 				}
 
@@ -415,14 +419,18 @@ namespace noco
 					{
 						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
 						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
-						m_text.erase(erasePos, eraseLen);
+						String text = m_text.value();
+						text.erase(erasePos, eraseLen);
+						m_text.setValue(text);
 						m_cursorIndex = erasePos;
 						m_selectionAnchor = m_cursorIndex;
 						m_isChanged = true;
 					}
 					else if (m_cursorIndex > 0)
 					{
-						m_text.erase(m_cursorIndex - 1, 1);
+						String text = m_text.value();
+						text.erase(m_cursorIndex - 1, 1);
+						m_text.setValue(text);
 						--m_cursorIndex;
 						m_selectionAnchor = m_cursorIndex;
 						m_isChanged = true;
@@ -437,14 +445,18 @@ namespace noco
 					{
 						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
 						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
-						m_text.erase(erasePos, eraseLen);
+						String text = m_text.value();
+						text.erase(erasePos, eraseLen);
+						m_text.setValue(text);
 						m_cursorIndex = erasePos;
 						m_selectionAnchor = m_cursorIndex;
 						m_isChanged = true;
 					}
-					else if (m_cursorIndex < m_text.size())
+					else if (m_cursorIndex < m_text.value().size())
 					{
-						m_text.erase(m_cursorIndex, 1);
+						String text = m_text.value();
+						text.erase(m_cursorIndex, 1);
+						m_text.setValue(text);
 						m_isChanged = true;
 					}
 					keyMoveTried = true;
@@ -465,14 +477,16 @@ namespace noco
 						continue;
 					}
 
+					String text = m_text.value();
 					if (m_cursorIndex != m_selectionAnchor)
 					{
 						const size_t erasePos = Min(m_cursorIndex, m_selectionAnchor);
 						const size_t eraseLen = (m_cursorIndex > m_selectionAnchor) ? (m_cursorIndex - m_selectionAnchor) : (m_selectionAnchor - m_cursorIndex);
-						m_text.erase(erasePos, eraseLen);
+						text.erase(erasePos, eraseLen);
 						m_cursorIndex = erasePos;
 					}
-					m_text = m_text.substrView(0, m_cursorIndex) + c + m_text.substrView(m_cursorIndex);
+					text = text.substrView(0, m_cursorIndex) + c + text.substrView(m_cursorIndex);
+					m_text.setValue(text);
 					++m_cursorIndex;
 					m_selectionAnchor = m_cursorIndex;
 					m_isChanged = true;
@@ -481,7 +495,7 @@ namespace noco
 
 			if (ctrl && !alt && !shift && KeyA.down())
 			{
-				m_cursorIndex = m_text.size();
+				m_cursorIndex = m_text.value().size();
 				m_selectionAnchor = 0;
 			}
 			else if (m_cursorIndex != prevCursorIndex || keyMoveTried)
@@ -509,10 +523,10 @@ namespace noco
 			m_prevEditingTextExists = false;
 		}
 
-		if (m_text != m_prevText)
+		if (m_text.value() != m_prevText)
 		{
 			m_isChanged = true;
-			m_prevText = m_text;
+			m_prevText = m_text.value();
 		}
 	}
 
@@ -530,7 +544,7 @@ namespace noco
 	void TextBox::updateScrollOffset(const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size);
@@ -620,7 +634,7 @@ namespace noco
 		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size);
@@ -717,7 +731,7 @@ namespace noco
 
 	std::shared_ptr<TextBox> TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
-		m_text = text;
+		m_text.setValue(text);
 		m_cursorIndex = 0;
 		m_selectionAnchor = m_cursorIndex;
 		m_scrollOffset = 0;

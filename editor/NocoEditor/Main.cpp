@@ -906,6 +906,7 @@ struct PropertyMetadata
 	std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件
 	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
 	Optional<int32> numTextAreaLines;  // テキストエリアとして表示する場合の行数(未設定の場合はテキストボックス)
+	bool refreshesEveryFrame = false;  // 毎フレームInspectorの値の更新が必要かどうか(テキストボックスなどユーザー編集を伴うコンポーネントで使用。現状コンポーネントのStringプロパティのみ対応)
 };
 
 // プロパティの可視情報
@@ -1332,6 +1333,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"TextBox", U"selectionColor" }] = PropertyMetadata{
 		.tooltip = U"選択範囲の色",
 	};
+	metadata[PropertyKey{ U"TextBox", U"text" }] = PropertyMetadata{
+		.numTextAreaLines = 3,
+		.refreshesEveryFrame = true,
+	};
 	
 	// TextArea
 	metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
@@ -1355,6 +1360,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"TextArea", U"selectionColor" }] = PropertyMetadata{
 		.tooltip = U"選択範囲の色",
+	};
+	metadata[PropertyKey{ U"TextArea", U"text" }] = PropertyMetadata{
+		.numTextAreaLines = 3,
+		.refreshesEveryFrame = true,
 	};
 	
 	// EventTrigger
@@ -3328,12 +3337,30 @@ public:
 	private:
 		std::shared_ptr<TextBox> m_textBox;
 		std::function<void(StringView)> m_fnSetValue;
+		std::function<String()> m_fnGetValue;
+		String m_prevExternalValue;
 
 		void update(const std::shared_ptr<Node>&) override
 		{
+			// 外部からの値の変更をチェック
+			if (m_fnGetValue)
+			{
+				const String currentExternalValue = String(m_fnGetValue());
+				if (!m_textBox->isEditing() && currentExternalValue != m_prevExternalValue)
+				{
+					m_textBox->setText(currentExternalValue, IgnoreIsChangedYN::Yes);
+					m_prevExternalValue = currentExternalValue;
+				}
+			}
+
+			// ユーザーによる変更をチェック
 			if (m_textBox->isChanged())
 			{
 				m_fnSetValue(m_textBox->text());
+				if (m_fnGetValue)
+				{
+					m_prevExternalValue = String(m_fnGetValue());
+				}
 			}
 		}
 
@@ -3342,10 +3369,12 @@ public:
 		}
 
 	public:
-		explicit PropertyTextBox(const std::shared_ptr<TextBox>& textBox, std::function<void(StringView)> fnSetValue)
+		explicit PropertyTextBox(const std::shared_ptr<TextBox>& textBox, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
 			: ComponentBase{ {} }
 			, m_textBox(textBox)
 			, m_fnSetValue(std::move(fnSetValue))
+			, m_fnGetValue(std::move(fnGetValue))
+			, m_prevExternalValue(fnGetValue ? String(fnGetValue()) : U"")
 		{
 		}
 	};
@@ -3380,7 +3409,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
 	{
 		// メタデータをチェックしてTextAreaを使うかどうか判断
 		std::shared_ptr<Node> propertyNode;
@@ -3390,12 +3419,12 @@ public:
 			if (metadata.numTextAreaLines.has_value())
 			{
 				// TextAreaを使用
-				propertyNode = CreatePropertyNodeWithTextArea(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines);
+				propertyNode = CreatePropertyNodeWithTextArea(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines, std::move(fnGetValue));
 			}
 			else
 			{
 				// 通常のTextBoxを使用
-				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
+				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
 			}
 			
 			// ツールチップを追加
@@ -3410,7 +3439,7 @@ public:
 		else
 		{
 			// メタデータがない場合は通常のTextBoxを使用
-			propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue);
+			propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
 		}
 		
 		return propertyNode;
@@ -3532,7 +3561,7 @@ public:
 	}
 
 	[[nodiscard]]
-	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -3578,12 +3607,12 @@ public:
 		textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
-		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
+		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue), std::move(fnGetValue)));
 		return propertyNode;
 	}
 
 	[[nodiscard]]
-	static std::shared_ptr<Node> CreatePropertyNodeWithTextArea(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, int32 numLines = 3)
+	static std::shared_ptr<Node> CreatePropertyNodeWithTextArea(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, int32 numLines = 3, std::function<String()> fnGetValue = nullptr)
 	{
 		const double textAreaHeight = numLines * 20.0 + 14.0;
 		const double nodeHeight = textAreaHeight + 6.0;
@@ -3639,20 +3668,40 @@ public:
 		private:
 			std::shared_ptr<TextArea> m_textArea;
 			std::function<void(StringView)> m_fnSetValue;
+			std::function<String()> m_fnGetValue;
+			String m_prevExternalValue;
 
 		public:
-			PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue)
+			PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
 				: ComponentBase{ {} }
 				, m_textArea{ textArea }
 				, m_fnSetValue{ std::move(fnSetValue) }
+				, m_fnGetValue{ std::move(fnGetValue) }
+				, m_prevExternalValue{ fnGetValue ? String(fnGetValue()) : U"" }
 			{
 			}
 
 			void update(const std::shared_ptr<Node>&) override
 			{
+				// 外部からの値の変更をチェック
+				if (m_fnGetValue)
+				{
+					const String currentExternalValue = String(m_fnGetValue());
+					if (!m_textArea->isEditing() && currentExternalValue != m_prevExternalValue)
+					{
+						m_textArea->setText(currentExternalValue, IgnoreIsChangedYN::Yes);
+						m_prevExternalValue = currentExternalValue;
+					}
+				}
+
+				// ユーザーによる変更をチェック
 				if (m_textArea->isChanged())
 				{
 					m_fnSetValue(m_textArea->text());
+					if (m_fnGetValue)
+					{
+						m_prevExternalValue = String(m_fnGetValue());
+					}
 				}
 			}
 
@@ -3661,7 +3710,7 @@ public:
 			}
 		};
 		
-		textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue)));
+		textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue), std::move(fnGetValue)));
 		return propertyNode;
 	}
 
@@ -5554,6 +5603,7 @@ public:
 					
 					// メタデータに基づいて変更時の処理を設定
 					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					std::function<String()> fnGetValue = nullptr;
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -5565,6 +5615,11 @@ public:
 								refreshInspector();
 							};
 						}
+						// refreshesEveryFrameがtrueの場合のみfnGetValueを設定
+						if (metadata.refreshesEveryFrame)
+						{
+							fnGetValue = [property]() -> String { return property->propertyValueStringOfDefault(); };
+						}
 					}
 					
 					propertyNode = componentNode->addChild(
@@ -5573,7 +5628,8 @@ public:
 							property->name(),
 							property->propertyValueStringOfDefault(),
 							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							fnGetValue));
 				}
 				break;
 			case PropertyEditType::Bool:

@@ -177,7 +177,7 @@ namespace noco
 	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size / effectScale);
@@ -204,7 +204,7 @@ namespace noco
 			return U"";
 		}
 		const auto [b, e] = getSelectionRange();
-		return m_text.substr(b, e - b);
+		return m_text.value().substr(b, e - b);
 	}
 
 	void TextArea::deleteSelection()
@@ -214,7 +214,9 @@ namespace noco
 			return;
 		}
 		const auto [b, e] = getSelectionRange();
-		m_text.erase(b, e - b);
+		String text = m_text.value();
+		text.erase(b, e - b);
+		m_text.setValue(text);
 		const auto [line, column] = m_cache.getIndexToLineColumn(b);
 		m_cursorLine = m_selectionAnchorLine = line;
 		m_cursorColumn = m_selectionAnchorColumn = column;
@@ -223,7 +225,9 @@ namespace noco
 	std::pair<size_t, size_t> TextArea::insertTextAtCursor(StringView str)
 	{
 		const size_t cursorIndex = m_cache.getLineColumnToIndex(m_cursorLine, m_cursorColumn);
-		m_text.insert(cursorIndex, str);
+		String text = m_text.value();
+		text.insert(cursorIndex, str);
+		m_text.setValue(text);
 		// 挿入位置と挿入サイズを返す
 		return { cursorIndex, str.size() };
 	}
@@ -309,7 +313,7 @@ namespace noco
 	void TextArea::updateScrollOffset(const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size / effectScale);
@@ -393,7 +397,7 @@ namespace noco
 		const RectF rect = node->rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size / effectScale);
@@ -716,7 +720,9 @@ namespace noco
 						const size_t cursorIndex = m_cache.getLineColumnToIndex(m_cursorLine, m_cursorColumn);
 						if (cursorIndex > 0)
 						{
-							m_text.erase(cursorIndex - 1, 1);
+							String text = m_text.value();
+							text.erase(cursorIndex - 1, 1);
+							m_text.setValue(text);
 							const auto [line, column] = m_cache.getIndexToLineColumn(cursorIndex - 1);
 							m_cursorLine = m_selectionAnchorLine = line;
 							m_cursorColumn = m_selectionAnchorColumn = column;
@@ -737,9 +743,11 @@ namespace noco
 					else
 					{
 						const size_t cursorIndex = m_cache.getLineColumnToIndex(m_cursorLine, m_cursorColumn);
-						if (cursorIndex < m_text.size())
+						if (cursorIndex < m_text.value().size())
 						{
-							m_text.erase(cursorIndex, 1);
+							String text = m_text.value();
+							text.erase(cursorIndex, 1);
+							m_text.setValue(text);
 							m_isChanged = true;
 						}
 					}
@@ -757,7 +765,7 @@ namespace noco
 					insertTextAtCursor(U"\n");
 
 					m_cache.refreshIfDirty(
-						m_text,
+						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
 						rect.size / effectScale);
@@ -776,7 +784,7 @@ namespace noco
 				{
 					// テキストが変更された場合、キャッシュを更新
 					m_cache.refreshIfDirty(
-						m_text,
+						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
 						rect.size / effectScale);
@@ -811,10 +819,12 @@ namespace noco
 				if (!validInput.empty())
 				{
 					const size_t cursorIndex = m_cache.getLineColumnToIndex(m_cursorLine, m_cursorColumn);
-					m_text = m_text.substrView(0, cursorIndex) + validInput + m_text.substrView(cursorIndex);
+					String text = m_text.value();
+					text = text.substrView(0, cursorIndex) + validInput + text.substrView(cursorIndex);
+					m_text.setValue(text);
 
 					m_cache.refreshIfDirty(
-						m_text,
+						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
 						rect.size / effectScale);
@@ -850,10 +860,10 @@ namespace noco
 			m_prevEditingTextExists = false;
 		}
 
-		if (m_text != m_prevText)
+		if (m_text.value() != m_prevText)
 		{
 			m_isChanged = true;
-			m_prevText = m_text;
+			m_prevText = m_text.value();
 		}
 	}
 
@@ -877,7 +887,7 @@ namespace noco
 		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
-			m_text,
+			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size / effectScale);
@@ -1011,7 +1021,7 @@ namespace noco
 
 	std::shared_ptr<TextArea> TextArea::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
-		m_text = text;
+		m_text.setValue(text);
 		m_cursorLine = 0;
 		m_cursorColumn = 0;
 		m_selectionAnchorLine = 0;
