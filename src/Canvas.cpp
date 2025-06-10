@@ -241,36 +241,51 @@ namespace noco
 			if (dragScrollingNode->m_dragStartPos)
 			{
 				const Vec2 dragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
-				const Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
 				
-				// scroll関数側でスクロール方向の制限がかかるので、ここでは特に制限しない
-				// (後からスクロール可能になった場合にその軸のスクロール分は即座に反映したいため)
-				Vec2 scrollDelta = newScrollOffset - dragScrollingNode->scrollOffset();
-				if (scrollDelta != Vec2::Zero())
+				// ドラッグ閾値の判定
+				constexpr double DragThreshold = 3.0;
+				if (!dragScrollingNode->m_dragThresholdExceeded)
 				{
-					dragScrollingNode->scroll(scrollDelta);
-					
-					// 速度計算
-					const double deltaTime = dragScrollingNode->m_dragVelocityStopwatch.sF();
-					constexpr double MinDeltaTime = 0.001; // 最小時間を設定して過度な速度を防ぐ
-					if (deltaTime > MinDeltaTime)
+					if (dragDelta.length() >= DragThreshold)
 					{
-						// スクロール方向はドラッグ方向と同じ
-						const Vec2 newVelocity = scrollDelta / deltaTime;
-						// 速度を適切な範囲に制限
-						constexpr double MaxVelocity = 2000.0;
-						if (newVelocity.length() > MaxVelocity)
-						{
-							dragScrollingNode->m_scrollVelocity = newVelocity.normalized() * MaxVelocity;
-						}
-						else
-						{
-							// 移動平均を使用して滑らかに
-							constexpr double SmoothingFactor = 0.2;
-							dragScrollingNode->m_scrollVelocity = dragScrollingNode->m_scrollVelocity * (1.0 - SmoothingFactor) + newVelocity * SmoothingFactor;
-						}
+						dragScrollingNode->m_dragThresholdExceeded = true;
 					}
-					dragScrollingNode->m_dragVelocityStopwatch.restart();
+				}
+				
+				// 閾値を超えた場合のみスクロール処理を実行
+				if (dragScrollingNode->m_dragThresholdExceeded)
+				{
+					const Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
+					
+					// scroll関数側でスクロール方向の制限がかかるので、ここでは特に制限しない
+					// (後からスクロール可能になった場合にその軸のスクロール分は即座に反映したいため)
+					Vec2 scrollDelta = newScrollOffset - dragScrollingNode->scrollOffset();
+					if (scrollDelta != Vec2::Zero())
+					{
+						dragScrollingNode->scroll(scrollDelta);
+						
+						// 速度計算
+						const double deltaTime = dragScrollingNode->m_dragVelocityStopwatch.sF();
+						constexpr double MinDeltaTime = 0.001; // 最小時間を設定して過度な速度を防ぐ
+						if (deltaTime > MinDeltaTime)
+						{
+							// スクロール方向はドラッグ方向と同じ
+							const Vec2 newVelocity = scrollDelta / deltaTime;
+							// 速度を適切な範囲に制限
+							constexpr double MaxVelocity = 2000.0;
+							if (newVelocity.length() > MaxVelocity)
+							{
+								dragScrollingNode->m_scrollVelocity = newVelocity.normalized() * MaxVelocity;
+							}
+							else
+							{
+								// 移動平均を使用して滑らかに
+								constexpr double SmoothingFactor = 0.2;
+								dragScrollingNode->m_scrollVelocity = dragScrollingNode->m_scrollVelocity * (1.0 - SmoothingFactor) + newVelocity * SmoothingFactor;
+							}
+						}
+						dragScrollingNode->m_dragVelocityStopwatch.restart();
+					}
 				}
 			}
 		}
@@ -280,6 +295,7 @@ namespace noco
 		{
 			dragScrollingNode->m_dragStartPos.reset();
 			dragScrollingNode->m_dragVelocityStopwatch.reset();
+			dragScrollingNode->m_dragThresholdExceeded = false; // 閾値フラグをリセット
 			detail::s_canvasUpdateContext.dragScrollingNode.reset();
 			// 慣性スクロールは各ノードがupdateで処理される
 		}
@@ -299,6 +315,7 @@ namespace noco
 			scrollableHoveredNode->m_dragStartScrollOffset = scrollableHoveredNode->scrollOffset();
 			scrollableHoveredNode->m_scrollVelocity = Vec2::Zero(); // ドラッグ開始時に慣性をリセット
 			scrollableHoveredNode->m_dragVelocityStopwatch.restart();
+			scrollableHoveredNode->m_dragThresholdExceeded = false; // 閾値フラグを初期化
 			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
 		}
 	}

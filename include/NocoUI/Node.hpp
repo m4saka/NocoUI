@@ -66,6 +66,7 @@ namespace noco
 		/* NonSerialized */ Vec2 m_dragStartScrollOffset; // ドラッグ開始時のスクロールオフセット
 		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
 		/* NonSerialized */ Stopwatch m_dragVelocityStopwatch; // ドラッグ速度計算用ストップウォッチ
+		/* NonSerialized */ bool m_dragThresholdExceeded = false; // ドラッグ閾値を超えたかどうか
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
