@@ -26,4 +26,5 @@ namespace noco
 	using ShiftYN = YesNo<struct ShiftYN_tag>;
 	using IncludingDisabledYN = YesNo<struct IncludingDisabledYN_tag>;
 	using IsScrollingYN = YesNo<struct IsScrollingYN_tag>;
+	using RubberBandScrollEnabledYN = YesNo<struct RubberBandScrollEnabledYN_tag>;
 }

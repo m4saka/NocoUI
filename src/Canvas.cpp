@@ -240,13 +240,19 @@ namespace noco
 		{
 			if (dragScrollingNode->m_dragStartPos)
 			{
-				const Vec2 dragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
+				// effectScaleを考慮してドラッグ量を計算(ゼロ除算を防ぐ)
+				const Vec2 effectScale = dragScrollingNode->effectScale();
+				const Vec2 screenDragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
+				const Vec2 dragDelta = Vec2{
+					effectScale.x > 0.0 ? screenDragDelta.x / effectScale.x : 0.0,
+					effectScale.y > 0.0 ? screenDragDelta.y / effectScale.y : 0.0
+				};
 				
-				// ドラッグ閾値の判定
+				// ドラッグ閾値の判定(画面座標での判定)
 				constexpr double DragThreshold = 4.0;
 				if (!dragScrollingNode->m_dragThresholdExceeded)
 				{
-					if (dragDelta.length() >= DragThreshold)
+					if (screenDragDelta.length() >= DragThreshold)
 					{
 						dragScrollingNode->m_dragThresholdExceeded = true;
 					}
@@ -255,7 +261,38 @@ namespace noco
 				// 閾値を超えた場合のみスクロール処理を実行
 				if (dragScrollingNode->m_dragThresholdExceeded)
 				{
-					const Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
+					Vec2 newScrollOffset = dragScrollingNode->m_dragStartScrollOffset - dragDelta;
+					
+					// ラバーバンドスクロールが有効な場合、範囲外での抵抗を適用
+					if (dragScrollingNode->rubberBandScrollEnabled())
+					{
+						const auto [minScroll, maxScroll] = dragScrollingNode->getValidScrollRange();
+						constexpr double RubberBandResistance = 0.3; // 抵抗係数（0.0～1.0、小さいほど抵抗が強い）
+						
+						// X軸の抵抗
+						if (newScrollOffset.x < minScroll.x)
+						{
+							const double overshoot = minScroll.x - newScrollOffset.x;
+							newScrollOffset.x = minScroll.x - overshoot * RubberBandResistance;
+						}
+						else if (newScrollOffset.x > maxScroll.x)
+						{
+							const double overshoot = newScrollOffset.x - maxScroll.x;
+							newScrollOffset.x = maxScroll.x + overshoot * RubberBandResistance;
+						}
+						
+						// Y軸の抵抗
+						if (newScrollOffset.y < minScroll.y)
+						{
+							const double overshoot = minScroll.y - newScrollOffset.y;
+							newScrollOffset.y = minScroll.y - overshoot * RubberBandResistance;
+						}
+						else if (newScrollOffset.y > maxScroll.y)
+						{
+							const double overshoot = newScrollOffset.y - maxScroll.y;
+							newScrollOffset.y = maxScroll.y + overshoot * RubberBandResistance;
+						}
+					}
 					
 					// scroll関数側でスクロール方向の制限がかかるので、ここでは特に制限しない
 					// (後からスクロール可能になった場合にその軸のスクロール分は即座に反映したいため)

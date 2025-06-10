@@ -973,6 +973,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"慣性スクロールの減衰率",
 		.tooltipDetail = U"1秒あたりの速度減衰率(0.0~1.0)。値が小さいほど早く停止します",
 	};
+	metadata[PropertyKey{ U"Node", U"rubberBandScrollEnabled" }] = PropertyMetadata{
+		.tooltip = U"ラバーバンドスクロールの有効/無効",
+		.tooltipDetail = U"有効にすると、スクロール範囲外でも一時的にドラッグでき、離すと自動的に範囲内に戻ります",
+	};
 	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 		.tooltip = U"クリッピングの有効/無効",
 		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",
@@ -4839,7 +4843,10 @@ public:
 		fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });
 		fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
 		fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
-		fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [node](bool value) { node->setWheelScrollEnabled(value); });
+		fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [this, node](bool value) { 
+			node->setWheelScrollEnabled(value); 
+			refreshInspector();
+		});
 		fnAddBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [this, node](bool value) { 
 			node->setDragScrollEnabled(value); 
 			refreshInspector();
@@ -4853,6 +4860,11 @@ public:
 					nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedNodeSetting.getBool());
 				};
 			fnAddDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
+		}
+		// wheelScrollEnabledまたはdragScrollEnabledが有効な場合のみ表示
+		if (node->wheelScrollEnabled() || node->dragScrollEnabled())
+		{
+			fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled().getBool(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
 		}
 		fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 

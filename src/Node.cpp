@@ -166,9 +166,54 @@ namespace noco
 			return;
 		}
 
-		const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
-		m_scrollOffset.x = Clamp(m_scrollOffset.x, -maxScrollX * scrollOffsetAnchor.x, maxScrollX * (1.0 - scrollOffsetAnchor.x));
-		m_scrollOffset.y = Clamp(m_scrollOffset.y, -maxScrollY * scrollOffsetAnchor.y, maxScrollY * (1.0 - scrollOffsetAnchor.y));
+		// ラバーバンドスクロールが無効な場合のみクランプする
+		if (!m_rubberBandScrollEnabled)
+		{
+			const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
+			m_scrollOffset.x = Clamp(m_scrollOffset.x, -maxScrollX * scrollOffsetAnchor.x, maxScrollX * (1.0 - scrollOffsetAnchor.x));
+			m_scrollOffset.y = Clamp(m_scrollOffset.y, -maxScrollY * scrollOffsetAnchor.y, maxScrollY * (1.0 - scrollOffsetAnchor.y));
+		}
+	}
+
+	std::pair<Vec2, Vec2> Node::getValidScrollRange() const
+	{
+		Vec2 minScroll = Vec2::Zero();
+		Vec2 maxScroll = Vec2::Zero();
+
+		if (!m_children.empty())
+		{
+			const bool horizontalScrollableValue = horizontalScrollable();
+			const bool verticalScrollableValue = verticalScrollable();
+			
+			if (horizontalScrollableValue || verticalScrollableValue)
+			{
+				const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding();
+				if (contentRectOpt)
+				{
+					const RectF& contentRect = *contentRectOpt;
+					const double viewWidth = m_layoutAppliedRect.w;
+					const double viewHeight = m_layoutAppliedRect.h;
+					const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
+					const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
+					
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
+					
+					if (horizontalScrollableValue)
+					{
+						minScroll.x = -maxScrollX * scrollOffsetAnchor.x;
+						maxScroll.x = maxScrollX * (1.0 - scrollOffsetAnchor.x);
+					}
+					
+					if (verticalScrollableValue)
+					{
+						minScroll.y = -maxScrollY * scrollOffsetAnchor.y;
+						maxScroll.y = maxScrollY * (1.0 - scrollOffsetAnchor.y);
+					}
+				}
+			}
+		}
+		
+		return { minScroll, maxScroll };
 	}
 
 	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -292,6 +337,8 @@ namespace noco
 			{ U"verticalScrollable", verticalScrollable() },
 			{ U"wheelScrollEnabled", wheelScrollEnabled() },
 			{ U"dragScrollEnabled", dragScrollEnabled() },
+			{ U"decelerationRate", m_decelerationRate },
+			{ U"rubberBandScrollEnabled", m_rubberBandScrollEnabled.getBool() },
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
@@ -393,6 +440,14 @@ namespace noco
 		if (json.contains(U"dragScrollEnabled"))
 		{
 			node->setDragScrollEnabled(json[U"dragScrollEnabled"].getOr<bool>(false));
+		}
+		if (json.contains(U"decelerationRate"))
+		{
+			node->setDecelerationRate(json[U"decelerationRate"].getOr<double>(0.2));
+		}
+		if (json.contains(U"rubberBandScrollEnabled"))
+		{
+			node->setRubberBandScrollEnabled(RubberBandScrollEnabledYN{ json[U"rubberBandScrollEnabled"].getOr<bool>(false) });
 		}
 		if (json.contains(U"clippingEnabled"))
 		{
@@ -1117,7 +1172,7 @@ namespace noco
 		constexpr double MinInertiaVelocity = 1.0;
 		constexpr double MinActualDelta = 0.001;
 		if (m_scrollVelocity.length() > 0.0 && !m_dragStartPos.has_value())
-		{
+		{	
 			const Vec2 scrollDelta = m_scrollVelocity * deltaTime;
 			if (m_scrollVelocity.length() > MinInertiaVelocity) // 速度が十分小さい場合は停止
 			{
@@ -1130,14 +1185,80 @@ namespace noco
 				}
 				else
 				{
-					// 減衰処理(1秒あたりの減衰率)
+					// 減衰
 					m_scrollVelocity *= Math::Pow(m_decelerationRate, deltaTime);
+					
+					// 範囲外に到達した場合は慣性を消す
+					const auto [minScroll, maxScroll] = getValidScrollRange();
+					if ((m_scrollOffset.x <= minScroll.x && m_scrollVelocity.x < 0) ||
+						(m_scrollOffset.x >= maxScroll.x && m_scrollVelocity.x > 0))
+					{
+						m_scrollVelocity.x = 0.0;
+					}
+					if ((m_scrollOffset.y <= minScroll.y && m_scrollVelocity.y < 0) ||
+						(m_scrollOffset.y >= maxScroll.y && m_scrollVelocity.y > 0))
+					{
+						m_scrollVelocity.y = 0.0;
+					}
 				}
 			}
 			else
 			{
 				// 速度が十分小さくなったら停止
 				m_scrollVelocity = Vec2::Zero();
+			}
+		}
+		
+		// ラバーバンドスクロール処理(ドラッグしていない時に範囲外なら戻す)
+		if (m_rubberBandScrollEnabled && !m_dragStartPos.has_value())
+		{
+			const auto [minScroll, maxScroll] = getValidScrollRange();
+			Vec2 targetOffset = m_scrollOffset;
+			bool needsRubberBand = false;
+			
+			// 範囲外かチェック
+			if (m_scrollOffset.x < minScroll.x)
+			{
+				targetOffset.x = minScroll.x;
+				needsRubberBand = true;
+			}
+			else if (m_scrollOffset.x > maxScroll.x)
+			{
+				targetOffset.x = maxScroll.x;
+				needsRubberBand = true;
+			}
+			
+			if (m_scrollOffset.y < minScroll.y)
+			{
+				targetOffset.y = minScroll.y;
+				needsRubberBand = true;
+			}
+			else if (m_scrollOffset.y > maxScroll.y)
+			{
+				targetOffset.y = maxScroll.y;
+				needsRubberBand = true;
+			}
+			
+			// 範囲外なら戻す
+			if (needsRubberBand)
+			{
+				constexpr double RubberBandSpeed = 10.0; // 戻る速度係数
+				const Vec2 diff = targetOffset - m_scrollOffset;
+				const Vec2 scrollDelta = diff * RubberBandSpeed * deltaTime;
+				
+				// 十分近くなったら完全に合わせる
+				constexpr double SnapThreshold = 0.5;
+				if (diff.length() < SnapThreshold)
+				{
+					m_scrollOffset = targetOffset;
+				}
+				else
+				{
+					m_scrollOffset += scrollDelta;
+				}
+				
+				// レイアウトを更新
+				refreshContainedCanvasLayout();
 			}
 		}
 		
@@ -1829,6 +1950,22 @@ namespace noco
 	{
 		m_decelerationRate = rate;
 		return shared_from_this();
+	}
+
+	RubberBandScrollEnabledYN Node::rubberBandScrollEnabled() const
+	{
+		return m_rubberBandScrollEnabled;
+	}
+
+	std::shared_ptr<Node> Node::setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled)
+	{
+		m_rubberBandScrollEnabled = rubberBandScrollEnabled;
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Node> Node::setRubberBandScrollEnabled(bool rubberBandScrollEnabled)
+	{
+		return setRubberBandScrollEnabled(rubberBandScrollEnabled ? RubberBandScrollEnabledYN::Yes : RubberBandScrollEnabledYN::No);
 	}
 
 	InteractionState Node::interactionStateSelf() const

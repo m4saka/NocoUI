@@ -39,6 +39,7 @@ namespace noco
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
+		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		ActiveYN m_activeSelf = ActiveYN::Yes;
 
@@ -67,6 +68,8 @@ namespace noco
 		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
 		/* NonSerialized */ Stopwatch m_dragVelocityStopwatch; // ドラッグ速度計算用ストップウォッチ
 		/* NonSerialized */ bool m_dragThresholdExceeded = false; // ドラッグ閾値を超えたかどうか
+		/* NonSerialized */ Optional<Vec2> m_rubberBandTargetOffset; // ラバーバンドスクロールの戻り先
+		/* NonSerialized */ double m_rubberBandAnimationTime = 0.0; // ラバーバンドアニメーション経過時間
 
 		[[nodiscard]]
 		explicit Node(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None)
@@ -90,6 +93,9 @@ namespace noco
 		void setCanvasRecursive(const std::weak_ptr<Canvas>& canvas);
 
 		void clampScrollOffset();
+
+		[[nodiscard]]
+		std::pair<Vec2, Vec2> getValidScrollRange() const;
 
 	public:
 		[[nodiscard]]
@@ -400,6 +406,13 @@ namespace noco
 		double decelerationRate() const;
 		
 		std::shared_ptr<Node> setDecelerationRate(double rate);
+
+		[[nodiscard]]
+		RubberBandScrollEnabledYN rubberBandScrollEnabled() const;
+
+		std::shared_ptr<Node> setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled);
+
+		std::shared_ptr<Node> setRubberBandScrollEnabled(bool rubberBandScrollEnabled);
 
 		[[nodiscard]]
 		ClippingEnabledYN clippingEnabled() const;
