@@ -133,6 +133,7 @@
     <ClCompile Include="..\..\src\Node.cpp" />
     <ClCompile Include="..\..\src\Serialization.cpp" />
     <ClCompile Include="..\..\src\Utility.cpp" />
+    <ClCompile Include="HistorySystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -291,6 +292,7 @@
     <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Utility.hpp" />
     <ClInclude Include="..\..\include\NocoUI\YN.hpp" />
+    <ClInclude Include="HistorySystem.hpp" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

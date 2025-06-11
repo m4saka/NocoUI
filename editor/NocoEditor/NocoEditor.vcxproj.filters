@@ -150,6 +150,9 @@
     <ClCompile Include="..\..\src\Component\CursorChanger.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
+    <ClCompile Include="HistorySystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -589,6 +592,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="HistorySystem.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
