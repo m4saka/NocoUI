@@ -1339,6 +1339,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.numTextAreaLines = 3,
 		.refreshesEveryFrame = true,
 	};
+	metadata[PropertyKey{ U"TextBox", U"readOnly" }] = PropertyMetadata{
+		.tooltip = U"読み取り専用",
+		.tooltipDetail = U"有効にすると編集不可になりますが、テキストの選択やコピーは可能です",
+	};
 	
 	// TextArea
 	metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
@@ -1366,6 +1370,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"TextArea", U"text" }] = PropertyMetadata{
 		.numTextAreaLines = 3,
 		.refreshesEveryFrame = true,
+	};
+	metadata[PropertyKey{ U"TextArea", U"readOnly" }] = PropertyMetadata{
+		.tooltip = U"読み取り専用",
+		.tooltipDetail = U"有効にすると編集不可になりますが、テキストの選択やコピーは可能です",
 	};
 	
 	// EventTrigger

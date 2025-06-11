@@ -18,6 +18,7 @@ namespace noco
 		SmoothProperty<Vec2> m_verticalPadding;
 		SmoothProperty<ColorF> m_cursorColor;
 		SmoothProperty<ColorF> m_selectionColor;
+		Property<bool> m_readOnly;
 
 		/* NonSerialized */ double m_cursorBlinkTime = 0.0;
 		/* NonSerialized */ bool m_isEditing = false;
@@ -110,8 +111,9 @@ namespace noco
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
-			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified)
-			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified,
+			const PropertyValue<bool>& readOnly = false)
+			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_readOnly } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -120,6 +122,7 @@ namespace noco
 			, m_verticalPadding{ U"verticalPadding", verticalPadding }
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
 			, m_selectionColor{ U"selectionColor", selectionColor.value_or(ColorF{ 0.0, 0.1, 0.3, 0.5 }) }
+			, m_readOnly{ U"readOnly", readOnly }
 		{
 		}
 
@@ -235,6 +238,18 @@ namespace noco
 		bool isEditing() const override
 		{
 			return m_isEditing;
+		}
+
+		[[nodiscard]]
+		const PropertyValue<bool>& readOnly() const
+		{
+			return m_readOnly.propertyValue();
+		}
+
+		std::shared_ptr<TextBox> setReadOnly(const PropertyValue<bool>& readOnly)
+		{
+			m_readOnly.setPropertyValue(readOnly);
+			return shared_from_this();
 		}
 	};
 }

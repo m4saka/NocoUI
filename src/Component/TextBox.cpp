@@ -188,6 +188,12 @@ namespace noco
 			return;
 		}
 
+		// readOnly時はカット・ペーストを無効化
+		if (m_readOnly.value())
+		{
+			return;
+		}
+
 		// Ctrl + X
 		if (KeyX.down())
 		{
@@ -315,10 +321,21 @@ namespace noco
 				node->setSelected(SelectedYN::Yes);
 				if (!m_isEditing)
 				{
-					// 初回クリック時は全て選択
-					m_selectionAnchor = 0;
-					m_cursorIndex = m_text.value().size();
-					m_isDragging = false;
+					// 初回クリック時の処理
+					if (m_readOnly.value())
+					{
+						// readOnly時はクリック位置にカーソルを移動
+						m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
+						m_cursorIndex = m_selectionAnchor;
+						m_isDragging = true;
+					}
+					else
+					{
+						// 通常時は全て選択
+						m_selectionAnchor = 0;
+						m_cursorIndex = m_text.value().size();
+						m_isDragging = false;
+					}
 				}
 				else if (!KeyShift.pressed())
 				{
@@ -413,7 +430,7 @@ namespace noco
 					keyMoveTried = true;
 				}
 
-				if (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s))
+				if (!m_readOnly.value() && (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s)))
 				{
 					if (m_cursorIndex != m_selectionAnchor)
 					{
@@ -439,7 +456,7 @@ namespace noco
 					m_backspacePressStopwatch.restart();
 				}
 
-				if (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s))
+				if (!m_readOnly.value() && (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s)))
 				{
 					if (m_cursorIndex != m_selectionAnchor)
 					{
@@ -467,7 +484,7 @@ namespace noco
 			}
 
 			// CtrlキーまたはAltキーが押されている場合は通常の文字入力を無視
-			if (!ctrl && !alt)
+			if (!ctrl && !alt && !m_readOnly.value())
 			{
 				for (const auto c : TextInput::GetRawInput())
 				{

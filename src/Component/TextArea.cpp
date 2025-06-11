@@ -257,6 +257,12 @@ namespace noco
 			return { true, 0, 0 };
 		}
 
+		// readOnly時はカット・ペーストを無効化
+		if (m_readOnly.value())
+		{
+			return { false, 0, 0 };
+		}
+
 		if (KeyX.down())
 		{
 			if (hasSelection())
@@ -708,7 +714,7 @@ namespace noco
 					m_pageDownPressStopwatch.restart();
 				}
 
-				if (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s))
+				if (!m_readOnly.value() && (KeyBackspace.down() || (KeyBackspace.pressedDuration() > 0.4s && m_backspacePressStopwatch.elapsed() > 0.03s)))
 				{
 					if (hasSelection())
 					{
@@ -733,7 +739,7 @@ namespace noco
 					m_backspacePressStopwatch.restart();
 				}
 
-				if (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s))
+				if (!m_readOnly.value() && (KeyDelete.down() || (KeyDelete.pressedDuration() > 0.4s && m_deletePressStopwatch.elapsed() > 0.03s)))
 				{
 					if (hasSelection())
 					{
@@ -755,7 +761,7 @@ namespace noco
 					m_deletePressStopwatch.restart();
 				}
 
-				if (KeyEnter.down() || (KeyEnter.pressedDuration() > 0.4s && m_enterPressStopwatch.elapsed() > 0.03s))
+				if (!m_readOnly.value() && (KeyEnter.down() || (KeyEnter.pressedDuration() > 0.4s && m_enterPressStopwatch.elapsed() > 0.03s)))
 				{
 					if (hasSelection())
 					{
@@ -801,7 +807,7 @@ namespace noco
 
 			const String rawInput = TextInput::GetRawInput();
 			// CtrlキーまたはAltキーが押されている場合は通常の文字入力を無視
-			if (!rawInput.empty() && !ctrl && !alt)
+			if (!rawInput.empty() && !ctrl && !alt && !m_readOnly.value())
 			{
 				if (hasSelection())
 				{
