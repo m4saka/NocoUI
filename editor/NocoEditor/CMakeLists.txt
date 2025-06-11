@@ -15,6 +15,7 @@ file(GLOB_RECURSE NOCO_SRC_FILES ../../src/*.cpp)
 
 add_executable(NocoEditor
   Main.cpp
+  HistorySystem.cpp
   ${NOCO_SRC_FILES}
   )
 
