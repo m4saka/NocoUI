@@ -103,7 +103,7 @@
       <Filter>Source Files\NocoUI\Layout</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Layout\VerticalLayout.cpp">
-      <Filter>Source Files\NocoUI\Component</Filter>
+      <Filter>Source Files\NocoUI\Layout</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Component\RectRenderer.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
@@ -144,10 +144,10 @@
     <ClCompile Include="..\..\src\Serialization.cpp">
       <Filter>Source Files\NocoUI</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\EventTrigger.cpp">
+    <ClCompile Include="..\..\src\Component\EventTrigger.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\CursorChanger.cpp">
+    <ClCompile Include="..\..\src\Component\CursorChanger.cpp">
       <Filter>Source Files\NocoUI\Component</Filter>
     </ClCompile>
   </ItemGroup>
@@ -587,7 +587,7 @@
     <ClInclude Include="..\..\include\NocoUI\Component\ITextBox.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\CursorChanger.hpp">
+    <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>

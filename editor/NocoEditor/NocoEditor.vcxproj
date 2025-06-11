@@ -115,8 +115,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\CursorChanger.cpp" />
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\src\Component\EventTrigger.cpp" />
+    <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
+    <ClCompile Include="..\..\src\Component\EventTrigger.cpp" />
     <ClCompile Include="..\..\src\Component\InputBlocker.cpp" />
     <ClCompile Include="..\..\src\Asset.cpp" />
     <ClCompile Include="..\..\src\Canvas.cpp" />
@@ -245,7 +245,7 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\include\NocoUI\Component\CursorChanger.hpp" />
+    <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
