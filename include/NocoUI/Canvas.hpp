@@ -17,14 +17,10 @@ namespace noco
 		// フレーム間で引き継ぐためresetしない
 		std::weak_ptr<Node> dragScrollingNode;
 
-		void clearBeforeUpdateInput()
+		void clear()
 		{
 			inputBlocked = false;
 			editingTextBox.reset();
-		}
-
-		void clearBeforeUpdate()
-		{
 			hoveredNode.reset();
 			scrollableHoveredNode.reset();
 			draggingNode.reset();
@@ -40,37 +36,21 @@ namespace noco
 		inline CanvasUpdateContext s_canvasUpdateContext;
 		inline CanvasUpdateContext s_prevCanvasUpdateContext;
 
-		inline void CopyCanvasUpdateContextToPrevIfNeeded()
+		inline void ClearCanvasUpdateContextIfNeeded()
 		{
 			const int32 currentFrameCount = Scene::FrameCount();
 			if (s_lastCopiedCanvasUpdateContextToPrevFrameCount == currentFrameCount)
 			{
 				return;
 			}
+
+			// 前のフレームの状態を保存
 			s_lastCopiedCanvasUpdateContextToPrevFrameCount = currentFrameCount;
 			s_prevCanvasUpdateContext = s_canvasUpdateContext;
-		}
 
-		inline void ClearCanvasUpdateContextBeforeUpdateInputIfNeeded()
-		{
-			const int32 currentFrameCount = Scene::FrameCount();
-			if (s_lastUpdateInputFrameCount == currentFrameCount)
-			{
-				return;
-			}
+			// 現在のフレームの状態をクリア
 			s_lastUpdateInputFrameCount = currentFrameCount;
-			s_canvasUpdateContext.clearBeforeUpdateInput();
-		}
-
-		inline void ClearCanvasUpdateContextBeforeUpdateIfNeeded()
-		{
-			const int32 currentFrameCount = Scene::FrameCount();
-			if (s_lastUpdateFrameCount == currentFrameCount)
-			{
-				return;
-			}
-			s_lastUpdateFrameCount = currentFrameCount;
-			s_canvasUpdateContext.clearBeforeUpdate();
+			s_canvasUpdateContext.clear();
 		}
 	}
 

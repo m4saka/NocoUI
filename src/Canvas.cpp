@@ -198,6 +198,8 @@ namespace noco
 	{
 		m_eventRegistry.clear();
 
+		noco::detail::ClearCanvasUpdateContextIfNeeded();
+
 		if (!m_rootNode)
 		{
 			return;

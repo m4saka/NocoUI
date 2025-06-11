@@ -1122,9 +1122,6 @@ namespace noco
 
 	void Node::updateInput()
 	{
-		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
-		noco::detail::ClearCanvasUpdateContextBeforeUpdateInputIfNeeded();
-
 		const auto thisNode = shared_from_this();
 
 		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
@@ -1163,9 +1160,6 @@ namespace noco
 
 	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale)
 	{
-		noco::detail::CopyCanvasUpdateContextToPrevIfNeeded();
-		noco::detail::ClearCanvasUpdateContextBeforeUpdateIfNeeded();
-		
 		const auto thisNode = shared_from_this();
 		
 		// 慣性スクロール処理
@@ -1996,6 +1990,10 @@ namespace noco
 
 	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseLTracker.isHovered(includingDisabled))
 		{
 			return true;
@@ -2009,6 +2007,10 @@ namespace noco
 
 	bool Node::isPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseLTracker.isPressed(includingDisabled))
 		{
 			return true;
@@ -2022,6 +2024,10 @@ namespace noco
 
 	bool Node::isPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseLTracker.isPressedHover(includingDisabled))
 		{
 			return true;
@@ -2035,6 +2041,10 @@ namespace noco
 
 	bool Node::isMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseLTracker.isHovered(includingDisabled) && MouseL.down())
 		{
 			return true;
@@ -2048,7 +2058,7 @@ namespace noco
 
 	bool Node::isClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
-		if (!includingDisabled && !m_interactable)
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2065,7 +2075,7 @@ namespace noco
 
 	bool Node::isClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
-		if (!includingDisabled && !m_interactable)
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2082,6 +2092,10 @@ namespace noco
 
 	bool Node::isRightPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseRTracker.isPressed(includingDisabled))
 		{
 			return true;
@@ -2095,6 +2109,10 @@ namespace noco
 
 	bool Node::isRightPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseRTracker.isPressedHover(includingDisabled))
 		{
 			return true;
@@ -2108,6 +2126,10 @@ namespace noco
 
 	bool Node::isRightMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		{
+			return false;
+		}
 		if (m_mouseRTracker.isHovered(includingDisabled) && MouseR.down())
 		{
 			return true;
@@ -2121,7 +2143,7 @@ namespace noco
 
 	bool Node::isRightClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
-		if (!includingDisabled && !m_interactable)
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2138,7 +2160,7 @@ namespace noco
 
 	bool Node::isRightClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{
-		if (!includingDisabled && !m_interactable)
+		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
 			return false;
 		}
