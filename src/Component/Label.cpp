@@ -3,12 +3,12 @@
 
 namespace noco
 {
-	bool Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode, int32 maxLines)
+	bool Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
 		const bool hasCustomFont = fontOpt.has_value();
 		const Font newFont = hasCustomFont ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
 		
-		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode, maxLines))
+		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
 		{
 			return false;
 		}
@@ -24,7 +24,6 @@ namespace noco
 			.hasCustomFont = hasCustomFont,
 			.customFont = newFont,
 			.sizingMode = newSizingMode,
-			.maxLines = maxLines,
 		};
 
 		currentFont = newFont;
@@ -50,12 +49,6 @@ namespace noco
 		const auto fnPushLine =
 			[&]() -> bool
 			{
-				// maxLinesの制限チェック（0の場合は無制限）
-				if (maxLines > 0 && static_cast<int32>(lineCaches.size()) >= maxLines)
-				{
-					return false;
-				}
-				
 				// 現在の行の下端位置を計算
 				const double currentLineBottom = offset.y + lineHeight;
 				
@@ -144,8 +137,7 @@ namespace noco
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
 			rect.size / effectScale,
-			m_sizingMode.value(),
-			m_maxLines.value());
+			m_sizingMode.value());
 
 		if (m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
 		{
@@ -183,8 +175,7 @@ namespace noco
 						m_horizontalOverflow.value(),
 						VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
 						availableSize,
-						m_sizingMode.value(),
-						m_maxLines.value());
+						m_sizingMode.value());
 					
 					// 収まっていれば、このサイズで確定
 					if (m_cache.regionSize.x <= availableSize.x && 
@@ -211,8 +202,7 @@ namespace noco
 							m_horizontalOverflow.value(),
 							VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
 							availableSize,
-							m_sizingMode.value(),
-							m_maxLines.value());
+							m_sizingMode.value());
 						break;
 					}
 				}
@@ -233,8 +223,7 @@ namespace noco
 						m_horizontalOverflow.value(),
 						m_verticalOverflow.value(),  // 実際のプロパティ値を使用
 						availableSize,
-						m_sizingMode.value(),
-						m_maxLines.value());
+						m_sizingMode.value());
 				}
 			}
 			else if (m_cache.effectiveFontSize != m_fontSize.value())
@@ -355,8 +344,7 @@ namespace noco
 			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
 			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
 			Vec2::Zero(),
-			m_sizingMode.value(),
-			m_maxLines.value());
+			m_sizingMode.value());
 
 		return m_cache.regionSize;
 	}
@@ -372,8 +360,7 @@ namespace noco
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
 			rectSize,
-			m_sizingMode.value(),
-			m_maxLines.value());
+			m_sizingMode.value());
 
 		return m_cache.regionSize;
 	}

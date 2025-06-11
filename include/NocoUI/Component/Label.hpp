@@ -36,7 +36,6 @@ namespace noco
 		Property<LabelUnderlineStyle> m_underlineStyle;
 		SmoothProperty<ColorF> m_underlineColor;
 		SmoothProperty<double> m_underlineThickness;
-		Property<int32> m_maxLines;
 
 		/* NonSerialized */ Optional<Font> m_fontOpt;
 		
@@ -52,7 +51,6 @@ namespace noco
 			bool hasCustomFont;
 			Font customFont;
 			LabelSizingMode sizingMode;
-			int32 maxLines;
 
 			[[nodiscard]]
 			bool isDirty(
@@ -65,8 +63,7 @@ namespace noco
 				const SizeF& newRectSize,
 				bool newHasCustomFont,
 				const Font& newCustomFont,
-				LabelSizingMode newSizingMode,
-				int32 newMaxLines) const
+				LabelSizingMode newSizingMode) const
 			{
 				return text != newText
 					|| fontAssetName != newFontAssetName
@@ -77,8 +74,7 @@ namespace noco
 					|| rectSize != newRectSize
 					|| hasCustomFont != newHasCustomFont
 					|| (hasCustomFont && customFont != newCustomFont)
-					|| sizingMode != newSizingMode
-					|| maxLines != newMaxLines;
+					|| sizingMode != newSizingMode;
 			}
 		};
 
@@ -109,7 +105,7 @@ namespace noco
 
 			Cache() = default;
 
-			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode, int32 maxLines);
+			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
@@ -130,9 +126,8 @@ namespace noco
 			const PropertyValue<ColorF>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
 			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed,
-			const PropertyValue<double>& minFontSize = 8.0,
-			const PropertyValue<int32>& maxLines = 0)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_sizingMode, &m_minFontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_maxLines } }
+			const PropertyValue<double>& minFontSize = 8.0)
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_sizingMode, &m_minFontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -148,7 +143,6 @@ namespace noco
 			, m_underlineStyle{ U"underlineStyle", underlineStyle }
 			, m_underlineColor{ U"underlineColor", underlineColor }
 			, m_underlineThickness{ U"underlineThickness", underlineThickness }
-			, m_maxLines{ U"maxLines", maxLines }
 		{
 		}
 
@@ -323,18 +317,6 @@ namespace noco
 		std::shared_ptr<Label> setMinFontSize(const PropertyValue<double>& minFontSize)
 		{
 			m_minFontSize.setPropertyValue(minFontSize);
-			return shared_from_this();
-		}
-
-		[[nodiscard]]
-		const PropertyValue<int32>& maxLines() const
-		{
-			return m_maxLines.propertyValue();
-		}
-
-		std::shared_ptr<Label> setMaxLines(const PropertyValue<int32>& maxLines)
-		{
-			m_maxLines.setPropertyValue(maxLines);
 			return shared_from_this();
 		}
 
