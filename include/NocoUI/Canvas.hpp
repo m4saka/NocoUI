@@ -310,11 +310,19 @@ namespace noco
 
 		[[nodiscard]]
 		JSON toJSON() const;
+		
+		[[nodiscard]]
+		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const;
 
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		[[nodiscard]]
+		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		
+		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 

@@ -173,14 +173,40 @@ namespace noco
 		return m_rootNode->toJSON();
 	}
 	
+	JSON Canvas::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+	{
+		return m_rootNode->toJSONImpl(includesInternalId);
+	}
+	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
 	{
 		return Create(Node::CreateFromJSON(json), refreshesLayout);
 	}
 	
+	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout)
+	{
+		return Create(Node::CreateFromJSONImpl(json, includesInternalId), refreshesLayout);
+	}
+	
 	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
 		m_rootNode = Node::CreateFromJSON(json);
+		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
+		if (refreshesLayoutPre)
+		{
+			refreshLayout();
+		}
+		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		if (refreshesLayoutPost)
+		{
+			refreshLayout();
+		}
+		return true; // TODO: 失敗したらfalseを返す
+	}
+	
+	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	{
+		m_rootNode = Node::CreateFromJSONImpl(json, includesInternalId);
 		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 		if (refreshesLayoutPre)
 		{

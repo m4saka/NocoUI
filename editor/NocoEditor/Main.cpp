@@ -2,6 +2,7 @@
 #include "NocoUI.hpp"
 
 using namespace noco;
+using noco::detail::IncludesInternalIdYN;
 
 using CheckedYN = YesNo<struct CheckedYN_tag>;
 using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
@@ -6527,7 +6528,7 @@ public:
 		const bool hasUserInput = MouseL.down() || MouseR.down() || Keyboard::GetAllInputs().any([](const Input& input) { return input.down(); });
 		if (hasUserInput)
 		{
-			m_historySystem.recordStateIfNeeded(m_canvas->toJSON());
+			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
 			m_toolbar.updateButtonStates();
 		}
 		
@@ -6578,6 +6579,65 @@ public:
 	{
 		m_hierarchy.refreshNodeList();
 		refreshLayout();
+	}
+
+	// 選択中のノードのinternalIdを保存
+	Array<uint64> saveSelectedNodeIds() const
+	{
+		Array<uint64> selectedIds;
+		const auto selectedNodes = m_hierarchy.getSelectedNodesExcludingChildren();
+		for (const auto& node : selectedNodes)
+		{
+			selectedIds.push_back(node->internalId());
+		}
+		return selectedIds;
+	}
+
+	// internalIdを使用してノードを検索（再帰的）
+	std::shared_ptr<Node> findNodeByInternalId(const std::shared_ptr<Node>& node, uint64 targetId) const
+	{
+		if (!node)
+		{
+			return nullptr;
+		}
+		
+		if (node->internalId() == targetId)
+		{
+			return node;
+		}
+		
+		for (const auto& child : node->children())
+		{
+			if (auto found = findNodeByInternalId(child, targetId))
+			{
+				return found;
+			}
+		}
+		
+		return nullptr;
+	}
+
+	// internalIdのリストから選択を復元
+	void restoreSelectedNodeIds(const Array<uint64>& selectedIds)
+	{
+		if (selectedIds.empty())
+		{
+			return;
+		}
+		
+		Array<std::shared_ptr<Node>> nodesToSelect;
+		for (const auto& id : selectedIds)
+		{
+			if (auto node = findNodeByInternalId(m_canvas->rootNode(), id))
+			{
+				nodesToSelect.push_back(node);
+			}
+		}
+		
+		if (!nodesToSelect.empty())
+		{
+			m_hierarchy.selectNodes(nodesToSelect);
+		}
 	}
 
 	bool isDirty() const
@@ -6781,10 +6841,17 @@ public:
 	
 	void onClickMenuEditUndo()
 	{
-		if (const auto undoState = m_historySystem.undo(m_canvas->toJSON()))
+		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes)))
 		{
-			m_canvas->tryReadFromJSON(*undoState);
+			// 現在選択中のノードのinternalIdを保存
+			const auto selectedNodeIds = saveSelectedNodeIds();
+			
+			m_canvas->tryReadFromJSONImpl(*undoState, IncludesInternalIdYN::Yes);
 			refresh();
+			
+			// 選択を復元
+			restoreSelectedNodeIds(selectedNodeIds);
+			
 			m_historySystem.endRestore();
 			m_toolbar.updateButtonStates();
 		}
@@ -6792,10 +6859,17 @@ public:
 	
 	void onClickMenuEditRedo()
 	{
-		if (const auto redoState = m_historySystem.redo(m_canvas->toJSON()))
+		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes)))
 		{
-			m_canvas->tryReadFromJSON(*redoState);
+			// 現在選択中のノードのinternalIdを保存
+			const auto selectedNodeIds = saveSelectedNodeIds();
+			
+			m_canvas->tryReadFromJSONImpl(*redoState, IncludesInternalIdYN::Yes);
 			refresh();
+			
+			// 選択を復元
+			restoreSelectedNodeIds(selectedNodeIds);
+			
 			m_historySystem.endRestore();
 			m_toolbar.updateButtonStates();
 		}
@@ -6824,7 +6898,7 @@ public:
 	
 	void recordInitialState()
 	{
-		m_historySystem.recordStateIfNeeded(m_canvas->toJSON());
+		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
 	}
 };
 
