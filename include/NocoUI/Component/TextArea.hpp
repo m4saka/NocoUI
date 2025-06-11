@@ -2,10 +2,11 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "ITextBox.hpp"
+#include "IFocusable.hpp"
 
 namespace noco
 {
-	class TextArea : public SerializableComponentBase, public ITextBox, public std::enable_shared_from_this<TextArea>
+	class TextArea : public SerializableComponentBase, public ITextBox, public IFocusable, public std::enable_shared_from_this<TextArea>
 	{
 	private:
 		static constexpr double CursorWidth = 1.5;
@@ -18,6 +19,7 @@ namespace noco
 		SmoothProperty<Vec2> m_verticalPadding;
 		SmoothProperty<ColorF> m_cursorColor;
 		SmoothProperty<ColorF> m_selectionColor;
+		Property<bool> m_tabStop;
 
 		/* NonSerialized */ double m_cursorBlinkTime = 0.0;
 		/* NonSerialized */ bool m_isEditing = false;
@@ -129,8 +131,9 @@ namespace noco
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
-			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified)
-			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor } }
+			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified,
+			const PropertyValue<bool>& tabStop = true)
+			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_tabStop } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -139,6 +142,7 @@ namespace noco
 			, m_verticalPadding{ U"verticalPadding", verticalPadding }
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
 			, m_selectionColor{ U"selectionColor", selectionColor.value_or(ColorF{ 0.0, 0.1, 0.3, 0.5 }) }
+			, m_tabStop{ U"tabStop", tabStop }
 		{
 		}
 
@@ -253,5 +257,17 @@ namespace noco
 		{
 			return m_isEditing;
 		}
+
+		// IFocusable interface
+		[[nodiscard]]
+		bool isTabStopEnabled() const override
+		{
+			return m_tabStop.value();
+		}
+
+		[[nodiscard]]
+		bool isFocused() const override;
+
+		void setFocused(bool focused) override;
 	};
 }

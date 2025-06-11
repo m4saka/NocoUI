@@ -741,4 +741,19 @@ namespace noco
 		}
 		return shared_from_this();
 	}
+
+	bool TextBox::isFocused() const
+	{
+		// 現状はSelectedの状態を使用
+		// 編集中かどうかで判定
+		return m_isEditing;
+	}
+
+	void TextBox::setFocused(bool focused)
+	{
+		// 現状はSelectedの状態を使用
+		// フォーカスを設定する場合は、後でupdateInputで処理される
+		// フォーカスを解除する場合は、deselectを呼び出す必要がある
+		// ただし、ここではノードへの参照がないため、実際の処理はCanvasレベルで行う
+	}
 }

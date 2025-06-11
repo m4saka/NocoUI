@@ -1333,6 +1333,9 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"TextBox", U"selectionColor" }] = PropertyMetadata{
 		.tooltip = U"選択範囲の色",
 	};
+	metadata[PropertyKey{ U"TextBox", U"tabStop" }] = PropertyMetadata{
+		.tooltip = U"Tabキーによるフォーカス移動を有効にするかどうか",
+	};
 	metadata[PropertyKey{ U"TextBox", U"text" }] = PropertyMetadata{
 		.numTextAreaLines = 3,
 		.refreshesEveryFrame = true,
@@ -1360,6 +1363,9 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"TextArea", U"selectionColor" }] = PropertyMetadata{
 		.tooltip = U"選択範囲の色",
+	};
+	metadata[PropertyKey{ U"TextArea", U"tabStop" }] = PropertyMetadata{
+		.tooltip = U"Tabキーによるフォーカス移動を有効にするかどうか",
 	};
 	metadata[PropertyKey{ U"TextArea", U"text" }] = PropertyMetadata{
 		.numTextAreaLines = 3,

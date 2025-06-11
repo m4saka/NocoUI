@@ -4,6 +4,7 @@
 #include "Sprite.hpp"
 #include "RectRenderer.hpp"
 #include "ITextBox.hpp"
+#include "IFocusable.hpp"
 #include "TextBox.hpp"
 #include "TextArea.hpp"
 #include "InputBlocker.hpp"

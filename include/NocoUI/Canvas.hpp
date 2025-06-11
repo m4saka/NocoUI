@@ -290,6 +290,10 @@ namespace noco
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
 
+		Array<std::shared_ptr<Node>> collectFocusableNodes() const;
+
+		void handleTabNavigation();
+
 		Canvas();
 
 		explicit Canvas(const std::shared_ptr<Node>& rootNode);
@@ -302,6 +306,10 @@ namespace noco
 		static std::shared_ptr<Canvas> Create(const std::shared_ptr<Node>& rootNode, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void refreshLayout();
+
+		void navigateToNextFocusable();
+
+		void navigateToPreviousFocusable();
 
 		bool containsNodeByName(const String& nodeName) const;
 

@@ -1,4 +1,7 @@
 ﻿#include "NocoUI/Canvas.hpp"
+#include "NocoUI/Component/IFocusable.hpp"
+#include "NocoUI/Component/TextBox.hpp"
+#include "NocoUI/Component/TextArea.hpp"
 #include <cassert>
 
 namespace noco
@@ -339,6 +342,9 @@ namespace noco
 			// 慣性スクロールは各ノードがupdateで処理される
 		}
 
+		// タブナビゲーション処理
+		handleTabNavigation();
+
 		// ノード更新
 		const bool currentDragScrollingWithThreshold = dragScrollingNode && dragScrollingNode->m_dragThresholdExceeded;
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
@@ -436,5 +442,255 @@ namespace noco
 	const Array<Event>& Canvas::getFiredEventsAll() const
 	{
 		return m_eventRegistry.getFiredEventsAll();
+	}
+
+	Array<std::shared_ptr<Node>> Canvas::collectFocusableNodes() const
+	{
+		if (!m_rootNode)
+		{
+			return {};
+		}
+
+		Array<std::shared_ptr<Node>> focusableNodes;
+
+		// 再帰的にノードを走査してIFocusableを実装したコンポーネントを持つノードを収集
+		std::function<void(const std::shared_ptr<Node>&)> collectRecursive = [&](const std::shared_ptr<Node>& node)
+		{
+			if (!node || !node->activeInHierarchy() || !node->interactableInHierarchy())
+			{
+				return;
+			}
+
+			// 最初に見つかったIFocusableコンポーネントを取得
+			for (const auto& component : node->components())
+			{
+				if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+				{
+					if (focusable->isTabStopEnabled())
+					{
+						focusableNodes.push_back(node);
+						break; // 最初のIFocusableのみを使用
+					}
+				}
+			}
+
+			// 子ノードも再帰的に探索
+			for (const auto& child : node->children())
+			{
+				collectRecursive(child);
+			}
+		};
+
+		collectRecursive(m_rootNode);
+		return focusableNodes;
+	}
+
+	void Canvas::handleTabNavigation()
+	{
+		// Tabキーが押されていない場合は何もしない
+		const bool tabPressed = KeyTab.down();
+		const bool shiftTabPressed = (KeyLShift | KeyRShift).pressed() && KeyTab.down();
+
+		if (!tabPressed && !shiftTabPressed)
+		{
+			return;
+		}
+
+		// フォーカス可能なノードを収集
+		const auto focusableNodes = collectFocusableNodes();
+		if (focusableNodes.empty())
+		{
+			return;
+		}
+
+		// 現在フォーカスされているノードのインデックスを探す
+		Optional<size_t> currentFocusedIndex;
+		for (size_t i = 0; i < focusableNodes.size(); ++i)
+		{
+			// 最初のIFocusableコンポーネントを取得
+			for (const auto& component : focusableNodes[i]->components())
+			{
+				if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+				{
+					if (focusable->isFocused())
+					{
+						currentFocusedIndex = i;
+						break;
+					}
+					break; // 最初のIFocusableのみをチェック
+				}
+			}
+			if (currentFocusedIndex.has_value())
+			{
+				break;
+			}
+		}
+
+		// 次のフォーカス先を決定
+		size_t nextIndex = 0;
+		if (currentFocusedIndex.has_value())
+		{
+			if (shiftTabPressed)
+			{
+				// Shift+Tab: 前の要素へ
+				nextIndex = (*currentFocusedIndex == 0) ? (focusableNodes.size() - 1) : (*currentFocusedIndex - 1);
+			}
+			else
+			{
+				// Tab: 次の要素へ
+				nextIndex = (*currentFocusedIndex + 1) % focusableNodes.size();
+			}
+		}
+		// 現在フォーカスがない場合は最初の要素にフォーカス
+
+		// 現在のフォーカスを解除
+		if (currentFocusedIndex.has_value())
+		{
+			// TextBox/TextAreaの場合はdeselectを呼ぶ必要がある
+			auto node = focusableNodes[*currentFocusedIndex];
+			for (const auto& component : node->components())
+			{
+				if (auto textBox = std::dynamic_pointer_cast<TextBox>(component))
+				{
+					textBox->deselect(node);
+					break;
+				}
+				else if (auto textArea = std::dynamic_pointer_cast<TextArea>(component))
+				{
+					textArea->deselect(node);
+					break;
+				}
+			}
+		}
+
+		// 新しいノードにフォーカスを設定
+		auto nextNode = focusableNodes[nextIndex];
+		nextNode->setSelected(SelectedYN::Yes);
+	}
+
+	void Canvas::navigateToNextFocusable()
+	{
+		// フォーカス可能なノードを収集
+		const auto focusableNodes = collectFocusableNodes();
+		if (focusableNodes.empty())
+		{
+			return;
+		}
+
+		// 現在フォーカスされているノードのインデックスを探す
+		Optional<size_t> currentFocusedIndex;
+		for (size_t i = 0; i < focusableNodes.size(); ++i)
+		{
+			for (const auto& component : focusableNodes[i]->components())
+			{
+				if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+				{
+					if (focusable->isFocused())
+					{
+						currentFocusedIndex = i;
+						break;
+					}
+					break;
+				}
+			}
+			if (currentFocusedIndex.has_value())
+			{
+				break;
+			}
+		}
+
+		// 次のフォーカス先を決定
+		size_t nextIndex = 0;
+		if (currentFocusedIndex.has_value())
+		{
+			nextIndex = (*currentFocusedIndex + 1) % focusableNodes.size();
+		}
+
+		// 現在のフォーカスを解除
+		if (currentFocusedIndex.has_value())
+		{
+			// TextBox/TextAreaの場合はdeselectを呼ぶ必要がある
+			auto node = focusableNodes[*currentFocusedIndex];
+			for (const auto& component : node->components())
+			{
+				if (auto textBox = std::dynamic_pointer_cast<TextBox>(component))
+				{
+					textBox->deselect(node);
+					break;
+				}
+				else if (auto textArea = std::dynamic_pointer_cast<TextArea>(component))
+				{
+					textArea->deselect(node);
+					break;
+				}
+			}
+		}
+
+		// 新しいノードにフォーカスを設定
+		auto nextNode = focusableNodes[nextIndex];
+		nextNode->setSelected(SelectedYN::Yes);
+	}
+
+	void Canvas::navigateToPreviousFocusable()
+	{
+		// フォーカス可能なノードを収集
+		const auto focusableNodes = collectFocusableNodes();
+		if (focusableNodes.empty())
+		{
+			return;
+		}
+
+		// 現在フォーカスされているノードのインデックスを探す
+		Optional<size_t> currentFocusedIndex;
+		for (size_t i = 0; i < focusableNodes.size(); ++i)
+		{
+			for (const auto& component : focusableNodes[i]->components())
+			{
+				if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+				{
+					if (focusable->isFocused())
+					{
+						currentFocusedIndex = i;
+						break;
+					}
+					break;
+				}
+			}
+			if (currentFocusedIndex.has_value())
+			{
+				break;
+			}
+		}
+
+		// 前のフォーカス先を決定
+		size_t nextIndex = 0;
+		if (currentFocusedIndex.has_value())
+		{
+			nextIndex = (*currentFocusedIndex == 0) ? (focusableNodes.size() - 1) : (*currentFocusedIndex - 1);
+		}
+
+		// 現在のフォーカスを解除
+		if (currentFocusedIndex.has_value())
+		{
+			// TextBox/TextAreaの場合はdeselectを呼ぶ必要がある
+			auto node = focusableNodes[*currentFocusedIndex];
+			for (const auto& component : node->components())
+			{
+				if (auto textBox = std::dynamic_pointer_cast<TextBox>(component))
+				{
+					textBox->deselect(node);
+					break;
+				}
+				else if (auto textArea = std::dynamic_pointer_cast<TextArea>(component))
+				{
+					textArea->deselect(node);
+					break;
+				}
+			}
+		}
+
+		// 新しいノードにフォーカスを設定
+		auto nextNode = focusableNodes[nextIndex];
+		nextNode->setSelected(SelectedYN::Yes);
 	}
 }
