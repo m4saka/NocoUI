@@ -1703,6 +1703,11 @@ namespace noco
 		return setInteractable(InteractableYN{ interactable });
 	}
 
+	bool Node::interactableInHierarchy() const
+	{
+		return m_currentInteractionState != InteractionState::Disabled;
+	}
+
 	ActiveYN Node::activeSelf() const
 	{
 		return m_activeSelf;

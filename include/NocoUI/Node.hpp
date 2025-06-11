@@ -336,6 +336,9 @@ namespace noco
 		std::shared_ptr<Node> setInteractable(bool interactable);
 
 		[[nodiscard]]
+		bool interactableInHierarchy() const;
+
+		[[nodiscard]]
 		ActiveYN activeSelf() const;
 
 		std::shared_ptr<Node> setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
