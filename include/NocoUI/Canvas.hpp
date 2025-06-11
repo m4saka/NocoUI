@@ -13,6 +13,7 @@ namespace noco
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<ITextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
+		std::weak_ptr<Node> focusedNode;
 
 		// フレーム間で引き継ぐためresetしない
 		std::weak_ptr<Node> dragScrollingNode;
@@ -24,6 +25,7 @@ namespace noco
 			hoveredNode.reset();
 			scrollableHoveredNode.reset();
 			draggingNode.reset();
+			focusedNode.reset();
 		}
 	};
 
@@ -114,6 +116,18 @@ namespace noco
 		{
 			return detail::s_canvasUpdateContext.inputBlocked;
 		}
+
+		[[nodiscard]]
+		inline bool AnyNodeFocused()
+		{
+			return !detail::s_canvasUpdateContext.focusedNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetFocusedNode()
+		{
+			return detail::s_canvasUpdateContext.focusedNode.lock();
+		}
 	}
 
 	namespace PrevFrame
@@ -164,6 +178,18 @@ namespace noco
 		inline std::shared_ptr<Node> GetDraggingNode()
 		{
 			return detail::s_prevCanvasUpdateContext.draggingNode.lock();
+		}
+
+		[[nodiscard]]
+		inline bool AnyNodeFocused()
+		{
+			return !detail::s_prevCanvasUpdateContext.focusedNode.expired();
+		}
+
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetFocusedNode()
+		{
+			return detail::s_prevCanvasUpdateContext.focusedNode.lock();
 		}
 	}
 
@@ -229,6 +255,22 @@ namespace noco
 			return node;
 		}
 		return PrevFrame::GetDraggingNode();
+	}
+
+	[[nodiscard]]
+	inline bool AnyNodeFocused()
+	{
+		return CurrentFrame::AnyNodeFocused() || PrevFrame::AnyNodeFocused();
+	}
+
+	[[nodiscard]]
+	inline std::shared_ptr<Node> GetFocusedNode()
+	{
+		if (auto node = CurrentFrame::GetFocusedNode())
+		{
+			return node;
+		}
+		return PrevFrame::GetFocusedNode();
 	}
 
 	enum class EventTriggerType : uint8

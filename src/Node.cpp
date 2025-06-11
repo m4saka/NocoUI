@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Component/Component.hpp"
+#include "NocoUI/Component/IFocusable.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
@@ -1985,6 +1986,36 @@ namespace noco
 	std::shared_ptr<Node> Node::setSelected(SelectedYN selected)
 	{
 		m_selected = selected;
+		
+		// IFocusableコンポーネントを持つノードのみfocusedNodeとして設定
+		bool hasFocusableComponent = false;
+		for (const auto& component : m_components)
+		{
+			if (std::dynamic_pointer_cast<IFocusable>(component))
+			{
+				hasFocusableComponent = true;
+				break;
+			}
+		}
+		
+		if (hasFocusableComponent)
+		{
+			// フォーカスされたノードの状態を更新
+			if (selected)
+			{
+				// このノードが選択された場合、focusedNodeとして設定
+				detail::s_canvasUpdateContext.focusedNode = shared_from_this();
+			}
+			else
+			{
+				// このノードの選択が解除された場合、focusedNodeがこのノードであればリセット
+				if (detail::s_canvasUpdateContext.focusedNode.lock() == shared_from_this())
+				{
+					detail::s_canvasUpdateContext.focusedNode.reset();
+				}
+			}
+		}
+		
 		return shared_from_this();
 	}
 

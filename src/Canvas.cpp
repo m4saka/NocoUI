@@ -566,6 +566,7 @@ namespace noco
 		// 新しいノードにフォーカスを設定
 		auto nextNode = focusableNodes[nextIndex];
 		nextNode->setSelected(SelectedYN::Yes);
+		detail::s_canvasUpdateContext.focusedNode = nextNode;
 	}
 
 	void Canvas::navigateToNextFocusable()
@@ -629,6 +630,7 @@ namespace noco
 		// 新しいノードにフォーカスを設定
 		auto nextNode = focusableNodes[nextIndex];
 		nextNode->setSelected(SelectedYN::Yes);
+		detail::s_canvasUpdateContext.focusedNode = nextNode;
 	}
 
 	void Canvas::navigateToPreviousFocusable()
@@ -692,5 +694,6 @@ namespace noco
 		// 新しいノードにフォーカスを設定
 		auto nextNode = focusableNodes[nextIndex];
 		nextNode->setSelected(SelectedYN::Yes);
+		detail::s_canvasUpdateContext.focusedNode = nextNode;
 	}
 }
