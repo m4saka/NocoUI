@@ -14,6 +14,144 @@ using IsCancelButtonYN = YesNo<struct IsCancelButtonYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
 
+// 元に戻す/やり直し機能を管理するクラス
+class HistorySystem
+{
+private:
+	static constexpr size_t MaxStackSize = 50;
+	static constexpr Duration MinTimeBetweenRecords = 0.5s; // 記録の最小間隔
+	
+	Array<JSON> m_undoStack;
+	Array<JSON> m_redoStack;
+	Stopwatch m_lastRecordTime;
+	Optional<JSON> m_lastRecordedState;
+	bool m_isRestoring = false;
+
+public:
+	HistorySystem()
+	{
+		m_lastRecordTime.start();
+	}
+	
+	// スタックをクリア
+	void clear()
+	{
+		m_undoStack.clear();
+		m_redoStack.clear();
+		m_lastRecordedState = none;
+	}
+	
+	// 現在の状態を記録するかチェックし、必要なら記録
+	void recordStateIfNeeded(const JSON& currentState)
+	{
+		if (m_isRestoring)
+		{
+			return;
+		}
+		
+		// 前回の記録から一定時間経過しているかチェック
+		if (m_lastRecordTime.elapsed() < MinTimeBetweenRecords)
+		{
+			return;
+		}
+		
+		// 前回の状態と同じかチェック
+		if (m_lastRecordedState.has_value())
+		{
+			const String currentHash = currentState.formatMinimum();
+			const String lastHash = m_lastRecordedState->formatMinimum();
+			if (currentHash == lastHash)
+			{
+				return;
+			}
+		}
+		
+		// 状態を記録
+		if (m_lastRecordedState.has_value())
+		{
+			m_undoStack.push_back(*m_lastRecordedState);
+			
+			// スタックサイズ制限
+			if (m_undoStack.size() > MaxStackSize)
+			{
+				m_undoStack.pop_front();
+			}
+			
+			// 新しい操作が行われたらRedoスタックをクリア
+			m_redoStack.clear();
+		}
+		
+		m_lastRecordedState = currentState;
+		m_lastRecordTime.restart();
+	}
+	
+	// 元に戻す
+	[[nodiscard]]
+	Optional<JSON> undo(const JSON& currentState)
+	{
+		if (m_undoStack.empty())
+		{
+			return none;
+		}
+		
+		// 現在の状態をRedoスタックに保存
+		m_redoStack.push_back(currentState);
+		
+		// Undoスタックから状態を復元
+		const JSON restoreState = m_undoStack.back();
+		m_undoStack.pop_back();
+		
+		m_lastRecordedState = restoreState;
+		m_lastRecordTime.restart();
+		m_isRestoring = true;
+		
+		return restoreState;
+	}
+	
+	// やり直す
+	[[nodiscard]]
+	Optional<JSON> redo(const JSON& currentState)
+	{
+		if (m_redoStack.empty())
+		{
+			return none;
+		}
+		
+		// 現在の状態をUndoスタックに保存
+		m_undoStack.push_back(currentState);
+		
+		// Redoスタックから状態を復元
+		const JSON restoreState = m_redoStack.back();
+		m_redoStack.pop_back();
+		
+		m_lastRecordedState = restoreState;
+		m_lastRecordTime.restart();
+		m_isRestoring = true;
+		
+		return restoreState;
+	}
+	
+	// 復元処理完了を通知
+	void endRestore()
+	{
+		m_isRestoring = false;
+	}
+	
+	// Undo可能かチェック
+	[[nodiscard]]
+	bool canUndo() const
+	{
+		return !m_undoStack.empty();
+	}
+	
+	// Redo可能かチェック
+	[[nodiscard]]
+	bool canRedo() const
+	{
+		return !m_redoStack.empty();
+	}
+};
+
 struct MenuItem
 {
 	String text;
@@ -6096,6 +6234,7 @@ private:
 	Vec2 m_scrollOffset = InitialCanvasScrollOffset;
 	double m_scrollScale = 1.0;
 	bool m_isAltScrolling = false;
+	HistorySystem m_historySystem;
 
 public:
 	Editor()
@@ -6132,6 +6271,9 @@ public:
 			U"編集",
 			KeyE,
 			{
+				MenuItem{ U"元に戻す", U"Ctrl+Z", KeyZ, [this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); } },
+				MenuItem{ U"やり直す", U"Ctrl+Shift+Z", KeyR, [this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); } },
+				MenuSeparator{},
 				MenuItem{ U"切り取り", U"Ctrl+X", KeyT, [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"コピー", U"Ctrl+C", KeyC, [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
@@ -6162,6 +6304,11 @@ public:
 		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); })->addClickHotKey(KeyO, CtrlYN::Yes, AltYN::No, ShiftYN::No);
 		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); })->addClickHotKey(KeyS, CtrlYN::Yes, AltYN::No, ShiftYN::No);
 		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); })->addClickHotKey(KeyA, CtrlYN::Yes, AltYN::No, ShiftYN::Yes);
+		m_toolbar.addSeparator();
+		m_toolbar.addButton(U"Undo", U"\xF054C", U"元に戻す (Ctrl+Z)", [this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); })->addClickHotKey(KeyZ, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"Redo", U"\xF054D", U"やり直す (Ctrl+Y)", [this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); })
+			->addClickHotKey(KeyY, CtrlYN::Yes, AltYN::No, ShiftYN::No)
+			->addClickHotKey(KeyZ, CtrlYN::Yes, AltYN::No, ShiftYN::Yes);
 		m_toolbar.addSeparator();
 		m_toolbar.addButton(U"NewNode", U"\xF1200", U"新規ノード (Ctrl+Shift+N)", [this] { m_hierarchy.onClickNewNode(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::Yes);
 		m_toolbar.addButton(U"NewNodeAsChild", U"\xF0F97", U"選択ノードの子として新規ノード (Ctrl+Alt+N)",
@@ -6376,6 +6523,14 @@ public:
 			m_isAltScrolling = false;
 		}
 
+		// ユーザー操作があった場合、状態を記録
+		const bool hasUserInput = MouseL.down() || MouseR.down() || Keyboard::GetAllInputs().any([](const Input& input) { return input.down(); });
+		if (hasUserInput)
+		{
+			m_historySystem.recordStateIfNeeded(m_canvas->toJSON());
+			m_toolbar.updateButtonStates();
+		}
+		
 		// ウィンドウを閉じようとした場合
 		if (!m_isConfirmDialogShowing && (System::GetUserActions() & UserAction::CloseButtonClicked))
 		{
@@ -6508,6 +6663,8 @@ public:
 				m_canvas->removeChildrenAll();
 				refresh();
 				createInitialNode();
+				m_historySystem.clear();
+				m_toolbar.updateButtonStates();
 			});
 	}
 
@@ -6535,6 +6692,8 @@ public:
 						return;
 					}
 					refresh();
+					m_historySystem.clear();
+					m_toolbar.updateButtonStates();
 				}
 			});
 	}
@@ -6619,6 +6778,28 @@ public:
 	{
 		m_hierarchy.selectAll();
 	}
+	
+	void onClickMenuEditUndo()
+	{
+		if (const auto undoState = m_historySystem.undo(m_canvas->toJSON()))
+		{
+			m_canvas->tryReadFromJSON(*undoState);
+			refresh();
+			m_historySystem.endRestore();
+			m_toolbar.updateButtonStates();
+		}
+	}
+	
+	void onClickMenuEditRedo()
+	{
+		if (const auto redoState = m_historySystem.redo(m_canvas->toJSON()))
+		{
+			m_canvas->tryReadFromJSON(*redoState);
+			refresh();
+			m_historySystem.endRestore();
+			m_toolbar.updateButtonStates();
+		}
+	}
 
 	void onClickMenuViewResetPosition()
 	{
@@ -6639,6 +6820,11 @@ public:
 	void createInitialNode()
 	{
 		m_hierarchy.onClickNewNode();
+	}
+	
+	void recordInitialState()
+	{
+		m_historySystem.recordStateIfNeeded(m_canvas->toJSON());
 	}
 };
 
@@ -6663,6 +6849,9 @@ void Main()
 	editor.refresh();
 	editor.createInitialNode();
 	editor.resetDirty();
+	
+	// 初期状態を記録
+	editor.recordInitialState();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
 
