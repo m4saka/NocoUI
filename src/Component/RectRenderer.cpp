@@ -10,6 +10,7 @@ namespace noco
 		const ColorF& fillColor = m_fillColor.value();
 		const ColorF& fillGradationColor1 = m_fillGradationColor1.value();
 		const ColorF& fillGradationColor2 = m_fillGradationColor2.value();
+		const BlendMode blendModeValue = m_blendMode.value();
 		const ColorF& outlineColor = m_outlineColor.value();
 		const double outlineThickness = m_outlineThickness.value() * effectScaleAvg;
 		const double cornerRadius = m_cornerRadius.value() * effectScaleAvg;
@@ -17,6 +18,24 @@ namespace noco
 		const Vec2& shadowOffset = m_shadowOffset.value() * effectScaleAvg;
 		const double shadowBlur = m_shadowBlur.value() * effectScaleAvg;
 		const double shadowSpread = m_shadowSpread.value() * effectScaleAvg;
+
+		// ブレンドモードの設定
+		Optional<ScopedRenderStates2D> blendState;
+		switch (blendModeValue)
+		{
+		case BlendMode::Additive:
+			blendState.emplace(BlendState::Additive);
+			break;
+		case BlendMode::Subtractive:
+			blendState.emplace(BlendState::Subtractive);
+			break;
+		case BlendMode::Multiply:
+			blendState.emplace(BlendState::Multiplicative);
+			break;
+		default:
+			// Normal の場合は何もしない
+			break;
+		}
 
 		if (cornerRadius == 0.0)
 		{

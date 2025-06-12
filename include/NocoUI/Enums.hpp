@@ -36,4 +36,12 @@ namespace noco
 		HeightOnly,
 		Both,
 	};
+
+	enum class BlendMode : uint8
+	{
+		Normal,
+		Additive,
+		Subtractive,
+		Multiply,
+	};
 }

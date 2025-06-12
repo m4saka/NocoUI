@@ -200,6 +200,7 @@ namespace noco
 			return shared_from_this();
 		}
 
+
 		[[nodiscard]]
 		const PropertyValue<HorizontalAlign>& horizontalAlign() const
 		{

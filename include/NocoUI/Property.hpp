@@ -269,7 +269,7 @@ namespace noco
 		SmoothProperty(const char32_t* name, const U& defaultValue) requires std::convertible_to<U, T>
 			: m_name{ name }
 			, m_propertyValue{ defaultValue }
-			, m_smoothing{ 0.0, defaultValue }
+			, m_smoothing{ defaultValue }
 		{
 		}
 

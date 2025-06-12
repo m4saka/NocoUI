@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "../LRTB.hpp"
+#include "../Enums.hpp"
 
 namespace noco
 {
@@ -11,6 +12,8 @@ namespace noco
 		Property<String> m_textureFilePath;
 		Property<String> m_textureAssetName;
 		SmoothProperty<ColorF> m_color;
+		SmoothProperty<ColorF> m_addColor;
+		Property<BlendMode> m_blendMode;
 		Property<bool> m_preserveAspect;
 		Property<bool> m_nineSliceEnabled;
 		Property<LRTB> m_nineSliceMargin;
@@ -28,10 +31,12 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
+			, m_addColor{ U"addColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }
 			, m_nineSliceEnabled{ U"nineSliceEnabled", false }
 			, m_nineSliceMargin{ U"nineSliceMargin", LRTB::Zero() }
@@ -80,6 +85,30 @@ namespace noco
 		std::shared_ptr<Sprite> setColor(const PropertyValue<ColorF>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& addColor() const
+		{
+			return m_addColor.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setAddColor(const PropertyValue<ColorF>& addColor)
+		{
+			m_addColor.setPropertyValue(addColor);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<BlendMode>& blendMode() const
+		{
+			return m_blendMode.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setBlendMode(const PropertyValue<BlendMode>& blendMode)
+		{
+			m_blendMode.setPropertyValue(blendMode);
 			return shared_from_this();
 		}
 

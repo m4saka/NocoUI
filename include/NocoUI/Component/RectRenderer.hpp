@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "../Enums.hpp"
 
 namespace noco
 {
@@ -18,6 +19,7 @@ namespace noco
 		SmoothProperty<ColorF> m_fillColor;
 		SmoothProperty<ColorF> m_fillGradationColor1;
 		SmoothProperty<ColorF> m_fillGradationColor2;
+		Property<BlendMode> m_blendMode;
 		SmoothProperty<ColorF> m_outlineColor;
 		SmoothProperty<double> m_outlineThickness;
 		SmoothProperty<double> m_cornerRadius;
@@ -36,11 +38,12 @@ namespace noco
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
 			const PropertyValue<double>& shadowSpread = 0.0)
-			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_blendMode, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
 			, m_fillGradationType{ U"fillGradationType", RectFillGradationType::None }
 			, m_fillColor{ U"fillColor", fillColor }
 			, m_fillGradationColor1{ U"fillGradationColor1", fillColor }
 			, m_fillGradationColor2{ U"fillGradationColor2", fillColor }
+			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_outlineColor{ U"outlineColor", outlineColor }
 			, m_outlineThickness{ U"outlineThickness", outlineThickness }
 			, m_cornerRadius{ U"cornerRadius", cornerRadius }
@@ -105,6 +108,18 @@ namespace noco
 		{
 			m_fillGradationColor1.setPropertyValue(color1);
 			m_fillGradationColor2.setPropertyValue(color2);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<BlendMode>& blendMode() const
+		{
+			return m_blendMode.propertyValue();
+		}
+
+		std::shared_ptr<RectRenderer> setBlendMode(const PropertyValue<BlendMode>& blendMode)
+		{
+			m_blendMode.setPropertyValue(blendMode);
 			return shared_from_this();
 		}
 

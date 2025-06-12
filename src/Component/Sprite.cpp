@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Component/Sprite.hpp"
 #include "NocoUI/Node.hpp"
 #include "NocoUI/Asset.hpp"
+#include "NocoUI/Enums.hpp"
 
 namespace noco
 {
@@ -256,6 +257,45 @@ namespace noco
 		
 		const RectF& rect = node.rect();
 		const ColorF& color = m_color.value();
+		const ColorF& addColorValue = m_addColor.value();
+		const BlendMode blendModeValue = m_blendMode.value();
+		
+		// ブレンドモードの設定
+		Optional<ScopedRenderStates2D> blendState;
+		switch (blendModeValue)
+		{
+		case BlendMode::Additive:
+			blendState.emplace(BlendState::Additive);
+			break;
+		case BlendMode::Subtractive:
+			blendState.emplace(BlendState::Subtractive);
+			break;
+		case BlendMode::Multiply:
+			// 乗算ブレンド用のカスタムブレンドステート
+			// Premultiplied Alphaを考慮し、透明部分が黒くならないようにする
+			blendState.emplace(
+				BlendState
+				{
+					true,
+					Blend::DestColor,
+					Blend::InvSrcAlpha,
+					BlendOp::Add,
+					Blend::DestAlpha,
+					Blend::InvSrcAlpha,
+					BlendOp::Add
+				});
+			break;
+		default:
+			// Normal の場合は何もしない
+			break;
+		}
+		
+		// 加算カラーの設定（完全に黒の場合はnone）
+		Optional<ScopedColorAdd2D> colorAdd;
+		if (addColorValue.r > 0.0 || addColorValue.g > 0.0 || addColorValue.b > 0.0 || addColorValue.a > 0.0)
+		{
+			colorAdd.emplace(addColorValue);
+		}
 		
 		if (m_nineSliceEnabled.value())
 		{

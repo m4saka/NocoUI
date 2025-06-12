@@ -1172,6 +1172,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 			return false;
 		},
 	};
+	metadata[PropertyKey{ U"RectRenderer", U"blendMode" }] = PropertyMetadata{
+		.tooltip = U"ブレンドモード",
+		.tooltipDetail = U"描画時のブレンドモードを指定します\nNormal: 通常の描画\nAdditive: 加算合成\nSubtractive: 減算合成\nMultiply: 乗算合成",
+	};
 	metadata[PropertyKey{ U"RectRenderer", U"outlineColor" }] = PropertyMetadata{
 		.tooltip = U"アウトライン色",
 	};
@@ -1268,6 +1272,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"Sprite", U"color" }] = PropertyMetadata{
 		.tooltip = U"スプライトの色",
 		.tooltipDetail = U"テクスチャの色に乗算されます\nアルファ値は透明度を制御します",
+	};
+	metadata[PropertyKey{ U"Sprite", U"addColor" }] = PropertyMetadata{
+		.tooltip = U"加算カラー",
+		.tooltipDetail = U"テクスチャの色に加算されます\n完全に黒(0,0,0,0)の場合は加算処理がスキップされます",
+	};
+	metadata[PropertyKey{ U"Sprite", U"blendMode" }] = PropertyMetadata{
+		.tooltip = U"ブレンドモード",
+		.tooltipDetail = U"描画時のブレンドモードを指定します\nNormal: 通常の描画\nAdditive: 加算合成\nSubtractive: 減算合成\nMultiply: 乗算合成",
 	};
 	metadata[PropertyKey{ U"Sprite", U"preserveAspect" }] = PropertyMetadata{
 		.tooltip = U"アスペクト比を保持",
