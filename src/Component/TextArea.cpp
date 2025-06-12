@@ -257,6 +257,23 @@ namespace noco
 			return { true, 0, 0 };
 		}
 
+		if (KeyA.down())
+		{
+			m_selectionAnchorLine = 0;
+			m_selectionAnchorColumn = 0;
+			if (getLineCount() > 0)
+			{
+				m_cursorLine = getLineCount() - 1;
+				m_cursorColumn = getColumnCount(m_cursorLine);
+			}
+			else
+			{
+				m_cursorLine = 0;
+				m_cursorColumn = 0;
+			}
+			return { true, 0, 0 };
+		}
+
 		// readOnly時はカット・ペーストを無効化
 		if (m_readOnly.value())
 		{
@@ -289,23 +306,6 @@ namespace noco
 			const auto [index, size] = insertTextAtCursor(clip);
 			m_isChanged = true;
 			return { true, index, size };
-		}
-
-		if (KeyA.down())
-		{
-			m_selectionAnchorLine = 0;
-			m_selectionAnchorColumn = 0;
-			if (getLineCount() > 0)
-			{
-				m_cursorLine = getLineCount() - 1;
-				m_cursorColumn = getColumnCount(m_cursorLine);
-			}
-			else
-			{
-				m_cursorLine = 0;
-				m_cursorColumn = 0;
-			}
-			return { true, 0, 0 };
 		}
 
 		return { false, 0, 0 };
