@@ -292,13 +292,13 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale);
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat);
 
 		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale);
+		void refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

@@ -1280,7 +1280,7 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1403,7 +1403,7 @@ namespace noco
 		if (m_activeInHierarchy)
 		{
 			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
-			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale);
+			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale, parentHitTestMat);
 		}
 
 		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
@@ -1433,9 +1433,14 @@ namespace noco
 			// 子ノードのupdate実行
 			const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
+			
+			// HitTest用のMatrixを計算
+			const Mat3x2 childHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
+				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestMat;
+			
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(scrollableHoveredNode, deltaTime, posScaleMat, effectScale);
+				child->update(scrollableHoveredNode, deltaTime, posScaleMat, effectScale, childHitTestMat);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1510,7 +1515,7 @@ namespace noco
 		}
 	}
 
-	void Node::refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale)
+	void Node::refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat)
 	{
 		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
 		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
@@ -1520,20 +1525,24 @@ namespace noco
 		
 		// HitTest用の矩形を計算
 		// appliesToHitTestの値に応じてposScaleMatを構築
-		Mat3x2 hitTestPosScaleMat = parentPosScaleMat;
+		Mat3x2 hitTestPosScaleMat = parentHitTestMat;
 		
 		if (m_transformEffect.appliesToHitTest().value())
 		{
 			// TransformEffectを適用
-			hitTestPosScaleMat = posScaleMat;
+			hitTestPosScaleMat = m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect);
 		}
 		
 		const Vec2 hitTestPosLeftTop = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.pos);
 		const Vec2 hitTestPosRightBottom = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.br());
 		m_hitTestRect = RectF{ hitTestPosLeftTop, hitTestPosRightBottom - hitTestPosLeftTop };
+		
+		// 子ノードに渡すHitTest用のMatrix
+		const Mat3x2 childHitTestMat = m_transformEffect.appliesToHitTest().value() ? hitTestPosScaleMat : parentHitTestMat;
+		
 		for (const auto& child : m_children)
 		{
-			child->refreshPosScaleAppliedRect(posScaleMat, m_effectScale);
+			child->refreshPosScaleAppliedRect(posScaleMat, m_effectScale, childHitTestMat);
 		}
 	}
 

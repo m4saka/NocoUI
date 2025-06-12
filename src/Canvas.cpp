@@ -147,7 +147,7 @@ namespace noco
 		}
 
 		m_rootNode->refreshBoxChildrenLayout();
-		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale, rootPosScaleMat());
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
@@ -370,7 +370,7 @@ namespace noco
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
 		m_rootNode->updateInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale);
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale, rootPosScaleMat());
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
 
@@ -411,14 +411,14 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
-		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale, rootPosScaleMat());
 		return shared_from_this();
 	}
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale, rootPosScaleMat());
 		return shared_from_this();
 	}
 	
@@ -426,7 +426,7 @@ namespace noco
 	{
 		m_offset = offset;
 		m_scale = scale;
-		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale);
+		m_rootNode->refreshPosScaleAppliedRect(rootPosScaleMat(), m_scale, rootPosScaleMat());
 		return shared_from_this();
 	}
 	
