@@ -746,6 +746,30 @@ namespace noco
 		}
 	}
 
+	void TextBox::focus(const std::shared_ptr<Node>& node)
+	{
+		if (m_readOnly.value())
+		{
+			return;
+		}
+
+		m_isEditing = true;
+		node->setSelected(SelectedYN::Yes);
+		detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
+		
+		// カーソルを表示するためにリセット
+		m_cursorBlinkTime = 0.0;
+		
+		// テキスト全体を選択
+		m_cursorIndex = m_text.value().size();
+		m_selectionAnchor = 0;
+	}
+
+	void TextBox::blur(const std::shared_ptr<Node>& node)
+	{
+		deselect(node);
+	}
+
 	std::shared_ptr<TextBox> TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
 		m_text.setValue(text);

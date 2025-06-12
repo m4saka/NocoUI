@@ -135,6 +135,10 @@ namespace noco
 		void draw(const Node& node) const override;
 
 		void deselect(const std::shared_ptr<Node>& node);
+		
+		void focus(const std::shared_ptr<Node>& node) override;
+		
+		void blur(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]
 		StringView text() const override

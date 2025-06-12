@@ -248,6 +248,11 @@ namespace noco
 		template<class Fty>
 		void findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearsArrayYN clearsArray = ClearsArrayYN::Yes)
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
+		
+		template<class Fty>
+		[[nodiscard]]
+		std::shared_ptr<Node> findNext(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No) const
+			requires std::invocable<Fty, const Node&>;
 
 		template <class TComponent>
 		[[nodiscard]]
@@ -614,6 +619,122 @@ namespace noco
 		{
 			child->findAll(predicate, pResults, ClearsArrayYN::No);
 		}
+	}
+	
+	template<class Fty>
+	std::shared_ptr<Node> Node::findNext(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic) const
+		requires std::invocable<Fty, const Node&>
+	{
+		// TODO: NocoUIライブラリ全体をconst-correctにする
+		// 現在、shared_ptr<Node>とshared_ptr<const Node>の使い分けが適切に行われていないため、
+		// const_pointer_castを使用している。将来的にはこのキャストを不要にする。
+		
+		// 最初に探索を開始したノードを記録（循環探索用）
+		auto startNode = std::const_pointer_cast<Node>(shared_from_this());
+		
+		// ヘルパー関数：子ノードを探索
+		std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&)> findInChildren;
+		findInChildren = [&](const std::shared_ptr<Node>& node) -> std::shared_ptr<Node>
+		{
+			for (const auto& child : node->children())
+			{
+				if (predicate(child))
+				{
+					return child;
+				}
+				if (auto result = findInChildren(child))
+				{
+					return result;
+				}
+			}
+			return nullptr;
+		};
+		
+		// ヘルパー関数：親を辿って次のノードを探す
+		std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&, bool)> findNextFromNode;
+		findNextFromNode = [&](const std::shared_ptr<Node>& node, bool checkSelf) -> std::shared_ptr<Node>
+		{
+			// 自分自身をチェック
+			if (checkSelf && predicate(node))
+			{
+				return node;
+			}
+			
+			// 自分の子を探索
+			if (auto result = findInChildren(node))
+			{
+				return result;
+			}
+			
+			// 親がいる場合は、親の次の兄弟を探索
+			if (auto parentNode = node->parent())
+			{
+				const auto& siblings = parentNode->children();
+				auto it = std::find(siblings.begin(), siblings.end(), node);
+				
+				if (it != siblings.end())
+				{
+					// 次の兄弟から探索
+					for (++it; it != siblings.end(); ++it)
+					{
+						if (auto result = findNextFromNode(*it, true))
+						{
+							return result;
+						}
+					}
+				}
+				
+				// 親の兄弟を探索（親自身はスキップ）
+				return findNextFromNode(parentNode, false);
+			}
+			
+			// ルートまで到達
+			return nullptr;
+		};
+		
+		// 探索開始
+		auto result = findNextFromNode(startNode, skipsSelf == SkipsSelfYN::No);
+		
+		// 循環探索が有効で、結果が見つからなかった場合
+		if (!result && isCyclic == IsCyclicYN::Yes)
+		{
+			// ルートを見つける
+			auto root = startNode;
+			while (auto p = root->parent())
+			{
+				root = p;
+			}
+			
+			// ルートから探索して、開始ノードの手前まで
+			std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&)> findUntilStart;
+			findUntilStart = [&](const std::shared_ptr<Node>& node) -> std::shared_ptr<Node>
+			{
+				// 開始ノードに到達したら終了
+				if (node == startNode)
+				{
+					return nullptr;
+				}
+				
+				if (predicate(node))
+				{
+					return node;
+				}
+				
+				for (const auto& child : node->children())
+				{
+					if (auto result = findUntilStart(child))
+					{
+						return result;
+					}
+				}
+				
+				return nullptr;
+			};
+			
+			result = findUntilStart(root);
+		}
+		
+		return result;
 	}
 
 	template <class TComponent>
