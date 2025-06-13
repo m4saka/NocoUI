@@ -909,6 +909,7 @@ struct PropertyMetadata
 	bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
 	Optional<int32> numTextAreaLines;  // テキストエリアとして表示する場合の行数(未設定の場合はテキストボックス)
 	bool refreshesEveryFrame = false;  // 毎フレームInspectorの値の更新が必要かどうか(テキストボックスなどユーザー編集を伴うコンポーネントで使用。現状コンポーネントのStringプロパティのみ対応)
+	Optional<String> category;  // プロパティが属するカテゴリ名
 };
 
 // プロパティの可視情報
@@ -960,25 +961,31 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	};
 	metadata[PropertyKey{ U"Node", U"horizontalScrollable" }] = PropertyMetadata{
 		.tooltip = U"水平方向のスクロール可能",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"verticalScrollable" }] = PropertyMetadata{
 		.tooltip = U"垂直方向のスクロール可能",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"wheelScrollEnabled" }] = PropertyMetadata{
 		.tooltip = U"ホイールスクロールの有効/無効",
 		.tooltipDetail = U"有効にすると、マウスホイールでスクロールできます",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"dragScrollEnabled" }] = PropertyMetadata{
 		.tooltip = U"ドラッグスクロールの有効/無効",
 		.tooltipDetail = U"有効にすると、ドラッグ操作でスクロールできます",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"decelerationRate" }] = PropertyMetadata{
 		.tooltip = U"慣性スクロールの減衰率",
 		.tooltipDetail = U"1秒あたりの速度減衰率(0.0~1.0)。値が小さいほど早く停止します",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"rubberBandScrollEnabled" }] = PropertyMetadata{
 		.tooltip = U"ラバーバンドスクロールの有効/無効",
 		.tooltipDetail = U"有効にすると、スクロール範囲外でも一時的にドラッグでき、離すと自動的に範囲内に戻ります",
+		.category = U"Scrolling",
 	};
 	metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 		.tooltip = U"クリッピングの有効/無効",
@@ -1277,39 +1284,48 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"9スライス機能を有効にするか",
 		.tooltipDetail = U"画像を9つの領域に分割し、角を固定サイズで表示しながら辺と中央を伸縮させます",
 		.refreshInspectorOnChange = true,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceMargin" }] = PropertyMetadata{
 		.tooltip = U"9スライスのマージン(素材の端からの距離)",
 		.tooltipDetail = U"素材画像の端から何ピクセル内側で領域分割するかを指定します",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceScale" }] = PropertyMetadata{
 		.tooltip = U"9スライスのスケール",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceCenterTiled" }] = PropertyMetadata{
 		.tooltip = U"中央領域をタイル表示するか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceTopTiled" }] = PropertyMetadata{
 		.tooltip = U"上端領域をタイル表示するか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceBottomTiled" }] = PropertyMetadata{
 		.tooltip = U"下端領域をタイル表示するか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceLeftTiled" }] = PropertyMetadata{
 		.tooltip = U"左端領域をタイル表示するか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceRightTiled" }] = PropertyMetadata{
 		.tooltip = U"右端領域をタイル表示するか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	metadata[PropertyKey{ U"Sprite", U"nineSliceFallback" }] = PropertyMetadata{
 		.tooltip = U"要素が9スライスのマージンより小さい場合に通常描画にフォールバックするかどうか",
 		.visibilityCondition = nineSliceVisibilityCondition,
+		.category = U"Nine Slice",
 	};
 	
 	// TextBox
@@ -3012,6 +3028,19 @@ private:
 	IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
 	IsFoldedYN m_isFoldedTransformEffect = IsFoldedYN::Yes;
 	Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
+	
+	// カテゴリごとの折りたたみ状態を管理 (コンポーネントとカテゴリ名のペア)
+	struct CategoryKey
+	{
+		std::weak_ptr<ComponentBase> component;
+		String categoryName;
+		
+		bool operator==(const CategoryKey& other) const
+		{
+			return component.lock().get() == other.component.lock().get() && categoryName == other.categoryName;
+		}
+	};
+	Array<CategoryKey> m_foldedCategories;
 
 	std::shared_ptr<Defaults> m_defaults;
 	
@@ -3079,6 +3108,64 @@ private:
 		}
 	}
 	
+	// カテゴリの折りたたみ状態をチェック（Node用のオーバーロード）
+	[[nodiscard]]
+	bool isCategoryFolded(const std::shared_ptr<Node>& node, StringView categoryName) const
+	{
+		return m_foldedCategories.contains_if([&](const CategoryKey& key) 
+		{
+			// Node用の場合はcomponentがexpiredまたはnullで、かつcategoryNameが一致
+			return (key.component.expired() || !key.component.lock()) && key.categoryName == categoryName;
+		});
+	}
+	
+	// カテゴリの折りたたみ状態をチェック（Component用）
+	[[nodiscard]]
+	bool isCategoryFolded(const std::shared_ptr<ComponentBase>& component, StringView categoryName) const
+	{
+		return m_foldedCategories.contains_if([&](const CategoryKey& key) 
+		{
+			return key.component.lock().get() == component.get() && key.categoryName == categoryName;
+		});
+	}
+	
+	// カテゴリの折りたたみ状態を設定（Node用）
+	void setCategoryFolded(const std::shared_ptr<Node>& node, StringView categoryName, IsFoldedYN isFolded)
+	{
+		if (isFolded)
+		{
+			if (!isCategoryFolded(node, categoryName))
+			{
+				m_foldedCategories.push_back({ std::weak_ptr<ComponentBase>(), String(categoryName) });
+			}
+		}
+		else
+		{
+			m_foldedCategories.remove_if([&](const CategoryKey& key)
+			{
+				return (key.component.expired() || !key.component.lock()) && key.categoryName == categoryName;
+			});
+		}
+	}
+	
+	// カテゴリの折りたたみ状態を設定（Component用）
+	void setCategoryFolded(const std::shared_ptr<ComponentBase>& component, StringView categoryName, IsFoldedYN isFolded)
+	{
+		if (isFolded)
+		{
+			if (!isCategoryFolded(component, categoryName))
+			{
+				m_foldedCategories.push_back({ std::weak_ptr<ComponentBase>(component), String(categoryName) });
+			}
+		}
+		else
+		{
+			m_foldedCategories.remove_if([&](const CategoryKey& key)
+			{
+				return key.component.lock().get() == component.get() && key.categoryName == categoryName;
+			});
+		}
+	}
 
 public:
 	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
@@ -3335,6 +3422,96 @@ public:
 					if (onToggleFold)
 					{
 						onToggleFold(IsFoldedYN{ inactiveNodeExists });
+					}
+				}
+			});
+
+		return headingNode;
+	}
+
+	[[nodiscard]]
+	static std::shared_ptr<Node> CreateCategoryHeadingNode(StringView name, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold = nullptr)
+	{
+		auto headingNode = Node::Create(U"CategoryHeading", BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = Vec2{ 0, 20 },
+				.margin = LRTB{ 0, 0, 4, 0 },
+			});
+		headingNode->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>(ColorF{ 0.4, 0.4, 0.4, 0.6 }).withHovered(ColorF{ 0.45, 0.45, 0.45, 0.6 }).withPressed(ColorF{ 0.35, 0.35, 0.35, 0.6 }),
+			Palette::Black,
+			0.0,
+			2.0);
+		const auto arrowLabel = headingNode->emplaceComponent<Label>(
+			isFolded ? U"▶" : U"▼",
+			U"",
+			12,
+			ColorF{ 1.0, 0.7 },
+			HorizontalAlign::Left,
+			VerticalAlign::Middle,
+			LRTB{ 8, 5, 0, 0 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip);
+		headingNode->emplaceComponent<Label>(
+			name,
+			U"",
+			12,
+			ColorF{ 1.0, 0.85 },
+			HorizontalAlign::Left,
+			VerticalAlign::Middle,
+			LRTB{ 24, 5, 0, 0 },
+			HorizontalOverflow::Wrap,
+			VerticalOverflow::Clip);
+		headingNode->addOnClick([arrowLabel, onToggleFold = std::move(onToggleFold)](const std::shared_ptr<Node>& node)
+			{
+				if (const auto parent = node->parent())
+				{
+					// 現在の折り畳み状態
+					bool currentlyFolded = false;
+					for (const auto& child : parent->children())
+					{
+						if (child != node)
+						{
+							currentlyFolded = !child->activeSelf();
+							break;
+						}
+					}
+					
+					// 折り畳み状態を反転
+					const bool willBeFolded = !currentlyFolded;
+					
+					// 各子ノードの表示状態を更新
+					for (const auto& child : parent->children())
+					{
+						if (child != node)
+						{
+							// 保存された可視情報を取得(デフォルトは表示可能)
+							const auto visibilityData = child->getStoredDataOr<PropertyVisibilityData>({ .isVisibleByCondition = true });
+							
+							// 折り畳まれていない場合は、可視条件に従って表示
+							// 折り畳まれている場合は、可視条件に関わらず非表示
+							if (willBeFolded || !visibilityData.isVisibleByCondition)
+							{
+								child->setActive(false);
+							}
+							else
+							{
+								child->setActive(true);
+							}
+						}
+					}
+
+					// 矢印を回転
+					arrowLabel->setText(willBeFolded ? U"▶" : U"▼");
+
+					// 高さをフィットさせる
+					parent->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
+
+					// トグル時処理があれば実行
+					if (onToggleFold)
+					{
+						onToggleFold(IsFoldedYN{ willBeFolded });
 					}
 				}
 			});
@@ -4900,31 +5077,88 @@ public:
 		fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
 		fnAddBoolChild(U"inheritsChildrenPressedState", node->inheritsChildrenPressedState(), [node](bool value) { node->setInheritsChildrenPressedState(value); });
 		fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });
-		fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
-		fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
-		fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [this, node](bool value) { 
-			node->setWheelScrollEnabled(value); 
-			refreshInspector();
-		});
-		fnAddBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [this, node](bool value) { 
-			node->setDragScrollEnabled(value); 
-			refreshInspector();
-		});
-		// dragScrollEnabledが有効な場合のみ表示
-		if (node->dragScrollEnabled())
+		
+		// Scrollingカテゴリの実装
+		const bool hasScrollingProperties = true; // 常にScrollingカテゴリは表示
+		if (hasScrollingProperties)
 		{
-			const auto fnAddDoubleChild =
-				[this, &nodeSettingNode](StringView name, double currentValue, auto fnSetValue)
+			// Scrollingカテゴリの折りたたみ状態を取得
+			const bool isScrollingFolded = isCategoryFolded(node, U"Scrolling");
+			
+			// Scrollingカテゴリコンテナを作成
+			auto scrollingContainer = Node::Create(
+				U"ScrollingContainer",
+				BoxConstraint
 				{
-					nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedNodeSetting.getBool());
+					.sizeRatio = Vec2{ 1, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			scrollingContainer->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 4 } });
+			
+			// Scrollingカテゴリヘッダーを追加
+			const auto scrollingHeader = scrollingContainer->addChild(
+				CreateCategoryHeadingNode(U"Scrolling", IsFoldedYN{ isScrollingFolded },
+					[this, node](IsFoldedYN isFolded)
+					{
+						setCategoryFolded(node, U"Scrolling", isFolded);
+					}));
+			
+			// Scrolling関連プロパティを追加するヘルパー関数
+			const auto fnAddScrollingBoolChild =
+				[this, &scrollingContainer, isScrollingFolded](StringView name, bool currentValue, auto fnSetValue)
+				{
+					const auto propertyNode = scrollingContainer->addChild(createBoolPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue));
+					if (isScrollingFolded || m_isFoldedNodeSetting.getBool())
+					{
+						propertyNode->setActive(false);
+					}
 				};
-			fnAddDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
+			const auto fnAddScrollingDoubleChild =
+				[this, &scrollingContainer, isScrollingFolded](StringView name, double currentValue, auto fnSetValue)
+				{
+					const auto propertyNode = scrollingContainer->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }));
+					if (isScrollingFolded || m_isFoldedNodeSetting.getBool())
+					{
+						propertyNode->setActive(false);
+					}
+				};
+			
+			fnAddScrollingBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
+			fnAddScrollingBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
+			fnAddScrollingBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [this, node](bool value) { 
+				node->setWheelScrollEnabled(value); 
+				refreshInspector();
+			});
+			fnAddScrollingBoolChild(U"dragScrollEnabled", node->dragScrollEnabled(), [this, node](bool value) { 
+				node->setDragScrollEnabled(value); 
+				refreshInspector();
+			});
+			
+			// dragScrollEnabledが有効な場合のみ表示
+			if (node->dragScrollEnabled())
+			{
+				fnAddScrollingDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
+			}
+			
+			// wheelScrollEnabledまたはdragScrollEnabledが有効な場合のみ表示
+			if (node->wheelScrollEnabled() || node->dragScrollEnabled())
+			{
+				fnAddScrollingBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled().getBool(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
+			}
+			
+			// Scrollingカテゴリコンテナを高さに合わせる
+			scrollingContainer->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			
+			// Scrollingカテゴリコンテナをノード設定に追加
+			nodeSettingNode->addChild(scrollingContainer);
+			
+			// Node Setting全体が折りたたまれている場合は、Scrollingカテゴリコンテナも非表示
+			if (m_isFoldedNodeSetting.getBool())
+			{
+				scrollingContainer->setActive(false);
+			}
 		}
-		// wheelScrollEnabledまたはdragScrollEnabledが有効な場合のみ表示
-		if (node->wheelScrollEnabled() || node->dragScrollEnabled())
-		{
-			fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled().getBool(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
-		}
+		
 		fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 
 		nodeSettingNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
@@ -5601,7 +5835,49 @@ public:
 				noPropertyLabelNode->setActive(false);
 			}
 		}
+		
+		// プロパティをカテゴリごとにグループ化
+		HashTable<String, Array<IProperty*>> categorizedProperties;
+		Array<IProperty*> uncategorizedProperties;
+		
 		for (const auto& property : component->properties())
+		{
+			const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+			if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.category.has_value())
+				{
+					categorizedProperties[*metadata.category].push_back(property);
+				}
+				else
+				{
+					uncategorizedProperties.push_back(property);
+				}
+			}
+			else
+			{
+				uncategorizedProperties.push_back(property);
+			}
+		}
+		
+		// 可視チェック用のヘルパー関数
+		auto isPropertyVisible = [this, component](IProperty* property) -> bool
+		{
+			const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+			if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.visibilityCondition)
+				{
+					return metadata.visibilityCondition(*component);
+				}
+			}
+			return true;
+		};
+		
+		// プロパティノード作成用のヘルパー関数
+		auto createPropertyNodeForProperty = [this, component](IProperty* property, const std::shared_ptr<Node>& parentNode) -> std::shared_ptr<Node>
 		{
 			const PropertyEditType editType = property->editType();
 			std::shared_ptr<Node> propertyNode;
@@ -5632,14 +5908,13 @@ public:
 						}
 					}
 					
-					propertyNode = componentNode->addChild(
-						createPropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							property->propertyValueStringOfDefault(),
-							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-							fnGetValue));
+					propertyNode = createPropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						property->propertyValueStringOfDefault(),
+						onChange,
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+						fnGetValue);
 				}
 				break;
 			case PropertyEditType::Bool:
@@ -5660,13 +5935,12 @@ public:
 							};
 						}
 					}
-					propertyNode = componentNode->addChild(
-						createBoolPropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							ParseOr<bool>(property->propertyValueStringOfDefault(), false),
-							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+					propertyNode = createBoolPropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						ParseOr<bool>(property->propertyValueStringOfDefault(), false),
+						onChange,
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() });
 				}
 				break;
 			case PropertyEditType::Vec2:
@@ -5688,13 +5962,12 @@ public:
 						}
 					}
 					
-					propertyNode = componentNode->addChild(
-						createVec2PropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
-							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+					propertyNode = createVec2PropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
+						onChange,
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() });
 				}
 				break;
 			case PropertyEditType::Color:
@@ -5716,13 +5989,12 @@ public:
 						}
 					}
 					
-					propertyNode = componentNode->addChild(
-						createColorPropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
-							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+					propertyNode = createColorPropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
+						onChange,
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() });
 				}
 				break;
 			case PropertyEditType::LRTB:
@@ -5744,13 +6016,12 @@ public:
 						}
 					}
 					
-					propertyNode = componentNode->addChild(
-						createLRTBPropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
-							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+					propertyNode = createLRTBPropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
+						onChange,
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() });
 				}
 				break;
 			case PropertyEditType::Enum:
@@ -5772,15 +6043,14 @@ public:
 						}
 					}
 					
-					propertyNode = componentNode->addChild(
-						createEnumPropertyNodeWithTooltip(
-							component->type(),
-							property->name(),
-							property->propertyValueStringOfDefault(),
-							onChange,
-							m_contextMenu,
-							property->enumCandidates(),
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+					propertyNode = createEnumPropertyNodeWithTooltip(
+						component->type(),
+						property->name(),
+						property->propertyValueStringOfDefault(),
+						onChange,
+						m_contextMenu,
+						property->enumCandidates(),
+						HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() });
 				}
 				break;
 			}
@@ -5803,22 +6073,11 @@ public:
 				
 				// プロパティの可視情報を保存
 				propertyNode->storeData<PropertyVisibilityData>({ .isVisibleByCondition = isVisible });
-				
-				// 可視条件を満たさない、または折り畳まれている場合は非表示
-				if (!isVisible || isFolded)
-				{
-					propertyNode->setActive(false);
-				}
 			}
 			else
 			{
 				// メタデータがない場合は、常に表示可能として扱う
 				propertyNode->storeData<PropertyVisibilityData>({ .isVisibleByCondition = true });
-				
-				if (isFolded)
-				{
-					propertyNode->setActive(false);
-				}
 			}
 			
 			if (property->isInteractiveProperty())
@@ -5831,6 +6090,93 @@ public:
 					},
 					nullptr,
 					RecursiveYN::Yes);
+			}
+			
+			return propertyNode;
+		};
+
+		// まず、カテゴリ化されていないプロパティを表示
+		for (const auto& property : uncategorizedProperties)
+		{
+			if (isPropertyVisible(property))
+			{
+				const auto propertyNode = createPropertyNodeForProperty(property, componentNode);
+				componentNode->addChild(propertyNode);
+				
+				// 折りたたまれている場合は非表示
+				if (isFolded)
+				{
+					propertyNode->setActive(false);
+				}
+			}
+		}
+		
+		// 次に、カテゴリごとにプロパティを表示
+		for (const auto& [categoryName, properties] : categorizedProperties)
+		{
+			// カテゴリ内に表示可能なプロパティがあるかチェック
+			bool hasVisibleProperties = false;
+			for (const auto& property : properties)
+			{
+				if (isPropertyVisible(property))
+				{
+					hasVisibleProperties = true;
+					break;
+				}
+			}
+			
+			if (!hasVisibleProperties)
+			{
+				continue;
+			}
+			
+			// カテゴリコンテナノードを作成
+			auto categoryContainer = Node::Create(
+				U"Category_{}Container"_fmt(categoryName),
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			categoryContainer->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 0, 4 } });
+			
+			// カテゴリの折りたたみ状態を取得
+			const bool isCategoryFolded = this->isCategoryFolded(component, categoryName);
+			
+			// カテゴリヘッダーを追加
+			const auto categoryHeader = categoryContainer->addChild(
+				CreateCategoryHeadingNode(categoryName, IsFoldedYN{ isCategoryFolded },
+					[this, component, categoryName = String(categoryName)](IsFoldedYN isFolded)
+					{
+						setCategoryFolded(component, categoryName, isFolded);
+					}));
+			
+			// カテゴリ内のプロパティを表示
+			for (const auto& property : properties)
+			{
+				if (isPropertyVisible(property))
+				{
+					const auto propertyNode = createPropertyNodeForProperty(property, categoryContainer);
+					categoryContainer->addChild(propertyNode);
+					
+					// カテゴリが折りたたまれているか、コンポーネント全体が折りたたまれている場合は非表示
+					if (isCategoryFolded || isFolded)
+					{
+						propertyNode->setActive(false);
+					}
+				}
+			}
+			
+			// カテゴリコンテナを高さに合わせる
+			categoryContainer->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			
+			// カテゴリコンテナをコンポーネントノードに追加
+			componentNode->addChild(categoryContainer);
+			
+			// コンポーネント全体が折りたたまれている場合は、カテゴリコンテナも非表示
+			if (isFolded)
+			{
+				categoryContainer->setActive(false);
 			}
 		}
 
