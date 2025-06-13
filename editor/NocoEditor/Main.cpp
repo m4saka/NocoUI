@@ -1,6 +1,7 @@
 ﻿#include <Siv3D.hpp>
 #include "NocoUI.hpp"
 #include "HistorySystem.hpp"
+#include "ResizableHandle.hpp"
 
 using namespace noco;
 using noco::detail::IncludesInternalIdYN;
@@ -2646,6 +2647,8 @@ public:
 	{
 		return m_hierarchyFrameNode;
 	}
+	
+	void setWidth(double width);
 
 	void drawSelectedNodesGizmo() const
 	{
@@ -2711,7 +2714,9 @@ std::shared_ptr<Node> CreateButtonNode(StringView text, const ConstraintVariant&
 		14,
 		Palette::White,
 		HorizontalAlign::Center,
-		VerticalAlign::Middle);
+		VerticalAlign::Middle,
+		LRTB{ -2, -2, -2, -2 })
+		->setSizingMode(LabelSizingMode::ShrinkToFit);
 	return buttonNode;
 }
 
@@ -3002,7 +3007,16 @@ public:
 			m_onChange();
 		}
 	}
+	
 };
+
+void Hierarchy::setWidth(double width)
+{
+	if (auto* constraint = m_hierarchyFrameNode->anchorConstraint())
+	{
+		const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
+	}
+}
 
 class Inspector
 {
@@ -3243,7 +3257,8 @@ public:
 				U"＋ コンポーネントを追加(A)",
 				BoxConstraint
 				{
-					.sizeDelta = Vec2{ 200, 24 },
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 24 },
 					.margin = LRTB{ 0, 0, 24, 24 },
 				},
 				[this] (const std::shared_ptr<Node>& node)
@@ -4574,7 +4589,8 @@ public:
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 5, 5, 5, 5 });
+			LRTB{ 3, 18, 3, 3 })
+			->setSizingMode(LabelSizingMode::ShrinkToFit);
 
 		class EnumPropertyComboBox : public ComponentBase
 		{
@@ -5865,6 +5881,8 @@ public:
 	{
 		return m_inspectorFrameNode;
 	}
+	
+	void setWidth(double width);
 };
 
 void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu)
@@ -6093,6 +6111,14 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 	contentRootNode->refreshContainedCanvasLayout();
 }
 
+void Inspector::setWidth(double width)
+{
+	if (auto* constraint = m_inspectorFrameNode->anchorConstraint())
+	{
+		const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
+	}
+}
+
 constexpr Vec2 InitialCanvasScrollOffset{ 0, -(MenuBarHeight + Toolbar::ToolbarHeight) / 2 };
 
 class Editor
@@ -6119,6 +6145,12 @@ private:
 	double m_scrollScale = 1.0;
 	bool m_isAltScrolling = false;
 	HistorySystem m_historySystem;
+	
+	// リサイズ機能
+	double m_hierarchyWidth = 300.0;
+	double m_inspectorWidth = 400.0;
+	std::unique_ptr<ResizableHandle> m_hierarchyResizeHandle;
+	std::unique_ptr<ResizableHandle> m_inspectorResizeHandle;
 
 public:
 	Editor()
@@ -6217,6 +6249,9 @@ public:
 		
 		// ツールバーの初期状態を更新
 		m_toolbar.updateButtonStates();
+		
+		// リサイズハンドルの初期化
+		initializeResizeHandles();
 	}
 
 	void update()
@@ -6250,6 +6285,16 @@ public:
 		m_menuBar.update();
 		m_hierarchy.update();
 		m_inspector.update();
+		
+		// リサイズハンドルの更新
+		if (m_hierarchyResizeHandle)
+		{
+			m_hierarchyResizeHandle->update();
+		}
+		if (m_inspectorResizeHandle)
+		{
+			m_inspectorResizeHandle->update();
+		}
 
 		if (m_hierarchy.hasSelectionChanged())
 		{
@@ -6449,8 +6494,75 @@ public:
 		return m_canvas->rootNode();
 	}
 
+	void initializeResizeHandles()
+	{
+		// Hierarchyのリサイズハンドル
+		m_hierarchyResizeHandle = std::make_unique<ResizableHandle>(
+			m_editorCanvas, ResizeDirection::Horizontal, 8.0);
+		m_hierarchyResizeHandle->setOnResize([this](double newWidth) {
+			onHierarchyResize(newWidth);
+		});
+		
+		// Inspectorのリサイズハンドル  
+		m_inspectorResizeHandle = std::make_unique<ResizableHandle>(
+			m_editorCanvas, ResizeDirection::Horizontal, 8.0);
+		m_inspectorResizeHandle->setOnResize([this](double newXPosition) {
+			onInspectorResize(newXPosition);
+		});
+		
+		updateResizeHandlePositions();
+	}
+	
+	void updateResizeHandlePositions()
+	{
+		const auto sceneSize = Scene::Size();
+		const double topOffset = MenuBarHeight + Toolbar::ToolbarHeight;
+		
+		// Hierarchyリサイズハンドル(右端)
+		if (m_hierarchyResizeHandle)
+		{
+			m_hierarchyResizeHandle->setPosition(Vec2{ m_hierarchyWidth - 4, topOffset });
+			m_hierarchyResizeHandle->setSize(Vec2{ 8, sceneSize.y - topOffset });
+		}
+		
+		// Inspectorリサイズハンドル(左端)
+		if (m_inspectorResizeHandle)
+		{
+			m_inspectorResizeHandle->setPosition(Vec2{ sceneSize.x - m_inspectorWidth - 4, topOffset });
+			m_inspectorResizeHandle->setSize(Vec2{ 8, sceneSize.y - topOffset });
+		}
+	}
+	
+	void onHierarchyResize(double newWidth)
+	{
+		m_hierarchyWidth = Math::Clamp(newWidth, 150.0, Scene::Width() * 0.4);
+		updatePanelLayout();
+		updateResizeHandlePositions();
+	}
+	
+	void onInspectorResize(double newXPosition)
+	{
+		// Inspectorの左端の位置から幅を計算
+		const double newWidth = Scene::Width() - newXPosition;
+		m_inspectorWidth = Math::Clamp(newWidth, 150.0, Scene::Width() * 0.4);
+		updatePanelLayout();
+		updateResizeHandlePositions();
+	}
+	
+	void updatePanelLayout()
+	{
+		// Hierarchyの幅を更新
+		m_hierarchy.setWidth(m_hierarchyWidth);
+		
+		// Inspectorの幅を更新
+		m_inspector.setWidth(m_inspectorWidth);
+		
+		refreshLayout();
+	}
+
 	void refreshLayout()
 	{
+		updateResizeHandlePositions();
 		m_editorCanvas->refreshLayout();
 		m_editorOverlayCanvas->refreshLayout();
 		m_canvas->refreshLayout();

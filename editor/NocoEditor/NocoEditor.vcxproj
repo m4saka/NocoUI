@@ -115,6 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.cpp" />
     <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
     <ClCompile Include="..\..\src\Component\EventTrigger.cpp" />
     <ClCompile Include="..\..\src\Component\InputBlocker.cpp" />
@@ -246,6 +247,7 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp" />
