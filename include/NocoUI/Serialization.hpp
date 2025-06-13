@@ -38,6 +38,10 @@ namespace noco
 			{
 				return StringToEnum<T>(json[key].getString(), defaultValue);
 			}
+			else if constexpr (std::same_as<T, struct LRTB>)
+			{
+				return LRTB::fromJSON(json[key], defaultValue);
+			}
 			else
 			{
 				return json[key].getOr<T>(defaultValue);
