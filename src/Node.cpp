@@ -619,7 +619,7 @@ namespace noco
 		return nullptr;
 	}
 
-	bool Node::isAncestorOf(const std::shared_ptr<Node>& node) const
+	bool Node::isAncestorOf(const std::shared_ptr<const Node>& node) const
 	{
 		if (node->m_parent.expired())
 		{
@@ -922,11 +922,15 @@ namespace noco
 		}
 	}
 
-	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
+	bool Node::containsChild(const std::shared_ptr<const Node>& child, RecursiveYN recursive) const
 	{
-		if (m_children.contains(child))
+		// const/非constの違いのためcontainsが使えないので、手動で検索
+		for (const auto& c : m_children)
 		{
-			return true;
+			if (c == child)
+			{
+				return true;
+			}
 		}
 		if (recursive)
 		{
@@ -987,6 +991,51 @@ namespace noco
 	}
 
 	std::shared_ptr<Node> Node::getChildByNameOrNull(StringView name, RecursiveYN recursive)
+	{
+		for (const auto& child : m_children)
+		{
+			if (child->m_name == name)
+			{
+				return child;
+			}
+		}
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (const auto found = child->getChildByNameOrNull(name, RecursiveYN::Yes))
+				{
+					return found;
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<const Node> Node::getChildByName(StringView name, RecursiveYN recursive) const
+	{
+		for (const auto& child : m_children)
+		{
+			if (child->m_name == name)
+			{
+				return child;
+			}
+		}
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				// 例外を投げられると途中で終了してしまうため、getChildByNameではなくgetChildByNameOrNullを使う必要がある
+				if (const auto found = child->getChildByNameOrNull(name, RecursiveYN::Yes))
+				{
+					return found;
+				}
+			}
+		}
+		throw Error{ U"Child node '{}' not found in node '{}'"_fmt(name, m_name) };
+	}
+
+	std::shared_ptr<const Node> Node::getChildByNameOrNull(StringView name, RecursiveYN recursive) const
 	{
 		for (const auto& child : m_children)
 		{
@@ -2467,4 +2516,42 @@ namespace noco
 			canvas->refreshLayout();
 		}
 	}
+
+	// collectNodesInOrderとgetRootNodeの実装
+	void Node::collectNodesInOrder(std::vector<std::shared_ptr<Node>>& nodes) const
+	{
+		nodes.push_back(std::const_pointer_cast<Node>(shared_from_this()));
+		for (const auto& child : m_children)
+		{
+			child->collectNodesInOrder(nodes);
+		}
+	}
+
+	void Node::collectNodesInOrder(std::vector<std::shared_ptr<const Node>>& nodes) const
+	{
+		nodes.push_back(shared_from_this());
+		for (const auto& child : m_children)
+		{
+			child->collectNodesInOrder(nodes);
+		}
+	}
+
+	std::shared_ptr<Node> Node::getRootNode()
+	{
+		if (auto p = parent())
+		{
+			return p->getRootNode();
+		}
+		return shared_from_this();
+	}
+
+	std::shared_ptr<const Node> Node::getRootNode() const
+	{
+		if (auto p = parent())
+		{
+			return p->getRootNode();
+		}
+		return shared_from_this();
+	}
+
 }

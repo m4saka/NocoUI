@@ -28,6 +28,9 @@ set(TARGET_NAME NocoUITest)
 add_executable(${TARGET_NAME} 
     Main.cpp
     TestNode.cpp
+    TestNode_findNext.cpp
+    TestNode_findPrevious.cpp
+    TestNode_findNextPrevious_Complex.cpp
     TestHitTest.cpp
     TestComponent.cpp
     TestCanvas.cpp

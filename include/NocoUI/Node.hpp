@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include <vector>
 #include "YN.hpp"
 #include "PropertyValue.hpp"
 #include "Property.hpp"
@@ -85,6 +86,7 @@ namespace noco
 		{
 		}
 
+
 		[[nodiscard]]
 		InteractionState updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling);
 
@@ -99,6 +101,17 @@ namespace noco
 
 		[[nodiscard]]
 		std::pair<Vec2, Vec2> getValidScrollRange() const;
+
+		// findNext/findPrevious用のヘルパーメソッド
+		// ヘルパー関数：ツリー内のすべてのノードを深さ優先順序で収集
+		void collectNodesInOrder(std::vector<std::shared_ptr<Node>>& nodes) const;
+		void collectNodesInOrder(std::vector<std::shared_ptr<const Node>>& nodes) const;
+
+		[[nodiscard]]
+		std::shared_ptr<Node> getRootNode();
+
+		[[nodiscard]]
+		std::shared_ptr<const Node> getRootNode() const;
 
 	public:
 		[[nodiscard]]
@@ -171,7 +184,7 @@ namespace noco
 		std::shared_ptr<Node> findHoverTargetParent();
 
 		[[nodiscard]]
-		bool isAncestorOf(const std::shared_ptr<Node>& node) const;
+		bool isAncestorOf(const std::shared_ptr<const Node>& node) const;
 
 		std::shared_ptr<Node> setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -235,7 +248,7 @@ namespace noco
 		void removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
-		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const;
+		bool containsChild(const std::shared_ptr<const Node>& child, RecursiveYN recursive = RecursiveYN::No) const;
 
 		[[nodiscard]]
 		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
@@ -251,7 +264,22 @@ namespace noco
 		
 		template<class Fty>
 		[[nodiscard]]
-		std::shared_ptr<Node> findNext(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No) const
+		std::shared_ptr<Node> findNext(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No)
+			requires std::invocable<Fty, const Node&>;
+
+		template<class Fty>
+		[[nodiscard]]
+		std::shared_ptr<const Node> findNext(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No) const
+			requires std::invocable<Fty, const Node&>;
+
+		template<class Fty>
+		[[nodiscard]]
+		std::shared_ptr<Node> findPrevious(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No)
+			requires std::invocable<Fty, const Node&>;
+
+		template<class Fty>
+		[[nodiscard]]
+		std::shared_ptr<const Node> findPrevious(Fty&& predicate, SkipsSelfYN skipsSelf = SkipsSelfYN::Yes, IsCyclicYN isCyclic = IsCyclicYN::No) const
 			requires std::invocable<Fty, const Node&>;
 
 		template <class TComponent>
@@ -268,7 +296,13 @@ namespace noco
 		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No);
 
 		[[nodiscard]]
+		std::shared_ptr<const Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
+
+		[[nodiscard]]
 		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No);
+
+		[[nodiscard]]
+		std::shared_ptr<const Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
 
 		void refreshBoxChildrenLayout();
 
@@ -621,120 +655,204 @@ namespace noco
 		}
 	}
 	
+	// 非const版 findNext
 	template<class Fty>
-	std::shared_ptr<Node> Node::findNext(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic) const
+	std::shared_ptr<Node> Node::findNext(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic)
 		requires std::invocable<Fty, const Node&>
 	{
-		// TODO: NocoUIライブラリ全体をconst-correctにする
-		// 現在、shared_ptr<Node>とshared_ptr<const Node>の使い分けが適切に行われていないため、
-		// const_pointer_castを使用している。将来的にはこのキャストを不要にする。
+		// ルートノードを取得
+		auto root = getRootNode();
 		
-		// 最初に探索を開始したノードを記録（循環探索用）
-		auto startNode = std::const_pointer_cast<Node>(shared_from_this());
+		// すべてのノードを深さ優先順序で収集
+		std::vector<std::shared_ptr<Node>> allNodes;
+		root->collectNodesInOrder(allNodes);
 		
-		// ヘルパー関数：子ノードを探索
-		std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&)> findInChildren;
-		findInChildren = [&](const std::shared_ptr<Node>& node) -> std::shared_ptr<Node>
+		// 自分の位置を見つける
+		auto myIt = std::find(allNodes.begin(), allNodes.end(), shared_from_this());
+		if (myIt == allNodes.end())
 		{
-			for (const auto& child : node->children())
-			{
-				if (predicate(child))
-				{
-					return child;
-				}
-				if (auto result = findInChildren(child))
-				{
-					return result;
-				}
-			}
 			return nullptr;
-		};
-		
-		// ヘルパー関数：親を辿って次のノードを探す
-		std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&, bool)> findNextFromNode;
-		findNextFromNode = [&](const std::shared_ptr<Node>& node, bool checkSelf) -> std::shared_ptr<Node>
-		{
-			// 自分自身をチェック
-			if (checkSelf && predicate(node))
-			{
-				return node;
-			}
-			
-			// 自分の子を探索
-			if (auto result = findInChildren(node))
-			{
-				return result;
-			}
-			
-			// 親がいる場合は、親の次の兄弟を探索
-			if (auto parentNode = node->parent())
-			{
-				const auto& siblings = parentNode->children();
-				auto it = std::find(siblings.begin(), siblings.end(), node);
-				
-				if (it != siblings.end())
-				{
-					// 次の兄弟から探索
-					for (++it; it != siblings.end(); ++it)
-					{
-						if (auto result = findNextFromNode(*it, true))
-						{
-							return result;
-						}
-					}
-				}
-				
-				// 親の兄弟を探索（親自身はスキップ）
-				return findNextFromNode(parentNode, false);
-			}
-			
-			// ルートまで到達
-			return nullptr;
-		};
-		
-		// 探索開始
-		auto result = findNextFromNode(startNode, skipsSelf == SkipsSelfYN::No);
-		
-		// 循環探索が有効で、結果が見つからなかった場合
-		if (!result && isCyclic == IsCyclicYN::Yes)
-		{
-			// ルートを見つける
-			auto root = startNode;
-			while (auto p = root->parent())
-			{
-				root = p;
-			}
-			
-			// ルートから探索して、開始ノードの手前まで
-			std::function<std::shared_ptr<Node>(const std::shared_ptr<Node>&)> findUntilStart;
-			findUntilStart = [&](const std::shared_ptr<Node>& node) -> std::shared_ptr<Node>
-			{
-				// 開始ノードに到達したら終了
-				if (node == startNode)
-				{
-					return nullptr;
-				}
-				
-				if (predicate(node))
-				{
-					return node;
-				}
-				
-				for (const auto& child : node->children())
-				{
-					if (auto result = findUntilStart(child))
-					{
-						return result;
-					}
-				}
-				
-				return nullptr;
-			};
-			
-			result = findUntilStart(root);
 		}
 		
-		return result;
+		// 自分自身をチェック（skipsSelfがNoの場合）
+		if (skipsSelf == SkipsSelfYN::No && predicate(*this))
+		{
+			return shared_from_this();
+		}
+		
+		// 自分より後のノードを探索
+		for (auto it = myIt + 1; it != allNodes.end(); ++it)
+		{
+			if (predicate(**it))
+			{
+				return *it;
+			}
+		}
+		
+		// 循環探索の場合、最初から自分の位置まで探索
+		if (isCyclic == IsCyclicYN::Yes)
+		{
+			for (auto it = allNodes.begin(); it != myIt; ++it)
+			{
+				if (predicate(**it))
+				{
+					return *it;
+				}
+			}
+		}
+		
+		return nullptr;
+	}
+
+	// const版 findNext
+	template<class Fty>
+	std::shared_ptr<const Node> Node::findNext(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic) const
+		requires std::invocable<Fty, const Node&>
+	{
+		// ルートノードを取得
+		auto root = getRootNode();
+		
+		// すべてのノードを深さ優先順序で収集
+		std::vector<std::shared_ptr<const Node>> allNodes;
+		root->collectNodesInOrder(allNodes);
+		
+		// 自分の位置を見つける
+		auto myIt = std::find(allNodes.begin(), allNodes.end(), shared_from_this());
+		if (myIt == allNodes.end())
+		{
+			return nullptr;
+		}
+		
+		// 自分自身をチェック（skipsSelfがNoの場合）
+		if (skipsSelf == SkipsSelfYN::No && predicate(*this))
+		{
+			return shared_from_this();
+		}
+		
+		// 自分より後のノードを探索
+		for (auto it = myIt + 1; it != allNodes.end(); ++it)
+		{
+			if (predicate(**it))
+			{
+				return *it;
+			}
+		}
+		
+		// 循環探索の場合、最初から自分の位置まで探索
+		if (isCyclic == IsCyclicYN::Yes)
+		{
+			for (auto it = allNodes.begin(); it != myIt; ++it)
+			{
+				if (predicate(**it))
+				{
+					return *it;
+				}
+			}
+		}
+		
+		return nullptr;
+	}
+
+	// 非const版 findPrevious
+	template<class Fty>
+	std::shared_ptr<Node> Node::findPrevious(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic)
+		requires std::invocable<Fty, const Node&>
+	{
+		// ルートノードを取得
+		auto root = getRootNode();
+		
+		// すべてのノードを深さ優先順序で収集
+		std::vector<std::shared_ptr<Node>> allNodes;
+		root->collectNodesInOrder(allNodes);
+		
+		// 自分の位置を見つける
+		auto myIt = std::find(allNodes.begin(), allNodes.end(), shared_from_this());
+		if (myIt == allNodes.end())
+		{
+			return nullptr;
+		}
+		
+		// 自分自身をチェック（skipsSelfがNoの場合）
+		if (skipsSelf == SkipsSelfYN::No && predicate(*this))
+		{
+			return shared_from_this();
+		}
+		
+		// 自分より前のノードを逆順で探索
+		for (auto it = myIt; it != allNodes.begin();)
+		{
+			--it;
+			if (predicate(**it))
+			{
+				return *it;
+			}
+		}
+		
+		// 循環探索の場合、末尾から自分の位置まで探索
+		if (isCyclic == IsCyclicYN::Yes)
+		{
+			for (auto it = allNodes.end(); it != myIt;)
+			{
+				--it;
+				if (*it != shared_from_this() && predicate(**it))
+				{
+					return *it;
+				}
+			}
+		}
+		
+		return nullptr;
+	}
+
+	// const版 findPrevious
+	template<class Fty>
+	std::shared_ptr<const Node> Node::findPrevious(Fty&& predicate, SkipsSelfYN skipsSelf, IsCyclicYN isCyclic) const
+		requires std::invocable<Fty, const Node&>
+	{
+		// ルートノードを取得
+		auto root = getRootNode();
+		
+		// すべてのノードを深さ優先順序で収集
+		std::vector<std::shared_ptr<const Node>> allNodes;
+		root->collectNodesInOrder(allNodes);
+		
+		// 自分の位置を見つける
+		auto myIt = std::find(allNodes.begin(), allNodes.end(), shared_from_this());
+		if (myIt == allNodes.end())
+		{
+			return nullptr;
+		}
+		
+		// 自分自身をチェック（skipsSelfがNoの場合）
+		if (skipsSelf == SkipsSelfYN::No && predicate(*this))
+		{
+			return shared_from_this();
+		}
+		
+		// 自分より前のノードを逆順で探索
+		for (auto it = myIt; it != allNodes.begin();)
+		{
+			--it;
+			if (predicate(**it))
+			{
+				return *it;
+			}
+		}
+		
+		// 循環探索の場合、末尾から自分の位置まで探索
+		if (isCyclic == IsCyclicYN::Yes)
+		{
+			for (auto it = allNodes.end(); it != myIt;)
+			{
+				--it;
+				if (*it != shared_from_this() && predicate(**it))
+				{
+					return *it;
+				}
+			}
+		}
+		
+		return nullptr;
 	}
 
 	template <class TComponent>
