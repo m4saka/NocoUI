@@ -10,6 +10,8 @@ namespace noco
 		Vec2 posDelta = Vec2::Zero();
 		Vec2 sizeDelta = Vec2::Zero();
 		Vec2 sizeDeltaPivot = Anchor::MiddleCenter;
+		Optional<double> minWidth = none;
+		Optional<double> minHeight = none;
 		Optional<double> maxWidth = none;
 		Optional<double> maxHeight = none;
 
@@ -22,6 +24,16 @@ namespace noco
 			const Vec2 originalSize{ parentRect.size * (anchorMax - anchorMin) + sizeDelta };
 			Vec2 size = originalSize;
 			
+			// 最小サイズの適用
+			if (minWidth)
+			{
+				size.x = Max(size.x, *minWidth);
+			}
+			if (minHeight)
+			{
+				size.y = Max(size.y, *minHeight);
+			}
+			
 			// 最大サイズの適用
 			if (maxWidth)
 			{
@@ -32,7 +44,7 @@ namespace noco
 				size.y = Min(size.y, *maxHeight);
 			}
 			
-			// サイズの差分を計算（最大サイズ適用による縮小分）
+			// サイズの差分を計算（min/maxサイズ適用による変化分）
 			const Vec2 sizeDiff = originalSize - size;
 			
 			// 位置計算（sizeDeltaPivotを考慮して、サイズ差分を反映）
@@ -53,6 +65,14 @@ namespace noco
 				{ U"sizeDeltaPivot", sizeDeltaPivot },
 			};
 			
+			if (minWidth)
+			{
+				json[U"minWidth"] = *minWidth;
+			}
+			if (minHeight)
+			{
+				json[U"minHeight"] = *minHeight;
+			}
 			if (maxWidth)
 			{
 				json[U"maxWidth"] = *maxWidth;
@@ -77,6 +97,14 @@ namespace noco
 				.sizeDeltaPivot = GetFromJSONOr(json, U"sizeDeltaPivot", Anchor::MiddleCenter),
 			};
 			
+			if (json.contains(U"minWidth"))
+			{
+				constraint.minWidth = json[U"minWidth"].get<double>();
+			}
+			if (json.contains(U"minHeight"))
+			{
+				constraint.minHeight = json[U"minHeight"].get<double>();
+			}
 			if (json.contains(U"maxWidth"))
 			{
 				constraint.maxWidth = json[U"maxWidth"].get<double>();

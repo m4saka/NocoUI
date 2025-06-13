@@ -10,6 +10,8 @@ namespace noco
 		Vec2 sizeDelta = Vec2::Zero();
 		double flexibleWeight = 0.0;
 		LRTB margin = LRTB::Zero();
+		Optional<double> minWidth = none;
+		Optional<double> minHeight = none;
 		Optional<double> maxWidth = none;
 		Optional<double> maxHeight = none;
 
@@ -17,6 +19,16 @@ namespace noco
 		RectF applyConstraint(const RectF& parentRect, const Vec2& offset) const
 		{
 			Vec2 size{ parentRect.size * sizeRatio + sizeDelta };
+			
+			// 最小サイズ制限を適用
+			if (minWidth.has_value())
+			{
+				size.x = Max(size.x, *minWidth);
+			}
+			if (minHeight.has_value())
+			{
+				size.y = Max(size.y, *minHeight);
+			}
 			
 			// 最大サイズ制限を適用
 			if (maxWidth.has_value())
@@ -44,6 +56,14 @@ namespace noco
 				{ U"margin", margin.toJSON() },
 			};
 			
+			if (minWidth.has_value())
+			{
+				json[U"minWidth"] = *minWidth;
+			}
+			if (minHeight.has_value())
+			{
+				json[U"minHeight"] = *minHeight;
+			}
 			if (maxWidth.has_value())
 			{
 				json[U"maxWidth"] = *maxWidth;
@@ -67,6 +87,14 @@ namespace noco
 				.margin = GetFromJSONOr(json, U"margin", LRTB::Zero()),
 			};
 			
+			if (json.hasElement(U"minWidth"))
+			{
+				constraint.minWidth = json[U"minWidth"].get<double>();
+			}
+			if (json.hasElement(U"minHeight"))
+			{
+				constraint.minHeight = json[U"minHeight"].get<double>();
+			}
 			if (json.hasElement(U"maxWidth"))
 			{
 				constraint.maxWidth = json[U"maxWidth"].get<double>();

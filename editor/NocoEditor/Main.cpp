@@ -5297,6 +5297,10 @@ public:
 			fnAddVec2Child(U"margin (L, R)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"margin (T, B)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
 			
+			fnAddOptionalDoubleChild(U"minWidth", pBoxConstraint->minWidth,
+				[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.minWidth = value; node->setConstraint(newConstraint); });
+			fnAddOptionalDoubleChild(U"minHeight", pBoxConstraint->minHeight,
+				[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.minHeight = value; node->setConstraint(newConstraint); });
 			fnAddOptionalDoubleChild(U"maxWidth", pBoxConstraint->maxWidth,
 				[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.maxWidth = value; node->setConstraint(newConstraint); });
 			fnAddOptionalDoubleChild(U"maxHeight", pBoxConstraint->maxHeight,
@@ -5501,7 +5505,8 @@ public:
 							c.sizeDelta.x -= delta;
 						}));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
-				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
@@ -5524,7 +5529,8 @@ public:
 						}));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
 				fnAddChild(U"yDelta", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
@@ -5547,7 +5553,8 @@ public:
 						}));
 				fnAddChild(U"bottom", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
-				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
@@ -5570,7 +5577,8 @@ public:
 						}));
 				fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
-				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
@@ -5593,7 +5601,8 @@ public:
 						}));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
 				fnAddChild(U"xDelta", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
@@ -5616,7 +5625,8 @@ public:
 						}));
 				fnAddChild(U"right", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
-				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
@@ -5652,7 +5662,10 @@ public:
 							double delta = v - oldBottom;
 							c.sizeDelta.y -= delta;
 						}));
-				// maxWidthとmaxHeightプロパティを追加 (X軸とY軸の両方が伸縮するため)
+				fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
+				fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
@@ -5665,7 +5678,10 @@ public:
 				fnAddVec2Child(U"sizeDeltaPivot", pAnchorConstraint->sizeDeltaPivot, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
 				fnAddVec2Child(U"posDelta", pAnchorConstraint->posDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.posDelta = val; }));
 				fnAddVec2Child(U"sizeDelta", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDelta = val; }));
-				// maxWidthとmaxHeightプロパティを追加 (Customの場合も編集可能に)
+				fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
+				fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
 					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
