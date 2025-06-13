@@ -1061,6 +1061,14 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"AnchorConstraint", U"yDelta" }] = PropertyMetadata{
 		.tooltip = U"Y軸の位置",
 	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"maxWidth" }] = PropertyMetadata{
+		.tooltip = U"最大幅",
+		.tooltipDetail = U"要素の幅の最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
+	};
+	metadata[PropertyKey{ U"AnchorConstraint", U"maxHeight" }] = PropertyMetadata{
+		.tooltip = U"最大高さ",
+		.tooltipDetail = U"要素の高さの最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
+	};
 	
 	// Layout関連
 	metadata[PropertyKey{ U"FlowLayout", U"type" }] = PropertyMetadata{
@@ -5147,6 +5155,116 @@ public:
 			{
 				constraintNode->addChild(createVec2PropertyNodeWithTooltip(constraintTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
 			};
+		const auto fnAddOptionalDoubleChild =
+			[this, &constraintNode, &constraintTypeName](StringView name, const Optional<double>& currentValue, auto fnSetValue)
+			{
+				const auto propertyNode = Node::Create(
+					name,
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 32 },
+					},
+					IsHitTargetYN::Yes,
+					InheritChildrenStateFlags::Hovered);
+				propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+				propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+				
+				// ラベル領域（チェックボックスを含む）
+				const auto labelNode = propertyNode->emplaceChild(
+					U"Label",
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 0, 1 },
+						.flexibleWeight = 0.85,
+					},
+					IsHitTargetYN::Yes,
+					InheritChildrenStateFlags::Hovered);
+				labelNode->setBoxChildrenLayout(HorizontalLayout{ .verticalAlign = VerticalAlign::Middle });
+				
+				// チェックボックスは後で追加（textBoxとtextBoxNodeを参照するため）
+				
+				// プロパティ名
+				labelNode->emplaceComponent<Label>(
+					name,
+					U"",
+					14,
+					Palette::White,
+					HorizontalAlign::Left,
+					VerticalAlign::Middle,
+					LRTB{ 18 + 4, 5, 5, 5 },
+					HorizontalOverflow::Wrap,
+					VerticalOverflow::Clip)
+					->setSizingMode(LabelSizingMode::ShrinkToFit);
+				
+				// メタデータに基づいてツールチップを追加
+				if (const auto it = m_propertyMetadata.find(PropertyKey{ String(constraintTypeName), String(name) }); it != m_propertyMetadata.end())
+				{
+					const auto& metadata = it->second;
+					if (metadata.tooltip)
+					{
+						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					}
+				}
+				
+				// 初期値設定
+				const bool hasValue = currentValue.has_value();
+				const auto hasValueShared = std::make_shared<bool>(hasValue);
+				
+				// テキストボックス
+				const auto textBoxNode = propertyNode->emplaceChild(
+					U"TextBox",
+					BoxConstraint
+					{
+						.sizeDelta = Vec2{ 0, 26 },
+						.flexibleWeight = 1,
+					});
+				textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withSelectedDefault(Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+				const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				textBox->setText(Format(currentValue.value_or(0.0)), IgnoreIsChangedYN::Yes);
+				textBoxNode->setInteractable(hasValue ? InteractableYN::Yes : InteractableYN::No);
+				
+				// チェックボックス（親のホバー状態を使用）
+				const auto checkboxNode = CreateCheckboxNode(hasValue, 
+					[hasValueShared, textBox, fnSetValue, textBoxNode](bool newValue)
+					{
+						*hasValueShared = newValue;
+						textBoxNode->setInteractable(newValue ? InteractableYN::Yes : InteractableYN::No);
+						if (newValue)
+						{
+							if (auto value = ParseOpt<double>(textBox->text()))
+							{
+								fnSetValue(*value);
+							}
+						}
+						else
+						{
+							fnSetValue(none);
+						}
+					}, true);  // useParentHoverState = true
+				checkboxNode->setConstraint(BoxConstraint
+				{
+					.sizeDelta = Vec2{ 18, 18 },
+					.margin = LRTB{ 0, 4, 0, 0 },
+				});
+				labelNode->addChild(checkboxNode);
+				
+				// PropertyTextBoxでテキストボックスの変更を処理
+				textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, 
+					[hasValueShared, fnSetValue](StringView text)
+					{
+						if (*hasValueShared)
+						{
+							if (auto value = ParseOpt<double>(text))
+							{
+								fnSetValue(*value);
+							}
+						}
+					}));
+				
+				propertyNode->setActive(!m_isFoldedConstraint.getBool());
+				constraintNode->addChild(propertyNode);
+			};
 
 		if (const auto pBoxConstraint = node->boxConstraint())
 		{
@@ -5378,6 +5496,9 @@ public:
 							c.sizeDelta.x -= delta;
 						}));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
+				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchMiddle:
@@ -5398,6 +5519,9 @@ public:
 						}));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
 				fnAddChild(U"yDelta", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
+				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchBottom:
@@ -5418,6 +5542,9 @@ public:
 						}));
 				fnAddChild(U"bottom", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
 				fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
+				// maxWidthプロパティを追加 (X軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchLeft:
@@ -5438,6 +5565,9 @@ public:
 						}));
 				fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
+				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchCenter:
@@ -5458,6 +5588,9 @@ public:
 						}));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
 				fnAddChild(U"xDelta", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
+				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchRight:
@@ -5478,6 +5611,9 @@ public:
 						}));
 				fnAddChild(U"right", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
 				fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
+				// maxHeightプロパティを追加 (Y軸が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
 
 			case AnchorPreset::StretchFull:
@@ -5511,6 +5647,11 @@ public:
 							double delta = v - oldBottom;
 							c.sizeDelta.y -= delta;
 						}));
+				// maxWidthとmaxHeightプロパティを追加 (X軸とY軸の両方が伸縮するため)
+				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
+				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
 
 			default:
@@ -5519,6 +5660,11 @@ public:
 				fnAddVec2Child(U"sizeDeltaPivot", pAnchorConstraint->sizeDeltaPivot, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
 				fnAddVec2Child(U"posDelta", pAnchorConstraint->posDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.posDelta = val; }));
 				fnAddVec2Child(U"sizeDelta", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDelta = val; }));
+				// maxWidthとmaxHeightプロパティを追加 (Customの場合も編集可能に)
+				fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
+				fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
+					[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
 				break;
 			}
 		}

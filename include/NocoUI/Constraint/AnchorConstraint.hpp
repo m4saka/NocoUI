@@ -10,6 +10,8 @@ namespace noco
 		Vec2 posDelta = Vec2::Zero();
 		Vec2 sizeDelta = Vec2::Zero();
 		Vec2 sizeDeltaPivot = Anchor::MiddleCenter;
+		Optional<double> maxWidth = none;
+		Optional<double> maxHeight = none;
 
 		/* NonSerialized */ bool isCustomAnchorInEditor = false;
 
@@ -17,15 +19,31 @@ namespace noco
 		RectF applyConstraint(const RectF& parentRect, const Vec2&) const
 		{
 			// AnchorConstraintはオフセットの影響を受けないため、第2引数は無視
-			const Vec2 size{ parentRect.size * (anchorMax - anchorMin) + sizeDelta };
-			const Vec2 position{ parentRect.pos + parentRect.size * anchorMin + posDelta - sizeDelta * sizeDeltaPivot };
+			const Vec2 originalSize{ parentRect.size * (anchorMax - anchorMin) + sizeDelta };
+			Vec2 size = originalSize;
+			
+			// 最大サイズの適用
+			if (maxWidth)
+			{
+				size.x = Min(size.x, *maxWidth);
+			}
+			if (maxHeight)
+			{
+				size.y = Min(size.y, *maxHeight);
+			}
+			
+			// サイズの差分を計算（最大サイズ適用による縮小分）
+			const Vec2 sizeDiff = originalSize - size;
+			
+			// 位置計算（sizeDeltaPivotを考慮して、サイズ差分を反映）
+			const Vec2 position{ parentRect.pos + parentRect.size * anchorMin + posDelta - sizeDelta * sizeDeltaPivot + sizeDiff * sizeDeltaPivot };
 			return RectF{ position, size };
 		}
 
 		[[nodiscard]]
 		JSON toJSON() const
 		{
-			return JSON
+			JSON json
 			{
 				{ U"type", U"AnchorConstraint" },
 				{ U"anchorMin", anchorMin },
@@ -34,12 +52,23 @@ namespace noco
 				{ U"sizeDelta", sizeDelta },
 				{ U"sizeDeltaPivot", sizeDeltaPivot },
 			};
+			
+			if (maxWidth)
+			{
+				json[U"maxWidth"] = *maxWidth;
+			}
+			if (maxHeight)
+			{
+				json[U"maxHeight"] = *maxHeight;
+			}
+			
+			return json;
 		}
 
 		[[nodiscard]]
 		static AnchorConstraint FromJSON(const JSON& json)
 		{
-			return AnchorConstraint
+			AnchorConstraint constraint
 			{
 				.anchorMin = GetFromJSONOr(json, U"anchorMin", Anchor::MiddleCenter),
 				.anchorMax = GetFromJSONOr(json, U"anchorMax", Anchor::MiddleCenter),
@@ -47,6 +76,17 @@ namespace noco
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
 				.sizeDeltaPivot = GetFromJSONOr(json, U"sizeDeltaPivot", Anchor::MiddleCenter),
 			};
+			
+			if (json.contains(U"maxWidth"))
+			{
+				constraint.maxWidth = json[U"maxWidth"].get<double>();
+			}
+			if (json.contains(U"maxHeight"))
+			{
+				constraint.maxHeight = json[U"maxHeight"].get<double>();
+			}
+			
+			return constraint;
 		}
 
 		[[nodiscard]]

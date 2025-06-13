@@ -38,6 +38,49 @@ TEST_CASE("Constraint system", "[Constraint]")
 		REQUIRE(anchorConstraint->anchorMin == Vec2{ 0.0f, 0.0f });
 		REQUIRE(anchorConstraint->anchorMax == Vec2{ 1.0f, 1.0f });
 	}
+
+	SECTION("AnchorConstraint with max size")
+	{
+		// 最大サイズの計算をテスト
+		noco::AnchorConstraint constraint;
+		constraint.anchorMin = Vec2{ 0.0f, 0.0f };
+		constraint.anchorMax = Vec2{ 1.0f, 1.0f };
+		constraint.sizeDelta = Vec2{ 0.0f, 0.0f };
+		constraint.maxWidth = 500.0;
+		constraint.maxHeight = 400.0;
+		
+		// 親の領域が大きい場合、最大サイズが適用される
+		RectF parentRect{ 0, 0, 1000, 800 };
+		RectF result = constraint.applyConstraint(parentRect, Vec2::Zero());
+		REQUIRE(result.w == 500.0f);
+		REQUIRE(result.h == 400.0f);
+		
+		// 親の領域が小さい場合、親のサイズに従う
+		RectF smallParentRect{ 0, 0, 300, 200 };
+		RectF smallResult = constraint.applyConstraint(smallParentRect, Vec2::Zero());
+		REQUIRE(smallResult.w == 300.0f);
+		REQUIRE(smallResult.h == 200.0f);
+	}
+
+	SECTION("AnchorConstraint with max size and centered pivot")
+	{
+		// 中央配置のピボットで最大サイズをテスト
+		noco::AnchorConstraint constraint;
+		constraint.anchorMin = Vec2{ 0.0f, 0.0f };
+		constraint.anchorMax = Vec2{ 1.0f, 1.0f };
+		constraint.sizeDelta = Vec2{ 0.0f, 0.0f };
+		constraint.sizeDeltaPivot = noco::Anchor::MiddleCenter;
+		constraint.maxWidth = 500.0;
+		constraint.maxHeight = 400.0;
+		
+		// 親の領域が大きい場合、最大サイズが適用され、中央に配置される
+		RectF parentRect{ 0, 0, 1000, 800 };
+		RectF result = constraint.applyConstraint(parentRect, Vec2::Zero());
+		REQUIRE(result.w == 500.0f);
+		REQUIRE(result.h == 400.0f);
+		// 中央配置の確認（親の中心と結果の中心が一致）
+		REQUIRE(result.center() == parentRect.center());
+	}
 }
 
 TEST_CASE("BoxConstraint detailed", "[Constraint][BoxConstraint]")

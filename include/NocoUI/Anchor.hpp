@@ -114,31 +114,31 @@ namespace noco
 		{
 			return AnchorPreset::BottomRight;
 		}
-		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::TopRight && pivot == Anchor::TopLeft)
+		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::TopRight && pivot == Anchor::TopCenter)
 		{
 			return AnchorPreset::StretchTop;
 		}
-		if (anchorMin == Anchor::MiddleLeft && anchorMax == Anchor::MiddleRight && pivot == Anchor::MiddleLeft)
+		if (anchorMin == Anchor::MiddleLeft && anchorMax == Anchor::MiddleRight && pivot == Anchor::MiddleCenter)
 		{
 			return AnchorPreset::StretchMiddle;
 		}
-		if (anchorMin == Anchor::BottomLeft && anchorMax == Anchor::BottomRight && pivot == Anchor::BottomLeft)
+		if (anchorMin == Anchor::BottomLeft && anchorMax == Anchor::BottomRight && pivot == Anchor::BottomCenter)
 		{
 			return AnchorPreset::StretchBottom;
 		}
-		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::BottomLeft && pivot == Anchor::TopLeft)
+		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::BottomLeft && pivot == Anchor::MiddleLeft)
 		{
 			return AnchorPreset::StretchLeft;
 		}
-		if (anchorMin == Anchor::TopCenter && anchorMax == Anchor::BottomCenter && pivot == Anchor::TopCenter)
+		if (anchorMin == Anchor::TopCenter && anchorMax == Anchor::BottomCenter && pivot == Anchor::MiddleCenter)
 		{
 			return AnchorPreset::StretchCenter;
 		}
-		if (anchorMin == Anchor::TopRight && anchorMax == Anchor::BottomRight && pivot == Anchor::TopRight)
+		if (anchorMin == Anchor::TopRight && anchorMax == Anchor::BottomRight && pivot == Anchor::MiddleRight)
 		{
 			return AnchorPreset::StretchRight;
 		}
-		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::BottomRight && pivot == Anchor::TopLeft)
+		if (anchorMin == Anchor::TopLeft && anchorMax == Anchor::BottomRight && pivot == Anchor::MiddleCenter)
 		{
 			return AnchorPreset::StretchFull;
 		}
@@ -169,19 +169,19 @@ namespace noco
 		case AnchorPreset::BottomRight:
 			return std::tuple{ Anchor::BottomRight, Anchor::BottomRight, Anchor::BottomRight };
 		case AnchorPreset::StretchTop:
-			return std::tuple{ Anchor::TopLeft, Anchor::TopRight, Anchor::TopLeft };
+			return std::tuple{ Anchor::TopLeft, Anchor::TopRight, Anchor::TopCenter };
 		case AnchorPreset::StretchMiddle:
-			return std::tuple{ Anchor::MiddleLeft, Anchor::MiddleRight, Anchor::MiddleLeft };
+			return std::tuple{ Anchor::MiddleLeft, Anchor::MiddleRight, Anchor::MiddleCenter };
 		case AnchorPreset::StretchBottom:
-			return std::tuple{ Anchor::BottomLeft, Anchor::BottomRight, Anchor::BottomLeft };
+			return std::tuple{ Anchor::BottomLeft, Anchor::BottomRight, Anchor::BottomCenter };
 		case AnchorPreset::StretchLeft:
-			return std::tuple{ Anchor::TopLeft, Anchor::BottomLeft, Anchor::TopLeft };
+			return std::tuple{ Anchor::TopLeft, Anchor::BottomLeft, Anchor::MiddleLeft };
 		case AnchorPreset::StretchCenter:
-			return std::tuple{ Anchor::TopCenter, Anchor::BottomCenter, Anchor::TopCenter };
+			return std::tuple{ Anchor::TopCenter, Anchor::BottomCenter, Anchor::MiddleCenter };
 		case AnchorPreset::StretchRight:
-			return std::tuple{ Anchor::TopRight, Anchor::BottomRight, Anchor::TopRight };
+			return std::tuple{ Anchor::TopRight, Anchor::BottomRight, Anchor::MiddleRight };
 		case AnchorPreset::StretchFull:
-			return std::tuple{ Anchor::TopLeft, Anchor::BottomRight, Anchor::TopLeft };
+			return std::tuple{ Anchor::TopLeft, Anchor::BottomRight, Anchor::MiddleCenter };
 		case AnchorPreset::Custom:
 			break;
 		}
