@@ -5296,6 +5296,11 @@ public:
 			fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { auto newConstraint = *node->boxConstraint(); newConstraint.flexibleWeight = value; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"margin (L, R)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
 			fnAddVec2Child(U"margin (T, B)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
+			
+			fnAddOptionalDoubleChild(U"maxWidth", pBoxConstraint->maxWidth,
+				[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.maxWidth = value; node->setConstraint(newConstraint); });
+			fnAddOptionalDoubleChild(U"maxHeight", pBoxConstraint->maxHeight,
+				[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.maxHeight = value; node->setConstraint(newConstraint); });
 		}
 		else if (const auto pAnchorConstraint = node->anchorConstraint())
 		{
