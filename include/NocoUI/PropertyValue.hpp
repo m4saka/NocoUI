@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <Siv3D.hpp>
+// #include <Siv3D.hpp> // pch.hppに移動
 #include "YN.hpp"
 #include "InteractionState.hpp"
 #include "Serialization.hpp"

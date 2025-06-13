@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <Siv3D.hpp>
+// #include <Siv3D.hpp> // pch.hppに移動
 #include "magic_enum.hpp" // https://github.com/Neargye/magic_enum
 
 namespace noco

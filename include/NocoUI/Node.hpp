@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include <Siv3D.hpp>
+// Siv3D.hppはpch.hppに含まれているためコメントアウト
+// #include <Siv3D.hpp>
 #include "YN.hpp"
 #include "PropertyValue.hpp"
 #include "Property.hpp"
