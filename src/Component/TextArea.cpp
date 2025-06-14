@@ -549,6 +549,10 @@ namespace noco
 					m_isDragging = true;
 				}
 				m_isEditing = true;
+				
+				// フォーカスを設定（Tabキーナビゲーションのため）
+				CurrentFrame::SetFocusedNode(node);
+				
 				updateScrollOffset(rect, effectScale);
 			}
 			else if (node->isRightMouseDown())

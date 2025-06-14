@@ -788,13 +788,16 @@ namespace noco
 			}
 		}
 		
-		// 循環探索の場合、末尾から自分の位置まで探索
+		// 循環探索の場合、末尾から自分より後ろのノードを探索
 		if (isCyclic == IsCyclicYN::Yes)
 		{
-			for (auto it = allNodes.end(); it != myIt;)
+			// skipsSelfがYesの場合は自分を除外する必要があるため、
+			// 自分より後のノードのみを探索
+			auto startIt = (skipsSelf == SkipsSelfYN::Yes) ? myIt + 1 : myIt;
+			for (auto it = allNodes.end(); it != startIt;)
 			{
 				--it;
-				if (*it != shared_from_this() && predicate(**it))
+				if (predicate(**it))
 				{
 					return *it;
 				}
@@ -839,13 +842,16 @@ namespace noco
 			}
 		}
 		
-		// 循環探索の場合、末尾から自分の位置まで探索
+		// 循環探索の場合、末尾から自分より後ろのノードを探索
 		if (isCyclic == IsCyclicYN::Yes)
 		{
-			for (auto it = allNodes.end(); it != myIt;)
+			// skipsSelfがYesの場合は自分を除外する必要があるため、
+			// 自分より後のノードのみを探索
+			auto startIt = (skipsSelf == SkipsSelfYN::Yes) ? myIt + 1 : myIt;
+			for (auto it = allNodes.end(); it != startIt;)
 			{
 				--it;
-				if (*it != shared_from_this() && predicate(**it))
+				if (predicate(**it))
 				{
 					return *it;
 				}

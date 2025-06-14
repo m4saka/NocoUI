@@ -1,11 +1,36 @@
-#include "TabStop.hpp"
+﻿#include "TabStop.hpp"
 #include <NocoUI/Node.hpp>
 #include <NocoUI/Component/IFocusable.hpp>
 #include <NocoUI/Canvas.hpp>
+#include <NocoUI/InteractionState.hpp>
+#include <NocoUI/YN.hpp>
 
 namespace nocoeditor
 {
-	void TabStop::update(const std::shared_ptr<noco::Node>& node)
+	// ノードがフォーカス可能かチェックする関数
+	static bool isFocusable(const std::shared_ptr<noco::Node>& node)
+	{
+		if (!node)
+		{
+			return false;
+		}
+		
+		// ノードが非アクティブの場合はフォーカス不可
+		if (node->activeInHierarchy() != noco::ActiveYN::Yes)
+		{
+			return false;
+		}
+		
+		// ノードがインタラクト不可の場合はフォーカス不可（階層も含めてチェック）
+		if (!node->interactableInHierarchy())
+		{
+			return false;
+		}
+		
+		return true;
+	}
+	
+	void TabStop::updateInput(const std::shared_ptr<noco::Node>& node)
 	{
 		// 現在フォーカスされているノードかチェック
 		const bool isFocused = (noco::CurrentFrame::GetFocusedNode() == node);
@@ -13,31 +38,35 @@ namespace nocoeditor
 		// フォーカスされている状態でTabキーが押されたかチェック
 		if (isFocused && KeyTab.down())
 		{
+			// Tabキーの入力をクリアして、他のTabStopが反応しないようにする
+			KeyTab.clearInput();
 			const bool reverse = KeyShift.pressed();
 			
-			std::shared_ptr<noco::Node> nextNode;
+			// 最初のターゲットノードを取得
+			std::shared_ptr<noco::Node> targetNode = reverse ? getPreviousNode() : getNextNode();
+			std::shared_ptr<noco::Node> startNode = node;
 			
-			if (reverse)
+			// フォーカス可能なノードが見つかるまで探索
+			while (targetNode && targetNode != startNode)
 			{
-				// 逆方向の探索（前のTabStopを探す、循環探索有効）
-				nextNode = node->findPrevious([](const noco::Node& n) {
-					return n.getComponentOrNull<TabStop>() != nullptr;
-				}, noco::SkipsSelfYN::Yes, noco::IsCyclicYN::Yes);
-			}
-			else
-			{
-				// 順方向の探索（次のTabStopを探す、循環探索有効）
-				nextNode = node->findNext([](const noco::Node& n) {
-					return n.getComponentOrNull<TabStop>() != nullptr;
-				}, noco::SkipsSelfYN::Yes, noco::IsCyclicYN::Yes);
-			}
-			
-			if (nextNode && nextNode != node)
-			{
-				// 次のノードにフォーカスを設定（SetFocusedNodeが自動的にblur/focusを呼ぶ）
-				noco::CurrentFrame::SetFocusedNode(nextNode);
+				if (isFocusable(targetNode))
+				{
+					// フォーカス可能なノードが見つかった
+					noco::CurrentFrame::SetFocusedNode(targetNode);
+					return;
+				}
+				
+				// 次のノードを探す
+				if (auto tabStop = targetNode->getComponentOrNull<TabStop>())
+				{
+					targetNode = reverse ? tabStop->getPreviousNode() : tabStop->getNextNode();
+				}
+				else
+				{
+					// TabStopがない場合は探索を中止
+					break;
+				}
 			}
 		}
-		
 	}
 }
