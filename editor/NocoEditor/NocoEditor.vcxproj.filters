@@ -153,6 +153,9 @@
     <ClCompile Include="HistorySystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tooltip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -597,6 +600,9 @@
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="HistorySystem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tooltip.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.hpp">
