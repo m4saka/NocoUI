@@ -14,41 +14,24 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const
 		{
-			if (left == right && right == top && top == bottom)
-			{
-				return JSON(left); // JSON{ left }にしてはいけない(引数がinitializer_listになるため配列扱いになってしまう)
-			}
-			else
-			{
-				return JSON
-				{
-					{ U"type", U"LRTB" },
-					{ U"left", left },
-					{ U"right", right },
-					{ U"top", top },
-					{ U"bottom", bottom },
-				};
-			}
+			// Vec4に変換してから文字列形式でシリアライズ
+			const Vec4 vec{ left, right, top, bottom };
+			return JSON(Format(vec));
 		}
 
 		[[nodiscard]]
-		static LRTB fromJSON(const JSON& json)
+		static LRTB fromJSON(const JSON& json, const LRTB& defaultValue = Zero())
 		{
-			if (json.isNumber())
+			if (json.isString())
 			{
-				const double value = json.get<double>();
-				return All(value);
-			}
-			else
-			{
-				return LRTB
+				// 文字列形式 "(left, right, top, bottom)" をパース
+				const String str = json.getString();
+				if (const auto vec = ParseOpt<Vec4>(str))
 				{
-					.left = GetFromJSONOr(json, U"left", 0.0),
-					.right = GetFromJSONOr(json, U"right", 0.0),
-					.top = GetFromJSONOr(json, U"top", 0.0),
-					.bottom = GetFromJSONOr(json, U"bottom", 0.0),
-				};
+					return LRTB{ vec->x, vec->y, vec->z, vec->w };
+				}
 			}
+			return defaultValue;
 		}
 
 		[[nodiscard]]

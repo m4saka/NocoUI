@@ -58,13 +58,14 @@ TEST_CASE("PropertyValue smoothing", "[Property]")
 		// Default状態で初期化
 		canvas->update();
 		// PropertyValueの値を直接確認
-		auto normalColor = colorProp.value(noco::InteractionState::Default, noco::SelectedYN::No);
+		s3d::Array<s3d::String> emptyActiveStyleStates;
+		auto normalColor = colorProp.value(noco::InteractionState::Default, emptyActiveStyleStates);
 		REQUIRE(normalColor == ColorF{ 1.0, 0.0, 0.0, 1.0 });
 		
 		// Hovered状態に変更（テスト用の簡略化）
 		// 実際にはマウス操作を通じてinteractionStateが変更される
 		// ここではPropertyValueの動作確認に焦点を当てる
-		auto hoveredColor = colorProp.value(noco::InteractionState::Hovered, noco::SelectedYN::No);
+		auto hoveredColor = colorProp.value(noco::InteractionState::Hovered, emptyActiveStyleStates);
 		REQUIRE(hoveredColor == ColorF{ 0.0, 1.0, 0.0, 1.0 });
 	}
 
@@ -93,9 +94,10 @@ TEST_CASE("PropertyValue smoothing", "[Property]")
 		canvas->update();
 		
 		// PropertyValueの状態遷移をテスト
-		auto defaultValue = fillColorProp.value(noco::InteractionState::Default, noco::SelectedYN::No);
-		auto hoveredValue = fillColorProp.value(noco::InteractionState::Hovered, noco::SelectedYN::No);
-		auto pressedValue = fillColorProp.value(noco::InteractionState::Pressed, noco::SelectedYN::No);
+		s3d::Array<s3d::String> emptyActiveStyleStates;
+		auto defaultValue = fillColorProp.value(noco::InteractionState::Default, emptyActiveStyleStates);
+		auto hoveredValue = fillColorProp.value(noco::InteractionState::Hovered, emptyActiveStyleStates);
+		auto pressedValue = fillColorProp.value(noco::InteractionState::Pressed, emptyActiveStyleStates);
 		
 		REQUIRE(defaultValue.a == 1.0);
 		REQUIRE(hoveredValue.a == 0.5);

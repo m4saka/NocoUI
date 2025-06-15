@@ -438,6 +438,12 @@ namespace noco
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
+		
+		// styleStateをシリアライズ（空でない場合のみ）
+		if (!m_styleState.empty())
+		{
+			result[U"styleState"] = m_styleState;
+		}
 
 		if (includesInternalId)
 		{
@@ -562,6 +568,10 @@ namespace noco
 		if (json.contains(U"activeSelf"))
 		{
 			node->setActive(ActiveYN{ json[U"activeSelf"].getOr<bool>(true) }, RefreshesLayoutYN::No);
+		}
+		if (json.contains(U"styleState"))
+		{
+			node->setStyleState(json[U"styleState"].getOr<String>(U""));
 		}
 		if (includesInternalId && json.contains(U"_internalId"))
 		{
@@ -1280,7 +1290,7 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1400,19 +1410,22 @@ namespace noco
 		}
 		m_componentTempBuffer.clear();
 
+		// activeStyleStatesを構築（親から受け取ったもの + 自身のstyleState）
+		// 非アクティブな場合でも子ノードに渡すために構築する
+		m_activeStyleStates = parentActiveStyleStates;
+		
+		// 自身のstyleStateを追加
+		if (!m_styleState.empty())
+		{
+			m_activeStyleStates.push_back(m_styleState);
+		}
+		
 		if (m_activeInHierarchy)
 		{
 			// 非表示→表示に変わった時はTweenをリセット
 			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
 			
-			// activeStyleStatesを作成
-			Array<String> activeStyleStates;
-			if (!m_styleState.empty())
-			{
-				activeStyleStates.push_back(m_styleState);
-			}
-			
-			m_transformEffect.update(m_currentInteractionState, activeStyleStates, deltaTime, shouldResetTween);
+			m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime, shouldResetTween);
 			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale, parentHitTestMat);
 		}
 
@@ -1448,9 +1461,10 @@ namespace noco
 			const Mat3x2 childHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
 				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestMat;
 			
+			// 子ノードにactiveStyleStatesを渡してupdate
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(scrollableHoveredNode, deltaTime, posScaleMat, effectScale, childHitTestMat);
+				child->update(scrollableHoveredNode, deltaTime, posScaleMat, effectScale, childHitTestMat, m_activeStyleStates);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1518,14 +1532,8 @@ namespace noco
 			// 非表示→表示に変わった時はTweenをリセット
 			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
 
-			// activeStyleStatesを作成
-			Array<String> activeStyleStates;
-			if (!m_styleState.empty())
-			{
-				activeStyleStates.push_back(m_styleState);
-			}
-
-			component->updateProperties(m_currentInteractionState, activeStyleStates, deltaTime, shouldResetTween);
+			// updateで既に構築されたactiveStyleStatesを使用
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, shouldResetTween);
 		}
 
 		// 子ノードのpostLateUpdate実行
