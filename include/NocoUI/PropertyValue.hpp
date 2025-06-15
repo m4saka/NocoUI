@@ -332,7 +332,9 @@ namespace noco
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0)
+				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				    (!styleStateValues || styleStateValues->empty()) && 
+				    (!styleStateInteractionValues || styleStateInteractionValues->empty()))
 				{
 					return EnumToString(defaultValue);
 				}
@@ -354,11 +356,84 @@ namespace noco
 				{
 					json[U"smoothTime"] = smoothTime;
 				}
+				
+				// styleState関連の値をシリアライズ
+				if ((styleStateValues && !styleStateValues->empty()) || 
+				    (styleStateInteractionValues && !styleStateInteractionValues->empty()))
+				{
+					JSON styleStatesJson;
+					
+					// 各styleStateごとにグループ化
+					HashSet<String> allStates;
+					if (styleStateValues)
+					{
+						for (const auto& [state, value] : *styleStateValues)
+						{
+							allStates.insert(state);
+						}
+					}
+					if (styleStateInteractionValues)
+					{
+						for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+						{
+							allStates.insert(stateInteraction.first);
+						}
+					}
+					
+					// 各stateについて、InteractionStateごとの値を構築
+					for (const String& state : allStates)
+					{
+						bool hasMultipleValues = false;
+						JSON stateJson;
+						
+						// InteractionStateごとの値をチェック
+						if (styleStateInteractionValues)
+						{
+							for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+							{
+								if (stateInteraction.first == state)
+								{
+									hasMultipleValues = true;
+									stateJson[EnumToString(stateInteraction.second)] = EnumToString(value);
+								}
+							}
+						}
+						
+						// stateのみの値（defaultとして扱う）
+						if (styleStateValues)
+						{
+							if (auto it = styleStateValues->find(state); it != styleStateValues->end())
+							{
+								if (hasMultipleValues)
+								{
+									stateJson[U"Default"] = EnumToString(it->second);
+								}
+								else
+								{
+									// Defaultのみの場合は省略記法として直接保存
+									styleStatesJson[state] = EnumToString(it->second);
+									continue;
+								}
+							}
+						}
+						
+						// 複数値がある場合はオブジェクトとして保存
+						if (hasMultipleValues)
+						{
+							styleStatesJson[state] = stateJson;
+						}
+					}
+					
+					json[U"styleStates"] = styleStatesJson;
+				}
+				
 				return json;
 			}
 			else if constexpr (HasToJSON<T>)
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0)
+				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				    (!styleStateValues || styleStateValues->empty()) && 
+				    (!styleStateInteractionValues || styleStateInteractionValues->empty()))
 				{
 					return defaultValue.toJSON();
 				}
@@ -380,11 +455,84 @@ namespace noco
 				{
 					json[U"smoothTime"] = smoothTime;
 				}
+				
+				// styleState関連の値をシリアライズ
+				if ((styleStateValues && !styleStateValues->empty()) || 
+				    (styleStateInteractionValues && !styleStateInteractionValues->empty()))
+				{
+					JSON styleStatesJson;
+					
+					// 各styleStateごとにグループ化
+					HashSet<String> allStates;
+					if (styleStateValues)
+					{
+						for (const auto& [state, value] : *styleStateValues)
+						{
+							allStates.insert(state);
+						}
+					}
+					if (styleStateInteractionValues)
+					{
+						for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+						{
+							allStates.insert(stateInteraction.first);
+						}
+					}
+					
+					// 各stateについて、InteractionStateごとの値を構築
+					for (const String& state : allStates)
+					{
+						bool hasOnlyDefault = true;
+						JSON stateJson;
+						
+						// InteractionStateごとの値をチェック
+						if (styleStateInteractionValues)
+						{
+							for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+							{
+								if (stateInteraction.first == state)
+								{
+									hasOnlyDefault = false;
+									stateJson[EnumToString(stateInteraction.second)] = value.toJSON();
+								}
+							}
+						}
+						
+						// stateのみの値（defaultとして扱う）
+						if (styleStateValues)
+						{
+							if (auto it = styleStateValues->find(state); it != styleStateValues->end())
+							{
+								if (!hasOnlyDefault)
+								{
+									stateJson[U"Default"] = it->second.toJSON();
+								}
+								else
+								{
+									// Defaultのみの場合は省略記法として直接保存
+									styleStatesJson[state] = it->second.toJSON();
+									continue;
+								}
+							}
+						}
+						
+						// Default以外の値がある場合はオブジェクトとして保存
+						if (!hasOnlyDefault)
+						{
+							styleStatesJson[state] = stateJson;
+						}
+					}
+					
+					json[U"styleStates"] = styleStatesJson;
+				}
+				
 				return json;
 			}
 			else
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0)
+				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				    (!styleStateValues || styleStateValues->empty()) && 
+				    (!styleStateInteractionValues || styleStateInteractionValues->empty()))
 				{
 					return defaultValue;
 				}
@@ -406,6 +554,77 @@ namespace noco
 				{
 					json[U"smoothTime"] = smoothTime;
 				}
+				
+				// styleState関連の値をシリアライズ
+				if ((styleStateValues && !styleStateValues->empty()) || 
+				    (styleStateInteractionValues && !styleStateInteractionValues->empty()))
+				{
+					JSON styleStatesJson;
+					
+					// 各styleStateごとにグループ化
+					HashSet<String> allStates;
+					if (styleStateValues)
+					{
+						for (const auto& [state, value] : *styleStateValues)
+						{
+							allStates.insert(state);
+						}
+					}
+					if (styleStateInteractionValues)
+					{
+						for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+						{
+							allStates.insert(stateInteraction.first);
+						}
+					}
+					
+					// 各stateについて、InteractionStateごとの値を構築
+					for (const String& state : allStates)
+					{
+						bool hasOnlyDefault = true;
+						JSON stateJson;
+						
+						// InteractionStateごとの値をチェック
+						if (styleStateInteractionValues)
+						{
+							for (const auto& [stateInteraction, value] : *styleStateInteractionValues)
+							{
+								if (stateInteraction.first == state)
+								{
+									hasOnlyDefault = false;
+									stateJson[EnumToString(stateInteraction.second)] = value;
+								}
+							}
+						}
+						
+						// stateのみの値（defaultとして扱う）
+						if (styleStateValues)
+						{
+							if (auto it = styleStateValues->find(state); it != styleStateValues->end())
+							{
+								if (!hasOnlyDefault)
+								{
+									stateJson[U"Default"] = it->second;
+								}
+								else
+								{
+									// Defaultのみの場合は省略記法として直接保存
+									styleStatesJson[state] = it->second;
+									continue;
+								}
+							}
+						}
+						
+						// Default以外の値がある場合はオブジェクトとして保存
+						if (!hasOnlyDefault)
+						{
+							styleStatesJson[state] = stateJson;
+						}
+					}
+					
+					json[U"styleStates"] = styleStatesJson;
+				}
+				
 				return json;
 			}
 		}
@@ -429,6 +648,60 @@ namespace noco
 						GetFromJSONOpt<T>(json, U"disabled"),
 						GetFromJSONOr(json, U"smoothTime", 0.0),
 					};
+					
+					// styleState関連の値をデシリアライズ
+					if (json.contains(U"styleStates"))
+					{
+						const JSON& styleStatesJson = json[U"styleStates"];
+						if (styleStatesJson.isObject())
+						{
+							for (const auto& [state, valueJson] : styleStatesJson)
+							{
+								if (valueJson.isString())
+								{
+									// 省略記法: 文字列の場合はdefaultの値として扱う
+									if (!propertyValue.styleStateValues)
+									{
+										propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+									}
+									(*propertyValue.styleStateValues)[state] = StringToEnum<T>(valueJson.getString(), defaultValue);
+								}
+								else if (valueJson.isObject())
+								{
+									// 完全記法: InteractionStateごとの値
+									for (const auto& [interactionStr, interactionValueJson] : valueJson)
+									{
+										if (interactionStr == U"Default")
+										{
+											// stateのみの値
+											if (!propertyValue.styleStateValues)
+											{
+												propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+											}
+											if (interactionValueJson.isString())
+											{
+												(*propertyValue.styleStateValues)[state] = StringToEnum<T>(interactionValueJson.getString(), defaultValue);
+											}
+										}
+										else
+										{
+											// state×InteractionStateの値
+											if (!propertyValue.styleStateInteractionValues)
+											{
+												propertyValue.styleStateInteractionValues = std::make_unique<HashTable<std::pair<String, InteractionState>, T>>();
+											}
+											const InteractionState interaction = StringToEnum<InteractionState>(interactionStr, InteractionState::Default);
+											if (interactionValueJson.isString())
+											{
+												(*propertyValue.styleStateInteractionValues)[std::make_pair(state, interaction)] = StringToEnum<T>(interactionValueJson.getString(), defaultValue);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
 					return propertyValue;
 				}
 				return PropertyValue<T>{ defaultValue };
@@ -445,6 +718,54 @@ namespace noco
 						json.contains(U"disabled") ? T::fromJSON(json[U"disabled"], defaultValue) : Optional<T>{ none },
 						json.contains(U"smoothTime") ? json[U"smoothTime"].getOr<double>(0.0) : 0.0,
 					};
+					
+					// styleState関連の値をデシリアライズ
+					if (json.contains(U"styleStates"))
+					{
+						const JSON& styleStatesJson = json[U"styleStates"];
+						if (styleStatesJson.isObject())
+						{
+							for (const auto& [state, valueJson] : styleStatesJson)
+							{
+								if (valueJson.isObject() && valueJson.contains(U"Default"))
+								{
+									// 完全記法: InteractionStateごとの値
+									for (const auto& [interactionStr, interactionValueJson] : valueJson)
+									{
+										if (interactionStr == U"Default")
+										{
+											// stateのみの値
+											if (!propertyValue.styleStateValues)
+											{
+												propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+											}
+											(*propertyValue.styleStateValues)[state] = T::fromJSON(interactionValueJson, defaultValue);
+										}
+										else
+										{
+											// state×InteractionStateの値
+											if (!propertyValue.styleStateInteractionValues)
+											{
+												propertyValue.styleStateInteractionValues = std::make_unique<HashTable<std::pair<String, InteractionState>, T>>();
+											}
+											const InteractionState interaction = StringToEnum<InteractionState>(interactionStr, InteractionState::Default);
+											(*propertyValue.styleStateInteractionValues)[std::make_pair(state, interaction)] = T::fromJSON(interactionValueJson, defaultValue);
+										}
+									}
+								}
+								else
+								{
+									// 省略記法: 値を直接defaultとして扱う
+									if (!propertyValue.styleStateValues)
+									{
+										propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+									}
+									(*propertyValue.styleStateValues)[state] = T::fromJSON(valueJson, defaultValue);
+								}
+							}
+						}
+					}
+					
 					return propertyValue;
 				}
 				return PropertyValue<T>{ T::fromJSON(json, defaultValue) };
@@ -461,6 +782,54 @@ namespace noco
 						GetFromJSONOpt<T>(json, U"disabled"),
 						GetFromJSONOr(json, U"smoothTime", 0.0),
 					};
+					
+					// styleState関連の値をデシリアライズ
+					if (json.contains(U"styleStates"))
+					{
+						const JSON& styleStatesJson = json[U"styleStates"];
+						if (styleStatesJson.isObject())
+						{
+							for (const auto& [state, valueJson] : styleStatesJson)
+							{
+								if (valueJson.isObject())
+								{
+									// 完全記法: InteractionStateごとの値
+									for (const auto& [interactionStr, interactionValueJson] : valueJson)
+									{
+										if (interactionStr == U"Default")
+										{
+											// stateのみの値
+											if (!propertyValue.styleStateValues)
+											{
+												propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+											}
+											(*propertyValue.styleStateValues)[state] = interactionValueJson.get<T>();
+										}
+										else
+										{
+											// state×InteractionStateの値
+											if (!propertyValue.styleStateInteractionValues)
+											{
+												propertyValue.styleStateInteractionValues = std::make_unique<HashTable<std::pair<String, InteractionState>, T>>();
+											}
+											const InteractionState interaction = StringToEnum<InteractionState>(interactionStr, InteractionState::Default);
+											(*propertyValue.styleStateInteractionValues)[std::make_pair(state, interaction)] = interactionValueJson.get<T>();
+										}
+									}
+								}
+								else
+								{
+									// 省略記法: Defaultのみの値として扱う
+									if (!propertyValue.styleStateValues)
+									{
+										propertyValue.styleStateValues = std::make_unique<HashTable<String, T>>();
+									}
+									(*propertyValue.styleStateValues)[state] = valueJson.get<T>();
+								}
+							}
+						}
+					}
+					
 					return propertyValue;
 				}
 				return PropertyValue<T>{ json.getOr<T>(defaultValue) };

@@ -438,6 +438,12 @@ namespace noco
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 			{ U"activeSelf", m_activeSelf.getBool() },
 		};
+		
+		// styleStateをシリアライズ（空でない場合のみ）
+		if (!m_styleState.empty())
+		{
+			result[U"styleState"] = m_styleState;
+		}
 
 		if (includesInternalId)
 		{
@@ -562,6 +568,10 @@ namespace noco
 		if (json.contains(U"activeSelf"))
 		{
 			node->setActive(ActiveYN{ json[U"activeSelf"].getOr<bool>(true) }, RefreshesLayoutYN::No);
+		}
+		if (json.contains(U"styleState"))
+		{
+			node->setStyleState(json[U"styleState"].getOr<String>(U""));
 		}
 		if (includesInternalId && json.contains(U"_internalId"))
 		{
