@@ -51,6 +51,7 @@ namespace noco
 		virtual void setTweenTransitionTime(double) {}
 		virtual Optional<String> tweenValueString(InteractionState, SelectedYN) const { return none; }
 		virtual void setTweenValueString(InteractionState, SelectedYN, const Optional<String>&) {}
+		virtual bool hasTweenOf(InteractionState, SelectedYN) const { return false; }
 		virtual void requestResetTween() {}
 	};
 

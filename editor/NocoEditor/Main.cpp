@@ -3566,7 +3566,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
+	std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr, bool hasTween = false)
 	{
 		// メタデータをチェックしてTextAreaを使うかどうか判断
 		std::shared_ptr<Node> propertyNode;
@@ -3581,7 +3581,7 @@ public:
 			else
 			{
 				// 通常のTextBoxを使用
-				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
+				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), hasTween);
 			}
 			
 			// ツールチップを追加
@@ -3596,7 +3596,7 @@ public:
 		else
 		{
 			// メタデータがない場合は通常のTextBoxを使用
-			propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
+			propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), hasTween);
 		}
 		
 		return propertyNode;
@@ -3604,9 +3604,9 @@ public:
 
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, bool hasTween = false)
 	{
-		const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasTween);
 		
 		// メタデータに基づいてツールチップを追加
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
@@ -3625,9 +3625,9 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, bool hasTween = false)
 	{
-		const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue);
+		const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue, hasTween);
 		
 		// メタデータに基づいてツールチップを追加
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
@@ -3646,9 +3646,9 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, bool hasTween = false)
 	{
-		const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasTween);
 		
 		// メタデータに基づいてツールチップを追加
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
@@ -3678,9 +3678,9 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, bool hasTween = false)
 	{
-		const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasTween);
 		
 		// メタデータに基づいてツールチップを追加
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
@@ -3697,9 +3697,9 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+	std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, bool hasTween = false)
 	{
-		const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+		const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasTween);
 		
 		// メタデータに基づいてツールチップを追加
 		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
@@ -3718,7 +3718,7 @@ public:
 	}
 
 	[[nodiscard]]
-	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
+	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr, bool hasTween = false)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -3765,6 +3765,30 @@ public:
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue), std::move(fnGetValue)));
+		
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			const auto overlayNode = textBoxNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
+			overlayNode->setIsHitTarget(false);
+		}
+		
 		return propertyNode;
 	}
 
@@ -3876,7 +3900,8 @@ public:
 		StringView name,
 		const Vec2& currentValue,
 		std::function<void(const Vec2&)> fnSetValue,
-		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+		bool hasTween = false)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -4006,6 +4031,29 @@ public:
 			fnSetValue,
 			currentValue
 		));
+
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			const auto overlayNode = textBoxParentNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
+			overlayNode->setIsHitTarget(false);
+		}
 
 		return propertyNode;
 	}
@@ -4190,7 +4238,8 @@ public:
 		StringView name,
 		const LRTB& currentValue,
 		std::function<void(const LRTB&)> fnSetValue,
-		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+		bool hasTween = false)
 	{
 		constexpr int32 LineHeight = 32;
 		const auto propertyNode = Node::Create(
@@ -4417,6 +4466,48 @@ public:
 			fnSetValue,
 			currentValue));
 
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			// Line1のオーバーレイ
+			const auto overlayNode1 = line1TextBoxParentNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode1->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode1->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			overlayNode1->setIsHitTarget(false);
+
+			// Line2のオーバーレイ
+			const auto overlayNode2 = line2TextBoxParentNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode2->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode2->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			overlayNode2->setIsHitTarget(false);
+		}
+
 		return propertyNode;
 	}
 
@@ -4425,7 +4516,8 @@ public:
 		StringView name,
 		const ColorF& currentValue,
 		std::function<void(const ColorF&)> fnSetValue,
-		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+		bool hasTween = false)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -4644,6 +4736,29 @@ public:
 			fnSetValue,
 			currentValue));
 
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			const auto overlayNode = textBoxParentNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
+			overlayNode->setIsHitTarget(false);
+		}
+
 		return propertyNode;
 	}
 
@@ -4654,7 +4769,8 @@ public:
 		std::function<void(StringView)> fnSetValue,
 		const std::shared_ptr<ContextMenu>& contextMenu,
 		const Array<String>& enumCandidates,
-		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+		bool hasTween = false)
 	{
 		const auto propertyNode = Node::Create(
 			name,
@@ -4779,6 +4895,29 @@ public:
 			VerticalAlign::Middle,
 			LRTB{ 5, 7, 5, 5 });
 
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			const auto overlayNode = comboBoxNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+			overlayNode->emplaceComponent<Label>(
+				U"Tween設定が優先されます",
+				U"",
+				12,
+				Palette::Yellow,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			// オーバーレイはヒットテストを無効にして、下のコンボボックスをクリックできるようにする
+			overlayNode->setIsHitTarget(false);
+		}
+
 		return propertyNode;
 	}
 
@@ -4869,7 +5008,8 @@ public:
 		StringView name,
 		bool currentValue,
 		std::function<void(bool)> fnSetValue,
-		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+		bool hasTween = false)
 	{
 		auto propertyNode = Node::Create(
 			name,
@@ -4929,6 +5069,20 @@ public:
 				.sizeDeltaPivot = Anchor::MiddleRight,
 			});
 		checkboxParentNode->addChild(checkboxNode);
+
+		// Tweenが設定されている場合、オーバーレイを追加
+		if (hasTween)
+		{
+			const auto overlayNode = checkboxParentNode->emplaceChild(
+				U"TweenOverlay",
+				AnchorConstraint
+				{
+					.anchorMin = Vec2{ 0, 0 },
+					.anchorMax = Vec2{ 1, 1 },
+					.sizeDelta = Vec2{ 0, 0 },
+				});
+			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+		}
 
 		return propertyNode;
 	}
@@ -5946,6 +6100,9 @@ public:
 						}
 					}
 					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createPropertyNodeWithTooltip(
 							component->type(),
@@ -5953,7 +6110,8 @@ public:
 							property->propertyValueStringOfDefault(),
 							onChange,
 							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-							fnGetValue));
+							fnGetValue,
+							hasTween));
 				}
 				break;
 			case PropertyEditType::Bool:
@@ -5974,13 +6132,18 @@ public:
 							};
 						}
 					}
+					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createBoolPropertyNodeWithTooltip(
 							component->type(),
 							property->name(),
 							ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							hasTween));
 				}
 				break;
 			case PropertyEditType::Vec2:
@@ -6002,13 +6165,17 @@ public:
 						}
 					}
 					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createVec2PropertyNodeWithTooltip(
 							component->type(),
 							property->name(),
 							ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
 							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							hasTween));
 				}
 				break;
 			case PropertyEditType::Color:
@@ -6030,13 +6197,17 @@ public:
 						}
 					}
 					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createColorPropertyNodeWithTooltip(
 							component->type(),
 							property->name(),
 							ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
 							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							hasTween));
 				}
 				break;
 			case PropertyEditType::LRTB:
@@ -6058,13 +6229,17 @@ public:
 						}
 					}
 					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createLRTBPropertyNodeWithTooltip(
 							component->type(),
 							property->name(),
 							ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
 							onChange,
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							hasTween));
 				}
 				break;
 			case PropertyEditType::Enum:
@@ -6086,6 +6261,9 @@ public:
 						}
 					}
 					
+					// Default状態でTweenが設定されているかチェック
+					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					
 					propertyNode = componentNode->addChild(
 						createEnumPropertyNodeWithTooltip(
 							component->type(),
@@ -6094,7 +6272,8 @@ public:
 							onChange,
 							m_contextMenu,
 							property->enumCandidates(),
-							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+							HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+							hasTween));
 				}
 				break;
 			}
@@ -6347,6 +6526,33 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 			{
 				throw Error{ U"Property value node is nullptr" };
 			}
+			
+			// Tweenが設定されている場合、オーバーレイを追加
+			if (m_pProperty->hasTweenOf(interactionState, selected))
+			{
+				// TextBoxノードを探す（propertyValueNodeの子要素）
+				if (const auto textBoxNode = propertyValueNode->getChildByNameOrNull(U"TextBox", RecursiveYN::Yes))
+				{
+					const auto overlayNode = textBoxNode->emplaceChild(
+						U"TweenOverlay",
+						AnchorConstraint
+						{
+							.anchorMin = Vec2{ 0, 0 },
+							.anchorMax = Vec2{ 1, 1 },
+							.sizeDelta = Vec2{ 0, 0 },
+						});
+					overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+					overlayNode->emplaceComponent<Label>(
+						U"Tween設定が優先されます",
+						U"",
+						12,
+						Palette::Yellow,
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+					// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
+					overlayNode->setIsHitTarget(false);
+				}
+			}
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
 				m_pProperty->hasPropertyValueOf(interactionState, selected),
 				[this, interactionState, selected, propertyValueNode, currentValueString](bool value)
@@ -6422,7 +6628,7 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 			.margin = LRTB{ 0, 0, 0, 8 },
 		});
 	labelNode->emplaceComponent<Label>(
-		m_pProperty->name() + U" - Tween Settings",
+		m_pProperty->name() + U" - Tween設定",
 		U"",
 		16,
 		Palette::White,
