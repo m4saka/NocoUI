@@ -340,7 +340,18 @@ namespace noco
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
 		
 		InteractiveValue<Optional<TweenValue<T>>> m_tweenValues;
-		/*NonSerialized*/ InteractiveValue<Optional<Stopwatch>> m_tweenStopwatches;
+		double m_tweenTransitionTime = 0.0;
+		/*NonSerialized*/ InteractiveValue<Stopwatch> m_tweenStopwatches;
+		/*NonSerialized*/ InteractiveValue<Smoothing<double>> m_tweenWeights{
+			Smoothing<double>{ 1.0 }, // defaultValue
+			Smoothing<double>{ 0.0 }, // hoveredValue
+			Smoothing<double>{ 0.0 }, // pressedValue
+			Smoothing<double>{ 0.0 }, // disabledValue
+			Smoothing<double>{ 0.0 }, // selectedDefaultValue
+			Smoothing<double>{ 0.0 }, // selectedHoveredValue
+			Smoothing<double>{ 0.0 }, // selectedPressedValue
+			Smoothing<double>{ 0.0 }  // selectedDisabledValue
+		};
 		/*NonSerialized*/ Optional<InteractionState> m_prevTweenSource = none;
 
 	private:
@@ -448,6 +459,107 @@ namespace noco
 			}
 			return none;
 		}
+		
+		void updateTweenWeights(InteractionState interactionState, SelectedYN selected, double deltaTime)
+		{
+			// 現在の状態に対応するTweenのみを1.0、他は0.0に設定
+			double targetDefaultWeight = 0.0;
+			double targetHoveredWeight = 0.0;
+			double targetPressedWeight = 0.0;
+			double targetDisabledWeight = 0.0;
+			
+			// 現在の状態に基づいてweightを設定
+			switch (interactionState)
+			{
+			case InteractionState::Default:
+				if (m_tweenValues.get(InteractionState::Default, selected).has_value())
+					targetDefaultWeight = 1.0;
+				break;
+			case InteractionState::Hovered:
+				if (m_tweenValues.get(InteractionState::Hovered, selected).has_value())
+					targetHoveredWeight = 1.0;
+				break;
+			case InteractionState::Pressed:
+				if (m_tweenValues.get(InteractionState::Pressed, selected).has_value())
+					targetPressedWeight = 1.0;
+				break;
+			case InteractionState::Disabled:
+				if (m_tweenValues.get(InteractionState::Disabled, selected).has_value())
+					targetDisabledWeight = 1.0;
+				break;
+			}
+			
+			// weightを滑らかに更新
+			m_tweenWeights.get(InteractionState::Default, selected).update(targetDefaultWeight, m_tweenTransitionTime, deltaTime);
+			m_tweenWeights.get(InteractionState::Hovered, selected).update(targetHoveredWeight, m_tweenTransitionTime, deltaTime);
+			m_tweenWeights.get(InteractionState::Pressed, selected).update(targetPressedWeight, m_tweenTransitionTime, deltaTime);
+			m_tweenWeights.get(InteractionState::Disabled, selected).update(targetDisabledWeight, m_tweenTransitionTime, deltaTime);
+		}
+		
+		[[nodiscard]]
+		T calculateBlendedTweenValue() const
+		{
+			T result{};
+			double totalWeight = 0.0;
+			
+			// 各状態のTweenを重み付きで加算
+			auto addWeightedValue =
+				[&](InteractionState state, SelectedYN selected)
+				{
+					if (m_tweenValues.get(state, selected).has_value())
+					{
+						double weight = m_tweenWeights.get(state, selected).currentValue();
+						if (weight > 0.0)
+						{
+							const double tweenTime = m_tweenStopwatches.get(state, selected).sF();
+							T tweenValue = m_tweenValues.get(state, selected)->calculateValue(tweenTime);
+							
+							if constexpr (std::is_arithmetic_v<T>)
+							{
+								result += static_cast<T>(tweenValue * weight);
+							}
+							else
+							{
+								// ベクトルや色などの場合は要素ごとに重み付き加算
+								result = result + tweenValue * weight;
+							}
+							totalWeight += weight;
+						}
+					}
+				};
+
+			addWeightedValue(InteractionState::Default, SelectedYN::No);
+			addWeightedValue(InteractionState::Hovered, SelectedYN::No);
+			addWeightedValue(InteractionState::Pressed, SelectedYN::No);
+			addWeightedValue(InteractionState::Disabled, SelectedYN::No);
+			addWeightedValue(InteractionState::Default, SelectedYN::Yes);
+			addWeightedValue(InteractionState::Hovered, SelectedYN::Yes);
+			addWeightedValue(InteractionState::Pressed, SelectedYN::Yes);
+			addWeightedValue(InteractionState::Disabled, SelectedYN::Yes);
+
+			// 正規化はしない（重みの合計は1とは限らない）
+			return result;
+		}
+		
+		[[nodiscard]]
+		bool hasTweenWithNonZeroWeight() const
+		{
+			auto hasNonZeroWeight =
+				[&](InteractionState state, SelectedYN selected)
+				{
+					return m_tweenValues.get(state, selected).has_value() && 
+						   m_tweenWeights.get(state, selected).currentValue() > 0.001;
+				};
+			
+			return hasNonZeroWeight(InteractionState::Default, SelectedYN::No) ||
+				hasNonZeroWeight(InteractionState::Hovered, SelectedYN::No) ||
+				hasNonZeroWeight(InteractionState::Pressed, SelectedYN::No) ||
+				hasNonZeroWeight(InteractionState::Disabled, SelectedYN::No) ||
+				hasNonZeroWeight(InteractionState::Default, SelectedYN::Yes) ||
+				hasNonZeroWeight(InteractionState::Hovered, SelectedYN::Yes) ||
+				hasNonZeroWeight(InteractionState::Pressed, SelectedYN::Yes) ||
+				hasNonZeroWeight(InteractionState::Disabled, SelectedYN::Yes);
+		}
 
 	public:
 		SmoothProperty(const char32_t* name, const PropertyValue<T>& propertyValue)
@@ -496,52 +608,54 @@ namespace noco
 
 		void update(InteractionState interactionState, SelectedYN selected, double deltaTime) override
 		{
-			T targetValue = m_propertyValue.value(interactionState, selected);
+			// 現在のTweenソースを取得
+			const Optional<InteractionState> currentTweenSource = tweenSourceOf(interactionState, selected);
 			
-			// 現在の状態のTweenを取得（フォールバック含む）
-			Optional<TweenValue<T>> tween = getTweenWithFallback(interactionState, selected);
-			
-			if (tween)
+			// 初回update時は、全ての状態のStopwatchを開始
+			if (m_prevTweenSource == none)
 			{
-				// 初回update時は、DefaultのTweenのvalue1を初期値に設定
-				if (m_prevTweenSource == none)
+				m_tweenStopwatches.defaultValue.start();
+				m_tweenStopwatches.hoveredValue.start();
+				m_tweenStopwatches.pressedValue.start();
+				m_tweenStopwatches.disabledValue.start();
+				m_tweenStopwatches.selectedDefaultValue.start();
+				m_tweenStopwatches.selectedHoveredValue.start();
+				m_tweenStopwatches.selectedPressedValue.start();
+				m_tweenStopwatches.selectedDisabledValue.start();
+			}
+			else if (m_prevTweenSource != currentTweenSource)
+			{
+				// tweenSourceが変わった場合、新しいソースのretrigger設定をチェック
+				if (currentTweenSource && m_tweenValues.get(*currentTweenSource, selected).has_value())
 				{
-					Optional<TweenValue<T>> defaultTween = getTweenWithFallback(InteractionState::Default, selected);
-					if (defaultTween)
+					const auto& tween = m_tweenValues.get(*currentTweenSource, selected);
+					if (tween->retrigger)
 					{
-						m_smoothing.setCurrentValue(defaultTween->value1);
+						m_tweenStopwatches.get(*currentTweenSource, selected).restart();
 					}
-				}
-				
-				// Tweenソースの変更をチェック
-				Optional<InteractionState> currentTweenSource = tweenSourceOf(interactionState, selected);
-				if (m_prevTweenSource != currentTweenSource)
-				{
-					// 遷移先のTweenのretrigger設定に従ってStopwatchをリセットするかどうか決める
-					if (tween->retrigger && currentTweenSource)
-					{
-						m_tweenStopwatches.get(*currentTweenSource, selected) = none;
-					}
-					// retriggerが無効の場合はStopwatchをリセットしない
-					// （既存のStopwatchが保持され、アニメーションが継続）
-					m_prevTweenSource = currentTweenSource;
-				}
-				
-				// Stopwatchを開始（フォールバック元のStateから）
-				if (currentTweenSource)
-				{
-					auto& stopwatch = m_tweenStopwatches.get(*currentTweenSource, selected);
-					if (!stopwatch)
-					{
-						stopwatch = Stopwatch{ StartImmediately::Yes };
-					}
-					
-					const double tweenTime = stopwatch->sF();
-					targetValue = tween->calculateValue(tweenTime);
 				}
 			}
 			
-			m_smoothing.update(targetValue, m_propertyValue.smoothTime, deltaTime);
+			m_prevTweenSource = currentTweenSource;
+			
+			// 各状態のweightを更新
+			updateTweenWeights(interactionState, selected, deltaTime);
+			
+			// 各状態のTweenを計算してブレンド
+			T blendedValue = calculateBlendedTweenValue();
+			
+			// ブレンドされたTween値があるかどうかチェック
+			if (hasTweenWithNonZeroWeight())
+			{
+				// Tweenの値を直接smoothingに設定
+				m_smoothing.setCurrentValue(blendedValue);
+			}
+			else
+			{
+				// Tweenがない場合は通常のsmoothing処理
+				T targetValue = m_propertyValue.value(interactionState, selected);
+				m_smoothing.update(targetValue, m_propertyValue.smoothTime, deltaTime);
+			}
 		}
 
 		void appendJSON(JSON& json) const override
@@ -564,6 +678,20 @@ namespace noco
 				propertyJson[U"tweens"] = tweenJson;
 			}
 			
+			// tweenTransitionTimeがデフォルト値でない場合はJSONに含める
+			if (m_tweenTransitionTime != 0.0)
+			{
+				// propertyJsonが単純な値の場合、オブジェクトに変換
+				if (!propertyJson.isObject())
+				{
+					JSON newJson;
+					newJson[U"default"] = propertyJson;
+					propertyJson = newJson;
+				}
+				
+				propertyJson[U"tweenTransitionTime"] = m_tweenTransitionTime;
+			}
+			
 			json[m_name] = propertyJson;
 		}
 
@@ -576,6 +704,12 @@ namespace noco
 			const JSON& propertyJson = json[m_name];
 			m_propertyValue = PropertyValue<T>::fromJSON(propertyJson);
 			m_smoothing = Smoothing<T>{ m_propertyValue.value(InteractionState::Default, SelectedYN::No) };
+			
+			// tweenTransitionTimeの読み込み
+			if (propertyJson.contains(U"tweenTransitionTime"))
+			{
+				m_tweenTransitionTime = propertyJson[U"tweenTransitionTime"].get<double>();
+			}
 			
 			// Tween設定の読み込み
 			if (propertyJson.contains(U"tweens"))
@@ -679,6 +813,17 @@ namespace noco
 		{
 			m_propertyValue.smoothTime = smoothTime;
 			return true;
+		}
+		
+		[[nodiscard]]
+		double tweenTransitionTime() const
+		{
+			return m_tweenTransitionTime;
+		}
+		
+		void setTweenTransitionTime(double tweenTransitionTime)
+		{
+			m_tweenTransitionTime = tweenTransitionTime;
 		}
 	};
 

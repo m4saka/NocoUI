@@ -123,5 +123,29 @@ namespace noco
 
 		[[nodiscard]]
 		bool operator==(const LRTB& other) const = default;
+		
+		[[nodiscard]]
+		LRTB operator+(const LRTB& other) const
+		{
+			return LRTB
+			{
+				.left = left + other.left,
+				.right = right + other.right,
+				.top = top + other.top,
+				.bottom = bottom + other.bottom,
+			};
+		}
+		
+		[[nodiscard]]
+		LRTB operator*(double weight) const
+		{
+			return LRTB
+			{
+				.left = left * weight,
+				.right = right * weight,
+				.top = top * weight,
+				.bottom = bottom * weight,
+			};
+		}
 	};
 }
