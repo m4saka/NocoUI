@@ -156,7 +156,7 @@
     <ClCompile Include="Tooltip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.cpp">
+    <ClCompile Include="ResizableHandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -605,7 +605,7 @@
     <ClInclude Include="Tooltip.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\source\repos\NocoEditor\editor\NocoEditor\ResizableHandle.hpp">
+    <ClInclude Include="ResizableHandle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
