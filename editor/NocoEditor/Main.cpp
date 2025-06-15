@@ -3030,7 +3030,7 @@ private:
 		double duration = 1.0;
 		double delay = 0.0;
 		bool loop = false;
-		bool retrigger = false;
+		bool restartsOnEnter = false;
 	};
 	
 	InteractiveValue<TweenState> m_tweenStates;
@@ -3109,7 +3109,7 @@ public:
 						tweenJson[U"duration"] = state.duration;
 						tweenJson[U"delay"] = state.delay;
 						tweenJson[U"loop"] = state.loop;
-						tweenJson[U"retrigger"] = state.retrigger;
+						tweenJson[U"restartsOnEnter"] = state.restartsOnEnter;
 						
 						m_pProperty->setTweenValueString(interactionState, selected, tweenJson.format());
 					}
@@ -6516,7 +6516,7 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				tweenState.duration = json[U"duration"].getOr<double>(1.0);
 				tweenState.delay = json[U"delay"].getOr<double>(0.0);
 				tweenState.loop = json[U"loop"].getOr<bool>(false);
-				tweenState.retrigger = json[U"retrigger"].getOr<bool>(false);
+				tweenState.restartsOnEnter = json[U"restartsOnEnter"].getOr<bool>(false);
 			}
 			else
 			{
@@ -6694,9 +6694,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				RefreshesLayoutYN::No);
 			loopNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 
-			// Retrigger設定
+			// RestartsOnEnter設定
 			const auto retriggerNode = tweenPanelNode->emplaceChild(
-				U"Retrigger",
+				U"RestartsOnEnter",
 				BoxConstraint
 				{
 					.sizeRatio = Vec2{ 1, 0 },
@@ -6705,11 +6705,11 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				});
 			retriggerNode->addChild(
 				Inspector::CreateBoolPropertyNode(
-					U"retrigger",
-					tweenState.retrigger,
+					U"restartsOnEnter",
+					tweenState.restartsOnEnter,
 					[this, interactionState, selected](bool value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).retrigger = value;
+						m_tweenStates.get(interactionState, selected).restartsOnEnter = value;
 					}),
 				RefreshesLayoutYN::No);
 			retriggerNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);

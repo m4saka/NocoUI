@@ -642,11 +642,11 @@ namespace noco
 			
 			if (m_prevTweenSource != currentTweenSource)
 			{
-				// tweenSourceが変わった場合、新しいソースのretrigger設定をチェック
+				// tweenSourceが変わった場合、新しいソースのrestartsOnEnter設定をチェック
 				if (currentTweenSource && m_tweenValues.get(*currentTweenSource, selected).has_value())
 				{
 					const auto& tween = m_tweenValues.get(*currentTweenSource, selected);
-					if (tween->retrigger)
+					if (tween->restartsOnEnter)
 					{
 						m_tweenStopwatches.get(*currentTweenSource, selected).restart();
 					}
