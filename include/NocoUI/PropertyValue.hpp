@@ -202,8 +202,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const T& value(InteractionState interactionState, SelectedYN selected) const
+		const T& value(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
+			bool selected = activeStyleStates.contains(U"selected");
 			if (selected)
 			{
 				switch (interactionState)
@@ -647,7 +648,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		Optional<String> getValueStringOf(InteractionState interactionState, SelectedYN selected) const
+		Optional<String> getValueStringOf(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
 			const auto fnGetStr = [](const T& value)
 				{
@@ -661,6 +662,7 @@ namespace noco
 					}
 				};
 
+			bool selected = activeStyleStates.contains(U"selected");
 			if (selected)
 			{
 				switch (interactionState)
@@ -721,9 +723,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		String getValueStringOfFallback(InteractionState interactionState, SelectedYN selected) const
+		String getValueStringOfFallback(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
-			const T v = value(interactionState, selected);
+			const T v = value(interactionState, activeStyleStates);
 			if constexpr (std::is_enum_v<T>)
 			{
 				return EnumToString(v);
@@ -753,8 +755,9 @@ namespace noco
 			return true;
 		}
 
-		bool trySetValueStringOf(StringView value, InteractionState interactionState, SelectedYN selected)
+		bool trySetValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates)
 		{
+			bool selected = activeStyleStates.contains(U"selected");
 			if (selected)
 			{
 				switch (interactionState)
@@ -826,8 +829,9 @@ namespace noco
 			return false;
 		}
 
-		bool tryUnsetValueOf(InteractionState interactionState, SelectedYN selected)
+		bool tryUnsetValueOf(InteractionState interactionState, const Array<String>& activeStyleStates)
 		{
+			bool selected = activeStyleStates.contains(U"selected");
 			if (selected)
 			{
 				switch (interactionState)
@@ -867,8 +871,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool hasValueOf(InteractionState interactionState, SelectedYN selected) const
+		bool hasValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
+			bool selected = activeStyleStates.contains(U"selected");
 			if (selected)
 			{
 				switch (interactionState)

@@ -6,7 +6,6 @@ namespace noco
 	using IgnoreIsChangedYN = YesNo<struct IgnoreIsChangedYN_tag>;
 	using InteractableYN = YesNo<struct InteractableYN_tag>;
 	using ActiveYN = YesNo<struct ActiveYN_tag>;
-	using SelectedYN = YesNo<struct SelectedYN_tag>;
 	using EditorHoveredYN = YesNo<struct EditorHoveredYN_tag>;
 	using EditorSelectedYN = YesNo<struct EditorSelectedYN_tag>;
 	using RecursiveYN = YesNo<struct RecursiveYN_tag>;

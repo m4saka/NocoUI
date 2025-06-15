@@ -1404,7 +1404,15 @@ namespace noco
 		{
 			// 非表示→表示に変わった時はTweenをリセット
 			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
-			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime, shouldResetTween);
+			
+			// activeStyleStatesを作成
+			Array<String> activeStyleStates;
+			if (!m_styleState.empty())
+			{
+				activeStyleStates.push_back(m_styleState);
+			}
+			
+			m_transformEffect.update(m_currentInteractionState, activeStyleStates, deltaTime, shouldResetTween);
 			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale, parentHitTestMat);
 		}
 
@@ -1510,7 +1518,14 @@ namespace noco
 			// 非表示→表示に変わった時はTweenをリセット
 			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
 
-			component->updateProperties(m_currentInteractionState, m_selected, deltaTime, shouldResetTween);
+			// activeStyleStatesを作成
+			Array<String> activeStyleStates;
+			if (!m_styleState.empty())
+			{
+				activeStyleStates.push_back(m_styleState);
+			}
+
+			component->updateProperties(m_currentInteractionState, activeStyleStates, deltaTime, shouldResetTween);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -2115,21 +2130,6 @@ namespace noco
 		return m_currentInteractionState;
 	}
 
-	SelectedYN Node::selected() const
-	{
-		return m_selected;
-	}
-
-	std::shared_ptr<Node> Node::setSelected(SelectedYN selected)
-	{
-		m_selected = selected;
-		return shared_from_this();
-	}
-
-	std::shared_ptr<Node> Node::setSelected(bool selected)
-	{
-		return setSelected(SelectedYN{ selected });
-	}
 
 	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{

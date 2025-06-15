@@ -318,7 +318,7 @@ namespace noco
 			{
 				// 領域内で左クリックし始めた場合
 				m_cursorBlinkTime = 0.0;
-				node->setSelected(SelectedYN::Yes);
+				node->setStyleState(U"selected");
 				if (!m_isEditing)
 				{
 					// 初回クリック時の処理
@@ -738,7 +738,7 @@ namespace noco
 	{
 		m_isEditing = false;
 		m_isDragging = false;
-		node->setSelected(SelectedYN::No);
+		node->setStyleState(U"");
 		m_selectionAnchor = m_cursorIndex;
 		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 		{

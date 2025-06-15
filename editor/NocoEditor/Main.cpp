@@ -656,14 +656,17 @@ template <typename T>
 [[nodiscard]]
 static bool HasAnyStateEqualTo(const PropertyValue<T>& propertyValue, const T& targetValue)
 {
-	return propertyValue.value(InteractionState::Default, SelectedYN::No) == targetValue ||
-	       propertyValue.value(InteractionState::Default, SelectedYN::Yes) == targetValue ||
-	       propertyValue.value(InteractionState::Hovered, SelectedYN::No) == targetValue ||
-	       propertyValue.value(InteractionState::Hovered, SelectedYN::Yes) == targetValue ||
-	       propertyValue.value(InteractionState::Pressed, SelectedYN::No) == targetValue ||
-	       propertyValue.value(InteractionState::Pressed, SelectedYN::Yes) == targetValue ||
-	       propertyValue.value(InteractionState::Disabled, SelectedYN::No) == targetValue ||
-	       propertyValue.value(InteractionState::Disabled, SelectedYN::Yes) == targetValue;
+	Array<String> normalStates{};
+	Array<String> selectedStates{ U"selected" };
+	
+	return propertyValue.value(InteractionState::Default, normalStates) == targetValue ||
+	       propertyValue.value(InteractionState::Default, selectedStates) == targetValue ||
+	       propertyValue.value(InteractionState::Hovered, normalStates) == targetValue ||
+	       propertyValue.value(InteractionState::Hovered, selectedStates) == targetValue ||
+	       propertyValue.value(InteractionState::Pressed, normalStates) == targetValue ||
+	       propertyValue.value(InteractionState::Pressed, selectedStates) == targetValue ||
+	       propertyValue.value(InteractionState::Disabled, normalStates) == targetValue ||
+	       propertyValue.value(InteractionState::Disabled, selectedStates) == targetValue;
 }
 
 // PropertyValueのいずれかの状態でtrueかをチェックする便利関数
@@ -2504,27 +2507,33 @@ public:
 			if (element.node()->isHitTarget())
 			{
 				const InteractionState interactionState = element.node()->currentInteractionState();
-				switch (interactionState)
+				// 状態表示を動的に生成
+				String stateText;
+				const String& styleState = element.node()->styleState();
+				const String interactionStateStr = EnumToString(interactionState);
+				
+				if (!styleState.empty())
 				{
-				case InteractionState::Default:
-					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected]" : U"[Default]");
-					break;
-				case InteractionState::Hovered:
-					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Hovered]" : U"[Hovered]");
-					break;
-				case InteractionState::Pressed:
-					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Pressed]" : U"[Pressed]");
-					break;
-				case InteractionState::Disabled:
-					element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected, Disabled]" : U"[Disabled]");
-					break;
-				default:
-					throw Error{ U"Invalid InteractionState: {}"_fmt(static_cast<std::underlying_type_t<InteractionState>>(interactionState)) };
+					if (interactionState == InteractionState::Default)
+					{
+						stateText = U"[{}]"_fmt(styleState);
+					}
+					else
+					{
+						stateText = U"[{}, {}]"_fmt(styleState, interactionStateStr);
+					}
 				}
+				else
+				{
+					stateText = U"[{}]"_fmt(interactionStateStr);
+				}
+				
+				element.elementDetail().hierarchyStateLabel->setText(stateText);
 			}
 			else
 			{
-				element.elementDetail().hierarchyStateLabel->setText(element.node()->selected() ? U"[Selected]" : U"");
+				const String& styleState = element.node()->styleState();
+				element.elementDetail().hierarchyStateLabel->setText(!styleState.empty() ? U"[{}]"_fmt(styleState) : U"");
 			}
 
 			if (element.hierarchyNode()->isClicked())
@@ -3050,14 +3059,16 @@ public:
 		}
 		
 		// 全ての状態にデフォルト値を設定
-		for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+		Array<String> normalStates{};
+		Array<String> selectedStates{ U"selected" };
+		for (const auto& activeStyleStates : { normalStates, selectedStates })
 		{
 			for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 			{
-				auto& tweenState = m_tweenStates.get(interactionState, selected);
+				auto& tweenState = m_tweenStates.get(interactionState, activeStyleStates);
 				
 				// プロパティの現在の値をデフォルト値として使用
-				String propertyValue = m_pProperty->propertyValueStringOfFallback(interactionState, selected);
+				String propertyValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
 				tweenState.value1 = propertyValue;
 				tweenState.value2 = propertyValue;
 			}
@@ -3093,11 +3104,13 @@ public:
 		if (resultButtonText == U"OK")
 		{
 			// 各状態のTween設定を保存
-			for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+			Array<String> normalStates{};
+			Array<String> selectedStates{ U"selected" };
+			for (const auto& activeStyleStates : { normalStates, selectedStates })
 			{
 				for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 				{
-					const auto& state = m_tweenStates.get(interactionState, selected);
+					const auto& state = m_tweenStates.get(interactionState, activeStyleStates);
 					
 					if (state.enabled)
 					{
@@ -3111,12 +3124,12 @@ public:
 						tweenJson[U"loop"] = state.loop;
 						tweenJson[U"restartsOnEnter"] = state.restartsOnEnter;
 						
-						m_pProperty->setTweenValueString(interactionState, selected, tweenJson.format());
+						m_pProperty->setTweenValueString(interactionState, activeStyleStates, tweenJson.format());
 					}
 					else
 					{
 						// Tweenを無効化
-						m_pProperty->setTweenValueString(interactionState, selected, none);
+						m_pProperty->setTweenValueString(interactionState, activeStyleStates, none);
 					}
 				}
 			}
@@ -6435,11 +6448,14 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 		HorizontalAlign::Center,
 		VerticalAlign::Middle);
 
-	for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+	Array<String> normalStates{};
+	Array<String> selectedStates{ U"selected" };
+	for (const auto& activeStyleStates : { normalStates, selectedStates })
 	{
 		for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 		{
-			const String headingText = EnumToString(interactionState) + (selected.yesNo ? U" & Selected" : U"");
+			const bool isSelected = !activeStyleStates.empty();
+			const String headingText = EnumToString(interactionState) + (isSelected ? U" & Selected" : U"");
 
 			const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",
@@ -6457,7 +6473,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					.sizeDelta = SizeF{ 8, 0 },
 				});
 			propertyNode->setBoxChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
-			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, selected));
+			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates));
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
 			{
@@ -6465,10 +6481,10 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreatePropertyNode(
 						headingText,
-						m_pProperty->propertyValueStringOfFallback(interactionState, selected),
-						[this, interactionState, selected, currentValueString](StringView value)
+						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, activeStyleStates))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -6483,11 +6499,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateBoolPropertyNode(
 						headingText,
-						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), false),
-						[this, interactionState, selected, currentValueString](bool value)
+						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), false),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](bool value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6502,11 +6518,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateVec2PropertyNode(
 						headingText,
-						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), Vec2{ 0, 0 }),
-						[this, interactionState, selected, currentValueString](const Vec2& value)
+						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), Vec2{ 0, 0 }),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const Vec2& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6521,11 +6537,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateColorPropertyNode(
 						headingText,
-						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), ColorF{ 0, 0, 0, 1 }),
-						[this, interactionState, selected, currentValueString](const ColorF& value)
+						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{ 0, 0, 0, 1 }),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const ColorF& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6540,11 +6556,11 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateLRTBPropertyNode(
 						headingText,
-						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactionState, selected), LRTB{ 0, 0, 0, 0 }),
-						[this, interactionState, selected, currentValueString](const LRTB& value)
+						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), LRTB{ 0, 0, 0, 0 }),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const LRTB& value)
 						{
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6559,10 +6575,10 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateEnumPropertyNode(
 						headingText,
-						m_pProperty->propertyValueStringOfFallback(interactionState, selected),
-						[this, interactionState, selected, currentValueString](StringView value)
+						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
+						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, selected))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, activeStyleStates))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -6582,7 +6598,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 			}
 			
 			// Tweenが設定されている場合、オーバーレイを追加
-			if (m_pProperty->hasTweenOf(interactionState, selected))
+			if (m_pProperty->hasTweenOf(interactionState, activeStyleStates))
 			{
 				// TextBoxノードを探す（propertyValueNodeの子要素）
 				if (const auto textBoxNode = propertyValueNode->getChildByNameOrNull(U"TextBox", RecursiveYN::Yes))
@@ -6608,12 +6624,12 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				}
 			}
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
-				m_pProperty->hasPropertyValueOf(interactionState, selected),
-				[this, interactionState, selected, propertyValueNode, currentValueString](bool value)
+				m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates),
+				[this, interactionState, activeStyleStates = activeStyleStates, propertyValueNode, currentValueString](bool value)
 				{
 					if (value)
 					{
-						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, selected))
+						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, activeStyleStates))
 						{
 							propertyValueNode->setInteractable(true);
 							if (m_onChange)
@@ -6624,7 +6640,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					}
 					else
 					{
-						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, selected))
+						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, activeStyleStates))
 						{
 							propertyValueNode->setInteractable(false);
 							if (m_onChange)
@@ -6636,8 +6652,8 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				}),
 				0,
 				RefreshesLayoutYN::No);
-			checkboxNode->setInteractable(interactionState != InteractionState::Default || selected.yesNo); // Defaultは必ず存在するのでチェックボックスは無効
-			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, selected));
+			checkboxNode->setInteractable(interactionState != InteractionState::Default || isSelected); // Defaultは必ず存在するのでチェックボックスは無効
+			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
 			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		}
 	}
@@ -6710,11 +6726,14 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 	transitionTimeNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 
 	// 各状態のTween設定
-	for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+	Array<String> normalStates{};
+	Array<String> selectedStates{ U"selected" };
+	for (const auto& activeStyleStates : { normalStates, selectedStates })
 	{
 		for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 		{
-			const String headingText = EnumToString(interactionState) + (selected.yesNo ? U" & Selected" : U"");
+			const bool isSelected = !activeStyleStates.empty();
+			const String headingText = EnumToString(interactionState) + (isSelected ? U" & Selected" : U"");
 
 			// 状態のセクション
 			const auto sectionNode = contentRootNode->emplaceChild(
@@ -6761,8 +6780,8 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 			propertyNode->setBoxChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
 
 			// 現在のTween設定を取得して、m_tweenStatesに反映
-			auto& tweenState = m_tweenStates.get(interactionState, selected);
-			const auto existingTweenJson = m_pProperty->tweenValueString(interactionState, selected);
+			auto& tweenState = m_tweenStates.get(interactionState, activeStyleStates);
+			const auto existingTweenJson = m_pProperty->tweenValueString(interactionState, activeStyleStates);
 			
 			if (existingTweenJson.has_value())
 			{
@@ -6864,12 +6883,12 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				valueNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 			};
 			
-			addValueNode(U"value1", tweenState.value1, [this, interactionState, selected](StringView value) {
-				m_tweenStates.get(interactionState, selected).value1 = String(value);
+			addValueNode(U"value1", tweenState.value1, [this, interactionState, activeStyleStates = activeStyleStates](StringView value) {
+				m_tweenStates.get(interactionState, activeStyleStates).value1 = String(value);
 			});
 			
-			addValueNode(U"value2", tweenState.value2, [this, interactionState, selected](StringView value) {
-				m_tweenStates.get(interactionState, selected).value2 = String(value);
+			addValueNode(U"value2", tweenState.value2, [this, interactionState, activeStyleStates = activeStyleStates](StringView value) {
+				m_tweenStates.get(interactionState, activeStyleStates).value2 = String(value);
 			});
 
 			// Type設定
@@ -6885,9 +6904,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				Inspector::CreateEnumPropertyNode(
 					U"type",
 					EnumToString(tweenState.type),
-					[this, interactionState, selected](StringView value) 
+					[this, interactionState, activeStyleStates = activeStyleStates](StringView value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).type = StringToEnum<TweenType>(value, TweenType::Linear);
+						m_tweenStates.get(interactionState, activeStyleStates).type = StringToEnum<TweenType>(value, TweenType::Linear);
 					},
 					dialogContextMenu,
 					EnumNames<TweenType>()),
@@ -6907,9 +6926,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				Inspector::CreatePropertyNode(
 					U"duration [sec]",
 					Format(tweenState.duration),
-					[this, interactionState, selected](StringView value) 
+					[this, interactionState, activeStyleStates = activeStyleStates](StringView value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).duration = ParseOr<double>(value, 1.0);
+						m_tweenStates.get(interactionState, activeStyleStates).duration = ParseOr<double>(value, 1.0);
 					}),
 				RefreshesLayoutYN::No);
 			durationNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -6927,9 +6946,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				Inspector::CreatePropertyNode(
 					U"delay [sec]",
 					Format(tweenState.delay),
-					[this, interactionState, selected](StringView value) 
+					[this, interactionState, activeStyleStates = activeStyleStates](StringView value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).delay = ParseOr<double>(value, 0.0);
+						m_tweenStates.get(interactionState, activeStyleStates).delay = ParseOr<double>(value, 0.0);
 					}),
 				RefreshesLayoutYN::No);
 			delayNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -6947,9 +6966,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				Inspector::CreateBoolPropertyNode(
 					U"loop",
 					tweenState.loop,
-					[this, interactionState, selected](bool value) 
+					[this, interactionState, activeStyleStates = activeStyleStates](bool value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).loop = value;
+						m_tweenStates.get(interactionState, activeStyleStates).loop = value;
 					}),
 				RefreshesLayoutYN::No);
 			loopNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -6967,9 +6986,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 				Inspector::CreateBoolPropertyNode(
 					U"restartsOnEnter",
 					tweenState.restartsOnEnter,
-					[this, interactionState, selected](bool value) 
+					[this, interactionState, activeStyleStates = activeStyleStates](bool value) 
 					{ 
-						m_tweenStates.get(interactionState, selected).restartsOnEnter = value;
+						m_tweenStates.get(interactionState, activeStyleStates).restartsOnEnter = value;
 					}),
 				RefreshesLayoutYN::No);
 			retriggerNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
@@ -6979,9 +6998,9 @@ void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNo
 			// チェックボックス（Tween有効/無効切り替え）
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
 				tweenState.enabled,
-				[this, interactionState, selected, tweenPanelNode](bool value)
+				[this, interactionState, activeStyleStates = activeStyleStates, tweenPanelNode](bool value)
 				{
-					m_tweenStates.get(interactionState, selected).enabled = value;
+					m_tweenStates.get(interactionState, activeStyleStates).enabled = value;
 					tweenPanelNode->setInteractable(value);
 				}),
 				0,
