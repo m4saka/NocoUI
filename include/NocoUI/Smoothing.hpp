@@ -53,5 +53,10 @@ namespace noco
 		{
 			return m_currentValue;
 		}
+
+		void setCurrentValue(const T& value)
+		{
+			m_currentValue = value;
+		}
 	};
 }

@@ -3,9 +3,147 @@
 #include "YN.hpp"
 #include "InteractionState.hpp"
 #include "Serialization.hpp"
+#include "LRTB.hpp"
 
 namespace noco
 {
+	enum class TweenType
+	{
+		Linear,
+		Sine0_1,
+		Triangle,
+		Square,
+		SawTooth,
+		EaseIn,
+		EaseOut,
+		EaseInOut
+	};
+
+
+	template <class T>
+	struct TweenValue
+	{
+		T value1{};
+		T value2{};
+		TweenType type = TweenType::Sine0_1;
+		double duration = 1.0;
+		double delay = 0.0;  // Tween開始までの遅延
+		bool loop = false;   // ループするかどうか
+		bool retrigger = true;  // 状態変更時に再開始するかどうか
+
+		[[nodiscard]]
+		T calculateValue(double time) const
+		{
+
+			// 遅延時間中はvalue1を返す
+			if (time < delay)
+			{
+				return value1;
+			}
+
+			// 遅延時間を考慮した経過時間
+			const double elapsedTime = time - delay;
+			
+			double normalizedTime;
+			if (loop)
+			{
+				// ループモード: durationで剰余を取る
+				normalizedTime = Math::Fmod(elapsedTime, duration) / duration;
+			}
+			else
+			{
+				// 非ループモード: 0.0〜1.0でクランプ
+				normalizedTime = Math::Clamp(elapsedTime / duration, 0.0, 1.0);
+			}
+
+			double progress = 0.0;
+
+			switch (type)
+			{
+			case TweenType::Linear:
+				progress = normalizedTime;
+				break;
+			case TweenType::Sine0_1:
+				progress = (Math::Sin(normalizedTime * Math::TwoPi - Math::HalfPi) + 1.0) * 0.5;
+				break;
+			case TweenType::Triangle:
+				progress = normalizedTime < 0.5 ? normalizedTime * 2.0 : (1.0 - normalizedTime) * 2.0;
+				break;
+			case TweenType::Square:
+				progress = normalizedTime < 0.5 ? 0.0 : 1.0;
+				break;
+			case TweenType::SawTooth:
+				progress = normalizedTime;
+				break;
+			case TweenType::EaseIn:
+				progress = normalizedTime * normalizedTime;
+				break;
+			case TweenType::EaseOut:
+				progress = 1.0 - (1.0 - normalizedTime) * (1.0 - normalizedTime);
+				break;
+			case TweenType::EaseInOut:
+				progress = normalizedTime < 0.5 
+					? 2.0 * normalizedTime * normalizedTime 
+					: 1.0 - Math::Pow(-2.0 * normalizedTime + 2.0, 2) / 2.0;
+				break;
+			}
+
+			if constexpr (std::is_arithmetic_v<T>)
+			{
+				return static_cast<T>(value1 + (value2 - value1) * progress);
+			}
+			else if constexpr (std::same_as<T, Vec2>)
+			{
+				return value1.lerp(value2, progress);
+			}
+			else if constexpr (std::same_as<T, ColorF>)
+			{
+				return value1.lerp(value2, progress);
+			}
+			else if constexpr (std::same_as<T, LRTB>)
+			{
+				return LRTB{
+					value1.left + (value2.left - value1.left) * progress,
+					value1.right + (value2.right - value1.right) * progress,
+					value1.top + (value2.top - value1.top) * progress,
+					value1.bottom + (value2.bottom - value1.bottom) * progress
+				};
+			}
+			else
+			{
+				return progress < 0.5 ? value1 : value2;
+			}
+		}
+
+		[[nodiscard]]
+		JSON toJSON() const
+		{
+			JSON json;
+			json[U"value1"] = value1;
+			json[U"value2"] = value2;
+			json[U"type"] = static_cast<int32>(type);
+			json[U"duration"] = duration;
+			json[U"delay"] = delay;
+			json[U"loop"] = loop;
+			json[U"retrigger"] = retrigger;
+			return json;
+		}
+
+		[[nodiscard]]
+		static TweenValue<T> fromJSON(const JSON& json, const T& defaultValue1 = T{}, const T& defaultValue2 = T{})
+		{
+			TweenValue<T> result;
+			result.value1 = GetFromJSONOr(json, U"value1", defaultValue1);
+			result.value2 = GetFromJSONOr(json, U"value2", defaultValue2);
+			result.type = static_cast<TweenType>(GetFromJSONOr(json, U"type", static_cast<int32>(TweenType::Sine0_1)));
+			result.duration = GetFromJSONOr(json, U"duration", 1.0);
+			result.delay = GetFromJSONOr(json, U"delay", 0.0);
+			result.loop = GetFromJSONOr(json, U"loop", false);
+			result.retrigger = GetFromJSONOr(json, U"retrigger", true);
+			return result;
+		}
+	};
+
 	template <class T>
 	struct PropertyValue
 	{
@@ -754,4 +892,20 @@ namespace noco
 				selectedDisabledValue.has_value();
 		}
 	};
+	
+	// TweenValueのストリーム演算子（文字列からのパースに必要）
+	template <typename T>
+	inline std::wistream& operator>>(std::wistream& is, TweenValue<T>&)
+	{
+		// TweenValueは文字列から直接パースできないので、エラーにする
+		is.setstate(std::ios::failbit);
+		return is;
+	}
+	
+	// TweenValueのFormat関数
+	template <typename T>
+	inline void Formatter(FormatData& formatData, const TweenValue<T>&)
+	{
+		formatData.string += U"TweenValue";
+	}
 }
