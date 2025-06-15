@@ -209,6 +209,8 @@ namespace noco
 					.sizeRatio = Vec2{ fitsWidth ? 0.0 : pBoxConstraint->sizeRatio.x, fitsHeight ? 0.0 : pBoxConstraint->sizeRatio.y },
 					.sizeDelta = Vec2{ fitsWidth ? maxWidth : pBoxConstraint->sizeDelta.x, fitsHeight ? totalHeight : pBoxConstraint->sizeDelta.y },
 					.margin = pBoxConstraint->margin,
+					.maxWidth = pBoxConstraint->maxWidth,
+					.maxHeight = pBoxConstraint->maxHeight,
 				});
 		}
 		else
@@ -217,6 +219,8 @@ namespace noco
 				BoxConstraint
 				{
 					.sizeDelta = Vec2{ fitsWidth ? maxWidth : node.layoutAppliedRect().w, fitsHeight ? totalHeight : node.layoutAppliedRect().h },
+					.maxWidth = none,
+					.maxHeight = none,
 				});
 		}
 

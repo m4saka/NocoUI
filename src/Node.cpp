@@ -1505,7 +1505,10 @@ namespace noco
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_selected, deltaTime);
+			// 非表示→表示に変わった時はTweenをリセット
+			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
+
+			component->updateProperties(m_currentInteractionState, m_selected, deltaTime, shouldResetTween);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -1513,6 +1516,8 @@ namespace noco
 		{
 			child->postLateUpdate(deltaTime);
 		}
+
+		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
 	void Node::refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat)

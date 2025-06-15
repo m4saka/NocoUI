@@ -30,13 +30,17 @@ namespace noco
 
 	template <typename T>
 	[[nodiscard]]
+	String EnumToString(T value) requires std::is_enum_v<T>;
+
+	template <typename T>
+	[[nodiscard]]
 	T GetFromJSONOr(const JSON& json, const String& key, const T& defaultValue)
 	{
 		if (json.isObject() && json.contains(key))
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
-				return StringToEnum<T>(json[key].getString(), defaultValue);
+				return StringToEnum<T>(json[key].getOr<String>(EnumToString(defaultValue)), defaultValue);
 			}
 			else if constexpr (std::same_as<T, struct LRTB>)
 			{
@@ -58,7 +62,7 @@ namespace noco
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
-				return StringToEnumOpt<T>(json[key].getString());
+				return StringToEnumOpt<T>(json[key].getOr<String>(U""));
 			}
 			else
 			{
@@ -110,6 +114,24 @@ namespace noco
 		else
 		{
 			return ParseOpt<T>(value);
+		}
+	}
+
+	template <typename T>
+	[[nodiscard]]
+	String ValueToString(const T& value)
+	{
+		if constexpr (std::is_enum_v<T>)
+		{
+			return EnumToString(value);
+		}
+		else if constexpr (std::same_as<T, String>)
+		{
+			return value;
+		}
+		else
+		{
+			return Format(value);
 		}
 	}
 

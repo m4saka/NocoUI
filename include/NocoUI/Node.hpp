@@ -56,6 +56,7 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
+		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
 		/* NonSerialized */ SelectedYN m_selected = SelectedYN::No;
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;

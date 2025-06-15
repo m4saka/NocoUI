@@ -27,6 +27,7 @@ namespace noco
 	using IncludingDisabledYN = YesNo<struct IncludingDisabledYN_tag>;
 	using IsScrollingYN = YesNo<struct IsScrollingYN_tag>;
 	using RubberBandScrollEnabledYN = YesNo<struct RubberBandScrollEnabledYN_tag>;
+	using ShouldResetTweenYN = YesNo<struct ShouldResetTweenYN_tag>;
 
 	namespace detail
 	{

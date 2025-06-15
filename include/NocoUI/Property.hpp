@@ -47,6 +47,11 @@ namespace noco
 		virtual bool isSmoothProperty() const = 0;
 		virtual double smoothTime() const = 0;
 		virtual bool trySetSmoothTime(double smoothTime) = 0;
+		virtual double tweenTransitionTime() const { return 0.0; }
+		virtual void setTweenTransitionTime(double) {}
+		virtual Optional<String> tweenValueString(InteractionState, SelectedYN) const { return none; }
+		virtual void setTweenValueString(InteractionState, SelectedYN, const Optional<String>&) {}
+		virtual void requestResetTween() {}
 	};
 
 	template <typename T>
@@ -354,6 +359,8 @@ namespace noco
 		};
 		/*NonSerialized*/ Optional<InteractionState> m_prevTweenSource = none;
 
+		/*NonSerialized*/ ShouldResetTweenYN m_shouldResetTween = ShouldResetTweenYN::Yes;
+
 	private:
 		[[nodiscard]]
 		JSON tweenValuesToJSON() const
@@ -468,25 +475,25 @@ namespace noco
 			double targetPressedWeight = 0.0;
 			double targetDisabledWeight = 0.0;
 			
-			// 現在の状態に基づいてweightを設定
-			switch (interactionState)
+			// フォールバックを考慮してweightを設定
+			const Optional<InteractionState> tweenSource = tweenSourceOf(interactionState, selected);
+			if (tweenSource.has_value())
 			{
-			case InteractionState::Default:
-				if (m_tweenValues.get(InteractionState::Default, selected).has_value())
+				switch (*tweenSource)
+				{
+				case InteractionState::Default:
 					targetDefaultWeight = 1.0;
-				break;
-			case InteractionState::Hovered:
-				if (m_tweenValues.get(InteractionState::Hovered, selected).has_value())
+					break;
+				case InteractionState::Hovered:
 					targetHoveredWeight = 1.0;
-				break;
-			case InteractionState::Pressed:
-				if (m_tweenValues.get(InteractionState::Pressed, selected).has_value())
+					break;
+				case InteractionState::Pressed:
 					targetPressedWeight = 1.0;
-				break;
-			case InteractionState::Disabled:
-				if (m_tweenValues.get(InteractionState::Disabled, selected).has_value())
+					break;
+				case InteractionState::Disabled:
 					targetDisabledWeight = 1.0;
-				break;
+					break;
+				}
 			}
 			
 			// weightを滑らかに更新
@@ -518,9 +525,17 @@ namespace noco
 							{
 								result += static_cast<T>(tweenValue * weight);
 							}
+							else if constexpr (std::is_same_v<T, ColorF>)
+							{
+								// Siv3DのColorFのoperator+はアルファ値を無視するため、手動で加算が必要
+								result.r += tweenValue.r * weight;
+								result.g += tweenValue.g * weight;
+								result.b += tweenValue.b * weight;
+								result.a += tweenValue.a * weight;
+							}
 							else
 							{
-								// ベクトルや色などの場合は要素ごとに重み付き加算
+								// ベクトルの場合は要素ごとに重み付き加算
 								result = result + tweenValue * weight;
 							}
 							totalWeight += weight;
@@ -611,8 +626,8 @@ namespace noco
 			// 現在のTweenソースを取得
 			const Optional<InteractionState> currentTweenSource = tweenSourceOf(interactionState, selected);
 			
-			// 初回update時は、全ての状態のStopwatchを開始
-			if (m_prevTweenSource == none)
+			// Tweenリセット時は、全ての状態のStopwatchを開始
+			if (m_shouldResetTween)
 			{
 				m_tweenStopwatches.defaultValue.start();
 				m_tweenStopwatches.hoveredValue.start();
@@ -622,8 +637,10 @@ namespace noco
 				m_tweenStopwatches.selectedHoveredValue.start();
 				m_tweenStopwatches.selectedPressedValue.start();
 				m_tweenStopwatches.selectedDisabledValue.start();
+				m_shouldResetTween = ShouldResetTweenYN::No;
 			}
-			else if (m_prevTweenSource != currentTweenSource)
+			
+			if (m_prevTweenSource != currentTweenSource)
 			{
 				// tweenSourceが変わった場合、新しいソースのretrigger設定をチェック
 				if (currentTweenSource && m_tweenValues.get(*currentTweenSource, selected).has_value())
@@ -641,21 +658,45 @@ namespace noco
 			// 各状態のweightを更新
 			updateTweenWeights(interactionState, selected, deltaTime);
 			
-			// 各状態のTweenを計算してブレンド
-			T blendedValue = calculateBlendedTweenValue();
+			// Tweenがある状態の値を計算
+			T tweenBlendedValue = calculateBlendedTweenValue();
+			double tweenTotalWeight = 0.0;
 			
-			// ブレンドされたTween値があるかどうかチェック
-			if (hasTweenWithNonZeroWeight())
+			// 各状態のweightを合計
+			for (const auto s : { SelectedYN::No, SelectedYN::Yes })
 			{
-				// Tweenの値を直接smoothingに設定
-				m_smoothing.setCurrentValue(blendedValue);
+				for (const auto state : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+				{
+					if (m_tweenValues.get(state, s).has_value())
+					{
+						tweenTotalWeight += m_tweenWeights.get(state, s).currentValue();
+					}
+				}
+			}
+			
+			// プロパティ値を取得
+			T propertyValue = m_propertyValue.value(interactionState, selected);
+			
+			// Tweenとプロパティ値を線形補間
+			T blendedValue;
+			if constexpr (std::is_arithmetic_v<T>)
+			{
+				blendedValue = static_cast<T>(tweenBlendedValue * tweenTotalWeight + propertyValue * (1.0 - tweenTotalWeight));
+			}
+			else if constexpr (std::is_same_v<T, ColorF>)
+			{
+				blendedValue.r = tweenBlendedValue.r * tweenTotalWeight + propertyValue.r * (1.0 - tweenTotalWeight);
+				blendedValue.g = tweenBlendedValue.g * tweenTotalWeight + propertyValue.g * (1.0 - tweenTotalWeight);
+				blendedValue.b = tweenBlendedValue.b * tweenTotalWeight + propertyValue.b * (1.0 - tweenTotalWeight);
+				blendedValue.a = tweenBlendedValue.a * tweenTotalWeight + propertyValue.a * (1.0 - tweenTotalWeight);
 			}
 			else
 			{
-				// Tweenがない場合は通常のsmoothing処理
-				T targetValue = m_propertyValue.value(interactionState, selected);
-				m_smoothing.update(targetValue, m_propertyValue.smoothTime, deltaTime);
+				blendedValue = tweenBlendedValue * tweenTotalWeight + propertyValue * (1.0 - tweenTotalWeight);
 			}
+			
+			// smoothingに設定
+			m_smoothing.setCurrentValue(blendedValue);
 		}
 
 		void appendJSON(JSON& json) const override
@@ -816,14 +857,54 @@ namespace noco
 		}
 		
 		[[nodiscard]]
-		double tweenTransitionTime() const
+		double tweenTransitionTime() const override
 		{
 			return m_tweenTransitionTime;
 		}
 		
-		void setTweenTransitionTime(double tweenTransitionTime)
+		void setTweenTransitionTime(double tweenTransitionTime) override
 		{
 			m_tweenTransitionTime = tweenTransitionTime;
+		}
+		
+		[[nodiscard]]
+		Optional<TweenValue<T>> getTweenValue(InteractionState interactionState, SelectedYN selected) const
+		{
+			return m_tweenValues.get(interactionState, selected);
+		}
+		
+		void setTweenValue(InteractionState interactionState, SelectedYN selected, const Optional<TweenValue<T>>& tweenValue)
+		{
+			m_tweenValues.get(interactionState, selected) = tweenValue;
+		}
+		
+		[[nodiscard]]
+		Optional<String> tweenValueString(InteractionState interactionState, SelectedYN selected) const override
+		{
+			const auto& tweenValue = m_tweenValues.get(interactionState, selected);
+			if (tweenValue.has_value())
+			{
+				return tweenValue->toJSON().format();
+			}
+			return none;
+		}
+		
+		void setTweenValueString(InteractionState interactionState, SelectedYN selected, const Optional<String>& jsonString) override
+		{
+			if (jsonString.has_value())
+			{
+				const JSON json = JSON::Parse(*jsonString);
+				m_tweenValues.get(interactionState, selected) = TweenValue<T>::fromJSON(json, T{}, T{});
+			}
+			else
+			{
+				m_tweenValues.get(interactionState, selected) = none;
+			}
+		}
+
+		void requestResetTween() override
+		{
+			m_shouldResetTween = ShouldResetTweenYN::Yes;
 		}
 	};
 

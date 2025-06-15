@@ -25,7 +25,7 @@ namespace noco
 	{
 		T value1{};
 		T value2{};
-		TweenType type = TweenType::Sine0_1;
+		TweenType type = TweenType::Linear;
 		double duration = 1.0;
 		double delay = 0.0;  // Tween開始までの遅延
 		bool loop = false;   // ループするかどうか
@@ -119,9 +119,10 @@ namespace noco
 		JSON toJSON() const
 		{
 			JSON json;
-			json[U"value1"] = value1;
-			json[U"value2"] = value2;
-			json[U"type"] = static_cast<int32>(type);
+			// value1とvalue2は必ず文字列として保存
+			json[U"value1"] = ValueToString(value1);
+			json[U"value2"] = ValueToString(value2);
+			json[U"type"] = EnumToString(type);
 			json[U"duration"] = duration;
 			json[U"delay"] = delay;
 			json[U"loop"] = loop;
@@ -133,9 +134,27 @@ namespace noco
 		static TweenValue<T> fromJSON(const JSON& json, const T& defaultValue1 = T{}, const T& defaultValue2 = T{})
 		{
 			TweenValue<T> result;
-			result.value1 = GetFromJSONOr(json, U"value1", defaultValue1);
-			result.value2 = GetFromJSONOr(json, U"value2", defaultValue2);
-			result.type = static_cast<TweenType>(GetFromJSONOr(json, U"type", static_cast<int32>(TweenType::Sine0_1)));
+			
+			// value1とvalue2は文字列として保存される
+			if (json.contains(U"value1"))
+			{
+				result.value1 = StringToValueOpt<T>(json[U"value1"].getOr<String>(U"")).value_or(defaultValue1);
+			}
+			else
+			{
+				result.value1 = defaultValue1;
+			}
+			
+			if (json.contains(U"value2"))
+			{
+				result.value2 = StringToValueOpt<T>(json[U"value2"].getOr<String>(U"")).value_or(defaultValue2);
+			}
+			else
+			{
+				result.value2 = defaultValue2;
+			}
+			
+			result.type = GetFromJSONOr(json, U"type", TweenType::Linear);
 			result.duration = GetFromJSONOr(json, U"duration", 1.0);
 			result.delay = GetFromJSONOr(json, U"delay", 0.0);
 			result.loop = GetFromJSONOr(json, U"loop", false);
@@ -892,20 +911,4 @@ namespace noco
 				selectedDisabledValue.has_value();
 		}
 	};
-	
-	// TweenValueのストリーム演算子（文字列からのパースに必要）
-	template <typename T>
-	inline std::wistream& operator>>(std::wistream& is, TweenValue<T>&)
-	{
-		// TweenValueは文字列から直接パースできないので、エラーにする
-		is.setstate(std::ios::failbit);
-		return is;
-	}
-	
-	// TweenValueのFormat関数
-	template <typename T>
-	inline void Formatter(FormatData& formatData, const TweenValue<T>&)
-	{
-		formatData.string += U"TweenValue";
-	}
 }

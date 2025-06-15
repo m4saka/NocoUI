@@ -2567,6 +2567,7 @@ public:
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.margin = LRTB{ 0, 0, 0, 0 },
+				.maxHeight = 600,
 			}))
 		, m_buttonRootNode(m_dialogNode->emplaceChild(
 			U"Dialog_ButtonRoot",
@@ -2644,6 +2645,10 @@ public:
 		}
 		buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+		// ダイアログの中身が大きすぎる場合用にスクロール可能にする
+		m_contentRootNode->setVerticalScrollable(true);
+		m_contentRootNode->setClippingEnabled(true);
 
 		m_dialogCanvas->refreshLayout();
 	}
@@ -2795,6 +2800,122 @@ public:
 		}
 	}
 	
+};
+
+class TweenDialog : public IDialog
+{
+private:
+	IProperty* m_pProperty;
+	std::function<void()> m_onChange;
+	
+	// 各状態のTween設定を保持
+	struct TweenState
+	{
+		bool enabled = false;
+		String value1;
+		String value2;
+		TweenType type = TweenType::Linear;
+		double duration = 1.0;
+		double delay = 0.0;
+		bool loop = false;
+		bool retrigger = false;
+	};
+	
+	InteractiveValue<TweenState> m_tweenStates;
+
+public:
+	TweenDialog(IProperty* pProperty, std::function<void()> onChange)
+		: m_pProperty(pProperty)
+		, m_onChange(std::move(onChange))
+	{
+		if (!m_pProperty)
+		{
+			throw Error{ U"Property is nullptr" };
+		}
+		if (!m_pProperty->isSmoothProperty())
+		{
+			throw Error{ U"Property is not smooth property" };
+		}
+		
+		// 全ての状態にデフォルト値を設定
+		for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+		{
+			for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+			{
+				auto& tweenState = m_tweenStates.get(interactionState, selected);
+				
+				// プロパティの現在の値をデフォルト値として使用
+				String propertyValue = m_pProperty->propertyValueStringOfFallback(interactionState, selected);
+				tweenState.value1 = propertyValue;
+				tweenState.value2 = propertyValue;
+			}
+		}
+	}
+
+	double dialogWidth() const override
+	{
+		return 600;
+	}
+
+	Array<DialogButtonDesc> buttonDescs() const override
+	{
+		return Array<DialogButtonDesc>
+		{
+			DialogButtonDesc
+			{
+				.text = U"OK",
+				.isDefaultButton = IsDefaultButtonYN::Yes,
+			},
+			DialogButtonDesc
+			{
+				.text = U"Cancel",
+				.isCancelButton = IsCancelButtonYN::Yes,
+			}
+		};
+	}
+
+	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override;
+
+	void onResult(StringView resultButtonText) override
+	{
+		if (resultButtonText == U"OK")
+		{
+			// 各状態のTween設定を保存
+			for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+			{
+				for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+				{
+					const auto& state = m_tweenStates.get(interactionState, selected);
+					
+					if (state.enabled)
+					{
+						// Tween値をJSON形式で作成
+						JSON tweenJson;
+						tweenJson[U"value1"] = state.value1;
+						tweenJson[U"value2"] = state.value2;
+						tweenJson[U"type"] = EnumToString(state.type);
+						tweenJson[U"duration"] = state.duration;
+						tweenJson[U"delay"] = state.delay;
+						tweenJson[U"loop"] = state.loop;
+						tweenJson[U"retrigger"] = state.retrigger;
+						
+						m_pProperty->setTweenValueString(interactionState, selected, tweenJson.format());
+					}
+					else
+					{
+						// Tweenを無効化
+						m_pProperty->setTweenValueString(interactionState, selected, none);
+					}
+				}
+			}
+			
+			// tweenTransitionTimeも更新済みなので、変更通知を実行
+			if (m_onChange)
+			{
+				m_onChange();
+			}
+		}
+	}
 };
 
 void Hierarchy::setWidth(double width)
@@ -5502,7 +5623,14 @@ public:
 			{
 				const auto propertyNode = transformEffectNode->addChild(createVec2PropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
 				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
-				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
+				
+				Array<MenuElement> menuElements
+				{
+					MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } },
+					MenuItem{ U"Tween設定..."_fmt(name), U"", KeyT, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<TweenDialog>(pProperty, [this] { refreshInspector(); })); } },
+				};
+				
+				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 			};
 		// Note: アクセサからポインタを取得しているので注意が必要
 		fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
@@ -5797,12 +5925,20 @@ public:
 			
 			if (property->isInteractiveProperty())
 			{
+				Array<MenuElement> menuElements
+				{
+					MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", KeyC, [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); })); } },
+				};
+				
+				// SmoothPropertyの場合はTween設定メニューを追加
+				if (property->isSmoothProperty())
+				{
+					menuElements.push_back(MenuItem{ U"Tween設定..."_fmt(property->name()), U"", KeyT, [this, property] { m_dialogOpener->openDialog(std::make_shared<TweenDialog>(property, [this] { refreshInspector(); })); } });
+				}
+				
 				propertyNode->emplaceComponent<ContextMenuOpener>(
 					m_contextMenu,
-					Array<MenuElement>
-					{
-						MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", KeyC, [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); })); } },
-					},
+					menuElements,
 					nullptr,
 					RecursiveYN::Yes);
 			}
@@ -6052,6 +6188,337 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }),
 			RefreshesLayoutYN::No);
 		propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+	}
+
+	contentRootNode->refreshContainedCanvasLayout();
+}
+
+void TweenDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu)
+{
+	if (!m_pProperty)
+	{
+		throw Error{ U"Property is nullptr" };
+	}
+
+	// プロパティ名のラベル
+	const auto labelNode = contentRootNode->emplaceChild(
+		U"Label",
+		BoxConstraint
+		{
+			.sizeRatio = Vec2{ 1, 0 },
+			.sizeDelta = SizeF{ 0, 36 },
+			.margin = LRTB{ 0, 0, 0, 8 },
+		});
+	labelNode->emplaceComponent<Label>(
+		m_pProperty->name() + U" - Tween Settings",
+		U"",
+		16,
+		Palette::White,
+		HorizontalAlign::Center,
+		VerticalAlign::Middle);
+
+	// tweenTransitionTimeの設定
+	const auto transitionTimeNode = contentRootNode->emplaceChild(
+		U"TransitionTime",
+		BoxConstraint
+		{
+			.sizeRatio = Vec2{ 1, 0 },
+			.sizeDelta = SizeF{ 0, 0 },
+			.margin = LRTB{ 0, 0, 0, 8 },
+		});
+	transitionTimeNode->addChild(
+		Inspector::CreatePropertyNode(
+			U"tweenTransitionTime [sec]",
+			Format(m_pProperty->tweenTransitionTime()),
+			[this](StringView value) 
+			{ 
+				m_pProperty->setTweenTransitionTime(ParseOr<double>(value, m_pProperty->tweenTransitionTime())); 
+			}),
+		RefreshesLayoutYN::No);
+	transitionTimeNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+	// 各状態のTween設定
+	for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+	{
+		for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+		{
+			const String headingText = EnumToString(interactionState) + (selected.yesNo ? U" & Selected" : U"");
+
+			// 状態のセクション
+			const auto sectionNode = contentRootNode->emplaceChild(
+				U"Section",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ -20, 0 },
+					.margin = LRTB{ 0, 0, 0, 12 },
+				});
+
+			// セクションタイトル
+			const auto titleNode = sectionNode->emplaceChild(
+				U"Title",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 24 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			titleNode->emplaceComponent<Label>(
+				headingText,
+				U"",
+				14,
+				ColorF{ 0.9, 0.9, 1.0 },
+				HorizontalAlign::Left,
+				VerticalAlign::Middle);
+
+			// チェックボックスとTween設定のコンテナ
+			const auto propertyNode = sectionNode->emplaceChild(
+				U"Property",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+				});
+			propertyNode->emplaceChild(
+				U"Spacing",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = SizeF{ 8, 0 },
+				});
+			propertyNode->setBoxChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
+
+			// 現在のTween設定を取得して、m_tweenStatesに反映
+			auto& tweenState = m_tweenStates.get(interactionState, selected);
+			const auto existingTweenJson = m_pProperty->tweenValueString(interactionState, selected);
+			
+			if (existingTweenJson.has_value())
+			{
+				// 既存のTween設定を読み込む
+				const JSON json = JSON::Parse(*existingTweenJson);
+				tweenState.enabled = true;
+				tweenState.value1 = json[U"value1"].getOr<String>(U"");
+				tweenState.value2 = json[U"value2"].getOr<String>(U"");
+				
+				tweenState.type = StringToEnum<TweenType>(json[U"type"].getOr<String>(U"Linear"), TweenType::Linear);
+				tweenState.duration = json[U"duration"].getOr<double>(1.0);
+				tweenState.delay = json[U"delay"].getOr<double>(0.0);
+				tweenState.loop = json[U"loop"].getOr<bool>(false);
+				tweenState.retrigger = json[U"retrigger"].getOr<bool>(false);
+			}
+			else
+			{
+				// デフォルト値を設定
+				tweenState.enabled = false;
+				// コンストラクタで既に適切なデフォルト値が設定されているため、ここでは何もしない
+			}
+
+			// Tween設定パネル
+			const auto tweenPanelNode = propertyNode->emplaceChild(
+				U"TweenPanel",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+				});
+			tweenPanelNode->setBoxChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
+
+			// Value1とValue2の設定（プロパティの型に応じたUI）
+			const auto addValueNode = [&](StringView name, const String& defaultValue, auto setValue) {
+				const auto valueNode = tweenPanelNode->emplaceChild(
+					name,
+					BoxConstraint
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = SizeF{ 0, 0 },
+						.margin = LRTB{ 0, 0, 0, 4 },
+					});
+				
+				std::shared_ptr<Node> propertyValueNode;
+				switch (m_pProperty->editType())
+				{
+				case PropertyEditType::Text:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreatePropertyNode(
+							name,
+							defaultValue,
+							[setValue](StringView value) { setValue(value); }),
+						RefreshesLayoutYN::No);
+					break;
+				case PropertyEditType::Bool:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreateBoolPropertyNode(
+							name,
+							ParseOr<bool>(Format(defaultValue), false),
+							[setValue](bool value) { setValue(Format(value)); }),
+						RefreshesLayoutYN::No);
+					break;
+				case PropertyEditType::Vec2:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreateVec2PropertyNode(
+							name,
+							ParseOr<Vec2>(Format(defaultValue), Vec2{ 0, 0 }),
+							[setValue](const Vec2& value) { setValue(Format(value)); }),
+						RefreshesLayoutYN::No);
+					break;
+				case PropertyEditType::Color:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreateColorPropertyNode(
+							name,
+							ParseOr<ColorF>(Format(defaultValue), ColorF{ 1, 1, 1, 1 }),
+							[setValue](const ColorF& value) { setValue(Format(value)); }),
+						RefreshesLayoutYN::No);
+					break;
+				case PropertyEditType::LRTB:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreateLRTBPropertyNode(
+							name,
+							ParseOr<LRTB>(Format(defaultValue), LRTB{ 0, 0, 0, 0 }),
+							[setValue](const LRTB& value) { setValue(Format(value)); }),
+						RefreshesLayoutYN::No);
+					break;
+				case PropertyEditType::Enum:
+					propertyValueNode = valueNode->addChild(
+						Inspector::CreateEnumPropertyNode(
+							name,
+							Format(defaultValue),
+							[setValue](StringView value) { setValue(value); },
+							dialogContextMenu,
+							m_pProperty->enumCandidates()),
+						RefreshesLayoutYN::No);
+					break;
+				}
+				
+				valueNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			};
+			
+			addValueNode(U"value1", tweenState.value1, [this, interactionState, selected](StringView value) {
+				m_tweenStates.get(interactionState, selected).value1 = String(value);
+			});
+			
+			addValueNode(U"value2", tweenState.value2, [this, interactionState, selected](StringView value) {
+				m_tweenStates.get(interactionState, selected).value2 = String(value);
+			});
+
+			// Type設定
+			const auto typeNode = tweenPanelNode->emplaceChild(
+				U"Type",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			typeNode->addChild(
+				Inspector::CreateEnumPropertyNode(
+					U"type",
+					EnumToString(tweenState.type),
+					[this, interactionState, selected](StringView value) 
+					{ 
+						m_tweenStates.get(interactionState, selected).type = StringToEnum<TweenType>(value, TweenType::Linear);
+					},
+					dialogContextMenu,
+					EnumNames<TweenType>()),
+				RefreshesLayoutYN::No);
+			typeNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			// Duration設定
+			const auto durationNode = tweenPanelNode->emplaceChild(
+				U"Duration",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			durationNode->addChild(
+				Inspector::CreatePropertyNode(
+					U"duration [sec]",
+					Format(tweenState.duration),
+					[this, interactionState, selected](StringView value) 
+					{ 
+						m_tweenStates.get(interactionState, selected).duration = ParseOr<double>(value, 1.0);
+					}),
+				RefreshesLayoutYN::No);
+			durationNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			// Delay設定
+			const auto delayNode = tweenPanelNode->emplaceChild(
+				U"Delay",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			delayNode->addChild(
+				Inspector::CreatePropertyNode(
+					U"delay [sec]",
+					Format(tweenState.delay),
+					[this, interactionState, selected](StringView value) 
+					{ 
+						m_tweenStates.get(interactionState, selected).delay = ParseOr<double>(value, 0.0);
+					}),
+				RefreshesLayoutYN::No);
+			delayNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			// Loop設定
+			const auto loopNode = tweenPanelNode->emplaceChild(
+				U"Loop",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			loopNode->addChild(
+				Inspector::CreateBoolPropertyNode(
+					U"loop",
+					tweenState.loop,
+					[this, interactionState, selected](bool value) 
+					{ 
+						m_tweenStates.get(interactionState, selected).loop = value;
+					}),
+				RefreshesLayoutYN::No);
+			loopNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			// Retrigger設定
+			const auto retriggerNode = tweenPanelNode->emplaceChild(
+				U"Retrigger",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = SizeF{ 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 4 },
+				});
+			retriggerNode->addChild(
+				Inspector::CreateBoolPropertyNode(
+					U"retrigger",
+					tweenState.retrigger,
+					[this, interactionState, selected](bool value) 
+					{ 
+						m_tweenStates.get(interactionState, selected).retrigger = value;
+					}),
+				RefreshesLayoutYN::No);
+			retriggerNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			tweenPanelNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+
+			// チェックボックス（Tween有効/無効切り替え）
+			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
+				tweenState.enabled,
+				[this, interactionState, selected, tweenPanelNode](bool value)
+				{
+					m_tweenStates.get(interactionState, selected).enabled = value;
+					tweenPanelNode->setInteractable(value);
+				}),
+				0,
+				RefreshesLayoutYN::No);
+			tweenPanelNode->setInteractable(tweenState.enabled);
+
+			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			sectionNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+		}
 	}
 
 	contentRootNode->refreshContainedCanvasLayout();

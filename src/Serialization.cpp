@@ -5,7 +5,7 @@ namespace noco
 {
 	std::shared_ptr<ComponentBase> CreateComponentFromJSON(const JSON& json)
 	{
-		const auto type = json[U"type"].getString();
+		const auto type = json[U"type"].getOr<String>(U"");
 		if (type == U"Label")
 		{
 			auto component = std::make_shared<Label>();
