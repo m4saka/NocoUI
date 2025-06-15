@@ -1253,6 +1253,7 @@ private:
 	std::shared_ptr<Node> m_hierarchyFrameNode;
 	std::shared_ptr<Node> m_hierarchyInnerFrameNode;
 	std::shared_ptr<Node> m_hierarchyRootNode;
+	std::shared_ptr<Node> m_hierarchyTailNode;
 	std::weak_ptr<Canvas> m_editorCanvas;
 	std::weak_ptr<Node> m_editorHoveredNode;
 	std::weak_ptr<Node> m_shiftSelectOriginNode;
@@ -1818,6 +1819,86 @@ public:
 		m_elements.clear();
 		m_hierarchyRootNode->removeChildrenAll();
 		addElementRecursive(m_canvas->rootNode(), 0, RefreshesLayoutYN::No);
+
+		// 末尾に空のノードを追加してドロップ領域とする
+		m_hierarchyTailNode = m_hierarchyRootNode->emplaceChild(
+			U"HierarchyTail",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = Vec2{ 0, 0 },
+				.flexibleWeight = 1.0,
+			},
+			IsHitTargetYN::Yes);
+		
+		// 末尾ノードにもContextMenuOpenerを追加
+		m_hierarchyTailNode->emplaceComponent<ContextMenuOpener>(m_contextMenu,
+			Array<MenuElement>
+			{
+				MenuItem{ U"新規ノード", U"", KeyN, [this] { onClickNewNode(); } },
+				MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
+			});
+		
+		// 末尾ノードにDragDropTargetを追加
+		m_hierarchyTailNode->emplaceComponent<DragDropTarget>([this](const Array<std::shared_ptr<Node>>& sourceNodes)
+			{
+				Array<std::shared_ptr<Node>> newSelection;
+				newSelection.reserve(sourceNodes.size());
+				
+				// ルートノードの末尾に移動
+				for (const auto& sourceNode : sourceNodes)
+				{
+					const auto pSourceElement = getElementByHierarchyNode(sourceNode);
+					if (pSourceElement == nullptr)
+					{
+						continue;
+					}
+					const auto& sourceElement = *pSourceElement;
+					
+					sourceElement.node()->removeFromParent();
+					m_canvas->rootNode()->addChild(sourceElement.node());
+					
+					newSelection.push_back(sourceElement.node());
+				}
+				
+				if (!newSelection.empty())
+				{
+					refreshNodeList();
+					selectNodes(newSelection);
+				}
+			},
+			[this](const Array<std::shared_ptr<Node>>& sourceNodes) -> bool
+			{
+				// ドラッグ中のノードが全てHierarchy上の要素の場合のみドロップ操作を受け付ける
+				return sourceNodes.all([&](const auto& sourceNode)
+					{
+						return getElementByHierarchyNode(sourceNode) != nullptr;
+					});
+			},
+			[this](const Node& node)
+			{
+				// 末尾にドロップする際のオレンジ色の線を描画
+				constexpr double Thickness = 4.0;
+				const auto rect = node.rect();
+				// 最後の要素があればその位置、なければ適切な位置に線を描画
+				if (!m_elements.empty())
+				{
+					const auto& lastElement = m_elements.back();
+					const auto lastRect = lastElement.hierarchyNode()->rect();
+					const Line line{ lastRect.bl() + Vec2::Right(15), lastRect.br() };
+					line.draw(Thickness, Palette::Orange);
+					Circle{ line.begin, Thickness }.draw(Palette::Orange);
+					Circle{ line.end, Thickness }.draw(Palette::Orange);
+				}
+				else
+				{
+					// 要素が空の場合は上部に線を描画
+					const Line line{ rect.tl() + Vec2::Right(15), rect.tr() };
+					line.draw(Thickness, Palette::Orange);
+					Circle{ line.begin, Thickness }.draw(Palette::Orange);
+					Circle{ line.end, Thickness }.draw(Palette::Orange);
+				}
+			});
 
 		for (const auto& node : foldedNodes)
 		{
