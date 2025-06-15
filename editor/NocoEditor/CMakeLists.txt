@@ -17,6 +17,7 @@ add_executable(NocoEditor
   Main.cpp
   HistorySystem.cpp
   ResizableHandle.cpp
+  Tooltip.cpp
   ${NOCO_SRC_FILES}
   )
 

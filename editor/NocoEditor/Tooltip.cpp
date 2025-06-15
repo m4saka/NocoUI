@@ -1,5 +1,4 @@
-﻿#include "stdafx.h"
-#include "Tooltip.hpp"
+﻿#include "Tooltip.hpp"
 
 TooltipOpener::TooltipOpener(const std::shared_ptr<Canvas>& overlayCanvas, StringView tooltipText, StringView tooltipDetailText)
 	: ComponentBase{ {} }
