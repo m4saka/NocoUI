@@ -644,17 +644,17 @@ namespace noco
 			// 現在のTweenソースを取得
 			const Optional<InteractionState> currentTweenSource = tweenSourceOf(interactionState, selected);
 			
-			// Tweenリセット時は、全ての状態のStopwatchを開始
+			// Tweenリセット時は、全ての状態のStopwatchを再開始
 			if (m_shouldResetTween)
 			{
-				m_tweenStopwatches.defaultValue.start();
-				m_tweenStopwatches.hoveredValue.start();
-				m_tweenStopwatches.pressedValue.start();
-				m_tweenStopwatches.disabledValue.start();
-				m_tweenStopwatches.selectedDefaultValue.start();
-				m_tweenStopwatches.selectedHoveredValue.start();
-				m_tweenStopwatches.selectedPressedValue.start();
-				m_tweenStopwatches.selectedDisabledValue.start();
+				m_tweenStopwatches.defaultValue.restart();
+				m_tweenStopwatches.hoveredValue.restart();
+				m_tweenStopwatches.pressedValue.restart();
+				m_tweenStopwatches.disabledValue.restart();
+				m_tweenStopwatches.selectedDefaultValue.restart();
+				m_tweenStopwatches.selectedHoveredValue.restart();
+				m_tweenStopwatches.selectedPressedValue.restart();
+				m_tweenStopwatches.selectedDisabledValue.restart();
 				m_shouldResetTween = ShouldResetTweenYN::No;
 			}
 			

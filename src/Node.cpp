@@ -1402,7 +1402,9 @@ namespace noco
 
 		if (m_activeInHierarchy)
 		{
-			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime);
+			// 非表示→表示に変わった時はTweenをリセット
+			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
+			m_transformEffect.update(m_currentInteractionState, m_selected, deltaTime, shouldResetTween);
 			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale, parentHitTestMat);
 		}
 
