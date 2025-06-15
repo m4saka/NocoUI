@@ -3587,9 +3587,9 @@ public:
 			// ツールチップを追加
 			if (metadata.tooltip)
 			{
-				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+				if (const auto labelTextNode = propertyNode->getChildByNameOrNull(U"LabelText", RecursiveYN::Yes))
 				{
-					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					labelTextNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 				}
 			}
 		}
@@ -3718,6 +3718,30 @@ public:
 	}
 
 	[[nodiscard]]
+	static std::shared_ptr<Node> CreateTweenValueWarningNode()
+	{
+		const auto overlayNode = Node::Create(
+			U"TweenOverlay",
+			AnchorConstraint
+			{
+				.anchorMin = Vec2{ 0, 0 },
+				.anchorMax = Vec2{ 1, 1 },
+				.sizeDelta = Vec2{ 0, 0 },
+			});
+		overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
+		overlayNode->emplaceComponent<Label>(
+			U"Tween設定が優先されます",
+			U"",
+			12,
+			ColorF{ 0.0, 0.8, 1.0 },  // Tweenバッジのホバー時と同じ明るい青
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+		// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
+		overlayNode->setIsHitTarget(false);
+		return overlayNode;
+	}
+
+	[[nodiscard]]
 	static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr, bool hasTween = false)
 	{
 		const auto propertyNode = Node::Create(
@@ -3731,29 +3755,108 @@ public:
 			InheritChildrenStateFlags::Hovered);
 		propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 		propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+		
 		const auto labelNode = propertyNode->emplaceChild(
 			U"Label",
 			BoxConstraint
 			{
 				.sizeRatio = Vec2{ 0, 1 },
 				.flexibleWeight = 0.85,
+			},
+			IsHitTargetYN::Yes,
+			InheritChildrenStateFlags::Hovered | InheritChildrenStateFlags::Pressed);
+		labelNode->setBoxChildrenLayout(HorizontalLayout{});
+		
+		// ラベルの中にバッジ用のコンテナを追加
+		const auto badgeContainerNode = labelNode->emplaceChild(
+			U"BadgeContainer",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.sizeDelta = Vec2{ 0, 0 },
 			});
-		labelNode->emplaceComponent<Label>(
+		badgeContainerNode->setBoxChildrenLayout(HorizontalLayout{ .spacing = 4.0 });
+		
+		// ラベルテキスト
+		const auto labelTextNode = labelNode->emplaceChild(
+			U"LabelText",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.flexibleWeight = 1.0,
+			});
+		// バッジの数に応じてpaddingを調整
+		double leftPadding = 5.0;
+		if (hasInteractivePropertyValue) leftPadding += 24.0;  // バッジ幅(20) + 間隔(4)
+		if (hasTween) leftPadding += 24.0;  // バッジ幅(20) + 間隔(4)
+		
+		labelTextNode->emplaceComponent<Label>(
 			name,
 			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Left,
 			VerticalAlign::Middle,
-			LRTB{ 5, 5, 5, 5 },
+			LRTB{ leftPadding, 5, 5, 5 },
 			HorizontalOverflow::Wrap,
 			VerticalOverflow::Clip,
 			Vec2::Zero(),
-			hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+			LabelUnderlineStyle::None,  // 下線は使わない
 			ColorF{ Palette::Yellow, 0.5 },
 			2.0,
 			LabelSizingMode::ShrinkToFit,
 			8.0);
+		
+		// ステート毎の値バッジ
+		if (hasInteractivePropertyValue)
+		{
+			const auto stateBadgeNode = badgeContainerNode->emplaceChild(
+				U"StateBadge",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ 20, 20 },
+				},
+				IsHitTargetYN::Yes);
+			stateBadgeNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>{ ColorF{ 0.8, 0.8, 0.0, 1.0 } }.withHovered(ColorF{ 1.0, 1.0, 0.0, 1.0 }),
+				Palette::Black,
+				0.0,
+				10.0);  // 丸いバッジ
+			stateBadgeNode->emplaceComponent<Label>(
+				U"S",
+				U"",
+				12,
+				Palette::Black,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+		}
+		
+		// Tween設定バッジ
+		if (hasTween)
+		{
+			const auto tweenBadgeNode = badgeContainerNode->emplaceChild(
+				U"TweenBadge",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ 20, 20 },
+				},
+				IsHitTargetYN::Yes);
+			tweenBadgeNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>{ ColorF{ 0.0, 0.6, 0.8, 1.0 } }.withHovered(ColorF{ 0.0, 0.8, 1.0, 1.0 }),
+				Palette::Black,
+				0.0,
+				10.0);  // 丸いバッジ
+			tweenBadgeNode->emplaceComponent<Label>(
+				U"T",
+				U"",
+				12,
+				Palette::White,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+		}
+		
 		const auto textBoxNode = propertyNode->emplaceChild(
 			U"TextBox",
 			BoxConstraint
@@ -3769,24 +3872,7 @@ public:
 		// Tweenが設定されている場合、オーバーレイを追加
 		if (hasTween)
 		{
-			const auto overlayNode = textBoxNode->emplaceChild(
-				U"TweenOverlay",
-				AnchorConstraint
-				{
-					.anchorMin = Vec2{ 0, 0 },
-					.anchorMax = Vec2{ 1, 1 },
-					.sizeDelta = Vec2{ 0, 0 },
-				});
-			overlayNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
-			overlayNode->emplaceComponent<Label>(
-				U"Tween設定が優先されます",
-				U"",
-				12,
-				Palette::Yellow,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
-			overlayNode->setIsHitTarget(false);
+			textBoxNode->addChild(CreateTweenValueWarningNode());
 		}
 		
 		return propertyNode;
@@ -4048,7 +4134,7 @@ public:
 				U"Tween設定が優先されます",
 				U"",
 				12,
-				Palette::Yellow,
+				ColorF{ 0.0, 0.8, 1.0 },  // Tweenバッジのホバー時と同じ明るい青
 				HorizontalAlign::Center,
 				VerticalAlign::Middle);
 			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
@@ -4470,42 +4556,10 @@ public:
 		if (hasTween)
 		{
 			// Line1のオーバーレイ
-			const auto overlayNode1 = line1TextBoxParentNode->emplaceChild(
-				U"TweenOverlay",
-				AnchorConstraint
-				{
-					.anchorMin = Vec2{ 0, 0 },
-					.anchorMax = Vec2{ 1, 1 },
-					.sizeDelta = Vec2{ 0, 0 },
-				});
-			overlayNode1->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
-			overlayNode1->emplaceComponent<Label>(
-				U"Tween設定が優先されます",
-				U"",
-				12,
-				Palette::Yellow,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			overlayNode1->setIsHitTarget(false);
+			line1TextBoxParentNode->addChild(CreateTweenValueWarningNode());
 
 			// Line2のオーバーレイ
-			const auto overlayNode2 = line2TextBoxParentNode->emplaceChild(
-				U"TweenOverlay",
-				AnchorConstraint
-				{
-					.anchorMin = Vec2{ 0, 0 },
-					.anchorMax = Vec2{ 1, 1 },
-					.sizeDelta = Vec2{ 0, 0 },
-				});
-			overlayNode2->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.0, 0.0, 0.5 });
-			overlayNode2->emplaceComponent<Label>(
-				U"Tween設定が優先されます",
-				U"",
-				12,
-				Palette::Yellow,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			overlayNode2->setIsHitTarget(false);
+			line2TextBoxParentNode->addChild(CreateTweenValueWarningNode());
 		}
 
 		return propertyNode;
@@ -4752,7 +4806,7 @@ public:
 				U"Tween設定が優先されます",
 				U"",
 				12,
-				Palette::Yellow,
+				ColorF{ 0.0, 0.8, 1.0 },  // Tweenバッジのホバー時と同じ明るい青
 				HorizontalAlign::Center,
 				VerticalAlign::Middle);
 			// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする
@@ -4911,7 +4965,7 @@ public:
 				U"Tween設定が優先されます",
 				U"",
 				12,
-				Palette::Yellow,
+				ColorF{ 0.0, 0.8, 1.0 },  // Tweenバッジのホバー時と同じ明るい青
 				HorizontalAlign::Center,
 				VerticalAlign::Middle);
 			// オーバーレイはヒットテストを無効にして、下のコンボボックスをクリックできるようにする
@@ -6100,8 +6154,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createPropertyNodeWithTooltip(
@@ -6133,8 +6187,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createBoolPropertyNodeWithTooltip(
@@ -6165,8 +6219,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createVec2PropertyNodeWithTooltip(
@@ -6197,8 +6251,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createColorPropertyNodeWithTooltip(
@@ -6229,8 +6283,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createLRTBPropertyNodeWithTooltip(
@@ -6261,8 +6315,8 @@ public:
 						}
 					}
 					
-					// Default状態でTweenが設定されているかチェック
-					bool hasTween = property->hasTweenOf(InteractionState::Default, SelectedYN::No);
+					// いずれかの状態でTweenが設定されているかチェック
+					bool hasTween = property->hasAnyTween();
 					
 					propertyNode = componentNode->addChild(
 						createEnumPropertyNodeWithTooltip(
@@ -6546,7 +6600,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 						U"Tween設定が優先されます",
 						U"",
 						12,
-						Palette::Yellow,
+						ColorF{ 0.0, 0.8, 1.0 },  // Tweenバッジのホバー時と同じ明るい青
 						HorizontalAlign::Center,
 						VerticalAlign::Middle);
 					// オーバーレイはヒットテストを無効にして、下のテキストボックスをクリックできるようにする

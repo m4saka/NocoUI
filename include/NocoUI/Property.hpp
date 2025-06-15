@@ -52,6 +52,7 @@ namespace noco
 		virtual Optional<String> tweenValueString(InteractionState, SelectedYN) const { return none; }
 		virtual void setTweenValueString(InteractionState, SelectedYN, const Optional<String>&) {}
 		virtual bool hasTweenOf(InteractionState, SelectedYN) const { return false; }
+		virtual bool hasAnyTween() const { return false; }
 		virtual void requestResetTween() {}
 	};
 
@@ -395,6 +396,22 @@ namespace noco
 		bool hasTweenOf(InteractionState interactionState, SelectedYN selected) const
 		{
 			return m_tweenValues.get(interactionState, selected).has_value();
+		}
+		
+		[[nodiscard]]
+		bool hasAnyTween() const override
+		{
+			for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+			{
+				for (const auto state : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+				{
+					if (hasTweenOf(state, selected))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 		
 		[[nodiscard]]
