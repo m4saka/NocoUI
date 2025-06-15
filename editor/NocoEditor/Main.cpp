@@ -1485,10 +1485,37 @@ private:
 				newSelection.reserve(sourceNodes.size());
 
 				const auto rect = hierarchyNode->rect();
+				const auto mouseX = Cursor::PosF().x;
+				
+				// X座標による階層の判定
+				const double desiredNestLevel = Math::Max(0.0, (mouseX - rect.x - 15) / 20.0);
+				
 				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
 					moveAsSiblingRectTop.mouseOver())
 				{
 					// targetの上に兄弟ノードとして移動
+					// X座標に基づいて、適切な親ノードを見つける
+					std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+					size_t actualNestLevel = targetElement.elementDetail().nestLevel;
+					
+					// マウスが左側にある場合、より上位の階層に移動
+					while (moveToParent && actualNestLevel > desiredNestLevel)
+					{
+						const auto grandParent = moveToParent->parent();
+						if (!grandParent)
+						{
+							break;
+						}
+						moveToParent = grandParent;
+						actualNestLevel--;
+					}
+					
+					if (!moveToParent)
+					{
+						// ルートレベルに移動
+						moveToParent = m_canvas->rootNode();
+					}
+					
 					for (const auto& sourceNode : sourceNodes)
 					{
 						const auto pSourceElement = getElementByHierarchyNode(sourceNode);
@@ -1507,14 +1534,36 @@ private:
 							// 子孫には移動不可
 							return;
 						}
-						const auto pTargetParent = targetElement.node()->parent();
-						if (pTargetParent == nullptr)
-						{
-							return;
-						}
+						
 						sourceElement.node()->removeFromParent();
-						const size_t index = pTargetParent->indexOfChild(targetElement.node());
-						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+						
+						// 移動先での挿入位置を計算
+						if (moveToParent == targetElement.node()->parent())
+						{
+							// 同じ親の場合は、targetの前に挿入
+							const size_t index = moveToParent->indexOfChild(targetElement.node());
+							moveToParent->addChildAtIndex(sourceElement.node(), index);
+						}
+						else
+						{
+							// 異なる親の場合は、適切な位置を見つける
+							std::shared_ptr<Node> insertBefore = targetElement.node();
+							while (insertBefore->parent() != moveToParent)
+							{
+								insertBefore = insertBefore->parent();
+								if (!insertBefore)
+								{
+									// 最後に追加
+									moveToParent->addChild(sourceElement.node());
+									break;
+								}
+							}
+							if (insertBefore)
+							{
+								const size_t index = moveToParent->indexOfChild(insertBefore);
+								moveToParent->addChildAtIndex(sourceElement.node(), index);
+							}
+						}
 
 						newSelection.push_back(sourceElement.node());
 					}
@@ -1523,6 +1572,28 @@ private:
 					moveAsSiblingRectBottom.mouseOver() && (targetElement.folded() || !targetElement.node()->hasChildren()))
 				{
 					// targetの下に兄弟ノードとして移動
+					// X座標に基づいて、適切な親ノードを見つける
+					std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+					size_t actualNestLevel = targetElement.elementDetail().nestLevel;
+					
+					// マウスが左側にある場合、より上位の階層に移動
+					while (moveToParent && actualNestLevel > desiredNestLevel)
+					{
+						const auto grandParent = moveToParent->parent();
+						if (!grandParent)
+						{
+							break;
+						}
+						moveToParent = grandParent;
+						actualNestLevel--;
+					}
+					
+					if (!moveToParent)
+					{
+						// ルートレベルに移動
+						moveToParent = m_canvas->rootNode();
+					}
+					
 					for (const auto& sourceNode : sourceNodes)
 					{
 						const auto pSourceElement = getElementByHierarchyNode(sourceNode);
@@ -1545,14 +1616,36 @@ private:
 							// 子孫には移動不可
 							return;
 						}
-						const auto pTargetParent = targetElement.node()->parent();
-						if (pTargetParent == nullptr)
-						{
-							return;
-						}
+						
 						sourceElement.node()->removeFromParent();
-						const size_t index = pTargetParent->indexOfChild(targetElement.node()) + 1;
-						pTargetParent->addChildAtIndex(sourceElement.node(), index);
+						
+						// 移動先での挿入位置を計算
+						if (moveToParent == targetElement.node()->parent())
+						{
+							// 同じ親の場合は、targetの後に挿入
+							const size_t index = moveToParent->indexOfChild(targetElement.node()) + 1;
+							moveToParent->addChildAtIndex(sourceElement.node(), index);
+						}
+						else
+						{
+							// 異なる親の場合は、適切な位置を見つける
+							std::shared_ptr<Node> insertAfter = targetElement.node();
+							while (insertAfter->parent() != moveToParent)
+							{
+								insertAfter = insertAfter->parent();
+								if (!insertAfter)
+								{
+									// 最後に追加
+									moveToParent->addChild(sourceElement.node());
+									break;
+								}
+							}
+							if (insertAfter)
+							{
+								const size_t index = moveToParent->indexOfChild(insertAfter) + 1;
+								moveToParent->addChildAtIndex(sourceElement.node(), index);
+							}
+						}
 
 						newSelection.push_back(sourceElement.node());
 					}
@@ -1614,10 +1707,29 @@ private:
 
 				constexpr double Thickness = 4.0;
 				const auto rect = node.rect();
+				const auto mouseX = Cursor::PosF().x;
+				
+				// X座標による階層の判定
+				const double desiredNestLevel = Math::Max(0.0, (mouseX - rect.x - 15) / 20.0);
+				size_t actualNestLevel = targetElement.elementDetail().nestLevel;
+				
+				// 実際の描画位置を計算
+				std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+				while (moveToParent && actualNestLevel > desiredNestLevel)
+				{
+					const auto grandParent = moveToParent->parent();
+					if (!grandParent)
+					{
+						break;
+					}
+					moveToParent = grandParent;
+					actualNestLevel--;
+				}
+				
 				if (const auto moveAsSiblingRectTop = RectF{ rect.x, rect.y, rect.w, MoveAsSiblingThresholdPixels };
 					moveAsSiblingRectTop.mouseOver())
 				{
-					const Line line{ rect.tl() + Vec2::Right(15 + 20 * static_cast<double>(nestLevel)), rect.tr() };
+					const Line line{ rect.tl() + Vec2::Right(15 + 20 * static_cast<double>(actualNestLevel)), rect.tr() };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
@@ -1625,7 +1737,7 @@ private:
 				else if (const auto moveAsSiblingRectBottom = RectF{ rect.x, rect.y + rect.h - MoveAsSiblingThresholdPixels, rect.w, MoveAsSiblingThresholdPixels };
 					moveAsSiblingRectBottom.mouseOver() && (targetElement.folded() || !targetElement.node()->hasChildren()))
 				{
-					const Line line{ rect.bl() + Vec2::Right(15 + 20 * static_cast<double>(nestLevel)), rect.br() };
+					const Line line{ rect.bl() + Vec2::Right(15 + 20 * static_cast<double>(actualNestLevel)), rect.br() };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
@@ -1880,20 +1992,39 @@ public:
 				// 末尾にドロップする際のオレンジ色の線を描画
 				constexpr double Thickness = 4.0;
 				const auto rect = node.rect();
-				// 最後の要素があればその位置、なければ適切な位置に線を描画
-				if (!m_elements.empty())
+				
+				// ドラッグ中のノードを除外して最後の表示要素を見つける
+				const Element* pLastVisibleElement = nullptr;
+				for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it)
 				{
-					const auto& lastElement = m_elements.back();
-					const auto lastRect = lastElement.hierarchyNode()->rect();
-					const Line line{ lastRect.bl() + Vec2::Right(15), lastRect.br() };
+					// アクティブでない（折りたたまれた親の中にある）要素はスキップ
+					if (it->hierarchyNode()->activeInHierarchy() == ActiveYN::No)
+					{
+						continue;
+					}
+					// ドラッグ中（選択中）の要素はスキップ
+					if (it->editorSelected() == EditorSelectedYN::Yes)
+					{
+						continue;
+					}
+					pLastVisibleElement = &(*it);
+					break;
+				}
+				
+				if (pLastVisibleElement)
+				{
+					const auto lastRect = pLastVisibleElement->hierarchyNode()->rect();
+					// ルートノードの子として移動（nestLevel=0のラベル位置に合わせる）
+					const double lineY = lastRect.y + lastRect.h;
+					const Line line{ Vec2{rect.x + 35, lineY}, Vec2{rect.x + rect.w, lineY} };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
 				}
 				else
 				{
-					// 要素が空の場合は上部に線を描画
-					const Line line{ rect.tl() + Vec2::Right(15), rect.tr() };
+					// 要素が空の場合も同様
+					const Line line{ rect.tl() + Vec2::Right(35), rect.tr() };
 					line.draw(Thickness, Palette::Orange);
 					Circle{ line.begin, Thickness }.draw(Palette::Orange);
 					Circle{ line.end, Thickness }.draw(Palette::Orange);
