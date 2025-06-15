@@ -242,8 +242,11 @@ namespace noco
 			const double marginBottom = measuredChild.margin.bottom;
 
 			const double shiftY = lineHeight - (h + marginTop + marginBottom);
-			const Vec2 pos = parentRect.pos + Vec2{ *pOffsetX + marginLeft, offsetY + marginTop + shiftY };
-			*pOffsetX += w + marginLeft + marginRight;
+			const Vec2 pos = parentRect.pos + Vec2{ pOffsetX ? *pOffsetX + marginLeft : marginLeft, offsetY + marginTop + shiftY };
+			if (pOffsetX)
+			{
+				*pOffsetX += w + marginLeft + marginRight;
+			}
 			return RectF{ pos, measuredChild.size };
 		}
 		else if (const auto pAnchorConstraint = child->anchorConstraint())

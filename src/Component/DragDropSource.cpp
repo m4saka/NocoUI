@@ -108,7 +108,7 @@ namespace noco
 				draggingNode->transformEffect().setPosition(Vec2::Zero());
 				draggingNode->setIsHitTarget(m_originalIsHitTargets[i]);
 			}
-			if (detail::s_canvasUpdateContext.draggingNode.lock().get() == sourceNode.get())
+			if (auto draggingNode = detail::s_canvasUpdateContext.draggingNode.lock(); draggingNode && draggingNode.get() == sourceNode.get())
 			{
 				detail::s_canvasUpdateContext.draggingNode.reset();
 			}

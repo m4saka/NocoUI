@@ -559,7 +559,7 @@ namespace noco
 			{
 				// 領域外をクリックした場合は選択解除
 				deselect(node);
-				if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == static_cast<ITextBox*>(this))
+				if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 				{
 					detail::s_canvasUpdateContext.editingTextBox.reset();
 				}
@@ -1019,7 +1019,7 @@ namespace noco
 		node->setSelected(SelectedYN::No);
 		m_selectionAnchorLine = m_cursorLine;
 		m_selectionAnchorColumn = m_cursorColumn;
-		if (detail::s_canvasUpdateContext.editingTextBox.lock().get() == static_cast<ITextBox*>(this))
+		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 		{
 			detail::s_canvasUpdateContext.editingTextBox.reset();
 		}
