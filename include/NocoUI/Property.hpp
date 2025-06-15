@@ -51,6 +51,8 @@ namespace noco
 		virtual void setTweenTransitionTime(double) {}
 		virtual Optional<String> tweenValueString(InteractionState, SelectedYN) const { return none; }
 		virtual void setTweenValueString(InteractionState, SelectedYN, const Optional<String>&) {}
+		virtual bool hasTweenOf(InteractionState, SelectedYN) const { return false; }
+		virtual bool hasAnyTween() const { return false; }
 		virtual void requestResetTween() {}
 	};
 
@@ -397,6 +399,22 @@ namespace noco
 		}
 		
 		[[nodiscard]]
+		bool hasAnyTween() const override
+		{
+			for (const auto selected : { SelectedYN::No, SelectedYN::Yes })
+			{
+				for (const auto state : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+				{
+					if (hasTweenOf(state, selected))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		
+		[[nodiscard]]
 		Optional<InteractionState> tweenSourceOf(InteractionState interactionState, SelectedYN selected) const
 		{
 			// フォールバック検索
@@ -626,27 +644,27 @@ namespace noco
 			// 現在のTweenソースを取得
 			const Optional<InteractionState> currentTweenSource = tweenSourceOf(interactionState, selected);
 			
-			// Tweenリセット時は、全ての状態のStopwatchを開始
+			// Tweenリセット時は、全ての状態のStopwatchを再開始
 			if (m_shouldResetTween)
 			{
-				m_tweenStopwatches.defaultValue.start();
-				m_tweenStopwatches.hoveredValue.start();
-				m_tweenStopwatches.pressedValue.start();
-				m_tweenStopwatches.disabledValue.start();
-				m_tweenStopwatches.selectedDefaultValue.start();
-				m_tweenStopwatches.selectedHoveredValue.start();
-				m_tweenStopwatches.selectedPressedValue.start();
-				m_tweenStopwatches.selectedDisabledValue.start();
+				m_tweenStopwatches.defaultValue.restart();
+				m_tweenStopwatches.hoveredValue.restart();
+				m_tweenStopwatches.pressedValue.restart();
+				m_tweenStopwatches.disabledValue.restart();
+				m_tweenStopwatches.selectedDefaultValue.restart();
+				m_tweenStopwatches.selectedHoveredValue.restart();
+				m_tweenStopwatches.selectedPressedValue.restart();
+				m_tweenStopwatches.selectedDisabledValue.restart();
 				m_shouldResetTween = ShouldResetTweenYN::No;
 			}
 			
 			if (m_prevTweenSource != currentTweenSource)
 			{
-				// tweenSourceが変わった場合、新しいソースのretrigger設定をチェック
+				// tweenSourceが変わった場合、新しいソースのrestartsOnEnter設定をチェック
 				if (currentTweenSource && m_tweenValues.get(*currentTweenSource, selected).has_value())
 				{
 					const auto& tween = m_tweenValues.get(*currentTweenSource, selected);
-					if (tween->retrigger)
+					if (tween->restartsOnEnter)
 					{
 						m_tweenStopwatches.get(*currentTweenSource, selected).restart();
 					}

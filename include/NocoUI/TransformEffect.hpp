@@ -4,6 +4,7 @@
 #include "InteractionState.hpp"
 #include "PropertyValue.hpp"
 #include "Property.hpp"
+#include "YN.hpp"
 
 namespace noco
 {
@@ -95,8 +96,15 @@ namespace noco
 			m_appliesToHitTest.setPropertyValue(value);
 		}
 
-		void update(InteractionState interactionState, SelectedYN selected, double deltaTime)
+		void update(InteractionState interactionState, SelectedYN selected, double deltaTime, ShouldResetTweenYN shouldResetTween)
 		{
+			if (shouldResetTween)
+			{
+				m_position.requestResetTween();
+				m_scale.requestResetTween();
+				m_pivot.requestResetTween();
+				m_appliesToHitTest.requestResetTween();
+			}
 			m_position.update(interactionState, selected, deltaTime);
 			m_scale.update(interactionState, selected, deltaTime);
 			m_pivot.update(interactionState, selected, deltaTime);

@@ -29,7 +29,7 @@ namespace noco
 		double duration = 1.0;
 		double delay = 0.0;  // Tween開始までの遅延
 		bool loop = false;   // ループするかどうか
-		bool retrigger = true;  // 状態変更時に再開始するかどうか
+		bool restartsOnEnter = true;  // 状態変更時に再開始するかどうか
 
 		[[nodiscard]]
 		T calculateValue(double time) const
@@ -126,7 +126,7 @@ namespace noco
 			json[U"duration"] = duration;
 			json[U"delay"] = delay;
 			json[U"loop"] = loop;
-			json[U"retrigger"] = retrigger;
+			json[U"restartsOnEnter"] = restartsOnEnter;
 			return json;
 		}
 
@@ -158,7 +158,7 @@ namespace noco
 			result.duration = GetFromJSONOr(json, U"duration", 1.0);
 			result.delay = GetFromJSONOr(json, U"delay", 0.0);
 			result.loop = GetFromJSONOr(json, U"loop", false);
-			result.retrigger = GetFromJSONOr(json, U"retrigger", true);
+			result.restartsOnEnter = GetFromJSONOr(json, U"restartsOnEnter", true);
 			return result;
 		}
 	};
