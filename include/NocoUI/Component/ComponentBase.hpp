@@ -51,7 +51,7 @@ namespace noco
 		{
 		}
 
-		void updateProperties(InteractionState interactionState, SelectedYN selected, double deltaTime, ShouldResetTweenYN shouldResetTween)
+		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, ShouldResetTweenYN shouldResetTween)
 		{
 			for (IProperty* property : m_properties)
 			{
@@ -59,7 +59,7 @@ namespace noco
 				{
 					property->requestResetTween();
 				}
-				property->update(interactionState, selected, deltaTime);
+				property->update(interactionState, activeStyleStates, deltaTime);
 			}
 		}
 

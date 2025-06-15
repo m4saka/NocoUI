@@ -57,7 +57,7 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
 		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
-		/* NonSerialized */ SelectedYN m_selected = SelectedYN::No;
+		/* NonSerialized */ String m_styleState = U"";
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
@@ -445,11 +445,13 @@ namespace noco
 		InteractionState currentInteractionState() const;
 
 		[[nodiscard]]
-		SelectedYN selected() const;
+		const String& styleState() const { return m_styleState; }
 
-		std::shared_ptr<Node> setSelected(SelectedYN selected);
-
-		std::shared_ptr<Node> setSelected(bool selected);
+		std::shared_ptr<Node> setStyleState(const String& state)
+		{
+			m_styleState = state;
+			return shared_from_this();
+		}
 
 		[[nodiscard]]
 		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
