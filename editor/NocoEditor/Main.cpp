@@ -3,6 +3,7 @@
 #include "HistorySystem.hpp"
 #include "ResizableHandle.hpp"
 #include "Tooltip.hpp"
+#include "TabStop.hpp"
 
 using namespace noco;
 using noco::detail::IncludesInternalIdYN;
@@ -3381,6 +3382,28 @@ public:
 	void refreshInspector(PreserveScrollYN preserveScroll = PreserveScrollYN::Yes)
 	{
 		const double scrollY = m_inspectorRootNode->scrollOffset().y;
+		
+		// 現在フォーカスされているノードの情報を保存
+		std::shared_ptr<Node> focusedNode = CurrentFrame::GetFocusedNode();
+		String focusedNodeName;
+		bool isInInspector = false;
+		
+		if (focusedNode)
+		{
+			// フォーカスされているノードがInspector内にあるかチェック
+			auto currentNode = focusedNode;
+			while (currentNode)
+			{
+				if (currentNode == m_inspectorRootNode)
+				{
+					isInInspector = true;
+					focusedNodeName = focusedNode->name();
+					break;
+				}
+				currentNode = currentNode->parent();
+			}
+		}
+		
 		setTargetNode(m_targetNode.lock());
 		if (preserveScroll)
 		{
@@ -3388,6 +3411,71 @@ public:
 			m_inspectorRootNode->scroll(Vec2{ 0, scrollY }, RefreshesLayoutYN::No);
 		}
 		m_editorCanvas->refreshLayout();
+		
+		// TabStopを持つすべてのノードを収集してリンクを設定
+		setupTabStopLinks();
+		
+		// フォーカスを復元
+		if (isInInspector && !focusedNodeName.empty())
+		{
+			// 同じ名前のノードを探してフォーカスを復元
+			auto newFocusNode = m_inspectorRootNode->getChildByNameOrNull(focusedNodeName, RecursiveYN::Yes);
+			if (newFocusNode && newFocusNode->getComponentOrNull<nocoeditor::TabStop>())
+			{
+				CurrentFrame::SetFocusedNode(newFocusNode);
+			}
+		}
+	}
+	
+	void setupTabStopLinks()
+	{
+		// TabStopを持つすべてのノードを収集
+		Array<std::shared_ptr<Node>> tabStopNodes;
+		collectTabStopNodes(m_inspectorRootNode, tabStopNodes);
+		
+		if (tabStopNodes.size() == 0)
+		{
+			return;
+		}
+		
+		// 各ノードのTabStopに次と前のノードを設定
+		for (size_t i = 0; i < tabStopNodes.size(); ++i)
+		{
+			auto tabStop = tabStopNodes[i]->getComponentOrNull<nocoeditor::TabStop>();
+			if (!tabStop)
+			{
+				continue;
+			}
+			
+			// 次のノードを設定（最後の要素は最初に戻る）
+			size_t nextIndex = (i + 1) % tabStopNodes.size();
+			tabStop->setNextNode(tabStopNodes[nextIndex]);
+			
+			// 前のノードを設定（最初の要素は最後に戻る）
+			size_t prevIndex = (i == 0) ? tabStopNodes.size() - 1 : i - 1;
+			tabStop->setPreviousNode(tabStopNodes[prevIndex]);
+			
+		}
+	}
+	
+	void collectTabStopNodes(const std::shared_ptr<Node>& node, Array<std::shared_ptr<Node>>& tabStopNodes)
+	{
+		if (!node)
+		{
+			return;
+		}
+		
+		// このノードがTabStopを持っているかチェック
+		if (node->getComponentOrNull<nocoeditor::TabStop>())
+		{
+			tabStopNodes.push_back(node);
+		}
+		
+		// 子ノードを再帰的に探索
+		for (const auto& child : node->children())
+		{
+			collectTabStopNodes(child, tabStopNodes);
+		}
 	}
 
 	void setTargetNode(const std::shared_ptr<Node>& targetNode)
@@ -3482,6 +3570,9 @@ public:
 					m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->rect().center());
 				}))->addClickHotKey(KeyA, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 		}
+		
+		// TabStopを持つすべてのノードを収集してリンクを設定
+		setupTabStopLinks();
 	}
 
 	[[nodiscard]]
@@ -3657,6 +3748,7 @@ public:
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
+		textBoxNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxNode->addClickHotKey(KeyF2);
 		return propertyNode;
 	}
@@ -3964,6 +4056,7 @@ public:
 		const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(value, IgnoreIsChangedYN::Yes);
 		textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue), std::move(fnGetValue)));
+		textBoxNode->emplaceComponent<nocoeditor::TabStop>();
 		
 		// Tweenが設定されている場合、オーバーレイを追加
 		if (hasTween)
@@ -4074,6 +4167,7 @@ public:
 		};
 		
 		textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue), std::move(fnGetValue)));
+		textAreaNode->emplaceComponent<nocoeditor::TabStop>();
 		return propertyNode;
 	}
 
@@ -4148,6 +4242,7 @@ public:
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxXNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 		// Y
@@ -4162,6 +4257,7 @@ public:
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxYNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 		class Vec2PropertyTextBox : public ComponentBase
@@ -4309,6 +4405,7 @@ public:
 		textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxXNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 		// Y
@@ -4323,6 +4420,7 @@ public:
 		textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxYNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 		// Z
@@ -4337,6 +4435,7 @@ public:
 		textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxZNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
 
 		// W
@@ -4351,6 +4450,7 @@ public:
 		textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxWNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
 
 		class Vec4PropertyTextBox : public ComponentBase
@@ -4499,6 +4599,7 @@ public:
 		textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxLNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
 
 		// R
@@ -4513,6 +4614,7 @@ public:
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxRNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
 
 		const auto line2 = propertyNode->emplaceChild(
@@ -4574,6 +4676,7 @@ public:
 		textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxTNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
 
 		// B
@@ -4588,6 +4691,7 @@ public:
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxBNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
 		class LRTBPropertyTextBox : public ComponentBase
@@ -4780,6 +4884,7 @@ public:
 		textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxRNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
 
 		// G
@@ -4794,6 +4899,7 @@ public:
 		textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxGNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
 
 		// B
@@ -4808,6 +4914,7 @@ public:
 		textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxBNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
 
 		// A
@@ -4822,6 +4929,7 @@ public:
 		textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 		const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+		textBoxANode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
 		class ColorPropertyTextBox : public ComponentBase

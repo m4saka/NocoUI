@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "Node.hpp"
+#include "Component/IFocusable.hpp"
 
 namespace noco
 {
 	class ITextBox;
+	class IFocusable;
 
 	struct CanvasUpdateContext
 	{
@@ -13,6 +15,7 @@ namespace noco
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<ITextBox> editingTextBox;
 		std::weak_ptr<Node> draggingNode;
+		std::weak_ptr<Node> focusedNode;
 
 		// フレーム間で引き継ぐためresetしない
 		std::weak_ptr<Node> dragScrollingNode;
@@ -24,6 +27,7 @@ namespace noco
 			hoveredNode.reset();
 			scrollableHoveredNode.reset();
 			draggingNode.reset();
+			// focusedNodeはフレーム間で保持するためクリアしない
 		}
 	};
 
@@ -113,6 +117,58 @@ namespace noco
 		inline bool HasInputBlocked()
 		{
 			return detail::s_canvasUpdateContext.inputBlocked;
+		}
+		
+		[[nodiscard]]
+		inline bool IsFocused()
+		{
+			return !detail::s_canvasUpdateContext.focusedNode.expired();
+		}
+		
+		[[nodiscard]]
+		inline std::shared_ptr<Node> GetFocusedNode()
+		{
+			return detail::s_canvasUpdateContext.focusedNode.lock();
+		}
+		
+		inline void SetFocusedNode(const std::shared_ptr<Node>& node)
+		{
+			auto currentFocused = detail::s_canvasUpdateContext.focusedNode.lock();
+			
+			// 同じノードの場合は何もしない
+			if (currentFocused == node)
+			{
+				return;
+			}
+			
+			// 既存のフォーカスがある場合はblurを呼ぶ
+			if (currentFocused)
+			{
+				// ITextBoxがIFocusableを継承しているので、TextBoxを取得してblurを呼ぶ
+				for (const auto& component : currentFocused->components())
+				{
+					if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+					{
+						focusable->blur(currentFocused);
+					}
+				}
+			}
+			
+			// 新しいフォーカスを設定
+			detail::s_canvasUpdateContext.focusedNode = node;
+			
+			// 新しいノードがある場合はfocusを呼ぶ
+			if (node)
+			{
+				// ITextBoxがIFocusableを継承しているので、TextBoxを取得してfocusを呼ぶ
+				for (const auto& component : node->components())
+				{
+					if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
+					{
+						focusable->focus(node);
+					}
+				}
+			}
 		}
 	}
 

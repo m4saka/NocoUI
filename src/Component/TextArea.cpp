@@ -549,6 +549,7 @@ namespace noco
 					m_isDragging = true;
 				}
 				m_isEditing = true;
+				CurrentFrame::SetFocusedNode(node);
 				updateScrollOffset(rect, effectScale);
 			}
 			else if (node->isRightMouseDown())
@@ -1039,5 +1040,23 @@ namespace noco
 			m_prevText = text;
 		}
 		return shared_from_this();
+	}
+	
+	void TextArea::focus(const std::shared_ptr<Node>& node)
+	{
+		// readOnly時もフォーカスは受け取るが、編集状態にはしない
+		if (!m_readOnly.value())
+		{
+			m_isEditing = true;
+			m_cursorBlinkTime = 0.0;
+			node->setStyleState(U"selected");
+			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
+			CurrentFrame::SetFocusedNode(node);
+		}
+	}
+	
+	void TextArea::blur(const std::shared_ptr<Node>& node)
+	{
+		deselect(node);
 	}
 }

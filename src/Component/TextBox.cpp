@@ -187,6 +187,14 @@ namespace noco
 			}
 			return;
 		}
+		
+		// Ctrl+A
+		if (KeyA.down())
+		{
+			m_cursorIndex = m_text.value().size();
+			m_selectionAnchor = 0;
+			return;
+		}
 
 		// readOnly時はカット・ペーストを無効化
 		if (m_readOnly.value())
@@ -351,6 +359,7 @@ namespace noco
 					m_isDragging = true;
 				}
 				m_isEditing = true;
+				CurrentFrame::SetFocusedNode(node);
 				updateScrollOffset(rect, effectScale);
 			}
 			else if (node->isRightMouseDown())
@@ -510,12 +519,7 @@ namespace noco
 				}
 			}
 
-			if (ctrl && !alt && !shift && KeyA.down())
-			{
-				m_cursorIndex = m_text.value().size();
-				m_selectionAnchor = 0;
-			}
-			else if (m_cursorIndex != prevCursorIndex || keyMoveTried)
+			if (m_cursorIndex != prevCursorIndex || keyMoveTried)
 			{
 				m_cursorBlinkTime = 0.0;
 				if (!shift)
@@ -757,5 +761,25 @@ namespace noco
 			m_prevText = text;
 		}
 		return shared_from_this();
+	}
+	
+	void TextBox::focus(const std::shared_ptr<Node>& node)
+	{
+		// readOnly時もフォーカスは受け取るが、編集状態にはしない
+		if (!m_readOnly.value())
+		{
+			m_isEditing = true;
+			m_cursorBlinkTime = 0.0;
+			// 全選択状態にする
+			m_selectionAnchor = 0;
+			m_cursorIndex = m_text.value().size();
+			node->setStyleState(U"selected");
+			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
+		}
+	}
+	
+	void TextBox::blur(const std::shared_ptr<Node>& node)
+	{
+		deselect(node);
 	}
 }

@@ -268,5 +268,10 @@ namespace noco
 			m_readOnly.setPropertyValue(readOnly);
 			return shared_from_this();
 		}
+		
+		// IFocusableインターフェースの実装
+		void focus(const std::shared_ptr<Node>& node) override;
+		
+		void blur(const std::shared_ptr<Node>& node) override;
 	};
 }

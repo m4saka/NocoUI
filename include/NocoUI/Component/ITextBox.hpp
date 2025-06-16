@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "IFocusable.hpp"
 
 namespace noco
 {
-	class ITextBox
+	class ITextBox : public IFocusable
 	{
 	public:
 		virtual ~ITextBox() = default;

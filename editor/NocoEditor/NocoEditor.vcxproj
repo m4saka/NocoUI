@@ -116,6 +116,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ResizableHandle.cpp" />
+    <ClCompile Include="TabStop.cpp" />
     <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
     <ClCompile Include="..\..\src\Component\EventTrigger.cpp" />
     <ClCompile Include="..\..\src\Component\InputBlocker.cpp" />
@@ -249,6 +250,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ResizableHandle.hpp" />
+    <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp" />
