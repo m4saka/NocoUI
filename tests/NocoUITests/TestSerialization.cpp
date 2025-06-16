@@ -131,6 +131,13 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		REQUIRE(json[U"maxWidth"].get<double>() == 600.0);
 		REQUIRE(json[U"maxHeight"].get<double>() == 450.0);
 		
+		// marginのJSONを確認
+		REQUIRE(json.contains(U"margin"));
+		const JSON& marginJson = json[U"margin"];
+		// LRTBは文字列として保存される
+		REQUIRE(marginJson.isString());
+		REQUIRE(marginJson.getString() == U"(5, 10, 15, 20)");
+		
 		// JSONからデシリアライズ
 		noco::BoxConstraint deserializedConstraint = noco::BoxConstraint::FromJSON(json);
 		
@@ -256,11 +263,9 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		// JSONにシリアライズ
 		JSON json = original.toJSON();
 		
-		// JSONの内容確認
-		REQUIRE(json[U"left"].get<double>() == 10.5);
-		REQUIRE(json[U"right"].get<double>() == 20.5);
-		REQUIRE(json[U"top"].get<double>() == 30.5);
-		REQUIRE(json[U"bottom"].get<double>() == 40.5);
+		// JSONの内容確認（文字列として保存される）
+		REQUIRE(json.isString());
+		REQUIRE(json.getString() == U"(10.5, 20.5, 30.5, 40.5)");
 		
 		// JSONからデシリアライズ
 		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
@@ -281,11 +286,9 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		// JSONにシリアライズ
 		JSON json = original.toJSON();
 		
-		// JSONの内容確認
-		REQUIRE(json[U"left"].get<double>() == 0.0);
-		REQUIRE(json[U"right"].get<double>() == 0.0);
-		REQUIRE(json[U"top"].get<double>() == 0.0);
-		REQUIRE(json[U"bottom"].get<double>() == 0.0);
+		// JSONの内容確認（文字列として保存される）
+		REQUIRE(json.isString());
+		REQUIRE(json.getString() == U"(0, 0, 0, 0)");
 		
 		// JSONからデシリアライズ
 		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
@@ -302,6 +305,10 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		// JSONにシリアライズ
 		JSON json = original.toJSON();
 		
+		// JSONの内容確認（文字列として保存される）
+		REQUIRE(json.isString());
+		REQUIRE(json.getString() == U"(-10, -20, -30, -40)");
+		
 		// JSONからデシリアライズ
 		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
 		
@@ -312,43 +319,39 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(deserialized.bottom == -40);
 	}
 	
-	SECTION("LRTB with missing fields uses default values")
+	SECTION("LRTB with invalid JSON uses default values")
 	{
-		// 不完全なJSONからのデシリアライゼーション
-		JSON incompleteJson;
-		incompleteJson[U"left"] = 15.0;
-		incompleteJson[U"top"] = 25.0;
-		// rightとbottomは欠落
+		// 文字列形式でないJSONからのデシリアライゼーション
+		JSON invalidJson;
+		invalidJson[U"someField"] = 42;
 		
 		// デフォルト値を指定してデシリアライズ
 		noco::LRTB defaultValue{ 1, 2, 3, 4 };
-		noco::LRTB deserialized = noco::LRTB::fromJSON(incompleteJson, defaultValue);
+		noco::LRTB deserialized = noco::LRTB::fromJSON(invalidJson, defaultValue);
 		
-		// 存在するフィールドはJSONから、欠落しているフィールドはデフォルトから
-		REQUIRE(deserialized.left == 15.0);
-		REQUIRE(deserialized.right == 2.0);  // デフォルト値
-		REQUIRE(deserialized.top == 25.0);
-		REQUIRE(deserialized.bottom == 4.0); // デフォルト値
+		// 文字列でないJSONの場合、デフォルト値が使用される
+		REQUIRE(deserialized == defaultValue);
+		REQUIRE(deserialized.left == 1.0);
+		REQUIRE(deserialized.right == 2.0);
+		REQUIRE(deserialized.top == 3.0);
+		REQUIRE(deserialized.bottom == 4.0);
 	}
 	
-	SECTION("LRTB with invalid JSON types uses default values")
+	SECTION("LRTB with malformed string format uses default values")
 	{
-		// 不正な型を含むJSON
-		JSON invalidJson;
-		invalidJson[U"left"] = U"not a number";  // 文字列
-		invalidJson[U"right"] = JSON::array();   // 配列
-		invalidJson[U"top"] = 35.0;              // 正常な値
-		invalidJson[U"bottom"] = JSON{};         // 空のオブジェクト
+		// 不正な文字列形式のJSON
+		JSON malformedJson = JSON(U"not a valid LRTB format");
 		
 		// デフォルト値を指定してデシリアライズ
 		noco::LRTB defaultValue{ 10, 20, 30, 40 };
-		noco::LRTB deserialized = noco::LRTB::fromJSON(invalidJson, defaultValue);
+		noco::LRTB deserialized = noco::LRTB::fromJSON(malformedJson, defaultValue);
 		
-		// 不正な型のフィールドはデフォルト値を使用
-		REQUIRE(deserialized.left == 10.0);   // デフォルト値（不正な型）
-		REQUIRE(deserialized.right == 20.0);  // デフォルト値（不正な型）
-		REQUIRE(deserialized.top == 35.0);    // JSONから（正常）
-		REQUIRE(deserialized.bottom == 40.0); // デフォルト値（不正な型）
+		// パースできない文字列の場合、デフォルト値が使用される
+		REQUIRE(deserialized == defaultValue);
+		REQUIRE(deserialized.left == 10.0);
+		REQUIRE(deserialized.right == 20.0);
+		REQUIRE(deserialized.top == 30.0);
+		REQUIRE(deserialized.bottom == 40.0);
 	}
 	
 	SECTION("LRTB in BoxConstraint with GetFromJSONOr")
@@ -360,13 +363,8 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		constraintJson[U"sizeDelta"] = Vec2{ 100, 100 };
 		constraintJson[U"flexibleWeight"] = 0.0;
 		
-		// marginフィールドが存在する場合
-		JSON marginJson;
-		marginJson[U"left"] = 5.0;
-		marginJson[U"right"] = 10.0;
-		marginJson[U"top"] = 15.0;
-		marginJson[U"bottom"] = 20.0;
-		constraintJson[U"margin"] = marginJson;
+		// marginフィールドが文字列として存在する場合
+		constraintJson[U"margin"] = U"(5, 10, 15, 20)";
 		
 		noco::BoxConstraint constraint = noco::BoxConstraint::FromJSON(constraintJson);
 		REQUIRE(constraint.margin.left == 5.0);
@@ -395,28 +393,25 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(constraint.margin.bottom == 0.0);
 	}
 	
-	SECTION("LRTB in BoxConstraint with partially invalid margin")
+	SECTION("LRTB in BoxConstraint with invalid margin format")
 	{
-		// marginフィールドに部分的に不正な値が含まれる場合
+		// marginフィールドに不正な文字列が含まれる場合
 		JSON constraintJson;
 		constraintJson[U"type"] = U"BoxConstraint";
 		constraintJson[U"sizeRatio"] = Vec2{ 0.8, 0.8 };
 		constraintJson[U"sizeDelta"] = Vec2{ 80, 80 };
 		constraintJson[U"flexibleWeight"] = 0.5;
 		
-		JSON marginJson;
-		marginJson[U"left"] = 12.5;
-		marginJson[U"right"] = U"invalid";  // 不正な型
-		marginJson[U"top"] = 7.5;
-		// bottomフィールドは欠落
-		constraintJson[U"margin"] = marginJson;
+		// 不正な形式の文字列
+		constraintJson[U"margin"] = U"invalid margin format";
 		
 		noco::BoxConstraint constraint = noco::BoxConstraint::FromJSON(constraintJson);
 		
-		// 有効な値は使用され、不正/欠落した値はデフォルト(0.0)になる
-		REQUIRE(constraint.margin.left == 12.5);
-		REQUIRE(constraint.margin.right == 0.0);  // デフォルト値
-		REQUIRE(constraint.margin.top == 7.5);
-		REQUIRE(constraint.margin.bottom == 0.0); // デフォルト値
+		// パースできない文字列の場合、デフォルト値(Zero)が使用される
+		REQUIRE(constraint.margin == noco::LRTB::Zero());
+		REQUIRE(constraint.margin.left == 0.0);
+		REQUIRE(constraint.margin.right == 0.0);
+		REQUIRE(constraint.margin.top == 0.0);
+		REQUIRE(constraint.margin.bottom == 0.0);
 	}
 }

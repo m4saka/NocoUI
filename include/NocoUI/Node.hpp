@@ -58,6 +58,7 @@ namespace noco
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
 		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
 		/* NonSerialized */ String m_styleState = U"";
+		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
@@ -293,7 +294,7 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat);
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates = {});
 
 		void lateUpdate();
 

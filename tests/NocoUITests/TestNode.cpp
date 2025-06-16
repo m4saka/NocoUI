@@ -132,9 +132,9 @@ TEST_CASE("Node properties and state management", "[Node]")
 		// デフォルトの状態
 		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
 		
-		// Selected状態
-		node->setSelected(noco::SelectedYN::Yes);
-		REQUIRE(node->selected() == noco::SelectedYN::Yes);
+		// styleStateの設定
+		node->setStyleState(U"selected");
+		REQUIRE(node->styleState() == U"selected");
 	}
 
 	SECTION("Hit test properties")

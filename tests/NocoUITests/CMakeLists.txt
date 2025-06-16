@@ -40,6 +40,7 @@ add_executable(${TARGET_NAME}
     TestComplexLayout.cpp
     TestErrorCases.cpp
     TestSerializationDetails.cpp
+    TestStyleState.cpp
 )
 
 # NocoUIライブラリのインクルードパスを追加
