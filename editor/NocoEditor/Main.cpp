@@ -2972,6 +2972,89 @@ public:
 	}
 };
 
+class SimpleInputDialog : public IDialog
+{
+private:
+	String m_labelText;
+	String m_defaultValue;
+	std::function<void(StringView, StringView)> m_onResult;
+	Array<DialogButtonDesc> m_buttonDescs;
+	std::shared_ptr<Node> m_textBoxNode;
+
+public:
+	SimpleInputDialog(StringView labelText, StringView defaultValue, const std::function<void(StringView, StringView)>& onResult, const Array<DialogButtonDesc>& buttonDescs)
+		: m_labelText(labelText)
+		, m_defaultValue(defaultValue)
+		, m_onResult(onResult)
+		, m_buttonDescs(buttonDescs)
+	{
+	}
+
+	double dialogWidth() const override
+	{
+		return 400;
+	}
+
+	Array<DialogButtonDesc> buttonDescs() const override
+	{
+		return m_buttonDescs;
+	}
+
+	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
+	{
+		const auto labelNode = contentRootNode->emplaceChild(
+			U"Label",
+			BoxConstraint
+			{
+				.sizeRatio = Vec2{ 1, 0 },
+				.sizeDelta = SizeF{ 0, 24 },
+				.margin = LRTB{ 16, 16, 16, 8 },
+			});
+		labelNode->emplaceComponent<Label>(
+			m_labelText,
+			U"",
+			14,
+			Palette::White,
+			HorizontalAlign::Left,
+			VerticalAlign::Middle);
+
+		m_textBoxNode = contentRootNode->emplaceChild(
+			U"TextBox",
+			BoxConstraint
+			{
+				.sizeDelta = SizeF{ 0, 26 },
+				.flexibleWeight = 1,
+				.margin = LRTB{ 16, 16, 8, 16 },
+			});
+		m_textBoxNode->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+			PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05),
+			1.0,
+			4.0);
+		const auto textBox = m_textBoxNode->emplaceComponent<TextBox>(
+			U"",
+			14,
+			Palette::White,
+			Vec2{ 4, 4 },
+			Vec2{ 2, 2 },
+			Palette::White,
+			ColorF{ Palette::Orange, 0.5 });
+		textBox->setText(m_defaultValue);
+	}
+
+	void onResult(StringView resultButtonText) override
+	{
+		if (m_onResult && m_textBoxNode)
+		{
+			const auto textBox = m_textBoxNode->getComponent<TextBox>();
+			if (textBox)
+			{
+				m_onResult(resultButtonText, textBox->text());
+			}
+		}
+	}
+};
+
 class InteractivePropertyValueDialog : public IDialog
 {
 private:
