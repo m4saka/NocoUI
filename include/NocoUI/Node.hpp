@@ -212,6 +212,9 @@ namespace noco
 			m_components.remove_if(std::move(predicate));
 		}
 
+		template <typename TComponent>
+		void removeComponentsAll(RecursiveYN recursive);
+
 		template <class TComponent, class... Args>
 		std::shared_ptr<TComponent> emplaceComponent(Args&&... args)
 			requires std::derived_from<TComponent, ComponentBase> && std::is_constructible_v<TComponent, Args...>;
@@ -763,6 +766,25 @@ namespace noco
 		else
 		{
 			return defaultValue;
+		}
+	}
+
+	template <typename TComponent>
+	void Node::removeComponentsAll(RecursiveYN recursive)
+	{
+		// 自身のコンポーネントから指定された型のものを削除
+		m_components.remove_if([](const std::shared_ptr<ComponentBase>& component)
+		{
+			return std::dynamic_pointer_cast<TComponent>(component) != nullptr;
+		});
+
+		// 再帰的に処理する場合は子ノードも処理
+		if (recursive == RecursiveYN::Yes)
+		{
+			for (const auto& child : m_children)
+			{
+				child->removeComponentsAll<TComponent>(RecursiveYN::Yes);
+			}
 		}
 	}
 

@@ -456,3 +456,125 @@ TEST_CASE("TransformEffect", "[Node][TransformEffect]")
 		REQUIRE(node->transformEffect().pivot().value() == Vec2{ 0.5, 0.5 });
 	}
 }
+
+// removeComponentsAllのテスト
+TEST_CASE("Node removeComponentsAll", "[Node][Component]")
+{
+	SECTION("Remove specific component type non-recursively")
+	{
+		auto node = noco::Node::Create();
+		
+		// 複数のコンポーネントを追加
+		auto label1 = node->emplaceComponent<noco::Label>();
+		auto label2 = node->emplaceComponent<noco::Label>();
+		auto textBox = node->emplaceComponent<noco::TextBox>();
+		
+		// 初期状態の確認
+		REQUIRE(node->getComponents<noco::Label>().size() == 2);
+		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);
+		
+		// Labelコンポーネントを全て削除（非再帰）
+		node->removeComponentsAll<noco::Label>(noco::RecursiveYN::No);
+		
+		// 削除後の確認
+		REQUIRE(node->getComponents<noco::Label>().size() == 0);
+		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);  // TextBoxは残っている
+	}
+	
+	SECTION("Remove specific component type recursively")
+	{
+		auto parent = noco::Node::Create();
+		auto child1 = noco::Node::Create();
+		auto child2 = noco::Node::Create();
+		auto grandchild = noco::Node::Create();
+		
+		parent->addChild(child1);
+		parent->addChild(child2);
+		child1->addChild(grandchild);
+		
+		// 各ノードにLabelコンポーネントを追加
+		parent->emplaceComponent<noco::Label>();
+		child1->emplaceComponent<noco::Label>();
+		child2->emplaceComponent<noco::Label>();
+		grandchild->emplaceComponent<noco::Label>();
+		
+		// 各ノードにTextBoxも追加（削除されないことを確認するため）
+		parent->emplaceComponent<noco::TextBox>();
+		child1->emplaceComponent<noco::TextBox>();
+		
+		// 初期状態の確認
+		REQUIRE(parent->getComponentOrNull<noco::Label>() != nullptr);
+		REQUIRE(child1->getComponentOrNull<noco::Label>() != nullptr);
+		REQUIRE(child2->getComponentOrNull<noco::Label>() != nullptr);
+		REQUIRE(grandchild->getComponentOrNull<noco::Label>() != nullptr);
+		
+		// Labelコンポーネントを再帰的に削除
+		parent->removeComponentsAll<noco::Label>(noco::RecursiveYN::Yes);
+		
+		// 削除後の確認
+		REQUIRE(parent->getComponentOrNull<noco::Label>() == nullptr);
+		REQUIRE(child1->getComponentOrNull<noco::Label>() == nullptr);
+		REQUIRE(child2->getComponentOrNull<noco::Label>() == nullptr);
+		REQUIRE(grandchild->getComponentOrNull<noco::Label>() == nullptr);
+		
+		// TextBoxは残っていることを確認
+		REQUIRE(parent->getComponentOrNull<noco::TextBox>() != nullptr);
+		REQUIRE(child1->getComponentOrNull<noco::TextBox>() != nullptr);
+	}
+	
+	SECTION("Remove components when none exist")
+	{
+		auto node = noco::Node::Create();
+		
+		// コンポーネントが存在しない状態で削除を実行
+		REQUIRE_NOTHROW(node->removeComponentsAll<noco::Label>(noco::RecursiveYN::No));
+		REQUIRE_NOTHROW(node->removeComponentsAll<noco::Label>(noco::RecursiveYN::Yes));
+	}
+	
+	SECTION("Complex hierarchy removal")
+	{
+		// 複雑な階層構造でのテスト
+		auto root = noco::Node::Create();
+		
+		// 3階層のノード構造を作成
+		for (int i = 0; i < 3; ++i)
+		{
+			auto level1 = noco::Node::Create();
+			root->addChild(level1);
+			
+			// 各レベル1ノードに複数のコンポーネントを追加
+			level1->emplaceComponent<noco::Label>();
+			level1->emplaceComponent<noco::RectRenderer>();
+			
+			for (int j = 0; j < 2; ++j)
+			{
+				auto level2 = noco::Node::Create();
+				level1->addChild(level2);
+				
+				// 各レベル2ノードにもコンポーネントを追加
+				level2->emplaceComponent<noco::Label>();
+				level2->emplaceComponent<noco::Label>();  // 同じ型を複数追加
+			}
+		}
+		
+		// 再帰的に削除
+		root->removeComponentsAll<noco::Label>(noco::RecursiveYN::Yes);
+		
+		// 全てのノードからLabelが削除されたことを確認
+		root->forEachNode([](const std::shared_ptr<noco::Node>& node)
+		{
+			REQUIRE(node->getComponents<noco::Label>().size() == 0);
+		});
+		
+		// RectRendererは残っていることを確認
+		int rectRendererCount = 0;
+		root->forEachNode([&](const std::shared_ptr<noco::Node>& node)
+		{
+			if (node->getComponentOrNull<noco::RectRenderer>())
+			{
+				rectRendererCount++;
+			}
+		});
+		REQUIRE(rectRendererCount == 3);  // レベル1ノード3つ分
+	}
+}
