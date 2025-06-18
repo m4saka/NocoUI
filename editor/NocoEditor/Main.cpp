@@ -6530,6 +6530,36 @@ private:
 	std::unique_ptr<ResizableHandle> m_hierarchyResizeHandle;
 	std::unique_ptr<ResizableHandle> m_inspectorResizeHandle;
 
+	void updateZoom()
+	{
+		if (!Cursor::OnClientRect())
+		{
+			// カーソルがウィンドウ外にある
+			return;
+		}
+
+		if (!Window::GetState().focused)
+		{
+			// ウィンドウが非アクティブ
+			// TODO: ウィンドウが非アクティブの場合はエディタ系Canvasがホバーしないため。もし今後Canvas::updateでTODOに書いた非アクティブ時もホバー可能にする対応が入った場合、この条件は不要になる
+			return;
+		}
+
+		// マウス座標を中心に拡大縮小
+		const Vec2 beforeOffset = m_scrollOffset;
+		const double beforeScale = m_scrollScale;
+		const double scaleFactor = std::exp(-0.2 * Mouse::Wheel());
+		m_scrollScale = Clamp(beforeScale * scaleFactor, 0.1, 10.0);
+		const Vec2 cursorPos = Cursor::PosF();
+		const Vec2 cursorPosInWorldBefore = (cursorPos + m_scrollOffset) / beforeScale;
+		const Vec2 cursorPosInWorldAfter = (cursorPos + m_scrollOffset) / m_scrollScale;
+		m_scrollOffset += (cursorPosInWorldBefore - cursorPosInWorldAfter) * m_scrollScale;
+		if (beforeOffset != m_scrollOffset || beforeScale != m_scrollScale)
+		{
+			m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		}
+	}
+
 public:
 	Editor()
 		: m_canvas(Canvas::Create())
@@ -6638,24 +6668,17 @@ public:
 		m_dialogCanvas->update();
 		m_editorOverlayCanvas->update();
 		m_editorCanvas->update();
+
+		// エディタ系Canvasの更新終了時点でノードがホバーされているかどうか
+		// (m_canvas->update()より手前で取得する必要がある点に注意)
 		const bool editorCanvasHovered = CurrentFrame::AnyNodeHovered();
+
 		m_canvas->update();
 
-		if (Cursor::OnClientRect() && !editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
+		// エディタ系Canvasやスクロール可能ノードにカーソルがなければズーム操作を更新
+		if (!editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
 		{
-			// マウス座標を中心に拡大縮小
-			const Vec2 beforeOffset = m_scrollOffset;
-			const double beforeScale = m_scrollScale;
-			const double scaleFactor = std::exp(-0.2 * Mouse::Wheel());
-			m_scrollScale = Clamp(beforeScale * scaleFactor, 0.1, 10.0);
-			const Vec2 cursorPos = Cursor::PosF();
-			const Vec2 cursorPosInWorldBefore = (cursorPos + m_scrollOffset) / beforeScale;
-			const Vec2 cursorPosInWorldAfter = (cursorPos + m_scrollOffset) / m_scrollScale;
-			m_scrollOffset += (cursorPosInWorldBefore - cursorPosInWorldAfter) * m_scrollScale;
-			if (beforeOffset != m_scrollOffset || beforeScale != m_scrollScale)
-			{
-				m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
-			}
+			updateZoom();
 		}
 
 		m_dialogContextMenu->update();
