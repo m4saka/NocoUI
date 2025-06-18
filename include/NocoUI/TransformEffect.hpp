@@ -96,15 +96,8 @@ namespace noco
 			m_appliesToHitTest.setPropertyValue(value);
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, ShouldResetTweenYN shouldResetTween)
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
 		{
-			if (shouldResetTween)
-			{
-				m_position.requestResetTween();
-				m_scale.requestResetTween();
-				m_pivot.requestResetTween();
-				m_appliesToHitTest.requestResetTween();
-			}
 			m_position.update(interactionState, activeStyleStates, deltaTime);
 			m_scale.update(interactionState, activeStyleStates, deltaTime);
 			m_pivot.update(interactionState, activeStyleStates, deltaTime);

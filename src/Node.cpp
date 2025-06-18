@@ -1422,10 +1422,7 @@ namespace noco
 		
 		if (m_activeInHierarchy)
 		{
-			// 非表示→表示に変わった時はTweenをリセット
-			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
-			
-			m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime, shouldResetTween);
+			m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
 			refreshPosScaleAppliedRect(parentPosScaleMat, parentEffectScale, parentHitTestMat);
 		}
 
@@ -1529,11 +1526,8 @@ namespace noco
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
-			// 非表示→表示に変わった時はTweenをリセット
-			const auto shouldResetTween = ShouldResetTweenYN{ m_activeInHierarchy && !m_prevActiveInHierarchy };
-
-			// updateで既に構築されたactiveStyleStatesを使用
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, shouldResetTween);
+			// m_activeStyleStatesはupdateで構築済み
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime);
 		}
 
 		// 子ノードのpostLateUpdate実行
