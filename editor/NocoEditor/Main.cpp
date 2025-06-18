@@ -6854,7 +6854,8 @@ public:
 		}
 
 		// ユーザー操作があった場合、状態を記録
-		const bool hasUserInput = MouseL.down() || MouseR.down() || Keyboard::GetAllInputs().any([](const Input& input) { return input.down(); });
+		const auto userActionFlags = System::GetUserActions();
+		const bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
 		if (hasUserInput)
 		{
 			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
@@ -6862,7 +6863,7 @@ public:
 		}
 		
 		// ウィンドウを閉じようとした場合
-		if (!m_isConfirmDialogShowing && (System::GetUserActions() & UserAction::CloseButtonClicked))
+		if (!m_isConfirmDialogShowing && (userActionFlags & UserAction::CloseButtonClicked))
 		{
 			showConfirmSaveIfDirty([] { System::Exit(); });
 		}
