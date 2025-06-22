@@ -6282,16 +6282,12 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 		HorizontalAlign::Center,
 		VerticalAlign::Middle);
 
-	Array<String> normalStates{};
-	Array<String> selectedStates{ U"selected" };
-	for (const auto& activeStyleStates : { normalStates, selectedStates })
+	Array<String> activeStyleStates{};
+	for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 	{
-		for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
-		{
-			const bool isSelected = !activeStyleStates.empty();
-			const String headingText = EnumToString(interactionState) + (isSelected ? U" & Selected" : U"");
+		const String headingText = EnumToString(interactionState);
 
-			const auto propertyNode = contentRootNode->emplaceChild(
+		const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",
 				BoxConstraint
 				{
@@ -6460,10 +6456,9 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				}),
 				0,
 				RefreshesLayoutYN::No);
-			checkboxNode->setInteractable(interactionState != InteractionState::Default || isSelected); // Defaultは必ず存在するのでチェックボックスは無効
+			checkboxNode->setInteractable(interactionState != InteractionState::Default); // Defaultは必ず存在するのでチェックボックスは無効
 			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
-			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-		}
+		propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 	}
 
 	// SmoothPropertyの場合はsmoothTimeの項目を追加
