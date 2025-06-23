@@ -387,7 +387,6 @@ public:
 	}
 };
 
-
 struct MenuCategory
 {
 	Array<MenuElement> elements;
@@ -631,7 +630,7 @@ public:
 // 前方宣言
 class Inspector;
 
-// プロパティのメタデータを管理するための構造
+// メタデータのキー
 struct PropertyKey
 {
 	String componentName;
@@ -652,36 +651,11 @@ struct std::hash<PropertyKey>
 	}
 };
 
-// PropertyValueのいずれかの状態が指定された値と一致するかをチェックする関数
-template <typename T>
-[[nodiscard]]
-static bool HasAnyStateEqualTo(const PropertyValue<T>& propertyValue, const T& targetValue)
-{
-	Array<String> normalStates{};
-	Array<String> selectedStates{ U"selected" };
-	
-	return propertyValue.value(InteractionState::Default, normalStates) == targetValue ||
-	       propertyValue.value(InteractionState::Default, selectedStates) == targetValue ||
-	       propertyValue.value(InteractionState::Hovered, normalStates) == targetValue ||
-	       propertyValue.value(InteractionState::Hovered, selectedStates) == targetValue ||
-	       propertyValue.value(InteractionState::Pressed, normalStates) == targetValue ||
-	       propertyValue.value(InteractionState::Pressed, selectedStates) == targetValue ||
-	       propertyValue.value(InteractionState::Disabled, normalStates) == targetValue ||
-	       propertyValue.value(InteractionState::Disabled, selectedStates) == targetValue;
-}
-
-// PropertyValueのいずれかの状態でtrueかをチェックする便利関数
+// PropertyValueのいずれかの状態の値がtrueかをチェック
 [[nodiscard]]
 static bool HasAnyTrueState(const PropertyValue<bool>& propertyValue)
 {
-	return HasAnyStateEqualTo(propertyValue, true);
-}
-
-// PropertyValueのいずれかの状態でfalseかをチェックする便利関数
-[[nodiscard]]
-static bool HasAnyFalseState(const PropertyValue<bool>& propertyValue)
-{
-	return HasAnyStateEqualTo(propertyValue, false);
+	return propertyValue.hasAnyStateEqualTo(true);
 }
 
 // プロパティのメタデータ
@@ -935,7 +909,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		{
 			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
 			{
-				return HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+				return rectRenderer->fillGradationType().hasAnyStateEqualTo(RectFillGradationType::None);
 			}
 			return false;
 		},
@@ -947,7 +921,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		{
 			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
 			{
-				return !HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+				return !rectRenderer->fillGradationType().hasAnyStateEqualTo(RectFillGradationType::None);
 			}
 			return false;
 		},
@@ -959,7 +933,7 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		{
 			if (const auto* rectRenderer = dynamic_cast<const RectRenderer*>(&component))
 			{
-				return !HasAnyStateEqualTo(rectRenderer->fillGradationType(), RectFillGradationType::None);
+				return !rectRenderer->fillGradationType().hasAnyStateEqualTo(RectFillGradationType::None);
 			}
 			return false;
 		},

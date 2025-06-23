@@ -1028,6 +1028,7 @@ namespace noco
 			return false;
 		}
 
+		[[nodiscard]]
 		bool hasInteractiveValue() const
 		{
 			return hoveredValue.has_value() ||
@@ -1035,6 +1036,42 @@ namespace noco
 				disabledValue.has_value() ||
 				(styleStateValues && !styleStateValues->empty()) ||
 				(styleStateInteractionValues && !styleStateInteractionValues->empty());
+		}
+
+		[[nodiscard]]
+		bool hasAnyStateEqualTo(const T& value) const
+		{
+			if (defaultValue == value)
+			{
+				return true;
+			}
+			if (hoveredValue && *hoveredValue == value)
+			{
+				return true;
+			}
+			if (pressedValue && *pressedValue == value)
+			{
+				return true;
+			}
+			if (disabledValue && *disabledValue == value)
+			{
+				return true;
+			}
+			if (styleStateValues && styleStateValues->contains(value))
+			{
+				return true;
+			}
+			if (styleStateInteractionValues)
+			{
+				for (const auto& [key, val] : *styleStateInteractionValues)
+				{
+					if (val == value)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	};
 }
