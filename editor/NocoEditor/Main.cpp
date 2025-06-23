@@ -2592,8 +2592,9 @@ public:
 				}
 			}
 
-			if (m_hierarchyRootNode->isClicked())
+			if (m_hierarchyRootNode->isClicked() || m_hierarchyTailNode->isClicked())
 			{
+				// Hierarchyの空白部分がクリックされた場合は選択を解除
 				clearSelection();
 			}
 		}
