@@ -742,6 +742,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"クリッピングの有効/無効",
 		.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",
 	};
+	metadata[PropertyKey{ U"Node", U"styleState" }] = PropertyMetadata{
+		.tooltip = U"styleState(スタイルステート)",
+		.tooltipDetail = U"styleStateとは、要素の状態を識別するために設定する文字列です(例: \"selected\")\n各プロパティの値はstyleState毎に異なる値を設定でき、状態に応じて見た目を変えることができます\nstyleStateはノード毎に1つのみ設定できます\n\n親要素のstyleStateがあればそれを受け継ぎます\n適用の優先度は自身の要素のstyleStateが最も高く、遠い親になるにつれて優先度は下がります",
+	};
 	
 	// Constraint関連 - AnchorConstraint
 	metadata[PropertyKey{ U"AnchorConstraint", U"type" }] = PropertyMetadata{
@@ -3016,6 +3020,9 @@ public:
 			Palette::White,
 			ColorF{ Palette::Orange, 0.5 });
 		textBox->setText(m_defaultValue);
+		
+		// テキストボックスにフォーカスを設定
+		textBox->focus(m_textBoxNode);
 	}
 
 	void onResult(StringView resultButtonText) override
@@ -3037,11 +3044,30 @@ private:
 	IProperty* m_pProperty;
 	Array<String> m_buttonTexts;
 	std::function<void()> m_onChange;
+	std::shared_ptr<DialogOpener> m_dialogOpener;
+	
+	// styleState選択用
+	String m_currentStyleState;
+	Array<String> m_availableStyleStates;
+	std::shared_ptr<Node> m_styleStateComboBox;
+	std::shared_ptr<Label> m_styleStateLabel;
+	std::shared_ptr<Node> m_removeButton;
+	
+	// プロパティ値表示用ノード
+	struct PropertyValueNodeInfo
+	{
+		std::shared_ptr<Node> propertyNode;
+		std::shared_ptr<Node> propertyValueNode;
+		std::shared_ptr<Node> checkboxNode;
+		std::shared_ptr<String> currentValueString;
+	};
+	HashTable<InteractionState, PropertyValueNodeInfo> m_propertyValueNodes;
 
 public:
-	InteractivePropertyValueDialog(IProperty* pProperty, std::function<void()> onChange)
+	InteractivePropertyValueDialog(IProperty* pProperty, std::function<void()> onChange, const std::shared_ptr<DialogOpener>& dialogOpener)
 		: m_pProperty(pProperty)
 		, m_onChange(std::move(onChange))
+		, m_dialogOpener(dialogOpener)
 	{
 		if (!m_pProperty)
 		{
@@ -3051,6 +3077,9 @@ public:
 		{
 			throw Error{ U"Property is not interactive" };
 		}
+		
+		// 既存のstyleStateを収集
+		collectExistingStyleStates();
 	}
 
 	double dialogWidth() const override
@@ -3068,6 +3097,345 @@ public:
 				.isDefaultButton = IsDefaultButtonYN::Yes,
 			}
 		};
+	}
+
+	void createStyleStateSection(const std::shared_ptr<Node>& parentNode, const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	{
+		const auto styleStateNode = parentNode->emplaceChild(
+			U"StyleStateSection",
+			BoxConstraint{
+				.sizeRatio = Vec2{1, 0},
+				.sizeDelta = SizeF{0, 36},
+				.margin = LRTB{0, 0, 0, 8},
+			});
+		styleStateNode->setBoxChildrenLayout(HorizontalLayout{.spacing = 4});
+		
+		// ラベル
+		const auto labelNode = styleStateNode->emplaceChild(
+			U"Label",
+			BoxConstraint{
+				.sizeRatio = Vec2{0, 1},
+				.sizeDelta = Vec2{80, 0},
+			});
+		labelNode->emplaceComponent<Label>(
+			U"styleState:",
+			U"",
+			14,
+			Palette::White,
+			HorizontalAlign::Left,
+			VerticalAlign::Middle,
+			LRTB{ 0, 0, 0, 0 });
+		
+		// コンボボックス
+		m_styleStateComboBox = styleStateNode->emplaceChild(
+			U"ComboBox",
+			BoxConstraint{
+				.sizeDelta = Vec2{0, 26},
+				.flexibleWeight = 1,
+			});
+		m_styleStateComboBox->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+			PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+			1.0,
+			4.0);
+		
+		m_styleStateLabel = m_styleStateComboBox->emplaceComponent<Label>(
+			U"(styleStateなし)",
+			U"",
+			14,
+			Palette::White,
+			HorizontalAlign::Left,
+			VerticalAlign::Middle,
+			LRTB{ 3, 18, 3, 3 })
+			->setSizingMode(LabelSizingMode::ShrinkToFit);
+		
+		// ▼アイコン
+		m_styleStateComboBox->emplaceComponent<Label>(
+			U"▼",
+			U"",
+			10,
+			Palette::White,
+			HorizontalAlign::Right,
+			VerticalAlign::Middle,
+			LRTB{ 5, 7, 5, 5 });
+		
+		// コンボボックスのクリックイベント
+		m_styleStateComboBox->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onStyleStateComboBoxClick(dialogContextMenu); });
+		
+		// ＋追加ボタン
+		const auto addButton = styleStateNode->emplaceChild(
+			U"AddButton",
+			BoxConstraint{
+				.sizeDelta = Vec2{60, 26},
+			});
+		addButton->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+			PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+			1.0,
+			4.0);
+		addButton->emplaceComponent<Label>(
+			U"＋ 追加",
+			U"",
+			12,
+			Palette::White,
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+		addButton->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onAddStyleState(dialogContextMenu); });
+		
+		// －削除ボタン
+		m_removeButton = styleStateNode->emplaceChild(
+			U"RemoveButton",
+			BoxConstraint{
+				.sizeDelta = Vec2{60, 26},
+			});
+		m_removeButton->emplaceComponent<RectRenderer>(
+			PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withDisabled(ColorF{ 0.05, 0.8 }).withSmoothTime(0.05),
+			PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withDisabled(ColorF{ 1.0, 0.2 }).withSmoothTime(0.05),
+			1.0,
+			4.0);
+		m_removeButton->emplaceComponent<Label>(
+			U"－ 削除",
+			U"",
+			12,
+			Palette::White,
+			HorizontalAlign::Center,
+			VerticalAlign::Middle);
+		m_removeButton->setInteractable(false); // 初期状態では無効
+		m_removeButton->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onRemoveStyleState(dialogContextMenu); });
+		
+		// 区切り線
+		const auto separatorNode = parentNode->emplaceChild(
+			U"Separator",
+			BoxConstraint{
+				.sizeRatio = Vec2{1, 0},
+				.sizeDelta = SizeF{0, 1},
+				.margin = LRTB{0, 0, 0, 8},
+			});
+		separatorNode->emplaceComponent<RectRenderer>(ColorF{ 1.0, 0.3 });
+	}
+	
+	void onStyleStateComboBoxClick(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	{
+		Array<MenuElement> menuElements;
+
+		menuElements.push_back(MenuItem{
+			.text = U"(styleStateなし)",
+			.hotKeyText = U"",
+			.mnemonicInput = none,
+			.onClick = [this]() { selectStyleState(U""); }
+		});
+		
+		// 既に設定されているstyleStateを選択肢として追加
+		for (const auto& state : m_availableStyleStates)
+		{
+			menuElements.push_back(MenuItem{
+				.text = state,
+				.hotKeyText = U"",
+				.mnemonicInput = none,
+				.onClick = [this, state = state]() { selectStyleState(state); }
+			});
+		}
+		
+		// コンテキストメニュー表示
+		dialogContextMenu->show(m_styleStateComboBox->rect().bl(), menuElements);
+	}
+	
+	void selectStyleState(const String& styleState)
+	{
+		m_currentStyleState = styleState;
+		updateStyleStateUI();
+		refreshPropertyValues();
+	}
+	
+	void updateStyleStateUI()
+	{
+		if (m_currentStyleState.isEmpty())
+		{
+			m_styleStateLabel->setText(U"(styleStateなし)");
+			m_removeButton->setInteractable(false);
+		}
+		else
+		{
+			m_styleStateLabel->setText(m_currentStyleState);
+			m_removeButton->setInteractable(true);
+		}
+	}
+	
+	void refreshPropertyValues()
+	{
+		// 現在のstyleStateに基づいてactiveStyleStatesを構築
+		Array<String> activeStyleStates;
+		if (!m_currentStyleState.isEmpty())
+		{
+			activeStyleStates.push_back(m_currentStyleState);
+		}
+		
+		// 各InteractionStateの値を更新
+		for (auto& [interactionState, nodeInfo] : m_propertyValueNodes)
+		{
+			// 現在の値を取得
+			const String currentValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
+			*nodeInfo.currentValueString = currentValue;
+			
+			// UIを更新
+			updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
+			
+			// チェックボックスの状態を更新
+			const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
+			// TODO: チェックボックスの状態を更新する方法を検討
+			
+			// Defaultは常に値が存在するのでチェックボックスは無効
+			nodeInfo.checkboxNode->setInteractable(interactionState != InteractionState::Default);
+		}
+	}
+	
+	void updatePropertyValueNode(InteractionState interactionState, const PropertyValueNodeInfo& nodeInfo, const String& value, const Array<String>& activeStyleStates)
+	{
+		// 各プロパティタイプに応じて表示を更新
+		switch (m_pProperty->editType())
+		{
+		case PropertyEditType::Text:
+			if (auto textBox = nodeInfo.propertyValueNode->getComponent<TextBox>())
+			{
+				textBox->setText(value);
+			}
+			break;
+		case PropertyEditType::Bool:
+			// TODO: Boolプロパティの更新
+			break;
+		case PropertyEditType::Vec2:
+			// TODO: Vec2プロパティの更新
+			break;
+		case PropertyEditType::Color:
+			// TODO: Colorプロパティの更新
+			break;
+		case PropertyEditType::LRTB:
+			// TODO: LRTBプロパティの更新
+			break;
+		case PropertyEditType::Enum:
+			// EnumPropertyNodeのラベルを更新
+			if (auto comboBoxNode = nodeInfo.propertyValueNode->getChildByNameOrNull(U"ComboBox"))
+			{
+				if (auto label = comboBoxNode->getComponent<Label>())
+				{
+					label->setText(value);
+				}
+			}
+			break;
+		}
+		
+		// プロパティ値ノードの有効/無効を設定
+		nodeInfo.propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
+	}
+	
+	void onAddStyleState(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	{
+		if (m_dialogOpener)
+		{
+			m_dialogOpener->openDialog(
+				std::make_unique<SimpleInputDialog>(
+					U"styleStateを入力",
+					U"",
+					[this](StringView buttonText, StringView inputValue)
+					{
+						if (buttonText == U"OK" && !inputValue.isEmpty())
+						{
+							// 重複チェック
+							String newState = String{ inputValue };
+							if (!m_availableStyleStates.contains(newState))
+							{
+								m_availableStyleStates.push_back(newState);
+								selectStyleState(newState);
+							}
+						}
+					},
+					Array<DialogButtonDesc>{
+						DialogButtonDesc{
+							.text = U"OK",
+							.isDefaultButton = IsDefaultButtonYN::Yes
+						},
+						DialogButtonDesc{
+							.text = U"キャンセル",
+							.isCancelButton = IsCancelButtonYN::Yes
+						}
+					}
+				)
+			);
+		}
+	}
+	
+	void onRemoveStyleState(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	{
+		if (m_currentStyleState == U"")
+		{
+			// styleStateなしは削除不可
+			return;
+		}
+		
+		// 確認ダイアログを表示
+		String styleStateToRemove = m_currentStyleState;
+		m_dialogOpener->openDialog(std::make_unique<SimpleDialog>(
+			U"styleState「{}」を削除しますか？"_fmt(styleStateToRemove),
+			[this, styleStateToRemove](StringView resultButtonText)
+			{
+				if (resultButtonText == U"削除")
+				{
+					// 削除処理
+					removeStyleStateFromAll(styleStateToRemove);
+					
+					// styleStateなしに戻す
+					m_currentStyleState = U"";
+					
+					// availableStyleStatesから削除
+					m_availableStyleStates.remove_if([&](const String& state) { return state == styleStateToRemove; });
+					
+					updateStyleStateUI();
+					
+					// プロパティ値を更新
+					refreshPropertyValues();
+				}
+			},
+			Array<DialogButtonDesc>
+			{
+				DialogButtonDesc
+				{
+					.text = U"キャンセル",
+					.isCancelButton = IsCancelButtonYN::Yes
+				},
+				DialogButtonDesc
+				{
+					.text = U"削除",
+					.isDefaultButton = IsDefaultButtonYN::Yes
+				}
+			}));
+	}
+
+	void removeStyleStateFromAll(const String& styleStateToRemove)
+	{
+		// プロパティ値から指定されたstyleStateを削除
+		if (m_pProperty && m_pProperty->isInteractiveProperty())
+		{
+			Array<String> styleStateArray = { styleStateToRemove };
+			
+			// 指定されたstyleStateのすべてのInteractionStateを削除
+			for (auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+			{
+				m_pProperty->tryUnsetPropertyValueOf(interactionState, styleStateArray);
+			}
+		}
+	}
+
+	void collectExistingStyleStates()
+	{
+		m_availableStyleStates.clear();
+		
+		if (!m_pProperty || !m_pProperty->isInteractiveProperty())
+		{
+			return;
+		}
+		
+		// 新しいstyleStateKeysメソッドを使用
+		m_availableStyleStates = m_pProperty->styleStateKeys();
 	}
 
 	void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override;
@@ -3891,7 +4259,7 @@ public:
 				// 外部からの値の変更をチェック
 				if (m_fnGetValue)
 				{
-					const String currentExternalValue = String(m_fnGetValue());
+					const String currentExternalValue = String{ m_fnGetValue() };
 					if (!m_textArea->isEditing() && currentExternalValue != m_prevExternalValue)
 					{
 						m_textArea->setText(currentExternalValue, IgnoreIsChangedYN::Yes);
@@ -3905,7 +4273,7 @@ public:
 					m_fnSetValue(m_textArea->text());
 					if (m_fnGetValue)
 					{
-						m_prevExternalValue = String(m_fnGetValue());
+						m_prevExternalValue = String{ m_fnGetValue() };
 					}
 				}
 			}
@@ -5137,6 +5505,14 @@ public:
 			fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled().getBool(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
 		}
 		fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
+		
+		// styleState入力欄を追加
+		const auto fnAddTextChild = 
+			[this, &nodeSettingNode](StringView name, const String& currentValue, auto fnSetValue)
+			{
+				nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
+			};
+		fnAddTextChild(U"styleState", node->styleState(), [node](StringView value) { node->setStyleState(String(value)); });
 
 		nodeSettingNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 
@@ -5901,7 +6277,7 @@ public:
 				
 				Array<MenuElement> menuElements
 				{
-					MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } },
+					MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
 				};
 				
 				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -5916,7 +6292,7 @@ public:
 			{
 				const auto propertyNode = transformEffectNode->addChild(createBoolPropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
 				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
-				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); })); } } }, nullptr, RecursiveYN::Yes);
+				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } } }, nullptr, RecursiveYN::Yes);
 			};
 		fnAddBoolChild(U"appliesToHitTest", &pTransformEffect->appliesToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setAppliesToHitTest(value); });
 
@@ -6204,7 +6580,7 @@ public:
 					m_contextMenu,
 					Array<MenuElement>
 					{
-						MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", KeyC, [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); })); } },
+						MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", KeyC, [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); }, m_dialogOpener)); } },
 					},
 					nullptr,
 					RecursiveYN::Yes);
@@ -6257,7 +6633,14 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 		HorizontalAlign::Center,
 		VerticalAlign::Middle);
 
+	createStyleStateSection(contentRootNode, dialogContextMenu);
+
+	// 現在のstyleStateに基づいてactiveStyleStatesを構築
 	Array<String> activeStyleStates{};
+	if (!m_currentStyleState.isEmpty())
+	{
+		activeStyleStates.push_back(m_currentStyleState);
+	}
 	for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 	{
 		const String headingText = EnumToString(interactionState);
@@ -6287,9 +6670,16 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreatePropertyNode(
 						headingText,
 						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](StringView value)
+						[this, interactionState, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, activeStyleStates))
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -6305,10 +6695,17 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreateBoolPropertyNode(
 						headingText,
 						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), false),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](bool value)
+						[this, interactionState, currentValueString](bool value)
 						{
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6324,10 +6721,17 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreateVec2PropertyNode(
 						headingText,
 						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), Vec2{ 0, 0 }),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const Vec2& value)
+						[this, interactionState, currentValueString](const Vec2& value)
 						{
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6343,10 +6747,17 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreateColorPropertyNode(
 						headingText,
 						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{ 0, 0, 0, 1 }),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const ColorF& value)
+						[this, interactionState, currentValueString](const ColorF& value)
 						{
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6362,10 +6773,17 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreateLRTBPropertyNode(
 						headingText,
 						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), LRTB{ 0, 0, 0, 0 }),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](const LRTB& value)
+						[this, interactionState, currentValueString](const LRTB& value)
 						{
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, activeStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -6381,9 +6799,16 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					Inspector::CreateEnumPropertyNode(
 						headingText,
 						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
-						[this, interactionState, activeStyleStates = activeStyleStates, currentValueString](StringView value)
+						[this, interactionState, currentValueString](StringView value)
 						{
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, activeStyleStates))
+							// 現在のactiveStyleStatesを動的に構築
+							Array<String> currentActiveStyleStates;
+							if (!m_currentStyleState.isEmpty())
+							{
+								currentActiveStyleStates.push_back(m_currentStyleState);
+							}
+							
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, currentActiveStyleStates))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -6404,11 +6829,18 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
 				m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates),
-				[this, interactionState, activeStyleStates = activeStyleStates, propertyValueNode, currentValueString](bool value)
+				[this, interactionState, propertyValueNode, currentValueString](bool value)
 				{
+					// 現在のactiveStyleStatesを動的に構築
+					Array<String> currentActiveStyleStates;
+					if (!m_currentStyleState.isEmpty())
+					{
+						currentActiveStyleStates.push_back(m_currentStyleState);
+					}
+					
 					if (value)
 					{
-						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, activeStyleStates))
+						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, currentActiveStyleStates))
 						{
 							propertyValueNode->setInteractable(true);
 							if (m_onChange)
@@ -6419,7 +6851,7 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 					}
 					else
 					{
-						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, activeStyleStates))
+						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, currentActiveStyleStates))
 						{
 							propertyValueNode->setInteractable(false);
 							if (m_onChange)
@@ -6431,14 +6863,33 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 				}),
 				0,
 				RefreshesLayoutYN::No);
-			checkboxNode->setInteractable(interactionState != InteractionState::Default); // Defaultは必ず存在するのでチェックボックスは無効
+			// Defaultは常に値が存在するのでチェックボックスは無効
+			checkboxNode->setInteractable(interactionState != InteractionState::Default);
 			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
-		propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-	}
+			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			
+			// PropertyValueNodeInfoを保存
+			m_propertyValueNodes[interactionState] = PropertyValueNodeInfo{
+				.propertyNode = propertyNode,
+				.propertyValueNode = propertyValueNode,
+				.checkboxNode = checkboxNode,
+				.currentValueString = currentValueString
+			};
+		}
 
 	// SmoothPropertyの場合はsmoothTimeの項目を追加
 	if (m_pProperty->isSmoothProperty())
 	{
+		// 区切り線
+		const auto separatorNode2 = contentRootNode->emplaceChild(
+			U"Separator",
+			BoxConstraint{
+				.sizeRatio = Vec2{1, 0},
+				.sizeDelta = SizeF{0, 1},
+				.margin = LRTB{0, 0, 0, 8},
+			});
+		separatorNode2->emplaceComponent<RectRenderer>(ColorF{ 1.0, 0.3 });
+		
 		const auto propertyNode = contentRootNode->emplaceChild(
 			U"Property",
 			BoxConstraint
@@ -6455,6 +6906,9 @@ void InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<N
 			RefreshesLayoutYN::No);
 		propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 	}
+
+	// 初期表示時に正しい値を反映
+	refreshPropertyValues();
 
 	contentRootNode->refreshContainedCanvasLayout();
 }

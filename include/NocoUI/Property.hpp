@@ -47,6 +47,7 @@ namespace noco
 		virtual bool isSmoothProperty() const = 0;
 		virtual double smoothTime() const = 0;
 		virtual bool trySetSmoothTime(double smoothTime) = 0;
+		virtual Array<String> styleStateKeys() const = 0;
 	};
 
 	template <typename T>
@@ -242,6 +243,26 @@ namespace noco
 		{
 			m_propertyValue.smoothTime = smoothTime;
 			return true;
+		}
+
+		Array<String> styleStateKeys() const override
+		{
+			Array<String> result;
+			
+			// styleStateValuesから収集
+			if (m_propertyValue.styleStateValues)
+			{
+				for (const auto& [state, value] : *m_propertyValue.styleStateValues)
+				{
+					if (!result.contains(state))
+					{
+						result.push_back(state);
+					}
+				}
+			}
+			
+			
+			return result;
 		}
 	};
 
@@ -499,6 +520,26 @@ namespace noco
 			m_propertyValue.smoothTime = smoothTime;
 			return true;
 		}
+
+		Array<String> styleStateKeys() const override
+		{
+			Array<String> result;
+			
+			// styleStateValuesから収集
+			if (m_propertyValue.styleStateValues)
+			{
+				for (const auto& [state, value] : *m_propertyValue.styleStateValues)
+				{
+					if (!result.contains(state))
+					{
+						result.push_back(state);
+					}
+				}
+			}
+			
+			
+			return result;
+		}
 	};
 
 	template <class T>
@@ -715,6 +756,12 @@ namespace noco
 		bool trySetSmoothTime(double) override
 		{
 			return false;
+		}
+
+		Array<String> styleStateKeys() const override
+		{
+			// PropertyNonInteractiveはstyleStateをサポートしない
+			return {};
 		}
 	};
 }
