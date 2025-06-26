@@ -15,6 +15,7 @@ namespace noco
 	void Asset::SetBaseDirectoryPath(FilePathView baseDirectoryPath)
 	{
 		UnloadAllTextures();
+		UnloadAllAudios();
 		s_baseDirectoryPath = baseDirectoryPath;
 	}
 
@@ -60,6 +61,52 @@ namespace noco
 			if (name.starts_with(AssetNamePrefix))
 			{
 				TextureAsset::Unregister(name);
+			}
+		}
+	}
+
+	Audio Asset::GetOrLoadAudio(FilePathView filePath)
+	{
+		if (filePath.isEmpty() || !FileSystem::IsFile(filePath))
+		{
+			return Audio();
+		}
+		if (!AudioAsset::IsRegistered(filePath))
+		{
+			AudioAsset::Register(AssetNamePrefix + filePath, FileSystem::PathAppend(s_baseDirectoryPath, filePath));
+		}
+		return AudioAsset(AssetNamePrefix + filePath);
+	}
+
+	Audio Asset::ReloadAudio(FilePathView filePath)
+	{
+		if (AudioAsset::IsRegistered(AssetNamePrefix + filePath))
+		{
+			AudioAsset::Release(AssetNamePrefix + filePath);
+			AudioAsset::Load(AssetNamePrefix + filePath);
+			return AudioAsset(AssetNamePrefix + filePath);
+		}
+		return Asset::GetOrLoadAudio(filePath);
+	}
+
+	bool Asset::UnloadAudio(FilePathView filePath)
+	{
+		if (AudioAsset::IsRegistered(AssetNamePrefix + filePath))
+		{
+			AudioAsset::Unregister(AssetNamePrefix + filePath);
+			return true;
+		}
+		return false;
+	}
+
+	void Asset::UnloadAllAudios()
+	{
+		const HashTable<AssetName, AssetInfo> allAssetTable = AudioAsset::Enumerate();
+		for (const auto& [name, assetInfo] : allAssetTable)
+		{
+			if (name.starts_with(AssetNamePrefix))
+			{
+				AudioAsset::Unregister(name);
 			}
 		}
 	}

@@ -115,6 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Component\AudioPlayer.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />
     <ClCompile Include="TabStop.cpp" />
     <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
@@ -249,6 +250,7 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\NocoUI\Component\AudioPlayer.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />

@@ -17,3 +17,4 @@
 #include "HotKeyInputHandler.hpp"
 #include "DataStore.hpp"
 #include "CursorChanger.hpp"
+#include "AudioPlayer.hpp"

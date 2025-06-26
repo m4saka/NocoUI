@@ -1192,6 +1192,22 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltipDetail = U"自由なデータを文字列で指定できます\nプログラム上ではwalkPlaceholders関数でPlaceholderを巡回し、dataを参照できます",
 		.numTextAreaLines = 3,
 	};
+
+	// AudioPlayer
+	metadata[PropertyKey{ U"AudioPlayer", U"audioFilePath" }] = PropertyMetadata{
+		.tooltip = U"オーディオファイルのパス",
+		.tooltipDetail = U"audioAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+	};
+	metadata[PropertyKey{ U"AudioPlayer", U"audioAssetName" }] = PropertyMetadata{
+		.tooltip = U"AudioAssetのキー名 (任意)",
+		.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したAudioAssetのオーディオを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でAudioAssetを使用するため、\n　パフォーマンス上の利点は特にありません。AudioAssetのキー名を手動で管理したい場合のみ使用してください",
+	};
+	metadata[PropertyKey{ U"AudioPlayer", U"triggerType" }] = PropertyMetadata{
+		.tooltip = U"オーディオを再生する操作の種類",
+	};
+	metadata[PropertyKey{ U"AudioPlayer", U"volume" }] = PropertyMetadata{
+		.tooltip = U"音量 (0.0 ~ 1.0)",
+	};
 	
 	return metadata;
 }
@@ -3768,6 +3784,7 @@ public:
 				MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },
 				MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
 				MenuItem{ U"CursorChanger を追加", U"", KeyC, [this] { onClickAddComponent<CursorChanger>(); } },
+				MenuItem{ U"AudioPlayer を追加", U"", KeyA, [this] { onClickAddComponent<AudioPlayer>(); } },
 			};
 			
 			// コピーされたコンポーネントがある場合は貼り付けメニューを追加

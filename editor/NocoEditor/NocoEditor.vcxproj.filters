@@ -162,6 +162,9 @@
     <ClCompile Include="TabStop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Component\AudioPlayer.cpp">
+      <Filter>Source Files\NocoUI\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="App\icon.ico">
@@ -613,6 +616,9 @@
     </ClInclude>
     <ClInclude Include="TabStop.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\NocoUI\Component\AudioPlayer.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

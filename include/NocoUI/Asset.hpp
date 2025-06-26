@@ -18,5 +18,13 @@ namespace noco
 		bool UnloadTexture(FilePathView filePath);
 
 		void UnloadAllTextures();
+
+		Audio GetOrLoadAudio(FilePathView filePath);
+
+		Audio ReloadAudio(FilePathView filePath);
+
+		bool UnloadAudio(FilePathView filePath);
+
+		void UnloadAllAudios();
 	}
 }

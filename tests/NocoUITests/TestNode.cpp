@@ -470,14 +470,20 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		auto textBox = node->emplaceComponent<noco::TextBox>();
 		
 		// 初期状態の確認
-		REQUIRE(node->getComponents<noco::Label>().size() == 2);
+		auto labelCount = std::count_if(node->components().begin(), node->components().end(), [](const auto& c) {
+			return std::dynamic_pointer_cast<noco::Label>(c) != nullptr;
+		});
+		REQUIRE(labelCount == 2);
 		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);
 		
 		// Labelコンポーネントを全て削除（非再帰）
 		node->removeComponentsAll<noco::Label>(noco::RecursiveYN::No);
 		
 		// 削除後の確認
-		REQUIRE(node->getComponents<noco::Label>().size() == 0);
+		auto labelCountAfter = std::count_if(node->components().begin(), node->components().end(), [](const auto& c) {
+			return std::dynamic_pointer_cast<noco::Label>(c) != nullptr;
+		});
+		REQUIRE(labelCountAfter == 0);
 		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);  // TextBoxは残っている
 	}
 	
@@ -561,20 +567,35 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		root->removeComponentsAll<noco::Label>(noco::RecursiveYN::Yes);
 		
 		// 全てのノードからLabelが削除されたことを確認
-		root->forEachNode([](const std::shared_ptr<noco::Node>& node)
+		std::function<void(const std::shared_ptr<noco::Node>&)> checkNode;
+		checkNode = [&checkNode](const std::shared_ptr<noco::Node>& node)
 		{
-			REQUIRE(node->getComponents<noco::Label>().size() == 0);
-		});
+			auto labelCount = std::count_if(node->components().begin(), node->components().end(), [](const auto& c) {
+				return std::dynamic_pointer_cast<noco::Label>(c) != nullptr;
+			});
+			REQUIRE(labelCount == 0);
+			for (const auto& child : node->children())
+			{
+				checkNode(child);
+			}
+		};
+		checkNode(root);
 		
 		// RectRendererは残っていることを確認
 		int rectRendererCount = 0;
-		root->forEachNode([&](const std::shared_ptr<noco::Node>& node)
+		std::function<void(const std::shared_ptr<noco::Node>&)> countRectRenderers;
+		countRectRenderers = [&rectRendererCount, &countRectRenderers](const std::shared_ptr<noco::Node>& node)
 		{
 			if (node->getComponentOrNull<noco::RectRenderer>())
 			{
 				rectRendererCount++;
 			}
-		});
+			for (const auto& child : node->children())
+			{
+				countRectRenderers(child);
+			}
+		};
+		countRectRenderers(root);
 		REQUIRE(rectRendererCount == 3);  // レベル1ノード3つ分
 	}
 }

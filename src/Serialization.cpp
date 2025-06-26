@@ -96,6 +96,16 @@ namespace noco
 			}
 			return component;
 		}
+		else if (type == U"AudioPlayer")
+		{
+			auto component = std::make_shared<AudioPlayer>();
+			if (!component->tryReadFromJSON(json))
+			{
+				Logger << U"[NocoUI warning] Failed to read AudioPlayer component from JSON";
+				return nullptr;
+			}
+			return component;
+		}
 		else
 		{
 			Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
