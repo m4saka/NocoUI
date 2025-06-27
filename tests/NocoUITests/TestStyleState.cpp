@@ -448,8 +448,8 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 		// selected + Hovered
 		REQUIRE(prop.value(noco::InteractionState::Hovered, selectedStates) == ColorF{0.2, 0.2, 1});
 		
-		// selected + Pressed（定義なし → 通常のHoveredにフォールバック）
-		REQUIRE(prop.value(noco::InteractionState::Pressed, selectedStates) == ColorF{0.6, 0.6, 0.6});
+		// selected + Pressed（定義なし → selected時のHoveredにフォールバック）
+		REQUIRE(prop.value(noco::InteractionState::Pressed, selectedStates) == ColorF{0.2, 0.2, 1});
 	}
 	
 	SECTION("Complex priority resolution")
@@ -473,12 +473,12 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 		Array<String> selectedStates = { U"selected" };
 		REQUIRE(prop.value(noco::InteractionState::Pressed, selectedStates) == 220);  // 組み合わせが優先
 		
-		// テストケース3: tab1 + Pressed（組み合わせなし）
-		REQUIRE(prop.value(noco::InteractionState::Pressed, tab1States) == 100);  // tab1のデフォルト値
+		// テストケース3: tab1 + Pressed（組み合わせなし → tab1のHoveredにフォールバック）
+		REQUIRE(prop.value(noco::InteractionState::Pressed, tab1States) == 110);  // tab1のHovered値
 		
 		// テストケース4: 複数styleState + Hovered
 		Array<String> multiStates = { U"tab1", U"selected" };
-		REQUIRE(prop.value(noco::InteractionState::Hovered, multiStates) == 110);  // tab1 + Hoveredの組み合わせが見つかる
+		REQUIRE(prop.value(noco::InteractionState::Hovered, multiStates) == 200);  // selectedが優先され、selectedのHoveredがないためselectedのデフォルト値
 	}
 }
 
