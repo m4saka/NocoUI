@@ -38,13 +38,13 @@ namespace noco
 			return m_value;
 		}
 
-		std::shared_ptr<DataStore> setValue(const TData& value)
+		std::shared_ptr<DataStore<TData>> setValue(const TData& value)
 		{
 			m_value = value;
 			return this->shared_from_this();
 		}
 
-		std::shared_ptr<DataStore> setValue(TData&& data)
+		std::shared_ptr<DataStore<TData>> setValue(TData&& data)
 		{
 			m_value = std::move(data);
 			return this->shared_from_this();
