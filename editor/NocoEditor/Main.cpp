@@ -3202,7 +3202,7 @@ public:
 			Palette::White,
 			HorizontalAlign::Center,
 			VerticalAlign::Middle);
-		addButton->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onAddStyleState(dialogContextMenu); });
+		addButton->addOnClick([this](const std::shared_ptr<Node>&) { onAddStyleState(); });
 		
 		// －削除ボタン
 		m_removeButton = styleStateNode->emplaceChild(
@@ -3223,7 +3223,7 @@ public:
 			HorizontalAlign::Center,
 			VerticalAlign::Middle);
 		m_removeButton->setInteractable(false); // 初期状態では無効
-		m_removeButton->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onRemoveStyleState(dialogContextMenu); });
+		m_removeButton->addOnClick([this](const std::shared_ptr<Node>&) { onRemoveStyleState(); });
 		
 		// 区切り線
 		const auto separatorNode = parentNode->emplaceChild(
@@ -3350,7 +3350,7 @@ public:
 		nodeInfo.propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
 	}
 	
-	void onAddStyleState(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	void onAddStyleState()
 	{
 		if (m_dialogOpener)
 		{
@@ -3386,7 +3386,7 @@ public:
 		}
 	}
 	
-	void onRemoveStyleState(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	void onRemoveStyleState()
 	{
 		if (m_currentStyleState == U"")
 		{
