@@ -1,4 +1,4 @@
-#include "NocoUI/Component/AudioPlayer.hpp"
+﻿#include "NocoUI/Component/AudioPlayer.hpp"
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/Canvas.hpp"
 
@@ -9,10 +9,10 @@ namespace noco
 		Audio GetAudio(const String& audioFilePath, const String& audioAssetName)
 		{
 #ifdef NOCO_EDITOR
-			// �G�f�B�^�ł͏��O
+			// エディタでは除外
 			(void)audioAssetName;
 #else
-			// �C�t���Ȃ������Ƀt�@�C���p�X���g����̂�����邽�߁AAudioAsset�Ɏw�肳�ꂽ�L�[�����݂��Ȃ������t�@�C���p�X�ւ̃t�H�[���o�b�N�͂��Ȃ��d�l�Ƃ���
+			// 気付かないうちにファイルパスが使われるのを避けるため、AudioAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
 			if (!audioAssetName.empty())
 			{
 				return AudioAsset(audioAssetName);
