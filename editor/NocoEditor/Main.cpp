@@ -6948,6 +6948,9 @@ public:
 				createInitialNode();
 				m_historySystem.clear();
 				m_toolbar.updateButtonStates();
+
+				// アセットのルートディレクトリを初期化
+				noco::Asset::SetBaseDirectoryPath(U"");
 			});
 	}
 
@@ -6977,6 +6980,10 @@ public:
 					refresh();
 					m_historySystem.clear();
 					m_toolbar.updateButtonStates();
+
+					// ファイルと同じディレクトリをアセットのルートディレクトリに設定
+					const String folderPath = FileSystem::ParentPath(*filePath);
+					noco::Asset::SetBaseDirectoryPath(folderPath);
 				}
 			});
 	}
@@ -7015,6 +7022,13 @@ public:
 			{
 				m_filePath = filePath;
 				m_savedHash = json.formatMinimum().hash();
+
+				if (noco::Asset::GetBaseDirectoryPath().empty())
+				{
+					// 明示的にアセットパスが指定されていない場合、ファイルと同じディレクトリをアセットのルートディレクトリに設定
+					const String folderPath = FileSystem::ParentPath(*filePath);
+					noco::Asset::SetBaseDirectoryPath(folderPath);
+				}
 			}
 			else
 			{

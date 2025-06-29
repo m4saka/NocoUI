@@ -21,15 +21,21 @@ namespace noco
 
 	Texture Asset::GetOrLoadTexture(FilePathView filePath)
 	{
-		if (filePath.isEmpty() || !FileSystem::IsFile(filePath))
+		if (filePath.isEmpty())
 		{
-			return Texture();
+			return Texture{};
 		}
-		if (!TextureAsset::IsRegistered(filePath))
+		const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
+		const String key = AssetNamePrefix + filePath;
+		if (!AudioAsset::IsRegistered(key))
 		{
-			TextureAsset::Register(AssetNamePrefix + filePath, FileSystem::PathAppend(s_baseDirectoryPath, filePath));
+			if (!FileSystem::IsFile(combinedPath))
+			{
+				return Texture{};
+			}
+			TextureAsset::Register(key, combinedPath);
 		}
-		return TextureAsset(AssetNamePrefix + filePath);
+		return TextureAsset(key);
 	}
 
 	Texture Asset::ReloadTexture(FilePathView filePath)
@@ -67,15 +73,21 @@ namespace noco
 
 	Audio Asset::GetOrLoadAudio(FilePathView filePath)
 	{
-		if (filePath.isEmpty() || !FileSystem::IsFile(filePath))
+		if (filePath.isEmpty())
 		{
-			return Audio();
+			return Audio{};
 		}
-		if (!AudioAsset::IsRegistered(filePath))
+		const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
+		const String key = AssetNamePrefix + filePath;
+		if (!AudioAsset::IsRegistered(key))
 		{
-			AudioAsset::Register(AssetNamePrefix + filePath, FileSystem::PathAppend(s_baseDirectoryPath, filePath));
+			if (!FileSystem::IsFile(combinedPath))
+			{
+				return Audio{};
+			}
+			AudioAsset::Register(key, combinedPath);
 		}
-		return AudioAsset(AssetNamePrefix + filePath);
+		return AudioAsset(key);
 	}
 
 	Audio Asset::ReloadAudio(FilePathView filePath)
