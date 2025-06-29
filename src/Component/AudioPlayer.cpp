@@ -30,6 +30,7 @@ namespace noco
 	{
 		const auto triggerType = m_triggerType.value();
 		const bool recursive = m_recursive.value();
+		const bool includingDisabled = m_includingDisabled.value();
 
 		auto play = [&]() {
 			const String& audioFilePath = m_audioFilePath.value();
@@ -44,13 +45,13 @@ namespace noco
 		switch (triggerType)
 		{
 		case TriggerType::Click:
-			if (node->isClicked(RecursiveYN{ recursive }))
+			if (node->isClicked(RecursiveYN{ recursive }, IncludingDisabledYN{ includingDisabled }))
 			{
 				play();
 			}
 			break;
 		case TriggerType::RightClick:
-			if (node->isRightClicked(RecursiveYN{ recursive }))
+			if (node->isRightClicked(RecursiveYN{ recursive }, IncludingDisabledYN{ includingDisabled }))
 			{
 				play();
 			}
@@ -58,7 +59,7 @@ namespace noco
 		case TriggerType::HoverStart:
 			if (recursive)
 			{
-				if (node->isHovered(RecursiveYN::Yes))
+				if (node->isHovered(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevHoveredRecursive.has_value() && !m_prevHoveredRecursive.value())
 					{
@@ -73,7 +74,7 @@ namespace noco
 			}
 			else
 			{
-				if (node->isHovered())
+				if (node->isHovered(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevHovered.has_value() && !m_prevHovered.value())
 					{
@@ -90,7 +91,7 @@ namespace noco
 		case TriggerType::HoverEnd:
 			if (recursive)
 			{
-				if (!node->isHovered(RecursiveYN::Yes))
+				if (!node->isHovered(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevHoveredRecursive.has_value() && m_prevHoveredRecursive.value())
 					{
@@ -105,7 +106,7 @@ namespace noco
 			}
 			else
 			{
-				if (!node->isHovered())
+				if (!node->isHovered(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevHovered.has_value() && m_prevHovered.value())
 					{
@@ -122,7 +123,7 @@ namespace noco
 		case TriggerType::PressStart:
 			if (recursive)
 			{
-				if (node->isPressed(RecursiveYN::Yes))
+				if (node->isPressed(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevPressedRecursive.has_value() && !m_prevPressedRecursive.value())
 					{
@@ -137,7 +138,7 @@ namespace noco
 			}
 			else
 			{
-				if (node->isPressed())
+				if (node->isPressed(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevPressed.has_value() && !m_prevPressed.value())
 					{
@@ -154,7 +155,7 @@ namespace noco
 		case TriggerType::PressEnd:
 			if (recursive)
 			{
-				if (!node->isPressed(RecursiveYN::Yes))
+				if (!node->isPressed(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevPressedRecursive.has_value() && m_prevPressedRecursive.value())
 					{
@@ -169,7 +170,7 @@ namespace noco
 			}
 			else
 			{
-				if (!node->isPressed())
+				if (!node->isPressed(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevPressed.has_value() && m_prevPressed.value())
 					{
@@ -186,7 +187,7 @@ namespace noco
 		case TriggerType::RightPressStart:
 			if (recursive)
 			{
-				if (node->isRightPressed(RecursiveYN::Yes))
+				if (node->isRightPressed(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevRightPressedRecursive.has_value() && !m_prevRightPressedRecursive.value())
 					{
@@ -201,7 +202,7 @@ namespace noco
 			}
 			else
 			{
-				if (node->isRightPressed())
+				if (node->isRightPressed(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevRightPressed.has_value() && !m_prevRightPressed.value())
 					{
@@ -218,7 +219,7 @@ namespace noco
 		case TriggerType::RightPressEnd:
 			if (recursive)
 			{
-				if (!node->isRightPressed(RecursiveYN::Yes))
+				if (!node->isRightPressed(RecursiveYN::Yes, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevRightPressedRecursive.has_value() && m_prevRightPressedRecursive.value())
 					{
@@ -233,7 +234,7 @@ namespace noco
 			}
 			else
 			{
-				if (!node->isRightPressed())
+				if (!node->isRightPressed(RecursiveYN::No, IncludingDisabledYN{ includingDisabled }))
 				{
 					if (m_prevRightPressed.has_value() && m_prevRightPressed.value())
 					{

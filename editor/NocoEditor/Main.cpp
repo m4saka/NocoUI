@@ -1211,6 +1211,9 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"AudioPlayer", U"recursive" }] = PropertyMetadata{
 		.tooltip = U"子孫要素のインタラクションも対象にするかどうか",
 	};
+	metadata[PropertyKey{ U"AudioPlayer", U"includingDisabled" }] = PropertyMetadata{
+		.tooltip = U"InteractionStateがDisabledの要素への操作でもオーディオを再生するかどうか",
+	};
 	
 	return metadata;
 }

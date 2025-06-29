@@ -27,6 +27,7 @@ namespace noco
 		PropertyNonInteractive<TriggerType> m_triggerType;
 		Property<double> m_volume;
 		PropertyNonInteractive<bool> m_recursive;
+		PropertyNonInteractive<bool> m_includingDisabled;
 
 		/* NonSerialized */ Optional<bool> m_prevHovered = false;
 		/* NonSerialized */ Optional<bool> m_prevPressed = none;
@@ -36,13 +37,14 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
 
 	public:
-		AudioPlayer(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No)
-			: SerializableComponentBase{ U"AudioPlayer", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive } }
+		AudioPlayer(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No)
+			: SerializableComponentBase{ U"AudioPlayer", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
 			, m_audioFilePath{ U"audioFilePath", audioFilePath }
 			, m_audioAssetName{ U"audioAssetName", audioAssetName }
 			, m_triggerType{ U"triggerType", triggerType }
 			, m_volume{ U"volume", volume }
 			, m_recursive{ U"recursive", recursive.getBool() }
+			, m_includingDisabled{ U"includingDisabled", includingDisabled.getBool() }
 		{
 		}
 
@@ -100,6 +102,17 @@ namespace noco
 		std::shared_ptr<AudioPlayer> setRecursive(bool value)
 		{
 			m_recursive.setValue(value);
+			return shared_from_this();
+		}
+
+		bool includingDisabled() const
+		{
+			return m_includingDisabled.value();
+		}
+
+		std::shared_ptr<AudioPlayer> setIncludingDisabled(bool value)
+		{
+			m_includingDisabled.setValue(value);
 			return shared_from_this();
 		}
 	};
