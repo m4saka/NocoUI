@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "YN.hpp"
 #include "magic_enum.hpp" // https://github.com/Neargye/magic_enum
 
 namespace noco
@@ -149,6 +150,12 @@ namespace noco
 	
 	class ComponentBase;
 	
+	namespace detail
+	{
+		[[nodiscard]]
+		std::shared_ptr<ComponentBase> CreateComponentFromJSONImpl(const JSON& json, IncludesInternalIdYN includesInternalId);
+	}
+
 	[[nodiscard]]
 	std::shared_ptr<ComponentBase> CreateComponentFromJSON(const JSON& json);
 }
