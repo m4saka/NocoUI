@@ -3042,6 +3042,25 @@ public:
 							String newState = String{ inputValue };
 							if (!m_availableStyleStates.contains(newState))
 							{
+								// 現在のstyleStateから値をコピー
+								Array<String> currentActiveStyleStates;
+								if (!m_currentStyleState.isEmpty())
+								{
+									currentActiveStyleStates.push_back(m_currentStyleState);
+								}
+								
+								Array<String> newActiveStyleStates = { newState };
+								
+								// 各InteractionStateの値をコピー
+								for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+								{
+									if (m_pProperty->hasPropertyValueOf(interactionState, currentActiveStyleStates))
+									{
+										const String value = m_pProperty->propertyValueStringOfFallback(interactionState, currentActiveStyleStates);
+										m_pProperty->trySetPropertyValueStringOf(value, interactionState, newActiveStyleStates);
+									}
+								}
+								
 								m_availableStyleStates.push_back(newState);
 								selectStyleState(newState);
 							}
