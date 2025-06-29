@@ -1208,6 +1208,9 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	metadata[PropertyKey{ U"AudioPlayer", U"volume" }] = PropertyMetadata{
 		.tooltip = U"音量 (0.0 ~ 1.0)",
 	};
+	metadata[PropertyKey{ U"AudioPlayer", U"recursive" }] = PropertyMetadata{
+		.tooltip = U"子孫要素のインタラクションも対象にするかどうか",
+	};
 	
 	return metadata;
 }

@@ -26,18 +26,23 @@ namespace noco
 		Property<String> m_audioAssetName;
 		PropertyNonInteractive<TriggerType> m_triggerType;
 		Property<double> m_volume;
+		PropertyNonInteractive<bool> m_recursive;
 
 		/* NonSerialized */ Optional<bool> m_prevHovered = false;
 		/* NonSerialized */ Optional<bool> m_prevPressed = none;
 		/* NonSerialized */ Optional<bool> m_prevRightPressed = none;
+		/* NonSerialized */ Optional<bool> m_prevHoveredRecursive = false;
+		/* NonSerialized */ Optional<bool> m_prevPressedRecursive = none;
+		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
 
 	public:
-		AudioPlayer(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0)
-			: SerializableComponentBase{ U"AudioPlayer", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume } }
+		AudioPlayer(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No)
+			: SerializableComponentBase{ U"AudioPlayer", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive } }
 			, m_audioFilePath{ U"audioFilePath", audioFilePath }
 			, m_audioAssetName{ U"audioAssetName", audioAssetName }
 			, m_triggerType{ U"triggerType", triggerType }
 			, m_volume{ U"volume", volume }
+			, m_recursive{ U"recursive", recursive.getBool() }
 		{
 		}
 
@@ -84,6 +89,17 @@ namespace noco
 		std::shared_ptr<AudioPlayer> setVolume(const PropertyValue<double>& value)
 		{
 			m_volume.setPropertyValue(value);
+			return shared_from_this();
+		}
+
+		bool recursive() const
+		{
+			return m_recursive.value();
+		}
+
+		std::shared_ptr<AudioPlayer> setRecursive(bool value)
+		{
+			m_recursive.setValue(value);
 			return shared_from_this();
 		}
 	};

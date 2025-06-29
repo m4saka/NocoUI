@@ -9,10 +9,10 @@ namespace noco
 		Audio GetAudio(const String& audioFilePath, const String& audioAssetName)
 		{
 #ifdef NOCO_EDITOR
-			// ƒGƒfƒBƒ^‚Å‚ÍœŠO
+			// ï¿½Gï¿½fï¿½Bï¿½^ï¿½Å‚Íï¿½ï¿½O
 			(void)audioAssetName;
 #else
-			// ‹C•t‚©‚È‚¢‚¤‚¿‚Éƒtƒ@ƒCƒ‹ƒpƒX‚ªg‚í‚ê‚é‚Ì‚ğ”ğ‚¯‚é‚½‚ßAAudioAsset‚Éw’è‚³‚ê‚½ƒL[‚ª‘¶İ‚µ‚È‚¢‚àƒtƒ@ƒCƒ‹ƒpƒX‚Ö‚ÌƒtƒH[ƒ‹ƒoƒbƒN‚Í‚µ‚È‚¢d—l‚Æ‚·‚é
+			// ï¿½Cï¿½tï¿½ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Éƒtï¿½@ï¿½Cï¿½ï¿½ï¿½pï¿½Xï¿½ï¿½ï¿½gï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½ï¿½ï¿½é‚½ï¿½ßAAudioAssetï¿½Éwï¿½è‚³ï¿½ê‚½ï¿½Lï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½İ‚ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½pï¿½Xï¿½Ö‚Ìƒtï¿½Hï¿½[ï¿½ï¿½ï¿½oï¿½bï¿½Nï¿½Í‚ï¿½ï¿½È‚ï¿½ï¿½dï¿½lï¿½Æ‚ï¿½ï¿½ï¿½
 			if (!audioAssetName.empty())
 			{
 				return AudioAsset(audioAssetName);
@@ -29,6 +29,7 @@ namespace noco
 	void AudioPlayer::update(const std::shared_ptr<Node>& node)
 	{
 		const auto triggerType = m_triggerType.value();
+		const bool recursive = m_recursive.value();
 
 		auto play = [&]() {
 			const String& audioFilePath = m_audioFilePath.value();
@@ -43,99 +44,207 @@ namespace noco
 		switch (triggerType)
 		{
 		case TriggerType::Click:
-			if (node->isClicked())
+			if (node->isClicked(RecursiveYN{ recursive }))
 			{
 				play();
 			}
 			break;
 		case TriggerType::RightClick:
-			if (node->isRightClicked())
+			if (node->isRightClicked(RecursiveYN{ recursive }))
 			{
 				play();
 			}
 			break;
 		case TriggerType::HoverStart:
-			if (node->isHovered())
+			if (recursive)
 			{
-				if (m_prevHovered.has_value() && !m_prevHovered.value())
+				if (node->isHovered(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevHoveredRecursive.has_value() && !m_prevHoveredRecursive.value())
+					{
+						play();
+					}
+					m_prevHoveredRecursive = true;
 				}
-				m_prevHovered = true;
+				else
+				{
+					m_prevHoveredRecursive = false;
+				}
 			}
 			else
 			{
-				m_prevHovered = false;
+				if (node->isHovered())
+				{
+					if (m_prevHovered.has_value() && !m_prevHovered.value())
+					{
+						play();
+					}
+					m_prevHovered = true;
+				}
+				else
+				{
+					m_prevHovered = false;
+				}
 			}
 			break;
 		case TriggerType::HoverEnd:
-			if (!node->isHovered())
+			if (recursive)
 			{
-				if (m_prevHovered.has_value() && m_prevHovered.value())
+				if (!node->isHovered(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevHoveredRecursive.has_value() && m_prevHoveredRecursive.value())
+					{
+						play();
+					}
+					m_prevHoveredRecursive = false;
 				}
-				m_prevHovered = false;
+				else
+				{
+					m_prevHoveredRecursive = true;
+				}
 			}
 			else
 			{
-				m_prevHovered = true;
+				if (!node->isHovered())
+				{
+					if (m_prevHovered.has_value() && m_prevHovered.value())
+					{
+						play();
+					}
+					m_prevHovered = false;
+				}
+				else
+				{
+					m_prevHovered = true;
+				}
 			}
 			break;
 		case TriggerType::PressStart:
-			if (node->isPressed())
+			if (recursive)
 			{
-				if (m_prevPressed.has_value() && !m_prevPressed.value())
+				if (node->isPressed(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevPressedRecursive.has_value() && !m_prevPressedRecursive.value())
+					{
+						play();
+					}
+					m_prevPressedRecursive = true;
 				}
-				m_prevPressed = true;
+				else
+				{
+					m_prevPressedRecursive = false;
+				}
 			}
 			else
 			{
-				m_prevPressed = false;
+				if (node->isPressed())
+				{
+					if (m_prevPressed.has_value() && !m_prevPressed.value())
+					{
+						play();
+					}
+					m_prevPressed = true;
+				}
+				else
+				{
+					m_prevPressed = false;
+				}
 			}
 			break;
 		case TriggerType::PressEnd:
-			if (!node->isPressed())
+			if (recursive)
 			{
-				if (m_prevPressed.has_value() && m_prevPressed.value())
+				if (!node->isPressed(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevPressedRecursive.has_value() && m_prevPressedRecursive.value())
+					{
+						play();
+					}
+					m_prevPressedRecursive = false;
 				}
-				m_prevPressed = false;
+				else
+				{
+					m_prevPressedRecursive = true;
+				}
 			}
 			else
 			{
-				m_prevPressed = true;
+				if (!node->isPressed())
+				{
+					if (m_prevPressed.has_value() && m_prevPressed.value())
+					{
+						play();
+					}
+					m_prevPressed = false;
+				}
+				else
+				{
+					m_prevPressed = true;
+				}
 			}
 			break;
 		case TriggerType::RightPressStart:
-			if (node->isRightPressed())
+			if (recursive)
 			{
-				if (m_prevRightPressed.has_value() && !m_prevRightPressed.value())
+				if (node->isRightPressed(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevRightPressedRecursive.has_value() && !m_prevRightPressedRecursive.value())
+					{
+						play();
+					}
+					m_prevRightPressedRecursive = true;
 				}
-				m_prevRightPressed = true;
+				else
+				{
+					m_prevRightPressedRecursive = false;
+				}
 			}
 			else
 			{
-				m_prevRightPressed = false;
+				if (node->isRightPressed())
+				{
+					if (m_prevRightPressed.has_value() && !m_prevRightPressed.value())
+					{
+						play();
+					}
+					m_prevRightPressed = true;
+				}
+				else
+				{
+					m_prevRightPressed = false;
+				}
 			}
 			break;
 		case TriggerType::RightPressEnd:
-			if (!node->isRightPressed())
+			if (recursive)
 			{
-				if (m_prevRightPressed.has_value() && m_prevRightPressed.value())
+				if (!node->isRightPressed(RecursiveYN::Yes))
 				{
-					play();
+					if (m_prevRightPressedRecursive.has_value() && m_prevRightPressedRecursive.value())
+					{
+						play();
+					}
+					m_prevRightPressedRecursive = false;
 				}
-				m_prevRightPressed = false;
+				else
+				{
+					m_prevRightPressedRecursive = true;
+				}
 			}
 			else
 			{
-				m_prevRightPressed = true;
+				if (!node->isRightPressed())
+				{
+					if (m_prevRightPressed.has_value() && m_prevRightPressed.value())
+					{
+						play();
+					}
+					m_prevRightPressed = false;
+				}
+				else
+				{
+					m_prevRightPressed = true;
+				}
 			}
 			break;
 		}
