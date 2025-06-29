@@ -256,13 +256,11 @@ namespace noco
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponent(RecursiveYN recursive = RecursiveYN::No) const
-			requires std::derived_from<TComponent, ComponentBase>;
+		std::shared_ptr<TComponent> getComponent(RecursiveYN recursive = RecursiveYN::No) const;
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const
-			requires std::derived_from<TComponent, ComponentBase>;
+		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No);
@@ -626,7 +624,6 @@ namespace noco
 	template <class TComponent>
 	[[nodiscard]]
 	std::shared_ptr<TComponent> Node::getComponent(RecursiveYN recursive) const
-		requires std::derived_from<TComponent, ComponentBase>
 	{
 		if (const auto component = getComponentOrNull<TComponent>(RecursiveYN::No))
 		{
@@ -648,7 +645,6 @@ namespace noco
 	template <class TComponent>
 	[[nodiscard]]
 	std::shared_ptr<TComponent> Node::getComponentOrNull(RecursiveYN recursive) const
-		requires std::derived_from<TComponent, ComponentBase>
 	{
 		for (const auto& component : m_components)
 		{

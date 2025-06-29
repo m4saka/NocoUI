@@ -251,6 +251,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\NocoUI\Component\AudioPlayer.hpp" />
+    <ClInclude Include="CheckboxToggler.hpp" />
+    <ClInclude Include="ColorPropertyTextBox.hpp" />
+    <ClInclude Include="ContextMenu.hpp" />
+    <ClInclude Include="EnumPropertyComboBox.hpp" />
+    <ClInclude Include="LRTBPropertyTextBox.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
@@ -302,6 +307,8 @@
     <ClInclude Include="HistorySystem.hpp" />
     <ClInclude Include="Tooltip.hpp" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Vec2PropertyTextBox.hpp" />
+    <ClInclude Include="Vec4PropertyTextBox.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

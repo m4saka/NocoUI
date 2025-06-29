@@ -4,12 +4,17 @@
 #include "ResizableHandle.hpp"
 #include "Tooltip.hpp"
 #include "TabStop.hpp"
+#include "ContextMenu.hpp"
+#include "EnumPropertyComboBox.hpp"
+#include "CheckboxToggler.hpp"
+#include "Vec2PropertyTextBox.hpp"
+#include "Vec4PropertyTextBox.hpp"
+#include "ColorPropertyTextBox.hpp"
+#include "LRTBPropertyTextBox.hpp"
 
-using namespace noco;
+using namespace noco::editor;
 using noco::detail::IncludesInternalIdYN;
 
-using CheckedYN = YesNo<struct CheckedYN_tag>;
-using ScreenMaskEnabledYN = YesNo<struct ScreenMaskEnabledYN_tag>;
 using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
 using HasInteractivePropertyValueYN = YesNo<struct HasInteractivePropertyValueYN_tag>;
 using IsFoldedYN = YesNo<struct IsFoldedYN_tag>;
@@ -18,374 +23,6 @@ using IsDefaultButtonYN = YesNo<struct IsDefaultButtonYN_tag>;
 using IsCancelButtonYN = YesNo<struct IsCancelButtonYN_tag>;
 
 constexpr int32 MenuBarHeight = 26;
-
-struct MenuItem
-{
-	String text;
-	String hotKeyText;
-	Optional<Input> mnemonicInput = none;
-	std::function<void()> onClick = nullptr;
-	std::function<bool()> fnIsEnabled = [] { return true; };
-};
-
-struct CheckableMenuItem
-{
-	String text;
-	String hotKeyText;
-	Optional<Input> mnemonicInput = none;
-	std::function<void(CheckedYN)> onClick = nullptr;
-	CheckedYN checked = CheckedYN::No;
-	std::function<bool()> fnIsEnabled = [] { return true; };
-};
-
-struct MenuSeparator
-{
-};
-
-using MenuElement = std::variant<MenuItem, CheckableMenuItem, MenuSeparator>;
-
-[[nodiscard]]
-static PropertyValue<ColorF> MenuItemRectFillColor()
-{
-	return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
-}
-
-class ContextMenu
-{
-public:
-	static constexpr int32 DefaultMenuItemWidth = 300;
-	static constexpr int32 MenuItemHeight = 30;
-
-private:
-	std::shared_ptr<Canvas> m_editorOverlayCanvas;
-	std::shared_ptr<Node> m_screenMaskNode;
-	std::shared_ptr<Node> m_rootNode;
-
-	Array<MenuElement> m_elements;
-	Array<std::shared_ptr<Node>> m_elementNodes;
-
-	std::function<void()> m_fnOnHide = nullptr;
-
-	bool m_isFirstUpdateSinceShown = false;
-
-public:
-	explicit ContextMenu(const std::shared_ptr<Canvas>& editorOverlayCanvas, StringView name = U"ContextMenu")
-		: m_editorOverlayCanvas(editorOverlayCanvas)
-		, m_screenMaskNode(editorOverlayCanvas->rootNode()->emplaceChild(
-			U"{}_ScreenMask"_fmt(name),
-			AnchorConstraint
-			{
-				.anchorMin = Anchor::TopLeft,
-				.anchorMax = Anchor::BottomRight,
-				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ 0, 0 },
-				.sizeDeltaPivot = Anchor::TopLeft,
-			}))
-		, m_rootNode(m_screenMaskNode->emplaceChild(
-			U"{}_Root"_fmt(name),
-			AnchorConstraint
-			{
-				.anchorMin = Anchor::TopLeft,
-				.anchorMax = Anchor::TopLeft,
-				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ DefaultMenuItemWidth, 0 },
-				.sizeDeltaPivot = Anchor::TopLeft,
-			}))
-	{
-		m_screenMaskNode->emplaceComponent<InputBlocker>();
-		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
-
-		m_rootNode->setBoxChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
-		m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
-		m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
-
-		m_editorOverlayCanvas->refreshLayout();
-	}
-
-	void show(const Vec2& pos, const Array<MenuElement>& elements, int32 menuItemWidth = DefaultMenuItemWidth, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
-	{
-		// 前回開いていたメニューを閉じてから表示
-		hide(RefreshesLayoutYN::No);
-		m_elements = elements;
-		m_elementNodes.reserve(m_elements.size());
-		m_fnOnHide = std::move(fnOnHide);
-
-		if (const AnchorConstraint* pAnchorConstraint = m_rootNode->anchorConstraint())
-		{
-			AnchorConstraint newConstraint = *pAnchorConstraint;
-			newConstraint.sizeDelta.x = menuItemWidth;
-			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
-		}
-
-		for (size_t i = 0; i < m_elements.size(); ++i)
-		{
-			if (const auto pItem = std::get_if<MenuItem>(&m_elements[i]))
-			{
-				// 項目
-				const auto itemNode = m_rootNode->emplaceChild(
-					U"MenuItem_{}"_fmt(i),
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, MenuItemHeight },
-					},
-					IsHitTargetYN::Yes,
-					InheritChildrenStateFlags::None,
-					RefreshesLayoutYN::No);
-				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-				const auto label = itemNode->emplaceComponent<Label>(pItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				if (!pItem->hotKeyText.empty())
-				{
-					itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
-				}
-				if (pItem->mnemonicInput.has_value())
-				{
-					// ショートカットキー(ニーモニック)があれば追加
-					const Input& input = *pItem->mnemonicInput;
-					itemNode->addClickHotKey(input);
-					String text = label->text().defaultValue;
-					bool dot = false;
-					if (text.ends_with(U"..."))
-					{
-						text = text.substr(0, text.size() - 3);
-						dot = true;
-					}
-					label->setText(U"{}({}){}"_fmt(text, input.name(), dot ? U"..." : U""));
-				}
-				itemNode->setInteractable(pItem->fnIsEnabled());
-				m_elementNodes.push_back(itemNode);
-			}
-			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
-			{
-				// チェック可能な項目
-				const auto itemNode = m_rootNode->emplaceChild(
-					U"CheckableMenuItem_{}"_fmt(i),
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, MenuItemHeight },
-					},
-					IsHitTargetYN::Yes,
-					InheritChildrenStateFlags::None,
-					RefreshesLayoutYN::No);
-				itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-				const auto label = itemNode->emplaceComponent<Label>(pCheckableItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
-				if (!pCheckableItem->hotKeyText.empty())
-				{
-					itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
-				}
-				if (pCheckableItem->mnemonicInput.has_value())
-				{
-					// ショートカットキー(ニーモニック)があれば追加
-					const Input& input = *pCheckableItem->mnemonicInput;
-					itemNode->addClickHotKey(input);
-					String text = label->text().defaultValue;
-					bool dot = false;
-					if (text.ends_with(U"..."))
-					{
-						text = text.substr(0, text.size() - 3);
-						dot = true;
-					}
-					label->setText(U"{}({}){}"_fmt(text, input.name(), dot ? U"..." : U""));
-				}
-				itemNode->emplaceComponent<Label>(
-					pCheckableItem->checked ? U"✔" : U"",
-					U"",
-					14,
-					PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }),
-					HorizontalAlign::Left,
-					VerticalAlign::Middle,
-					LRTB{ 10, 10, 0, 0 });
-				itemNode->setInteractable(pCheckableItem->fnIsEnabled());
-				m_elementNodes.push_back(itemNode);
-			}
-			else if (std::holds_alternative<MenuSeparator>(m_elements[i]))
-			{
-				// セパレータ
-				const auto separatorNode = m_rootNode->emplaceChild(
-					U"Separator",
-					BoxConstraint
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, 8 },
-					},
-					IsHitTargetYN::No,
-					InheritChildrenStateFlags::None,
-					RefreshesLayoutYN::No);
-				separatorNode->emplaceChild(
-					U"SeparatorLine",
-					AnchorConstraint
-					{
-						.anchorMin = Anchor::MiddleLeft,
-						.anchorMax = Anchor::MiddleRight,
-						.sizeDelta = Vec2{ -10, 1 },
-						.sizeDeltaPivot = Anchor::MiddleCenter,
-					},
-					IsHitTargetYN::No)
-					->emplaceComponent<RectRenderer>(ColorF{ 0.7 });
-
-				m_elementNodes.push_back(separatorNode);
-			}
-		}
-
-		double x = pos.x;
-		double y = pos.y;
-
-		// 右端にはみ出す場合は左に寄せる
-		if (x + menuItemWidth > Scene::Width())
-		{
-			x = Scene::Width() - menuItemWidth;
-		}
-
-		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
-		{
-			auto newConstraint = *pAnchorConstraint;
-			newConstraint.sizeDelta.y = m_rootNode->getFittingSizeToChildren().y;
-			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
-		}
-
-		// 下端にはみ出す場合は上に寄せる
-		const double menuHeight = m_rootNode->anchorConstraint()->sizeDelta.y;
-		if (y + menuHeight > Scene::Height())
-		{
-			y = Scene::Height() - menuHeight;
-		}
-
-		if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
-		{
-			auto newConstraint = *pAnchorConstraint;
-			newConstraint.posDelta = Vec2{ x, y };
-			m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
-		}
-
-		m_screenMaskNode->setIsHitTarget(screenMaskEnabled.getBool());
-		m_screenMaskNode->setActive(ActiveYN::Yes, RefreshesLayoutYN::Yes);
-
-		m_isFirstUpdateSinceShown = true;
-	}
-
-	void hide(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
-	{
-		if (m_fnOnHide)
-		{
-			m_fnOnHide();
-			m_fnOnHide = nullptr;
-		}
-		m_elements.clear();
-		m_elementNodes.clear();
-		m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
-		m_rootNode->removeChildrenAll(RefreshesLayoutYN::No);
-		m_isFirstUpdateSinceShown = false;
-		if (refreshesLayout)
-		{
-			m_editorOverlayCanvas->refreshLayout();
-		}
-	}
-
-	void update()
-	{
-		// 初回フレームは閉じる判定しない
-		if (!m_screenMaskNode->activeSelf() || m_isFirstUpdateSinceShown)
-		{
-			m_isFirstUpdateSinceShown = false;
-			return;
-		}
-
-		// メニュー項目クリック判定
-		for (size_t i = 0; i < m_elements.size(); ++i)
-		{
-			if (const auto pItem = std::get_if<MenuItem>(&m_elements[i]))
-			{
-				if (m_elementNodes[i]->isClicked())
-				{
-					if (pItem->onClick)
-					{
-						pItem->onClick();
-						hide();
-						break;
-					}
-				}
-			}
-			else if (const auto pCheckableItem = std::get_if<CheckableMenuItem>(&m_elements[i]))
-			{
-				if (m_elementNodes[i]->isClicked())
-				{
-					if (pCheckableItem->onClick)
-					{
-						pCheckableItem->onClick(CheckedYN{ !pCheckableItem->checked });
-						// pCheckableItemは下記のhideで即座に解放されるため、ここでのpCheckableItemのチェック状態の書き換えは不要
-						hide();
-						break;
-					}
-				}
-			}
-		}
-
-		if (!m_rootNode->isHovered(RecursiveYN::Yes) && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
-		{
-			// メニュー外クリックで閉じる
-			// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
-			hide();
-		}
-		else if (KeyEscape.down())
-		{
-			// Escキーで閉じる
-			// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
-			hide();
-		}
-		else if (!Window::GetState().focused)
-		{
-			// ウィンドウが非アクティブになった場合は閉じる
-			hide();
-		}
-	}
-
-	[[nodiscard]]
-	bool isHoveredRecursive() const
-	{
-		return m_rootNode->isHovered(RecursiveYN::Yes);
-	}
-};
-
-class ContextMenuOpener : public ComponentBase
-{
-private:
-	std::shared_ptr<ContextMenu> m_contextMenu;
-	Array<MenuElement> m_menuElements;
-	std::function<void()> m_fnBeforeOpen;
-	RecursiveYN m_recursive;
-
-public:
-	explicit ContextMenuOpener(const std::shared_ptr<ContextMenu>& contextMenu, Array<MenuElement> menuElements, std::function<void()> fnBeforeOpen = nullptr, RecursiveYN recursive = RecursiveYN::No)
-		: ComponentBase{ {} }
-		, m_contextMenu{ contextMenu }
-		, m_menuElements{ std::move(menuElements) }
-		, m_fnBeforeOpen{ std::move(fnBeforeOpen) }
-		, m_recursive{ recursive }
-	{
-	}
-
-	void update(const std::shared_ptr<Node>& node) override
-	{
-		if (node->isRightClicked(RecursiveYN{ m_recursive }))
-		{
-			openManually();
-		}
-	}
-
-	void draw(const Node&) const override
-	{
-	}
-
-	void openManually(const Vec2& pos = Cursor::PosF()) const
-	{
-		if (m_fnBeforeOpen)
-		{
-			m_fnBeforeOpen();
-		}
-		m_contextMenu->show(pos, m_menuElements);
-	}
-};
 
 struct MenuCategory
 {
@@ -3283,7 +2920,36 @@ public:
 		}
 	}
 	
-	void refreshPropertyValues();
+	void refreshPropertyValues()
+	{
+		// 現在のstyleStateに基づいてactiveStyleStatesを構築
+		Array<String> activeStyleStates;
+		if (!m_currentStyleState.isEmpty())
+		{
+			activeStyleStates.push_back(m_currentStyleState);
+		}
+
+		// 各InteractionStateの値を更新
+		for (const auto& [interactionState, nodeInfo] : m_propertyValueNodes)
+		{
+			// 現在の値を取得
+			const String currentValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
+			*nodeInfo.currentValueString = currentValue;
+
+			// UIを更新
+			updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
+
+			// チェックボックスの状態を更新
+			const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
+			if (const auto toggler = nodeInfo.checkboxNode->getComponent<CheckboxToggler>())
+			{
+				toggler->setValue(hasValue);
+			}
+
+			// Defaultは常に値が存在するのでチェックボックスは無効
+			nodeInfo.checkboxNode->setInteractable(interactionState != InteractionState::Default);
+		}
+	}
 	
 	void updatePropertyValueNode(InteractionState interactionState, const PropertyValueNodeInfo& nodeInfo, const String& value, const Array<String>& activeStyleStates)
 	{
@@ -3291,31 +2957,67 @@ public:
 		switch (m_pProperty->editType())
 		{
 		case PropertyEditType::Text:
-			if (auto textBox = nodeInfo.propertyValueNode->getComponent<TextBox>())
+			if (const auto textBox = nodeInfo.propertyValueNode->getComponentOrNull<TextBox>(RecursiveYN::Yes))
 			{
 				textBox->setText(value);
 			}
+			else if (const auto textArea = nodeInfo.propertyValueNode->getComponentOrNull<TextArea>(RecursiveYN::Yes))
+			{
+				textArea->setText(value);
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] TextBox or TextArea not found";
+			}
 			break;
 		case PropertyEditType::Bool:
-			// TODO: Boolプロパティの更新
+			if (const auto checkboxToggler = nodeInfo.propertyValueNode->getComponentOrNull<CheckboxToggler>(RecursiveYN::Yes))
+			{
+				checkboxToggler->setValue(StringToValueOpt<bool>(value).value_or(false));
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] CheckboxToggler not found";
+			}
 			break;
 		case PropertyEditType::Vec2:
-			// TODO: Vec2プロパティの更新
+			if (const auto vec2PropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<Vec2PropertyTextBox>(RecursiveYN::Yes))
+			{
+				vec2PropertyTextBox->setValue(StringToValueOpt<Vec2>(value).value_or(Vec2::Zero()));
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] Vec2PropertyTextBox not found";
+			}
 			break;
 		case PropertyEditType::Color:
-			// TODO: Colorプロパティの更新
+			if (const auto colorPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<ColorPropertyTextBox>(RecursiveYN::Yes))
+			{
+				colorPropertyTextBox->setValue(StringToValueOpt<ColorF>(value).value_or(ColorF{ Palette::White }));
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] ColorPropertyTextBox not found";
+			}
 			break;
 		case PropertyEditType::LRTB:
-			// TODO: LRTBプロパティの更新
+			if (const auto lrtbPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<LRTBPropertyTextBox>(RecursiveYN::Yes))
+			{
+				lrtbPropertyTextBox->setValue(StringToValueOpt<LRTB>(value).value_or(LRTB::Zero()));
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] LRTBPropertyTextBox not found";
+			}
 			break;
 		case PropertyEditType::Enum:
-			// EnumPropertyNodeのラベルを更新
-			if (auto comboBoxNode = nodeInfo.propertyValueNode->getChildByNameOrNull(U"ComboBox"))
+			if (const auto comboBox = nodeInfo.propertyValueNode->getComponentOrNull<EnumPropertyComboBox>(RecursiveYN::Yes))
 			{
-				if (auto label = comboBoxNode->getComponent<Label>())
-				{
-					label->setText(value);
-				}
+				comboBox->setValue(value);
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] EnumPropertyComboBox not found";
 			}
 			break;
 		}
@@ -3452,65 +3154,6 @@ void Hierarchy::setWidth(double width)
 		const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
 	}
 }
-
-class CheckboxToggler : public ComponentBase
-{
-private:
-	bool m_value;
-	std::function<void(bool)> m_fnSetValue;
-	std::shared_ptr<Label> m_checkLabel;
-	bool m_useParentHoverState;
-
-public:
-	CheckboxToggler(bool initialValue,
-		std::function<void(bool)> fnSetValue,
-		const std::shared_ptr<Label>& checkLabel,
-		bool useParentHoverState)
-		: ComponentBase{ {} }
-		, m_value(initialValue)
-		, m_fnSetValue(std::move(fnSetValue))
-		, m_checkLabel(checkLabel)
-		, m_useParentHoverState(useParentHoverState)
-	{
-	}
-
-	void setValue(bool value)
-	{
-		m_value = value;
-		m_checkLabel->setText(m_value ? U"✓" : U"");
-	}
-
-	bool value() const
-	{
-		return m_value;
-	}
-
-	void update(const std::shared_ptr<Node>& node) override
-	{
-		// クリックでON/OFFをトグル
-		bool isClicked = false;
-		if (m_useParentHoverState)
-		{
-			if (const auto parent = node->findHoverTargetParent())
-			{
-				isClicked = parent->isClicked();
-			}
-		}
-		else
-		{
-			isClicked = node->isClicked();
-		}
-		if (isClicked)
-		{
-			m_value = !m_value;
-			m_checkLabel->setText(m_value ? U"✓" : U"");
-			if (m_fnSetValue)
-			{
-				m_fnSetValue(m_value);
-			}
-		}
-	}
-};
 
 class Inspector
 {
@@ -4432,55 +4075,11 @@ public:
 		textBoxYNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
-		class Vec2PropertyTextBox : public ComponentBase
-		{
-		private:
-			std::shared_ptr<TextBox> m_textBoxX;
-			std::shared_ptr<TextBox> m_textBoxY;
-			std::function<void(const Vec2&)> m_fnSetValue;
-			Vec2 m_prevValue;
-
-		public:
-			Vec2PropertyTextBox(
-				const std::shared_ptr<TextBox>& textBoxX,
-				const std::shared_ptr<TextBox>& textBoxY,
-				std::function<void(const Vec2&)> fnSetValue,
-				const Vec2& initialValue)
-				: ComponentBase{ {} }
-				, m_textBoxX(textBoxX)
-				, m_textBoxY(textBoxY)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_prevValue(initialValue)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>&) override
-			{
-				const double x = ParseOpt<double>(m_textBoxX->text()).value_or(m_prevValue.x);
-				const double y = ParseOpt<double>(m_textBoxY->text()).value_or(m_prevValue.y);
-
-				const Vec2 newValue{ x, y };
-				if (newValue != m_prevValue)
-				{
-					m_prevValue = newValue;
-					if (m_fnSetValue)
-					{
-						m_fnSetValue(newValue);
-					}
-				}
-			}
-
-			void draw(const Node&) const override
-			{
-			}
-		};
-
 		propertyNode->addComponent(std::make_shared<Vec2PropertyTextBox>(
 			textBoxX,
 			textBoxY,
 			fnSetValue,
-			currentValue
-		));
+			currentValue));
 
 		return propertyNode;
 	}
@@ -4601,57 +4200,6 @@ public:
 			U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 		textBoxWNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
-
-		class Vec4PropertyTextBox : public ComponentBase
-		{
-		private:
-			std::shared_ptr<TextBox> m_textBoxX;
-			std::shared_ptr<TextBox> m_textBoxY;
-			std::shared_ptr<TextBox> m_textBoxZ;
-			std::shared_ptr<TextBox> m_textBoxW;
-			std::function<void(const Vec4&)> m_fnSetValue;
-			Vec4 m_prevValue;
-
-		public:
-			Vec4PropertyTextBox(
-				const std::shared_ptr<TextBox>& textBoxX,
-				const std::shared_ptr<TextBox>& textBoxY,
-				const std::shared_ptr<TextBox>& textBoxZ,
-				const std::shared_ptr<TextBox>& textBoxW,
-				std::function<void(const Vec4&)> fnSetValue,
-				const Vec4& initialValue)
-				: ComponentBase{ {} }
-				, m_textBoxX(textBoxX)
-				, m_textBoxY(textBoxY)
-				, m_textBoxZ(textBoxZ)
-				, m_textBoxW(textBoxW)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_prevValue(initialValue)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>&) override
-			{
-				const double x = ParseOpt<double>(m_textBoxX->text()).value_or(m_prevValue.x);
-				const double y = ParseOpt<double>(m_textBoxY->text()).value_or(m_prevValue.y);
-				const double z = ParseOpt<double>(m_textBoxZ->text()).value_or(m_prevValue.z);
-				const double w = ParseOpt<double>(m_textBoxW->text()).value_or(m_prevValue.w);
-
-				const Vec4 newValue{ x, y, z, w };
-				if (newValue != m_prevValue)
-				{
-					m_prevValue = newValue;
-					if (m_fnSetValue)
-					{
-						m_fnSetValue(newValue);
-					}
-				}
-			}
-
-			void draw(const Node&) const override
-			{
-			}
-		};
 
 		propertyNode->addComponent(std::make_shared<Vec4PropertyTextBox>(
 			textBoxX,
@@ -4842,56 +4390,6 @@ public:
 		textBoxBNode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
-		class LRTBPropertyTextBox : public ComponentBase
-		{
-		private:
-			std::shared_ptr<TextBox> m_textBoxL;
-			std::shared_ptr<TextBox> m_textBoxR;
-			std::shared_ptr<TextBox> m_textBoxT;
-			std::shared_ptr<TextBox> m_textBoxB;
-			std::function<void(const LRTB&)> m_fnSetValue;
-			LRTB m_prevValue;
-
-		public:
-			LRTBPropertyTextBox(
-				const std::shared_ptr<TextBox>& textBoxL,
-				const std::shared_ptr<TextBox>& textBoxR,
-				const std::shared_ptr<TextBox>& textBoxT,
-				const std::shared_ptr<TextBox>& textBoxB,
-				std::function<void(const LRTB&)> fnSetValue,
-				const LRTB& initialValue)
-				: ComponentBase{ {} }
-				, m_textBoxL(textBoxL)
-				, m_textBoxR(textBoxR)
-				, m_textBoxT(textBoxT)
-				, m_textBoxB(textBoxB)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_prevValue(initialValue)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>&) override
-			{
-				const double l = ParseOpt<double>(m_textBoxL->text()).value_or(m_prevValue.left);
-				const double r = ParseOpt<double>(m_textBoxR->text()).value_or(m_prevValue.right);
-				const double t = ParseOpt<double>(m_textBoxT->text()).value_or(m_prevValue.top);
-				const double b = ParseOpt<double>(m_textBoxB->text()).value_or(m_prevValue.bottom);
-				const LRTB newValue{ l, r, t, b };
-				if (newValue != m_prevValue)
-				{
-					m_prevValue = newValue;
-					if (m_fnSetValue)
-					{
-						m_fnSetValue(newValue);
-					}
-				}
-			}
-
-			void draw(const Node&) const override
-			{
-			}
-		};
-
 		propertyNode->addComponent(std::make_shared<LRTBPropertyTextBox>(
 			textBoxL,
 			textBoxR,
@@ -5069,59 +4567,6 @@ public:
 		textBoxANode->emplaceComponent<nocoeditor::TabStop>();
 		textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
-		class ColorPropertyTextBox : public ComponentBase
-		{
-		private:
-			std::shared_ptr<TextBox> m_textBoxR;
-			std::shared_ptr<TextBox> m_textBoxG;
-			std::shared_ptr<TextBox> m_textBoxB;
-			std::shared_ptr<TextBox> m_textBoxA;
-			std::shared_ptr<RectRenderer> m_previewRect;
-			std::function<void(const ColorF&)> m_fnSetValue;
-
-			// 前回の色
-			ColorF m_prevColor;
-
-		public:
-			ColorPropertyTextBox(
-				const std::shared_ptr<TextBox>& r,
-				const std::shared_ptr<TextBox>& g,
-				const std::shared_ptr<TextBox>& b,
-				const std::shared_ptr<TextBox>& a,
-				const std::shared_ptr<RectRenderer>& previewRect,
-				std::function<void(const ColorF&)> fnSetValue,
-				const ColorF& initialColor)
-				: ComponentBase{ {} }
-				, m_textBoxR(r)
-				, m_textBoxG(g)
-				, m_textBoxB(b)
-				, m_textBoxA(a)
-				, m_previewRect(previewRect)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_prevColor(initialColor)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>&) override
-			{
-				const double r = Clamp(ParseOpt<double>(m_textBoxR->text()).value_or(m_prevColor.r), 0.0, 1.0);
-				const double g = Clamp(ParseOpt<double>(m_textBoxG->text()).value_or(m_prevColor.g), 0.0, 1.0);
-				const double b = Clamp(ParseOpt<double>(m_textBoxB->text()).value_or(m_prevColor.b), 0.0, 1.0);
-				const double a = Clamp(ParseOpt<double>(m_textBoxA->text()).value_or(m_prevColor.a), 0.0, 1.0);
-
-				const ColorF newColor{ r, g, b, a };
-				if (newColor != m_prevColor)
-				{
-					m_prevColor = newColor;
-					if (m_fnSetValue)
-					{
-						m_fnSetValue(newColor);
-					}
-					m_previewRect->setFillColor(newColor);
-				}
-			}
-		};
-
 		propertyNode->addComponent(std::make_shared<ColorPropertyTextBox>(
 			textBoxR,
 			textBoxG,
@@ -5198,57 +4643,6 @@ public:
 			VerticalAlign::Middle,
 			LRTB{ 3, 18, 3, 3 })
 			->setSizingMode(LabelSizingMode::ShrinkToFit);
-
-		class EnumPropertyComboBox : public ComponentBase
-		{
-		private:
-			String m_currentValue;
-			std::function<void(StringView)> m_onSetValue;
-			std::shared_ptr<Label> m_label;
-			std::shared_ptr<ContextMenu> m_contextMenu;
-			Array<String> m_enumCandidates;
-
-		public:
-			EnumPropertyComboBox(
-				StringView initialValue,
-				std::function<void(StringView)> onSetValue,
-				const std::shared_ptr<Label>& label,
-				const std::shared_ptr<ContextMenu>& contextMenu,
-				const Array<String>& enumCandidates)
-				: ComponentBase{ {} }
-				, m_currentValue(initialValue)
-				, m_onSetValue(std::move(onSetValue))
-				, m_label(label)
-				, m_contextMenu(contextMenu)
-				, m_enumCandidates(enumCandidates)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>& node) override
-			{
-				if (node->isClicked())
-				{
-					Array<MenuElement> menuElements;
-					for (const auto& name : m_enumCandidates)
-					{
-						menuElements.push_back(
-							MenuItem
-							{
-								name,
-								U"",
-								none,
-								[this, name]
-								{
-									m_currentValue = name;
-									m_label->setText(name);
-									m_onSetValue(m_currentValue);
-								}
-							});
-					}
-					m_contextMenu->show(node->rect().bl(), menuElements);
-				}
-			}
-		};
 
 		comboBoxNode->addComponent(std::make_shared<EnumPropertyComboBox>(
 			currentValue,
@@ -7762,36 +7156,5 @@ void Main()
 	{
 		editor.update();
 		editor.draw();
-	}
-}
-
-void InteractivePropertyValueDialog::refreshPropertyValues()
-{
-	// 現在のstyleStateに基づいてactiveStyleStatesを構築
-	Array<String> activeStyleStates;
-	if (!m_currentStyleState.isEmpty())
-	{
-		activeStyleStates.push_back(m_currentStyleState);
-	}
-	
-	// 各InteractionStateの値を更新
-	for (auto& [interactionState, nodeInfo] : m_propertyValueNodes)
-	{
-		// 現在の値を取得
-		const String currentValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
-		*nodeInfo.currentValueString = currentValue;
-		
-		// UIを更新
-		updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
-		
-		// チェックボックスの状態を更新
-		const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
-		if (auto toggler = nodeInfo.checkboxNode->getComponent<CheckboxToggler>())
-		{
-			toggler->setValue(hasValue);
-		}
-		
-		// Defaultは常に値が存在するのでチェックボックスは無効
-		nodeInfo.checkboxNode->setInteractable(interactionState != InteractionState::Default);
 	}
 }

@@ -992,6 +992,12 @@ namespace noco
 		[[nodiscard]]
 		bool hasValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
+			if (interactionState == InteractionState::Default)
+			{
+				// defaultValueは常にある
+				return true;
+			}
+
 			if (!activeStyleStates.empty())
 			{
 				const String& styleState = activeStyleStates.back();
@@ -1003,8 +1009,6 @@ namespace noco
 						const InteractionValues<T>& values = it->second;
 						switch (interactionState)
 						{
-						case InteractionState::Default:
-							return true; // defaultValueは常にある
 						case InteractionState::Hovered:
 							return values.hoveredValue.has_value();
 						case InteractionState::Pressed:
@@ -1018,8 +1022,6 @@ namespace noco
 			
 			switch (interactionState)
 			{
-			case InteractionState::Default:
-				return true; // defaultValueは常にある
 			case InteractionState::Hovered:
 				return hoveredValue.has_value();
 			case InteractionState::Pressed:
@@ -1027,6 +1029,7 @@ namespace noco
 			case InteractionState::Disabled:
 				return disabledValue.has_value();
 			}
+
 			return false;
 		}
 
