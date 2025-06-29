@@ -3283,33 +3283,7 @@ public:
 		}
 	}
 	
-	void refreshPropertyValues()
-	{
-		// 現在のstyleStateに基づいてactiveStyleStatesを構築
-		Array<String> activeStyleStates;
-		if (!m_currentStyleState.isEmpty())
-		{
-			activeStyleStates.push_back(m_currentStyleState);
-		}
-		
-		// 各InteractionStateの値を更新
-		for (auto& [interactionState, nodeInfo] : m_propertyValueNodes)
-		{
-			// 現在の値を取得
-			const String currentValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
-			*nodeInfo.currentValueString = currentValue;
-			
-			// UIを更新
-			updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
-			
-			// チェックボックスの状態を更新
-			const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
-			// TODO: チェックボックスの状態を更新する方法を検討
-			
-			// Defaultは常に値が存在するのでチェックボックスは無効
-			nodeInfo.checkboxNode->setInteractable(interactionState != InteractionState::Default);
-		}
-	}
+	void refreshPropertyValues();
 	
 	void updatePropertyValueNode(InteractionState interactionState, const PropertyValueNodeInfo& nodeInfo, const String& value, const Array<String>& activeStyleStates)
 	{
@@ -3478,6 +3452,65 @@ void Hierarchy::setWidth(double width)
 		const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
 	}
 }
+
+class CheckboxToggler : public ComponentBase
+{
+private:
+	bool m_value;
+	std::function<void(bool)> m_fnSetValue;
+	std::shared_ptr<Label> m_checkLabel;
+	bool m_useParentHoverState;
+
+public:
+	CheckboxToggler(bool initialValue,
+		std::function<void(bool)> fnSetValue,
+		const std::shared_ptr<Label>& checkLabel,
+		bool useParentHoverState)
+		: ComponentBase{ {} }
+		, m_value(initialValue)
+		, m_fnSetValue(std::move(fnSetValue))
+		, m_checkLabel(checkLabel)
+		, m_useParentHoverState(useParentHoverState)
+	{
+	}
+
+	void setValue(bool value)
+	{
+		m_value = value;
+		m_checkLabel->setText(m_value ? U"✓" : U"");
+	}
+
+	bool value() const
+	{
+		return m_value;
+	}
+
+	void update(const std::shared_ptr<Node>& node) override
+	{
+		// クリックでON/OFFをトグル
+		bool isClicked = false;
+		if (m_useParentHoverState)
+		{
+			if (const auto parent = node->findHoverTargetParent())
+			{
+				isClicked = parent->isClicked();
+			}
+		}
+		else
+		{
+			isClicked = node->isClicked();
+		}
+		if (isClicked)
+		{
+			m_value = !m_value;
+			m_checkLabel->setText(m_value ? U"✓" : U"");
+			if (m_fnSetValue)
+			{
+				m_fnSetValue(m_value);
+			}
+		}
+	}
+};
 
 class Inspector
 {
@@ -5260,54 +5293,6 @@ public:
 			Palette::White,
 			HorizontalAlign::Center,
 			VerticalAlign::Middle);
-
-		class CheckboxToggler : public ComponentBase
-		{
-		private:
-			bool m_value;
-			std::function<void(bool)> m_fnSetValue;
-			std::shared_ptr<Label> m_checkLabel;
-			bool m_useParentHoverState;
-
-		public:
-			CheckboxToggler(bool initialValue,
-				std::function<void(bool)> fnSetValue,
-				const std::shared_ptr<Label>& checkLabel,
-				bool useParentHoverState)
-				: ComponentBase{ {} }
-				, m_value(initialValue)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_checkLabel(checkLabel)
-				, m_useParentHoverState(useParentHoverState)
-			{
-			}
-
-			void update(const std::shared_ptr<Node>& node) override
-			{
-				// クリックでON/OFFをトグル
-				bool isClicked = false;
-				if (m_useParentHoverState)
-				{
-					if (const auto parent = node->findHoverTargetParent())
-					{
-						isClicked = parent->isClicked();
-					}
-				}
-				else
-				{
-					isClicked = node->isClicked();
-				}
-				if (isClicked)
-				{
-					m_value = !m_value;
-					m_checkLabel->setText(m_value ? U"✓" : U"");
-					if (m_fnSetValue)
-					{
-						m_fnSetValue(m_value);
-					}
-				}
-			}
-		};
 
 		checkboxNode->addComponent(std::make_shared<CheckboxToggler>(
 			initialValue,
@@ -7777,5 +7762,36 @@ void Main()
 	{
 		editor.update();
 		editor.draw();
+	}
+}
+
+void InteractivePropertyValueDialog::refreshPropertyValues()
+{
+	// 現在のstyleStateに基づいてactiveStyleStatesを構築
+	Array<String> activeStyleStates;
+	if (!m_currentStyleState.isEmpty())
+	{
+		activeStyleStates.push_back(m_currentStyleState);
+	}
+	
+	// 各InteractionStateの値を更新
+	for (auto& [interactionState, nodeInfo] : m_propertyValueNodes)
+	{
+		// 現在の値を取得
+		const String currentValue = m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates);
+		*nodeInfo.currentValueString = currentValue;
+		
+		// UIを更新
+		updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
+		
+		// チェックボックスの状態を更新
+		const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
+		if (auto toggler = nodeInfo.checkboxNode->getComponent<CheckboxToggler>())
+		{
+			toggler->setValue(hasValue);
+		}
+		
+		// Defaultは常に値が存在するのでチェックボックスは無効
+		nodeInfo.checkboxNode->setInteractable(interactionState != InteractionState::Default);
 	}
 }
