@@ -3508,6 +3508,7 @@ public:
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 24 },
 					.margin = LRTB{ 0, 0, 24, 24 },
+					.maxWidth = 240,
 				},
 				[this] (const std::shared_ptr<Node>& node)
 				{
