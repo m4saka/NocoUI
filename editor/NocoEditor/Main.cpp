@@ -3719,9 +3719,9 @@ public:
 			// ツールチップを追加
 			if (metadata.tooltip)
 			{
-				if (const auto labelTextNode = propertyNode->getChildByNameOrNull(U"LabelText", RecursiveYN::Yes))
+				if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 				{
-					labelTextNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 				}
 			}
 		}
