@@ -1555,6 +1555,16 @@ namespace noco
 			scissorRect.emplace(m_posScaleAppliedRect.asRect());
 		}
 
+		// TransformEffectの乗算カラーを適用
+		const ColorF effectColor = m_transformEffect.color().value();
+		Optional<ScopedColorMul2D> colorMul;
+		const ColorF currentColor = ColorF{ Graphics2D::GetColorMul() };
+		const ColorF newColor = currentColor * effectColor;
+		if (effectColor != ColorF{ 1.0 })
+		{
+			colorMul.emplace(newColor);
+		}
+
 		// draw関数はconstのため、addComponentやaddChild等によるイテレータ破壊は考慮不要とする
 		{
 			for (const auto& component : m_components)

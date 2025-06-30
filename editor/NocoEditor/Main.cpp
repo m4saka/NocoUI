@@ -536,6 +536,10 @@ static HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 		.tooltip = U"基準点 (X、Y)",
 		.tooltipDetail = U"scaleによる拡大縮小の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
 	};
+	metadata[PropertyKey{ U"TransformEffect", U"color" }] = PropertyMetadata{
+		.tooltip = U"乗算カラー",
+		.tooltipDetail = U"子孫を含む要素の描画に対する乗算カラーを指定します\n親要素が乗算カラーを持つ場合、再帰的に乗算したカラーが適用されます",
+	};
 	
 	// Componentのプロパティ
 	// RectRenderer
@@ -5716,6 +5720,21 @@ public:
 				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } } }, nullptr, RecursiveYN::Yes);
 			};
 		fnAddBoolChild(U"appliesToHitTest", &pTransformEffect->appliesToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setAppliesToHitTest(value); });
+
+		const auto fnAddColorChild =
+			[this, &transformEffectNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)
+			{
+				const auto propertyNode = transformEffectNode->addChild(createColorPropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+				propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+				
+				Array<MenuElement> menuElements
+				{
+					MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
+				};
+				
+				propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+			};
+		fnAddColorChild(U"color", &pTransformEffect->color(), [this, pTransformEffect](const ColorF& value) { pTransformEffect->setColor(value); });
 
 		transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
 

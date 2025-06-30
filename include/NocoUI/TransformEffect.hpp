@@ -15,16 +15,19 @@ namespace noco
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
 		Property<bool> m_appliesToHitTest;
+		SmoothProperty<ColorF> m_color;
 
 	public:
 		TransformEffect(
 			const PropertyValue<Vec2>& position = Vec2::Zero(),
 			const PropertyValue<Vec2>& scale = Vec2::One(),
-			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter)
+			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
+			const PropertyValue<ColorF>& color = ColorF{ 1.0 })
 			: m_position{ U"position", position }
 			, m_scale{ U"scale", scale }
 			, m_pivot{ U"pivot", pivot }
 			, m_appliesToHitTest{ U"appliesToHitTest", false }
+			, m_color{ U"color", color }
 		{
 		}
 
@@ -96,12 +99,30 @@ namespace noco
 			m_appliesToHitTest.setPropertyValue(value);
 		}
 
+		[[nodiscard]]
+		const SmoothProperty<ColorF>& color() const
+		{
+			return m_color;
+		}
+
+		[[nodiscard]]
+		SmoothProperty<ColorF>& color()
+		{
+			return m_color;
+		}
+
+		void setColor(const PropertyValue<ColorF>& color)
+		{
+			m_color.setPropertyValue(color);
+		}
+
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
 		{
 			m_position.update(interactionState, activeStyleStates, deltaTime);
 			m_scale.update(interactionState, activeStyleStates, deltaTime);
 			m_pivot.update(interactionState, activeStyleStates, deltaTime);
 			m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime);
+			m_color.update(interactionState, activeStyleStates, deltaTime);
 		}
 
 		[[nodiscard]]
@@ -122,6 +143,7 @@ namespace noco
 			m_scale.appendJSON(json);
 			m_pivot.appendJSON(json);
 			m_appliesToHitTest.appendJSON(json);
+			m_color.appendJSON(json);
 			return json;
 		}
 
@@ -131,6 +153,7 @@ namespace noco
 			m_scale.readFromJSON(json);
 			m_pivot.readFromJSON(json);
 			m_appliesToHitTest.readFromJSON(json);
+			m_color.readFromJSON(json);
 		}
 	};
 }
