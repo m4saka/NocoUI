@@ -19,7 +19,7 @@ namespace noco::editor
 		Font m_iconFont{ FontMethod::MSDF, 18, Typeface::Icon_MaterialDesign };
 		
 		// ボタンノードを管理するためのマップ
-		std::unordered_map<String, std::shared_ptr<Node>> m_buttonNodes;
+		HashTable<String, std::shared_ptr<Node>> m_buttonNodes;
 		
 		// ボタンの有効/無効を判定する関数
 		struct ButtonInfo
@@ -27,7 +27,7 @@ namespace noco::editor
 			std::shared_ptr<Node> node;
 			std::function<bool()> enableCondition;
 		};
-		std::unordered_map<String, ButtonInfo> m_buttons;
+		HashTable<String, ButtonInfo> m_buttons;
 
 	public:
 		explicit Toolbar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas)
@@ -108,9 +108,10 @@ namespace noco::editor
 			{
 				buttonNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, tooltip);
 			}
-			
-			m_buttonNodes[String{ name }] = buttonNode;
-			m_buttons[String{ name }] = ButtonInfo{ buttonNode, enableCondition };
+
+			const String nameStr{ name };
+			m_buttonNodes[nameStr] = buttonNode;
+			m_buttons[nameStr] = ButtonInfo{ buttonNode, enableCondition };
 			if (enableCondition)
 			{
 				buttonNode->setInteractable(enableCondition());
@@ -134,7 +135,7 @@ namespace noco::editor
 		void updateButtonStates()
 		{
 			// 各ボタンの有効/無効状態を更新
-			for (auto& [name, buttonInfo] : m_buttons)
+			for (const auto& [name, buttonInfo] : m_buttons)
 			{
 				if (buttonInfo.enableCondition)
 				{

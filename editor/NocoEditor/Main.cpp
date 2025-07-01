@@ -21,9 +21,6 @@
 using namespace noco::editor;
 using noco::detail::IncludesInternalIdYN;
 
-// 前方宣言
-class Inspector;
-
 // メタデータのキー
 struct PropertyKey
 {
@@ -1541,7 +1538,7 @@ private:
 	
 	void doSnapNodeSizeToTexture(const std::shared_ptr<Sprite>& sprite, const std::shared_ptr<Node>& node)
 	{
-		const String texturePath = sprite->textureFilePath().getValueStringOfDefault();
+		const String texturePath = sprite->textureFilePath().defaultValue;
 		if (texturePath.isEmpty())
 		{
 			return;
@@ -1555,17 +1552,17 @@ private:
 		
 		const Vec2 textureSize{ texture.size() };
 		
-		if (const auto* box = node->boxConstraint())
+		if (const auto* pBoxConstraint = node->boxConstraint())
 		{
-			BoxConstraint newConstraint = *box;
+			BoxConstraint newConstraint = *pBoxConstraint;
 			newConstraint.sizeDelta = textureSize;
 			newConstraint.sizeRatio = Vec2::Zero();
 			newConstraint.flexibleWeight = 0.0;
 			node->setConstraint(newConstraint);
 		}
-		else if (const auto* anchor = node->anchorConstraint())
+		else if (const auto* pAnchorConstraint = node->anchorConstraint())
 		{
-			AnchorConstraint newConstraint = *anchor;
+			AnchorConstraint newConstraint = *pAnchorConstraint;
 			newConstraint.sizeDelta = textureSize;
 			newConstraint.anchorMin = noco::Anchor::MiddleCenter;
 			newConstraint.anchorMax = noco::Anchor::MiddleCenter;
@@ -1955,7 +1952,7 @@ public:
 				m_fnSetValue(m_textBox->text());
 				if (m_fnGetValue)
 				{
-					m_prevExternalValue = String(m_fnGetValue());
+					m_prevExternalValue = String{ m_fnGetValue() };
 				}
 			}
 		}
@@ -1970,7 +1967,7 @@ public:
 			, m_textBox(textBox)
 			, m_fnSetValue(std::move(fnSetValue))
 			, m_fnGetValue(std::move(fnGetValue))
-			, m_prevExternalValue(fnGetValue ? String(fnGetValue()) : U"")
+			, m_prevExternalValue(m_fnGetValue ? String{ m_fnGetValue() } : U"")
 		{
 		}
 	};
@@ -2010,7 +2007,7 @@ public:
 	{
 		// メタデータをチェックしてTextAreaを使うかどうか判断
 		std::shared_ptr<Node> propertyNode;
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.numTextAreaLines.has_value())
@@ -2049,7 +2046,7 @@ public:
 		const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
 		// メタデータに基づいてツールチップを追加
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
@@ -2070,7 +2067,7 @@ public:
 		const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue);
 		
 		// メタデータに基づいてツールチップを追加
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
@@ -2091,7 +2088,7 @@ public:
 		const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
 		// メタデータに基づいてツールチップを追加
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
@@ -2123,7 +2120,7 @@ public:
 		const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
 		// メタデータに基づいてツールチップを追加
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
@@ -2142,7 +2139,7 @@ public:
 		const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
 		
 		// メタデータに基づいてツールチップを追加
-		if (const auto it = m_propertyMetadata.find(PropertyKey{ String(componentName), String(propertyName) }); it != m_propertyMetadata.end())
+		if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 		{
 			const auto& metadata = it->second;
 			if (metadata.tooltip)
@@ -2280,7 +2277,7 @@ public:
 				, m_textArea{ textArea }
 				, m_fnSetValue{ std::move(fnSetValue) }
 				, m_fnGetValue{ std::move(fnGetValue) }
-				, m_prevExternalValue{ fnGetValue ? String(fnGetValue()) : U"" }
+				, m_prevExternalValue{ m_fnGetValue ? String{ m_fnGetValue() } : U"" }
 			{
 			}
 
@@ -3482,7 +3479,7 @@ public:
 					->setSizingMode(LabelSizingMode::ShrinkToFit);
 				
 				// メタデータに基づいてツールチップを追加
-				if (const auto it = m_propertyMetadata.find(PropertyKey{ String(constraintTypeName), String(name) }); it != m_propertyMetadata.end())
+				if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ constraintTypeName }, String{ name } }); it != m_propertyMetadata.end())
 				{
 					const auto& metadata = it->second;
 					if (metadata.tooltip)
@@ -4112,7 +4109,7 @@ public:
 					std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					std::function<String()> fnGetValue = nullptr;
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
@@ -4147,7 +4144,7 @@ public:
 					std::function<void(bool)> onChange = [property](bool value) { property->trySetPropertyValueString(Format(value)); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -4175,7 +4172,7 @@ public:
 					std::function<void(const Vec2&)> onChange = [property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -4203,7 +4200,7 @@ public:
 					std::function<void(const ColorF&)> onChange = [property](const ColorF& value) { property->trySetPropertyValueString(Format(value)); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -4231,7 +4228,7 @@ public:
 					std::function<void(const LRTB&)> onChange = [property](const LRTB& value) { property->trySetPropertyValueString(Format(value)); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -4259,7 +4256,7 @@ public:
 					std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };
 					
 					// メタデータに基づいて変更時の処理を設定
-					const PropertyKey propertyKey{ String(component->type()), String(property->name()) };
+					const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 					if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
@@ -4291,7 +4288,7 @@ public:
 			}
 
 			// 表示条件のチェック
-			const PropertyKey visibilityKey{ String(component->type()), String(property->name()) };
+			const PropertyKey visibilityKey{ String{ component->type() }, String{ property->name() } };
 			if (const auto it = m_propertyMetadata.find(visibilityKey); it != m_propertyMetadata.end())
 			{
 				const auto& metadata = it->second;

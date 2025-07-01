@@ -77,34 +77,19 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static BoxConstraint FromJSON(const JSON& json)
+				static BoxConstraint FromJSON(const JSON& json)
 		{
-			BoxConstraint constraint
+			return BoxConstraint
 			{
 				.sizeRatio = GetFromJSONOr(json, U"sizeRatio", Vec2::Zero()),
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
 				.flexibleWeight = Max(GetFromJSONOr(json, U"flexibleWeight", 0.0), 0.0),
 				.margin = GetFromJSONOr(json, U"margin", LRTB::Zero()),
+				.minWidth = GetFromJSONOpt<double>(json, U"minWidth"),
+				.minHeight = GetFromJSONOpt<double>(json, U"minHeight"),
+				.maxWidth = GetFromJSONOpt<double>(json, U"maxWidth"),
+				.maxHeight = GetFromJSONOpt<double>(json, U"maxHeight"),
 			};
-			
-			if (json.hasElement(U"minWidth"))
-			{
-				constraint.minWidth = json[U"minWidth"].get<double>();
-			}
-			if (json.hasElement(U"minHeight"))
-			{
-				constraint.minHeight = json[U"minHeight"].get<double>();
-			}
-			if (json.hasElement(U"maxWidth"))
-			{
-				constraint.maxWidth = json[U"maxWidth"].get<double>();
-			}
-			if (json.hasElement(U"maxHeight"))
-			{
-				constraint.maxHeight = json[U"maxHeight"].get<double>();
-			}
-			
-			return constraint;
 		}
 
 		[[nodiscard]]

@@ -68,7 +68,7 @@ namespace noco
 		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
 		/* NonSerialized */ Optional<Vec2> m_dragStartPos; // ドラッグ開始位置
-		/* NonSerialized */ Vec2 m_dragStartScrollOffset; // ドラッグ開始時のスクロールオフセット
+		/* NonSerialized */ Vec2 m_dragStartScrollOffset{ 0.0, 0.0 }; // ドラッグ開始時のスクロールオフセット
 		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
 		/* NonSerialized */ Stopwatch m_dragVelocityStopwatch; // ドラッグ速度計算用ストップウォッチ
 		/* NonSerialized */ bool m_dragThresholdExceeded = false; // ドラッグ閾値を超えたかどうか

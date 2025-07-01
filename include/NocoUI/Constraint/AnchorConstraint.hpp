@@ -88,33 +88,18 @@ namespace noco
 		[[nodiscard]]
 		static AnchorConstraint FromJSON(const JSON& json)
 		{
-			AnchorConstraint constraint
+			return AnchorConstraint
 			{
 				.anchorMin = GetFromJSONOr(json, U"anchorMin", Anchor::MiddleCenter),
 				.anchorMax = GetFromJSONOr(json, U"anchorMax", Anchor::MiddleCenter),
 				.posDelta = GetFromJSONOr(json, U"posDelta", Vec2::Zero()),
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
 				.sizeDeltaPivot = GetFromJSONOr(json, U"sizeDeltaPivot", Anchor::MiddleCenter),
+				.minWidth = GetFromJSONOpt<double>(json, U"minWidth"),
+				.minHeight = GetFromJSONOpt<double>(json, U"minHeight"),
+				.maxWidth = GetFromJSONOpt<double>(json, U"maxWidth"),
+				.maxHeight = GetFromJSONOpt<double>(json, U"maxHeight"),
 			};
-			
-			if (json.contains(U"minWidth"))
-			{
-				constraint.minWidth = json[U"minWidth"].get<double>();
-			}
-			if (json.contains(U"minHeight"))
-			{
-				constraint.minHeight = json[U"minHeight"].get<double>();
-			}
-			if (json.contains(U"maxWidth"))
-			{
-				constraint.maxWidth = json[U"maxWidth"].get<double>();
-			}
-			if (json.contains(U"maxHeight"))
-			{
-				constraint.maxHeight = json[U"maxHeight"].get<double>();
-			}
-			
-			return constraint;
 		}
 
 		[[nodiscard]]
