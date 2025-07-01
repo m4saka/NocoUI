@@ -251,9 +251,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\NocoUI\Component\AudioPlayer.hpp" />
+    <ClInclude Include="EditorButton.hpp" />
     <ClInclude Include="CheckboxToggler.hpp" />
     <ClInclude Include="ColorPropertyTextBox.hpp" />
     <ClInclude Include="ContextMenu.hpp" />
+    <ClInclude Include="EditorDialog.hpp" />
     <ClInclude Include="EditorEnums.hpp" />
     <ClInclude Include="EditorYN.hpp" />
     <ClInclude Include="EnumPropertyComboBox.hpp" />

@@ -1415,7 +1415,13 @@ namespace noco::editor
 			return m_hierarchyFrameNode;
 		}
 	
-		void setWidth(double width);
+		void setWidth(double width)
+		{
+			if (auto* constraint = m_hierarchyFrameNode->anchorConstraint())
+			{
+				const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
+			}
+		}
 
 		void drawSelectedNodesGizmo() const
 		{

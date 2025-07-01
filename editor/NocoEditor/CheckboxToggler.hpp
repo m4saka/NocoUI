@@ -1,4 +1,5 @@
-﻿#include <NocoUI.hpp>
+﻿#pragma once
+#include <NocoUI.hpp>
 
 namespace noco::editor
 {
