@@ -254,8 +254,12 @@
     <ClInclude Include="CheckboxToggler.hpp" />
     <ClInclude Include="ColorPropertyTextBox.hpp" />
     <ClInclude Include="ContextMenu.hpp" />
+    <ClInclude Include="EditorEnums.hpp" />
+    <ClInclude Include="EditorYN.hpp" />
     <ClInclude Include="EnumPropertyComboBox.hpp" />
+    <ClInclude Include="Hierarchy.hpp" />
     <ClInclude Include="LRTBPropertyTextBox.hpp" />
+    <ClInclude Include="MenuBar.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />

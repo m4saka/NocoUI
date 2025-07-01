@@ -641,5 +641,17 @@
     <ClInclude Include="LRTBPropertyTextBox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Hierarchy.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorEnums.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorYN.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuBar.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
