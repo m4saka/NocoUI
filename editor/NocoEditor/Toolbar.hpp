@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
+#include "MenuBar.hpp"
 
 namespace noco::editor
 {
