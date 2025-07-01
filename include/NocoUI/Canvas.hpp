@@ -170,6 +170,16 @@ namespace noco
 				}
 			}
 		}
+
+		inline bool UnfocusNodeIfFocused(const std::shared_ptr<Node>& node)
+		{
+			if (detail::s_canvasUpdateContext.focusedNode.lock() == node)
+			{
+				SetFocusedNode(nullptr);
+				return true;
+			}
+			return false;
+		}
 	}
 
 	namespace PrevFrame

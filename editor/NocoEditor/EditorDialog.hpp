@@ -326,7 +326,7 @@ namespace noco::editor
 			textBox->setText(m_defaultValue);
 		
 			// テキストボックスにフォーカスを設定
-			textBox->focus(m_textBoxNode);
+			CurrentFrame::SetFocusedNode(m_textBoxNode);
 		}
 
 		void onResult(StringView resultButtonText) override

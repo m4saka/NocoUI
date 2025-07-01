@@ -236,7 +236,34 @@ namespace noco
 
 	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
 	{
-		deselect(node);
+		CurrentFrame::UnfocusNodeIfFocused(node);
+	}
+
+	void TextBox::focus(const std::shared_ptr<Node>& node)
+	{
+		// readOnly時もフォーカスは受け取るが、編集状態にはしない
+		if (!m_readOnly.value())
+		{
+			m_isEditing = true;
+			m_cursorBlinkTime = 0.0;
+			// 全選択状態にする
+			m_selectionAnchor = 0;
+			m_cursorIndex = m_text.value().size();
+			node->setStyleState(U"selected");
+			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
+		}
+	}
+
+	void TextBox::blur(const std::shared_ptr<Node>& node)
+	{
+		m_isEditing = false;
+		m_isDragging = false;
+		node->setStyleState(U"");
+		m_selectionAnchor = m_cursorIndex;
+		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
+		{
+			detail::s_canvasUpdateContext.editingTextBox.reset();
+		}
 	}
 
 	void TextBox::updateInput(const std::shared_ptr<Node>& node)
@@ -247,7 +274,7 @@ namespace noco
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
 		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != static_cast<ITextBox*>(this)))
 		{
-			deselect(node);
+			CurrentFrame::UnfocusNodeIfFocused(node);
 			return;
 		}
 
@@ -369,7 +396,7 @@ namespace noco
 			else if (MouseL.down() || MouseM.down() || MouseR.down())
 			{
 				// 領域外をクリックした場合は選択解除
-				deselect(node);
+				CurrentFrame::UnfocusNodeIfFocused(node);
 				if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 				{
 					detail::s_canvasUpdateContext.editingTextBox.reset();
@@ -738,18 +765,6 @@ namespace noco
 		}
 	}
 
-	void TextBox::deselect(const std::shared_ptr<Node>& node)
-	{
-		m_isEditing = false;
-		m_isDragging = false;
-		node->setStyleState(U"");
-		m_selectionAnchor = m_cursorIndex;
-		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
-		{
-			detail::s_canvasUpdateContext.editingTextBox.reset();
-		}
-	}
-
 	std::shared_ptr<TextBox> TextBox::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
 		m_text.setValue(text);
@@ -761,25 +776,5 @@ namespace noco
 			m_prevText = text;
 		}
 		return shared_from_this();
-	}
-	
-	void TextBox::focus(const std::shared_ptr<Node>& node)
-	{
-		// readOnly時もフォーカスは受け取るが、編集状態にはしない
-		if (!m_readOnly.value())
-		{
-			m_isEditing = true;
-			m_cursorBlinkTime = 0.0;
-			// 全選択状態にする
-			m_selectionAnchor = 0;
-			m_cursorIndex = m_text.value().size();
-			node->setStyleState(U"selected");
-			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
-		}
-	}
-	
-	void TextBox::blur(const std::shared_ptr<Node>& node)
-	{
-		deselect(node);
 	}
 }

@@ -313,7 +313,7 @@ namespace noco
 
 	void TextArea::onDeactivated(const std::shared_ptr<Node>& node)
 	{
-		deselect(node);
+		CurrentFrame::UnfocusNodeIfFocused(node);
 	}
 
 	void TextArea::updateScrollOffset(const RectF& rect, const Vec2& effectScale)
@@ -384,6 +384,32 @@ namespace noco
 		return lineCache.textEndIndex - lineCache.textBeginIndex;
 	}
 
+	void TextArea::focus(const std::shared_ptr<Node>& node)
+	{
+		// readOnly時もフォーカスは受け取るが、編集状態にはしない
+		if (!m_readOnly.value())
+		{
+			m_isEditing = true;
+			m_cursorBlinkTime = 0.0;
+			node->setStyleState(U"selected");
+			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
+			CurrentFrame::SetFocusedNode(node);
+		}
+	}
+
+	void TextArea::blur(const std::shared_ptr<Node>& node)
+	{
+		m_isEditing = false;
+		m_isDragging = false;
+		node->setStyleState(U"");
+		m_selectionAnchorLine = m_cursorLine;
+		m_selectionAnchorColumn = m_cursorColumn;
+		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
+		{
+			detail::s_canvasUpdateContext.editingTextBox.reset();
+		}
+	}
+
 	void TextArea::updateInput(const std::shared_ptr<Node>& node)
 	{
 		m_prevActiveInHierarchy = true;
@@ -391,7 +417,7 @@ namespace noco
 
 		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != static_cast<ITextBox*>(this)))
 		{
-			deselect(node);
+			CurrentFrame::UnfocusNodeIfFocused(node);
 			return;
 		}
 
@@ -559,7 +585,7 @@ namespace noco
 			else if (MouseL.down() || MouseM.down() || MouseR.down())
 			{
 				// 領域外をクリックした場合は選択解除
-				deselect(node);
+				CurrentFrame::UnfocusNodeIfFocused(node);
 				if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 				{
 					detail::s_canvasUpdateContext.editingTextBox.reset();
@@ -1013,19 +1039,6 @@ namespace noco
 		}
 	}
 
-	void TextArea::deselect(const std::shared_ptr<Node>& node)
-	{
-		m_isEditing = false;
-		m_isDragging = false;
-		node->setStyleState(U"");
-		m_selectionAnchorLine = m_cursorLine;
-		m_selectionAnchorColumn = m_cursorColumn;
-		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
-		{
-			detail::s_canvasUpdateContext.editingTextBox.reset();
-		}
-	}
-
 	std::shared_ptr<TextArea> TextArea::setText(StringView text, IgnoreIsChangedYN ignoreIsChanged)
 	{
 		m_text.setValue(text);
@@ -1040,23 +1053,5 @@ namespace noco
 			m_prevText = text;
 		}
 		return shared_from_this();
-	}
-	
-	void TextArea::focus(const std::shared_ptr<Node>& node)
-	{
-		// readOnly時もフォーカスは受け取るが、編集状態にはしない
-		if (!m_readOnly.value())
-		{
-			m_isEditing = true;
-			m_cursorBlinkTime = 0.0;
-			node->setStyleState(U"selected");
-			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
-			CurrentFrame::SetFocusedNode(node);
-		}
-	}
-	
-	void TextArea::blur(const std::shared_ptr<Node>& node)
-	{
-		deselect(node);
 	}
 }

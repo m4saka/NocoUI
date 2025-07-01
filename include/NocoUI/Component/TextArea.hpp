@@ -122,6 +122,10 @@ namespace noco
 
 		size_t getColumnCount(size_t line) const;
 
+		// IFocusableインターフェースの実装
+		void focus(const std::shared_ptr<Node>& node) override;
+		void blur(const std::shared_ptr<Node>& node) override;
+
 	public:
 		explicit TextArea(
 			const PropertyValue<String>& fontAssetName = U"",
@@ -150,8 +154,6 @@ namespace noco
 		void updateInputInactive(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
-
-		void deselect(const std::shared_ptr<Node>& node);
 
 		[[nodiscard]]
 		StringView text() const override
@@ -268,10 +270,5 @@ namespace noco
 			m_readOnly.setPropertyValue(readOnly);
 			return shared_from_this();
 		}
-		
-		// IFocusableインターフェースの実装
-		void focus(const std::shared_ptr<Node>& node) override;
-		
-		void blur(const std::shared_ptr<Node>& node) override;
 	};
 }

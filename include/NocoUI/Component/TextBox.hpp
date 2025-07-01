@@ -103,6 +103,10 @@ namespace noco
 
 		void onDeactivated(const std::shared_ptr<Node>& node);
 
+		// IFocusableインターフェースの実装
+		void focus(const std::shared_ptr<Node>& node) override;
+		void blur(const std::shared_ptr<Node>& node) override;
+
 	public:
 		explicit TextBox(
 			const PropertyValue<String>& fontAssetName = U"",
@@ -133,8 +137,6 @@ namespace noco
 		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
 
 		void draw(const Node& node) const override;
-
-		void deselect(const std::shared_ptr<Node>& node);
 
 		[[nodiscard]]
 		StringView text() const override
@@ -251,10 +253,5 @@ namespace noco
 			m_readOnly.setPropertyValue(readOnly);
 			return shared_from_this();
 		}
-		
-		// IFocusableインターフェースの実装
-		void focus(const std::shared_ptr<Node>& node) override;
-		
-		void blur(const std::shared_ptr<Node>& node) override;
 	};
 }
