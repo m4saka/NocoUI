@@ -6,7 +6,6 @@
 #include "ITextBox.hpp"
 #include "TextBox.hpp"
 #include "TextArea.hpp"
-#include "InputBlocker.hpp"
 #include "EventTrigger.hpp"
 #include "Placeholder.hpp"
 #include "InputUpdaterComponent.hpp"

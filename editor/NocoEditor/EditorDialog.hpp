@@ -8,6 +8,7 @@
 #include "CheckboxToggler.hpp"
 #include "EditorButton.hpp"
 #include "EditorYN.hpp"
+#include "InputBlocker.hpp"
 
 namespace noco::editor
 {

@@ -58,16 +58,6 @@ namespace noco
 				}
 				return component;
 			}
-			else if (type == U"InputBlocker")
-			{
-				auto component = std::make_shared<InputBlocker>();
-				if (!component->tryReadFromJSONImpl(json, includesInternalId))
-				{
-					Logger << U"[NocoUI warning] Failed to read InputBlocker component from JSON";
-					return nullptr;
-				}
-				return component;
-			}
 			else if (type == U"EventTrigger")
 			{
 				auto component = std::make_shared<EventTrigger>();

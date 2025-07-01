@@ -123,7 +123,6 @@
     <ClCompile Include="TabStop.cpp" />
     <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
     <ClCompile Include="..\..\src\Component\EventTrigger.cpp" />
-    <ClCompile Include="..\..\src\Component\InputBlocker.cpp" />
     <ClCompile Include="..\..\src\Asset.cpp" />
     <ClCompile Include="..\..\src\Canvas.cpp" />
     <ClCompile Include="..\..\src\Component\DragDropSource.cpp" />
@@ -271,7 +270,6 @@
     <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\InputBlocker.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
     <ClInclude Include="..\..\include\NocoUI\Asset.hpp" />
