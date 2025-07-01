@@ -22,6 +22,7 @@
 #include "PropertyMetaData.hpp"
 #include "Inspector.hpp"
 
+using namespace noco;
 using namespace noco::editor;
 using noco::detail::IncludesInternalIdYN;
 
@@ -225,7 +226,7 @@ public:
 			m_inspectorResizeHandle->update();
 		}
 
-		if (m_hierarchy.hasSelectionChanged())
+		if (m_hierarchy.checkSelectionChanged())
 		{
 			m_inspector.setTargetNode(m_hierarchy.selectedNode().lock());
 			m_toolbar.updateButtonStates();
@@ -429,16 +430,20 @@ public:
 		// Hierarchyのリサイズハンドル
 		m_hierarchyResizeHandle = std::make_unique<ResizableHandle>(
 			m_editorCanvas, ResizeDirection::Horizontal, 8.0);
-		m_hierarchyResizeHandle->setOnResize([this](double newWidth) {
-			onHierarchyResize(newWidth);
-		});
+		m_hierarchyResizeHandle->setOnResize(
+			[this](double newWidth)
+			{
+				onHierarchyResize(newWidth);
+			});
 		
 		// Inspectorのリサイズハンドル  
 		m_inspectorResizeHandle = std::make_unique<ResizableHandle>(
 			m_editorCanvas, ResizeDirection::Horizontal, 8.0);
-		m_inspectorResizeHandle->setOnResize([this](double newXPosition) {
-			onInspectorResize(newXPosition);
-		});
+		m_inspectorResizeHandle->setOnResize(
+			[this](double newXPosition)
+			{
+				onInspectorResize(newXPosition);
+			});
 		
 		updateResizeHandlePositions();
 	}
@@ -481,10 +486,7 @@ public:
 	
 	void updatePanelLayout()
 	{
-		// Hierarchyの幅を更新
 		m_hierarchy.setWidth(m_hierarchyWidth);
-		
-		// Inspectorの幅を更新
 		m_inspector.setWidth(m_inspectorWidth);
 		
 		refreshLayout();
@@ -509,13 +511,8 @@ public:
 	// 選択中のノードのinternalIdを保存
 	Array<uint64> saveSelectedNodeIds() const
 	{
-		Array<uint64> selectedIds;
 		const auto selectedNodes = m_hierarchy.getSelectedNodesExcludingChildren();
-		for (const auto& node : selectedNodes)
-		{
-			selectedIds.push_back(node->internalId());
-		}
-		return selectedIds;
+		return selectedNodes.map([](const auto& node) { return node->internalId(); });
 	}
 
 	// internalIdを使用してノードを検索（再帰的）
@@ -551,11 +548,12 @@ public:
 		}
 		
 		Array<std::shared_ptr<Node>> nodesToSelect;
+		nodesToSelect.reserve(selectedIds.size());
 		for (const auto& id : selectedIds)
 		{
 			if (auto node = findNodeByInternalId(m_canvas->rootNode(), id))
 			{
-				nodesToSelect.push_back(node);
+				nodesToSelect.push_back(std::move(node));
 			}
 		}
 		
@@ -835,7 +833,7 @@ public:
 		m_hierarchy.onClickNewNode();
 	}
 	
-	void recordInitialState()
+	void recordInitialHistoryState()
 	{
 		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
 	}
@@ -864,7 +862,7 @@ void Main()
 	editor.resetDirty();
 	
 	// 初期状態を記録
-	editor.recordInitialState();
+	editor.recordInitialHistoryState();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
 

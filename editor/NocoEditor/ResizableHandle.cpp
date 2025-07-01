@@ -1,117 +1,130 @@
 ﻿#include "ResizableHandle.hpp"
 
-ResizableHandle::ResizableHandle(
-	const std::shared_ptr<Canvas>& editorCanvas,
-	ResizeDirection direction,
-	double handleThickness)
-	: m_editorCanvas(editorCanvas)
-	, m_direction(direction)
-	, m_handleThickness(handleThickness)
+namespace noco::editor
 {
-	// リサイズハンドル用のノードを作成
-	m_handleNode = editorCanvas->rootNode()->emplaceChild(
-		U"ResizableHandle",
-		AnchorConstraint
-		{
-			.anchorMin = Anchor::TopLeft,
-			.anchorMax = Anchor::TopLeft,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = Vec2{ handleThickness, handleThickness },
-			.sizeDeltaPivot = Anchor::TopLeft,
-		});
-}
-
-void ResizableHandle::setPosition(const Vec2& position)
-{
-	if (auto* constraint = m_handleNode->anchorConstraint())
+	ResizableHandle::ResizableHandle(
+		const std::shared_ptr<Canvas>& editorCanvas,
+		ResizeDirection direction,
+		double handleThickness)
+		: m_editorCanvas(editorCanvas)
+		, m_direction(direction)
+		, m_handleThickness(handleThickness)
 	{
-		const_cast<AnchorConstraint*>(constraint)->posDelta = position;
-		m_editorCanvas->refreshLayout();
+		// リサイズハンドル用のノードを作成
+		m_handleNode = editorCanvas->rootNode()->emplaceChild(
+			U"ResizableHandle",
+			AnchorConstraint
+			{
+				.anchorMin = Anchor::TopLeft,
+				.anchorMax = Anchor::TopLeft,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = Vec2{ handleThickness, handleThickness },
+				.sizeDeltaPivot = Anchor::TopLeft,
+			});
 	}
-}
 
-void ResizableHandle::setSize(const Vec2& size)
-{
-	if (auto* constraint = m_handleNode->anchorConstraint())
+	void ResizableHandle::setPosition(const Vec2& position)
 	{
-		const_cast<AnchorConstraint*>(constraint)->sizeDelta = size;
-		m_editorCanvas->refreshLayout();
-	}
-}
-
-void ResizableHandle::setOnResize(std::function<void(double)> onResize)
-{
-	m_onResize = std::move(onResize);
-}
-
-void ResizableHandle::setDragStartValue(double value)
-{
-	m_dragStartValue = value;
-}
-
-void ResizableHandle::update()
-{
-	const bool isHovered = m_handleNode->isHovered();
-	const bool isPressed = m_handleNode->isPressed();
-	
-	// マウスカーソルの変更
-	if (isHovered || m_isDragging)
-	{
-		if (m_direction == ResizeDirection::Horizontal)
+		if (auto* pAnchorConstraint = m_handleNode->anchorConstraint())
 		{
-			Cursor::RequestStyle(CursorStyle::ResizeLeftRight);
+			auto newConstraint = *pAnchorConstraint;
+			newConstraint.posDelta = position;
+			m_handleNode->setConstraint(newConstraint);
 		}
 		else
 		{
-			Cursor::RequestStyle(CursorStyle::ResizeUpDown);
+			Logger << U"[NocoEditor warning] AnchorConstraint not found in handleNode";
 		}
 	}
-	
-	// ドラッグ処理
-	if (!m_isDragging && isPressed && MouseL.down())
+
+	void ResizableHandle::setSize(const Vec2& size)
 	{
-		m_isDragging = true;
-		m_dragStartPos = Cursor::PosF();
-		// 現在のマウス位置を開始値として設定
-		if (m_direction == ResizeDirection::Horizontal)
+		if (auto* pAnchorConstraint = m_handleNode->anchorConstraint())
 		{
-			m_dragStartValue = m_dragStartPos.x;
+			auto newConstraint = *pAnchorConstraint;
+			newConstraint.sizeDelta = size;
+			m_handleNode->setConstraint(newConstraint);
 		}
 		else
 		{
-			m_dragStartValue = m_dragStartPos.y;
+			Logger << U"[NocoEditor warning] AnchorConstraint not found in handleNode";
 		}
 	}
-	
-	if (m_isDragging)
+
+	void ResizableHandle::setOnResize(std::function<void(double)> onResize)
 	{
-		if (MouseL.pressed())
+		m_onResize = std::move(onResize);
+	}
+
+	void ResizableHandle::setDragStartValue(double value)
+	{
+		m_dragStartValue = value;
+	}
+
+	void ResizableHandle::update()
+	{
+		const bool isHovered = m_handleNode->isHovered();
+		const bool isPressed = m_handleNode->isPressed();
+
+		// マウスカーソルの変更
+		if (isHovered || m_isDragging)
 		{
-			const Vec2 currentPos = Cursor::PosF();
-			
-			double currentValue = 0;
 			if (m_direction == ResizeDirection::Horizontal)
 			{
-				currentValue = currentPos.x;
+				Cursor::RequestStyle(CursorStyle::ResizeLeftRight);
 			}
 			else
 			{
-				currentValue = currentPos.y;
-			}
-			
-			if (m_onResize)
-			{
-				m_onResize(currentValue);
+				Cursor::RequestStyle(CursorStyle::ResizeUpDown);
 			}
 		}
-		else
+
+		// ドラッグ処理
+		if (!m_isDragging && isPressed && MouseL.down())
 		{
-			m_isDragging = false;
+			m_isDragging = true;
+			m_dragStartPos = Cursor::PosF();
+			// 現在のマウス位置を開始値として設定
+			if (m_direction == ResizeDirection::Horizontal)
+			{
+				m_dragStartValue = m_dragStartPos.x;
+			}
+			else
+			{
+				m_dragStartValue = m_dragStartPos.y;
+			}
+		}
+
+		if (m_isDragging)
+		{
+			if (MouseL.pressed())
+			{
+				const Vec2 currentPos = Cursor::PosF();
+
+				double currentValue = 0;
+				if (m_direction == ResizeDirection::Horizontal)
+				{
+					currentValue = currentPos.x;
+				}
+				else
+				{
+					currentValue = currentPos.y;
+				}
+
+				if (m_onResize)
+				{
+					m_onResize(currentValue);
+				}
+			}
+			else
+			{
+				m_isDragging = false;
+			}
 		}
 	}
-}
 
-std::shared_ptr<Node> ResizableHandle::getNode() const
-{
-	return m_handleNode;
+	std::shared_ptr<Node> ResizableHandle::getNode() const
+	{
+		return m_handleNode;
+	}
 }

@@ -1374,15 +1374,14 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		bool hasSelectionChanged()
+		bool checkSelectionChanged()
 		{
 			const auto currentSelectedNode = m_lastEditorSelectedNode.lock();
 			const auto prevSelectedNode = m_prevCheckedSelectedNode.lock();
 		
 			// 選択状態が変化したかチェック
 			const bool currentExists = (currentSelectedNode != nullptr);
-			const bool changed = (currentSelectedNode != prevSelectedNode) || 
-								(currentExists != m_prevSelectedNodeExists);
+			const bool changed = currentSelectedNode != prevSelectedNode || currentExists != m_prevSelectedNodeExists;
 		
 			// 状態を更新
 			if (changed)
@@ -1417,9 +1416,15 @@ namespace noco::editor
 	
 		void setWidth(double width)
 		{
-			if (auto* constraint = m_hierarchyFrameNode->anchorConstraint())
+			if (auto* pAnchorConstraint = m_hierarchyFrameNode->anchorConstraint())
 			{
-				const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
+				auto newConstraint = *pAnchorConstraint;
+				newConstraint.sizeDelta.x = width;
+				m_hierarchyFrameNode->setConstraint(newConstraint);
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] AnchorConstraint not found in hierarchyFrameNode";
 			}
 		}
 

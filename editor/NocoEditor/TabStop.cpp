@@ -5,7 +5,7 @@
 #include <NocoUI/InteractionState.hpp>
 #include <NocoUI/YN.hpp>
 
-namespace nocoeditor
+namespace noco::editor
 {
 	// ノードがフォーカス可能かチェックする関数
 	static bool isFocusable(const std::shared_ptr<noco::Node>& node)
@@ -15,13 +15,13 @@ namespace nocoeditor
 			return false;
 		}
 		
-		// ノードが非アクティブの場合はフォーカス不可
+		// 非アクティブなノードはフォーカス不可
 		if (node->activeInHierarchy() != noco::ActiveYN::Yes)
 		{
 			return false;
 		}
 		
-		// ノードがインタラクト不可の場合はフォーカス不可（階層も含めてチェック）
+		// 無効ノードはフォーカス不可
 		if (!node->interactableInHierarchy())
 		{
 			return false;
@@ -38,8 +38,9 @@ namespace nocoeditor
 		// フォーカスされている状態でTabキーが押されたかチェック
 		if (isFocused && KeyTab.down())
 		{
-			// Tabキーの入力をクリアして、他のTabStopが反応しないようにする
 			KeyTab.clearInput();
+			CurrentFrame::BlockInput();
+
 			const bool reverse = KeyShift.pressed();
 			
 			// 最初のターゲットノードを取得

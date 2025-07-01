@@ -130,6 +130,10 @@ namespace noco::editor
 				newConstraint.anchorMax = noco::Anchor::MiddleCenter;
 				node->setConstraint(newConstraint);
 			}
+			else
+			{
+				throw Error{ U"Unknown constraint type" };
+			}
 		}
 
 	public:
@@ -229,7 +233,7 @@ namespace noco::editor
 			{
 				// 同じ名前のノードを探してフォーカスを復元
 				auto newFocusNode = m_inspectorRootNode->getChildByNameOrNull(focusedNodeName, RecursiveYN::Yes);
-				if (newFocusNode && newFocusNode->getComponentOrNull<nocoeditor::TabStop>())
+				if (newFocusNode && newFocusNode->getComponentOrNull<TabStop>())
 				{
 					CurrentFrame::SetFocusedNode(newFocusNode);
 				}
@@ -240,9 +244,9 @@ namespace noco::editor
 		{
 			// TabStopを持つすべてのノードを収集
 			Array<std::shared_ptr<Node>> tabStopNodes;
-			collectTabStopNodes(m_inspectorRootNode, tabStopNodes);
+			populateTabStopNodes(m_inspectorRootNode, tabStopNodes);
 			
-			if (tabStopNodes.size() == 0)
+			if (tabStopNodes.empty())
 			{
 				return;
 			}
@@ -250,24 +254,23 @@ namespace noco::editor
 			// 各ノードのTabStopに次と前のノードを設定
 			for (size_t i = 0; i < tabStopNodes.size(); ++i)
 			{
-				auto tabStop = tabStopNodes[i]->getComponentOrNull<nocoeditor::TabStop>();
+				const auto tabStop = tabStopNodes[i]->getComponentOrNull<TabStop>();
 				if (!tabStop)
 				{
 					continue;
 				}
 				
 				// 次のノードを設定（最後の要素は最初に戻る）
-				size_t nextIndex = (i + 1) % tabStopNodes.size();
+				const size_t nextIndex = (i + 1) % tabStopNodes.size();
 				tabStop->setNextNode(tabStopNodes[nextIndex]);
 				
 				// 前のノードを設定（最初の要素は最後に戻る）
-				size_t prevIndex = (i == 0) ? tabStopNodes.size() - 1 : i - 1;
+				const size_t prevIndex = (i == 0) ? tabStopNodes.size() - 1 : i - 1;
 				tabStop->setPreviousNode(tabStopNodes[prevIndex]);
-				
 			}
 		}
 		
-		void collectTabStopNodes(const std::shared_ptr<Node>& node, Array<std::shared_ptr<Node>>& tabStopNodes)
+		void populateTabStopNodes(const std::shared_ptr<Node>& node, Array<std::shared_ptr<Node>>& tabStopNodes)
 		{
 			if (!node)
 			{
@@ -275,7 +278,7 @@ namespace noco::editor
 			}
 			
 			// このノードがTabStopを持っているかチェック
-			if (node->getComponentOrNull<nocoeditor::TabStop>())
+			if (node->getComponentOrNull<TabStop>())
 			{
 				tabStopNodes.push_back(node);
 			}
@@ -283,7 +286,7 @@ namespace noco::editor
 			// 子ノードを再帰的に探索
 			for (const auto& child : node->children())
 			{
-				collectTabStopNodes(child, tabStopNodes);
+				populateTabStopNodes(child, tabStopNodes);
 			}
 		}
 
@@ -518,10 +521,6 @@ namespace noco::editor
 				}
 			}
 
-			void draw(const Node&) const override
-			{
-			}
-
 		public:
 			explicit PropertyTextBox(const std::shared_ptr<TextBox>& textBox, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
 				: ComponentBase{ {} }
@@ -558,7 +557,7 @@ namespace noco::editor
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
-			textBoxNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxNode->emplaceComponent<TabStop>();
 			textBoxNode->addClickHotKey(KeyF2);
 			return propertyNode;
 		}
@@ -587,7 +586,7 @@ namespace noco::editor
 				{
 					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 					{
-						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
 			}
@@ -614,7 +613,7 @@ namespace noco::editor
 				{
 					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 					{
-						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
 			}
@@ -635,7 +634,7 @@ namespace noco::editor
 				{
 					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 					{
-						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
 			}
@@ -659,14 +658,14 @@ namespace noco::editor
 					{
 						if (const auto labelNode = line1->getChildByNameOrNull(U"Label", RecursiveYN::No))
 						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
 					}
 					if (const auto line2 = propertyNode->getChildByNameOrNull(U"Line2", RecursiveYN::No))
 					{
 						if (const auto labelNode = line2->getChildByNameOrNull(U"Label", RecursiveYN::No))
 						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
 					}
 				}
@@ -687,7 +686,7 @@ namespace noco::editor
 				if (metadata.tooltip)
 				{
 					// boolプロパティの場合は、propertyNode全体にツールチップを追加
-					propertyNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+					propertyNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 				}
 			}
 			
@@ -707,7 +706,7 @@ namespace noco::editor
 				{
 					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 					{
-						labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
 			}
@@ -768,7 +767,7 @@ namespace noco::editor
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue), std::move(fnGetValue)));
-			textBoxNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxNode->emplaceComponent<TabStop>();
 			return propertyNode;
 		}
 
@@ -865,14 +864,10 @@ namespace noco::editor
 						}
 					}
 				}
-
-				void draw(const Node&) const override
-				{
-				}
 			};
 			
 			textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue), std::move(fnGetValue)));
-			textAreaNode->emplaceComponent<nocoeditor::TabStop>();
+			textAreaNode->emplaceComponent<TabStop>();
 			return propertyNode;
 		}
 
@@ -946,7 +941,7 @@ namespace noco::editor
 			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxXNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxXNode->emplaceComponent<TabStop>();
 			textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 			// Y
@@ -961,7 +956,7 @@ namespace noco::editor
 			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxYNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxYNode->emplaceComponent<TabStop>();
 			textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 			propertyNode->addComponent(std::make_shared<Vec2PropertyTextBox>(
@@ -1042,7 +1037,7 @@ namespace noco::editor
 			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxXNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxXNode->emplaceComponent<TabStop>();
 			textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
 			// Y
@@ -1057,7 +1052,7 @@ namespace noco::editor
 			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxYNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxYNode->emplaceComponent<TabStop>();
 			textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
 			// Z
@@ -1072,7 +1067,7 @@ namespace noco::editor
 			textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxZNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxZNode->emplaceComponent<TabStop>();
 			textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
 
 			// W
@@ -1087,7 +1082,7 @@ namespace noco::editor
 			textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxWNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxWNode->emplaceComponent<TabStop>();
 			textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
 
 			propertyNode->addComponent(std::make_shared<Vec4PropertyTextBox>(
@@ -1184,7 +1179,7 @@ namespace noco::editor
 			textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxLNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxLNode->emplaceComponent<TabStop>();
 			textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
 
 			// R
@@ -1199,7 +1194,7 @@ namespace noco::editor
 			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxRNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxRNode->emplaceComponent<TabStop>();
 			textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
 
 			const auto line2 = propertyNode->emplaceChild(
@@ -1261,7 +1256,7 @@ namespace noco::editor
 			textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxTNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxTNode->emplaceComponent<TabStop>();
 			textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
 
 			// B
@@ -1276,7 +1271,7 @@ namespace noco::editor
 			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxBNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
 			propertyNode->addComponent(std::make_shared<LRTBPropertyTextBox>(
@@ -1408,7 +1403,7 @@ namespace noco::editor
 			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxRNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxRNode->emplaceComponent<TabStop>();
 			textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
 
 			// G
@@ -1423,7 +1418,7 @@ namespace noco::editor
 			textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxGNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxGNode->emplaceComponent<TabStop>();
 			textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
 
 			// B
@@ -1438,7 +1433,7 @@ namespace noco::editor
 			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxBNode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
 
 			// A
@@ -1453,7 +1448,7 @@ namespace noco::editor
 			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
-			textBoxANode->emplaceComponent<nocoeditor::TabStop>();
+			textBoxANode->emplaceComponent<TabStop>();
 			textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
 			propertyNode->addComponent(std::make_shared<ColorPropertyTextBox>(
@@ -1679,7 +1674,7 @@ namespace noco::editor
 					const auto& metadata = it->second;
 					if (metadata.tooltip)
 					{
-						activeCheckboxNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+						activeCheckboxNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
 			}
@@ -1710,7 +1705,7 @@ namespace noco::editor
 						// CreateNodeNameTextboxNodeはLabelを含むNodeを返すので、そのLabelを探す
 						if (const auto labelNode = nameTextboxNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
 					}
 				}
@@ -1798,7 +1793,7 @@ namespace noco::editor
 			fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 			
 			// styleState入力欄を追加
-			const auto fnAddTextChild = 
+			const auto fnAddTextChild =
 				[this, &nodeSettingNode](StringView name, const String& currentValue, auto fnSetValue)
 				{
 					nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
@@ -2045,7 +2040,7 @@ namespace noco::editor
 						const auto& metadata = it->second;
 						if (metadata.tooltip)
 						{
-							labelNode->emplaceComponent<::TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
+							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
 					}
 					
@@ -2939,9 +2934,15 @@ namespace noco::editor
 		
 		void setWidth(double width)
 		{
-			if (auto* constraint = m_inspectorFrameNode->anchorConstraint())
+			if (auto* pAnchorConstraint = m_inspectorFrameNode->anchorConstraint())
 			{
-				const_cast<AnchorConstraint*>(constraint)->sizeDelta.x = width;
+				auto newConstraint = *pAnchorConstraint;
+				newConstraint.sizeDelta.x = width;
+				m_inspectorFrameNode->setConstraint(newConstraint);
+			}
+			else
+			{
+				Logger << U"[NocoEditor warning] AnchorConstraint not found in inspectorFrameNode";
 			}
 		}
 	};

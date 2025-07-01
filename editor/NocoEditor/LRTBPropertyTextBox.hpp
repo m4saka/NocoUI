@@ -3,7 +3,6 @@
 
 namespace noco::editor
 {
-
 	class LRTBPropertyTextBox : public ComponentBase
 	{
 	private:
