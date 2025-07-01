@@ -3265,6 +3265,39 @@ private:
 		}
 	}
 	
+	void doSnapNodeSizeToTexture(const std::shared_ptr<Sprite>& sprite, const std::shared_ptr<Node>& node)
+	{
+		const String texturePath = sprite->textureFilePath().getValueStringOfDefault();
+		if (texturePath.isEmpty())
+		{
+			return;
+		}
+		
+		Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
+		if (!texture)
+		{
+			return;
+		}
+		
+		const Vec2 textureSize{ texture.size() };
+		
+		if (const auto* box = node->boxConstraint())
+		{
+			BoxConstraint newConstraint = *box;
+			newConstraint.sizeDelta = textureSize;
+			newConstraint.sizeRatio = Vec2::Zero();
+			newConstraint.flexibleWeight = 0.0;
+			node->setConstraint(newConstraint);
+		}
+		else if (const auto* anchor = node->anchorConstraint())
+		{
+			AnchorConstraint newConstraint = *anchor;
+			newConstraint.sizeDelta = textureSize;
+			newConstraint.anchorMin = noco::Anchor::MiddleCenter;
+			newConstraint.anchorMax = noco::Anchor::MiddleCenter;
+			node->setConstraint(newConstraint);
+		}
+	}
 
 public:
 	explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
@@ -6025,6 +6058,30 @@ public:
 					},
 					nullptr,
 					RecursiveYN::Yes);
+			}
+		}
+
+		// Spriteコンポーネントの場合、スナップボタンを追加
+		// TODO: コンポーネント毎のカスタムInspectorを追加するための仕組みを整備する
+		if (auto sprite = std::dynamic_pointer_cast<Sprite>(component))
+		{
+			auto snapButton = componentNode->addChild(CreateButtonNode(
+				U"テクスチャサイズへスナップ",
+				BoxConstraint
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ -24, 24 },
+					.margin = LRTB{ 12, 12, 4, 0 },
+				},
+				[this, sprite, node](const std::shared_ptr<Node>&)
+				{
+					doSnapNodeSizeToTexture(sprite, node);
+					refreshInspector();
+				}));
+			
+			if (isFolded)
+			{
+				snapButton->setActive(false);
 			}
 		}
 
