@@ -116,6 +116,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Component\AudioPlayer.cpp" />
+    <ClCompile Include="EditorButton.cpp" />
+    <ClCompile Include="EditorDialog.cpp" />
     <ClCompile Include="PropertyMetaData.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />
     <ClCompile Include="TabStop.cpp" />
