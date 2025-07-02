@@ -796,7 +796,6 @@ namespace noco::editor
 				return;
 			}
 		
-			// 新しいstyleStateKeysメソッドを使用
 			m_availableStyleStates = m_pProperty->styleStateKeys();
 		}
 

@@ -122,7 +122,7 @@ namespace noco
 
 		size_t getColumnCount(size_t line) const;
 
-		// IFocusableインターフェースの実装
+		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;
 		void blur(const std::shared_ptr<Node>& node) override;
 

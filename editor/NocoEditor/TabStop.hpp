@@ -4,7 +4,6 @@
 
 namespace noco::editor
 {
-	// タブキーでのフォーカス移動を可能にするコンポーネント（NocoEditor専用、非シリアライズ）
 	class TabStop : public noco::ComponentBase
 	{
 	private:

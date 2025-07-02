@@ -597,7 +597,6 @@ namespace noco
 	{
 		if (const auto parent = m_parent.lock())
 		{
-			// ポインタ比較で検索（shared_from_thisはconstメソッドで問題があるため）
 			const auto it = std::find_if(parent->m_children.begin(), parent->m_children.end(),
 				[this](const std::shared_ptr<Node>& child) { return child.get() == this; });
 			if (it != parent->m_children.end())

@@ -103,7 +103,7 @@ namespace noco
 
 		void onDeactivated(const std::shared_ptr<Node>& node);
 
-		// IFocusableインターフェースの実装
+		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;
 		void blur(const std::shared_ptr<Node>& node) override;
 
