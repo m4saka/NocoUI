@@ -115,29 +115,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Component\AudioPlayer.cpp" />
     <ClCompile Include="EditorButton.cpp" />
     <ClCompile Include="EditorDialog.cpp" />
     <ClCompile Include="PropertyMetaData.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />
     <ClCompile Include="TabStop.cpp" />
-    <ClCompile Include="..\..\src\Component\CursorChanger.cpp" />
-    <ClCompile Include="..\..\src\Component\EventTrigger.cpp" />
-    <ClCompile Include="..\..\src\Asset.cpp" />
-    <ClCompile Include="..\..\src\Canvas.cpp" />
-    <ClCompile Include="..\..\src\Component\DragDropSource.cpp" />
-    <ClCompile Include="..\..\src\Component\DragDropTarget.cpp" />
-    <ClCompile Include="..\..\src\Component\Label.cpp" />
-    <ClCompile Include="..\..\src\Component\RectRenderer.cpp" />
-    <ClCompile Include="..\..\src\Component\Sprite.cpp" />
-    <ClCompile Include="..\..\src\Component\TextArea.cpp" />
-    <ClCompile Include="..\..\src\Component\TextBox.cpp" />
-    <ClCompile Include="..\..\src\Layout\FlowLayout.cpp" />
-    <ClCompile Include="..\..\src\Layout\HorizontalLayout.cpp" />
-    <ClCompile Include="..\..\src\Layout\VerticalLayout.cpp" />
-    <ClCompile Include="..\..\src\Node.cpp" />
-    <ClCompile Include="..\..\src\Serialization.cpp" />
-    <ClCompile Include="..\..\src\Utility.cpp" />
     <ClCompile Include="HistorySystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Tooltip.cpp" />
@@ -252,7 +234,6 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\NocoUI\Component\AudioPlayer.hpp" />
     <ClInclude Include="EditorButton.hpp" />
     <ClInclude Include="CheckboxToggler.hpp" />
     <ClInclude Include="ColorPropertyTextBox.hpp" />
@@ -268,56 +249,17 @@
     <ClInclude Include="PropertyMetaData.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="TabStop.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\CursorChanger.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\DataStore.hpp" />
     <ClInclude Include="..\..\include\NocoUI.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Anchor.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Asset.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Canvas.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\Component.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\ComponentBase.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\DragDropSource.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\DragDropTarget.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\DrawerComponent.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\EventTrigger.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\InputUpdaterComponent.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\ITextBox.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\Label.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\Placeholder.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\RectRenderer.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\HotKeyInputHandler.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\Sprite.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\TextArea.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\TextBox.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Component\UpdaterComponent.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Constraint\AnchorConstraint.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Constraint\BoxConstraint.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Constraint\Constraint.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\detail\ScopedScissorRect.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Enums.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\InheritChildrenStateFlags.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\InteractionState.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Layout\FlowLayout.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Layout\HorizontalLayout.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Layout\Layout.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Layout\VerticalLayout.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\LRTB.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\magic_enum.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\MouseTracker.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Node.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Property.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\PropertyValue.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\ScrollableAxisFlags.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Serialization.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Smoothing.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\TransformEffect.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\Utility.hpp" />
-    <ClInclude Include="..\..\include\NocoUI\YN.hpp" />
     <ClInclude Include="HistorySystem.hpp" />
     <ClInclude Include="Tooltip.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vec2PropertyTextBox.hpp" />
     <ClInclude Include="Vec4PropertyTextBox.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NocoUI.vcxproj">
+      <Project>{557d3fbd-c267-4eb1-8ad6-2c19af884151}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
