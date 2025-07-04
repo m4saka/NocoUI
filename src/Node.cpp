@@ -1782,6 +1782,7 @@ namespace noco
 		return m_currentInteractionState != InteractionState::Disabled;
 	}
 
+	// TODO: boolで返す方が良さそう
 	ActiveYN Node::activeSelf() const
 	{
 		return m_activeSelf;

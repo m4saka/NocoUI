@@ -127,6 +127,7 @@
     <ClCompile Include="src\Component\Sprite.cpp" />
     <ClCompile Include="src\Component\TextArea.cpp" />
     <ClCompile Include="src\Component\TextBox.cpp" />
+    <ClCompile Include="src\Component\Tween.cpp" />
     <ClCompile Include="src\Layout\FlowLayout.cpp" />
     <ClCompile Include="src\Layout\HorizontalLayout.cpp" />
     <ClCompile Include="src\Layout\VerticalLayout.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="include\NocoUI\Component\Sprite.hpp" />
     <ClInclude Include="include\NocoUI\Component\TextArea.hpp" />
     <ClInclude Include="include\NocoUI\Component\TextBox.hpp" />
+    <ClInclude Include="include\NocoUI\Component\Tween.hpp" />
     <ClInclude Include="include\NocoUI\Component\UpdaterComponent.hpp" />
     <ClInclude Include="include\NocoUI\Constraint\AnchorConstraint.hpp" />
     <ClInclude Include="include\NocoUI\Constraint\BoxConstraint.hpp" />

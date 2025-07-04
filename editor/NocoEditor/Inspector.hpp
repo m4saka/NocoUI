@@ -358,6 +358,7 @@ namespace noco::editor
 					MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
 					MenuItem{ U"CursorChanger を追加", U"", KeyC, [this] { onClickAddComponent<CursorChanger>(); } },
 					MenuItem{ U"AudioPlayer を追加", U"", KeyA, [this] { onClickAddComponent<AudioPlayer>(); } },
+					MenuItem{ U"Tween を追加", U"", KeyT, [this] { onClickAddComponent<Tween>(); } },
 				};
 				
 				// コピーされたコンポーネントがある場合は貼り付けメニューを追加

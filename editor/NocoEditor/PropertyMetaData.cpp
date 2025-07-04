@@ -544,6 +544,74 @@ namespace noco::editor
 			.tooltip = U"InteractionStateがDisabledの要素への操作でもオーディオを再生するかどうか",
 		};
 		
+		// Tween
+		metadata[PropertyKey{ U"Tween", U"active" }] = PropertyMetadata{
+			.tooltip = U"アニメーションの再生状態",
+		};
+		metadata[PropertyKey{ U"Tween", U"target" }] = PropertyMetadata{
+			.tooltip = U"アニメーション対象",
+			.tooltipDetail = U"None: アニメーションしない\nPosition: TransformEffectのpositionプロパティ\nScale: TransformEffectのscaleプロパティ\nColor: TransformEffectのcolorプロパティ",
+			.refreshInspectorOnChange = true,
+		};
+		
+		// Vec2用プロパティの条件付き表示
+		const auto tweenVec2VisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* tween = dynamic_cast<const Tween*>(&component))
+			{
+				const auto target = tween->target();
+				return target == TweenTarget::Position || target == TweenTarget::Scale;
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"value1_vec2" }] = PropertyMetadata{
+			.tooltip = U"開始値",
+			.visibilityCondition = tweenVec2VisibilityCondition,
+		};
+		metadata[PropertyKey{ U"Tween", U"value2_vec2" }] = PropertyMetadata{
+			.tooltip = U"終了値",
+			.visibilityCondition = tweenVec2VisibilityCondition,
+		};
+		
+		// ColorF用プロパティの条件付き表示
+		const auto tweenColorVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* tween = dynamic_cast<const Tween*>(&component))
+			{
+				return tween->target() == TweenTarget::Color;
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"value1_color" }] = PropertyMetadata{
+			.tooltip = U"開始値",
+			.visibilityCondition = tweenColorVisibilityCondition,
+		};
+		metadata[PropertyKey{ U"Tween", U"value2_color" }] = PropertyMetadata{
+			.tooltip = U"終了値",
+			.visibilityCondition = tweenColorVisibilityCondition,
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"easing" }] = PropertyMetadata{
+			.tooltip = U"イージング関数",
+			.tooltipDetail = U"時間に対する値の変化のさせ方を指定します",
+		};
+		metadata[PropertyKey{ U"Tween", U"duration" }] = PropertyMetadata{
+			.tooltip = U"アニメーション時間（秒）",
+		};
+		metadata[PropertyKey{ U"Tween", U"delay" }] = PropertyMetadata{
+			.tooltip = U"開始までの遅延時間（秒）",
+		};
+		metadata[PropertyKey{ U"Tween", U"loopType" }] = PropertyMetadata{
+			.tooltip = U"ループの種類",
+			.tooltipDetail = U"None: ループなし\nLoop: 通常ループ\nPingPong: 往復ループ",
+		};
+		metadata[PropertyKey{ U"Tween", U"restartsOnActive" }] = PropertyMetadata{
+			.tooltip = U"アクティブ時に最初から再生",
+			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか",
+		};
+		
 		return metadata;
 	}
 }

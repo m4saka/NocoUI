@@ -98,6 +98,16 @@ namespace noco
 				}
 				return component;
 			}
+			else if (type == U"Tween")
+			{
+				auto component = std::make_shared<Tween>();
+				if (!component->tryReadFromJSONImpl(json, includesInternalId))
+				{
+					Logger << U"[NocoUI warning] Failed to read Tween component from JSON";
+					return nullptr;
+				}
+				return component;
+			}
 			else
 			{
 				Logger << U"[NocoUI warning] Unknown component type: '{}'"_fmt(type);
