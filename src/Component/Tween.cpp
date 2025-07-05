@@ -70,7 +70,7 @@ namespace noco
 		case TweenEasing::EaseInOutBounce:
 			return EaseInOutBounce(t);
 		default:
-			Logger << U"[NocoUI warning] Unknown TweenEasing: {}"_fmt(std::to_underlying(m_easing.value()));
+			Logger << U"[NocoUI warning] Unknown TweenEasing: {}"_fmt(static_cast<std::underlying_type_t<TweenEasing>>(m_easing.value()));
 			return t;
 		}
 	}

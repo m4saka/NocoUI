@@ -12,13 +12,10 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 file(GLOB_RECURSE NOCO_SRC_FILES ../../src/*.cpp)
+file(GLOB EDITOR_SRC_FILES *.cpp)
 
 add_executable(NocoEditor
-  Main.cpp
-  HistorySystem.cpp
-  ResizableHandle.cpp
-  Tooltip.cpp
-  TabStop.cpp
+  ${EDITOR_SRC_FILES}
   ${NOCO_SRC_FILES}
   )
 

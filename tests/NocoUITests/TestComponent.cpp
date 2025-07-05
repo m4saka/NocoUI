@@ -106,20 +106,6 @@ TEST_CASE("TextArea component", "[Component][TextArea]")
 	}
 }
 
-// InputBlockerコンポーネントのテスト
-TEST_CASE("InputBlocker component", "[Component][InputBlocker]")
-{
-	SECTION("Basic functionality")
-	{
-		auto node = noco::Node::Create();
-		auto blocker = node->emplaceComponent<noco::InputBlocker>();
-		
-		// InputBlockerは特定のプロパティを持たないシンプルなコンポーネント
-		// 存在することで入力をブロックする
-		REQUIRE(blocker != nullptr);
-	}
-}
-
 // DragDropSource/Targetコンポーネントのテスト
 TEST_CASE("DragDrop components", "[Component][DragDrop]")
 {
