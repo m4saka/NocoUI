@@ -321,6 +321,8 @@ namespace noco::editor
 				Palette::White,
 				Vec2{ 4, 4 },
 				Vec2{ 2, 2 },
+				HorizontalAlign::Left,
+				VerticalAlign::Middle,
 				Palette::White,
 				ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(m_defaultValue);

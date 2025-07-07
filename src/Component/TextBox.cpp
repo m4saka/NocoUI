@@ -103,6 +103,60 @@ namespace noco
 		return 0.0;
 	}
 
+	Vec2 TextBox::getAlignOffset(const RectF& rect, const Vec2& effectScale) const
+	{
+		double offsetX = 0.0;
+		double offsetY = 0.0;
+		
+		// 水平揃え
+		const double contentWidth = m_cache.regionSize.x;
+		const double availableWidth = rect.w / effectScale.x;
+		
+		// テキストが収まる場合のみ水平揃えを適用
+		if (contentWidth <= availableWidth)
+		{
+			switch (m_horizontalAlign.value())
+			{
+			case HorizontalAlign::Left:
+				offsetX = 0.0;
+				break;
+			case HorizontalAlign::Center:
+				offsetX = (availableWidth - contentWidth) / 2.0;
+				break;
+			case HorizontalAlign::Right:
+				offsetX = availableWidth - contentWidth;
+				break;
+			}
+		}
+		else
+		{
+			// スクロールが必要な場合は水平揃えしない
+			offsetX = 0.0;
+		}
+		
+		// 垂直揃え
+		const double contentHeight = m_cache.lineHeight;
+		const double availableHeight = rect.h / effectScale.y;
+		
+		if (contentHeight <= availableHeight)
+		{
+			switch (m_verticalAlign.value())
+			{
+			case VerticalAlign::Top:
+				offsetY = 0.0;
+				break;
+			case VerticalAlign::Middle:
+				offsetY = (availableHeight - contentHeight) / 2.0;
+				break;
+			case VerticalAlign::Bottom:
+				offsetY = availableHeight - contentHeight;
+				break;
+			}
+		}
+		
+		return Vec2{ offsetX, offsetY };
+	}
+
 	size_t TextBox::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
 	{
 		m_cache.refreshIfDirty(
@@ -111,8 +165,10 @@ namespace noco
 			m_fontSize.value(),
 			rect.size);
 
-		const double posX = (Cursor::PosF().x - rect.x) / effectScale.x;
+		const Vec2 alignOffset = getAlignOffset(rect, effectScale);
 		const double drawOffsetX = getDrawOffsetX();
+		const double posX = (Cursor::PosF().x - rect.x) / effectScale.x - alignOffset.x;
+		
 		return m_cache.getCursorIndex(drawOffsetX, m_scrollOffset, posX);
 	}
 
@@ -163,7 +219,7 @@ namespace noco
 
 	void TextBox::handleClipboardShortcut()
 	{
-		if (!m_isEditing)
+		if (!m_isEditing || m_isDragging)
 		{
 			return;
 		}
@@ -422,7 +478,7 @@ namespace noco
 			bool keyMoveTried = false;
 
 			const bool editingTextExists = !TextInput::GetEditingText().empty();
-			if (!m_prevEditingTextExists && !editingTextExists) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)
+			if (!m_prevEditingTextExists && !editingTextExists && !m_isDragging) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)、ドラッグ中もキー操作を無効化
 			{
 				if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
 				{
@@ -530,6 +586,9 @@ namespace noco
 						continue;
 					}
 
+					// 文字入力があった場合はドラッグ状態を解除
+					m_isDragging = false;
+
 					String text = m_text.value();
 					if (m_cursorIndex != m_selectionAnchor)
 					{
@@ -596,6 +655,15 @@ namespace noco
 			m_fontAssetName.value(),
 			m_fontSize.value(),
 			rect.size);
+
+		const double contentWidth = m_cache.regionSize.x;
+		const double availableWidth = rect.w / effectScale.x;
+		if (contentWidth <= availableWidth)
+		{
+			m_scrollOffset = 0;
+			m_fitDirection = FitDirection::Left;
+			return;
+		}
 
 		const double cursorWidth = CursorWidth * effectScale.x;
 		for (size_t i = 0; i < 1000; ++i) // 無限ループ回避
@@ -687,8 +755,10 @@ namespace noco
 			m_fontSize.value(),
 			rect.size);
 
+		// Alignオフセットを計算
+		const Vec2 alignOffset = getAlignOffset(rect, effectScale);
 		const double drawOffsetX = getDrawOffsetX();
-		const Vec2 offset = rect.pos + Vec2{ drawOffsetX * effectScale.x, 0.0 };
+		const Vec2 offset = rect.pos + Vec2{ (drawOffsetX + alignOffset.x) * effectScale.x, alignOffset.y * effectScale.y };
 
 		{
 			detail::ScopedScissorRect scissorRect{ rect.asRect() };
@@ -697,15 +767,15 @@ namespace noco
 			if (m_selectionAnchor != m_cursorIndex)
 			{
 				const auto [selectionBegin, selectionEnd] = std::minmax(m_selectionAnchor, m_cursorIndex);
-				const double xBegin = rect.pos.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, selectionBegin) * effectScale.x;
-				const double xEnd = rect.pos.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, selectionEnd) * effectScale.x;
+				const double xBegin = rect.pos.x + (alignOffset.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, selectionBegin)) * effectScale.x;
+				const double xEnd = rect.pos.x + (alignOffset.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, selectionEnd)) * effectScale.x;
 
 				const double selectionLeft = Min(xBegin, xEnd);
 				const double selectionWidth = Abs(xEnd - xBegin);
 
 				const RectF selectionRect{
 					Vec2{ selectionLeft, offset.y },
-					Vec2{ selectionWidth, m_cache.regionSize.y * effectScale.y } };
+					Vec2{ selectionWidth, m_cache.lineHeight * effectScale.y } };
 				selectionRect.draw(m_selectionColor.value());
 			}
 
@@ -726,8 +796,9 @@ namespace noco
 			if (m_isEditing && m_cursorBlinkTime < 0.5)
 			{
 				const double cursorWidth = CursorWidth * effectScale.x;
-				const double cursorHeight = m_cache.regionSize.y * effectScale.y;
-				const RectF cursorRect{ rect.pos + Vec2{ m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, m_cursorIndex) * effectScale.x, 0.0 }, Vec2{ cursorWidth, cursorHeight } };
+				const double cursorHeight = m_cache.lineHeight * effectScale.y;
+				const double cursorX = rect.pos.x + (alignOffset.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, m_cursorIndex)) * effectScale.x;
+				const RectF cursorRect{ Vec2{ cursorX, offset.y }, Vec2{ cursorWidth, cursorHeight } };
 				cursorRect.draw(m_cursorColor.value());
 			}
 		}
@@ -743,7 +814,8 @@ namespace noco
 					m_fontSize.value(),
 					rect.size);
 
-				const Vec2 editingOffset = offset + Vec2{ m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, m_cursorIndex) * effectScale.x, 0.0 };
+				const double editingX = rect.pos.x + (alignOffset.x + m_cache.getCursorPosX(drawOffsetX, m_scrollOffset, m_cursorIndex)) * effectScale.x;
+				const Vec2 editingOffset = Vec2{ editingX, offset.y };
 
 				// 領域を塗りつぶし
 				{

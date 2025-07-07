@@ -440,6 +440,12 @@ namespace noco::editor
 		metadata[PropertyKey{ U"TextBox", U"verticalPadding" }] = PropertyMetadata{
 			.tooltip = U"垂直方向の内側の余白 (上、下)",
 		};
+		metadata[PropertyKey{ U"TextBox", U"horizontalAlign" }] = PropertyMetadata{
+			.tooltip = U"水平方向の配置",
+		};
+		metadata[PropertyKey{ U"TextBox", U"verticalAlign" }] = PropertyMetadata{
+			.tooltip = U"垂直方向の配置",
+		};
 		metadata[PropertyKey{ U"TextBox", U"cursorColor" }] = PropertyMetadata{
 			.tooltip = U"カーソルの色",
 		};
@@ -447,7 +453,6 @@ namespace noco::editor
 			.tooltip = U"選択範囲の色",
 		};
 		metadata[PropertyKey{ U"TextBox", U"text" }] = PropertyMetadata{
-			.numTextAreaLines = 3,
 			.refreshesEveryFrame = true,
 		};
 		metadata[PropertyKey{ U"TextBox", U"readOnly" }] = PropertyMetadata{

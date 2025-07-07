@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "ITextBox.hpp"
+#include "../Enums.hpp"
 
 namespace noco
 {
@@ -16,6 +17,8 @@ namespace noco
 		SmoothProperty<ColorF> m_color;
 		SmoothProperty<Vec2> m_horizontalPadding;
 		SmoothProperty<Vec2> m_verticalPadding;
+		Property<HorizontalAlign> m_horizontalAlign;
+		Property<VerticalAlign> m_verticalAlign;
 		SmoothProperty<ColorF> m_cursorColor;
 		SmoothProperty<ColorF> m_selectionColor;
 		Property<bool> m_readOnly;
@@ -87,6 +90,8 @@ namespace noco
 
 		double getDrawOffsetX() const;
 
+		Vec2 getAlignOffset(const RectF& rect, const Vec2& effectScale) const;
+
 		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
 
 		bool hasSelection() const;
@@ -114,16 +119,20 @@ namespace noco
 			const PropertyValue<ColorF>& color = Palette::Black,
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
+			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Left,
+			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Middle,
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
 			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified,
 			const PropertyValue<bool>& readOnly = false)
-			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_readOnly } }
+			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_horizontalAlign, &m_verticalAlign, &m_readOnly } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
 			, m_color{ U"color", color }
 			, m_horizontalPadding{ U"horizontalPadding", horizontalPadding }
 			, m_verticalPadding{ U"verticalPadding", verticalPadding }
+			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
+			, m_verticalAlign{ U"verticalAlign", verticalAlign }
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
 			, m_selectionColor{ U"selectionColor", selectionColor.value_or(ColorF{ 0.0, 0.1, 0.3, 0.5 }) }
 			, m_readOnly{ U"readOnly", readOnly }
@@ -240,6 +249,30 @@ namespace noco
 		bool isEditing() const override
 		{
 			return m_isEditing;
+		}
+
+		[[nodiscard]]
+		const PropertyValue<HorizontalAlign>& horizontalAlign() const
+		{
+			return m_horizontalAlign.propertyValue();
+		}
+
+		std::shared_ptr<TextBox> setHorizontalAlign(const PropertyValue<HorizontalAlign>& horizontalAlign)
+		{
+			m_horizontalAlign.setPropertyValue(horizontalAlign);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<VerticalAlign>& verticalAlign() const
+		{
+			return m_verticalAlign.propertyValue();
+		}
+
+		std::shared_ptr<TextBox> setVerticalAlign(const PropertyValue<VerticalAlign>& verticalAlign)
+		{
+			m_verticalAlign.setPropertyValue(verticalAlign);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]

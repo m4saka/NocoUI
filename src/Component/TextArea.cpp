@@ -234,7 +234,7 @@ namespace noco
 
 	std::tuple<bool, size_t, size_t> TextArea::handleShortcut()
 	{
-		if (!m_isEditing)
+		if (!m_isEditing || m_isDragging)
 		{
 			return { false, 0, 0 };
 		}
@@ -613,7 +613,7 @@ namespace noco
 			bool shortcutActionTried = false;
 
 			const bool editingTextExists = !TextInput::GetEditingText().empty();
-			if (!m_prevEditingTextExists && !editingTextExists) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)
+			if (!m_prevEditingTextExists && !editingTextExists && !m_isDragging) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)、ドラッグ中もキー操作を無効化
 			{
 				if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
 				{
@@ -836,6 +836,9 @@ namespace noco
 			// CtrlキーまたはAltキーが押されている場合は通常の文字入力を無視
 			if (!rawInput.empty() && !ctrl && !alt && !m_readOnly.value())
 			{
+				// 文字入力があった場合はドラッグ状態を解除
+				m_isDragging = false;
+				
 				if (hasSelection())
 				{
 					deleteSelection();
