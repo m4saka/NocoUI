@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="EditorButton.cpp" />
     <ClCompile Include="EditorDialog.cpp" />
+    <ClCompile Include="PropertyLabelDragger.cpp" />
     <ClCompile Include="PropertyMetaData.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />
     <ClCompile Include="TabStop.cpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="Inspector.hpp" />
     <ClInclude Include="LRTBPropertyTextBox.hpp" />
     <ClInclude Include="MenuBar.hpp" />
+    <ClInclude Include="PropertyLabelDragger.hpp" />
     <ClInclude Include="PropertyMetaData.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="TabStop.hpp" />

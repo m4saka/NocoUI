@@ -43,6 +43,7 @@ namespace noco
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
+		
 		ActiveYN m_activeSelf = ActiveYN::Yes;
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
@@ -74,6 +75,7 @@ namespace noco
 		/* NonSerialized */ bool m_dragThresholdExceeded = false; // ドラッグ閾値を超えたかどうか
 		/* NonSerialized */ Optional<Vec2> m_rubberBandTargetOffset; // ラバーバンドスクロールの戻り先
 		/* NonSerialized */ double m_rubberBandAnimationTime = 0.0; // ラバーバンドアニメーション経過時間
+		/* NonSerialized */ bool m_preventDragScroll = false; // ドラッグスクロールを阻止するか
 
 		[[nodiscard]]
 		explicit Node(uint64 internalId, StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -432,6 +434,9 @@ namespace noco
 		std::shared_ptr<Node> setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled);
 
 		std::shared_ptr<Node> setRubberBandScrollEnabled(bool rubberBandScrollEnabled);
+
+		// ドラッグスクロール阻止
+		void preventDragScroll();
 
 		[[nodiscard]]
 		ClippingEnabledYN clippingEnabled() const;

@@ -555,6 +555,7 @@ namespace noco
 					m_cursorLine = line;
 					m_cursorColumn = column;
 					m_isDragging = true;
+					node->preventDragScroll();
 				}
 				else if (!KeyShift.pressed())
 				{
@@ -565,6 +566,7 @@ namespace noco
 					m_cursorLine = line;
 					m_cursorColumn = column;
 					m_isDragging = true;
+					node->preventDragScroll();
 				}
 				else
 				{
@@ -573,6 +575,7 @@ namespace noco
 					m_cursorLine = line;
 					m_cursorColumn = column;
 					m_isDragging = true;
+					node->preventDragScroll();
 				}
 				m_isEditing = true;
 				CurrentFrame::SetFocusedNode(node);

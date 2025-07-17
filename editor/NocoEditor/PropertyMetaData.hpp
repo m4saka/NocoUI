@@ -30,6 +30,7 @@ namespace noco::editor
 		bool refreshInspectorOnChange = false;  // 変更時にInspectorを更新するかどうか
 		Optional<int32> numTextAreaLines;  // テキストエリアとして表示する場合の行数(未設定の場合はテキストボックス)
 		bool refreshesEveryFrame = false;  // 毎フレームInspectorの値の更新が必要かどうか(テキストボックスなどユーザー編集を伴うコンポーネントで使用。現状コンポーネントのStringプロパティのみ対応)
+		Optional<double> dragValueChangeStep;  // ドラッグによる値変更のステップ値（値が設定されている場合、ドラッグ機能が有効になる）
 	};
 
 	struct PropertyVisibilityData

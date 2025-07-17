@@ -8,6 +8,7 @@
 #include "EditorDialog.hpp"
 #include "PropertyMetaData.hpp"
 #include "Vec4PropertyTextBox.hpp"
+#include "PropertyLabelDragger.hpp"
 
 namespace noco::editor
 {
@@ -579,7 +580,7 @@ namespace noco::editor
 				else
 				{
 					// 通常のTextBoxを使用
-					propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
+					propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), metadata.dragValueChangeStep);
 				}
 				
 				// ツールチップを追加
@@ -594,7 +595,7 @@ namespace noco::editor
 			else
 			{
 				// メタデータがない場合は通常のTextBoxを使用
-				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue));
+				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), none);
 			}
 			
 			return propertyNode;
@@ -716,7 +717,7 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
+		static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr, Optional<double> dragValueChangeStep = none)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -740,7 +741,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered | InheritChildrenStateFlags::Pressed);
 			labelNode->setBoxChildrenLayout(HorizontalLayout{});
-			labelNode->emplaceComponent<Label>(
+			const auto labelComponent = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -767,8 +768,87 @@ namespace noco::editor
 			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
-			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue), std::move(fnGetValue)));
+			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, fnSetValue, fnGetValue));
 			textBoxNode->emplaceComponent<TabStop>();
+			
+			// dragValueChangeStepが設定されている場合、ラベルにPropertyLabelDraggerを追加
+			if (dragValueChangeStep.has_value())
+			{
+				// textBoxへの参照を取得してラムダでキャプチャ
+				const auto textBoxWeak = std::weak_ptr<TextBox>(textBox);
+				const auto labelComponentWeak = std::weak_ptr<Label>(labelComponent);
+				
+				// fnGetValueがある場合はそれを使い、ない場合はtextBoxから直接取得
+				if (fnGetValue)
+				{
+					// 初期値を記録
+					double initialValue = ParseOpt<double>(fnGetValue()).value_or(0.0);
+					
+					labelNode->emplaceComponent<PropertyLabelDragger>(
+						[fnSetValue, textBoxWeak, labelComponentWeak, initialValue, hasInteractivePropertyValue](double newValue) mutable {
+							// 値が実際に変更された場合のみ更新
+							if (std::abs(newValue - initialValue) > 0.0001)  // 浮動小数点の誤差を考慮
+							{
+								fnSetValue(Format(newValue));
+								if (const auto tb = textBoxWeak.lock())
+								{
+									tb->setText(Format(newValue));
+								}
+								// インタラクティブ値があった場合は下線を消す
+								if (hasInteractivePropertyValue)
+								{
+									if (const auto label = labelComponentWeak.lock())
+									{
+										label->setUnderlineStyle(LabelUnderlineStyle::None);
+									}
+								}
+								initialValue = newValue;
+							}
+						},
+						[fnGetValue]() { return ParseOpt<double>(fnGetValue()).value_or(0.0); },
+						*dragValueChangeStep
+					);
+				}
+				else
+				{
+					labelNode->emplaceComponent<PropertyLabelDragger>(
+						[fnSetValue, textBoxWeak, labelComponentWeak, hasInteractivePropertyValue](double newValue) {
+							// 現在の値を取得
+							double currentValue = 0.0;
+							if (const auto tb = textBoxWeak.lock())
+							{
+								currentValue = ParseOpt<double>(tb->text()).value_or(0.0);
+							}
+							
+							// 値が実際に変更された場合のみ更新
+							if (std::abs(newValue - currentValue) > 0.0001)  // 浮動小数点の誤差を考慮
+							{
+								fnSetValue(Format(newValue));
+								if (const auto tb = textBoxWeak.lock())
+								{
+									tb->setText(Format(newValue));
+								}
+								// インタラクティブ値があった場合は下線を消す
+								if (hasInteractivePropertyValue)
+								{
+									if (const auto label = labelComponentWeak.lock())
+									{
+										label->setUnderlineStyle(LabelUnderlineStyle::None);
+									}
+								}
+							}
+						},
+						[textBoxWeak]() { 
+							if (const auto tb = textBoxWeak.lock())
+							{
+								return ParseOpt<double>(tb->text()).value_or(0.0);
+							}
+							return 0.0;
+						},
+						*dragValueChangeStep
+					);
+				}
+			}
 			return propertyNode;
 		}
 
@@ -930,6 +1010,22 @@ namespace noco::editor
 				InheritChildrenStateFlags::Hovered);
 			textBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
 
+			// Xラベル
+			const auto xLabelNode = textBoxParentNode->emplaceChild(
+				U"XLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 20, 26 },
+					.flexibleWeight = 0,
+				});
+			xLabelNode->emplaceComponent<Label>(
+				U"X", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Xラベルに背景を追加（ホバー時のフィードバック用）
+			xLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
+
 			// X
 			const auto textBoxXNode = textBoxParentNode->emplaceChild(
 				U"TextBoxX",
@@ -937,13 +1033,29 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 0, 2, 0, 0 },
+					.margin = LRTB{ 0, 6, 0, 0 },
 				});
 			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxXNode->emplaceComponent<TabStop>();
 			textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
+
+			// Yラベル
+			const auto yLabelNode = textBoxParentNode->emplaceChild(
+				U"YLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 20, 26 },
+					.flexibleWeight = 0,
+				});
+			yLabelNode->emplaceComponent<Label>(
+				U"Y", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Yラベルに背景を追加（ホバー時のフィードバック用）
+			yLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// Y
 			const auto textBoxYNode = textBoxParentNode->emplaceChild(
@@ -952,7 +1064,7 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 0, 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 0 },
 				});
 			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
@@ -960,11 +1072,53 @@ namespace noco::editor
 			textBoxYNode->emplaceComponent<TabStop>();
 			textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
-			propertyNode->addComponent(std::make_shared<Vec2PropertyTextBox>(
+			const auto vec2PropertyTextBox = std::make_shared<Vec2PropertyTextBox>(
 				textBoxX,
 				textBoxY,
 				fnSetValue,
-				currentValue));
+				currentValue);
+			propertyNode->addComponent(vec2PropertyTextBox);
+
+			// PropertyLabelDraggerを追加
+			{
+				// Xラベルにドラッグ機能を追加
+				xLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[vec2PropertyTextBox, textBoxX](double value)
+					{
+						const Vec2 currentVec = vec2PropertyTextBox->value();
+						vec2PropertyTextBox->setValue(Vec2{ value, currentVec.y }, true);
+						textBoxX->setText(Format(value));
+					},
+					[vec2PropertyTextBox]() -> double
+					{
+						return vec2PropertyTextBox->value().x;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
+					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+				);
+
+				// Yラベルにドラッグ機能を追加
+				yLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[vec2PropertyTextBox, textBoxY](double value)
+					{
+						const Vec2 currentVec = vec2PropertyTextBox->value();
+						vec2PropertyTextBox->setValue(Vec2{ currentVec.x, value }, true);
+						textBoxY->setText(Format(value));
+					},
+					[vec2PropertyTextBox]() -> double
+					{
+						return vec2PropertyTextBox->value().y;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
+					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+				);
+			}
 
 			return propertyNode;
 		}
@@ -1168,6 +1322,22 @@ namespace noco::editor
 				InheritChildrenStateFlags::Hovered);
 			line1TextBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
 
+			// Lラベル
+			const auto lLabelNode = line1TextBoxParentNode->emplaceChild(
+				U"LLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			lLabelNode->emplaceComponent<Label>(
+				U"L", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Lラベルに背景を追加（ホバー時のフィードバック用）
+			lLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
+
 			// L
 			const auto textBoxLNode = line1TextBoxParentNode->emplaceChild(
 				U"TextBoxL",
@@ -1175,13 +1345,29 @@ namespace noco::editor
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 0, 2, 0, 6 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxLNode->emplaceComponent<TabStop>();
 			textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
+
+			// Rラベル
+			const auto rLabelNode = line1TextBoxParentNode->emplaceChild(
+				U"RLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			rLabelNode->emplaceComponent<Label>(
+				U"R", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Rラベルに背景を追加（ホバー時のフィードバック用）
+			rLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// R
 			const auto textBoxRNode = line1TextBoxParentNode->emplaceChild(
@@ -1190,7 +1376,7 @@ namespace noco::editor
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 0, 0, 6 },
+					.margin = LRTB{ 0, 0, 0, 0 },
 				});
 			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
@@ -1245,6 +1431,22 @@ namespace noco::editor
 				InheritChildrenStateFlags::Hovered);
 			line2TextBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
 
+			// Tラベル
+			const auto tLabelNode = line2TextBoxParentNode->emplaceChild(
+				U"TLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			tLabelNode->emplaceComponent<Label>(
+				U"T", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Tラベルに背景を追加（ホバー時のフィードバック用）
+			tLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
+
 			// T
 			const auto textBoxTNode = line2TextBoxParentNode->emplaceChild(
 				U"TextBoxT",
@@ -1252,13 +1454,29 @@ namespace noco::editor
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 0, 2, 0, 0 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxTNode->emplaceComponent<TabStop>();
 			textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
+
+			// Bラベル
+			const auto bLabelNode = line2TextBoxParentNode->emplaceChild(
+				U"BLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			bLabelNode->emplaceComponent<Label>(
+				U"B", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Bラベルに背景を追加（ホバー時のフィードバック用）
+			bLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// B
 			const auto textBoxBNode = line2TextBoxParentNode->emplaceChild(
@@ -1267,7 +1485,7 @@ namespace noco::editor
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 0, 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 0 },
 				});
 			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
@@ -1275,13 +1493,93 @@ namespace noco::editor
 			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
-			propertyNode->addComponent(std::make_shared<LRTBPropertyTextBox>(
+			const auto lrtbPropertyTextBox = std::make_shared<LRTBPropertyTextBox>(
 				textBoxL,
 				textBoxR,
 				textBoxT,
 				textBoxB,
 				fnSetValue,
-				currentValue));
+				currentValue);
+			propertyNode->addComponent(lrtbPropertyTextBox);
+
+			// PropertyLabelDraggerを追加
+			{
+				// Lラベルにドラッグ機能を追加
+				lLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[lrtbPropertyTextBox, textBoxL](double value)
+					{
+						const LRTB currentLRTB = lrtbPropertyTextBox->value();
+						lrtbPropertyTextBox->setValue(LRTB{ value, currentLRTB.right, currentLRTB.top, currentLRTB.bottom }, true);
+						textBoxL->setText(Format(value));
+					},
+					[lrtbPropertyTextBox]() -> double
+					{
+						return lrtbPropertyTextBox->value().left;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
+					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+				);
+
+				// Rラベルにドラッグ機能を追加
+				rLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[lrtbPropertyTextBox, textBoxR](double value)
+					{
+						const LRTB currentLRTB = lrtbPropertyTextBox->value();
+						lrtbPropertyTextBox->setValue(LRTB{ currentLRTB.left, value, currentLRTB.top, currentLRTB.bottom }, true);
+						textBoxR->setText(Format(value));
+					},
+					[lrtbPropertyTextBox]() -> double
+					{
+						return lrtbPropertyTextBox->value().right;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
+					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+				);
+
+				// Tラベルにドラッグ機能を追加
+				tLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[lrtbPropertyTextBox, textBoxT](double value)
+					{
+						const LRTB currentLRTB = lrtbPropertyTextBox->value();
+						lrtbPropertyTextBox->setValue(LRTB{ currentLRTB.left, currentLRTB.right, value, currentLRTB.bottom }, true);
+						textBoxT->setText(Format(value));
+					},
+					[lrtbPropertyTextBox]() -> double
+					{
+						return lrtbPropertyTextBox->value().top;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,
+					nullptr
+				);
+
+				// Bラベルにドラッグ機能を追加
+				bLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[lrtbPropertyTextBox, textBoxB](double value)
+					{
+						const LRTB currentLRTB = lrtbPropertyTextBox->value();
+						lrtbPropertyTextBox->setValue(LRTB{ currentLRTB.left, currentLRTB.right, currentLRTB.top, value }, true);
+						textBoxB->setText(Format(value));
+					},
+					[lrtbPropertyTextBox]() -> double
+					{
+						return lrtbPropertyTextBox->value().bottom;
+					},
+					1.0,  // 感度
+					-std::numeric_limits<double>::max(),  // 最小値
+					std::numeric_limits<double>::max(),   // 最大値
+					nullptr,
+					nullptr
+				);
+			}
 
 			return propertyNode;
 		}
@@ -1391,6 +1689,23 @@ namespace noco::editor
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
+			textBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+
+			// Rラベル
+			const auto rLabelNode = textBoxParentNode->emplaceChild(
+				U"RLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			rLabelNode->emplaceComponent<Label>(
+				U"R", U"", 12, ColorF{ 1.0, 0.7, 0.7 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Rラベルに背景を追加（ホバー時のフィードバック用）
+			rLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// R
 			const auto textBoxRNode = textBoxParentNode->emplaceChild(
@@ -1399,13 +1714,29 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 2, 0, 0 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxRNode->emplaceComponent<TabStop>();
 			textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
+
+			// Gラベル
+			const auto gLabelNode = textBoxParentNode->emplaceChild(
+				U"GLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			gLabelNode->emplaceComponent<Label>(
+				U"G", U"", 12, ColorF{ 0.7, 1.0, 0.7 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Gラベルに背景を追加（ホバー時のフィードバック用）
+			gLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// G
 			const auto textBoxGNode = textBoxParentNode->emplaceChild(
@@ -1414,13 +1745,29 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 2, 0, 0 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxGNode->emplaceComponent<TabStop>();
 			textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
+
+			// Bラベル
+			const auto bLabelNode = textBoxParentNode->emplaceChild(
+				U"BLabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			bLabelNode->emplaceComponent<Label>(
+				U"B", U"", 12, ColorF{ 0.7, 0.7, 1.0 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Bラベルに背景を追加（ホバー時のフィードバック用）
+			bLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// B
 			const auto textBoxBNode = textBoxParentNode->emplaceChild(
@@ -1429,13 +1776,29 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 2, 0, 0 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
+
+			// Aラベル
+			const auto aLabelNode = textBoxParentNode->emplaceChild(
+				U"ALabel",
+				BoxConstraint
+				{
+					.sizeDelta = Vec2{ 16, 26 },
+					.flexibleWeight = 0,
+				});
+			aLabelNode->emplaceComponent<Label>(
+				U"A", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				HorizontalAlign::Center, VerticalAlign::Middle);
+			// Aラベルに背景を追加（ホバー時のフィードバック用）
+			aLabelNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+				Palette::Black, 0.0, 2.0);
 
 			// A
 			const auto textBoxANode = textBoxParentNode->emplaceChild(
@@ -1444,7 +1807,7 @@ namespace noco::editor
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 2, 0, 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 0 },
 				});
 			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
@@ -1452,14 +1815,94 @@ namespace noco::editor
 			textBoxANode->emplaceComponent<TabStop>();
 			textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
-			propertyNode->addComponent(std::make_shared<ColorPropertyTextBox>(
+			const auto colorPropertyTextBox = std::make_shared<ColorPropertyTextBox>(
 				textBoxR,
 				textBoxG,
 				textBoxB,
 				textBoxA,
 				previewRectRenderer,
 				fnSetValue,
-				currentValue));
+				currentValue);
+			propertyNode->addComponent(colorPropertyTextBox);
+
+			// PropertyLabelDraggerを追加
+			{
+				// Rラベルにドラッグ機能を追加
+				rLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[colorPropertyTextBox, textBoxR](double value)
+					{
+						const ColorF currentColor = colorPropertyTextBox->value();
+						colorPropertyTextBox->setValue(ColorF{ value, currentColor.g, currentColor.b, currentColor.a }, true);
+						textBoxR->setText(Format(value));
+					},
+					[colorPropertyTextBox]() -> double
+					{
+						return colorPropertyTextBox->value().r;
+					},
+					0.01,  // 感度（色は0-1の範囲なので小さめ）
+					0.0,   // 最小値
+					1.0,   // 最大値
+					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
+					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+				);
+
+				// Gラベルにドラッグ機能を追加
+				gLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[colorPropertyTextBox, textBoxG](double value)
+					{
+						const ColorF currentColor = colorPropertyTextBox->value();
+						colorPropertyTextBox->setValue(ColorF{ currentColor.r, value, currentColor.b, currentColor.a }, true);
+						textBoxG->setText(Format(value));
+					},
+					[colorPropertyTextBox]() -> double
+					{
+						return colorPropertyTextBox->value().g;
+					},
+					0.01,  // 感度
+					0.0,   // 最小値
+					1.0,   // 最大値
+					nullptr,
+					nullptr
+				);
+
+				// Bラベルにドラッグ機能を追加
+				bLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[colorPropertyTextBox, textBoxB](double value)
+					{
+						const ColorF currentColor = colorPropertyTextBox->value();
+						colorPropertyTextBox->setValue(ColorF{ currentColor.r, currentColor.g, value, currentColor.a }, true);
+						textBoxB->setText(Format(value));
+					},
+					[colorPropertyTextBox]() -> double
+					{
+						return colorPropertyTextBox->value().b;
+					},
+					0.01,  // 感度
+					0.0,   // 最小値
+					1.0,   // 最大値
+					nullptr,
+					nullptr
+				);
+
+				// Aラベルにドラッグ機能を追加
+				aLabelNode->emplaceComponent<PropertyLabelDragger>(
+					[colorPropertyTextBox, textBoxA](double value)
+					{
+						const ColorF currentColor = colorPropertyTextBox->value();
+						colorPropertyTextBox->setValue(ColorF{ currentColor.r, currentColor.g, currentColor.b, value }, true);
+						textBoxA->setText(Format(value));
+					},
+					[colorPropertyTextBox]() -> double
+					{
+						return colorPropertyTextBox->value().a;
+					},
+					0.01,  // 感度
+					0.0,   // 最小値
+					1.0,   // 最大値
+					nullptr,
+					nullptr
+				);
+			}
 
 			return propertyNode;
 		}
@@ -1782,7 +2225,7 @@ namespace noco::editor
 				const auto fnAddDoubleChild =
 					[this, &nodeSettingNode](StringView name, double currentValue, auto fnSetValue)
 					{
-						nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedNodeSetting.getBool());
+						nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedNodeSetting.getBool());
 					};
 				fnAddDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
 			}
@@ -1849,7 +2292,7 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
 				{
-					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedLayout.getBool());
+					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddLRTBChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
@@ -1980,7 +2423,7 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &constraintNode, &constraintTypeName](StringView name, double currentValue, auto fnSetValue)
 				{
-					constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }))->setActive(!m_isFoldedConstraint.getBool());
+					constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedConstraint.getBool());
 				};
 			const auto fnAddEnumChild =
 				[this, &constraintNode, &constraintTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
@@ -2946,5 +3389,6 @@ namespace noco::editor
 				Logger << U"[NocoEditor warning] AnchorConstraint not found in inspectorFrameNode";
 			}
 		}
+		
 	};
 }

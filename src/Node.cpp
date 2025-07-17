@@ -1244,6 +1244,11 @@ namespace noco
 			}
 		}
 		
+		if (m_preventDragScroll && !MouseL.pressed())
+		{
+			m_preventDragScroll = false;
+		}
+		
 		// ラバーバンドスクロール処理(ドラッグしていない時に範囲外なら戻す)
 		if (m_rubberBandScrollEnabled && !m_dragStartPos.has_value())
 		{
@@ -1481,6 +1486,11 @@ namespace noco
 
 	void Node::scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout)
 	{
+		if (m_preventDragScroll)
+		{
+			return;
+		}
+		
 		bool scrolledH = false;
 		if (horizontalScrollable() && offsetDelta.x != 0.0)
 		{
@@ -2040,6 +2050,22 @@ namespace noco
 	std::shared_ptr<Node> Node::setRubberBandScrollEnabled(bool rubberBandScrollEnabled)
 	{
 		return setRubberBandScrollEnabled(rubberBandScrollEnabled ? RubberBandScrollEnabledYN::Yes : RubberBandScrollEnabledYN::No);
+	}
+
+	void Node::preventDragScroll()
+	{
+		if (!MouseL.pressed())
+		{
+			return;
+		}
+		
+		m_preventDragScroll = true;
+		
+		// 親ノードにも再帰的に適用
+		if (const auto parentNode = m_parent.lock())
+		{
+			parentNode->preventDragScroll();
+		}
 	}
 
 	InteractionState Node::interactionStateSelf() const

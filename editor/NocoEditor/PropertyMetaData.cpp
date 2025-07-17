@@ -58,6 +58,7 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Node", U"decelerationRate" }] = PropertyMetadata{
 			.tooltip = U"慣性スクロールの減衰率",
 			.tooltipDetail = U"1秒あたりの速度減衰率(0.0~1.0)。値が小さいほど早く停止します",
+			.dragValueChangeStep = 0.01,
 		};
 		metadata[PropertyKey{ U"Node", U"rubberBandScrollEnabled" }] = PropertyMetadata{
 			.tooltip = U"ラバーバンドスクロールの有効/無効",
@@ -137,9 +138,11 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"AnchorConstraint", U"width" }] = PropertyMetadata{
 			.tooltip = U"幅",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"AnchorConstraint", U"height" }] = PropertyMetadata{
 			.tooltip = U"高さ",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"AnchorConstraint", U"xDelta" }] = PropertyMetadata{
 			.tooltip = U"X軸の位置",
@@ -150,10 +153,12 @@ namespace noco::editor
 		metadata[PropertyKey{ U"AnchorConstraint", U"maxWidth" }] = PropertyMetadata{
 			.tooltip = U"最大幅",
 			.tooltipDetail = U"要素の幅の最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"AnchorConstraint", U"maxHeight" }] = PropertyMetadata{
 			.tooltip = U"最大高さ",
 			.tooltipDetail = U"要素の高さの最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
+			.dragValueChangeStep = 1.0,
 		};
 		
 		// Layout関連
@@ -280,9 +285,11 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"outlineThickness" }] = PropertyMetadata{
 			.tooltip = U"アウトラインの太さ",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"cornerRadius" }] = PropertyMetadata{
 			.tooltip = U"角の丸み半径",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"shadowColor" }] = PropertyMetadata{
 			.tooltip = U"影の色",
@@ -292,9 +299,11 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"shadowBlur" }] = PropertyMetadata{
 			.tooltip = U"影のぼかし度合い",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"shadowSpread" }] = PropertyMetadata{
 			.tooltip = U"影の拡散サイズ",
+			.dragValueChangeStep = 1.0,
 		};
 		
 		// Label
@@ -308,6 +317,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",
@@ -325,6 +335,7 @@ namespace noco::editor
 				}
 				return false;
 			},
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
 			.tooltip = U"テキスト色",
@@ -357,6 +368,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"underlineThickness" }] = PropertyMetadata{
 			.tooltip = U"下線の太さ",
+			.dragValueChangeStep = 1.0,
 		};
 		
 		// Sprite
@@ -430,6 +442,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextBox", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"TextBox", U"color" }] = PropertyMetadata{
 			.tooltip = U"テキスト色",
@@ -467,6 +480,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextArea", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"TextArea", U"color" }] = PropertyMetadata{
 			.tooltip = U"テキスト色",
@@ -541,6 +555,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"AudioPlayer", U"volume" }] = PropertyMetadata{
 			.tooltip = U"音量 (0.0 ~ 1.0)",
+			.dragValueChangeStep = 0.01,
 		};
 		metadata[PropertyKey{ U"AudioPlayer", U"recursive" }] = PropertyMetadata{
 			.tooltip = U"子孫要素のインタラクションも対象にするかどうか",
@@ -604,9 +619,11 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Tween", U"duration" }] = PropertyMetadata{
 			.tooltip = U"アニメーション時間（秒）",
+			.dragValueChangeStep = 0.1,
 		};
 		metadata[PropertyKey{ U"Tween", U"delay" }] = PropertyMetadata{
 			.tooltip = U"開始までの遅延時間（秒）",
+			.dragValueChangeStep = 0.1,
 		};
 		metadata[PropertyKey{ U"Tween", U"loopType" }] = PropertyMetadata{
 			.tooltip = U"ループの種類",

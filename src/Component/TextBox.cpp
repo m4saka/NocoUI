@@ -419,6 +419,7 @@ namespace noco
 						m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
 						m_cursorIndex = m_selectionAnchor;
 						m_isDragging = true;
+						node->preventDragScroll();
 					}
 					else
 					{
@@ -426,6 +427,7 @@ namespace noco
 						m_selectionAnchor = 0;
 						m_cursorIndex = m_text.value().size();
 						m_isDragging = false;
+						node->preventDragScroll();
 					}
 				}
 				else if (!KeyShift.pressed())
@@ -434,12 +436,14 @@ namespace noco
 					m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
 					m_cursorIndex = m_selectionAnchor;
 					m_isDragging = true;
+					node->preventDragScroll();
 				}
 				else
 				{
 					// Shiftを押しながらクリックした場合、既存の起点を維持しつつカーソルのみクリック位置へ移動
 					m_cursorIndex = moveCursorToMousePos(rect, effectScale);
 					m_isDragging = true;
+					node->preventDragScroll();
 				}
 				m_isEditing = true;
 				CurrentFrame::SetFocusedNode(node);
