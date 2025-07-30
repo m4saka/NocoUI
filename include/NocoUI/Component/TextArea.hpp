@@ -100,7 +100,7 @@ namespace noco
 		/* NonSerialized */ mutable Cache m_cache;
 		/* NonSerialized */ mutable Cache m_editingCache;
 
-		std::pair<size_t, size_t> moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
+		std::pair<size_t, size_t> moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node);
 
 		bool hasSelection() const;
 

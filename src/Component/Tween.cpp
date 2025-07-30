@@ -95,6 +95,16 @@ namespace noco
 		transformEffect.scale().setPropertyValue(interpolated);
 	}
 
+	void Tween::updateRotation(const std::shared_ptr<Node>& node, double progress)
+	{
+		const double value1 = m_value1_double.value();
+		const double value2 = m_value2_double.value();
+		const double interpolated = Math::Lerp(value1, value2, progress);
+
+		auto& transformEffect = node->transformEffect();
+		transformEffect.rotation().setPropertyValue(interpolated);
+	}
+
 	void Tween::updateColor(const std::shared_ptr<Node>& node, double progress)
 	{
 		const ColorF& value1 = m_value1_color.value();
@@ -140,6 +150,9 @@ namespace noco
 			case TweenTarget::Scale:
 				updateScale(node, easedProgress);
 				break;
+			case TweenTarget::Rotation:
+				updateRotation(node, easedProgress);
+				break;
 			case TweenTarget::Color:
 				updateColor(node, easedProgress);
 				break;
@@ -165,6 +178,9 @@ namespace noco
 				break;
 			case TweenTarget::Scale:
 				updateScale(node, easedProgress);
+				break;
+			case TweenTarget::Rotation:
+				updateRotation(node, easedProgress);
 				break;
 			case TweenTarget::Color:
 				updateColor(node, easedProgress);
@@ -219,6 +235,9 @@ namespace noco
 			break;
 		case TweenTarget::Color:
 			updateColor(node, easedProgress);
+			break;
+		case TweenTarget::Rotation:
+			updateRotation(node, easedProgress);
 			break;
 		}
 	}

@@ -52,6 +52,8 @@ namespace noco
 		/* NonSerialized */ RectF m_posScaleAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ RectF m_hitTestRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
+		/* NonSerialized */ double m_rotationInHierarchy = 0.0;
+		/* NonSerialized */ Quad m_rotatedQuad;
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
@@ -297,13 +299,13 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates = {});
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, const Array<String>& parentActiveStyleStates = {});
 
 		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshPosScaleAppliedRect(const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat);
+		void refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -326,10 +328,25 @@ namespace noco
 		const RectF& rect() const;
 
 		[[nodiscard]]
-		const RectF& hitTestRect() const;
+		RectF hitTestRect(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;
 
 		[[nodiscard]]
 		const Vec2& effectScale() const;
+
+		[[nodiscard]]
+		double rotationInHierarchy() const;
+
+		[[nodiscard]]
+		Vec2 effectPivotPos() const;
+
+		[[nodiscard]]
+		Vec2 effectPivotPosWithoutParentPosScale() const;
+
+		[[nodiscard]]
+		const Quad& rotatedQuad() const;
+
+		[[nodiscard]]
+		Quad hitTestQuad(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;
 
 		[[nodiscard]]
 		const RectF& layoutAppliedRect() const;

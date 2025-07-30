@@ -1444,7 +1444,8 @@ namespace noco::editor
 				const EditorSelectedYN editorSelected = element.editorSelected();
 				if (editorSelected)
 				{
-					node->hitTestRect().stretched(Thickness / 2).drawFrame(Thickness, Palette::Orange);
+					const Quad quad = node->hitTestQuad();
+					quad.drawFrame(Thickness, Palette::Orange);
 
 					// 上下左右にリサイズハンドルを表示
 					// TODO: リサイズ可能にする
@@ -1458,11 +1459,11 @@ namespace noco::editor
 
 				if (node == editorHoveredNode)
 				{
-					const auto& rect = node->hitTestRect();
-					rect.draw(ColorF{ 1.0, 0.1 });
+					const Quad quad = node->hitTestQuad();
+					quad.draw(ColorF{ 1.0, 0.1 });
 					if (!editorSelected)
 					{
-						rect.stretched(Thickness / 2).drawFrame(Thickness, ColorF{ 1.0 });
+						quad.drawFrame(Thickness, ColorF{ 1.0 });
 					}
 				}
 			}

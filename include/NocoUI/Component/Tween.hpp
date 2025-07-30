@@ -9,6 +9,7 @@ namespace noco
 		None,
 		Position,
 		Scale,
+		Rotation,
 		Color,
 	};
 
@@ -64,6 +65,10 @@ namespace noco
 		PropertyNonInteractive<Vec2> m_value1_vec2;
 		PropertyNonInteractive<Vec2> m_value2_vec2;
 		
+		// double用（Rotation）
+		PropertyNonInteractive<double> m_value1_double;
+		PropertyNonInteractive<double> m_value2_double;
+		
 		// ColorF用
 		PropertyNonInteractive<ColorF> m_value1_color;
 		PropertyNonInteractive<ColorF> m_value2_color;
@@ -84,6 +89,7 @@ namespace noco
 
 		void updatePosition(const std::shared_ptr<Node>& node, double progress);
 		void updateScale(const std::shared_ptr<Node>& node, double progress);
+		void updateRotation(const std::shared_ptr<Node>& node, double progress);
 		void updateColor(const std::shared_ptr<Node>& node, double progress);
 
 	public:
@@ -92,6 +98,8 @@ namespace noco
 			TweenTarget target = TweenTarget::None,
 			const Vec2& value1_vec2 = Vec2::Zero(),
 			const Vec2& value2_vec2 = Vec2::One(),
+			double value1_double = 0.0,
+			double value2_double = 0.0,
 			const ColorF& value1_color = ColorF{ 1.0, 1.0, 1.0, 1.0 },
 			const ColorF& value2_color = ColorF{ 1.0, 1.0, 1.0, 0.0 },
 			TweenEasing easing = TweenEasing::EaseOutQuad,
@@ -102,6 +110,7 @@ namespace noco
 			: SerializableComponentBase{ U"Tween", { 
 				&m_active, &m_target, 
 				&m_value1_vec2, &m_value2_vec2, 
+				&m_value1_double, &m_value2_double,
 				&m_value1_color, &m_value2_color,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartsOnActive 
 			} }
@@ -109,6 +118,8 @@ namespace noco
 			, m_target{ U"target", target }
 			, m_value1_vec2{ U"value1_vec2", value1_vec2 }
 			, m_value2_vec2{ U"value2_vec2", value2_vec2 }
+			, m_value1_double{ U"value1_double", value1_double }
+			, m_value2_double{ U"value2_double", value2_double }
 			, m_value1_color{ U"value1_color", value1_color }
 			, m_value2_color{ U"value2_color", value2_color }
 			, m_easing{ U"easing", easing }
@@ -167,6 +178,30 @@ namespace noco
 		std::shared_ptr<Tween> setValue2Vec2(const Vec2& value)
 		{
 			m_value2_vec2.setValue(value);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double value1_double() const
+		{
+			return m_value1_double.value();
+		}
+
+		std::shared_ptr<Tween> setValue1Double(double value)
+		{
+			m_value1_double.setValue(value);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double value2_double() const
+		{
+			return m_value2_double.value();
+		}
+
+		std::shared_ptr<Tween> setValue2Double(double value)
+		{
+			m_value2_double.setValue(value);
 			return shared_from_this();
 		}
 

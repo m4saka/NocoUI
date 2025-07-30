@@ -14,6 +14,7 @@ namespace noco
 		SmoothProperty<Vec2> m_position;
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
+		SmoothProperty<double> m_rotation;
 		Property<bool> m_appliesToHitTest;
 		SmoothProperty<ColorF> m_color;
 
@@ -22,10 +23,12 @@ namespace noco
 			const PropertyValue<Vec2>& position = Vec2::Zero(),
 			const PropertyValue<Vec2>& scale = Vec2::One(),
 			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
+			const PropertyValue<double>& rotation = 0.0,
 			const PropertyValue<ColorF>& color = ColorF{ 1.0 })
 			: m_position{ U"position", position }
 			, m_scale{ U"scale", scale }
 			, m_pivot{ U"pivot", pivot }
+			, m_rotation{ U"rotation", rotation }
 			, m_appliesToHitTest{ U"appliesToHitTest", false }
 			, m_color{ U"color", color }
 		{
@@ -83,6 +86,23 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const SmoothProperty<double>& rotation() const
+		{
+			return m_rotation;
+		}
+
+		[[nodiscard]]
+		SmoothProperty<double>& rotation()
+		{
+			return m_rotation;
+		}
+
+		void setRotation(const PropertyValue<double>& rotation)
+		{
+			m_rotation.setPropertyValue(rotation);
+		}
+
+		[[nodiscard]]
 		const Property<bool>& appliesToHitTest() const
 		{
 			return m_appliesToHitTest;
@@ -121,6 +141,7 @@ namespace noco
 			m_position.update(interactionState, activeStyleStates, deltaTime);
 			m_scale.update(interactionState, activeStyleStates, deltaTime);
 			m_pivot.update(interactionState, activeStyleStates, deltaTime);
+			m_rotation.update(interactionState, activeStyleStates, deltaTime);
 			m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime);
 			m_color.update(interactionState, activeStyleStates, deltaTime);
 		}
@@ -136,12 +157,19 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		double rotationInHierarchy(double parentRotation) const
+		{
+			return parentRotation + m_rotation.value();
+		}
+
+		[[nodiscard]]
 		JSON toJSON() const
 		{
 			JSON json;
 			m_position.appendJSON(json);
 			m_scale.appendJSON(json);
 			m_pivot.appendJSON(json);
+			m_rotation.appendJSON(json);
 			m_appliesToHitTest.appendJSON(json);
 			m_color.appendJSON(json);
 			return json;
@@ -152,6 +180,7 @@ namespace noco
 			m_position.readFromJSON(json);
 			m_scale.readFromJSON(json);
 			m_pivot.readFromJSON(json);
+			m_rotation.readFromJSON(json);
 			m_appliesToHitTest.readFromJSON(json);
 			m_color.readFromJSON(json);
 		}

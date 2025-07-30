@@ -92,7 +92,7 @@ namespace noco
 
 		Vec2 getAlignOffset(const RectF& rect, const Vec2& effectScale) const;
 
-		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale);
+		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node);
 
 		bool hasSelection() const;
 

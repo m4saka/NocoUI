@@ -157,7 +157,7 @@ namespace noco
 		return Vec2{ offsetX, offsetY };
 	}
 
-	size_t TextBox::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale)
+	size_t TextBox::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node)
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
@@ -167,7 +167,22 @@ namespace noco
 
 		const Vec2 alignOffset = getAlignOffset(rect, effectScale);
 		const double drawOffsetX = getDrawOffsetX();
-		const double posX = (Cursor::PosF().x - rect.x) / effectScale.x - alignOffset.x;
+		
+		// 回転を考慮したマウス座標を取得
+		Vec2 localMousePos;
+		if (node && node->rotationInHierarchy() != 0.0)
+		{
+			// 回転の逆行列を使ってマウス座標をローカル座標に変換
+			const Vec2 pivotPos = node->effectPivotPos();
+			const Mat3x2 invRotationMat = Mat3x2::Rotate(Math::ToRadians(-node->rotationInHierarchy()), pivotPos);
+			localMousePos = invRotationMat.transformPoint(Cursor::PosF());
+		}
+		else
+		{
+			localMousePos = Cursor::PosF();
+		}
+		
+		const double posX = (localMousePos.x - rect.x) / effectScale.x - alignOffset.x;
 		
 		return m_cache.getCursorIndex(drawOffsetX, m_scrollOffset, posX);
 	}
@@ -351,7 +366,21 @@ namespace noco
 					{
 						return Max(0.2s / Max(distance / 5, 1.0), 0.01s);
 					};
-				const double mouseCursorPosX = Cursor::PosF().x;
+				
+				// 回転を考慮したマウス座標を取得
+				Vec2 localMousePos;
+				if (node->rotationInHierarchy() != 0.0)
+				{
+					const Vec2 pivotPos = node->effectPivotPos();
+					const Mat3x2 invRotationMat = Mat3x2::Rotate(Math::ToRadians(-node->rotationInHierarchy()), pivotPos);
+					localMousePos = invRotationMat.transformPoint(Cursor::PosF());
+				}
+				else
+				{
+					localMousePos = Cursor::PosF();
+				}
+				
+				const double mouseCursorPosX = localMousePos.x;
 				if (mouseCursorPosX < rect.x)
 				{
 					// テキストボックス左側の領域外にマウスカーソルがある場合のカーソル移動
@@ -392,7 +421,7 @@ namespace noco
 				else
 				{
 					// テキストボックス内にマウスカーソルがある場合のカーソル移動
-					m_cursorIndex = moveCursorToMousePos(rect, effectScale);
+					m_cursorIndex = moveCursorToMousePos(rect, effectScale, node);
 				}
 
 				updateScrollOffset(rect, effectScale);
@@ -416,7 +445,7 @@ namespace noco
 					if (m_readOnly.value())
 					{
 						// readOnly時はクリック位置にカーソルを移動
-						m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
+						m_selectionAnchor = moveCursorToMousePos(rect, effectScale, node);
 						m_cursorIndex = m_selectionAnchor;
 						m_isDragging = true;
 						node->preventDragScroll();
@@ -433,7 +462,7 @@ namespace noco
 				else if (!KeyShift.pressed())
 				{
 					// Shiftを押していなければ選択をリセットして選択起点を新たに設定し直す
-					m_selectionAnchor = moveCursorToMousePos(rect, effectScale);
+					m_selectionAnchor = moveCursorToMousePos(rect, effectScale, node);
 					m_cursorIndex = m_selectionAnchor;
 					m_isDragging = true;
 					node->preventDragScroll();
@@ -441,7 +470,7 @@ namespace noco
 				else
 				{
 					// Shiftを押しながらクリックした場合、既存の起点を維持しつつカーソルのみクリック位置へ移動
-					m_cursorIndex = moveCursorToMousePos(rect, effectScale);
+					m_cursorIndex = moveCursorToMousePos(rect, effectScale, node);
 					m_isDragging = true;
 					node->preventDragScroll();
 				}

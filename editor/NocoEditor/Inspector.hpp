@@ -3017,6 +3017,40 @@ namespace noco::editor
 			fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
 			fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
 			
+			// rotation プロパティを追加
+			const auto fnAddDoubleChild =
+				[this, &transformEffectNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
+				{
+					const auto propertyNode = transformEffectNode->addChild(createPropertyNodeWithTooltip(U"TransformEffect", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+					
+					Array<MenuElement> menuElements
+					{
+						MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
+					};
+					
+					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+				};
+			fnAddDoubleChild(U"rotation", &pTransformEffect->rotation(), [this, pTransformEffect](StringView valueStr) 
+			{ 
+				if (const auto value = ParseOpt<double>(valueStr))
+				{
+					// -180～180の範囲に正規化
+					double normalizedValue = *value;
+					if (std::isnan(normalizedValue) || normalizedValue < -1e9 || normalizedValue > 1e9)
+					{
+						normalizedValue = 0.0;
+					}
+					else
+					{
+						while (normalizedValue > 180.0) normalizedValue -= 360.0;
+						while (normalizedValue < -180.0) normalizedValue += 360.0;
+					}
+					pTransformEffect->setRotation(normalizedValue); 
+					m_canvas->refreshLayout(); 
+				}
+			});
+			
 			const auto fnAddBoolChild =
 				[this, &transformEffectNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
 				{

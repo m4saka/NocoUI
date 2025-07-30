@@ -162,11 +162,8 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hitBefore == child);
 		
 		// 親に90度回転を適用（appliesToHitTest=true）
-		// 注意: 現在のコードでは回転はサポートされていない可能性があるが、
-		// 将来的な拡張を想定したテストケース
-		// ここでは位置とスケールの組み合わせで擬似的にテスト
-		parent->transformEffect().setPosition(Vec2{ 100, 0 });
-		parent->transformEffect().setScale(Vec2{ -1, 1 }); // X軸反転で180度回転の効果
+		parent->transformEffect().setRotation(90.0);
+		parent->transformEffect().setPivot(noco::Anchor::MiddleCenter);
 		parent->transformEffect().setAppliesToHitTest(true);
 		canvas->update();
 		

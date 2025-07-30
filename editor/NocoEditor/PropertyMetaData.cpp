@@ -227,7 +227,12 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TransformEffect", U"pivot" }] = PropertyMetadata{
 			.tooltip = U"基準点 (X、Y)",
-			.tooltipDetail = U"scaleによる拡大縮小の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
+			.tooltipDetail = U"scaleによる拡大縮小とrotationによる回転の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
+		};
+		metadata[PropertyKey{ U"TransformEffect", U"rotation" }] = PropertyMetadata{
+			.tooltip = U"回転角度",
+			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません",
+			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"TransformEffect", U"color" }] = PropertyMetadata{
 			.tooltip = U"乗算カラー",
@@ -570,7 +575,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Tween", U"target" }] = PropertyMetadata{
 			.tooltip = U"アニメーション対象",
-			.tooltipDetail = U"None: アニメーションしない\nPosition: TransformEffectのpositionプロパティ\nScale: TransformEffectのscaleプロパティ\nColor: TransformEffectのcolorプロパティ",
+			.tooltipDetail = U"None: アニメーションしない\nPosition: TransformEffectのpositionプロパティ\nScale: TransformEffectのscaleプロパティ\nRotation: TransformEffectのrotationプロパティ\nColor: TransformEffectのcolorプロパティ",
 			.refreshInspectorOnChange = true,
 		};
 		
@@ -592,6 +597,27 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Tween", U"value2_vec2" }] = PropertyMetadata{
 			.tooltip = U"終了値",
 			.visibilityCondition = tweenVec2VisibilityCondition,
+		};
+		
+		// double用プロパティの条件付き表示（Rotation用）
+		const auto tweenDoubleVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* tween = dynamic_cast<const Tween*>(&component))
+			{
+				return tween->target() == TweenTarget::Rotation;
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"value1_double" }] = PropertyMetadata{
+			.tooltip = U"開始角度（度）",
+			.visibilityCondition = tweenDoubleVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Tween", U"value2_double" }] = PropertyMetadata{
+			.tooltip = U"終了角度（度）",
+			.visibilityCondition = tweenDoubleVisibilityCondition,
+			.dragValueChangeStep = 1.0,
 		};
 		
 		// ColorF用プロパティの条件付き表示
