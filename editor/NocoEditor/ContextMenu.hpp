@@ -225,18 +225,28 @@ namespace noco::editor
 				x = Scene::Width() - menuItemWidth;
 			}
 
+			// メニューの高さを計算
+			const double contentHeight = m_rootNode->getFittingSizeToChildren().y;
+			const double maxMenuHeight = Scene::Height();
+			const double menuHeight = std::min(contentHeight, maxMenuHeight);
+
 			if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
 			{
 				auto newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta.y = m_rootNode->getFittingSizeToChildren().y;
+				newConstraint.sizeDelta.y = menuHeight;
 				m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
 			}
 
 			// 下端にはみ出す場合は上に寄せる
-			const double menuHeight = m_rootNode->anchorConstraint()->sizeDelta.y;
 			if (y + menuHeight > Scene::Height())
 			{
 				y = Scene::Height() - menuHeight;
+			}
+
+			// 上端にはみ出す場合は下に寄せる
+			if (y < 0)
+			{
+				y = 0;
 			}
 
 			if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
