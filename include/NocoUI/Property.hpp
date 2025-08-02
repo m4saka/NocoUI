@@ -87,6 +87,8 @@ namespace noco
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<T> m_overrideValue;
+		/*NonSerialized*/ int32 m_overrideFrameCount = 0;
 
 	public:
 		Property(const char32_t* name, const PropertyValue<T>& propertyValue)
@@ -134,7 +136,28 @@ namespace noco
 		[[nodiscard]]
 		const T& value() const
 		{
+			if (m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount())
+			{
+				return *m_overrideValue;
+			}
 			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
+		}
+		
+		void setOverrideValue(const T& value)
+		{
+			m_overrideValue = value;
+			m_overrideFrameCount = Scene::FrameCount();
+		}
+		
+		void clearOverrideValue()
+		{
+			m_overrideValue.reset();
+		}
+		
+		[[nodiscard]]
+		bool hasOverrideValue() const
+		{
+			return m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount();
 		}
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double) override
@@ -359,6 +382,8 @@ namespace noco
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
+		/*NonSerialized*/ Optional<T> m_overrideValue;
+		/*NonSerialized*/ int32 m_overrideFrameCount = 0;
 
 	public:
 		SmoothProperty(const char32_t* name, const PropertyValue<T>& propertyValue)
@@ -402,12 +427,33 @@ namespace noco
 		[[nodiscard]]
 		const T& value() const
 		{
+			if (m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount())
+			{
+				return *m_overrideValue;
+			}
 			return m_smoothing.currentValue();
 		}
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime) override
 		{
 			m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime, deltaTime);
+		}
+
+		void setOverrideValue(const T& value)
+		{
+			m_overrideValue = value;
+			m_overrideFrameCount = Scene::FrameCount();
+		}
+		
+		void clearOverrideValue()
+		{
+			m_overrideValue.reset();
+		}
+		
+		[[nodiscard]]
+		bool hasOverrideValue() const
+		{
+			return m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount();
 		}
 
 		void appendJSON(JSON& json) const override
@@ -550,6 +596,8 @@ namespace noco
 		T m_value;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<T> m_overrideValue;
+		/*NonSerialized*/ int32 m_overrideFrameCount = 0;
 
 	public:
 		template <class U>
@@ -585,7 +633,28 @@ namespace noco
 		[[nodiscard]]
 		const T& value() const
 		{
+			if (m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount())
+			{
+				return *m_overrideValue;
+			}
 			return m_value;
+		}
+		
+		void setOverrideValue(const T& value)
+		{
+			m_overrideValue = value;
+			m_overrideFrameCount = Scene::FrameCount();
+		}
+		
+		void clearOverrideValue()
+		{
+			m_overrideValue.reset();
+		}
+		
+		[[nodiscard]]
+		bool hasOverrideValue() const
+		{
+			return m_overrideValue.has_value() && m_overrideFrameCount == Scene::FrameCount();
 		}
 
 		void update(InteractionState, const Array<String>&, double) override

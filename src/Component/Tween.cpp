@@ -82,7 +82,7 @@ namespace noco
 		const Vec2 interpolated = Math::Lerp(value1, value2, progress);
 
 		auto& transformEffect = node->transformEffect();
-		transformEffect.position().setPropertyValue(interpolated);
+		transformEffect.position().setOverrideValue(interpolated);
 	}
 
 	void Tween::updateScale(const std::shared_ptr<Node>& node, double progress)
@@ -92,7 +92,7 @@ namespace noco
 		const Vec2 interpolated = Math::Lerp(value1, value2, progress);
 
 		auto& transformEffect = node->transformEffect();
-		transformEffect.scale().setPropertyValue(interpolated);
+		transformEffect.scale().setOverrideValue(interpolated);
 	}
 
 	void Tween::updateRotation(const std::shared_ptr<Node>& node, double progress)
@@ -102,7 +102,7 @@ namespace noco
 		const double interpolated = Math::Lerp(value1, value2, progress);
 
 		auto& transformEffect = node->transformEffect();
-		transformEffect.rotation().setPropertyValue(interpolated);
+		transformEffect.rotation().setOverrideValue(interpolated);
 	}
 
 	void Tween::updateColor(const std::shared_ptr<Node>& node, double progress)
@@ -112,7 +112,7 @@ namespace noco
 		const ColorF interpolated = value1.lerp(value2, progress);
 
 		auto& transformEffect = node->transformEffect();
-		transformEffect.color().setPropertyValue(interpolated);
+		transformEffect.color().setOverrideValue(interpolated);
 	}
 
 	void Tween::update(const std::shared_ptr<Node>& node)
