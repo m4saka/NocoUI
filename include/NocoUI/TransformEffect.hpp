@@ -24,165 +24,67 @@ namespace noco
 			const PropertyValue<Vec2>& scale = Vec2::One(),
 			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
 			const PropertyValue<double>& rotation = 0.0,
-			const PropertyValue<ColorF>& color = ColorF{ 1.0 })
-			: m_position{ U"position", position }
-			, m_scale{ U"scale", scale }
-			, m_pivot{ U"pivot", pivot }
-			, m_rotation{ U"rotation", rotation }
-			, m_appliesToHitTest{ U"appliesToHitTest", false }
-			, m_color{ U"color", color }
-		{
-		}
+			const PropertyValue<ColorF>& color = ColorF{ 1.0 });
 
 		[[nodiscard]]
-		const SmoothProperty<Vec2>& position() const
-		{
-			return m_position;
-		}
+		const SmoothProperty<Vec2>& position() const;
 
 		[[nodiscard]]
-		SmoothProperty<Vec2>& position()
-		{
-			return m_position;
-		}
+		SmoothProperty<Vec2>& position();
 
-		void setPosition(const PropertyValue<Vec2>& position)
-		{
-			m_position.setPropertyValue(position);
-		}
+		void setPosition(const PropertyValue<Vec2>& position);
 
 		[[nodiscard]]
-		const SmoothProperty<Vec2>& scale() const
-		{
-			return m_scale;
-		}
+		const SmoothProperty<Vec2>& scale() const;
 
 		[[nodiscard]]
-		SmoothProperty<Vec2>& scale()
-		{
-			return m_scale;
-		}
+		SmoothProperty<Vec2>& scale();
 
-		void setScale(const PropertyValue<Vec2>& scale)
-		{
-			m_scale.setPropertyValue(scale);
-		}
+		void setScale(const PropertyValue<Vec2>& scale);
 
 		[[nodiscard]]
-		const SmoothProperty<Vec2>& pivot() const
-		{
-			return m_pivot;
-		}
+		const SmoothProperty<Vec2>& pivot() const;
 
 		[[nodiscard]]
-		SmoothProperty<Vec2>& pivot()
-		{
-			return m_pivot;
-		}
+		SmoothProperty<Vec2>& pivot();
 
-		void setPivot(const PropertyValue<Vec2>& pivot)
-		{
-			m_pivot.setPropertyValue(pivot);
-		}
+		void setPivot(const PropertyValue<Vec2>& pivot);
 
 		[[nodiscard]]
-		const SmoothProperty<double>& rotation() const
-		{
-			return m_rotation;
-		}
+		const SmoothProperty<double>& rotation() const;
 
 		[[nodiscard]]
-		SmoothProperty<double>& rotation()
-		{
-			return m_rotation;
-		}
+		SmoothProperty<double>& rotation();
 
-		void setRotation(const PropertyValue<double>& rotation)
-		{
-			m_rotation.setPropertyValue(rotation);
-		}
+		void setRotation(const PropertyValue<double>& rotation);
 
 		[[nodiscard]]
-		const Property<bool>& appliesToHitTest() const
-		{
-			return m_appliesToHitTest;
-		}
+		const Property<bool>& appliesToHitTest() const;
 
 		[[nodiscard]]
-		Property<bool>& appliesToHitTest()
-		{
-			return m_appliesToHitTest;
-		}
+		Property<bool>& appliesToHitTest();
 
-		void setAppliesToHitTest(const PropertyValue<bool>& value)
-		{
-			m_appliesToHitTest.setPropertyValue(value);
-		}
+		void setAppliesToHitTest(const PropertyValue<bool>& value);
 
 		[[nodiscard]]
-		const SmoothProperty<ColorF>& color() const
-		{
-			return m_color;
-		}
+		const SmoothProperty<ColorF>& color() const;
 
 		[[nodiscard]]
-		SmoothProperty<ColorF>& color()
-		{
-			return m_color;
-		}
+		SmoothProperty<ColorF>& color();
 
-		void setColor(const PropertyValue<ColorF>& color)
-		{
-			m_color.setPropertyValue(color);
-		}
+		void setColor(const PropertyValue<ColorF>& color);
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
-		{
-			m_position.update(interactionState, activeStyleStates, deltaTime);
-			m_scale.update(interactionState, activeStyleStates, deltaTime);
-			m_pivot.update(interactionState, activeStyleStates, deltaTime);
-			m_rotation.update(interactionState, activeStyleStates, deltaTime);
-			m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime);
-			m_color.update(interactionState, activeStyleStates, deltaTime);
-		}
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime);
 
 		[[nodiscard]]
-		Mat3x2 posScaleMat(const Mat3x2& parentMat, const RectF& rect) const
-		{
-			const Vec2& position = m_position.value();
-			const Vec2& scale = m_scale.value();
-			const Vec2& pivot = m_pivot.value();
-			const Vec2 pivotPos = rect.pos + rect.size * pivot;
-			return Mat3x2::Scale(scale, pivotPos).translated(position) * parentMat;
-		}
+		Mat3x2 posScaleMat(const Mat3x2& parentMat, const RectF& rect) const;
 
 		[[nodiscard]]
-		double rotationInHierarchy(double parentRotation) const
-		{
-			return parentRotation + m_rotation.value();
-		}
+		double rotationInHierarchy(double parentRotation) const;
 
 		[[nodiscard]]
-		JSON toJSON() const
-		{
-			JSON json;
-			m_position.appendJSON(json);
-			m_scale.appendJSON(json);
-			m_pivot.appendJSON(json);
-			m_rotation.appendJSON(json);
-			m_appliesToHitTest.appendJSON(json);
-			m_color.appendJSON(json);
-			return json;
-		}
+		JSON toJSON() const;
 
-		void readFromJSON(const JSON& json)
-		{
-			m_position.readFromJSON(json);
-			m_scale.readFromJSON(json);
-			m_pivot.readFromJSON(json);
-			m_rotation.readFromJSON(json);
-			m_appliesToHitTest.readFromJSON(json);
-			m_color.readFromJSON(json);
-		}
+		void readFromJSON(const JSON& json);
 	};
 }
