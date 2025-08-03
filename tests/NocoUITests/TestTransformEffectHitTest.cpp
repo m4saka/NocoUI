@@ -918,4 +918,199 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		auto hitOutside = canvas->rootNode()->hitTest(Vec2{ 250, 250 });
 		REQUIRE(hitOutside == nullptr);
 	}
+	
+	SECTION("Parent rotation affects child TransformEffect position")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"parent");
+		auto child = noco::Node::Create(U"child");
+		
+		// 親：200x200、位置(100,100)、45度回転
+		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
+		parent->transformEffect().setPosition(Vec2{ 100, 100 });
+		parent->transformEffect().setRotation(45.0);
+		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		
+		// 子：100x100、TransformEffect位置(50,0) - 水平方向のみのオフセット
+		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		child->transformEffect().setPosition(Vec2{ 50, 0 });
+		
+		canvas->rootNode()->addChild(parent);
+		parent->addChild(child);
+		canvas->update();
+		
+		// 期待値: 子の位置は親の回転によって変換される
+		// (50,0)が45度回転すると(35.355, 35.355)になり、
+		// 親の位置(100,100)に加算されて(135.355, 135.355)
+		const double expectedX = 135.35534;
+		const double expectedY = 135.35534;
+		
+		auto childRect = child->rect();
+		Console << U"Parent rotation test - child rect: " << childRect;
+		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
+		REQUIRE(childRect.x == Approx(expectedX).margin(0.01));
+		REQUIRE(childRect.y == Approx(expectedY).margin(0.01));
+		REQUIRE(childRect.w == Approx(100.0).margin(0.01));
+		REQUIRE(childRect.h == Approx(100.0).margin(0.01));
+	}
+	
+	SECTION("Parent scale affects child TransformEffect position")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"parent");
+		auto child = noco::Node::Create(U"child");
+		
+		// 親：200x200、位置(100,100)、スケール(2.0, 0.5)
+		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
+		parent->transformEffect().setPosition(Vec2{ 100, 100 });
+		parent->transformEffect().setScale(Vec2{ 2.0, 0.5 });
+		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		
+		// 子：100x100、TransformEffect位置(50,50)
+		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		child->transformEffect().setPosition(Vec2{ 50, 50 });
+		
+		canvas->rootNode()->addChild(parent);
+		parent->addChild(child);
+		canvas->update();
+		
+		// 期待値: 子の位置は親のスケールによって変換される
+		// (50,50)がスケール(2.0, 0.5)で(100, 25)になり、
+		// 親の位置(100,100)に加算されて(200, 125)
+		const double expectedX = 200.0;
+		const double expectedY = 125.0;
+		
+		auto childRect = child->rect();
+		Console << U"Parent scale test - child rect: " << childRect;
+		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
+		REQUIRE(childRect.x == Approx(expectedX).margin(0.01));
+		REQUIRE(childRect.y == Approx(expectedY).margin(0.01));
+		REQUIRE(childRect.w == Approx(100.0).margin(0.01));
+		REQUIRE(childRect.h == Approx(100.0).margin(0.01));
+	}
+	
+	SECTION("Parent rotation and scale affects child TransformEffect position")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"parent");
+		auto child = noco::Node::Create(U"child");
+		
+		// 親：200x200、位置(100,100)、30度回転、スケール(1.5, 1.5)
+		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
+		parent->transformEffect().setPosition(Vec2{ 100, 100 });
+		parent->transformEffect().setRotation(30.0);
+		parent->transformEffect().setScale(Vec2{ 1.5, 1.5 });
+		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		
+		// 子：80x80、TransformEffect位置(40,0)
+		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 80, 80 } });
+		child->transformEffect().setPosition(Vec2{ 40, 0 });
+		
+		canvas->rootNode()->addChild(parent);
+		parent->addChild(child);
+		canvas->update();
+		
+		// 期待値: スケール後に回転
+		// (40,0)がスケール(1.5,1.5)で(60,0)になり、
+		// 30度回転で(51.96152, 30)になり、
+		// 親の位置(100,100)に加算されて(151.96152, 130)
+		const double expectedX = 151.96152;
+		const double expectedY = 130.0;
+		
+		auto childRect = child->rect();
+		Console << U"Combined test - child rect: " << childRect;
+		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
+		REQUIRE(childRect.x == Approx(expectedX).margin(0.01));
+		REQUIRE(childRect.y == Approx(expectedY).margin(0.01));
+		REQUIRE(childRect.w == Approx(80.0).margin(0.01));
+		REQUIRE(childRect.h == Approx(80.0).margin(0.01));
+	}
+	
+	SECTION("Simple parent rotation with child offset - 90 degrees")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"parent");
+		auto child = noco::Node::Create(U"child");
+		
+		// 親：100x100、位置(0,0)、90度回転
+		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		parent->transformEffect().setPosition(Vec2{ 0, 0 });
+		parent->transformEffect().setRotation(90.0);
+		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		
+		// 子：50x50、TransformEffect位置(40,0) - 親の座標系で右方向
+		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 50, 50 } });
+		child->transformEffect().setPosition(Vec2{ 40, 0 });
+		
+		canvas->rootNode()->addChild(parent);
+		parent->addChild(child);
+		canvas->update();
+		
+		// 期待値: 親が90度回転しているので、子の(40,0)は下方向(0,40)になる
+		// 親の中心(50,50) + 回転後のオフセット(0,40) = (50,90)
+		const Vec2 expectedCenter{ 50.0, 90.0 };
+		
+		// 描画位置を確認（rotatedQuadで回転を含む完全な変換後の位置を取得）
+		auto childRotatedQuad = child->rotatedQuad();
+		Console << U"90° rotation test - child rotated quad: " << childRotatedQuad;
+		
+		// 描画位置の中心が期待値の位置にあることを確認
+		REQUIRE(childRotatedQuad.contains(expectedCenter));
+		// 四隅も期待される位置にあることを確認（50x50の子、中心が(50,90)）
+		// 1px内側で判定して境界の浮動小数点誤差を回避
+		REQUIRE(childRotatedQuad.contains(Vec2{ 26.0, 66.0 }));  // 左上から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 74.0, 66.0 }));  // 右上から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 26.0, 114.0 })); // 左下から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 74.0, 114.0 })); // 右下から1px内側
+		
+		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（appliesToHitTest=false）
+		auto childHitQuad = child->hitTestQuad();
+		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
+		// ヒットテストも親の回転により同じ位置に移動しているはず
+		REQUIRE(childHitQuad.contains(expectedCenter));
+	}
+	
+	SECTION("Simple parent rotation with child offset - negative 90 degrees")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"parent");
+		auto child = noco::Node::Create(U"child");
+		
+		// 親：100x100、位置(100,100)、-90度回転
+		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		parent->transformEffect().setPosition(Vec2{ 100, 100 });
+		parent->transformEffect().setRotation(-90.0);
+		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		
+		// 子：50x50、TransformEffect位置(30,0) - 親の座標系で右方向
+		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 50, 50 } });
+		child->transformEffect().setPosition(Vec2{ 30, 0 });
+		
+		canvas->rootNode()->addChild(parent);
+		parent->addChild(child);
+		canvas->update();
+		
+		// 期待値: 親が-90度回転しているので、子の(30,0)は上方向(0,-30)になる
+		// 親の中心(150,150) + 回転後のオフセット(0,-30) = (150,120)
+		const Vec2 expectedCenter{ 150.0, 120.0 };
+		
+		// 描画位置を確認（rotatedQuadで回転を含む完全な変換後の位置を取得）
+		auto childRotatedQuad = child->rotatedQuad();
+		Console << U"-90° rotation test - child rotated quad: " << childRotatedQuad;
+		
+		// 描画位置の中心が期待値の位置にあることを確認
+		REQUIRE(childRotatedQuad.contains(expectedCenter));
+		// 四隅も期待される位置にあることを確認（50x50の子、中心が(150,120)）
+		// 1px内側で判定して境界の浮動小数点誤差を回避
+		REQUIRE(childRotatedQuad.contains(Vec2{ 126.0, 96.0 }));   // 左上から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 174.0, 96.0 }));   // 右上から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 126.0, 144.0 }));  // 左下から1px内側
+		REQUIRE(childRotatedQuad.contains(Vec2{ 174.0, 144.0 }));  // 右下から1px内側
+		
+		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（appliesToHitTest=false）
+		auto childHitQuad = child->hitTestQuad();
+		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
+		// ヒットテストも親の回転により同じ位置に移動しているはず
+		REQUIRE(childHitQuad.contains(expectedCenter));
+	}
 }
