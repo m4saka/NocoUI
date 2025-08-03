@@ -77,7 +77,7 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime);
 
 		[[nodiscard]]
-		Mat3x2 posScaleMat(const Mat3x2& parentMat, const RectF& rect) const;
+		Mat3x2 posScaleMat(const Mat3x2& parentMat, const RectF& rect, double parentRotation) const;
 
 		[[nodiscard]]
 		double rotationInHierarchy(double parentRotation) const;

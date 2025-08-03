@@ -1332,8 +1332,6 @@ namespace noco
 		
 		if (m_activeInHierarchy)
 		{
-			m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
-			m_rotationInHierarchy = m_transformEffect.rotationInHierarchy(parentRotation);
 			refreshPosScaleAppliedRect(RecursiveYN::No, parentPosScaleMat, parentEffectScale, parentRotation, parentHitTestMat, parentHitTestRotation, parentHitTestPosScaleMat);
 		}
 
@@ -1363,12 +1361,12 @@ namespace noco
 
 			// 子ノードのupdate実行
 			// 基本のposScaleMat（回転による位置変化なし）
-			const Mat3x2 baseChildPosScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
+			const Mat3x2 baseChildPosScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect, parentRotation);
 			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
 			
 			// HitTest用のMatrixを計算
 			const Mat3x2 baseChildHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
-				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestMat;
+				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestMat;
 			
 			// 自身の回転がある場合、子ノードの位置に対する影響を計算
 			const double myRotation = m_transformEffect.rotation().value();
@@ -1404,6 +1402,7 @@ namespace noco
 							// 子のappliesToHitTest=falseならレイアウト矩形の左上を基準に補正
 							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
 							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
+							const double rad = Math::ToRadians(myRotation);
 							const Vec2 rotatedRelativeLayoutPos{
 								relativeLayoutPos.x * std::cos(rad) - relativeLayoutPos.y * std::sin(rad),
 								relativeLayoutPos.x * std::sin(rad) + relativeLayoutPos.y * std::cos(rad)
@@ -1418,14 +1417,11 @@ namespace noco
 						childHitTestMatForChild = baseChildHitTestMat;
 					}
 					
-					// 子に渡す回転角度に自身の回転を含めるかはappliesToHitTestに応じて変わる
-					const double childRotation = m_transformEffect.appliesToHitTest().value() ? m_rotationInHierarchy : parentRotation;
-					
 					// 子に渡すHitTestPosScaleMat
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestPosScaleMat;
+						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->update(scrollableHoveredNode, deltaTime, childPosScaleMat, effectScale, childHitTestMatForChild, childRotation, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
+					child->update(scrollableHoveredNode, deltaTime, childPosScaleMat, effectScale, childHitTestMatForChild, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
 				}
 			}
 			else
@@ -1433,13 +1429,11 @@ namespace noco
 				// 回転がない場合は通常通り
 				for (const auto& child : m_childrenTempBuffer)
 				{
-					// 子に渡す回転角度に自身の回転を含めるかはappliesToHitTestに応じて変わる
-					const double childRotation = m_transformEffect.appliesToHitTest().value() ? m_rotationInHierarchy : parentRotation;
 					// 子に渡すHitTestPosScaleMat
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestPosScaleMat;
+						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->update(scrollableHoveredNode, deltaTime, baseChildPosScaleMat, effectScale, baseChildHitTestMat, childRotation, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
+					child->update(scrollableHoveredNode, deltaTime, baseChildPosScaleMat, effectScale, baseChildHitTestMat, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
 				}
 			}
 
@@ -1522,7 +1516,7 @@ namespace noco
 	{
 		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, 0.0);
 
-		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect);
+		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect, parentRotation);
 		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
 		const Vec2 posRightBottom = posScaleMat.transformPoint(m_layoutAppliedRect.br());
 		m_posScaleAppliedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
@@ -1545,7 +1539,7 @@ namespace noco
 		if (m_transformEffect.appliesToHitTest().value())
 		{
 			// TransformEffectを適用
-			const Mat3x2 hitTestPosScaleMat = m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect);
+			const Mat3x2 hitTestPosScaleMat = m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation);
 			const Vec2 hitTestPosLeftTop = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.pos);
 			const Vec2 hitTestPosRightBottom = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.br());
 			
@@ -1616,7 +1610,7 @@ namespace noco
 
 			// 子ノードに渡すHitTest用のMatrix
 			const Mat3x2 childHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
-				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestMat;
+				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestMat;
 
 			// 自身の回転がある場合、子ノードの位置に対する影響を計算
 			const double myRotation = m_transformEffect.rotation().value();
@@ -1665,14 +1659,11 @@ namespace noco
 						childHitTestMatForChild = childHitTestMat;
 					}
 
-					// 子に渡す回転角度に自身の回転を含めるかはappliesToHitTestに応じて変わる
-					const double childRotation = m_transformEffect.appliesToHitTest().value() ? m_rotationInHierarchy : parentRotation;
-
 					// 子に渡すHitTestPosScaleMat
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestPosScaleMat;
+						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, childPosScaleMat, m_effectScale, childRotation, childHitTestMatForChild, m_hitTestRotation, childHitTestPosScaleMat);
+					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, childPosScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMatForChild, m_hitTestRotation, childHitTestPosScaleMat);
 				}
 			}
 			else
@@ -1680,13 +1671,11 @@ namespace noco
 				// 回転がない場合
 				for (const auto& child : m_children)
 				{
-					// 子に渡す回転角度に自身の回転を含めるかはappliesToHitTestに応じて変わる
-					const double childRotation = m_transformEffect.appliesToHitTest().value() ? m_rotationInHierarchy : parentRotation;
 					// 子に渡すHitTestPosScaleMat
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect) : parentHitTestPosScaleMat;
+						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, posScaleMat, m_effectScale, childRotation, childHitTestMat, m_hitTestRotation, childHitTestPosScaleMat);
+					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, posScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMat, m_hitTestRotation, childHitTestPosScaleMat);
 				}
 			}
 		}
