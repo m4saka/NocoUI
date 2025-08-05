@@ -1379,13 +1379,23 @@ namespace noco
 				{
 					// 描画用の位置補正（子のpivotを考慮）
 					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
+					// 親のスケールを適用
+					const Vec2& parentScale = m_transformEffect.scale().value();
+					const Vec2 scaledRelativePos = relativePos * parentScale;
 					const double rad = Math::ToRadians(myRotation);
-					const Vec2 rotatedRelativePos{
-						relativePos.x * std::cos(rad) - relativePos.y * std::sin(rad),
-						relativePos.x * std::sin(rad) + relativePos.y * std::cos(rad)
+					const Vec2 rotatedScaledRelativePos{
+						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
+						scaledRelativePos.x * std::sin(rad) + scaledRelativePos.y * std::cos(rad)
 					};
-					const Vec2 positionOffset = rotatedRelativePos - relativePos;
-					const Mat3x2 childPosScaleMat = Mat3x2::Translate(positionOffset) * baseChildPosScaleMat;
+					// スケール適用後のオフセットを計算
+					const Vec2 offsetInParentLocal = rotatedScaledRelativePos - scaledRelativePos;
+					const Mat3x2 parentLinearMat{
+						parentPosScaleMat._11, parentPosScaleMat._12,
+						parentPosScaleMat._21, parentPosScaleMat._22,
+						0.0, 0.0
+					};
+					const Vec2 finalOffset = parentLinearMat.transformPoint(offsetInParentLocal);
+					const Mat3x2 childPosScaleMat = baseChildPosScaleMat.translated(finalOffset);
 					
 					// HitTest用の位置補正
 					Mat3x2 childHitTestMatForChild;
@@ -1395,20 +1405,23 @@ namespace noco
 						if (child->transformEffect().appliesToHitTest().value())
 						{
 							// 子のappliesToHitTest=trueなら描画と同じ補正を適用
-							childHitTestMatForChild = Mat3x2::Translate(positionOffset) * baseChildHitTestMat;
+							childHitTestMatForChild = baseChildHitTestMat.translated(finalOffset);
 						}
 						else
 						{
 							// 子のappliesToHitTest=falseならレイアウト矩形の左上を基準に補正
 							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
 							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
-							const double rad = Math::ToRadians(myRotation);
-							const Vec2 rotatedRelativeLayoutPos{
-								relativeLayoutPos.x * std::cos(rad) - relativeLayoutPos.y * std::sin(rad),
-								relativeLayoutPos.x * std::sin(rad) + relativeLayoutPos.y * std::cos(rad)
+							// 親のスケールを適用
+							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * parentScale;
+							const Vec2 rotatedScaledRelativeLayoutPos{
+								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
+								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
 							};
-							const Vec2 layoutPosOffset = rotatedRelativeLayoutPos - relativeLayoutPos;
-							childHitTestMatForChild = Mat3x2::Translate(layoutPosOffset) * baseChildHitTestMat;
+							// スケール適用後のオフセットを計算
+							const Vec2 layoutOffsetInParentLocal = rotatedScaledRelativeLayoutPos - scaledRelativeLayoutPos;
+							const Vec2 layoutFinalOffset = parentLinearMat.transformPoint(layoutOffsetInParentLocal);
+							childHitTestMatForChild = baseChildHitTestMat.translated(layoutFinalOffset);
 						}
 					}
 					else
@@ -1622,13 +1635,23 @@ namespace noco
 				{
 					// 描画用の位置補正（子のpivotを考慮）
 					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
+					// 親のスケールを適用
+					const Vec2& parentScale = m_transformEffect.scale().value();
+					const Vec2 scaledRelativePos = relativePos * parentScale;
 					const double rad = Math::ToRadians(myRotation);
-					const Vec2 rotatedRelativePos{
-						relativePos.x * std::cos(rad) - relativePos.y * std::sin(rad),
-						relativePos.x * std::sin(rad) + relativePos.y * std::cos(rad)
+					const Vec2 rotatedScaledRelativePos{
+						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
+						scaledRelativePos.x * std::sin(rad) + scaledRelativePos.y * std::cos(rad)
 					};
-					const Vec2 positionOffset = rotatedRelativePos - relativePos;
-					const Mat3x2 childPosScaleMat = Mat3x2::Translate(positionOffset) * posScaleMat;
+					// スケール適用後のオフセットを計算
+					const Vec2 offsetInParentLocal = rotatedScaledRelativePos - scaledRelativePos;
+					const Mat3x2 parentLinearMat{
+						parentPosScaleMat._11, parentPosScaleMat._12,
+						parentPosScaleMat._21, parentPosScaleMat._22,
+						0.0, 0.0
+					};
+					const Vec2 finalOffset = parentLinearMat.transformPoint(offsetInParentLocal);
+					const Mat3x2 childPosScaleMat = posScaleMat.translated(finalOffset);
 
 					// HitTest用の位置補正
 					Mat3x2 childHitTestMatForChild;
@@ -1638,19 +1661,23 @@ namespace noco
 						if (child->transformEffect().appliesToHitTest().value())
 						{
 							// 子のappliesToHitTest=trueなら描画と同じ補正を適用
-							childHitTestMatForChild = Mat3x2::Translate(positionOffset) * childHitTestMat;
+							childHitTestMatForChild = childHitTestMat.translated(finalOffset);
 						}
 						else
 						{
 							// 子のappliesToHitTest=falseならレイアウト矩形の左上を基準に補正
 							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
 							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
-							const Vec2 rotatedRelativeLayoutPos{
-								relativeLayoutPos.x * std::cos(rad) - relativeLayoutPos.y * std::sin(rad),
-								relativeLayoutPos.x * std::sin(rad) + relativeLayoutPos.y * std::cos(rad)
+							// 親のスケールを適用
+							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * parentScale;
+							const Vec2 rotatedScaledRelativeLayoutPos{
+								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
+								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
 							};
-							const Vec2 layoutPosOffset = rotatedRelativeLayoutPos - relativeLayoutPos;
-							childHitTestMatForChild = Mat3x2::Translate(layoutPosOffset) * childHitTestMat;
+							// スケール適用後のオフセットを計算
+							const Vec2 layoutOffsetInParentLocal = rotatedScaledRelativeLayoutPos - scaledRelativeLayoutPos;
+							const Vec2 layoutFinalOffset = parentLinearMat.transformPoint(layoutOffsetInParentLocal);
+							childHitTestMatForChild = childHitTestMat.translated(layoutFinalOffset);
 						}
 					}
 					else
