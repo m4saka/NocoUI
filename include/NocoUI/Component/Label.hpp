@@ -298,6 +298,18 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const PropertyValue<double>& underlineThickness() const
+		{
+			return m_underlineThickness.propertyValue();
+		}
+
+		std::shared_ptr<Label> setUnderlineThickness(const PropertyValue<double>& underlineThickness)
+		{
+			m_underlineThickness.setPropertyValue(underlineThickness);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
 		const PropertyValue<LabelSizingMode>& sizingMode() const
 		{
 			return m_sizingMode.propertyValue();
