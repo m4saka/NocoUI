@@ -568,7 +568,7 @@ public:
 		return m_savedHash != m_canvas->toJSON().formatMinimum().hash();
 	}
 
-	void resetDirty()
+	void resetDirtyState()
 	{
 		m_savedHash = m_canvas->toJSON().formatMinimum().hash();
 	}
@@ -651,6 +651,8 @@ public:
 
 				// アセットのルートディレクトリを初期化
 				noco::Asset::SetBaseDirectoryPath(U"");
+
+				resetDirtyState();
 			});
 	}
 
@@ -684,6 +686,8 @@ public:
 					// ファイルと同じディレクトリをアセットのルートディレクトリに設定
 					const String folderPath = FileSystem::ParentPath(*filePath);
 					noco::Asset::SetBaseDirectoryPath(folderPath);
+
+					resetDirtyState();
 				}
 			});
 	}
@@ -859,7 +863,7 @@ void Main()
 	});
 	editor.refresh();
 	editor.createInitialNode();
-	editor.resetDirty();
+	editor.resetDirtyState();
 	
 	// 初期状態を記録
 	editor.recordInitialHistoryState();
