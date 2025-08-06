@@ -1195,9 +1195,13 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Array<String>& parentActiveStyleStates)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale, const Array<String>& parentActiveStyleStates)
 	{
 		const auto thisNode = shared_from_this();
+		
+		// 子に渡すhitTestScale（appliesToHitTestがtrueの場合のみスケールを適用）
+		const Vec2 hitTestScale = m_transformEffect.appliesToHitTest().value() ? 
+			m_transformEffect.scale().value() * parentHitTestScale : parentHitTestScale;
 		
 		// 慣性スクロール処理
 		constexpr double MinInertiaVelocity = 1.0;
@@ -1332,7 +1336,7 @@ namespace noco
 		
 		if (m_activeInHierarchy)
 		{
-			refreshPosScaleAppliedRect(RecursiveYN::No, parentPosScaleMat, parentEffectScale, parentRotation, parentHitTestMat, parentHitTestRotation, parentHitTestPosScaleMat);
+			refreshPosScaleAppliedRect(RecursiveYN::No, parentPosScaleMat, parentEffectScale, parentRotation, parentHitTestMat, parentHitTestRotation, parentHitTestPosScaleMat, parentHitTestScale);
 		}
 
 		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
@@ -1380,8 +1384,7 @@ namespace noco
 					// 描画用の位置補正（子のpivotを考慮）
 					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
 					// 親のスケールを適用
-					const Vec2& parentScale = m_transformEffect.scale().value();
-					const Vec2 scaledRelativePos = relativePos * parentScale;
+					const Vec2 scaledRelativePos = relativePos * effectScale;
 					const double rad = Math::ToRadians(myRotation);
 					const Vec2 rotatedScaledRelativePos{
 						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
@@ -1413,7 +1416,7 @@ namespace noco
 							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
 							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
 							// 親のスケールを適用
-							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * parentScale;
+							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * hitTestScale;
 							const Vec2 rotatedScaledRelativeLayoutPos{
 								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
 								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
@@ -1434,7 +1437,7 @@ namespace noco
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
 						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->update(scrollableHoveredNode, deltaTime, childPosScaleMat, effectScale, childHitTestMatForChild, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
+					child->update(scrollableHoveredNode, deltaTime, childPosScaleMat, effectScale, childHitTestMatForChild, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale, m_activeStyleStates);
 				}
 			}
 			else
@@ -1446,7 +1449,7 @@ namespace noco
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
 						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->update(scrollableHoveredNode, deltaTime, baseChildPosScaleMat, effectScale, baseChildHitTestMat, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, m_activeStyleStates);
+					child->update(scrollableHoveredNode, deltaTime, baseChildPosScaleMat, effectScale, baseChildHitTestMat, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale, m_activeStyleStates);
 				}
 			}
 
@@ -1525,9 +1528,13 @@ namespace noco
 		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
-	void Node::refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat)
+	void Node::refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale)
 	{
 		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, 0.0);
+		
+		// 子に渡すhitTestScale（appliesToHitTestがtrueの場合のみスケールを適用）
+		const Vec2 hitTestScale = m_transformEffect.appliesToHitTest().value() ? 
+			m_transformEffect.scale().value() * parentHitTestScale : parentHitTestScale;
 
 		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect, parentRotation);
 		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
@@ -1636,8 +1643,7 @@ namespace noco
 					// 描画用の位置補正（子のpivotを考慮）
 					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
 					// 親のスケールを適用
-					const Vec2& parentScale = m_transformEffect.scale().value();
-					const Vec2 scaledRelativePos = relativePos * parentScale;
+					const Vec2 scaledRelativePos = relativePos * m_effectScale;
 					const double rad = Math::ToRadians(myRotation);
 					const Vec2 rotatedScaledRelativePos{
 						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
@@ -1669,7 +1675,7 @@ namespace noco
 							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
 							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
 							// 親のスケールを適用
-							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * parentScale;
+							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * hitTestScale;
 							const Vec2 rotatedScaledRelativeLayoutPos{
 								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
 								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
@@ -1690,7 +1696,7 @@ namespace noco
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
 						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, childPosScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMatForChild, m_hitTestRotation, childHitTestPosScaleMat);
+					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, childPosScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMatForChild, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale);
 				}
 			}
 			else
@@ -1702,7 +1708,7 @@ namespace noco
 					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
 						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
 					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, posScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMat, m_hitTestRotation, childHitTestPosScaleMat);
+					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, posScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMat, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale);
 				}
 			}
 		}

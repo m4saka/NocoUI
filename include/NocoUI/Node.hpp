@@ -302,13 +302,13 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Array<String>& parentActiveStyleStates = {});
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale, const Array<String>& parentActiveStyleStates = {});
 
 		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat);
+		void refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale = Vec2{ 1.0, 1.0 });
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

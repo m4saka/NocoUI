@@ -370,7 +370,7 @@ namespace noco
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
 		m_rootNode->updateInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale, rootPosScaleMat(), 0.0, 0.0, rootPosScaleMat(), {});
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale, rootPosScaleMat(), 0.0, 0.0, rootPosScaleMat(), Vec2{ 1.0, 1.0 }, {});
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
 
