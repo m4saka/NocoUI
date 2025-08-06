@@ -382,7 +382,7 @@ namespace noco::editor
 					},
 					[this] (const std::shared_ptr<Node>& node)
 					{
-						m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->rect().center());
+						m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->layoutAppliedRect().center());
 					}))->addClickHotKey(KeyA, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 			}
 			
@@ -2636,7 +2636,7 @@ namespace noco::editor
 							node->setConstraint(BoxConstraint
 							{
 								.sizeRatio = Vec2::Zero(),
-								.sizeDelta = node->rect().size,
+								.sizeDelta = node->layoutAppliedRect().size,
 							});
 							m_defaults->constraintType = ConstraintType::BoxConstraint; // 次回のデフォルト値として記憶
 							refreshInspector(); // 項目に変更があるため更新

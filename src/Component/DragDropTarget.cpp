@@ -45,7 +45,7 @@ namespace noco
 			}
 			else
 			{
-				node.rect().draw(ColorF{ Palette::White, 0.3 });
+				node.layoutAppliedRect().draw(ColorF{ Palette::White, 0.3 });
 			}
 		}
 	}

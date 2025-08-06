@@ -117,35 +117,6 @@ namespace noco
 		m_color.update(interactionState, activeStyleStates, deltaTime);
 	}
 
-	Mat3x2 TransformEffect::posScaleMat(const Mat3x2& parentPosScaleMat, const RectF& rect, double parentRotation) const
-	{
-
-		const Vec2& scale = m_scale.value();
-		const Vec2& pivot = m_pivot.value();
-
-		const Vec2 pivotPos = rect.pos + rect.size * pivot;
-		const Mat3x2 localScaleMat = Mat3x2::Scale(scale, pivotPos);
-		const Mat3x2 baseMat = localScaleMat * parentPosScaleMat;
-
-		// positionに親のscaleとrotationを適用
-		const Mat3x2 parentLinearMat
-		{
-			parentPosScaleMat._11, parentPosScaleMat._12,
-			parentPosScaleMat._21, parentPosScaleMat._22,
-			0.0, 0.0
-		};
-		const Mat3x2 parentLinearMatWithRotation = parentLinearMat * Mat3x2::Rotate(Math::ToRadians(parentRotation));
-		const Vec2& position = m_position.value();
-		const Vec2 transformedPosition = parentLinearMatWithRotation.transformPoint(position);
-
-		return baseMat.translated(transformedPosition);
-	}
-
-	double TransformEffect::rotationInHierarchy(double parentRotation) const
-	{
-		return parentRotation + m_rotation.value();
-	}
-
 	JSON TransformEffect::toJSON() const
 	{
 		JSON json;

@@ -5,19 +5,18 @@ namespace noco
 {
 	void RectRenderer::draw(const Node& node) const
 	{
-		const double effectScaleAvg = (node.effectScale().x + node.effectScale().y) / 2;
 		const RectFillGradationType fillGradationType = m_fillGradationType.value();
 		const ColorF& fillColor = m_fillColor.value();
 		const ColorF& fillGradationColor1 = m_fillGradationColor1.value();
 		const ColorF& fillGradationColor2 = m_fillGradationColor2.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		const ColorF& outlineColor = m_outlineColor.value();
-		const double outlineThickness = m_outlineThickness.value() * effectScaleAvg;
-		const double cornerRadius = m_cornerRadius.value() * effectScaleAvg;
+		const double outlineThickness = m_outlineThickness.value();
+		const double cornerRadius = m_cornerRadius.value();
 		const ColorF& shadowColor = m_shadowColor.value();
-		const Vec2& shadowOffset = m_shadowOffset.value() * effectScaleAvg;
-		const double shadowBlur = m_shadowBlur.value() * effectScaleAvg;
-		const double shadowSpread = m_shadowSpread.value() * effectScaleAvg;
+		const Vec2& shadowOffset = m_shadowOffset.value();
+		const double shadowBlur = m_shadowBlur.value();
+		const double shadowSpread = m_shadowSpread.value();
 
 		// ブレンドモードの設定
 		Optional<ScopedRenderStates2D> blendState;
@@ -39,7 +38,7 @@ namespace noco
 
 		if (cornerRadius == 0.0)
 		{
-			const RectF rect = node.rect().stretched(-outlineThickness / 2);
+			const RectF rect = node.layoutAppliedRect().stretched(-outlineThickness / 2);
 			if (shadowColor.a > 0.0)
 			{
 				rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
@@ -68,7 +67,7 @@ namespace noco
 		}
 		else
 		{
-			const RectF rect = node.rect().stretched(-outlineThickness / 2);
+			const RectF rect = node.layoutAppliedRect().stretched(-outlineThickness / 2);
 			const RoundRect roundRect = rect.rounded(cornerRadius);
 			if (shadowColor.a > 0.0)
 			{

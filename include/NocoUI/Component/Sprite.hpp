@@ -27,7 +27,7 @@ namespace noco
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
-		void drawNineSlice(const Texture& texture, const RectF& rect, const Vec2& effectScale, const ColorF& color) const;
+		void drawNineSlice(const Texture& texture, const RectF& rect, const ColorF& color) const;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)

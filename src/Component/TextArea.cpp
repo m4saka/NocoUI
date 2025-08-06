@@ -174,29 +174,18 @@ namespace noco
 		return { 0, 0 };
 	}
 
-	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node)
+	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const RectF& rect, const std::shared_ptr<Node>& node)
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
-			rect.size / effectScale);
+			rect.size);
 		
-		// 回転を考慮したマウス座標を取得
-		Vec2 localMousePos;
-		if (node && node->rotationInHierarchy() != 0.0)
-		{
-			// 回転の逆行列を使ってマウス座標をローカル座標に変換
-			const Vec2 pivotPos = node->effectPivotPos();
-			const Mat3x2 invRotationMat = Mat3x2::Rotate(Math::ToRadians(-node->rotationInHierarchy()), pivotPos);
-			localMousePos = invRotationMat.transformPoint(Cursor::PosF());
-		}
-		else
-		{
-			localMousePos = Cursor::PosF();
-		}
+		// ヒットテスト用逆変換でマウス座標を変換
+		const Vec2 nodeSpaceMousePos = node ? node->inverseTransformHitTestPoint(Cursor::PosF()) : Cursor::PosF();
 		
-		const Vec2 pos = (localMousePos - rect.pos) / effectScale;
+		const Vec2 pos = nodeSpaceMousePos - rect.pos;
 		return m_cache.getCursorIndex(pos, m_scrollOffsetX, m_scrollOffsetY);
 	}
 
@@ -331,15 +320,15 @@ namespace noco
 		CurrentFrame::UnfocusNodeIfFocused(node);
 	}
 
-	void TextArea::updateScrollOffset(const RectF& rect, const Vec2& effectScale)
+	void TextArea::updateScrollOffset(const RectF& rect)
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
-			rect.size / effectScale);
+			rect.size);
 
-		const Vec2 cursorPos = m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
+		const Vec2 cursorPos = m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY);
 
 		// 現状は水平スクロールは行わない
 		// (将来的に折返し無効オプションを追加した場合に必要になる)
@@ -353,11 +342,11 @@ namespace noco
 		}
 
 		// カーソル位置を可視領域内に収めるための計算
-		const double lineHeightScaled = m_cache.lineHeight * effectScale.y;
-		const size_t visibleLines = static_cast<size_t>(Max(1.0, rect.h / lineHeightScaled));
-		const double cursorTop = m_cursorLine * lineHeightScaled;
-		const double cursorBottom = cursorTop + lineHeightScaled;
-		const double viewTop = m_scrollOffsetY * lineHeightScaled;
+		const double lineHeight = m_cache.lineHeight;
+		const size_t visibleLines = static_cast<size_t>(Max(1.0, rect.h / lineHeight));
+		const double cursorTop = m_cursorLine * lineHeight;
+		const double cursorBottom = cursorTop + lineHeight;
+		const double viewTop = m_scrollOffsetY * lineHeight;
 		const double viewBottom = viewTop + rect.h;
 
 		// カーソルが上側にはみ出している場合
@@ -436,18 +425,17 @@ namespace noco
 			return;
 		}
 
-		const Vec2& effectScale = node->effectScale();
-		const Vec2 horizontalPadding = m_horizontalPadding.value() * effectScale.x;
-		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
+		const Vec2 horizontalPadding = m_horizontalPadding.value();
+		const Vec2 verticalPadding = m_verticalPadding.value();
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node->rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node->layoutAppliedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
-			rect.size / effectScale);
+			rect.size);
 
 		if (m_isDragging)
 		{
@@ -460,20 +448,10 @@ namespace noco
 						return Max(0.2s / Max(distance / 5, 1.0), 0.01s);
 					};
 				
-				// 回転を考慮したマウス座標を取得
-				Vec2 localMousePos;
-				if (node->rotationInHierarchy() != 0.0)
-				{
-					const Vec2 pivotPos = node->effectPivotPos();
-					const Mat3x2 invRotationMat = Mat3x2::Rotate(Math::ToRadians(-node->rotationInHierarchy()), pivotPos);
-					localMousePos = invRotationMat.transformPoint(Cursor::PosF());
-				}
-				else
-				{
-					localMousePos = Cursor::PosF();
-				}
+				// ヒットテスト用逆変換でマウス座標を変換
+				const Vec2 nodeSpaceMousePos = node->inverseTransformHitTestPoint(Cursor::PosF());
 				
-				const Vec2 mousePos = localMousePos;
+				const Vec2 mousePos = nodeSpaceMousePos;
 				bool needScroll = false;
 				if (mousePos.x < rect.x)
 				{
@@ -501,7 +479,7 @@ namespace noco
 						++m_cursorColumn;
 						
 						// 遅れて見えないよう見えている範囲の右端までは即座に移動
-						const auto [rightMostLine, rightMostColumn] = m_cache.getCursorIndex(Vec2{ rect.w / effectScale.x, (m_cursorLine - m_scrollOffsetY) * m_cache.lineHeight }, m_scrollOffsetX, m_scrollOffsetY);
+						const auto [rightMostLine, rightMostColumn] = m_cache.getCursorIndex(Vec2{ rect.w, (m_cursorLine - m_scrollOffsetY) * m_cache.lineHeight }, m_scrollOffsetX, m_scrollOffsetY);
 						if (rightMostLine == m_cursorLine && m_cursorColumn < rightMostColumn)
 						{
 							m_cursorColumn = rightMostColumn;
@@ -539,8 +517,8 @@ namespace noco
 						++m_cursorLine;
 						
 						// 遅れて見えないよう見えている範囲の下端までは即座に移動
-						const double lineHeightScaled = m_cache.lineHeight * effectScale.y;
-						const size_t visibleLines = static_cast<size_t>(Max(1.0, rect.h / lineHeightScaled));
+						const double lineHeight = m_cache.lineHeight;
+						const size_t visibleLines = static_cast<size_t>(Max(1.0, rect.h / lineHeight));
 						const size_t bottomMostLine = Min(m_scrollOffsetY + visibleLines - 1, maxLine - 1);
 						if (m_cursorLine < bottomMostLine)
 						{
@@ -556,11 +534,11 @@ namespace noco
 				if (!needScroll && rect.contains(mousePos))
 				{
 					// テキストボックス内にマウスカーソルがある場合のカーソル移動
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale, node);
+					const auto [line, column] = moveCursorToMousePos(rect, node);
 					m_cursorLine = line;
 					m_cursorColumn = column;
 				}
-				updateScrollOffset(rect, effectScale);
+				updateScrollOffset(rect);
 			}
 			else
 			{
@@ -578,7 +556,7 @@ namespace noco
 				if (!m_isEditing)
 				{
 					// 初回クリック時
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale, node);
+					const auto [line, column] = moveCursorToMousePos(rect, node);
 					m_selectionAnchorLine = line;
 					m_selectionAnchorColumn = column;
 					m_cursorLine = line;
@@ -589,7 +567,7 @@ namespace noco
 				else if (!KeyShift.pressed())
 				{
 					// Shiftを押していなければ選択をリセットして選択起点を新たに設定し直す
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale, node);
+					const auto [line, column] = moveCursorToMousePos(rect, node);
 					m_selectionAnchorLine = line;
 					m_selectionAnchorColumn = column;
 					m_cursorLine = line;
@@ -600,7 +578,7 @@ namespace noco
 				else
 				{
 					// Shiftを押しながらクリックした場合、既存の起点を維持しつつカーソルのみクリック位置へ移動
-					const auto [line, column] = moveCursorToMousePos(rect, effectScale, node);
+					const auto [line, column] = moveCursorToMousePos(rect, node);
 					m_cursorLine = line;
 					m_cursorColumn = column;
 					m_isDragging = true;
@@ -608,7 +586,7 @@ namespace noco
 				}
 				m_isEditing = true;
 				CurrentFrame::SetFocusedNode(node);
-				updateScrollOffset(rect, effectScale);
+				updateScrollOffset(rect);
 			}
 			else if (node->isRightMouseDown())
 			{
@@ -751,9 +729,9 @@ namespace noco
 
 				if (KeyPageUp.down() || (KeyPageUp.pressedDuration() > 0.4s && m_pageUpPressStopwatch.elapsed() > 0.03s))
 				{
-					if (m_cursorLine > 0 && m_cache.lineHeight * effectScale.y > 0.0)
+					if (m_cursorLine > 0 && m_cache.lineHeight > 0.0)
 					{
-						const size_t pageLines = static_cast<size_t>(Max(1.0, rect.h / (m_cache.lineHeight * effectScale.y)));
+						const size_t pageLines = static_cast<size_t>(Max(1.0, rect.h / m_cache.lineHeight));
 						m_cursorLine = m_cursorLine > pageLines ? (m_cursorLine - pageLines) : 0;
 						m_cursorColumn = Min(m_cursorColumn, getColumnCount(m_cursorLine));
 					}
@@ -763,9 +741,9 @@ namespace noco
 
 				if (KeyPageDown.down() || (KeyPageDown.pressedDuration() > 0.4s && m_pageDownPressStopwatch.elapsed() > 0.03s))
 				{
-					if (getLineCount() > 0 && m_cache.lineHeight * effectScale.y > 0.0)
+					if (getLineCount() > 0 && m_cache.lineHeight > 0.0)
 					{
-						const size_t pageLines = static_cast<size_t>(Max(1.0, rect.h / (m_cache.lineHeight * effectScale.y)));
+						const size_t pageLines = static_cast<size_t>(Max(1.0, rect.h / m_cache.lineHeight));
 						m_cursorLine = Min(m_cursorLine + pageLines, getLineCount() - 1);
 						m_cursorColumn = Min(m_cursorColumn, getColumnCount(m_cursorLine));
 					}
@@ -833,7 +811,7 @@ namespace noco
 						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
-						rect.size / effectScale);
+						rect.size);
 
 					// カーソルを次の行の先頭に移動
 					const auto [line, column] = m_cache.getIndexToLineColumn(beforeIndex + 1);
@@ -852,7 +830,7 @@ namespace noco
 						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
-						rect.size / effectScale);
+						rect.size);
 
 					// Ctrl+Vで挿入された場合、カーソル位置を挿入したテキストの末尾に更新
 					if (shortcutInsertSize > 0)
@@ -895,7 +873,7 @@ namespace noco
 						m_text.value(),
 						m_fontAssetName.value(),
 						m_fontSize.value(),
-						rect.size / effectScale);
+						rect.size);
 
 					const auto [line, column] = m_cache.getIndexToLineColumn(cursorIndex + validInput.size());
 					m_cursorLine = m_selectionAnchorLine = line;
@@ -912,7 +890,7 @@ namespace noco
 					m_selectionAnchorLine = m_cursorLine;
 					m_selectionAnchorColumn = m_cursorColumn;
 				}
-				updateScrollOffset(rect, effectScale);
+				updateScrollOffset(rect);
 			}
 
 			m_cursorBlinkTime += Scene::DeltaTime();
@@ -947,21 +925,23 @@ namespace noco
 
 	void TextArea::draw(const Node& node) const
 	{
-		const Vec2& effectScale = node.effectScale();
-		const Vec2 horizontalPadding = m_horizontalPadding.value() * effectScale.x;
-		const Vec2 verticalPadding = m_verticalPadding.value() * effectScale.y;
+		const Vec2 horizontalPadding = m_horizontalPadding.value();
+		const Vec2 verticalPadding = m_verticalPadding.value();
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.rect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node.layoutAppliedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		
+		// クリッピング用の矩形（Transformer2DがScissorRectに効かないため）
+		const RectF clipRect = node.unrotatedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
 			m_fontSize.value(),
-			rect.size / effectScale);
+			rect.size);
 
 		{
-			detail::ScopedScissorRect scissorRect{ rect.asRect() };
+			detail::ScopedScissorRect scissorRect{ clipRect.asRect() };
 
 			// 選択範囲を描画
 			if (hasSelection())
@@ -971,12 +951,12 @@ namespace noco
 				const auto [endLine, endColumn] = m_cache.getIndexToLineColumn(selectionEnd);
 				for (size_t line = beginLine; line <= endLine; ++line)
 				{
-					if (line >= m_scrollOffsetY && line < m_scrollOffsetY + static_cast<size_t>(rect.h / (m_cache.lineHeight * effectScale.y) + 1))
+					if (line >= m_scrollOffsetY && line < m_scrollOffsetY + static_cast<size_t>(rect.h / m_cache.lineHeight + 1))
 					{
 						size_t startColumn = (line == beginLine) ? beginColumn : 0;
 						size_t endCol = (line == endLine) ? endColumn : getColumnCount(line);
-						const Vec2 startPos = rect.pos + m_cache.getCursorPos(line, startColumn, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
-						const Vec2 endPos = rect.pos + m_cache.getCursorPos(line, endCol, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
+						const Vec2 startPos = rect.pos + m_cache.getCursorPos(line, startColumn, m_scrollOffsetX, m_scrollOffsetY);
+						const Vec2 endPos = rect.pos + m_cache.getCursorPos(line, endCol, m_scrollOffsetX, m_scrollOffsetY);
 						// 表示領域内でクリップ
 						const double selectionLeft = Max(startPos.x, rect.x);
 						const double selectionRight = Min(endPos.x, rect.br().x);
@@ -984,7 +964,7 @@ namespace noco
 						{
 							const RectF selectionRect{
 								Vec2{ selectionLeft, startPos.y },
-								Vec2{ selectionRight - selectionLeft, m_cache.lineHeight * effectScale.y }
+								Vec2{ selectionRight - selectionLeft, m_cache.lineHeight }
 							};
 							selectionRect.draw(m_selectionColor.value());
 						}
@@ -998,7 +978,7 @@ namespace noco
 				for (size_t lineIndex = m_scrollOffsetY; lineIndex < m_cache.lines.size(); ++lineIndex)
 				{
 					const auto& line = m_cache.lines[lineIndex];
-					const double y = rect.y + (lineIndex - m_scrollOffsetY) * m_cache.lineHeight * effectScale.y;
+					const double y = rect.y + (lineIndex - m_scrollOffsetY) * m_cache.lineHeight;
 					if (y > rect.br().y)
 					{
 						break;
@@ -1007,7 +987,7 @@ namespace noco
 					// スクロールオフセットまでの文字幅を計算して減算
 					for (size_t i = 0; i < Min(m_scrollOffsetX, line.glyphs.size()); ++i)
 					{
-						x -= line.glyphs[i].xAdvance * m_cache.scale * effectScale.x;
+						x -= line.glyphs[i].xAdvance * m_cache.scale;
 					}
 					// 表示する文字を描画
 					for (size_t i = 0; i < line.glyphs.size(); ++i)
@@ -1018,11 +998,11 @@ namespace noco
 						{
 							continue;
 						}
-						if (x + glyph.xAdvance * m_cache.scale * effectScale.x > rect.x && x < rect.br().x)
+						if (x + glyph.xAdvance * m_cache.scale > rect.x && x < rect.br().x)
 						{
-							glyph.texture.scaled(m_cache.scale * effectScale).draw(Vec2{ x, y } + glyph.getOffset(m_cache.scale) * effectScale, m_color.value());
+							glyph.texture.scaled(m_cache.scale).draw(Vec2{ x, y } + glyph.getOffset(m_cache.scale), m_color.value());
 						}
-						x += glyph.xAdvance * m_cache.scale * effectScale.x;
+						x += glyph.xAdvance * m_cache.scale;
 						if (x > rect.br().x)
 						{
 							break;
@@ -1034,9 +1014,9 @@ namespace noco
 			// カーソルを描画
 			if (m_isEditing && m_cursorBlinkTime < 0.5)
 			{
-				const double cursorWidth = CursorWidth * effectScale.x;
-				const Vec2 cursorPos = rect.pos + m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
-				const RectF cursorRect{ cursorPos, Vec2{ cursorWidth, m_cache.lineHeight * effectScale.y } };
+				const double cursorWidth = CursorWidth;
+				const Vec2 cursorPos = rect.pos + m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY);
+				const RectF cursorRect{ cursorPos, Vec2{ cursorWidth, m_cache.lineHeight } };
 				cursorRect.draw(m_cursorColor.value());
 			}
 		}
@@ -1052,11 +1032,11 @@ namespace noco
 					m_fontSize.value(),
 					SizeF{ std::numeric_limits<double>::max(), std::numeric_limits<double>::max() }); // 折り返しが必要ないため、適当な大きい値を指定
 
-				const Vec2 editingOffset = rect.pos + m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY) * effectScale;
+				const Vec2 editingOffset = rect.pos + m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY);
 
 				// 領域を塗りつぶし
 				{
-					const RectF editingRect = RectF{ editingOffset, m_editingCache.regionSize * effectScale };
+					const RectF editingRect = RectF{ editingOffset, m_editingCache.regionSize };
 					editingRect.draw(ColorF{ 0.0, 0.6 });
 				}
 
@@ -1066,8 +1046,8 @@ namespace noco
 					const ScopedCustomShader2D shader{ Font::GetPixelShader(m_editingCache.fontMethod) };
 					for (const auto& glyph : m_editingCache.lines[0].glyphs)
 					{
-						glyph.texture.scaled(m_editingCache.scale * effectScale).draw(editingPos + glyph.getOffset(m_editingCache.scale) * effectScale);
-						editingPos.x += glyph.xAdvance * m_editingCache.scale * effectScale.x;
+						glyph.texture.scaled(m_editingCache.scale).draw(editingPos + glyph.getOffset(m_editingCache.scale));
+						editingPos.x += glyph.xAdvance * m_editingCache.scale;
 					}
 				}
 			}

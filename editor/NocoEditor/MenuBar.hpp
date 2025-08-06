@@ -81,7 +81,7 @@ namespace noco::editor
 					else
 					{
 						// メニューがクリックされた場合は表示を切り替え
-						m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
+						m_contextMenu->show(menuCategory.node->layoutAppliedRect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 						m_activeMenuCategoryNode = menuCategory.node;
 						hasMenuOpened = true;
 					}
@@ -89,7 +89,7 @@ namespace noco::editor
 				else if (menuCategory.node->isHovered(RecursiveYN::Yes) && m_activeMenuCategoryNode && m_activeMenuCategoryNode != menuCategory.node)
 				{
 					// カーソルが他のメニューに移動した場合はサブメニューを切り替える
-					m_contextMenu->show(menuCategory.node->rect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
+					m_contextMenu->show(menuCategory.node->layoutAppliedRect().bl(), menuCategory.elements, menuCategory.subMenuWidth, ScreenMaskEnabledYN::No, [this] { m_hasMenuClosed = true; });
 					m_activeMenuCategoryNode = menuCategory.node;
 					hasMenuOpened = true;
 				}

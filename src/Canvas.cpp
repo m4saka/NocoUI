@@ -147,7 +147,7 @@ namespace noco
 		}
 
 		m_rootNode->refreshBoxChildrenLayout();
-		m_rootNode->refreshPosScaleAppliedRect(RecursiveYN::Yes, rootPosScaleMat(), m_scale, 0.0, rootPosScaleMat(), 0.0, rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
@@ -241,7 +241,7 @@ namespace noco
 
 		// スクロール可能なホバー中ノード取得
 		auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;
-		if (scrollableHoveredNode && !scrollableHoveredNode->rect().mouseOver())
+		if (scrollableHoveredNode && !scrollableHoveredNode->hitTestQuad().mouseOver())
 		{
 			// 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
 			scrollableHoveredNode = nullptr;
@@ -268,8 +268,8 @@ namespace noco
 		{
 			if (dragScrollingNode->m_dragStartPos)
 			{
-				// effectScaleを考慮してドラッグ量を計算(ゼロ除算を防ぐ)
-				const Vec2 effectScale = dragScrollingNode->effectScale();
+				// effectScaleInHierarchyを考慮してドラッグ量を計算(ゼロ除算を防ぐ)
+				const Vec2 effectScale = dragScrollingNode->effectScaleInHierarchy();
 				const Vec2 screenDragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
 				const Vec2 dragDelta = Vec2{
 					effectScale.x > 0.0 ? screenDragDelta.x / effectScale.x : 0.0,
@@ -370,7 +370,7 @@ namespace noco
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
 		m_rootNode->updateInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), m_scale, rootPosScaleMat(), 0.0, 0.0, rootPosScaleMat(), Vec2{ 1.0, 1.0 }, {});
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), {});
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());
 
@@ -411,14 +411,14 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
-		m_rootNode->refreshPosScaleAppliedRect(RecursiveYN::Yes, rootPosScaleMat(), m_scale, 0.0, rootPosScaleMat(), 0.0, rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 		return shared_from_this();
 	}
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshPosScaleAppliedRect(RecursiveYN::Yes, rootPosScaleMat(), m_scale, 0.0, rootPosScaleMat(), 0.0, rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 		return shared_from_this();
 	}
 	
@@ -426,7 +426,7 @@ namespace noco
 	{
 		m_offset = offset;
 		m_scale = scale;
-		m_rootNode->refreshPosScaleAppliedRect(RecursiveYN::Yes, rootPosScaleMat(), m_scale, 0.0, rootPosScaleMat(), 0.0, rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 		return shared_from_this();
 	}
 	

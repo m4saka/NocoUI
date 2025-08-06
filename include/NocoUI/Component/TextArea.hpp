@@ -100,7 +100,7 @@ namespace noco
 		/* NonSerialized */ mutable Cache m_cache;
 		/* NonSerialized */ mutable Cache m_editingCache;
 
-		std::pair<size_t, size_t> moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node);
+		std::pair<size_t, size_t> moveCursorToMousePos(const RectF& rect, const std::shared_ptr<Node>& node);
 
 		bool hasSelection() const;
 
@@ -116,7 +116,7 @@ namespace noco
 
 		void onDeactivated(const std::shared_ptr<Node>& node);
 
-		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
+		void updateScrollOffset(const RectF& rect);
 
 		size_t getLineCount() const;
 

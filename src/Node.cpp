@@ -4,18 +4,6 @@
 #include "NocoUI/Component/Component.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
-namespace
-{
-	RectF CreateRectFromPoints(const Vec2& point1, const Vec2& point2)
-	{
-		const double minX = Min(point1.x, point2.x);
-		const double maxX = Max(point1.x, point2.x);
-		const double minY = Min(point1.y, point2.y);
-		const double maxY = Max(point1.y, point2.y);
-		return RectF{ minX, minY, maxX - minX, maxY - minY };
-	}
-}
-
 namespace noco
 {
 	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
@@ -1055,7 +1043,7 @@ namespace noco
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_posScaleAppliedRect.contains(point))
+		if (m_clippingEnabled && !m_rotatedQuad.contains(point))
 		{
 			return nullptr;
 		}
@@ -1087,7 +1075,7 @@ namespace noco
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_posScaleAppliedRect.contains(point))
+		if (m_clippingEnabled && !m_rotatedQuad.contains(point))
 		{
 			return nullptr;
 		}
@@ -1195,13 +1183,9 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale, const Array<String>& parentActiveStyleStates)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates)
 	{
 		const auto thisNode = shared_from_this();
-		
-		// 子に渡すhitTestScale（appliesToHitTestがtrueの場合のみスケールを適用）
-		const Vec2 hitTestScale = m_transformEffect.appliesToHitTest().value() ? 
-			m_transformEffect.scale().value() * parentHitTestScale : parentHitTestScale;
 		
 		// 慣性スクロール処理
 		constexpr double MinInertiaVelocity = 1.0;
@@ -1336,7 +1320,7 @@ namespace noco
 		
 		if (m_activeInHierarchy)
 		{
-			refreshPosScaleAppliedRect(RecursiveYN::No, parentPosScaleMat, parentEffectScale, parentRotation, parentHitTestMat, parentHitTestRotation, parentHitTestPosScaleMat, parentHitTestScale);
+			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat);
 		}
 
 		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
@@ -1364,93 +1348,11 @@ namespace noco
 			}
 
 			// 子ノードのupdate実行
-			// 基本のposScaleMat（回転による位置変化なし）
-			const Mat3x2 baseChildPosScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect, parentRotation);
-			const Vec2 effectScale = m_transformEffect.scale().value() * parentEffectScale;
+			const Mat3x2 childHitTestMat = calculateHitTestMatrix(parentHitTestMat);
 			
-			// HitTest用のMatrixを計算
-			const Mat3x2 baseChildHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
-				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestMat;
-			
-			// 自身の回転がある場合、子ノードの位置に対する影響を計算
-			const double myRotation = m_transformEffect.rotation().value();
-			if (myRotation != 0.0)
+			for (const auto& child : m_childrenTempBuffer)
 			{
-				const Vec2 myPivotPos = effectPivotPosWithoutParentPosScale();
-				
-				// 各子ノードに対して位置補正を適用
-				for (const auto& child : m_childrenTempBuffer)
-				{
-					// 描画用の位置補正（子のpivotを考慮）
-					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
-					// 親のスケールを適用
-					const Vec2 scaledRelativePos = relativePos * effectScale;
-					const double rad = Math::ToRadians(myRotation);
-					const Vec2 rotatedScaledRelativePos{
-						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
-						scaledRelativePos.x * std::sin(rad) + scaledRelativePos.y * std::cos(rad)
-					};
-					// スケール適用後のオフセットを計算
-					const Vec2 offsetInParentLocal = rotatedScaledRelativePos - scaledRelativePos;
-					const Mat3x2 parentLinearMat{
-						parentPosScaleMat._11, parentPosScaleMat._12,
-						parentPosScaleMat._21, parentPosScaleMat._22,
-						0.0, 0.0
-					};
-					const Vec2 finalOffset = parentLinearMat.transformPoint(offsetInParentLocal);
-					const Mat3x2 childPosScaleMat = baseChildPosScaleMat.translated(finalOffset);
-					
-					// HitTest用の位置補正
-					Mat3x2 childHitTestMatForChild;
-					if (m_transformEffect.appliesToHitTest().value())
-					{
-						// 親のappliesToHitTest=trueの場合のみ位置補正を適用
-						if (child->transformEffect().appliesToHitTest().value())
-						{
-							// 子のappliesToHitTest=trueなら描画と同じ補正を適用
-							childHitTestMatForChild = baseChildHitTestMat.translated(finalOffset);
-						}
-						else
-						{
-							// 子のappliesToHitTest=falseならレイアウト矩形の左上を基準に補正
-							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
-							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
-							// 親のスケールを適用
-							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * hitTestScale;
-							const Vec2 rotatedScaledRelativeLayoutPos{
-								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
-								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
-							};
-							// スケール適用後のオフセットを計算
-							const Vec2 layoutOffsetInParentLocal = rotatedScaledRelativeLayoutPos - scaledRelativeLayoutPos;
-							const Vec2 layoutFinalOffset = parentLinearMat.transformPoint(layoutOffsetInParentLocal);
-							childHitTestMatForChild = baseChildHitTestMat.translated(layoutFinalOffset);
-						}
-					}
-					else
-					{
-						// 親のappliesToHitTest=falseなら位置補正を適用しない
-						childHitTestMatForChild = baseChildHitTestMat;
-					}
-					
-					// 子に渡すHitTestPosScaleMat
-					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
-					
-					child->update(scrollableHoveredNode, deltaTime, childPosScaleMat, effectScale, childHitTestMatForChild, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale, m_activeStyleStates);
-				}
-			}
-			else
-			{
-				// 回転がない場合は通常通り
-				for (const auto& child : m_childrenTempBuffer)
-				{
-					// 子に渡すHitTestPosScaleMat
-					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
-					
-					child->update(scrollableHoveredNode, deltaTime, baseChildPosScaleMat, effectScale, baseChildHitTestMat, m_rotationInHierarchy, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale, m_activeStyleStates);
-				}
+				child->update(scrollableHoveredNode, deltaTime, m_transformMatInHierarchy, childHitTestMat, m_activeStyleStates);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1512,6 +1414,9 @@ namespace noco
 	{
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
+		// TransformEffectのプロパティ値更新
+		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
+
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
@@ -1528,188 +1433,136 @@ namespace noco
 		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
-	void Node::refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale)
+	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat)
 	{
 		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, 0.0);
 		
-		// 子に渡すhitTestScale（appliesToHitTestがtrueの場合のみスケールを適用）
-		const Vec2 hitTestScale = m_transformEffect.appliesToHitTest().value() ? 
-			m_transformEffect.scale().value() * parentHitTestScale : parentHitTestScale;
-
-		const Mat3x2 posScaleMat = m_transformEffect.posScaleMat(parentPosScaleMat, m_layoutAppliedRect, parentRotation);
-		const Vec2 posLeftTop = posScaleMat.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 posRightBottom = posScaleMat.transformPoint(m_layoutAppliedRect.br());
-		m_posScaleAppliedRect = RectF{ posLeftTop, posRightBottom - posLeftTop };
-		m_effectScale = parentEffectScale * m_transformEffect.scale().value();
+		const Vec2& scale = m_transformEffect.scale().value();
+		const Vec2& pivot = m_transformEffect.pivot().value();
+		const Vec2& position = m_transformEffect.position().value();
+		const double rotation = m_transformEffect.rotation().value();
 		
-		// 回転適用後のQuadを計算
-		m_rotationInHierarchy = m_transformEffect.rotationInHierarchy(parentRotation);
-		if (m_rotationInHierarchy != 0.0)
+		const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
+		
+		// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
+		Mat3x2 selfTransform = Mat3x2::Translate(position);
+		
+		if (rotation != 0.0)
 		{
-			m_rotatedQuad = m_posScaleAppliedRect.rotatedAt(effectPivotPos(), Math::ToRadians(m_rotationInHierarchy));
-		}
-		else
-		{
-			// 回転がない場合は矩形からQuadを作成
-			m_rotatedQuad = Quad{ m_posScaleAppliedRect };
+			selfTransform = Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos) * selfTransform;
 		}
 		
-		// HitTest用の矩形を計算
-		// appliesToHitTestの値に応じてposScaleMatを構築
-		if (m_transformEffect.appliesToHitTest().value())
-		{
-			// TransformEffectを適用
-			const Mat3x2 hitTestPosScaleMat = m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation);
-			const Vec2 hitTestPosLeftTop = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.pos);
-			const Vec2 hitTestPosRightBottom = hitTestPosScaleMat.transformPoint(m_layoutAppliedRect.br());
-			
-			m_hitTestRect = CreateRectFromPoints(hitTestPosLeftTop, hitTestPosRightBottom);
-		}
-		else
-		{
-			// appliesToHitTestがfalseの場合、親から受け取ったHitTest行列をそのまま使用
-			const Vec2 hitTestPosLeftTop = parentHitTestMat.transformPoint(m_layoutAppliedRect.pos);
-			const Vec2 hitTestPosRightBottom = parentHitTestMat.transformPoint(m_layoutAppliedRect.br());
-			
-			m_hitTestRect = CreateRectFromPoints(hitTestPosLeftTop, hitTestPosRightBottom);
-		}
+		selfTransform = Mat3x2::Scale(scale, pivotPos) * selfTransform;
 		
-		// ヒット判定用の回転角度を計算
-		m_hitTestRotation = m_transformEffect.appliesToHitTest().value() ? 
-			(parentHitTestRotation + m_transformEffect.rotation().value()) : 
-			parentHitTestRotation;
+		// 親の変換と合成（親の変換が先に適用される）
+		m_transformMatInHierarchy = selfTransform * parentTransformMat;
 		
-		// ヒット判定用のQuadを計算
-		if (m_hitTestRotation != 0.0)
+		// rotatedQuadを計算
+		const Vec2 topLeft = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos);
+		const Vec2 topRight = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{m_layoutAppliedRect.w, 0});
+		const Vec2 bottomRight = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.br());
+		const Vec2 bottomLeft = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
+		
+		// 負のスケールの場合、Quadの頂点順序を調整
+		const Vec2& visualScale = m_transformEffect.scale().value();
+		if (visualScale.x < 0 || visualScale.y < 0)
 		{
-			// 回転の中心点を決定
-			Vec2 rotationCenter;
-			if (m_transformEffect.appliesToHitTest().value())
+			if (visualScale.x < 0 && visualScale.y >= 0)
 			{
-				// 自身の変換が適用される場合は自身のpivot位置
-				const Vec2& pivot = m_transformEffect.pivot().value();
-				rotationCenter = m_hitTestRect.pos + m_hitTestRect.size * pivot;
+				// X軸のみ反転
+				m_rotatedQuad = Quad{ topRight, topLeft, bottomLeft, bottomRight };
+			}
+			else if (visualScale.x >= 0 && visualScale.y < 0)
+			{
+				// Y軸のみ反転
+				m_rotatedQuad = Quad{ bottomLeft, bottomRight, topRight, topLeft };
 			}
 			else
 			{
-				// appliesToHitTest=falseの場合は、親がレイアウト矩形の左上を基準に計算しているため
-				// 同じく矩形の左上を回転中心とする
-				rotationCenter = m_hitTestRect.pos;
+				// XY両軸反転
+				m_rotatedQuad = Quad{ bottomRight, bottomLeft, topLeft, topRight };
 			}
-			
-			m_hitTestQuad = m_hitTestRect.rotatedAt(rotationCenter, Math::ToRadians(m_hitTestRotation));
-			
-			// パディング有りのQuadも計算
-			const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
-			const RectF paddedRect{
-				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
-				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
-				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
-				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
-			};
-			m_hitTestQuadWithPadding = paddedRect.rotatedAt(rotationCenter, Math::ToRadians(m_hitTestRotation));
 		}
 		else
 		{
-			m_hitTestQuad = Quad{ m_hitTestRect };
-			
-			// パディング有りのQuadも計算
-			const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
-			const RectF paddedRect{
-				m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
-				m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
-				m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
-				m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
-			};
-			m_hitTestQuadWithPadding = Quad{ paddedRect };
+			m_rotatedQuad = Quad{ topLeft, topRight, bottomRight, bottomLeft };
+		}
+		
+		// HitTest用の変換行列を計算
+		m_hitTestMatInHierarchy = calculateHitTestMatrix(parentHitTestMat);
+		
+		// HitTest用のQuadを計算
+		const Vec2 hitTopLeft = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos);
+		const Vec2 hitTopRight = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{m_layoutAppliedRect.w, 0});
+		const Vec2 hitBottomRight = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.br());
+		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
+		
+		// 負のスケールの場合、Quadの頂点順序を調整
+		if (m_transformEffect.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		{
+			if (scale.x < 0 && scale.y >= 0)
+			{
+				// X軸のみ反転
+				m_hitTestQuad = Quad{ hitTopRight, hitTopLeft, hitBottomLeft, hitBottomRight };
+			}
+			else if (scale.x >= 0 && scale.y < 0)
+			{
+				// Y軸のみ反転
+				m_hitTestQuad = Quad{ hitBottomLeft, hitBottomRight, hitTopRight, hitTopLeft };
+			}
+			else
+			{
+				// XY両軸反転
+				m_hitTestQuad = Quad{ hitBottomRight, hitBottomLeft, hitTopLeft, hitTopRight };
+			}
+		}
+		else
+		{
+			m_hitTestQuad = Quad{ hitTopLeft, hitTopRight, hitBottomRight, hitBottomLeft };
+		}
+		
+		// パディング有りのHitTestQuadを計算
+		const RectF paddedRect{
+			m_layoutAppliedRect.x - m_hitTestPadding.left,
+			m_layoutAppliedRect.y - m_hitTestPadding.top,
+			m_layoutAppliedRect.w + m_hitTestPadding.totalWidth(),
+			m_layoutAppliedRect.h + m_hitTestPadding.totalHeight()
+		};
+		const Vec2 paddedTopLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos);
+		const Vec2 paddedTopRight = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{paddedRect.w, 0});
+		const Vec2 paddedBottomRight = m_hitTestMatInHierarchy.transformPoint(paddedRect.br());
+		const Vec2 paddedBottomLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{0, paddedRect.h});
+		
+		// 負のスケールの場合、Quadの頂点順序を調整
+		if (m_transformEffect.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		{
+			if (scale.x < 0 && scale.y >= 0)
+			{
+				// X軸のみ反転
+				m_hitTestQuadWithPadding = Quad{ paddedTopRight, paddedTopLeft, paddedBottomLeft, paddedBottomRight };
+			}
+			else if (scale.x >= 0 && scale.y < 0)
+			{
+				// Y軸のみ反転
+				m_hitTestQuadWithPadding = Quad{ paddedBottomLeft, paddedBottomRight, paddedTopRight, paddedTopLeft };
+			}
+			else
+			{
+				// XY両軸反転
+				m_hitTestQuadWithPadding = Quad{ paddedBottomRight, paddedBottomLeft, paddedTopLeft, paddedTopRight };
+			}
+		}
+		else
+		{
+			m_hitTestQuadWithPadding = Quad{ paddedTopLeft, paddedTopRight, paddedBottomRight, paddedBottomLeft };
 		}
 		
 		if (recursive)
 		{
-			// TODO: update側と同じ計算なのでまとめたい
-
-			// 子ノードに渡すHitTest用のMatrix
-			const Mat3x2 childHitTestMat = m_transformEffect.appliesToHitTest().value() ? 
-				m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestMat;
-
-			// 自身の回転がある場合、子ノードの位置に対する影響を計算
-			const double myRotation = m_transformEffect.rotation().value();
-			if (myRotation != 0.0)
+			// 子ノードの変換行列を更新
+			for (const auto& child : m_children)
 			{
-				const Vec2 myPivotPos = effectPivotPosWithoutParentPosScale();
-
-				for (const auto& child : m_children)
-				{
-					// 描画用の位置補正（子のpivotを考慮）
-					const Vec2 relativePos = child->effectPivotPosWithoutParentPosScale() - myPivotPos;
-					// 親のスケールを適用
-					const Vec2 scaledRelativePos = relativePos * m_effectScale;
-					const double rad = Math::ToRadians(myRotation);
-					const Vec2 rotatedScaledRelativePos{
-						scaledRelativePos.x * std::cos(rad) - scaledRelativePos.y * std::sin(rad),
-						scaledRelativePos.x * std::sin(rad) + scaledRelativePos.y * std::cos(rad)
-					};
-					// スケール適用後のオフセットを計算
-					const Vec2 offsetInParentLocal = rotatedScaledRelativePos - scaledRelativePos;
-					const Mat3x2 parentLinearMat{
-						parentPosScaleMat._11, parentPosScaleMat._12,
-						parentPosScaleMat._21, parentPosScaleMat._22,
-						0.0, 0.0
-					};
-					const Vec2 finalOffset = parentLinearMat.transformPoint(offsetInParentLocal);
-					const Mat3x2 childPosScaleMat = posScaleMat.translated(finalOffset);
-
-					// HitTest用の位置補正
-					Mat3x2 childHitTestMatForChild;
-					if (m_transformEffect.appliesToHitTest().value())
-					{
-						// 親のappliesToHitTest=trueの場合のみ位置補正を適用
-						if (child->transformEffect().appliesToHitTest().value())
-						{
-							// 子のappliesToHitTest=trueなら描画と同じ補正を適用
-							childHitTestMatForChild = childHitTestMat.translated(finalOffset);
-						}
-						else
-						{
-							// 子のappliesToHitTest=falseならレイアウト矩形の左上を基準に補正
-							const Vec2 childLayoutPos = child->layoutAppliedRect().pos;
-							const Vec2 relativeLayoutPos = childLayoutPos - myPivotPos;
-							// 親のスケールを適用
-							const Vec2 scaledRelativeLayoutPos = relativeLayoutPos * hitTestScale;
-							const Vec2 rotatedScaledRelativeLayoutPos{
-								scaledRelativeLayoutPos.x * std::cos(rad) - scaledRelativeLayoutPos.y * std::sin(rad),
-								scaledRelativeLayoutPos.x * std::sin(rad) + scaledRelativeLayoutPos.y * std::cos(rad)
-							};
-							// スケール適用後のオフセットを計算
-							const Vec2 layoutOffsetInParentLocal = rotatedScaledRelativeLayoutPos - scaledRelativeLayoutPos;
-							const Vec2 layoutFinalOffset = parentLinearMat.transformPoint(layoutOffsetInParentLocal);
-							childHitTestMatForChild = childHitTestMat.translated(layoutFinalOffset);
-						}
-					}
-					else
-					{
-						// 親のappliesToHitTest=falseなら位置補正を適用しない
-						childHitTestMatForChild = childHitTestMat;
-					}
-
-					// 子に渡すHitTestPosScaleMat
-					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
-					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, childPosScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMatForChild, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale);
-				}
-			}
-			else
-			{
-				// 回転がない場合
-				for (const auto& child : m_children)
-				{
-					// 子に渡すHitTestPosScaleMat
-					const Mat3x2 childHitTestPosScaleMat = m_transformEffect.appliesToHitTest().value() ? 
-						m_transformEffect.posScaleMat(parentHitTestMat, m_layoutAppliedRect, parentHitTestRotation) : parentHitTestPosScaleMat;
-					
-					child->refreshPosScaleAppliedRect(RecursiveYN::Yes, posScaleMat, m_effectScale, m_rotationInHierarchy, childHitTestMat, m_hitTestRotation, childHitTestPosScaleMat, hitTestScale);
-				}
+				child->refreshTransformMat(RecursiveYN::Yes, m_transformMatInHierarchy, m_hitTestMatInHierarchy);
 			}
 		}
 	}
@@ -1791,7 +1644,7 @@ namespace noco
 		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			scissorRect.emplace(m_posScaleAppliedRect.asRect());
+			scissorRect.emplace(unrotatedRect().asRect());
 		}
 
 		// TransformEffectの乗算カラーを適用
@@ -1804,17 +1657,12 @@ namespace noco
 			colorMul.emplace(newColor);
 		}
 
-		// 回転行列を計算（描画用）
-		const Vec2 pivotPos = effectPivotPos();
-		const Mat3x2 rotationMat = Mat3x2::Rotate(Math::ToRadians(m_rotationInHierarchy), pivotPos);
-
 		// draw関数はconstのため、addComponentやaddChild等によるイテレータ破壊は考慮不要とする
 		{
-			// 回転適用
 			Optional<Transformer2D> transformer;
-			if (m_rotationInHierarchy != 0.0)
+			if (m_transformMatInHierarchy != Mat3x2::Identity())
 			{
-				transformer.emplace(rotationMat);
+				transformer.emplace(m_transformMatInHierarchy);
 			}
 
 			for (const auto& component : m_components)
@@ -1832,10 +1680,13 @@ namespace noco
 		// スクロールバー描画
 		if (m_scrollBarAlpha.currentValue() > 0.0)
 		{
-			// スクロールバーは回転を適用（上で計算済みの行列を再利用）
+			// スクロールバーは回転を適用
 			Optional<Transformer2D> transformer;
-			if (m_rotationInHierarchy != 0.0)
+			const double currentRotation = extractRotationFromTransformMat();
+			if (Math::Abs(currentRotation) > 0.0001)
 			{
+				const Vec2 pivotPos = effectPivotPos();
+				const Mat3x2 rotationMat = Mat3x2::Rotate(currentRotation, pivotPos);
 				transformer.emplace(rotationMat);
 			}
 
@@ -1846,13 +1697,14 @@ namespace noco
 				if (const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding())
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
-					const Vec2 scale = m_effectScale;
 					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
-					const double roundRadius = 2.0 * (scale.x + scale.y) / 2;
+					const double roundRadius = 2.0;
 
 					// 背景より手前にするためにハンドル部分は後で描画
 					Optional<RectF> horizontalHandleRect = none;
 					Optional<RectF> verticalHandleRect = none;
+					
+					const Vec2 scale = effectScaleInHierarchy();
 
 					// 横スクロールバー
 					if (needHorizontalScrollBar)
@@ -1867,19 +1719,20 @@ namespace noco
 							const double x = scrolledRatio * (viewWidth - w);
 							const double thickness = 4.0 * scale.y;
 
+							const RectF unrotated = unrotatedRect();
 							const RectF backgroundRect
 							{
-								m_posScaleAppliedRect.x,
-								m_posScaleAppliedRect.y + m_posScaleAppliedRect.h - thickness,
-								m_posScaleAppliedRect.w,
+								unrotated.x,
+								unrotated.y + unrotated.h - thickness,
+								unrotated.w,
 								thickness
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
 							horizontalHandleRect = RectF
 							{
-								m_posScaleAppliedRect.x + x,
-								m_posScaleAppliedRect.y + m_posScaleAppliedRect.h - thickness,
+								unrotated.x + x,
+								unrotated.y + unrotated.h - thickness,
 								w,
 								thickness
 							};
@@ -1899,19 +1752,20 @@ namespace noco
 							const double y = scrolledRatio * (viewHeight - h);
 							const double thickness = 4.0 * scale.x;
 
+							const RectF unrotated = unrotatedRect();
 							const RectF backgroundRect
 							{
-								m_posScaleAppliedRect.x + m_posScaleAppliedRect.w - thickness,
-								m_posScaleAppliedRect.y,
+								unrotated.x + unrotated.w - thickness,
+								unrotated.y,
 								thickness,
-								m_posScaleAppliedRect.h
+								unrotated.h
 							};
 							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
 
 							verticalHandleRect = RectF
 							{
-								m_posScaleAppliedRect.x + m_posScaleAppliedRect.w - thickness,
-								m_posScaleAppliedRect.y + y,
+								unrotated.x + unrotated.w - thickness,
+								unrotated.y + y,
 								thickness,
 								h
 							};
@@ -1963,48 +1817,109 @@ namespace noco
 		return shared_from_this();
 	}
 
-	const RectF& Node::rect() const
+	double Node::extractRotationFromTransformMat() const
 	{
-		return m_posScaleAppliedRect;
-	}
-
-	RectF Node::hitTestRect(IncludingPaddingYN includingPadding) const
-	{
-		if (includingPadding == IncludingPaddingYN::No)
+		// 変換行列から回転角度を抽出
+		const double scaleX = Math::Sqrt(m_transformMatInHierarchy._11 * m_transformMatInHierarchy._11 + 
+		                                  m_transformMatInHierarchy._21 * m_transformMatInHierarchy._21);
+		if (scaleX < 0.0001) 
 		{
-			return m_hitTestRect;
+			return 0.0;
 		}
 		
-		// パディングを含める場合
-		const Vec2 effectScale = m_transformEffect.appliesToHitTest().value() ? m_effectScale : Vec2::One();
-		return RectF{
-			m_hitTestRect.x - m_hitTestPadding.left * effectScale.x,
-			m_hitTestRect.y - m_hitTestPadding.top * effectScale.y,
-			m_hitTestRect.w + m_hitTestPadding.totalWidth() * effectScale.x,
-			m_hitTestRect.h + m_hitTestPadding.totalHeight() * effectScale.y
-		};
+		// atan2で角度を計算（ラジアン）
+		return Math::Atan2(m_transformMatInHierarchy._21 / scaleX, m_transformMatInHierarchy._11 / scaleX);
+	}
+	
+	RectF Node::unrotatedRect() const
+	{	
+		// 変換行列から回転成分を抽出
+		const double rotation = Math::Atan2(m_transformMatInHierarchy._21, m_transformMatInHierarchy._11);
+		
+		// Quadの中心を軸に逆回転
+		const Vec2 center = (m_rotatedQuad.p0 + m_rotatedQuad.p1 + m_rotatedQuad.p2 + m_rotatedQuad.p3) / 4;
+		const Mat3x2 inverseRotationMat = Mat3x2::Rotate(-rotation, center);
+		const Vec2 p0 = inverseRotationMat.transformPoint(m_rotatedQuad.p0);
+		const Vec2 p1 = inverseRotationMat.transformPoint(m_rotatedQuad.p1);
+		const Vec2 p2 = inverseRotationMat.transformPoint(m_rotatedQuad.p2);
+		const Vec2 p3 = inverseRotationMat.transformPoint(m_rotatedQuad.p3);
+		
+		// スケールの縦横比が1:1でなく平行四辺形になる場合用に、幅と高さは対辺の中点を結んで算出
+		const Vec2 midTop = (p0 + p1) / 2;
+		const Vec2 midBottom = (p2 + p3) / 2;
+		const Vec2 midLeft = (p0 + p3) / 2;
+		const Vec2 midRight = (p1 + p2) / 2;
+		const double width = (midRight - midLeft).length();
+		const double height = (midBottom - midTop).length();
+		
+		return RectF{ Arg::center = center, width, height };
 	}
 
-	const Vec2& Node::effectScale() const
+	Mat3x2 Node::calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const
 	{
-		return m_effectScale;
+		if (m_transformEffect.appliesToHitTest().value())
+		{
+			// TransformEffectをHitTestに適用
+			const Vec2& scale = m_transformEffect.scale().value();
+			const Vec2& pivot = m_transformEffect.pivot().value();
+			const Vec2& position = m_transformEffect.position().value();
+			const double rotation = m_transformEffect.rotation().value();
+			
+			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
+			
+			// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
+			Mat3x2 selfTransform = Mat3x2::Translate(position);
+			
+			if (rotation != 0.0)
+			{
+				selfTransform = Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos) * selfTransform;
+			}
+			
+			selfTransform = Mat3x2::Scale(scale, pivotPos) * selfTransform;
+			
+			return selfTransform * parentHitTestMat;
+		}
+		else
+		{
+			return parentHitTestMat;
+		}
 	}
 
-	double Node::rotationInHierarchy() const
+	Vec2 Node::effectScaleInHierarchy() const
 	{
-		return m_rotationInHierarchy;
+		// 変換行列からスケールを抽出
+		const double scaleX = std::sqrt(m_transformMatInHierarchy._11 * m_transformMatInHierarchy._11 + 
+		                                m_transformMatInHierarchy._21 * m_transformMatInHierarchy._21);
+		const double scaleY = std::sqrt(m_transformMatInHierarchy._12 * m_transformMatInHierarchy._12 + 
+		                                m_transformMatInHierarchy._22 * m_transformMatInHierarchy._22);
+		
+		return Vec2{ scaleX, scaleY };
+	}
+
+	const Mat3x2& Node::hitTestMatInHierarchy() const
+	{
+		return m_hitTestMatInHierarchy;
+	}
+
+	Vec2 Node::inverseTransformHitTestPoint(const Vec2& point) const
+	{
+		const Mat3x2& hitTestMat = m_hitTestMatInHierarchy;
+		if (hitTestMat != Mat3x2::Identity())
+		{
+			const Mat3x2 invHitTestMat = hitTestMat.inverse();
+			return invHitTestMat.transformPoint(point);
+		}
+		else
+		{
+			return point;
+		}
 	}
 
 	Vec2 Node::effectPivotPos() const
 	{
 		const Vec2& pivot = m_transformEffect.pivot().value();
-		return m_posScaleAppliedRect.pos + m_posScaleAppliedRect.size * pivot;
-	}
-
-	Vec2 Node::effectPivotPosWithoutParentPosScale() const
-	{
-		const Vec2& pivot = m_transformEffect.pivot().value();
-		return m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
+		const RectF unrotated = unrotatedRect();
+		return unrotated.pos + unrotated.size * pivot;
 	}
 
 	const Quad& Node::rotatedQuad() const
@@ -2029,6 +1944,11 @@ namespace noco
 	const RectF& Node::layoutAppliedRect() const
 	{
 		return m_layoutAppliedRect;
+	}
+
+	const Mat3x2& Node::transformMatInHierarchy() const
+	{
+		return m_transformMatInHierarchy;
 	}
 
 	RectF Node::layoutAppliedRectWithMargin() const

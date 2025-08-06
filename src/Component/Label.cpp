@@ -116,16 +116,14 @@ namespace noco
 			return;
 		}
 
-		const Vec2& effectScale = node.effectScale();
 		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
 
-		// node.rect()は既にeffectScaleが適用されているので、paddingもeffectScaleを適用
-		const RectF rect = node.rect().stretched(
-			-padding.top * effectScale.y,
-			-padding.right * effectScale.x,
-			-padding.bottom * effectScale.y,
-			-padding.left * effectScale.x
+		const RectF rect = node.layoutAppliedRect().stretched(
+			-padding.top,
+			-padding.right,
+			-padding.bottom,
+			-padding.left
 		);
 
 		const bool wasUpdated = m_cache.refreshIfDirty(
@@ -136,12 +134,12 @@ namespace noco
 			characterSpacing,
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
-			rect.size / effectScale,
+			rect.size,
 			m_sizingMode.value());
 
 		if (m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
 		{
-			const SizeF availableSize = rect.size / effectScale;
+			const SizeF availableSize = rect.size;
 			
 			// フォントサイズはSmoothPropertyなので許容誤差を大きめに取る
 			constexpr double Epsilon = 1e-2;
@@ -255,7 +253,7 @@ namespace noco
 			m_cache.prevParams->fontSize = m_fontSize.value();
 		}
 
-		const double startY = [this, &rect, &effectScale]()
+		const double startY = [this, &rect]()
 			{
 				const VerticalAlign& verticalAlign = m_verticalAlign.value();
 				switch (verticalAlign)
@@ -263,9 +261,9 @@ namespace noco
 				case VerticalAlign::Top:
 					return rect.y;
 				case VerticalAlign::Middle:
-					return rect.y + (rect.h - m_cache.regionSize.y * effectScale.y) / 2;
+					return rect.y + (rect.h - m_cache.regionSize.y) / 2;
 				case VerticalAlign::Bottom:
-					return rect.y + rect.h - m_cache.regionSize.y * effectScale.y;
+					return rect.y + rect.h - m_cache.regionSize.y;
 				default:
 					throw Error{ U"Invalid VerticalAlign: {}"_fmt(static_cast<std::underlying_type_t<VerticalAlign>>(verticalAlign)) };
 				}
@@ -277,16 +275,16 @@ namespace noco
 			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [this, &rect, &effectScale, &lineCache, horizontalAlign]()
+				const double startX = [this, &rect, &lineCache, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{
 						case HorizontalAlign::Left:
 							return rect.x;
 						case HorizontalAlign::Center:
-							return rect.x + (rect.w - lineCache.width * effectScale.x) / 2;
+							return rect.x + (rect.w - lineCache.width) / 2;
 						case HorizontalAlign::Right:
-							return rect.x + rect.w - lineCache.width * effectScale.x;
+							return rect.x + rect.w - lineCache.width;
 						default:
 							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
 						}
@@ -299,10 +297,10 @@ namespace noco
 					{
 						continue;
 					}
-					const Vec2 pos{ startX + x, startY + lineCache.offsetY * effectScale.y };
+					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
 					const ColorF& color = m_color.value();
-					glyph.texture.scaled(m_cache.scale * effectScale).draw(pos + glyph.getOffset(m_cache.scale) * effectScale, color);
-					x += (glyph.xAdvance * m_cache.scale + characterSpacing.x) * effectScale.x;
+					glyph.texture.scaled(m_cache.scale).draw(pos + glyph.getOffset(m_cache.scale), color);
+					x += (glyph.xAdvance * m_cache.scale + characterSpacing.x);
 				}
 			}
 		}
@@ -311,24 +309,24 @@ namespace noco
 		{
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [this, &rect, &effectScale, &lineCache, horizontalAlign]()
+				const double startX = [this, &rect, &lineCache, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{
 						case HorizontalAlign::Left:
 							return rect.x;
 						case HorizontalAlign::Center:
-							return rect.x + (rect.w - lineCache.width * effectScale.x) / 2;
+							return rect.x + (rect.w - lineCache.width) / 2;
 						case HorizontalAlign::Right:
-							return rect.x + rect.w - lineCache.width * effectScale.x;
+							return rect.x + rect.w - lineCache.width;
 						default:
 							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
 						}
 					}();
 
-				const double thickness = m_underlineThickness.value() * effectScale.y;
-				const double y = startY + (lineCache.offsetY + m_cache.lineHeight) * effectScale.y;
-				Line{ startX, y, startX + lineCache.width * effectScale.x, y }.draw(thickness, m_underlineColor.value());
+				const double thickness = m_underlineThickness.value();
+				const double y = startY + (lineCache.offsetY + m_cache.lineHeight);
+				Line{ startX, y, startX + lineCache.width, y }.draw(thickness, m_underlineColor.value());
 			}
 		}
 	}

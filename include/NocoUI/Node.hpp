@@ -49,11 +49,6 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_layoutAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ RectF m_posScaleAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ RectF m_hitTestRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ Vec2 m_effectScale{ 1.0, 1.0 };
-		/* NonSerialized */ double m_rotationInHierarchy = 0.0;
-		/* NonSerialized */ double m_hitTestRotation = 0.0;
 		/* NonSerialized */ Quad m_rotatedQuad;
 		/* NonSerialized */ Quad m_hitTestQuad;
 		/* NonSerialized */ Quad m_hitTestQuadWithPadding;
@@ -81,6 +76,11 @@ namespace noco
 		/* NonSerialized */ Optional<Vec2> m_rubberBandTargetOffset; // ラバーバンドスクロールの戻り先
 		/* NonSerialized */ double m_rubberBandAnimationTime = 0.0; // ラバーバンドアニメーション経過時間
 		/* NonSerialized */ bool m_preventDragScroll = false; // ドラッグスクロールを阻止するか
+		/* NonSerialized */ Mat3x2 m_transformMatInHierarchy = Mat3x2::Identity(); // 階層内での変換行列
+		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
+
+		[[nodiscard]]
+		Mat3x2 calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const;
 
 		[[nodiscard]]
 		explicit Node(uint64 internalId, StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -302,13 +302,13 @@ namespace noco
 
 		void updateInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, const Mat3x2& parentHitTestMat, double parentRotation, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale, const Array<String>& parentActiveStyleStates = {});
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates = {});
 
 		void lateUpdate();
 
 		void postLateUpdate(double deltaTime);
 
-		void refreshPosScaleAppliedRect(RecursiveYN recursive, const Mat3x2& parentPosScaleMat, const Vec2& parentEffectScale, double parentRotation, const Mat3x2& parentHitTestMat, double parentHitTestRotation, const Mat3x2& parentHitTestPosScaleMat, const Vec2& parentHitTestScale = Vec2{ 1.0, 1.0 });
+		void refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat);
 
 		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
@@ -327,23 +327,24 @@ namespace noco
 
 		std::shared_ptr<Node> setName(StringView name);
 
+		// 回転を除いた矩形を取得
 		[[nodiscard]]
-		const RectF& rect() const;
+		RectF unrotatedRect() const;
 
 		[[nodiscard]]
-		RectF hitTestRect(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;
+		double extractRotationFromTransformMat() const;
 
 		[[nodiscard]]
-		const Vec2& effectScale() const;
+		Vec2 effectScaleInHierarchy() const;
 
 		[[nodiscard]]
-		double rotationInHierarchy() const;
+		const Mat3x2& hitTestMatInHierarchy() const;
+
+		[[nodiscard]]
+		Vec2 inverseTransformHitTestPoint(const Vec2& point) const;
 
 		[[nodiscard]]
 		Vec2 effectPivotPos() const;
-
-		[[nodiscard]]
-		Vec2 effectPivotPosWithoutParentPosScale() const;
 
 		[[nodiscard]]
 		const Quad& rotatedQuad() const;
@@ -356,6 +357,9 @@ namespace noco
 
 		[[nodiscard]]
 		RectF layoutAppliedRectWithMargin() const;
+
+		[[nodiscard]]
+		const Mat3x2& transformMatInHierarchy() const;
 
 		[[nodiscard]]
 		const Array<std::shared_ptr<Node>>& children() const;

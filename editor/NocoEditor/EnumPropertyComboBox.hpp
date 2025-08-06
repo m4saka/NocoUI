@@ -49,7 +49,7 @@ namespace noco::editor
 							}
 						});
 				}
-				m_contextMenu->show(node->rect().bl(), menuElements);
+				m_contextMenu->show(node->layoutAppliedRect().bl(), menuElements);
 			}
 		}
 

@@ -90,9 +90,9 @@ namespace noco
 
 		double getDrawOffsetX() const;
 
-		Vec2 getAlignOffset(const RectF& rect, const Vec2& effectScale) const;
+		Vec2 getAlignOffset(const RectF& rect) const;
 
-		size_t moveCursorToMousePos(const RectF& rect, const Vec2& effectScale, const std::shared_ptr<Node>& node);
+		size_t moveCursorToMousePos(const RectF& rect, const std::shared_ptr<Node>& node);
 
 		bool hasSelection() const;
 
@@ -143,7 +143,7 @@ namespace noco
 
 		void updateInputInactive(const std::shared_ptr<Node>& node) override;
 
-		void updateScrollOffset(const RectF& rect, const Vec2& effectScale);
+		void updateScrollOffset(const RectF& rect);
 
 		void draw(const Node& node) const override;
 

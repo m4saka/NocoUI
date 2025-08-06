@@ -319,7 +319,7 @@ namespace noco::editor
 				}
 			}
 
-			if (!m_rootNode->isHovered(RecursiveYN::Yes) && !m_rootNode->rect().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
+			if (!m_rootNode->isHovered(RecursiveYN::Yes) && !m_rootNode->hitTestQuad().mouseOver() && (MouseL.down() || MouseM.down() || MouseR.down()))
 			{
 				// メニュー外クリックで閉じる
 				// (無効項目のクリックで消えないようにするため、rectがmouseOverしていないこともチェック)
