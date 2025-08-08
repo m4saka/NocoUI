@@ -775,7 +775,6 @@ namespace noco
 
 		{
 			detail::ScopedScissorRect scissorRect{ clipRect.asRect() };
-			Scene::Rect().draw(ColorF{ 1.0, 0.0, 0.0, 0.5 }); // デバッグ用: クリップ領域を赤で表示
 
 			// 選択範囲を描画
 			if (m_selectionAnchor != m_cursorIndex)
