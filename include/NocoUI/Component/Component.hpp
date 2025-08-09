@@ -16,5 +16,5 @@
 #include "HotKeyInputHandler.hpp"
 #include "DataStore.hpp"
 #include "CursorChanger.hpp"
-#include "AudioPlayer.hpp"
+#include "UISound.hpp"
 #include "Tween.hpp"

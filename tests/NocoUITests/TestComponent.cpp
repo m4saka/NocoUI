@@ -130,71 +130,71 @@ TEST_CASE("DragDrop components", "[Component][DragDrop]")
 	}
 }
 
-// AudioPlayerコンポーネントのテスト
-TEST_CASE("AudioPlayer component", "[Component][AudioPlayer]")
+// UISoundコンポーネントのテスト
+TEST_CASE("UISound component", "[Component][UISound]")
 {
 	SECTION("Basic audio player creation")
 	{
 		auto node = noco::Node::Create();
-		auto audioPlayer = node->emplaceComponent<noco::AudioPlayer>();
+		auto uiSound = node->emplaceComponent<noco::UISound>();
 		
-		REQUIRE(audioPlayer != nullptr);
+		REQUIRE(uiSound != nullptr);
 	}
 
 	SECTION("Set properties")
 	{
 		auto node = noco::Node::Create();
-		auto audioPlayer = node->emplaceComponent<noco::AudioPlayer>(
+		auto uiSound = node->emplaceComponent<noco::UISound>(
 			U"test.wav",
 			U"testAsset",
-			noco::AudioPlayer::TriggerType::HoverStart,
+			noco::UISound::TriggerType::HoverStart,
 			0.5
 		);
 
-		REQUIRE(audioPlayer->audioFilePath().defaultValue == U"test.wav");
-		REQUIRE(audioPlayer->audioAssetName().defaultValue == U"testAsset");
-		REQUIRE(audioPlayer->triggerType() == noco::AudioPlayer::TriggerType::HoverStart);
-		REQUIRE(audioPlayer->volume().defaultValue == 0.5);
+		REQUIRE(uiSound->audioFilePath().defaultValue == U"test.wav");
+		REQUIRE(uiSound->audioAssetName().defaultValue == U"testAsset");
+		REQUIRE(uiSound->triggerType() == noco::UISound::TriggerType::HoverStart);
+		REQUIRE(uiSound->volume().defaultValue == 0.5);
 	}
 
 	SECTION("Method chaining for setters")
 	{
 		auto node = noco::Node::Create();
-		auto audioPlayer = node->emplaceComponent<noco::AudioPlayer>();
+		auto uiSound = node->emplaceComponent<noco::UISound>();
 
 		// メソッドチェインでプロパティを設定
-		auto result = audioPlayer->setAudioFilePath(U"chain_test.wav")
+		auto result = uiSound->setAudioFilePath(U"chain_test.wav")
 			->setAudioAssetName(U"chainAsset")
 			->setVolume(0.75)
-			->setTriggerType(noco::AudioPlayer::TriggerType::Click);
+			->setTriggerType(noco::UISound::TriggerType::Click);
 
 		// 返り値が同じインスタンスであることを確認
-		REQUIRE(result == audioPlayer);
+		REQUIRE(result == uiSound);
 
 		// 設定された値を確認
-		REQUIRE(audioPlayer->audioFilePath().defaultValue == U"chain_test.wav");
-		REQUIRE(audioPlayer->audioAssetName().defaultValue == U"chainAsset");
-		REQUIRE(audioPlayer->volume().defaultValue == 0.75);
-		REQUIRE(audioPlayer->triggerType() == noco::AudioPlayer::TriggerType::Click);
+		REQUIRE(uiSound->audioFilePath().defaultValue == U"chain_test.wav");
+		REQUIRE(uiSound->audioAssetName().defaultValue == U"chainAsset");
+		REQUIRE(uiSound->volume().defaultValue == 0.75);
+		REQUIRE(uiSound->triggerType() == noco::UISound::TriggerType::Click);
 	}
 
 	SECTION("Setter methods with PropertyValue")
 	{
 		auto node = noco::Node::Create();
-		auto audioPlayer = node->emplaceComponent<noco::AudioPlayer>();
+		auto uiSound = node->emplaceComponent<noco::UISound>();
 
 		// PropertyValueを使った設定
 		noco::PropertyValue<String> pathValue{ U"property_test.wav" };
-		audioPlayer->setAudioFilePath(pathValue);
-		REQUIRE(audioPlayer->audioFilePath().defaultValue == U"property_test.wav");
+		uiSound->setAudioFilePath(pathValue);
+		REQUIRE(uiSound->audioFilePath().defaultValue == U"property_test.wav");
 
 		// インタラクション状態ごとの値を設定
 		noco::PropertyValue<double> volumeValue{ 1.0, 0.8, 0.6, none };
-		audioPlayer->setVolume(volumeValue);
+		uiSound->setVolume(volumeValue);
 		
 		// デフォルト値を確認
-		REQUIRE(audioPlayer->volume().defaultValue == 1.0);
-		REQUIRE(audioPlayer->volume().hoveredValue == 0.8);
-		REQUIRE(audioPlayer->volume().pressedValue == 0.6);
+		REQUIRE(uiSound->volume().defaultValue == 1.0);
+		REQUIRE(uiSound->volume().hoveredValue == 0.8);
+		REQUIRE(uiSound->volume().pressedValue == 0.6);
 	}
 }

@@ -550,27 +550,27 @@ namespace noco::editor
 			.numTextAreaLines = 3,
 		};
 
-		// AudioPlayer
-		metadata[PropertyKey{ U"AudioPlayer", U"audioFilePath" }] = PropertyMetadata{
-			.tooltip = U"オーディオファイルのパス",
+		// UISound
+		metadata[PropertyKey{ U"UISound", U"audioFilePath" }] = PropertyMetadata{
+			.tooltip = U"音声ファイルのパス",
 			.tooltipDetail = U"audioAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
 		};
-		metadata[PropertyKey{ U"AudioPlayer", U"audioAssetName" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"UISound", U"audioAssetName" }] = PropertyMetadata{
 			.tooltip = U"AudioAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したAudioAssetのオーディオを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でAudioAssetを使用するため、\n　パフォーマンス上の利点は特にありません。AudioAssetのキー名を手動で管理したい場合のみ使用してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したAudioAssetの音声を使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でAudioAssetを使用するため、\n　パフォーマンス上の利点は特にありません。AudioAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
-		metadata[PropertyKey{ U"AudioPlayer", U"triggerType" }] = PropertyMetadata{
-			.tooltip = U"オーディオを再生する操作の種類",
+		metadata[PropertyKey{ U"UISound", U"triggerType" }] = PropertyMetadata{
+			.tooltip = U"音声を再生する操作の種類",
 		};
-		metadata[PropertyKey{ U"AudioPlayer", U"volume" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"UISound", U"volume" }] = PropertyMetadata{
 			.tooltip = U"音量 (0.0 ~ 1.0)",
 			.dragValueChangeStep = 0.01,
 		};
-		metadata[PropertyKey{ U"AudioPlayer", U"recursive" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"UISound", U"recursive" }] = PropertyMetadata{
 			.tooltip = U"子孫要素のインタラクションも対象にするかどうか",
 		};
-		metadata[PropertyKey{ U"AudioPlayer", U"includingDisabled" }] = PropertyMetadata{
-			.tooltip = U"InteractionStateがDisabledの要素への操作でもオーディオを再生するかどうか",
+		metadata[PropertyKey{ U"UISound", U"includingDisabled" }] = PropertyMetadata{
+			.tooltip = U"InteractionStateがDisabledの要素への操作でも音声を再生するかどうか",
 		};
 		
 		// Tween

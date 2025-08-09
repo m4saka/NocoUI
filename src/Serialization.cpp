@@ -88,12 +88,12 @@ namespace noco
 				}
 				return component;
 			}
-			else if (type == U"AudioPlayer")
+			else if (type == U"UISound")
 			{
-				auto component = std::make_shared<AudioPlayer>();
+				auto component = std::make_shared<UISound>();
 				if (!component->tryReadFromJSONImpl(json, includesInternalId))
 				{
-					Logger << U"[NocoUI warning] Failed to read AudioPlayer component from JSON";
+					Logger << U"[NocoUI warning] Failed to read UISound component from JSON";
 					return nullptr;
 				}
 				return component;

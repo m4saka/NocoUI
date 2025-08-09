@@ -1,4 +1,4 @@
-﻿#include "NocoUI/Component/AudioPlayer.hpp"
+﻿#include "NocoUI/Component/UISound.hpp"
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/Canvas.hpp"
 
@@ -26,7 +26,7 @@ namespace noco
 		}
 	}
 
-	void AudioPlayer::update(const std::shared_ptr<Node>& node)
+	void UISound::update(const std::shared_ptr<Node>& node)
 	{
 		const auto triggerType = m_triggerType.value();
 		const bool recursive = m_recursive.value();

@@ -33,7 +33,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Component\AudioPlayer.cpp">
+    <ClCompile Include="src\Component\UISound.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
     <ClCompile Include="src\Component\CursorChanger.cpp">
@@ -98,7 +98,7 @@
     <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\NocoUI\Component\AudioPlayer.hpp">
+    <ClInclude Include="include\NocoUI\Component\UISound.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\CursorChanger.hpp">

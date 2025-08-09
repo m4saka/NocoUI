@@ -6,7 +6,7 @@
 
 namespace noco
 {
-	class AudioPlayer : public SerializableComponentBase, public std::enable_shared_from_this<AudioPlayer>
+	class UISound : public SerializableComponentBase, public std::enable_shared_from_this<UISound>
 	{
 	public:
 		enum class TriggerType : uint8
@@ -37,8 +37,8 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
 
 	public:
-		AudioPlayer(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No)
-			: SerializableComponentBase{ U"AudioPlayer", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
+		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No)
+			: SerializableComponentBase{ U"UISound", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
 			, m_audioFilePath{ U"audioFilePath", audioFilePath }
 			, m_audioAssetName{ U"audioAssetName", audioAssetName }
 			, m_triggerType{ U"triggerType", triggerType }
@@ -55,7 +55,7 @@ namespace noco
 			return m_audioFilePath.propertyValue();
 		}
 
-		std::shared_ptr<AudioPlayer> setAudioFilePath(const PropertyValue<String>& path)
+		std::shared_ptr<UISound> setAudioFilePath(const PropertyValue<String>& path)
 		{
 			m_audioFilePath.setPropertyValue(path);
 			return shared_from_this();
@@ -66,7 +66,7 @@ namespace noco
 			return m_audioAssetName.propertyValue();
 		}
 
-		std::shared_ptr<AudioPlayer> setAudioAssetName(const PropertyValue<String>& name)
+		std::shared_ptr<UISound> setAudioAssetName(const PropertyValue<String>& name)
 		{
 			m_audioAssetName.setPropertyValue(name);
 			return shared_from_this();
@@ -77,7 +77,7 @@ namespace noco
 			return m_triggerType.value();
 		}
 
-		std::shared_ptr<AudioPlayer> setTriggerType(TriggerType type)
+		std::shared_ptr<UISound> setTriggerType(TriggerType type)
 		{
 			m_triggerType.setValue(type);
 			return shared_from_this();
@@ -88,7 +88,7 @@ namespace noco
 			return m_volume.propertyValue();
 		}
 
-		std::shared_ptr<AudioPlayer> setVolume(const PropertyValue<double>& value)
+		std::shared_ptr<UISound> setVolume(const PropertyValue<double>& value)
 		{
 			m_volume.setPropertyValue(value);
 			return shared_from_this();
@@ -99,7 +99,7 @@ namespace noco
 			return m_recursive.value();
 		}
 
-		std::shared_ptr<AudioPlayer> setRecursive(bool value)
+		std::shared_ptr<UISound> setRecursive(bool value)
 		{
 			m_recursive.setValue(value);
 			return shared_from_this();
@@ -110,7 +110,7 @@ namespace noco
 			return m_includingDisabled.value();
 		}
 
-		std::shared_ptr<AudioPlayer> setIncludingDisabled(bool value)
+		std::shared_ptr<UISound> setIncludingDisabled(bool value)
 		{
 			m_includingDisabled.setValue(value);
 			return shared_from_this();

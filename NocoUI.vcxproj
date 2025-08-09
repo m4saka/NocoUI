@@ -117,7 +117,7 @@
   <ItemGroup>
     <ClCompile Include="src\Asset.cpp" />
     <ClCompile Include="src\Canvas.cpp" />
-    <ClCompile Include="src\Component\AudioPlayer.cpp" />
+    <ClCompile Include="src\Component\UISound.cpp" />
     <ClCompile Include="src\Component\CursorChanger.cpp" />
     <ClCompile Include="src\Component\DragDropSource.cpp" />
     <ClCompile Include="src\Component\DragDropTarget.cpp" />
@@ -143,7 +143,7 @@
     <ClInclude Include="include\NocoUI\Anchor.hpp" />
     <ClInclude Include="include\NocoUI\Asset.hpp" />
     <ClInclude Include="include\NocoUI\Canvas.hpp" />
-    <ClInclude Include="include\NocoUI\Component\AudioPlayer.hpp" />
+    <ClInclude Include="include\NocoUI\Component\UISound.hpp" />
     <ClInclude Include="include\NocoUI\Component\Component.hpp" />
     <ClInclude Include="include\NocoUI\Component\ComponentBase.hpp" />
     <ClInclude Include="include\NocoUI\Component\CursorChanger.hpp" />
