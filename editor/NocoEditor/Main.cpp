@@ -643,7 +643,15 @@ public:
 			[this]
 			{
 				m_filePath = none;
-				m_canvas->removeChildrenAll();
+				m_canvas->resetWithNewRootNode(
+					AnchorRegion
+					{
+						.anchorMin = Anchor::MiddleCenter,
+						.anchorMax = Anchor::MiddleCenter,
+						.posDelta = Vec2{ 0, 0 },
+						.sizeDelta = Vec2{ 800, 600 },
+					},
+					U"Canvas");
 				refresh();
 				createInitialNode();
 				m_historySystem.clear();

@@ -399,6 +399,11 @@ namespace noco
 
 		void removeChildrenAll();
 
+		void resetWithNewRootNode(
+			const RegionVariant& region,
+			const String& name = U"Canvas",
+			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
 		std::shared_ptr<Canvas> setOffset(const Vec2& offset);
 
 		[[nodiscard]]

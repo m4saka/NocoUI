@@ -408,6 +408,30 @@ namespace noco
 		m_rootNode->removeChildrenAll();
 	}
 
+	void Canvas::resetWithNewRootNode(
+		const RegionVariant& region,
+		const String& name,
+		RefreshesLayoutYN refreshesLayout)
+	{
+		auto newRootNode = Node::Create(
+			name,
+			region,
+			IsHitTargetYN::No);
+		
+		if (m_rootNode)
+		{
+			m_rootNode->setCanvasRecursive(std::weak_ptr<Canvas>{});
+		}
+		
+		m_rootNode = newRootNode;
+		m_rootNode->setCanvasRecursive(shared_from_this());
+		
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+	}
+
 	std::shared_ptr<Canvas> Canvas::setOffset(const Vec2& offset)
 	{
 		m_offset = offset;
