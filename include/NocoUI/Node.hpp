@@ -7,7 +7,7 @@
 #include "ScrollableAxisFlags.hpp"
 #include "InteractionState.hpp"
 #include "MouseTracker.hpp"
-#include "TransformEffect.hpp"
+#include "Transform.hpp"
 #include "Region/Region.hpp"
 #include "Layout/Layout.hpp"
 #include "Component/ComponentBase.hpp"
@@ -30,7 +30,7 @@ namespace noco
 		uint64 m_internalId;
 		String m_name;
 		RegionVariant m_region;
-		TransformEffect m_transformEffect;
+		Transform m_transform;
 		LayoutVariant m_childrenLayout;
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
@@ -125,10 +125,10 @@ namespace noco
 		const AnchorRegion* anchorRegion() const;
 
 		[[nodiscard]]
-		TransformEffect& transformEffect();
+		Transform& transform();
 
 		[[nodiscard]]
-		const TransformEffect& transformEffect() const;
+		const Transform& transform() const;
 
 		[[nodiscard]]
 		const LayoutVariant& childrenLayout() const;
@@ -335,7 +335,7 @@ namespace noco
 		double extractRotationFromTransformMat() const;
 
 		[[nodiscard]]
-		Vec2 effectScaleInHierarchy() const;
+		Vec2 transformScaleInHierarchy() const;
 
 		[[nodiscard]]
 		const Mat3x2& hitTestMatInHierarchy() const;
@@ -344,7 +344,7 @@ namespace noco
 		Vec2 inverseTransformHitTestPoint(const Vec2& point) const;
 
 		[[nodiscard]]
-		Vec2 effectPivotPos() const;
+		Vec2 transformPivotPos() const;
 
 		[[nodiscard]]
 		const Quad& rotatedQuad() const;

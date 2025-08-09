@@ -3,10 +3,10 @@
 # include <NocoUI.hpp>
 
 // ========================================
-// TransformEffectのHitTestテスト
+// TransformのHitTestテスト
 // ========================================
 
-TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest][TransformEffect]")
+TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Transform]")
 {
 	SECTION("Parent with appliesToHitTest=false should not affect child's hit test")
 	{
@@ -17,9 +17,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		// 親にTransformEffectを適用（appliesToHitTest=false）
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		// 親にTransformを適用（appliesToHitTest=false）
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -52,9 +52,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		// 親にTransformEffectを適用（appliesToHitTest=true）
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setAppliesToHitTest(true);
+		// 親にTransformを適用（appliesToHitTest=true）
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -81,12 +81,12 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 祖父母: appliesToHitTest=true
-		grandparent->transformEffect().setPosition(Vec2{ 50, 50 });
-		grandparent->transformEffect().setAppliesToHitTest(true);
+		grandparent->transform().setPosition(Vec2{ 50, 50 });
+		grandparent->transform().setAppliesToHitTest(true);
 		
 		// 親: appliesToHitTest=false
-		parent->transformEffect().setPosition(Vec2{ 50, 50 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 50, 50 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		canvas->rootNode()->addChild(grandparent);
 		grandparent->addChild(parent);
@@ -118,14 +118,14 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 }, .margin = noco::LRTB{ 25, 25, 25, 25 } });
 		
 		// 親に2倍スケールを適用
-		parent->transformEffect().setScale(Vec2{ 2.0, 2.0 });
-		parent->transformEffect().setPivot(noco::Anchor::MiddleCenter);
+		parent->transform().setScale(Vec2{ 2.0, 2.0 });
+		parent->transform().setPivot(noco::Anchor::MiddleCenter);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		
 		// appliesToHitTest=false（子はスケールの影響を受けない）
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setAppliesToHitTest(false);
 		canvas->update();
 		
 		// appliesToHitTest=false: 親は元の位置(0,0-200,200)でヒット判定
@@ -135,7 +135,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hitParent == child);
 		
 		// appliesToHitTest=true（子もスケールの影響を受ける）
-		parent->transformEffect().setAppliesToHitTest(true);
+		parent->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// 親が中心から2倍になるので、親は-100,-100から300,300の範囲
@@ -162,9 +162,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hitBefore == child);
 		
 		// 親に90度回転を適用（appliesToHitTest=true）
-		parent->transformEffect().setRotation(90.0);
-		parent->transformEffect().setPivot(noco::Anchor::MiddleCenter);
-		parent->transformEffect().setAppliesToHitTest(true);
+		parent->transform().setRotation(90.0);
+		parent->transform().setPivot(noco::Anchor::MiddleCenter);
+		parent->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// 変換後の位置でヒットテスト
@@ -172,7 +172,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hitAfter != child); // 元の位置ではヒットしない
 	}
 
-	SECTION("Child with own TransformEffect when parent has appliesToHitTest=false")
+	SECTION("Child with own Transform when parent has appliesToHitTest=false")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"parent");
@@ -182,19 +182,19 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 親: 大きく移動するがappliesToHitTest=false
-		parent->transformEffect().setPosition(Vec2{ 1000, 1000 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 1000, 1000 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		// 子: 小さく移動してappliesToHitTest=true
-		child->transformEffect().setPosition(Vec2{ 50, 50 });
-		child->transformEffect().setAppliesToHitTest(true);
+		child->transform().setPosition(Vec2{ 50, 50 });
+		child->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
 		
 		// 親のappliesToHitTest=falseの影響で、子は元の位置(0,0)から
-		// 自身のTransformEffect(50,50)が適用される
+		// 自身のTransform(50,50)が適用される
 		// つまり、子のHitTest位置は(50,50-150,150)
 		auto hitChild = canvas->rootNode()->hitTest(Vec2{ 100, 100 });
 		REQUIRE(hitChild == child);
@@ -214,8 +214,8 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -230,7 +230,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit1b == parent);
 		
 		// appliesToHitTestを動的に変更
-		parent->transformEffect().setAppliesToHitTest(true);
+		parent->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// 変更後: appliesToHitTest=true
@@ -242,7 +242,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit3 == child);
 		
 		// 再度変更
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setAppliesToHitTest(false);
 		canvas->update();
 		
 		auto hit4 = canvas->rootNode()->hitTest(Vec2{ 50, 50 });
@@ -263,12 +263,12 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		// 祖父母: TransformEffectあり、初期状態でappliesToHitTest=false
-		grandparent->transformEffect().setPosition(Vec2{ 100, 100 });
-		grandparent->transformEffect().setAppliesToHitTest(false);
+		// 祖父母: Transformあり、初期状態でappliesToHitTest=false
+		grandparent->transform().setPosition(Vec2{ 100, 100 });
+		grandparent->transform().setAppliesToHitTest(false);
 		
-		// 親: TransformEffectなし
-		// 子: TransformEffectなし
+		// 親: Transformなし
+		// 子: Transformなし
 		
 		canvas->rootNode()->addChild(grandparent);
 		grandparent->addChild(parent);
@@ -298,7 +298,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit4_false == nullptr);
 		
 		// appliesToHitTest=trueに変更
-		grandparent->transformEffect().setAppliesToHitTest(true);
+		grandparent->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// appliesToHitTest=trueの場合の動作確認
@@ -331,9 +331,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 100x100のノードを(100,100)に配置
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 100, 100 });
-		node->transformEffect().setPivot(Vec2{ 0.5, 0.5 }); // 中心を回転軸に
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setPosition(Vec2{ 100, 100 });
+		node->transform().setPivot(Vec2{ 0.5, 0.5 }); // 中心を回転軸に
+		node->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(node);
 		
@@ -341,49 +341,49 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		Vec2 testPoint{ 198, 115 };
 		
 		// 0度：右上角付近はヒットする
-		node->transformEffect().setRotation(0.0);
+		node->transform().setRotation(0.0);
 		canvas->update();
 		auto hit0 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit0 == node);
 		
 		// 10度：まだヒットする
-		node->transformEffect().setRotation(10.0);
+		node->transform().setRotation(10.0);
 		canvas->update();
 		auto hit10 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit10 == node);
 		
 		// 15度：まだヒットする
-		node->transformEffect().setRotation(15.0);
+		node->transform().setRotation(15.0);
 		canvas->update();
 		auto hit15 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit15 == node);
 		
 		// 20度：まだヒットする
-		node->transformEffect().setRotation(20.0);
+		node->transform().setRotation(20.0);
 		canvas->update();
 		auto hit20 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit20 == node);
 		
 		// 21度：まだヒットする（ギリギリ）
-		node->transformEffect().setRotation(21.0);
+		node->transform().setRotation(21.0);
 		canvas->update();
 		auto hit21 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit21 == node);
 		
 		// 22度：ヒットしなくなる
-		node->transformEffect().setRotation(22.0);
+		node->transform().setRotation(22.0);
 		canvas->update();
 		auto hit22 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit22 == nullptr);
 		
 		// 30度：ヒットしない
-		node->transformEffect().setRotation(30.0);
+		node->transform().setRotation(30.0);
 		canvas->update();
 		auto hit30 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit30 == nullptr);
 		
 		// 45度：ヒットしない
-		node->transformEffect().setRotation(45.0);
+		node->transform().setRotation(45.0);
 		canvas->update();
 		auto hit45 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit45 == nullptr);
@@ -396,9 +396,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 100x100のノードを(100,100)に配置
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 100, 100 });
-		node->transformEffect().setPivot(Vec2{ 0.5, 0.5 }); // 中心を回転軸に
-		node->transformEffect().setAppliesToHitTest(false); // ヒット判定に適用しない
+		node->transform().setPosition(Vec2{ 100, 100 });
+		node->transform().setPivot(Vec2{ 0.5, 0.5 }); // 中心を回転軸に
+		node->transform().setAppliesToHitTest(false); // ヒット判定に適用しない
 		
 		canvas->rootNode()->addChild(node);
 		
@@ -406,37 +406,37 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		Vec2 testPoint{ 95, 5 };
 		
 		// 0度：右上角はヒットする
-		node->transformEffect().setRotation(0.0);
+		node->transform().setRotation(0.0);
 		canvas->update();
 		auto hit0 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit0 == node);
 		
 		// 10度：回転してもヒットする（appliesToHitTest=false）
-		node->transformEffect().setRotation(10.0);
+		node->transform().setRotation(10.0);
 		canvas->update();
 		auto hit10 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit10 == node);
 		
 		// 30度：回転してもヒットする
-		node->transformEffect().setRotation(30.0);
+		node->transform().setRotation(30.0);
 		canvas->update();
 		auto hit30 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit30 == node);
 		
 		// 45度：回転してもヒットする
-		node->transformEffect().setRotation(45.0);
+		node->transform().setRotation(45.0);
 		canvas->update();
 		auto hit45 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit45 == node);
 		
 		// 60度：回転してもヒットする
-		node->transformEffect().setRotation(60.0);
+		node->transform().setRotation(60.0);
 		canvas->update();
 		auto hit60 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit60 == node);
 		
 		// 90度：回転してもヒットする（ヒット判定は元の位置のまま）
-		node->transformEffect().setRotation(90.0);
+		node->transform().setRotation(90.0);
 		canvas->update();
 		auto hit90 = canvas->rootNode()->hitTest(testPoint);
 		REQUIRE(hit90 == node);
@@ -450,21 +450,21 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、pivot(0,0) - 左上角で回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 50, 50 });
-		parent->transformEffect().setPivot(Vec2{ 0, 0 }); // 左上角
-		parent->transformEffect().setAppliesToHitTest(true);
+		parent->transform().setPosition(Vec2{ 50, 50 });
+		parent->transform().setPivot(Vec2{ 0, 0 }); // 左上角
+		parent->transform().setAppliesToHitTest(true);
 		
 		// 子：80x80、ローカル位置(50,50)、pivot(1,1) - 右下角で回転
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 80, 80 }, .margin = noco::LRTB{ 50, 70, 50, 70 } });
-		child->transformEffect().setPivot(Vec2{ 1, 1 }); // 右下角
-		child->transformEffect().setAppliesToHitTest(true);
+		child->transform().setPivot(Vec2{ 1, 1 }); // 右下角
+		child->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		
 		// テストケース1: 両方回転なし
-		parent->transformEffect().setRotation(0.0);
-		child->transformEffect().setRotation(0.0);
+		parent->transform().setRotation(0.0);
+		child->transform().setRotation(0.0);
 		canvas->update();
 		
 		// 子の中心付近(140,140)はヒット
@@ -476,8 +476,8 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit2 == parent);
 		
 		// テストケース2: 親のみ30度回転
-		parent->transformEffect().setRotation(30.0);
-		child->transformEffect().setRotation(0.0);
+		parent->transform().setRotation(30.0);
+		child->transform().setRotation(0.0);
 		canvas->update();
 		
 		// 元の子の位置(140,140)はヒットしない（親の回転で移動）
@@ -485,8 +485,8 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit3 != child);
 		
 		// テストケース3: 子のみ45度回転（右下角中心）
-		parent->transformEffect().setRotation(0.0);
-		child->transformEffect().setRotation(45.0);
+		parent->transform().setRotation(0.0);
+		child->transform().setRotation(45.0);
 		canvas->update();
 		
 		Console << U"Child rotatedQuad: " << child->rotatedQuad();
@@ -497,13 +497,13 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		INFO("Hit4 result: " << (hit4 ? hit4->name() : U"nullptr"));
 		if (hit4 == parent) {
 			INFO("Hit parent instead of child!");
-			INFO("Child's appliesToHitTest: " << child->transformEffect().appliesToHitTest().value());
+			INFO("Child's appliesToHitTest: " << child->transform().appliesToHitTest().value());
 		}
 		REQUIRE(hit4 == child);
 		
 		// テストケース4: 親30度、子45度の組み合わせ
-		parent->transformEffect().setRotation(30.0);
-		child->transformEffect().setRotation(45.0);
+		parent->transform().setRotation(30.0);
+		child->transform().setRotation(45.0);
 		canvas->update();
 		
 		// (140,140)は回転後も子がヒット
@@ -523,16 +523,16 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、pivot(0.5,0) - 上辺中央で回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0 }); // 上辺中央
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setAppliesToHitTest(false); // 親の回転はヒット判定に影響しない
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setPivot(Vec2{ 0.5, 0 }); // 上辺中央
+		parent->transform().setRotation(45.0);
+		parent->transform().setAppliesToHitTest(false); // 親の回転はヒット判定に影響しない
 		
 		// 子：60x60、pivot(0,0.5) - 左辺中央で回転
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 60, 60 }, .margin = noco::LRTB{ 20, 120, 20, 120 } });
-		child->transformEffect().setPivot(Vec2{ 0, 0.5 }); // 左辺中央
-		child->transformEffect().setRotation(30.0);
-		child->transformEffect().setAppliesToHitTest(true);
+		child->transform().setPivot(Vec2{ 0, 0.5 }); // 左辺中央
+		child->transform().setRotation(30.0);
+		child->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -567,14 +567,14 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、中心で45度回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 }); // 中心
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setAppliesToHitTest(true); // 親の回転がヒット判定に影響する
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 }); // 中心
+		parent->transform().setRotation(45.0);
+		parent->transform().setAppliesToHitTest(true); // 親の回転がヒット判定に影響する
 		
 		// 子：100x100、親に対する相対位置(0,0)、appliesToHitTest=false
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setAppliesToHitTest(false); // 子自身の変換は無効
+		child->transform().setAppliesToHitTest(false); // 子自身の変換は無効
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -604,15 +604,15 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 100x100のノードを(50,50)に配置
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 50, 50 });
-		node->transformEffect().setScale(Vec2{ 2.0, 2.0 }); // 2倍スケール
-		node->transformEffect().setRotation(45.0); // 45度回転
-		node->transformEffect().setPivot(Vec2{ 0.5, 0.5 }); // 中心を基準に変換
+		node->transform().setPosition(Vec2{ 50, 50 });
+		node->transform().setScale(Vec2{ 2.0, 2.0 }); // 2倍スケール
+		node->transform().setRotation(45.0); // 45度回転
+		node->transform().setPivot(Vec2{ 0.5, 0.5 }); // 中心を基準に変換
 		
 		canvas->rootNode()->addChild(node);
 		
 		// appliesToHitTest=trueの場合
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// 変換後の領域内でヒット
@@ -627,7 +627,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit3 == node);
 		
 		// appliesToHitTest=falseに変更
-		node->transformEffect().setAppliesToHitTest(false);
+		node->transform().setAppliesToHitTest(false);
 		canvas->update();
 		
 		// appliesToHitTest=falseの場合、元の位置(0,0-100,100)でヒット判定
@@ -650,14 +650,14 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 100x100のノードを(50,50)に配置
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 50, 50 });
-		node->transformEffect().setPivot(Vec2{ 0, 0 }); // 左上角を基準に反転
+		node->transform().setPosition(Vec2{ 50, 50 });
+		node->transform().setPivot(Vec2{ 0, 0 }); // 左上角を基準に反転
 		
 		canvas->rootNode()->addChild(node);
 		
 		// X軸反転（水平反転）- pivot(0,0)で反転すると領域が(-50,50)-(50,150)になる
-		node->transformEffect().setScale(Vec2{ -1.0, 1.0 });
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setScale(Vec2{ -1.0, 1.0 });
+		node->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		
@@ -674,7 +674,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit3 == node);
 		
 		// Y軸反転（垂直反転）- pivot(0,0)で反転すると領域が(50,-50)-(150,50)になる
-		node->transformEffect().setScale(Vec2{ 1.0, -1.0 });
+		node->transform().setScale(Vec2{ 1.0, -1.0 });
 		canvas->update();
 		
 		// 元の中心(100,100)は反転後の領域外
@@ -686,7 +686,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit5 == node);
 		
 		// 両軸反転 - pivot(0,0)で反転すると領域が(-50,-50)-(50,50)になる
-		node->transformEffect().setScale(Vec2{ -1.0, -1.0 });
+		node->transform().setScale(Vec2{ -1.0, -1.0 });
 		canvas->update();
 		
 		// 元の位置は範囲外
@@ -698,7 +698,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hit7 == node);
 		
 		// appliesToHitTest=falseの場合は元の位置(0,0-100,100)でヒット
-		node->transformEffect().setAppliesToHitTest(false);
+		node->transform().setAppliesToHitTest(false);
 		canvas->update();
 		
 		auto hit8 = canvas->rootNode()->hitTest(Vec2{ 50, 50 });
@@ -720,30 +720,30 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、45度回転、appliesToHitTest=true
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		parent->transformEffect().setAppliesToHitTest(true);
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(45.0);
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setAppliesToHitTest(true);
 		
 		// 子：100x100、相対位置(0,0)、appliesToHitTest=false
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setAppliesToHitTest(false);
+		child->transform().setAppliesToHitTest(false);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		
 		// 子のpivotを左上(0,0)に設定
-		child->transformEffect().setPivot(Vec2{ 0.0, 0.0 });
+		child->transform().setPivot(Vec2{ 0.0, 0.0 });
 		canvas->update();
 		auto quad1 = child->hitTestQuad();
 		
 		// 子のpivotを中央(0.5,0.5)に変更
-		child->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		child->transform().setPivot(Vec2{ 0.5, 0.5 });
 		canvas->update();
 		auto quad2 = child->hitTestQuad();
 		
 		// 子のpivotを右下(1.0,1.0)に変更
-		child->transformEffect().setPivot(Vec2{ 1.0, 1.0 });
+		child->transform().setPivot(Vec2{ 1.0, 1.0 });
 		canvas->update();
 		auto quad3 = child->hitTestQuad();
 		
@@ -769,15 +769,15 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		// 実際のヒットテストも確認
 		Vec2 testPoint{ 150, 150 }; // 変換後の領域内の点
 		
-		child->transformEffect().setPivot(Vec2{ 0.0, 0.0 });
+		child->transform().setPivot(Vec2{ 0.0, 0.0 });
 		canvas->update();
 		auto hit1 = canvas->rootNode()->hitTest(testPoint);
 		
-		child->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		child->transform().setPivot(Vec2{ 0.5, 0.5 });
 		canvas->update();
 		auto hit2 = canvas->rootNode()->hitTest(testPoint);
 		
-		child->transformEffect().setPivot(Vec2{ 1.0, 1.0 });
+		child->transform().setPivot(Vec2{ 1.0, 1.0 });
 		canvas->update();
 		auto hit3 = canvas->rootNode()->hitTest(testPoint);
 		
@@ -795,24 +795,24 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 祖父母：300x300、位置(50,50)、回転20°、appliesToHitTest=true
 		grandparent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 300, 300 } });
-		grandparent->transformEffect().setPosition(Vec2{ 50, 50 });
-		grandparent->transformEffect().setRotation(20.0);
-		grandparent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		grandparent->transformEffect().setAppliesToHitTest(true);
+		grandparent->transform().setPosition(Vec2{ 50, 50 });
+		grandparent->transform().setRotation(20.0);
+		grandparent->transform().setPivot(Vec2{ 0.5, 0.5 });
+		grandparent->transform().setAppliesToHitTest(true);
 		
 		// 親：200x200、相対位置(50,50)、回転30°、appliesToHitTest=false
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 50, 50 });
-		parent->transformEffect().setRotation(30.0);
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 50, 50 });
+		parent->transform().setRotation(30.0);
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		// 子：100x100、相対位置(50,50)、回転40°、appliesToHitTest=true
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setPosition(Vec2{ 50, 50 });
-		child->transformEffect().setRotation(40.0);
-		child->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		child->transformEffect().setAppliesToHitTest(true);
+		child->transform().setPosition(Vec2{ 50, 50 });
+		child->transform().setRotation(40.0);
+		child->transform().setPivot(Vec2{ 0.5, 0.5 });
+		child->transform().setAppliesToHitTest(true);
 		
 		canvas->rootNode()->addChild(grandparent);
 		grandparent->addChild(parent);
@@ -848,13 +848,13 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：100x100、位置(100,100)、スケール(2.0, 0.5)、appliesToHitTest=false
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setScale(Vec2{ 2.0, 0.5 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setScale(Vec2{ 2.0, 0.5 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		// 子：50x50、相対位置(25,25)
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
-		child->transformEffect().setPosition(Vec2{ 25, 25 });
+		child->transform().setPosition(Vec2{ 25, 25 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -885,17 +885,17 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、回転45°、スケール(1.5,1.5)、appliesToHitTest=false
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setScale(Vec2{ 1.5, 1.5 });
-		parent->transformEffect().setAppliesToHitTest(false);
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(45.0);
+		parent->transform().setScale(Vec2{ 1.5, 1.5 });
+		parent->transform().setAppliesToHitTest(false);
 		
 		// 子：50x50、相対位置(25,25)、回転30°、スケール(2,2)、appliesToHitTest=false
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
-		child->transformEffect().setPosition(Vec2{ 25, 25 });
-		child->transformEffect().setRotation(30.0);
-		child->transformEffect().setScale(Vec2{ 2, 2 });
-		child->transformEffect().setAppliesToHitTest(false);
+		child->transform().setPosition(Vec2{ 25, 25 });
+		child->transform().setRotation(30.0);
+		child->transform().setScale(Vec2{ 2, 2 });
+		child->transform().setAppliesToHitTest(false);
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -919,7 +919,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(hitOutside == nullptr);
 	}
 	
-	SECTION("Parent rotation affects child TransformEffect position")
+	SECTION("Parent rotation affects child Transform position")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"parent");
@@ -927,20 +927,20 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、45度回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(45.0);
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
 		
-		// 子：100x100、TransformEffect位置(50,0) - 水平方向のみのオフセット
+		// 子：100x100、Transform位置(50,0) - 水平方向のみのオフセット
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setPosition(Vec2{ 50, 0 });
+		child->transform().setPosition(Vec2{ 50, 0 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
 		
 		// 期待値: 子の位置は親の回転によって変換される
-		// 子のTransformEffect位置(50,0)を含めた子の左上(50,0)が親の回転中心(200,200)を基準に45度回転
+		// 子のTransform位置(50,0)を含めた子の左上(50,0)が親の回転中心(200,200)を基準に45度回転
 		const double expectedX = 235.35534;
 		const double expectedY = 93.93398;
 		
@@ -949,9 +949,9 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
 		Console << U"Child layoutAppliedRect: " << child->layoutAppliedRect();
 		Console << U"Parent layoutAppliedRect: " << parent->layoutAppliedRect();
-		INFO("Parent transform position: " << parent->transformEffect().position().value());
-		INFO("Parent transform rotation: " << parent->transformEffect().rotation().value());
-		INFO("Child transform position: " << child->transformEffect().position().value());
+		INFO("Parent transform position: " << parent->transform().position().value());
+		INFO("Parent transform rotation: " << parent->transform().rotation().value());
+		INFO("Child transform position: " << child->transform().position().value());
 		INFO("Actual child quad p0: " << childQuad.p0);
 		INFO("Expected child p0: (" << expectedX << ", " << expectedY << ")");
 		
@@ -959,7 +959,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
 	}
 	
-	SECTION("Parent scale affects child TransformEffect position")
+	SECTION("Parent scale affects child Transform position")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"parent");
@@ -967,20 +967,20 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、スケール(2.0, 0.5)
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setScale(Vec2{ 2.0, 0.5 });
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setScale(Vec2{ 2.0, 0.5 });
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
 		
-		// 子：100x100、TransformEffect位置(50,50)
+		// 子：100x100、Transform位置(50,50)
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setPosition(Vec2{ 50, 50 });
+		child->transform().setPosition(Vec2{ 50, 50 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
 		
 		// 期待値: 子の位置は親のスケールによって変換される
-		// 子のTransformEffect位置(50,50)を含めた子の左上が親のpivot(200,200)を基準にスケール変換
+		// 子のTransform位置(50,50)を含めた子の左上が親のpivot(200,200)を基準にスケール変換
 		const double expectedX = 100.0;
 		const double expectedY = 175.0;
 		
@@ -991,7 +991,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
 	}
 	
-	SECTION("Parent rotation and scale affects child TransformEffect position")
+	SECTION("Parent rotation and scale affects child Transform position")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"parent");
@@ -999,21 +999,21 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：200x200、位置(100,100)、30度回転、スケール(1.5, 1.5)
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setRotation(30.0);
-		parent->transformEffect().setScale(Vec2{ 1.5, 1.5 });
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(30.0);
+		parent->transform().setScale(Vec2{ 1.5, 1.5 });
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
 		
-		// 子：80x80、TransformEffect位置(40,0)
+		// 子：80x80、Transform位置(40,0)
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 80, 80 } });
-		child->transformEffect().setPosition(Vec2{ 40, 0 });
+		child->transform().setPosition(Vec2{ 40, 0 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
 		
 		// 期待値: スケール後に回転
-		// 子のTransformEffect位置(40,0)を含めた子の左上が親のpivot(200,200)を基準にスケール・回転変換
+		// 子のTransform位置(40,0)を含めた子の左上が親のpivot(200,200)を基準にスケール・回転変換
 		const double expectedX = 197.05771;
 		const double expectedY = 25.09619;
 		
@@ -1021,9 +1021,10 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		auto childRect = child->unrotatedRect();
 		Console << U"Combined test - child quad: " << childQuad;
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
-		REQUIRE(childRect.x == Approx(expectedX).margin(0.01));
-		REQUIRE(childRect.y == Approx(expectedY).margin(0.01));
-		// 親のスケール(1.5, 1.5)が子のサイズにも適用される
+		// 変換後の実際の位置（左上頂点）を確認
+		REQUIRE(childQuad.p0.x == Approx(expectedX).margin(0.01));
+		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
+		// 親のスケール(1.5, 1.5)が子のサイズにも適用される（unrotatedRectで確認）
 		REQUIRE(childRect.w == Approx(120.0).margin(0.01));
 		REQUIRE(childRect.h == Approx(120.0).margin(0.01));
 	}
@@ -1036,14 +1037,14 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：100x100、位置(0,0)、90度回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		parent->transformEffect().setPosition(Vec2{ 0, 0 });
-		parent->transformEffect().setRotation(90.0);
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		parent->transformEffect().setAppliesToHitTest(true);  // 親の回転をヒットテストに適用
+		parent->transform().setPosition(Vec2{ 0, 0 });
+		parent->transform().setRotation(90.0);
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setAppliesToHitTest(true);  // 親の回転をヒットテストに適用
 		
-		// 子：50x50、TransformEffect位置(40,0) - 親の座標系で右方向
+		// 子：50x50、Transform位置(40,0) - 親の座標系で右方向
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
-		child->transformEffect().setPosition(Vec2{ 40, 0 });
+		child->transform().setPosition(Vec2{ 40, 0 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -1059,7 +1060,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 実際の変換後の位置を確認
 		// 子の実際の位置は親の回転中心(50,50)を基準に90度回転
-		// TransformEffect位置(40,0)により、子は(40,0)から(90,50)の範囲になるが、
+		// Transform位置(40,0)により、子は(40,0)から(90,50)の範囲になるが、
 		// 90度回転により(50,40)から(100,90)の範囲になる
 		REQUIRE(childRotatedQuad.p0.x == Approx(100.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p0.y == Approx(40.0).margin(0.01));
@@ -1073,7 +1074,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（appliesToHitTest=false）
 		auto childHitQuad = child->hitTestQuad();
 		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
-		// ヒットテストのQuadは子のTransformEffect位置が完全には適用されていない
+		// ヒットテストのQuadは子のTransform位置が完全には適用されていない
 		// 実際の中心は(75, 25)になる
 		const Vec2 actualCenter{ 75.0, 25.0 };
 		REQUIRE(childHitQuad.contains(actualCenter));
@@ -1087,14 +1088,14 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 親：100x100、位置(100,100)、-90度回転
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		parent->transformEffect().setRotation(-90.0);
-		parent->transformEffect().setPivot(Vec2{ 0.5, 0.5 });
-		parent->transformEffect().setAppliesToHitTest(true);  // 親の回転をヒットテストに適用
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(-90.0);
+		parent->transform().setPivot(Vec2{ 0.5, 0.5 });
+		parent->transform().setAppliesToHitTest(true);  // 親の回転をヒットテストに適用
 		
-		// 子：50x50、TransformEffect位置(30,0) - 親の座標系で右方向
+		// 子：50x50、Transform位置(30,0) - 親の座標系で右方向
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
-		child->transformEffect().setPosition(Vec2{ 30, 0 });
+		child->transform().setPosition(Vec2{ 30, 0 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -1110,7 +1111,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		
 		// 実際の変換後の位置を確認  
 		// 子の実際の位置は親の回転中心(150,150)を基準に-90度回転
-		// TransformEffect位置(30,0)により、子は(130,100)から(180,150)の範囲になるが、
+		// Transform位置(30,0)により、子は(130,100)から(180,150)の範囲になるが、
 		// -90度回転により(100,120)から(150,170)の範囲になる
 		REQUIRE(childRotatedQuad.p0.x == Approx(100.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p0.y == Approx(170.0).margin(0.01));
@@ -1124,7 +1125,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（appliesToHitTest=false）
 		auto childHitQuad = child->hitTestQuad();
 		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
-		// ヒットテストのQuadは子のTransformEffect位置が完全には適用されていない
+		// ヒットテストのQuadは子のTransform位置が完全には適用されていない
 		// 実際の中心は(125, 175)になる
 		const Vec2 actualCenter{ 125.0, 175.0 };
 		REQUIRE(childHitQuad.contains(actualCenter));
@@ -1135,7 +1136,7 @@ TEST_CASE("TransformEffect HitTest with Parent-Child Hierarchy", "[Node][HitTest
 // unrotatedRect のテスト
 // ========================================
 
-TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformEffect][unrotatedRect]")
+TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform][unrotatedRect]")
 {
 	SECTION("No rotation with scale")
 	{
@@ -1144,8 +1145,8 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		
 		// 100x50のノードにスケール(2.0, 1.5)を適用
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		node->transformEffect().setScale(Vec2{ 2.0, 1.5 });
-		node->transformEffect().setPosition(Vec2{ 100, 200 });
+		node->transform().setScale(Vec2{ 2.0, 1.5 });
+		node->transform().setPosition(Vec2{ 100, 200 });
 		
 		canvas->rootNode()->addChild(node);
 		canvas->update();
@@ -1163,8 +1164,8 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		auto node = noco::Node::Create(U"node");
 		
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		node->transformEffect().setRotation(45.0);
-		node->transformEffect().setPosition(Vec2{ 150, 100 });
+		node->transform().setRotation(45.0);
+		node->transform().setPosition(Vec2{ 150, 100 });
 		
 		canvas->rootNode()->addChild(node);
 		canvas->update();
@@ -1182,9 +1183,9 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		auto node = noco::Node::Create(U"node");
 		
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		node->transformEffect().setRotation(90.0);
-		node->transformEffect().setScale(Vec2{ 2.0, 1.5 });
-		node->transformEffect().setPosition(Vec2{ 200, 150 });
+		node->transform().setRotation(90.0);
+		node->transform().setScale(Vec2{ 2.0, 1.5 });
+		node->transform().setPosition(Vec2{ 200, 150 });
 		
 		canvas->rootNode()->addChild(node);
 		canvas->update();
@@ -1203,11 +1204,11 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		auto child = noco::Node::Create(U"child");
 		
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setRotation(45.0);
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
+		parent->transform().setRotation(45.0);
+		parent->transform().setPosition(Vec2{ 100, 100 });
 		
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		child->transformEffect().setScale(Vec2{ 2.0, 1.5 });
+		child->transform().setScale(Vec2{ 2.0, 1.5 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -1231,9 +1232,9 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		auto node = noco::Node::Create(U"node");
 		
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		node->transformEffect().setRotation(30.0);
-		node->transformEffect().setScale(Vec2{ 1.5, 2.0 });
-		node->transformEffect().setPosition(Vec2{ 250, 300 });
+		node->transform().setRotation(30.0);
+		node->transform().setScale(Vec2{ 1.5, 2.0 });
+		node->transform().setPosition(Vec2{ 250, 300 });
 		
 		canvas->rootNode()->addChild(node);
 		canvas->update();
@@ -1257,11 +1258,11 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][TransformE
 		auto child = noco::Node::Create(U"child");
 		
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
-		parent->transformEffect().setRotation(30.0);
+		parent->transform().setRotation(30.0);
 		
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
-		child->transformEffect().setRotation(15.0);
-		child->transformEffect().setScale(Vec2{ 2.0, 1.5 });
+		child->transform().setRotation(15.0);
+		child->transform().setScale(Vec2{ 2.0, 1.5 });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);

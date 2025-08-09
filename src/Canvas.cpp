@@ -268,12 +268,12 @@ namespace noco
 		{
 			if (dragScrollingNode->m_dragStartPos)
 			{
-				// effectScaleInHierarchyを考慮してドラッグ量を計算(ゼロ除算を防ぐ)
-				const Vec2 effectScale = dragScrollingNode->effectScaleInHierarchy();
+				// transformScaleInHierarchyを考慮してドラッグ量を計算(ゼロ除算を防ぐ)
+				const Vec2 transformScale = dragScrollingNode->transformScaleInHierarchy();
 				const Vec2 screenDragDelta = Cursor::PosF() - *dragScrollingNode->m_dragStartPos;
 				const Vec2 dragDelta = Vec2{
-					effectScale.x > 0.0 ? screenDragDelta.x / effectScale.x : 0.0,
-					effectScale.y > 0.0 ? screenDragDelta.y / effectScale.y : 0.0
+					transformScale.x > 0.0 ? screenDragDelta.x / transformScale.x : 0.0,
+					transformScale.y > 0.0 ? screenDragDelta.y / transformScale.y : 0.0
 				};
 				
 				// ドラッグ閾値の判定(画面座標での判定)

@@ -540,11 +540,11 @@ TEST_CASE("Min/Max size regions", "[Region][AnchorRegion][InlineRegion]")
 	}
 }
 
-TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][InlineRegion][TransformEffect]")
+TEST_CASE("Min/Max size regions with Transform", "[Region][AnchorRegion][InlineRegion][Transform]")
 {
-	SECTION("AnchorRegion min/max independent of TransformEffect scale")
+	SECTION("AnchorRegion min/max independent of Transform scale")
 	{
-		// TransformEffectのscaleが制約サイズに影響しないことを確認
+		// Transformのscaleが制約サイズに影響しないことを確認
 		auto node = noco::Node::Create();
 		
 		noco::AnchorRegion region;
@@ -558,14 +558,14 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		
 		node->setRegion(region);
 		
-		// TransformEffectでスケールを2倍に設定
-		node->transformEffect().setScale(Vec2{ 2.0, 2.0 });
+		// Transformでスケールを2倍に設定
+		node->transform().setScale(Vec2{ 2.0, 2.0 });
 		
-		// 制約計算はTransformEffectの影響を受けない
+		// 制約計算はTransformの影響を受けない
 		RectF parentRect{ 0, 0, 50, 40 }; // 小さい親領域
 		RectF result = region.applyRegion(parentRect, Vec2::Zero());
 		
-		// minサイズが適用される（TransformEffectのscaleは無関係）
+		// minサイズが適用される（Transformのscaleは無関係）
 		REQUIRE(result.w == 100.0);
 		REQUIRE(result.h == 80.0);
 		
@@ -573,14 +573,14 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		RectF largeParentRect{ 0, 0, 500, 400 };
 		RectF largeResult = region.applyRegion(largeParentRect, Vec2::Zero());
 		
-		// maxサイズが適用される（TransformEffectのscaleは無関係）
+		// maxサイズが適用される（Transformのscaleは無関係）
 		REQUIRE(largeResult.w == 300.0);
 		REQUIRE(largeResult.h == 200.0);
 	}
 
-	SECTION("InlineRegion min/max independent of TransformEffect scale")
+	SECTION("InlineRegion min/max independent of Transform scale")
 	{
-		// InlineRegionでもTransformEffectのscaleが制約サイズに影響しないことを確認
+		// InlineRegionでもTransformのscaleが制約サイズに影響しないことを確認
 		auto node = noco::Node::Create();
 		
 		noco::InlineRegion region;
@@ -592,14 +592,14 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		
 		node->setRegion(region);
 		
-		// TransformEffectでスケールを0.5倍に設定
-		node->transformEffect().setScale(Vec2{ 0.5, 0.5 });
+		// Transformでスケールを0.5倍に設定
+		node->transform().setScale(Vec2{ 0.5, 0.5 });
 		
-		// 制約計算はTransformEffectの影響を受けない
+		// 制約計算はTransformの影響を受けない
 		RectF parentRect{ 0, 0, 80, 60 }; // 小さい親領域
 		RectF result = region.applyRegion(parentRect, Vec2::Zero());
 		
-		// minサイズが適用される（TransformEffectのscaleは無関係）
+		// minサイズが適用される（Transformのscaleは無関係）
 		REQUIRE(result.w == 120.0);
 		REQUIRE(result.h == 90.0);
 		
@@ -607,14 +607,14 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		RectF largeParentRect{ 0, 0, 600, 500 };
 		RectF largeResult = region.applyRegion(largeParentRect, Vec2::Zero());
 		
-		// maxサイズが適用される（TransformEffectのscaleは無関係）
+		// maxサイズが適用される（Transformのscaleは無関係）
 		REQUIRE(largeResult.w == 400.0);
 		REQUIRE(largeResult.h == 300.0);
 	}
 
-	SECTION("Parent and child with different TransformEffect scales")
+	SECTION("Parent and child with different Transform scales")
 	{
-		// 親と子で異なるTransformEffectが設定されている場合のテスト
+		// 親と子で異なるTransformが設定されている場合のテスト
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		
@@ -626,8 +626,8 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		parentRegion.maxHeight = 400.0;
 		parent->setRegion(parentRegion);
 		
-		// 親のTransformEffect
-		parent->transformEffect().setScale(Vec2{ 1.5, 1.5 });
+		// 親のTransform
+		parent->transform().setScale(Vec2{ 1.5, 1.5 });
 		
 		// 子ノードの設定
 		noco::InlineRegion childRegion;
@@ -636,8 +636,8 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		childRegion.minHeight = 120.0;
 		child->setRegion(childRegion);
 		
-		// 子のTransformEffect
-		child->transformEffect().setScale(Vec2{ 0.8, 0.8 });
+		// 子のTransform
+		child->transform().setScale(Vec2{ 0.8, 0.8 });
 		
 		parent->addChild(child);
 		
@@ -645,7 +645,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		RectF grandParentRect{ 0, 0, 800, 600 };
 		RectF parentRect = parentRegion.applyRegion(grandParentRect, Vec2::Zero());
 		
-		// 親のサイズはmaxで制限される（親のTransformEffectのscaleは無関係）
+		// 親のサイズはmaxで制限される（親のTransformのscaleは無関係）
 		REQUIRE(parentRect.w == 500.0);
 		REQUIRE(parentRect.h == 400.0);
 		
@@ -653,14 +653,14 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		RectF childRect = childRegion.applyRegion(parentRect, Vec2::Zero());
 		
 		// 子は親の80% = (400, 320)を要求、minサイズ(150, 120)より大きいのでそのまま
-		// TransformEffectのscaleは制約計算に影響しない
+		// Transformのscaleは制約計算に影響しない
 		REQUIRE(childRect.w == 400.0);
 		REQUIRE(childRect.h == 320.0);
 	}
 
 	SECTION("Complex hierarchy with multiple scales and regions")
 	{
-		// 複雑な階層でのTransformEffectとmin/max制約の独立性を確認
+		// 複雑な階層でのTransformとmin/max制約の独立性を確認
 		auto grandParent = noco::Node::Create();
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
@@ -670,7 +670,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		grandParentRegion.sizeDelta = Vec2{ 1000, 800 };
 		grandParent->setRegion(grandParentRegion);
 		
-		grandParent->transformEffect().setScale(Vec2{ 2.0, 2.0 });
+		grandParent->transform().setScale(Vec2{ 2.0, 2.0 });
 		
 		// 親ノード
 		noco::AnchorRegion parentRegion;
@@ -680,7 +680,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		parentRegion.maxWidth = 600.0;
 		parent->setRegion(parentRegion);
 		
-		parent->transformEffect().setScale(Vec2{ 0.7, 0.7 });
+		parent->transform().setScale(Vec2{ 0.7, 0.7 });
 		
 		// 子ノード
 		noco::InlineRegion childRegion;
@@ -689,7 +689,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		childRegion.maxHeight = 400.0;
 		child->setRegion(childRegion);
 		
-		child->transformEffect().setScale(Vec2{ 3.0, 3.0 });
+		child->transform().setScale(Vec2{ 3.0, 3.0 });
 		
 		grandParent->addChild(parent);
 		parent->addChild(child);
@@ -697,7 +697,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		// 制約計算の確認
 		RectF rootRect{ 0, 0, 1000, 800 };
 		
-		// 親の制約計算（祖父母のTransformEffectは影響しない）
+		// 親の制約計算（祖父母のTransformは影響しない）
 		RectF parentRect = parentRegion.applyRegion(rootRect, Vec2::Zero());
 		
 		// 親のサイズ = 祖父母の80%サイズの領域 = (800, 640)
@@ -705,7 +705,7 @@ TEST_CASE("Min/Max size regions with TransformEffect", "[Region][AnchorRegion][I
 		REQUIRE(parentRect.w == 600.0);
 		REQUIRE(parentRect.h == 640.0);
 		
-		// 子の制約計算（親のTransformEffectは影響しない）
+		// 子の制約計算（親のTransformは影響しない）
 		RectF childRect = childRegion.applyRegion(parentRect, Vec2::Zero());
 		
 		// 子のサイズ = 親の120% = (720, 768)を要求

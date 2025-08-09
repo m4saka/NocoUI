@@ -29,7 +29,7 @@ add_executable(${TARGET_NAME}
     Main.cpp
     TestNode.cpp
     TestHitTest.cpp
-    TestTransformEffectHitTest.cpp
+    TestTransformHitTest.cpp
     TestComponent.cpp
     TestCanvas.cpp
     TestRegion.cpp

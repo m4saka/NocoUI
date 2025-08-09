@@ -1,8 +1,8 @@
-﻿#include "NocoUI/TransformEffect.hpp"
+﻿#include "NocoUI/Transform.hpp"
 
 namespace noco
 {
-	TransformEffect::TransformEffect(
+	Transform::Transform(
 		const PropertyValue<Vec2>& position,
 		const PropertyValue<Vec2>& scale,
 		const PropertyValue<Vec2>& pivot,
@@ -17,97 +17,97 @@ namespace noco
 	{
 	}
 
-	const SmoothProperty<Vec2>& TransformEffect::position() const
+	const SmoothProperty<Vec2>& Transform::position() const
 	{
 		return m_position;
 	}
 
-	SmoothProperty<Vec2>& TransformEffect::position()
+	SmoothProperty<Vec2>& Transform::position()
 	{
 		return m_position;
 	}
 
-	void TransformEffect::setPosition(const PropertyValue<Vec2>& position)
+	void Transform::setPosition(const PropertyValue<Vec2>& position)
 	{
 		m_position.setPropertyValue(position);
 	}
 
-	const SmoothProperty<Vec2>& TransformEffect::scale() const
+	const SmoothProperty<Vec2>& Transform::scale() const
 	{
 		return m_scale;
 	}
 
-	SmoothProperty<Vec2>& TransformEffect::scale()
+	SmoothProperty<Vec2>& Transform::scale()
 	{
 		return m_scale;
 	}
 
-	void TransformEffect::setScale(const PropertyValue<Vec2>& scale)
+	void Transform::setScale(const PropertyValue<Vec2>& scale)
 	{
 		m_scale.setPropertyValue(scale);
 	}
 
-	const SmoothProperty<Vec2>& TransformEffect::pivot() const
+	const SmoothProperty<Vec2>& Transform::pivot() const
 	{
 		return m_pivot;
 	}
 
-	SmoothProperty<Vec2>& TransformEffect::pivot()
+	SmoothProperty<Vec2>& Transform::pivot()
 	{
 		return m_pivot;
 	}
 
-	void TransformEffect::setPivot(const PropertyValue<Vec2>& pivot)
+	void Transform::setPivot(const PropertyValue<Vec2>& pivot)
 	{
 		m_pivot.setPropertyValue(pivot);
 	}
 
-	const SmoothProperty<double>& TransformEffect::rotation() const
+	const SmoothProperty<double>& Transform::rotation() const
 	{
 		return m_rotation;
 	}
 
-	SmoothProperty<double>& TransformEffect::rotation()
+	SmoothProperty<double>& Transform::rotation()
 	{
 		return m_rotation;
 	}
 
-	void TransformEffect::setRotation(const PropertyValue<double>& rotation)
+	void Transform::setRotation(const PropertyValue<double>& rotation)
 	{
 		m_rotation.setPropertyValue(rotation);
 	}
 
-	const Property<bool>& TransformEffect::appliesToHitTest() const
+	const Property<bool>& Transform::appliesToHitTest() const
 	{
 		return m_appliesToHitTest;
 	}
 
-	Property<bool>& TransformEffect::appliesToHitTest()
+	Property<bool>& Transform::appliesToHitTest()
 	{
 		return m_appliesToHitTest;
 	}
 
-	void TransformEffect::setAppliesToHitTest(const PropertyValue<bool>& value)
+	void Transform::setAppliesToHitTest(const PropertyValue<bool>& value)
 	{
 		m_appliesToHitTest.setPropertyValue(value);
 	}
 
-	const SmoothProperty<ColorF>& TransformEffect::color() const
+	const SmoothProperty<ColorF>& Transform::color() const
 	{
 		return m_color;
 	}
 
-	SmoothProperty<ColorF>& TransformEffect::color()
+	SmoothProperty<ColorF>& Transform::color()
 	{
 		return m_color;
 	}
 
-	void TransformEffect::setColor(const PropertyValue<ColorF>& color)
+	void Transform::setColor(const PropertyValue<ColorF>& color)
 	{
 		m_color.setPropertyValue(color);
 	}
 
-	void TransformEffect::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
+	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
 	{
 		m_position.update(interactionState, activeStyleStates, deltaTime);
 		m_scale.update(interactionState, activeStyleStates, deltaTime);
@@ -117,7 +117,7 @@ namespace noco
 		m_color.update(interactionState, activeStyleStates, deltaTime);
 	}
 
-	JSON TransformEffect::toJSON() const
+	JSON Transform::toJSON() const
 	{
 		JSON json;
 		m_position.appendJSON(json);
@@ -129,7 +129,7 @@ namespace noco
 		return json;
 	}
 
-	void TransformEffect::readFromJSON(const JSON& json)
+	void Transform::readFromJSON(const JSON& json)
 	{
 		m_position.readFromJSON(json);
 		m_scale.readFromJSON(json);

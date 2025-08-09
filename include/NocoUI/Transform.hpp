@@ -8,7 +8,7 @@
 
 namespace noco
 {
-	class TransformEffect
+	class Transform
 	{
 	private:
 		SmoothProperty<Vec2> m_position;
@@ -19,7 +19,7 @@ namespace noco
 		SmoothProperty<ColorF> m_color;
 
 	public:
-		TransformEffect(
+		Transform(
 			const PropertyValue<Vec2>& position = Vec2::Zero(),
 			const PropertyValue<Vec2>& scale = Vec2::One(),
 			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,

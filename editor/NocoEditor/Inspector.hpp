@@ -30,7 +30,7 @@ namespace noco::editor
 		IsFoldedYN m_isFoldedRegion = IsFoldedYN::No;
 		IsFoldedYN m_isFoldedNodeSetting = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
-		IsFoldedYN m_isFoldedTransformEffect = IsFoldedYN::Yes;
+		IsFoldedYN m_isFoldedTransform = IsFoldedYN::Yes;
 		Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
 		std::shared_ptr<Defaults> m_defaults;
@@ -317,8 +317,8 @@ namespace noco::editor
 				const auto layoutNode = createChildrenLayoutNode(targetNode);
 				m_inspectorRootNode->addChild(layoutNode);
 
-				const auto transformEffectNode = createTransformEffectNode(&targetNode->transformEffect());
-				m_inspectorRootNode->addChild(transformEffectNode);
+				const auto transformNode = createTransformNode(&targetNode->transform());
+				m_inspectorRootNode->addChild(transformNode);
 
 				for (const std::shared_ptr<ComponentBase>& component : targetNode->components())
 				{
@@ -2981,29 +2981,29 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createTransformEffectNode(TransformEffect* const pTransformEffect)
+		std::shared_ptr<Node> createTransformNode(Transform* const pTransform)
 		{
-			auto transformEffectNode = Node::Create(
-				U"TransformEffect",
+			auto transformNode = Node::Create(
+				U"Transform",
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			transformEffectNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			transformEffectNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			transformNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransform ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			transformNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransformEffect,
+			transformNode->addChild(CreateHeadingNode(U"Transform", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransform,
 				[this](IsFoldedYN isFolded)
 				{
-					m_isFoldedTransformEffect = isFolded;
+					m_isFoldedTransform = isFolded;
 				}));
 
 			const auto fnAddVec2Child =
-				[this, &transformEffectNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
+				[this, &transformNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformEffectNode->addChild(createVec2PropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
-					propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
@@ -3013,16 +3013,16 @@ namespace noco::editor
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
 			// Note: アクセサからポインタを取得しているので注意が必要
-			fnAddVec2Child(U"position", &pTransformEffect->position(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPosition(value); m_canvas->refreshLayout(); });
-			fnAddVec2Child(U"scale", &pTransformEffect->scale(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setScale(value); m_canvas->refreshLayout(); });
-			fnAddVec2Child(U"pivot", &pTransformEffect->pivot(), [this, pTransformEffect](const Vec2& value) { pTransformEffect->setPivot(value); m_canvas->refreshLayout(); });
+			fnAddVec2Child(U"position", &pTransform->position(), [this, pTransform](const Vec2& value) { pTransform->setPosition(value); m_canvas->refreshLayout(); });
+			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayout(); });
+			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayout(); });
 			
 			// rotation プロパティを追加
 			const auto fnAddDoubleChild =
-				[this, &transformEffectNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
+				[this, &transformNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformEffectNode->addChild(createPropertyNodeWithTooltip(U"TransformEffect", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
-					propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+					const auto propertyNode = transformNode->addChild(createPropertyNodeWithTooltip(U"Transform", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
@@ -3031,7 +3031,7 @@ namespace noco::editor
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
-			fnAddDoubleChild(U"rotation", &pTransformEffect->rotation(), [this, pTransformEffect](StringView valueStr) 
+			fnAddDoubleChild(U"rotation", &pTransform->rotation(), [this, pTransform](StringView valueStr) 
 			{ 
 				if (const auto value = ParseOpt<double>(valueStr))
 				{
@@ -3046,25 +3046,25 @@ namespace noco::editor
 						while (normalizedValue > 180.0) normalizedValue -= 360.0;
 						while (normalizedValue < -180.0) normalizedValue += 360.0;
 					}
-					pTransformEffect->setRotation(normalizedValue); 
+					pTransform->setRotation(normalizedValue); 
 					m_canvas->refreshLayout(); 
 				}
 			});
 			
 			const auto fnAddBoolChild =
-				[this, &transformEffectNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
+				[this, &transformNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformEffectNode->addChild(createBoolPropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
-					propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+					const auto propertyNode = transformNode->addChild(createBoolPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } } }, nullptr, RecursiveYN::Yes);
 				};
-			fnAddBoolChild(U"appliesToHitTest", &pTransformEffect->appliesToHitTest(), [this, pTransformEffect](bool value) { pTransformEffect->setAppliesToHitTest(value); });
+			fnAddBoolChild(U"appliesToHitTest", &pTransform->appliesToHitTest(), [this, pTransform](bool value) { pTransform->setAppliesToHitTest(value); });
 
 			const auto fnAddColorChild =
-				[this, &transformEffectNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)
+				[this, &transformNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformEffectNode->addChild(createColorPropertyNodeWithTooltip(U"TransformEffect", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
-					propertyNode->setActive(!m_isFoldedTransformEffect.getBool());
+					const auto propertyNode = transformNode->addChild(createColorPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
@@ -3073,11 +3073,11 @@ namespace noco::editor
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
-			fnAddColorChild(U"color", &pTransformEffect->color(), [this, pTransformEffect](const ColorF& value) { pTransformEffect->setColor(value); });
+			fnAddColorChild(U"color", &pTransform->color(), [this, pTransform](const ColorF& value) { pTransform->setColor(value); });
 
-			transformEffectNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+			transformNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
-			return transformEffectNode;
+			return transformNode;
 		}
 
 		[[nodiscard]]

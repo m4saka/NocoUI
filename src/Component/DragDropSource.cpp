@@ -61,14 +61,14 @@ namespace noco
 			m_isDragging = false;
 		}
 
-		if (m_movesTransformEffectPosition)
+		if (m_movesTransformPosition)
 		{
 			if (m_isDragging)
 			{
 				for (size_t i = 0; i < m_draggingNodeList.size(); ++i)
 				{
 					const auto& draggingNode = m_draggingNodeList[i];
-					draggingNode->transformEffect().setPosition(Vec2{ Cursor::PosF() - m_dragStartPosition });
+					draggingNode->transform().setPosition(Vec2{ Cursor::PosF() - m_dragStartPosition });
 					draggingNode->setIsHitTarget(false); // カーソルに合わせて動かすとドロップ先にホバーできないので一時的にホバー無効にする
 				}
 			}
@@ -78,7 +78,7 @@ namespace noco
 				for (size_t i = 0; i < count; ++i)
 				{
 					const auto& draggingNode = m_draggingNodeList[i];
-					draggingNode->transformEffect().setPosition(Vec2::Zero());
+					draggingNode->transform().setPosition(Vec2::Zero());
 					draggingNode->setIsHitTarget(m_originalIsHitTargets[i]);
 				}
 			}
@@ -105,7 +105,7 @@ namespace noco
 			for (size_t i = 0; i < count; ++i)
 			{
 				const auto& draggingNode = m_draggingNodeList[i];
-				draggingNode->transformEffect().setPosition(Vec2::Zero());
+				draggingNode->transform().setPosition(Vec2::Zero());
 				draggingNode->setIsHitTarget(m_originalIsHitTargets[i]);
 			}
 			if (auto draggingNode = detail::s_canvasUpdateContext.draggingNode.lock(); draggingNode && draggingNode.get() == sourceNode.get())

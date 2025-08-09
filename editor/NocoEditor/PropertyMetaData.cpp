@@ -216,29 +216,29 @@ namespace noco::editor
 			.tooltip = U"垂直方向の配置",
 		};
 		
-		// TransformEffect関連
-		metadata[PropertyKey{ U"TransformEffect", U"position" }] = PropertyMetadata{
+		// Transform関連
+		metadata[PropertyKey{ U"Transform", U"position" }] = PropertyMetadata{
 			.tooltip = U"位置",
-			.tooltipDetail = U"要素の位置を移動させます\nこの値による位置変更はレイアウト計算に影響を与えません\n※TransformEffectはレイアウトの再計算を必要としないため、要素の位置を高速に変更できます。そのため、アニメーション等の用途で利用できます\n※appliesToHitTestがtrueの場合のみ、マウスカーソルのホバー判定に移動後の位置が利用されます",
+			.tooltipDetail = U"要素の位置を移動させます\nこの値による位置変更はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の位置を高速に変更できます。そのため、アニメーション等の用途で利用できます\n※appliesToHitTestがtrueの場合のみ、マウスカーソルのホバー判定に移動後の位置が利用されます",
 		};
-		metadata[PropertyKey{ U"TransformEffect", U"scale" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"scale" }] = PropertyMetadata{
 			.tooltip = U"スケール",
-			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※TransformEffectはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※appliesToHitTestがtrueの場合のみ、マウスカーソルのホバー判定に拡大縮小後のサイズが利用されます",
+			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※appliesToHitTestがtrueの場合のみ、マウスカーソルのホバー判定に拡大縮小後のサイズが利用されます",
 		};
-		metadata[PropertyKey{ U"TransformEffect", U"pivot" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"pivot" }] = PropertyMetadata{
 			.tooltip = U"基準点 (X、Y)",
 			.tooltipDetail = U"scaleによる拡大縮小とrotationによる回転の基準点となる位置を0～1の比率で指定します\n(0,0)は左上、(1,1)は右下を表します",
 		};
-		metadata[PropertyKey{ U"TransformEffect", U"rotation" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"rotation" }] = PropertyMetadata{
 			.tooltip = U"回転角度",
 			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません\n※appliesToHitTestがtrueの場合のみ、マウスカーソルのホバー判定に回転が適用されます",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"TransformEffect", U"appliesToHitTest" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"appliesToHitTest" }] = PropertyMetadata{
 			.tooltip = U"ヒットテスト領域へ適用するか",
-			.tooltipDetail = U"TransformEffectの位置・スケール・回転をマウスのホバー判定に適用するかどうかを指定します\ntrueの場合：position, scale, rotationの変換がホバー判定に反映されます\nfalseの場合：変換は描画のみに適用され、ホバー判定は元の位置で行われます",
+			.tooltipDetail = U"Transformの位置・スケール・回転をマウスのホバー判定に適用するかどうかを指定します\ntrueの場合：position, scale, rotationの変換がホバー判定に反映されます\nfalseの場合：変換は描画のみに適用され、ホバー判定は元の位置で行われます",
 		};
-		metadata[PropertyKey{ U"TransformEffect", U"color" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"color" }] = PropertyMetadata{
 			.tooltip = U"乗算カラー",
 			.tooltipDetail = U"子孫を含む要素の描画に対する乗算カラーを指定します\n親要素が乗算カラーを持つ場合、再帰的に乗算したカラーが適用されます",
 		};
@@ -579,7 +579,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Tween", U"target" }] = PropertyMetadata{
 			.tooltip = U"Tweenアニメーション対象",
-			.tooltipDetail = U"None: アニメーションしない\nPosition: TransformEffectのpositionプロパティ\nScale: TransformEffectのscaleプロパティ\nRotation: TransformEffectのrotationプロパティ\nColor: TransformEffectのcolorプロパティ",
+			.tooltipDetail = U"None: アニメーションしない\nPosition: Transformのpositionプロパティ\nScale: Transformのscaleプロパティ\nRotation: Transformのrotationプロパティ\nColor: Transformのcolorプロパティ",
 			.refreshInspectorOnChange = true,
 		};
 		

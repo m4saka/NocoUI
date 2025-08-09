@@ -247,14 +247,14 @@ namespace noco
 		return std::get_if<AnchorRegion>(&m_region);
 	}
 
-	TransformEffect& Node::transformEffect()
+	Transform& Node::transform()
 	{
-		return m_transformEffect;
+		return m_transform;
 	}
 
-	const TransformEffect& Node::transformEffect() const
+	const Transform& Node::transform() const
 	{
-		return m_transformEffect;
+		return m_transform;
 	}
 
 	const LayoutVariant& Node::childrenLayout() const
@@ -330,7 +330,7 @@ namespace noco
 		{
 			{ U"name", m_name },
 			{ U"region", std::visit([](const auto& region) { return region.toJSON(); }, m_region) },
-			{ U"transformEffect", m_transformEffect.toJSON() },
+			{ U"transform", m_transform.toJSON() },
 			{ U"childrenLayout", std::visit([](const auto& childrenLayout) { return childrenLayout.toJSON(); }, m_childrenLayout) },
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
@@ -401,9 +401,9 @@ namespace noco
 				node->m_region = InlineRegion{};
 			}
 		}
-		if (json.contains(U"transformEffect"))
+		if (json.contains(U"transform"))
 		{
-			node->m_transformEffect.readFromJSON(json[U"transformEffect"]);
+			node->m_transform.readFromJSON(json[U"transform"]);
 		}
 		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
@@ -1414,8 +1414,8 @@ namespace noco
 	{
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
-		// TransformEffectのプロパティ値更新
-		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
+		// Transformのプロパティ値更新
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
 
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
@@ -1435,12 +1435,12 @@ namespace noco
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat)
 	{
-		m_transformEffect.update(m_currentInteractionState, m_activeStyleStates, 0.0);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0);
 		
-		const Vec2& scale = m_transformEffect.scale().value();
-		const Vec2& pivot = m_transformEffect.pivot().value();
-		const Vec2& position = m_transformEffect.position().value();
-		const double rotation = m_transformEffect.rotation().value();
+		const Vec2& scale = m_transform.scale().value();
+		const Vec2& pivot = m_transform.pivot().value();
+		const Vec2& position = m_transform.position().value();
+		const double rotation = m_transform.rotation().value();
 		
 		const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
 		
@@ -1464,7 +1464,7 @@ namespace noco
 		const Vec2 bottomLeft = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		const Vec2& visualScale = m_transformEffect.scale().value();
+		const Vec2& visualScale = m_transform.scale().value();
 		if (visualScale.x < 0 || visualScale.y < 0)
 		{
 			if (visualScale.x < 0 && visualScale.y >= 0)
@@ -1498,7 +1498,7 @@ namespace noco
 		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transformEffect.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -1534,7 +1534,7 @@ namespace noco
 		const Vec2 paddedBottomLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{0, paddedRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transformEffect.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -1647,12 +1647,12 @@ namespace noco
 			scissorRect.emplace(unrotatedRect().asRect());
 		}
 
-		// TransformEffectの乗算カラーを適用
-		const ColorF effectColor = m_transformEffect.color().value();
+		// Transformの乗算カラーを適用
+		const ColorF transformColor = m_transform.color().value();
 		Optional<ScopedColorMul2D> colorMul;
 		const ColorF currentColor = ColorF{ Graphics2D::GetColorMul() };
-		const ColorF newColor = currentColor * effectColor;
-		if (effectColor != ColorF{ 1.0 })
+		const ColorF newColor = currentColor * transformColor;
+		if (transformColor != ColorF{ 1.0 })
 		{
 			colorMul.emplace(newColor);
 		}
@@ -1685,7 +1685,7 @@ namespace noco
 			const double currentRotation = extractRotationFromTransformMat();
 			if (Math::Abs(currentRotation) > 0.0001)
 			{
-				const Vec2 pivotPos = effectPivotPos();
+				const Vec2 pivotPos = transformPivotPos();
 				const Mat3x2 rotationMat = Mat3x2::Rotate(currentRotation, pivotPos);
 				transformer.emplace(rotationMat);
 			}
@@ -1704,7 +1704,7 @@ namespace noco
 					Optional<RectF> horizontalHandleRect = none;
 					Optional<RectF> verticalHandleRect = none;
 					
-					const Vec2 scale = effectScaleInHierarchy();
+					const Vec2 scale = transformScaleInHierarchy();
 
 					// 横スクロールバー
 					if (needHorizontalScrollBar)
@@ -1857,13 +1857,13 @@ namespace noco
 
 	Mat3x2 Node::calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const
 	{
-		if (m_transformEffect.appliesToHitTest().value())
+		if (m_transform.appliesToHitTest().value())
 		{
-			// TransformEffectをHitTestに適用
-			const Vec2& scale = m_transformEffect.scale().value();
-			const Vec2& pivot = m_transformEffect.pivot().value();
-			const Vec2& position = m_transformEffect.position().value();
-			const double rotation = m_transformEffect.rotation().value();
+			// TransformをHitTestに適用
+			const Vec2& scale = m_transform.scale().value();
+			const Vec2& pivot = m_transform.pivot().value();
+			const Vec2& position = m_transform.position().value();
+			const double rotation = m_transform.rotation().value();
 			
 			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
 			
@@ -1885,7 +1885,7 @@ namespace noco
 		}
 	}
 
-	Vec2 Node::effectScaleInHierarchy() const
+	Vec2 Node::transformScaleInHierarchy() const
 	{
 		// 変換行列からスケールを抽出
 		const double scaleX = std::sqrt(m_transformMatInHierarchy._11 * m_transformMatInHierarchy._11 + 
@@ -1915,9 +1915,9 @@ namespace noco
 		}
 	}
 
-	Vec2 Node::effectPivotPos() const
+	Vec2 Node::transformPivotPos() const
 	{
-		const Vec2& pivot = m_transformEffect.pivot().value();
+		const Vec2& pivot = m_transform.pivot().value();
 		const RectF unrotated = unrotatedRect();
 		return unrotated.pos + unrotated.size * pivot;
 	}

@@ -84,7 +84,7 @@
     <ClCompile Include="src\Serialization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\TransformEffect.cpp">
+    <ClCompile Include="src\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Utility.cpp">
@@ -224,7 +224,7 @@
     <ClInclude Include="include\NocoUI\Smoothing.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\TransformEffect.hpp">
+    <ClInclude Include="include\NocoUI\Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Utility.hpp">

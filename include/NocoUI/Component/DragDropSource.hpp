@@ -10,7 +10,7 @@ namespace noco
 	{
 	private:
 		double m_dragThreshold;
-		bool m_movesTransformEffectPosition;
+		bool m_movesTransformPosition;
 		bool m_isPressed = false;
 		bool m_isDragging = false;
 		bool m_prevIsDragging = false;
@@ -23,10 +23,10 @@ namespace noco
 		Array<std::shared_ptr<Node>> onStartDragging(const std::shared_ptr<Node>& node) const;
 
 	public:
-		explicit DragDropSource(std::function<Array<std::shared_ptr<Node>>()> onStartDragging = nullptr, double dragThreshold = 5.0, bool movesTransformEffectPosition = true)
+		explicit DragDropSource(std::function<Array<std::shared_ptr<Node>>()> onStartDragging = nullptr, double dragThreshold = 5.0, bool movesTransformPosition = true)
 			: ComponentBase{ {} }
 			, m_dragThreshold{ dragThreshold }
-			, m_movesTransformEffectPosition{ movesTransformEffectPosition }
+			, m_movesTransformPosition{ movesTransformPosition }
 			, m_onStartDragging{ std::move(onStartDragging) }
 		{
 		}

@@ -32,8 +32,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 100, 100 });
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setPosition(Vec2{ 100, 100 });
+		node->transform().setAppliesToHitTest(true);
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -53,14 +53,14 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 100, 100 });
-		node->transformEffect().setAppliesToHitTest(false); // 明示的にfalseに設定
+		node->transform().setPosition(Vec2{ 100, 100 });
+		node->transform().setAppliesToHitTest(false); // 明示的にfalseに設定
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
 		
-		// 元の位置でヒットする（TransformEffectが適用されない）
+		// 元の位置でヒットする（Transformが適用されない）
 		auto hitNode = node->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hitNode == node);
 		
@@ -74,8 +74,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setPosition(Vec2{ 100, 100 });
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setPosition(Vec2{ 100, 100 });
+		node->transform().setAppliesToHitTest(true);
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -95,14 +95,14 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transformEffect().setScale(Vec2{ 2.0, 2.0 }); // 2倍にスケール
+		node->transform().setScale(Vec2{ 2.0, 2.0 }); // 2倍にスケール
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
 		
 		// appliesToHitTest = false（デフォルト）
-		node->transformEffect().setAppliesToHitTest(false);
+		node->transform().setAppliesToHitTest(false);
 		canvas->update();
 		
 		// 元のサイズの範囲内でヒット
@@ -114,7 +114,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missScaled == nullptr);
 		
 		// appliesToHitTest = true
-		node->transformEffect().setAppliesToHitTest(true);
+		node->transform().setAppliesToHitTest(true);
 		canvas->update();
 		
 		// スケール後の範囲でヒット（中心から拡大されるので-50～150の範囲）
@@ -189,7 +189,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		child->transformEffect().setPosition(Vec2{ 50, 50 }); // 部分的に親の外に出る
+		child->transform().setPosition(Vec2{ 50, 50 }); // 部分的に親の外に出る
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);

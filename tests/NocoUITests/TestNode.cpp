@@ -109,11 +109,11 @@ TEST_CASE("Node properties and state management", "[Node]")
 		canvas->rootNode()->addChild(node);
 		
 		// 初期値の確認
-		auto& transform = node->transformEffect();
+		auto& transform = node->transform();
 		REQUIRE(transform.position().value() == Vec2{ 0, 0 });
 		REQUIRE(transform.scale().value() == Vec2{ 1, 1 });
 		
-		// TransformEffectを使用して変換を設定
+		// Transformを使用して変換を設定
 		transform.setPosition(Vec2{ 100, 200 });
 		transform.setScale(Vec2{ 2.0, 3.0 });
 		
@@ -296,18 +296,18 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		parent->addChild(child);
 		
 		// 初期値の確認
-		REQUIRE(parent->transformEffect().position().value() == Vec2{ 0, 0 });
-		REQUIRE(child->transformEffect().position().value() == Vec2{ 0, 0 });
+		REQUIRE(parent->transform().position().value() == Vec2{ 0, 0 });
+		REQUIRE(child->transform().position().value() == Vec2{ 0, 0 });
 		
-		parent->transformEffect().setPosition(Vec2{ 100, 100 });
-		child->transformEffect().setPosition(Vec2{ 50, 50 });
+		parent->transform().setPosition(Vec2{ 100, 100 });
+		child->transform().setPosition(Vec2{ 50, 50 });
 		
 		// Canvasをupdateして変換を適用
 		canvas->update();
 		
 		// 更新後の座標の確認
-		REQUIRE(parent->transformEffect().position().value() == Vec2{ 100, 100 });
-		REQUIRE(child->transformEffect().position().value() == Vec2{ 50, 50 });
+		REQUIRE(parent->transform().position().value() == Vec2{ 100, 100 });
+		REQUIRE(child->transform().position().value() == Vec2{ 50, 50 });
 	}
 
 	SECTION("Scale inheritance")
@@ -320,18 +320,18 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		parent->addChild(child);
 		
 		// 初期値の確認
-		REQUIRE(parent->transformEffect().scale().value() == Vec2{ 1, 1 });
-		REQUIRE(child->transformEffect().scale().value() == Vec2{ 1, 1 });
+		REQUIRE(parent->transform().scale().value() == Vec2{ 1, 1 });
+		REQUIRE(child->transform().scale().value() == Vec2{ 1, 1 });
 		
-		parent->transformEffect().setScale(Vec2{ 2.0, 2.0 });
-		child->transformEffect().setScale(Vec2{ 0.5, 0.5 });
+		parent->transform().setScale(Vec2{ 2.0, 2.0 });
+		child->transform().setScale(Vec2{ 0.5, 0.5 });
 		
 		// Canvasをupdateして変換を適用
 		canvas->update();
 		
 		// 更新後のスケールの確認
-		REQUIRE(parent->transformEffect().scale().value() == Vec2{ 2.0, 2.0 });
-		REQUIRE(child->transformEffect().scale().value() == Vec2{ 0.5, 0.5 });
+		REQUIRE(parent->transform().scale().value() == Vec2{ 2.0, 2.0 });
+		REQUIRE(child->transform().scale().value() == Vec2{ 0.5, 0.5 });
 	}
 
 	SECTION("Rotation inheritance")
@@ -344,19 +344,19 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		parent->addChild(child);
 		
 		// 初期値の確認
-		REQUIRE(parent->transformEffect().position().value() == Vec2{ 0, 0 });
-		REQUIRE(child->transformEffect().position().value() == Vec2{ 0, 0 });
+		REQUIRE(parent->transform().position().value() == Vec2{ 0, 0 });
+		REQUIRE(child->transform().position().value() == Vec2{ 0, 0 });
 		
-		// TransformEffectにはangleがないので、positionとscaleのみテスト
-		parent->transformEffect().setPosition(Vec2{ 10, 10 });
-		child->transformEffect().setPosition(Vec2{ 20, 20 });
+		// Transformにはangleがないので、positionとscaleのみテスト
+		parent->transform().setPosition(Vec2{ 10, 10 });
+		child->transform().setPosition(Vec2{ 20, 20 });
 		
 		// Canvasをupdateして変換を適用
 		canvas->update();
 		
 		// 更新後の位置の確認
-		REQUIRE(parent->transformEffect().position().value() == Vec2{ 10, 10 });
-		REQUIRE(child->transformEffect().position().value() == Vec2{ 20, 20 });
+		REQUIRE(parent->transform().position().value() == Vec2{ 10, 10 });
+		REQUIRE(child->transform().position().value() == Vec2{ 20, 20 });
 	}
 }
 
@@ -427,8 +427,8 @@ TEST_CASE("Node scrolling", "[Node]")
 	}
 }
 
-// TransformEffectのテスト
-TEST_CASE("TransformEffect", "[Node][TransformEffect]")
+// Transformのテスト
+TEST_CASE("Transform", "[Node][Transform]")
 {
 	SECTION("Basic transform effects")
 	{
@@ -437,23 +437,23 @@ TEST_CASE("TransformEffect", "[Node][TransformEffect]")
 		canvas->rootNode()->addChild(node);
 		
 		// 初期値の確認
-		auto& effect = node->transformEffect();
-		REQUIRE(effect.position().value() == Vec2{ 0, 0 });
-		REQUIRE(effect.scale().value() == Vec2{ 1, 1 });
-		REQUIRE(effect.pivot().value() == Vec2{ 0.5, 0.5 });
+		auto& transform = node->transform();
+		REQUIRE(transform.position().value() == Vec2{ 0, 0 });
+		REQUIRE(transform.scale().value() == Vec2{ 1, 1 });
+		REQUIRE(transform.pivot().value() == Vec2{ 0.5, 0.5 });
 		
-		// トランスフォームエフェクトの設定
-		effect.setPosition(Vec2{ 10, 20 });
-		effect.setScale(Vec2{ 1.5, 1.5 });
-		effect.setPivot(Vec2{ 0.5, 0.5 });
+		// Transformの設定
+		transform.setPosition(Vec2{ 10, 20 });
+		transform.setScale(Vec2{ 1.5, 1.5 });
+		transform.setPivot(Vec2{ 0.5, 0.5 });
 		
 		// Canvasをupdateして変換を適用
 		canvas->update();
 		
-		// 更新後のエフェクトの確認
-		REQUIRE(node->transformEffect().position().value() == Vec2{ 10, 20 });
-		REQUIRE(node->transformEffect().scale().value() == Vec2{ 1.5, 1.5 });
-		REQUIRE(node->transformEffect().pivot().value() == Vec2{ 0.5, 0.5 });
+		// 更新後のTransformの確認
+		REQUIRE(node->transform().position().value() == Vec2{ 10, 20 });
+		REQUIRE(node->transform().scale().value() == Vec2{ 1.5, 1.5 });
+		REQUIRE(node->transform().pivot().value() == Vec2{ 0.5, 0.5 });
 	}
 }
 
