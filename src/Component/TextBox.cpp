@@ -326,7 +326,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateInput(const std::shared_ptr<Node>& node)
+	void TextBox::updateKeyInput(const std::shared_ptr<Node>& node)
 	{
 		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
@@ -648,7 +648,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateInputInactive(const std::shared_ptr<Node>& node)
+	void TextBox::updateKeyInputInactive(const std::shared_ptr<Node>& node)
 	{
 		if (m_prevActiveInHierarchy)
 		{

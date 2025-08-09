@@ -369,7 +369,7 @@ namespace noco
 		const bool currentDragScrollingWithThreshold = dragScrollingNode && dragScrollingNode->m_dragThresholdExceeded;
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
-		m_rootNode->updateInput();
+		m_rootNode->updateKeyInput();
 		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), {});
 		m_rootNode->lateUpdate();
 		m_rootNode->postLateUpdate(Scene::DeltaTime());

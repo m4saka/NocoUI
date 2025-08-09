@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
-#include "InputBlocker.hpp"
+#include "KeyInputBlocker.hpp"
 
 namespace noco::editor
 {
@@ -80,7 +80,7 @@ namespace noco::editor
 						.sizeDeltaPivot = Anchor::TopLeft,
 					}))
 		{
-			m_screenMaskNode->emplaceComponent<InputBlocker>();
+			m_screenMaskNode->emplaceComponent<KeyInputBlocker>();
 			m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
 			m_rootNode->setBoxChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);

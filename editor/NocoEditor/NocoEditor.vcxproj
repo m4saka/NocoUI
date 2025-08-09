@@ -245,6 +245,7 @@
     <ClInclude Include="EnumPropertyComboBox.hpp" />
     <ClInclude Include="Hierarchy.hpp" />
     <ClInclude Include="Inspector.hpp" />
+    <ClInclude Include="KeyInputBlocker.hpp" />
     <ClInclude Include="LRTBPropertyTextBox.hpp" />
     <ClInclude Include="MenuBar.hpp" />
     <ClInclude Include="PropertyLabelDragger.hpp" />

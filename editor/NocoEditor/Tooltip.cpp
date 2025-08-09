@@ -128,10 +128,10 @@ namespace noco::editor
 		}
 	}
 
-	void TooltipOpener::updateInput(const std::shared_ptr<Node>& node)
+	void TooltipOpener::updateKeyInput(const std::shared_ptr<Node>& node)
 	{
 		// インプットがブロックされている場合やクリックされた瞬間は何もしない
-		if (CurrentFrame::HasInputBlocked() || MouseL.down() || MouseM.down() || MouseR.down())
+		if (CurrentFrame::HasKeyInputBlocked() || MouseL.down() || MouseM.down() || MouseR.down())
 		{
 			// ホバーが外れたらツールチップを破棄
 			if (m_isShowing)

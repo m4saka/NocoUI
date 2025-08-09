@@ -10,7 +10,7 @@ namespace noco
 
 	struct CanvasUpdateContext
 	{
-		bool inputBlocked = false;
+		bool keyInputBlocked = false;
 		std::weak_ptr<Node> hoveredNode;
 		std::weak_ptr<Node> scrollableHoveredNode;
 		std::weak_ptr<ITextBox> editingTextBox;
@@ -22,7 +22,7 @@ namespace noco
 
 		void clear()
 		{
-			inputBlocked = false;
+			keyInputBlocked = false;
 			editingTextBox.reset();
 			hoveredNode.reset();
 			scrollableHoveredNode.reset();
@@ -108,15 +108,15 @@ namespace noco
 			return detail::s_canvasUpdateContext.draggingNode.lock();
 		}
 
-		inline void BlockInput()
+		inline void BlockKeyInput()
 		{
-			detail::s_canvasUpdateContext.inputBlocked = true;
+			detail::s_canvasUpdateContext.keyInputBlocked = true;
 		}
 
 		[[nodiscard]]
-		inline bool HasInputBlocked()
+		inline bool HasKeyInputBlocked()
 		{
-			return detail::s_canvasUpdateContext.inputBlocked;
+			return detail::s_canvasUpdateContext.keyInputBlocked;
 		}
 		
 		[[nodiscard]]

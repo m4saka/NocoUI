@@ -61,7 +61,7 @@ namespace noco
 		{
 		}
 
-		void updateInput(const std::shared_ptr<Node>& node) override
+		void updateKeyInput(const std::shared_ptr<Node>& node) override
 		{
 			if (!m_enabledWhileTextEditing && IsEditingTextBox())
 			{

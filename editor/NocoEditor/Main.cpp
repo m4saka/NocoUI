@@ -247,7 +247,7 @@ public:
 
 		// ショートカットキー
 		const bool isWindowActive = Window::GetState().focused;
-		if (isWindowActive && !CurrentFrame::HasInputBlocked() && !IsDraggingNode() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
+		if (isWindowActive && !CurrentFrame::HasKeyInputBlocked() && !IsDraggingNode() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
 		{
 			const bool ctrl = KeyControl.pressed();
 			const bool alt = KeyAlt.pressed();

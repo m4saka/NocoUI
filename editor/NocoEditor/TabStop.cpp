@@ -30,7 +30,7 @@ namespace noco::editor
 		return true;
 	}
 	
-	void TabStop::updateInput(const std::shared_ptr<noco::Node>& node)
+	void TabStop::updateKeyInput(const std::shared_ptr<noco::Node>& node)
 	{
 		// 現在フォーカスされているノードかチェック
 		const bool isFocused = (noco::CurrentFrame::GetFocusedNode() == node);
@@ -39,7 +39,7 @@ namespace noco::editor
 		if (isFocused && KeyTab.down())
 		{
 			KeyTab.clearInput();
-			CurrentFrame::BlockInput();
+			CurrentFrame::BlockKeyInput();
 
 			const bool reverse = KeyShift.pressed();
 			

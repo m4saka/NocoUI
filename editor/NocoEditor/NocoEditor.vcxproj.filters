@@ -455,6 +455,9 @@
     <ClInclude Include="Inspector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KeyInputBlocker.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="PropertyMetaData.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

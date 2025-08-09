@@ -23,11 +23,11 @@ namespace noco
 
 		virtual ~ComponentBase() = 0;
 
-		virtual void updateInput(const std::shared_ptr<Node>&)
+		virtual void updateKeyInput(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void updateInputInactive(const std::shared_ptr<Node>&)
+		virtual void updateKeyInputInactive(const std::shared_ptr<Node>&)
 		{
 		}
 

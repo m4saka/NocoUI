@@ -300,7 +300,7 @@ namespace noco
 
 		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling = IsScrollingYN::No);
 
-		void updateInput();
+		void updateKeyInput();
 
 		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates = {});
 
@@ -532,7 +532,7 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> clone() const;
 
-		std::shared_ptr<Node> addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater);
+		std::shared_ptr<Node> addKeyInputUpdater(std::function<void(const std::shared_ptr<Node>&)> keyInputUpdater);
 
 		std::shared_ptr<Node> addUpdater(std::function<void(const std::shared_ptr<Node>&)> updater);
 

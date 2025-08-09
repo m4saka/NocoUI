@@ -40,6 +40,6 @@ namespace noco::editor
 			return m_previousNode.lock();
 		}
 
-		void updateInput(const std::shared_ptr<noco::Node>& node) override;
+		void updateKeyInput(const std::shared_ptr<noco::Node>& node) override;
 	};
 }

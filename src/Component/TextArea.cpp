@@ -414,7 +414,7 @@ namespace noco
 		}
 	}
 
-	void TextArea::updateInput(const std::shared_ptr<Node>& node)
+	void TextArea::updateKeyInput(const std::shared_ptr<Node>& node)
 	{
 		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
@@ -913,7 +913,7 @@ namespace noco
 		}
 	}
 
-	void TextArea::updateInputInactive(const std::shared_ptr<Node>& node)
+	void TextArea::updateKeyInputInactive(const std::shared_ptr<Node>& node)
 	{
 		if (m_prevActiveInHierarchy)
 		{

@@ -125,7 +125,7 @@
     <ClInclude Include="include\NocoUI\Component\EventTrigger.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Component\InputUpdaterComponent.hpp">
+    <ClInclude Include="include\NocoUI\Component\KeyInputUpdaterComponent.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\ITextBox.hpp">

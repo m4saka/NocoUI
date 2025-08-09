@@ -4,19 +4,19 @@
 
 namespace noco
 {
-	class InputUpdaterComponent : public ComponentBase
+	class KeyInputUpdaterComponent : public ComponentBase
 	{
 	private:
 		std::function<void(const std::shared_ptr<Node>&)> m_function;
 
 	public:
-		explicit InputUpdaterComponent(std::function<void(const std::shared_ptr<Node>&)> function)
+		explicit KeyInputUpdaterComponent(std::function<void(const std::shared_ptr<Node>&)> function)
 			: ComponentBase{ {} }
 			, m_function{ std::move(function) }
 		{
 		}
 
-		void updateInput(const std::shared_ptr<Node>& node) override
+		void updateKeyInput(const std::shared_ptr<Node>& node) override
 		{
 			if (m_function)
 			{

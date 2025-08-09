@@ -2,7 +2,6 @@
 
 namespace noco
 {
-	// 手前のものを後で実行する必要があるため、updateInputではなくupdateで実行
 	void CursorChanger::update(const std::shared_ptr<Node>& node)
 	{
 		const bool recursive = m_recursive.value();

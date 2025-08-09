@@ -8,7 +8,7 @@
 #include "CheckboxToggler.hpp"
 #include "EditorButton.hpp"
 #include "EditorYN.hpp"
-#include "InputBlocker.hpp"
+#include "KeyInputBlocker.hpp"
 
 namespace noco::editor
 {
@@ -83,7 +83,7 @@ namespace noco::editor
 				}))
 			, m_onResult(onResult)
 		{
-			m_screenMaskNode->emplaceComponent<InputBlocker>();
+			m_screenMaskNode->emplaceComponent<KeyInputBlocker>();
 
 			// ダイアログ背面を暗くする
 			m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });

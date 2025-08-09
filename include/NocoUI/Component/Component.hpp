@@ -8,7 +8,7 @@
 #include "TextArea.hpp"
 #include "EventTrigger.hpp"
 #include "Placeholder.hpp"
-#include "InputUpdaterComponent.hpp"
+#include "KeyInputUpdaterComponent.hpp"
 #include "UpdaterComponent.hpp"
 #include "DrawerComponent.hpp"
 #include "DragDropSource.hpp"

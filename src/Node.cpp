@@ -1145,7 +1145,7 @@ namespace noco
 		}
 	}
 
-	void Node::updateInput()
+	void Node::updateKeyInput()
 	{
 		const auto thisNode = shared_from_this();
 
@@ -1158,7 +1158,7 @@ namespace noco
 		}
 		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
 		{
-			(*it)->updateInput();
+			(*it)->updateKeyInput();
 		}
 		m_childrenTempBuffer.clear();
 
@@ -1171,13 +1171,13 @@ namespace noco
 		}
 		for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
 		{
-			if (m_activeInHierarchy && (!detail::s_canvasUpdateContext.inputBlocked)) // updateInput内で更新される場合があるためループ内で分岐が必要
+			if (m_activeInHierarchy && (!detail::s_canvasUpdateContext.keyInputBlocked)) // updateKeyInput内で更新される場合があるためループ内で分岐が必要
 			{
-				(*it)->updateInput(thisNode);
+				(*it)->updateKeyInput(thisNode);
 			}
 			else
 			{
-				(*it)->updateInputInactive(thisNode);
+				(*it)->updateKeyInputInactive(thisNode);
 			}
 		}
 		m_componentTempBuffer.clear();
@@ -2550,9 +2550,9 @@ namespace noco
 		return CreateFromJSON(toJSON());
 	}
 
-	std::shared_ptr<Node> Node::addInputUpdater(std::function<void(const std::shared_ptr<Node>&)> inputUpdater)
+	std::shared_ptr<Node> Node::addKeyInputUpdater(std::function<void(const std::shared_ptr<Node>&)> keyInputUpdater)
 	{
-		emplaceComponent<InputUpdaterComponent>(std::move(inputUpdater));
+		emplaceComponent<KeyInputUpdaterComponent>(std::move(keyInputUpdater));
 		return shared_from_this();
 	}
 

@@ -23,7 +23,7 @@ namespace noco::editor
 		explicit TooltipOpener(const std::shared_ptr<Canvas>& overlayCanvas, StringView tooltipText, StringView tooltipDetailText = U"");
 		~TooltipOpener();
 
-		void updateInput(const std::shared_ptr<Node>& node) override;
+		void updateKeyInput(const std::shared_ptr<Node>& node) override;
 		void setTooltipText(StringView text, StringView detailText = U"");
 	};
 }
