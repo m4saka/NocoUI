@@ -575,10 +575,10 @@ namespace noco::editor
 		
 		// Tween
 		metadata[PropertyKey{ U"Tween", U"active" }] = PropertyMetadata{
-			.tooltip = U"アニメーションの再生状態",
+			.tooltip = U"Tweenアニメーションの再生状態",
 		};
 		metadata[PropertyKey{ U"Tween", U"target" }] = PropertyMetadata{
-			.tooltip = U"アニメーション対象",
+			.tooltip = U"Tweenアニメーション対象",
 			.tooltipDetail = U"None: アニメーションしない\nPosition: TransformEffectのpositionプロパティ\nScale: TransformEffectのscaleプロパティ\nRotation: TransformEffectのrotationプロパティ\nColor: TransformEffectのcolorプロパティ",
 			.refreshInspectorOnChange = true,
 		};
