@@ -1445,14 +1445,14 @@ namespace noco
 		const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
 		
 		// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
-		Mat3x2 selfTransform = Mat3x2::Translate(position);
+		Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
 		
 		if (rotation != 0.0)
 		{
-			selfTransform = Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos) * selfTransform;
+			selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 		}
 		
-		selfTransform = Mat3x2::Scale(scale, pivotPos) * selfTransform;
+		selfTransform = selfTransform * Mat3x2::Translate(position);
 		
 		// 親の変換と合成（親の変換が先に適用される）
 		m_transformMatInHierarchy = selfTransform * parentTransformMat;
@@ -1868,14 +1868,14 @@ namespace noco
 			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
 			
 			// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
-			Mat3x2 selfTransform = Mat3x2::Translate(position);
+			Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
 			
 			if (rotation != 0.0)
 			{
-				selfTransform = Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos) * selfTransform;
+				selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 			}
 			
-			selfTransform = Mat3x2::Scale(scale, pivotPos) * selfTransform;
+			selfTransform = selfTransform * Mat3x2::Translate(position);
 			
 			return selfTransform * parentHitTestMat;
 		}
