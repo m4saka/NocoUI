@@ -16,7 +16,7 @@
     <Filter Include="Header Files\Component">
       <UniqueIdentifier>{ed574432-6bf1-414a-8efe-d1e3f985d111}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Constraint">
+    <Filter Include="Header Files\Region">
       <UniqueIdentifier>{95f10eaf-a1e6-491a-a360-2b0280f11d2e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\detail">
@@ -155,14 +155,14 @@
     <ClInclude Include="include\NocoUI\Component\UpdaterComponent.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Constraint\AnchorConstraint.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\NocoUI\Region\AnchorRegion.hpp">
+      <Filter>Header Files\Region</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Constraint\BoxConstraint.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\NocoUI\Region\InlineRegion.hpp">
+      <Filter>Header Files\Region</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Constraint\Constraint.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\NocoUI\Region\Region.hpp">
+      <Filter>Header Files\Region</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp">
       <Filter>Header Files</Filter>

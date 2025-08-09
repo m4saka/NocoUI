@@ -47,30 +47,30 @@ namespace noco
 				continue;
 			}
 
-			if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+			if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 			{
-				const RectF measuredRect = pBoxConstraint->applyConstraint(
+				const RectF measuredRect = pInlineRegion->applyRegion(
 					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
 				measureInfo.measuredChildren.push_back(
 					MeasureInfo::MeasuredChild
 					{
 						.size = measuredRect.size,
-						.margin = pBoxConstraint->margin,
+						.margin = pInlineRegion->margin,
 					});
 
-				const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
-				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
+				const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
+				const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
 
 				// 行の最初の要素でない場合はspacing.xの余白を追加
 				double childWWithSpacing = childW;
-				if (measureInfo.lines.back().boxConstraintChildExists && !measureInfo.lines.back().childIndices.empty())
+				if (measureInfo.lines.back().inlineRegionChildExists && !measureInfo.lines.back().childIndices.empty())
 				{
 					childWWithSpacing += spacing.x;
 				}
 
 				// 行がはみ出す場合は改行
-				if (measureInfo.lines.back().boxConstraintChildExists &&
+				if (measureInfo.lines.back().inlineRegionChildExists &&
 					currentX + childWWithSpacing > availableWidth)
 				{
 					// 行ごとの幅・高さを記録
@@ -87,15 +87,15 @@ namespace noco
 				}
 
 				// 行の最初の要素でない場合はspacing.xの余白を追加
-				if (measureInfo.lines.back().boxConstraintChildExists && !measureInfo.lines.back().childIndices.empty())
+				if (measureInfo.lines.back().inlineRegionChildExists && !measureInfo.lines.back().childIndices.empty())
 				{
 					currentX += spacing.x;
 				}
 
 				measureInfo.lines.back().childIndices.push_back(i);
-				measureInfo.lines.back().boxConstraintChildExists = true;
+				measureInfo.lines.back().inlineRegionChildExists = true;
 				currentX += childW;
-				currentLineTotalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
+				currentLineTotalFlexibleWeight += Max(pInlineRegion->flexibleWeight, 0.0);
 
 				if (childH > currentLineMaxHeight)
 				{
@@ -104,7 +104,7 @@ namespace noco
 			}
 			else
 			{
-				// BoxConstraint以外はオフセットに関与しないので、計測結果は空にする
+				// InlineRegion以外はオフセットに関与しないので、計測結果は空にする
 				measureInfo.measuredChildren.emplace_back();
 				measureInfo.lines.back().childIndices.push_back(i);
 			}
@@ -121,7 +121,7 @@ namespace noco
 		// flexibleWeightが設定されている場合は残りの幅を分配
 		for (auto& line : measureInfo.lines)
 		{
-			if (!line.boxConstraintChildExists || line.totalFlexibleWeight <= 0.0)
+			if (!line.inlineRegionChildExists || line.totalFlexibleWeight <= 0.0)
 			{
 				// flexibleWeight不使用の行はスキップ
 				continue;
@@ -144,13 +144,13 @@ namespace noco
 				{
 					continue;
 				}
-				if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+				if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 				{
-					if (pBoxConstraint->flexibleWeight <= 0.0)
+					if (pInlineRegion->flexibleWeight <= 0.0)
 					{
 						continue;
 					}
-					measureInfo.measuredChildren[index].size.x += remainingWidth * pBoxConstraint->flexibleWeight / line.totalFlexibleWeight;
+					measureInfo.measuredChildren[index].size.x += remainingWidth * pInlineRegion->flexibleWeight / line.totalFlexibleWeight;
 				}
 			}
 			line.totalWidth = availableWidth;
@@ -196,27 +196,27 @@ namespace noco
 		return { maxWidth, totalHeight };
 	}
 
-	void FlowLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
+	void FlowLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
 	{
 		const auto [maxWidth, totalHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
-		if (const auto pBoxConstraint = node.boxConstraint())
+		if (const auto pInlineRegion = node.inlineRegion())
 		{
-			node.setConstraint(
-				BoxConstraint
+			node.setRegion(
+				InlineRegion
 				{
-					.sizeRatio = Vec2{ fitsWidth ? 0.0 : pBoxConstraint->sizeRatio.x, fitsHeight ? 0.0 : pBoxConstraint->sizeRatio.y },
-					.sizeDelta = Vec2{ fitsWidth ? maxWidth : pBoxConstraint->sizeDelta.x, fitsHeight ? totalHeight : pBoxConstraint->sizeDelta.y },
-					.margin = pBoxConstraint->margin,
-					.maxWidth = pBoxConstraint->maxWidth,
-					.maxHeight = pBoxConstraint->maxHeight,
+					.sizeRatio = Vec2{ fitsWidth ? 0.0 : pInlineRegion->sizeRatio.x, fitsHeight ? 0.0 : pInlineRegion->sizeRatio.y },
+					.sizeDelta = Vec2{ fitsWidth ? maxWidth : pInlineRegion->sizeDelta.x, fitsHeight ? totalHeight : pInlineRegion->sizeDelta.y },
+					.margin = pInlineRegion->margin,
+					.maxWidth = pInlineRegion->maxWidth,
+					.maxHeight = pInlineRegion->maxHeight,
 				});
 		}
 		else
 		{
-			node.setConstraint(
-				BoxConstraint
+			node.setRegion(
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ fitsWidth ? maxWidth : node.layoutAppliedRect().w, fitsHeight ? totalHeight : node.layoutAppliedRect().h },
 					.maxWidth = none,
@@ -232,7 +232,7 @@ namespace noco
 
 	RectF FlowLayout::executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const
 	{
-		if (const auto pBoxConstraint = child->boxConstraint())
+		if (const auto pInlineRegion = child->inlineRegion())
 		{
 			const double w = measuredChild.size.x;
 			const double h = measuredChild.size.y;
@@ -249,14 +249,14 @@ namespace noco
 			}
 			return RectF{ pos, measuredChild.size };
 		}
-		else if (const auto pAnchorConstraint = child->anchorConstraint())
+		else if (const auto pAnchorRegion = child->anchorRegion())
 		{
-			return pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
+			return pAnchorRegion->applyRegion(parentRect, Vec2::Zero());
 		}
 		else
 		{
 			// TODO: コンパイルエラーにする
-			throw Error{ U"FlowLayout::executeChild: Invalid constraint" };
+			throw Error{ U"FlowLayout::executeChild: Invalid region" };
 		}
 	}
 }

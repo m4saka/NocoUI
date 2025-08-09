@@ -29,53 +29,53 @@ namespace noco
 	{
 		double totalHeight = padding.top + padding.bottom;
 		double maxWidth = 0.0;
-		bool isFirstBoxConstraintChild = true;
+		bool isFirstInlineRegionChild = true;
 		for (const auto& child : children)
 		{
 			if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
 			{
 				continue;
 			}
-			if (const auto pBoxConstraint = child->boxConstraint())
+			if (const auto pInlineRegion = child->inlineRegion())
 			{
-				const RectF measuredRect = pBoxConstraint->applyConstraint(
+				const RectF measuredRect = pInlineRegion->applyRegion(
 					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
-				const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
-				const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
-				if (!isFirstBoxConstraintChild)
+				const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
+				const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
+				if (!isFirstInlineRegionChild)
 				{
 					totalHeight += spacing;
 				}
 				totalHeight += childH;
 				maxWidth = Max(maxWidth, childW);
-				isFirstBoxConstraintChild = false;
+				isFirstInlineRegionChild = false;
 			}
 		}
 		return { maxWidth + padding.left + padding.right, totalHeight };
 	}
 
-	void VerticalLayout::setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
+	void VerticalLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
 	{
 		const auto [maxWidth, totalHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
 		const bool fitsHeight = fitTarget == FitTarget::HeightOnly || fitTarget == FitTarget::Both;
-		if (const auto pBoxConstraint = node.boxConstraint())
+		if (const auto pInlineRegion = node.inlineRegion())
 		{
-			node.setConstraint(
-				BoxConstraint
+			node.setRegion(
+				InlineRegion
 				{
-					.sizeRatio = Vec2{ fitsWidth ? 0.0 : pBoxConstraint->sizeRatio.x, fitsHeight ? 0.0 : pBoxConstraint->sizeRatio.y },
-					.sizeDelta = Vec2{ fitsWidth ? maxWidth : pBoxConstraint->sizeDelta.x, fitsHeight ? totalHeight : pBoxConstraint->sizeDelta.y },
-					.margin = pBoxConstraint->margin,
-					.maxWidth = pBoxConstraint->maxWidth,
-					.maxHeight = pBoxConstraint->maxHeight,
+					.sizeRatio = Vec2{ fitsWidth ? 0.0 : pInlineRegion->sizeRatio.x, fitsHeight ? 0.0 : pInlineRegion->sizeRatio.y },
+					.sizeDelta = Vec2{ fitsWidth ? maxWidth : pInlineRegion->sizeDelta.x, fitsHeight ? totalHeight : pInlineRegion->sizeDelta.y },
+					.margin = pInlineRegion->margin,
+					.maxWidth = pInlineRegion->maxWidth,
+					.maxHeight = pInlineRegion->maxHeight,
 				});
 		}
 		else
 		{
-			node.setConstraint(
-				BoxConstraint
+			node.setRegion(
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ fitsWidth ? maxWidth : node.layoutAppliedRect().w, fitsHeight ? totalHeight : node.layoutAppliedRect().h },
 					.maxWidth = none,

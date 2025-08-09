@@ -61,7 +61,7 @@ namespace noco::editor
 			: m_editorOverlayCanvas(editorOverlayCanvas)
 			, m_screenMaskNode(editorOverlayCanvas->rootNode()->emplaceChild(
 				U"{}_ScreenMask"_fmt(name),
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -71,7 +71,7 @@ namespace noco::editor
 				}))
 				, m_rootNode(m_screenMaskNode->emplaceChild(
 					U"{}_Root"_fmt(name),
-					AnchorConstraint
+					AnchorRegion
 					{
 						.anchorMin = Anchor::TopLeft,
 						.anchorMax = Anchor::TopLeft,
@@ -83,7 +83,7 @@ namespace noco::editor
 			m_screenMaskNode->emplaceComponent<KeyInputBlocker>();
 			m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
 
-			m_rootNode->setBoxChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
+			m_rootNode->setChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
 			m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
 			m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
@@ -98,11 +98,11 @@ namespace noco::editor
 			m_elementNodes.reserve(m_elements.size());
 			m_fnOnHide = std::move(fnOnHide);
 
-			if (const AnchorConstraint* pAnchorConstraint = m_rootNode->anchorConstraint())
+			if (const AnchorRegion* pAnchorRegion = m_rootNode->anchorRegion())
 			{
-				AnchorConstraint newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta.x = menuItemWidth;
-				m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
+				AnchorRegion newRegion = *pAnchorRegion;
+				newRegion.sizeDelta.x = menuItemWidth;
+				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
 			}
 
 			for (size_t i = 0; i < m_elements.size(); ++i)
@@ -112,7 +112,7 @@ namespace noco::editor
 					// 項目
 					const auto itemNode = m_rootNode->emplaceChild(
 						U"MenuItem_{}"_fmt(i),
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ 0, MenuItemHeight },
@@ -148,7 +148,7 @@ namespace noco::editor
 					// チェック可能な項目
 					const auto itemNode = m_rootNode->emplaceChild(
 						U"CheckableMenuItem_{}"_fmt(i),
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ 0, MenuItemHeight },
@@ -192,7 +192,7 @@ namespace noco::editor
 					// セパレータ
 					const auto separatorNode = m_rootNode->emplaceChild(
 						U"Separator",
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ 0, 8 },
@@ -202,7 +202,7 @@ namespace noco::editor
 						RefreshesLayoutYN::No);
 					separatorNode->emplaceChild(
 						U"SeparatorLine",
-						AnchorConstraint
+						AnchorRegion
 						{
 							.anchorMin = Anchor::MiddleLeft,
 							.anchorMax = Anchor::MiddleRight,
@@ -230,11 +230,11 @@ namespace noco::editor
 			const double maxMenuHeight = Scene::Height();
 			const double menuHeight = std::min(contentHeight, maxMenuHeight);
 
-			if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
+			if (const auto pAnchorRegion = m_rootNode->anchorRegion())
 			{
-				auto newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta.y = menuHeight;
-				m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
+				auto newRegion = *pAnchorRegion;
+				newRegion.sizeDelta.y = menuHeight;
+				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
 			}
 
 			// 下端にはみ出す場合は上に寄せる
@@ -249,11 +249,11 @@ namespace noco::editor
 				y = 0;
 			}
 
-			if (const auto pAnchorConstraint = m_rootNode->anchorConstraint())
+			if (const auto pAnchorRegion = m_rootNode->anchorRegion())
 			{
-				auto newConstraint = *pAnchorConstraint;
-				newConstraint.posDelta = Vec2{ x, y };
-				m_rootNode->setConstraint(newConstraint, RefreshesLayoutYN::No);
+				auto newRegion = *pAnchorRegion;
+				newRegion.posDelta = Vec2{ x, y };
+				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
 			}
 
 			m_screenMaskNode->setIsHitTarget(screenMaskEnabled.getBool());

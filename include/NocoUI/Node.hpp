@@ -8,7 +8,7 @@
 #include "InteractionState.hpp"
 #include "MouseTracker.hpp"
 #include "TransformEffect.hpp"
-#include "Constraint/Constraint.hpp"
+#include "Region/Region.hpp"
 #include "Layout/Layout.hpp"
 #include "Component/ComponentBase.hpp"
 #include "Component/Placeholder.hpp"
@@ -29,9 +29,9 @@ namespace noco
 		static inline uint64_t s_nextInternalId = 1;
 		uint64 m_internalId;
 		String m_name;
-		ConstraintVariant m_constraint;
+		RegionVariant m_region;
 		TransformEffect m_transformEffect;
-		LayoutVariant m_boxChildrenLayout;
+		LayoutVariant m_childrenLayout;
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
@@ -83,10 +83,10 @@ namespace noco
 		Mat3x2 calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const;
 
 		[[nodiscard]]
-		explicit Node(uint64 internalId, StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
+		explicit Node(uint64 internalId, StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 			: m_internalId{ internalId }
 			, m_name{ name }
-			, m_constraint{ constraint }
+			, m_region{ region }
 			, m_isHitTarget{ isHitTarget }
 			, m_inheritChildrenStateFlags{ inheritChildrenStateFlags }
 			, m_mouseLTracker{ MouseL, m_interactable }
@@ -111,18 +111,18 @@ namespace noco
 
 	public:
 		[[nodiscard]]
-		static std::shared_ptr<Node> Create(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None);
+		static std::shared_ptr<Node> Create(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None);
 
 		[[nodiscard]]
-		const ConstraintVariant& constraint() const;
+		const RegionVariant& region() const;
 
-		std::shared_ptr<Node> setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
-
-		[[nodiscard]]
-		const BoxConstraint* boxConstraint() const;
+		std::shared_ptr<Node> setRegion(const RegionVariant& region, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
-		const AnchorConstraint* anchorConstraint() const;
+		const InlineRegion* inlineRegion() const;
+
+		[[nodiscard]]
+		const AnchorRegion* anchorRegion() const;
 
 		[[nodiscard]]
 		TransformEffect& transformEffect();
@@ -131,9 +131,9 @@ namespace noco
 		const TransformEffect& transformEffect() const;
 
 		[[nodiscard]]
-		const LayoutVariant& boxChildrenLayout() const;
+		const LayoutVariant& childrenLayout() const;
 
-		std::shared_ptr<Node> setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
 		const FlowLayout* childrenFlowLayout() const;
@@ -147,16 +147,16 @@ namespace noco
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren() const;
 
-		std::shared_ptr<Node> setBoxConstraintToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setInlineRegionToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		[[nodiscard]]
-		const LRTB& boxChildrenLayoutPadding() const;
+		const LRTB& childrenLayoutPadding() const;
 
 		[[nodiscard]]
-		bool hasBoxConstraint() const;
+		bool hasInlineRegion() const;
 
 		[[nodiscard]]
-		bool hasAnchorConstraint() const;
+		bool hasAnchorRegion() const;
 
 		[[nodiscard]]
 		JSON toJSON() const;
@@ -234,7 +234,7 @@ namespace noco
 
 		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const ConstraintVariant& constraint = BoxConstraint{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		const std::shared_ptr<Node>& emplaceChild(RefreshesLayoutYN refreshesLayout);
 
@@ -275,13 +275,13 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No);
 
-		void refreshBoxChildrenLayout();
+		void refreshChildrenLayout();
 
 		[[nodiscard]]
-		Optional<RectF> getBoxChildrenContentRect() const;
+		Optional<RectF> getChildrenContentRect() const;
 
 		[[nodiscard]]
-		Optional<RectF> getBoxChildrenContentRectWithPadding() const;
+		Optional<RectF> getChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> hoveredNodeRecursive();
@@ -830,7 +830,7 @@ namespace noco
 		const double availableHeight = parentRect.h - (padding.top + padding.bottom);
 
 		{
-			bool isFirstBoxConstraintChild = true;
+			bool isFirstInlineRegionChild = true;
 			for (const auto& child : children)
 			{
 				if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
@@ -839,28 +839,28 @@ namespace noco
 					margins.push_back(LRTB::Zero());
 					continue;
 				}
-				if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+				if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 				{
-					const RectF measuredRect = pBoxConstraint->applyConstraint(
+					const RectF measuredRect = pInlineRegion->applyRegion(
 						RectF{ 0, 0, availableWidth, availableHeight }, // 計測用に親サイズだけ渡す
 						Vec2::Zero());
 					sizes.push_back(measuredRect.size);
-					margins.push_back(pBoxConstraint->margin);
+					margins.push_back(pInlineRegion->margin);
 
-					const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
-					const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
-					if (!isFirstBoxConstraintChild)
+					const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
+					const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
+					if (!isFirstInlineRegionChild)
 					{
 						totalWidth += spacing;
 					}
 					totalWidth += childW;
 					maxHeight = Max(maxHeight, childH);
-					totalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
-					isFirstBoxConstraintChild = false;
+					totalFlexibleWeight += Max(pInlineRegion->flexibleWeight, 0.0);
+					isFirstInlineRegionChild = false;
 				}
 				else
 				{
-					// BoxConstraint以外は計測不要
+					// InlineRegion以外は計測不要
 					sizes.push_back(SizeF::Zero());
 					margins.push_back(LRTB::Zero());
 				}
@@ -880,13 +880,13 @@ namespace noco
 					{
 						continue;
 					}
-					if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+					if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 					{
-						if (pBoxConstraint->flexibleWeight <= 0.0)
+						if (pInlineRegion->flexibleWeight <= 0.0)
 						{
 							continue;
 						}
-						sizes[i].x += widthRemain * pBoxConstraint->flexibleWeight / totalFlexibleWeight;
+						sizes[i].x += widthRemain * pInlineRegion->flexibleWeight / totalFlexibleWeight;
 					}
 				}
 			}
@@ -915,7 +915,7 @@ namespace noco
 
 		{
 			double currentX = parentRect.x + offsetX;
-			bool isFirstBoxConstraintChild = true;
+			bool isFirstInlineRegionChild = true;
 			for (size_t i = 0; i < children.size(); ++i)
 			{
 				const auto& child = children[i];
@@ -925,13 +925,13 @@ namespace noco
 				}
 				const SizeF& childSize = sizes[i];
 				const LRTB& margin = margins[i];
-				if (const auto pBoxConstraint = child->boxConstraint())
+				if (const auto pInlineRegion = child->inlineRegion())
 				{
-					if (!isFirstBoxConstraintChild)
+					if (!isFirstInlineRegionChild)
 					{
 						currentX += spacing;
 					}
-					isFirstBoxConstraintChild = false;
+					isFirstInlineRegionChild = false;
 					const double childX = currentX + margin.left;
 					const double childTotalHeight = childSize.y + margin.top + margin.bottom;
 					const double shiftY = maxHeight - childTotalHeight;
@@ -955,15 +955,15 @@ namespace noco
 					fnSetRect(child, finalRect);
 					currentX += childSize.x + margin.left + margin.right;
 				}
-				else if (const auto pAnchorConstraint = child->anchorConstraint())
+				else if (const auto pAnchorRegion = child->anchorRegion())
 				{
-					// AnchorConstraintはオフセット無視
-					const RectF finalRect = pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
+					// AnchorRegionはオフセット無視
+					const RectF finalRect = pAnchorRegion->applyRegion(parentRect, Vec2::Zero());
 					fnSetRect(child, finalRect);
 				}
 				else
 				{
-					throw Error{ U"HorizontalLayout::execute: Unknown constraint" };
+					throw Error{ U"HorizontalLayout::execute: Unknown region" };
 				}
 			}
 		}
@@ -986,7 +986,7 @@ namespace noco
 		const double availableHeight = parentRect.h - (padding.top + padding.bottom);
 
 		{
-			bool isFirstBoxConstraintChild = true;
+			bool isFirstInlineRegionChild = true;
 			for (const auto& child : children)
 			{
 				if (!child->activeSelf()) // 親の影響を受けないようactiveSelfを使う
@@ -995,28 +995,28 @@ namespace noco
 					margins.push_back(LRTB::Zero());
 					continue;
 				}
-				if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+				if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 				{
-					const RectF measuredRect = pBoxConstraint->applyConstraint(
+					const RectF measuredRect = pInlineRegion->applyRegion(
 						RectF{ 0, 0, availableWidth, availableHeight }, // 計測用に親サイズだけ渡す
 						Vec2::Zero());
 					sizes.push_back(measuredRect.size);
-					margins.push_back(pBoxConstraint->margin);
+					margins.push_back(pInlineRegion->margin);
 
-					const double childW = measuredRect.w + pBoxConstraint->margin.left + pBoxConstraint->margin.right;
-					const double childH = measuredRect.h + pBoxConstraint->margin.top + pBoxConstraint->margin.bottom;
-					if (!isFirstBoxConstraintChild)
+					const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
+					const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
+					if (!isFirstInlineRegionChild)
 					{
 						totalHeight += spacing;
 					}
 					totalHeight += childH;
 					maxWidth = Max(maxWidth, childW);
-					totalFlexibleWeight += Max(pBoxConstraint->flexibleWeight, 0.0);
-					isFirstBoxConstraintChild = false;
+					totalFlexibleWeight += Max(pInlineRegion->flexibleWeight, 0.0);
+					isFirstInlineRegionChild = false;
 				}
 				else
 				{
-					// BoxConstraint以外は計測不要
+					// InlineRegion以外は計測不要
 					sizes.push_back(SizeF::Zero());
 					margins.push_back(LRTB::Zero());
 				}
@@ -1036,13 +1036,13 @@ namespace noco
 					{
 						continue;
 					}
-					if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&child->constraint()))
+					if (const auto pInlineRegion = std::get_if<InlineRegion>(&child->region()))
 					{
-						if (pBoxConstraint->flexibleWeight <= 0.0)
+						if (pInlineRegion->flexibleWeight <= 0.0)
 						{
 							continue;
 						}
-						sizes[i].y += heightRemain * pBoxConstraint->flexibleWeight / totalFlexibleWeight;
+						sizes[i].y += heightRemain * pInlineRegion->flexibleWeight / totalFlexibleWeight;
 					}
 				}
 			}
@@ -1071,7 +1071,7 @@ namespace noco
 
 		{
 			double currentY = parentRect.y + offsetY;
-			bool isFirstBoxConstraintChild = true;
+			bool isFirstInlineRegionChild = true;
 			for (size_t i = 0; i < children.size(); ++i)
 			{
 				const auto& child = children[i];
@@ -1081,13 +1081,13 @@ namespace noco
 				}
 				const SizeF& childSize = sizes[i];
 				const LRTB& margin = margins[i];
-				if (const auto pBoxConstraint = child->boxConstraint())
+				if (const auto pInlineRegion = child->inlineRegion())
 				{
-					if (!isFirstBoxConstraintChild)
+					if (!isFirstInlineRegionChild)
 					{
 						currentY += spacing;
 					}
-					isFirstBoxConstraintChild = false;
+					isFirstInlineRegionChild = false;
 					const double childY = currentY + margin.top;
 					const double childTotalWidth = childSize.x + margin.left + margin.right;
 					const double shiftX = maxWidth - childTotalWidth;
@@ -1111,15 +1111,15 @@ namespace noco
 					fnSetRect(child, finalRect);
 					currentY += childSize.y + margin.top + margin.bottom;
 				}
-				else if (const auto pAnchorConstraint = child->anchorConstraint())
+				else if (const auto pAnchorRegion = child->anchorRegion())
 				{
-					// AnchorConstraintはオフセット無視
-					const RectF finalRect = pAnchorConstraint->applyConstraint(parentRect, Vec2::Zero());
+					// AnchorRegionはオフセット無視
+					const RectF finalRect = pAnchorRegion->applyRegion(parentRect, Vec2::Zero());
 					fnSetRect(child, finalRect);
 				}
 				else
 				{
-					throw Error{ U"VerticalLayout::execute: Unknown constraint" };
+					throw Error{ U"VerticalLayout::execute: Unknown region" };
 				}
 			}
 		}
@@ -1169,17 +1169,17 @@ namespace noco
 				offsetX += availableWidth - line.totalWidth;
 			}
 			const double lineHeight = line.maxHeight;
-			bool boxConstraintChildPlaced = false;
+			bool inlineRegionChildPlaced = false;
 			for (const size_t index : line.childIndices)
 			{
 				const auto& child = children[index];
-				if (child->hasBoxConstraint())
+				if (child->hasInlineRegion())
 				{
-					if (boxConstraintChildPlaced)
+					if (inlineRegionChildPlaced)
 					{
 						offsetX += spacing.x;
 					}
-					boxConstraintChildPlaced = true;
+					inlineRegionChildPlaced = true;
 				}
 				const RectF finalRect = executeChild(parentRect, child, measureInfo.measuredChildren[index], offsetY, lineHeight, &offsetX);
 				fnSetRect(child, finalRect);

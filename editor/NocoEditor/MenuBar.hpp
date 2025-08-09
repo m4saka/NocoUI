@@ -30,7 +30,7 @@ namespace noco::editor
 			: m_editorCanvas(editorCanvas)
 			, m_menuBarRootNode(editorCanvas->rootNode()->emplaceChild(
 				U"MenuBar",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopRight,
@@ -40,7 +40,7 @@ namespace noco::editor
 				}))
 			, m_contextMenu(contextMenu)
 		{
-			m_menuBarRootNode->setBoxChildrenLayout(HorizontalLayout{});
+			m_menuBarRootNode->setChildrenLayout(HorizontalLayout{});
 			m_menuBarRootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 });
 		}
 
@@ -48,7 +48,7 @@ namespace noco::editor
 		{
 			const auto node = m_menuBarRootNode->emplaceChild(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.sizeDelta = Vec2{ width, 0 },

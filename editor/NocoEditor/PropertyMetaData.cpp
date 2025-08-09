@@ -73,89 +73,89 @@ namespace noco::editor
 			.tooltipDetail = U"styleStateとは、要素の状態を識別するために設定する文字列です(例: \"selected\")\n各プロパティの値はstyleState毎に異なる値を設定でき、状態に応じて見た目を変えることができます\nstyleStateはノード毎に1つのみ設定できます\n\n親要素のstyleStateがあればそれを受け継ぎます\n適用の優先度は自身の要素のstyleStateが最も高く、遠い親になるにつれて優先度は下がります",
 		};
 		
-		// Constraint関連 - AnchorConstraint
-		metadata[PropertyKey{ U"AnchorConstraint", U"type" }] = PropertyMetadata{
-			.tooltip = U"Constraintの種類",
-			.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorConstraint: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorConstraintの要素は親要素のboxChildrenLayoutの影響を受けません\nBoxConstraint: 親要素のboxChildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
+		// Region関連 - AnchorRegion
+		metadata[PropertyKey{ U"AnchorRegion", U"type" }] = PropertyMetadata{
+			.tooltip = U"Regionの種類",
+			.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorRegion: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorRegionの要素は親要素のchildrenLayoutの影響を受けません\nInlineRegion: 親要素のchildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"anchor" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"anchor" }] = PropertyMetadata{
 			.tooltip = U"アンカー位置",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"anchorMin" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"anchorMin" }] = PropertyMetadata{
 			.tooltip = U"最小アンカー位置 (0,0)が左上、(1,1)が右下",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"anchorMax" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"anchorMax" }] = PropertyMetadata{
 			.tooltip = U"最大アンカー位置 (0,0)が左上、(1,1)が右下",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"posDelta" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"posDelta" }] = PropertyMetadata{
 			.tooltip = U"位置 (アンカーからの相対位置)",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"sizeDelta" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"sizeDelta" }] = PropertyMetadata{
 			.tooltip = U"サイズ (差分値)",
 			.tooltipDetail = U"要素の大きさをピクセル数で指定します。アンカーを基に計算された領域サイズにこのサイズが加算されます",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"sizeDeltaPivot" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"sizeDeltaPivot" }] = PropertyMetadata{
 			.tooltip = U"サイズ計算の起点 (X、Y)",
 		};
 		
-		// Constraint関連 - BoxConstraint
-		metadata[PropertyKey{ U"BoxConstraint", U"type" }] = PropertyMetadata{
-			.tooltip = U"Constraintの種類",
-			.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorConstraint: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorConstraintの要素は親要素のboxChildrenLayoutの影響を受けません\nBoxConstraint: 親要素のboxChildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
+		// Region関連 - InlineRegion
+		metadata[PropertyKey{ U"InlineRegion", U"type" }] = PropertyMetadata{
+			.tooltip = U"Regionの種類",
+			.tooltipDetail = U"親要素に対する位置とサイズの決め方の種類を指定します\nAnchorRegion: 親要素の四辺を基に比率と差分値で四辺の位置を決定します\n　※AnchorRegionの要素は親要素のchildrenLayoutの影響を受けません\nInlineRegion: 親要素のchildrenLayoutで指定されたレイアウト方法に応じて、順番に配置されます",
 		};
-		metadata[PropertyKey{ U"BoxConstraint", U"margin" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"InlineRegion", U"margin" }] = PropertyMetadata{
 			.tooltip = U"マージン (左、右、上、下)",
-			.tooltipDetail = U"要素の外側の余白を指定します\n※全ての子要素間で共通の間隔を設定したい場合は、こちらではなく親要素のboxChildrenLayoutに対してspacingの値を指定してください",
+			.tooltipDetail = U"要素の外側の余白を指定します\n※全ての子要素間で共通の間隔を設定したい場合は、こちらではなく親要素のchildrenLayoutに対してspacingの値を指定してください",
 		};
-		metadata[PropertyKey{ U"BoxConstraint", U"sizeRatio" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"InlineRegion", U"sizeRatio" }] = PropertyMetadata{
 			.tooltip = U"親要素に対するサイズ比率 (0.0～1.0)",
 			.tooltipDetail = U"親要素のサイズに対する比率を指定します。0.0は親要素のサイズを無視し、1.0は親要素のサイズと同じになります\n※要素間で自動的にサイズを分配する必要がある場合、sizeRatioではなくflexibleWeightを使用してください",
 		};
-		metadata[PropertyKey{ U"BoxConstraint", U"sizeDelta" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"InlineRegion", U"sizeDelta" }] = PropertyMetadata{
 			.tooltip = U"サイズ (差分値)",
 			.tooltipDetail = U"要素の大きさをピクセル数で指定します。sizeRatioおよびflexibleWeightと併用した場合、このサイズが差分値として加算されます",
 		};
-		metadata[PropertyKey{ U"BoxConstraint", U"flexibleWeight" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"InlineRegion", U"flexibleWeight" }] = PropertyMetadata{
 			.tooltip = U"フレキシブル要素の伸縮の重み",
 			.tooltipDetail = U"0以外の値を設定すると、余った領域を重みの比率に応じて他のフレキシブル要素と分け合います\n(FlowLayoutとHorizontalLayoutでは横方向、VerticalLayoutでは縦方向の領域を分け合います)\n※例1: 全てのフレキシブル要素に1を指定すると、余った領域を均等に分配します\n※例2: ある要素に2、それ以外の全ての要素に1を指定すると、2を指定した要素は他の要素の2倍の領域が割り当てられます",
 		};
 		
 		// AnchorPreset用プロパティ
-		metadata[PropertyKey{ U"AnchorConstraint", U"top" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"top" }] = PropertyMetadata{
 			.tooltip = U"親要素の上端からの距離",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"left" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"left" }] = PropertyMetadata{
 			.tooltip = U"親要素の左端からの距離",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"right" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"right" }] = PropertyMetadata{
 			.tooltip = U"親要素の右端からの距離",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"bottom" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"bottom" }] = PropertyMetadata{
 			.tooltip = U"親要素の下端からの距離",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"size" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"size" }] = PropertyMetadata{
 			.tooltip = U"サイズ (幅、高さ)",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"width" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"width" }] = PropertyMetadata{
 			.tooltip = U"幅",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"height" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"height" }] = PropertyMetadata{
 			.tooltip = U"高さ",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"xDelta" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"xDelta" }] = PropertyMetadata{
 			.tooltip = U"X軸の位置",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"yDelta" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"yDelta" }] = PropertyMetadata{
 			.tooltip = U"Y軸の位置",
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"maxWidth" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"maxWidth" }] = PropertyMetadata{
 			.tooltip = U"最大幅",
 			.tooltipDetail = U"要素の幅の最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"AnchorConstraint", U"maxHeight" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"AnchorRegion", U"maxHeight" }] = PropertyMetadata{
 			.tooltip = U"最大高さ",
 			.tooltipDetail = U"要素の高さの最大値を指定します。チェックボックスをOFFにすると、最大値の制限がなくなります",
 			.dragValueChangeStep = 1.0,
@@ -164,14 +164,14 @@ namespace noco::editor
 		// Layout関連
 		metadata[PropertyKey{ U"FlowLayout", U"type" }] = PropertyMetadata{
 			.tooltip = U"レイアウトの種類",
-			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
+			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※childrenLayoutはInlineRegionが指定された子要素のみに影響します。AnchorRegionを持つ子要素に対しては影響しません",
 		};
 		metadata[PropertyKey{ U"FlowLayout", U"padding" }] = PropertyMetadata{
 			.tooltip = U"内側の余白 (左、右、上、下)",
 		};
 		metadata[PropertyKey{ U"FlowLayout", U"spacing" }] = PropertyMetadata{
 			.tooltip = U"子要素同士の間隔 (X、Y)",
-			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
+			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のInlineRegionのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 		};
 		metadata[PropertyKey{ U"FlowLayout", U"horizontalAlign" }] = PropertyMetadata{
 			.tooltip = U"水平方向の配置",
@@ -182,14 +182,14 @@ namespace noco::editor
 		
 		metadata[PropertyKey{ U"HorizontalLayout", U"type" }] = PropertyMetadata{
 			.tooltip = U"レイアウトの種類",
-			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
+			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※childrenLayoutはInlineRegionが指定された子要素のみに影響します。AnchorRegionを持つ子要素に対しては影響しません",
 		};
 		metadata[PropertyKey{ U"HorizontalLayout", U"padding" }] = PropertyMetadata{
 			.tooltip = U"内側の余白 (左、右、上、下)",
 		};
 		metadata[PropertyKey{ U"HorizontalLayout", U"spacing" }] = PropertyMetadata{
 			.tooltip = U"子要素同士の間隔 (X、Y)",
-			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
+			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のInlineRegionのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 		};
 		metadata[PropertyKey{ U"HorizontalLayout", U"horizontalAlign" }] = PropertyMetadata{
 			.tooltip = U"水平方向の配置",
@@ -200,14 +200,14 @@ namespace noco::editor
 		
 		metadata[PropertyKey{ U"VerticalLayout", U"type" }] = PropertyMetadata{
 			.tooltip = U"レイアウトの種類",
-			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※boxChildrenLayoutはBoxConstraintが指定された子要素のみに影響します。AnchorConstraintを持つ子要素に対しては影響しません",
+			.tooltipDetail = U"FlowLayout: 子要素を左から右へ並べ、右端で折り返します\nHorizontalLayout: 子要素を水平方向に並べます\nVerticalLayout: 子要素を垂直方向に並べます\n※childrenLayoutはInlineRegionが指定された子要素のみに影響します。AnchorRegionを持つ子要素に対しては影響しません",
 		};
 		metadata[PropertyKey{ U"VerticalLayout", U"padding" }] = PropertyMetadata{
 			.tooltip = U"内側の余白 (左、右、上、下)",
 		};
 		metadata[PropertyKey{ U"VerticalLayout", U"spacing" }] = PropertyMetadata{
 			.tooltip = U"子要素同士の間隔 (X、Y)",
-			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のBoxConstraintのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
+			.tooltipDetail = U"子要素同士の間隔を指定します\n全ての子要素に共通の間隔を指定したい場合に使用します\n※子要素のInlineRegionのmarginにも値が設定されている場合、spacingとmarginの合計値が子要素間の間隔として適用されます",
 		};
 		metadata[PropertyKey{ U"VerticalLayout", U"horizontalAlign" }] = PropertyMetadata{
 			.tooltip = U"水平方向の配置",

@@ -20,7 +20,7 @@ namespace noco
 				double totalWidth = 0.0;
 				double maxHeight = 0.0;
 				double totalFlexibleWeight = 0.0;
-				bool boxConstraintChildExists = false;
+				bool inlineRegionChildExists = false;
 			};
 			Array<Line> lines;
 
@@ -55,7 +55,7 @@ namespace noco
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const;
 
-		void setBoxConstraintToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const;
+		void setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const;
 		
 		[[nodiscard]]
 		Vec2 scrollOffsetAnchor() const

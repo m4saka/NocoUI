@@ -165,7 +165,7 @@ namespace noco::editor
 		{
 			const auto hierarchyNode = Node::Create(
 				U"Element",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 24 },
@@ -532,7 +532,7 @@ namespace noco::editor
 
 			const auto toggleFoldedNode = hierarchyNode->emplaceChild(
 				U"ToggleFolded",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomLeft,
@@ -628,7 +628,7 @@ namespace noco::editor
 			: m_canvas(canvas)
 			, m_hierarchyFrameNode(editorCanvas->rootNode()->emplaceChild(
 				U"HierarchyFrame",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomLeft,
@@ -638,7 +638,7 @@ namespace noco::editor
 				}))
 			, m_hierarchyInnerFrameNode(m_hierarchyFrameNode->emplaceChild(
 				U"HierarchyInnerFrame",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -650,7 +650,7 @@ namespace noco::editor
 				InheritChildrenStateFlags::Hovered | InheritChildrenStateFlags::Pressed))
 			, m_hierarchyRootNode(m_hierarchyInnerFrameNode->emplaceChild(
 				U"Hierarchy",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -670,7 +670,7 @@ namespace noco::editor
 					MenuItem{ U"新規ノード", U"", KeyN, [this] { onClickNewNode(); } },
 					MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
 				});
-			m_hierarchyRootNode->setBoxChildrenLayout(VerticalLayout{ .padding = 2 });
+			m_hierarchyRootNode->setChildrenLayout(VerticalLayout{ .padding = 2 });
 			m_hierarchyRootNode->setVerticalScrollable(true);
 
 			refreshNodeList();
@@ -696,7 +696,7 @@ namespace noco::editor
 			// 末尾に空のノードを追加してドロップ領域とする
 			m_hierarchyTailNode = m_hierarchyRootNode->emplaceChild(
 				U"HierarchyTail",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 0 },
@@ -910,10 +910,10 @@ namespace noco::editor
 				throw Error{ U"Parent node is nullptr" };
 			}
 
-			// 記憶された種類のConstraintを使用してノードを作成
+			// 記憶された種類のRegionを使用してノードを作成
 			std::shared_ptr<Node> newNode = parentNode->emplaceChild(
 				U"Node",
-				m_defaults->defaultConstraint());
+				m_defaults->defaultRegion());
 			refreshNodeList();
 			selectSingleNode(newNode);
 		}
@@ -1103,15 +1103,15 @@ namespace noco::editor
 			selectedNode->removeFromParent();
 
 			// 元ノードと同じインデックスに同じレイアウト設定で空の親ノードを生成
-			const auto newParent = Node::Create(U"Node", selectedNode->constraint());
+			const auto newParent = Node::Create(U"Node", selectedNode->region());
 			oldParent->addChildAtIndex(newParent, idx);
 
 			// 新しい親のもとへ子として追加
 			newParent->addChild(selectedNode);
 
-			// 元オブジェクトはアンカーがMiddleCenterのAnchorConstraintに変更する
+			// 元オブジェクトはアンカーがMiddleCenterのAnchorRegionに変更する
 			const RectF originalCalculatedRect = selectedNode->layoutAppliedRect();
-			selectedNode->setConstraint(AnchorConstraint
+			selectedNode->setRegion(AnchorRegion
 			{
 				.anchorMin = Anchor::MiddleCenter,
 				.anchorMax = Anchor::MiddleCenter,
@@ -1416,15 +1416,15 @@ namespace noco::editor
 	
 		void setWidth(double width)
 		{
-			if (auto* pAnchorConstraint = m_hierarchyFrameNode->anchorConstraint())
+			if (auto* pAnchorRegion = m_hierarchyFrameNode->anchorRegion())
 			{
-				auto newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta.x = width;
-				m_hierarchyFrameNode->setConstraint(newConstraint);
+				auto newRegion = *pAnchorRegion;
+				newRegion.sizeDelta.x = width;
+				m_hierarchyFrameNode->setRegion(newRegion);
 			}
 			else
 			{
-				Logger << U"[NocoEditor warning] AnchorConstraint not found in hierarchyFrameNode";
+				Logger << U"[NocoEditor warning] AnchorRegion not found in hierarchyFrameNode";
 			}
 		}
 

@@ -14,7 +14,7 @@ TEST_CASE("Layout system", "[Layout]")
 		noco::HorizontalLayout layout;
 		layout.spacing = 10.0f;
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
 		// 子ノードを追加
 		auto child1 = noco::Node::Create();
@@ -23,7 +23,7 @@ TEST_CASE("Layout system", "[Layout]")
 		parent->addChild(child2);
 		
 		// Layoutが正しく設定されているか確認
-		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->boxChildrenLayout());
+		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->childrenLayout());
 		REQUIRE(hLayout != nullptr);
 		REQUIRE(hLayout->spacing == 10.0f);
 	}
@@ -34,10 +34,10 @@ TEST_CASE("Layout system", "[Layout]")
 		noco::VerticalLayout layout;
 		layout.spacing = 5.0f;
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
 		// Layoutが正しく設定されているか確認
-		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->boxChildrenLayout());
+		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->childrenLayout());
 		REQUIRE(vLayout != nullptr);
 		REQUIRE(vLayout->spacing == 5.0f);
 	}
@@ -56,9 +56,9 @@ TEST_CASE("HorizontalLayout detailed", "[Layout][HorizontalLayout]")
 		// パディングの設定
 		layout.padding = noco::LRTB{ 10, 10, 5, 5 };
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
-		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->boxChildrenLayout());
+		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->childrenLayout());
 		REQUIRE(hLayout != nullptr);
 		REQUIRE(hLayout->spacing == 15.0f);
 		REQUIRE(hLayout->padding.left == 10);
@@ -73,9 +73,9 @@ TEST_CASE("HorizontalLayout detailed", "[Layout][HorizontalLayout]")
 		// 子要素のアライメント
 		layout.verticalAlign = noco::VerticalAlign::Middle;
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
-		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->boxChildrenLayout());
+		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->childrenLayout());
 		REQUIRE(hLayout->verticalAlign == noco::VerticalAlign::Middle);
 	}
 
@@ -94,9 +94,9 @@ TEST_CASE("VerticalLayout detailed", "[Layout][VerticalLayout]")
 		// パディングの設定
 		layout.padding = noco::LRTB{ 5, 5, 10, 10 };
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
-		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->boxChildrenLayout());
+		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->childrenLayout());
 		REQUIRE(vLayout != nullptr);
 		REQUIRE(vLayout->spacing == 10.0f);
 		REQUIRE(vLayout->padding.left == 5);
@@ -116,9 +116,9 @@ TEST_CASE("FlowLayout detailed", "[Layout][FlowLayout]")
 		// パディングの設定
 		layout.padding = noco::LRTB{ 5, 5, 10, 10 };
 		
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
-		auto* flowLayout = std::get_if<noco::FlowLayout>(&parent->boxChildrenLayout());
+		auto* flowLayout = std::get_if<noco::FlowLayout>(&parent->childrenLayout());
 		REQUIRE(flowLayout != nullptr);
 		REQUIRE(flowLayout->spacing == Vec2{ 10.0f, 5.0f });
 		REQUIRE(flowLayout->padding.left == 5);

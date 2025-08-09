@@ -854,7 +854,7 @@ void Main()
 	System::SetTerminationTriggers(UserAction::NoAction);
 
 	Editor editor;
-	editor.rootNode()->setConstraint(AnchorConstraint
+	editor.rootNode()->setRegion(AnchorRegion
 	{
 		.anchorMin = Anchor::MiddleCenter,
 		.anchorMax = Anchor::MiddleCenter,

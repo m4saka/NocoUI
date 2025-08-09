@@ -35,13 +35,13 @@ TEST_CASE("Serialization details", "[Serialization]")
 		noco::HorizontalLayout layout;
 		layout.spacing = 15.0f;
 		layout.padding = noco::LRTB{ 10, 10, 5, 5 };
-		parent->setBoxChildrenLayout(layout);
+		parent->setChildrenLayout(layout);
 		
 		// JSON変換
 		JSON json = parent->toJSON();
 		
 		// レイアウト情報が含まれているか確認
-		REQUIRE(json.hasElement(U"boxChildrenLayout"));
+		REQUIRE(json.hasElement(U"childrenLayout"));
 	}
 
 	SECTION("Complex hierarchy serialization")
@@ -51,7 +51,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 		
 		// 複雑な階層構造を作成
 		auto parent = noco::Node::Create(U"Parent");
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 300, 200 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 300, 200 } });
 		
 		auto child1 = noco::Node::Create(U"Child1");
 		child1->emplaceComponent<noco::Label>()->setText(U"Label1");

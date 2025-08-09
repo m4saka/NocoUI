@@ -12,7 +12,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -31,7 +31,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transformEffect().setPosition(Vec2{ 100, 100 });
 		node->transformEffect().setAppliesToHitTest(true);
 		canvas->rootNode()->addChild(node);
@@ -52,7 +52,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transformEffect().setPosition(Vec2{ 100, 100 });
 		node->transformEffect().setAppliesToHitTest(false); // 明示的にfalseに設定
 		canvas->rootNode()->addChild(node);
@@ -73,7 +73,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transformEffect().setPosition(Vec2{ 100, 100 });
 		node->transformEffect().setAppliesToHitTest(true);
 		canvas->rootNode()->addChild(node);
@@ -94,7 +94,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transformEffect().setScale(Vec2{ 2.0, 2.0 }); // 2倍にスケール
 		canvas->rootNode()->addChild(node);
 		
@@ -136,8 +136,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -162,7 +162,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		canvas->rootNode()->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -187,8 +187,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		child->transformEffect().setPosition(Vec2{ 50, 50 }); // 部分的に親の外に出る
 		
 		canvas->rootNode()->addChild(parent);
@@ -216,11 +216,11 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto child = noco::Node::Create();
 		
 		// スクロール可能な親ノード
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		parent->setScrollableAxisFlags(noco::ScrollableAxisFlags::Horizontal | noco::ScrollableAxisFlags::Vertical);
 		
 		// 大きな子ノード（スクロールが必要）
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 400, 400 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 400, 400 } });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);
@@ -256,12 +256,12 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto child = noco::Node::Create();
 		
 		// スクロール可能でクリッピングを有効にした親ノード
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		parent->setScrollableAxisFlags(noco::ScrollableAxisFlags::Horizontal | noco::ScrollableAxisFlags::Vertical);
 		parent->setClippingEnabled(noco::ClippingEnabledYN::Yes);
 		
 		// 大きな子ノード（スクロールが必要）
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 400, 400 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 400, 400 } });
 		
 		canvas->rootNode()->addChild(parent);
 		parent->addChild(child);

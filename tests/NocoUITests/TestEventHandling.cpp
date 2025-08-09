@@ -12,7 +12,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// EventTriggerコンポーネントを追加
 		auto trigger = node->emplaceComponent<noco::EventTrigger>(U"testButton", noco::EventTriggerType::Click);
@@ -38,7 +38,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// ClickトリガーのEventTriggerを追加（右クリックも通常のClickイベントとして扱われる）
 		auto trigger = node->emplaceComponent<noco::EventTrigger>(U"rightClickTest", noco::EventTriggerType::RightClick);
@@ -66,8 +66,8 @@ TEST_CASE("Event handling", "[Events]")
 		auto node1 = noco::Node::Create(U"Node1");
 		auto node2 = noco::Node::Create(U"Node2");
 		
-		node1->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
-		node2->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		node2->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 異なるタグでEventTriggerを設定
 		node1->emplaceComponent<noco::EventTrigger>(U"button1");
@@ -98,8 +98,8 @@ TEST_CASE("Event handling", "[Events]")
 		auto parent = noco::Node::Create(U"Parent");
 		auto child = noco::Node::Create(U"Child");
 		
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 200 } });
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 子ノードにEventTriggerを設定
 		child->emplaceComponent<noco::EventTrigger>(U"childButton");
@@ -121,9 +121,9 @@ TEST_CASE("Event handling", "[Events]")
 		auto node2 = noco::Node::Create();
 		auto node3 = noco::Node::Create();
 		
-		node1->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
-		node2->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
-		node3->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		node2->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		node3->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// EventTriggerを設定
 		node1->emplaceComponent<noco::EventTrigger>(U"button1");
@@ -153,7 +153,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// クリックハンドラの呼び出しを記録する変数
 		bool clickHandlerCalled = false;
@@ -180,7 +180,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// クリックハンドラの呼び出しを記録する変数
 		bool clickHandlerCalled = false;
@@ -204,7 +204,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 右クリックハンドラの呼び出しを記録する変数
 		bool rightClickHandlerCalled = false;
@@ -231,7 +231,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		// 右クリックハンドラの呼び出しを記録する変数
 		bool rightClickHandlerCalled = false;
@@ -255,7 +255,7 @@ TEST_CASE("Event handling", "[Events]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		node->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 100, 100 } });
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
 		int clickCount = 0;
 		int rightClickCount = 0;

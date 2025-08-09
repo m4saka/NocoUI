@@ -12,7 +12,7 @@ namespace noco::editor
 
 		const auto labelNode = contentRootNode->emplaceChild(
 			U"Label",
-			BoxConstraint
+			InlineRegion
 			{
 				.sizeRatio = Vec2{ 1, 0 },
 				.sizeDelta = SizeF{ 0, 36 },
@@ -40,7 +40,7 @@ namespace noco::editor
 
 			const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = SizeF{ -20, 0 },
@@ -48,12 +48,12 @@ namespace noco::editor
 				});
 			propertyNode->emplaceChild(
 				U"Spacing",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 0 },
 					.sizeDelta = SizeF{ 8, 0 },
 				});
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
+			propertyNode->setChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
 			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates));
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
@@ -259,7 +259,7 @@ namespace noco::editor
 			// Defaultは常に値が存在するのでチェックボックスは無効
 			checkboxNode->setInteractable(interactionState != InteractionState::Default);
 			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
-			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 
 			// PropertyValueNodeInfoを保存
 			m_propertyValueNodes[interactionState] = PropertyValueNodeInfo{
@@ -276,7 +276,7 @@ namespace noco::editor
 			// 区切り線
 			const auto separatorNode2 = contentRootNode->emplaceChild(
 				U"Separator",
-				BoxConstraint{
+				InlineRegion{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = SizeF{ 0, 1 },
 					.margin = LRTB{ 0, 0, 0, 8 },
@@ -285,7 +285,7 @@ namespace noco::editor
 
 			const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = SizeF{ 0, 0 },
@@ -297,7 +297,7 @@ namespace noco::editor
 					Format(m_pProperty->smoothTime()),
 					[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }),
 				RefreshesLayoutYN::No);
-			propertyNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 		}
 
 		// 初期表示時に正しい値を反映

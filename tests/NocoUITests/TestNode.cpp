@@ -267,7 +267,7 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		
 		// デフォルト値の確認
 		REQUIRE(child1->name() == U"Node");
-		REQUIRE(child1->hasBoxConstraint());
+		REQUIRE(child1->hasInlineRegion());
 		REQUIRE(child1->isHitTarget() == noco::IsHitTargetYN::Yes);
 		REQUIRE(child1->inheritChildrenStateFlags() == noco::InheritChildrenStateFlags::None);
 		
@@ -371,7 +371,7 @@ TEST_CASE("Node scrolling", "[Node]")
 		
 		// スクロールには子ノードが必要
 		auto child = noco::Node::Create();
-		child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 1000, 1000 } });
+		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 1000, 1000 } });
 		node->addChild(child);
 		
 		// スクロール可能に設定

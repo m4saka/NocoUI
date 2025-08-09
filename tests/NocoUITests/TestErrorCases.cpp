@@ -23,20 +23,20 @@ TEST_CASE("Error cases and edge cases", "[Error]")
 		REQUIRE(node2->parent() == node1);
 	}
 
-	SECTION("Invalid constraint values")
+	SECTION("Invalid region values")
 	{
 		auto node = noco::Node::Create();
 		
 		// 負のサイズ
-		noco::BoxConstraint invalidBox;
+		noco::InlineRegion invalidBox;
 		invalidBox.sizeDelta = Vec2{ -100, -50 };
-		node->setConstraint(invalidBox);
+		node->setRegion(invalidBox);
 		
 		// 無効なアンカー値（0-1の範囲外）
-		noco::AnchorConstraint invalidAnchor;
+		noco::AnchorRegion invalidAnchor;
 		invalidAnchor.anchorMin = Vec2{ -0.5, 1.5 };
 		invalidAnchor.anchorMax = Vec2{ 2.0, -1.0 };
-		node->setConstraint(invalidAnchor);
+		node->setRegion(invalidAnchor);
 		
 		// エラーハンドリングの実装に依存
 	}

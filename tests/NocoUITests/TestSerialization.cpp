@@ -22,68 +22,68 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 	}
 }
 
-TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstraint][BoxConstraint][JSON][Serialization]")
+TEST_CASE("Min/Max Size Regions Serialization", "[Region][AnchorRegion][InlineRegion][JSON][Serialization]")
 {
-	SECTION("AnchorConstraint min/max serialization and deserialization")
+	SECTION("AnchorRegion min/max serialization and deserialization")
 	{
-		// AnchorConstraintでmin/maxサイズを設定
-		noco::AnchorConstraint originalConstraint;
-		originalConstraint.anchorMin = Vec2{ 0.1, 0.2 };
-		originalConstraint.anchorMax = Vec2{ 0.8, 0.9 };
-		originalConstraint.posDelta = Vec2{ 10, 20 };
-		originalConstraint.sizeDelta = Vec2{ 100, 150 };
-		originalConstraint.sizeDeltaPivot = noco::Anchor::TopLeft;
-		originalConstraint.minWidth = 80.0;
-		originalConstraint.minHeight = 60.0;
-		originalConstraint.maxWidth = 500.0;
-		originalConstraint.maxHeight = 400.0;
+		// AnchorRegionでmin/maxサイズを設定
+		noco::AnchorRegion originalRegion;
+		originalRegion.anchorMin = Vec2{ 0.1, 0.2 };
+		originalRegion.anchorMax = Vec2{ 0.8, 0.9 };
+		originalRegion.posDelta = Vec2{ 10, 20 };
+		originalRegion.sizeDelta = Vec2{ 100, 150 };
+		originalRegion.sizeDeltaPivot = noco::Anchor::TopLeft;
+		originalRegion.minWidth = 80.0;
+		originalRegion.minHeight = 60.0;
+		originalRegion.maxWidth = 500.0;
+		originalRegion.maxHeight = 400.0;
 		
 		// JSONにシリアライズ
-		JSON json = originalConstraint.toJSON();
+		JSON json = originalRegion.toJSON();
 		
 		// JSONの内容確認
-		REQUIRE(json[U"type"].getString() == U"AnchorConstraint");
-		REQUIRE(json[U"anchorMin"] == originalConstraint.anchorMin);
-		REQUIRE(json[U"anchorMax"] == originalConstraint.anchorMax);
-		REQUIRE(json[U"posDelta"] == originalConstraint.posDelta);
-		REQUIRE(json[U"sizeDelta"] == originalConstraint.sizeDelta);
-		REQUIRE(json[U"sizeDeltaPivot"] == originalConstraint.sizeDeltaPivot);
+		REQUIRE(json[U"type"].getString() == U"AnchorRegion");
+		REQUIRE(json[U"anchorMin"] == originalRegion.anchorMin);
+		REQUIRE(json[U"anchorMax"] == originalRegion.anchorMax);
+		REQUIRE(json[U"posDelta"] == originalRegion.posDelta);
+		REQUIRE(json[U"sizeDelta"] == originalRegion.sizeDelta);
+		REQUIRE(json[U"sizeDeltaPivot"] == originalRegion.sizeDeltaPivot);
 		REQUIRE(json[U"minWidth"].get<double>() == 80.0);
 		REQUIRE(json[U"minHeight"].get<double>() == 60.0);
 		REQUIRE(json[U"maxWidth"].get<double>() == 500.0);
 		REQUIRE(json[U"maxHeight"].get<double>() == 400.0);
 		
 		// JSONからデシリアライズ
-		noco::AnchorConstraint deserializedConstraint = noco::AnchorConstraint::FromJSON(json);
+		noco::AnchorRegion deserializedRegion = noco::AnchorRegion::FromJSON(json);
 		
 		// デシリアライズ結果の確認
-		REQUIRE(deserializedConstraint.anchorMin == originalConstraint.anchorMin);
-		REQUIRE(deserializedConstraint.anchorMax == originalConstraint.anchorMax);
-		REQUIRE(deserializedConstraint.posDelta == originalConstraint.posDelta);
-		REQUIRE(deserializedConstraint.sizeDelta == originalConstraint.sizeDelta);
-		REQUIRE(deserializedConstraint.sizeDeltaPivot == originalConstraint.sizeDeltaPivot);
-		REQUIRE(deserializedConstraint.minWidth.has_value());
-		REQUIRE(*deserializedConstraint.minWidth == 80.0);
-		REQUIRE(deserializedConstraint.minHeight.has_value());
-		REQUIRE(*deserializedConstraint.minHeight == 60.0);
-		REQUIRE(deserializedConstraint.maxWidth.has_value());
-		REQUIRE(*deserializedConstraint.maxWidth == 500.0);
-		REQUIRE(deserializedConstraint.maxHeight.has_value());
-		REQUIRE(*deserializedConstraint.maxHeight == 400.0);
+		REQUIRE(deserializedRegion.anchorMin == originalRegion.anchorMin);
+		REQUIRE(deserializedRegion.anchorMax == originalRegion.anchorMax);
+		REQUIRE(deserializedRegion.posDelta == originalRegion.posDelta);
+		REQUIRE(deserializedRegion.sizeDelta == originalRegion.sizeDelta);
+		REQUIRE(deserializedRegion.sizeDeltaPivot == originalRegion.sizeDeltaPivot);
+		REQUIRE(deserializedRegion.minWidth.has_value());
+		REQUIRE(*deserializedRegion.minWidth == 80.0);
+		REQUIRE(deserializedRegion.minHeight.has_value());
+		REQUIRE(*deserializedRegion.minHeight == 60.0);
+		REQUIRE(deserializedRegion.maxWidth.has_value());
+		REQUIRE(*deserializedRegion.maxWidth == 500.0);
+		REQUIRE(deserializedRegion.maxHeight.has_value());
+		REQUIRE(*deserializedRegion.maxHeight == 400.0);
 	}
 
-	SECTION("AnchorConstraint with partial min/max values")
+	SECTION("AnchorRegion with partial min/max values")
 	{
 		// 一部のmin/maxのみ設定された場合
-		noco::AnchorConstraint originalConstraint;
-		originalConstraint.anchorMin = Vec2{ 0, 0 };
-		originalConstraint.anchorMax = Vec2{ 1, 1 };
-		originalConstraint.minWidth = 100.0;
+		noco::AnchorRegion originalRegion;
+		originalRegion.anchorMin = Vec2{ 0, 0 };
+		originalRegion.anchorMax = Vec2{ 1, 1 };
+		originalRegion.minWidth = 100.0;
 		// minHeight, maxWidth, maxHeightは設定しない
-		originalConstraint.maxHeight = 300.0;
+		originalRegion.maxHeight = 300.0;
 		
 		// JSONにシリアライズ
-		JSON json = originalConstraint.toJSON();
+		JSON json = originalRegion.toJSON();
 		
 		// 設定されたもののみJSONに含まれる
 		REQUIRE(json.contains(U"minWidth"));
@@ -94,37 +94,37 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		REQUIRE(json[U"maxHeight"].get<double>() == 300.0);
 		
 		// JSONからデシリアライズ
-		noco::AnchorConstraint deserializedConstraint = noco::AnchorConstraint::FromJSON(json);
+		noco::AnchorRegion deserializedRegion = noco::AnchorRegion::FromJSON(json);
 		
 		// デシリアライズ結果の確認
-		REQUIRE(deserializedConstraint.minWidth.has_value());
-		REQUIRE(*deserializedConstraint.minWidth == 100.0);
-		REQUIRE(!deserializedConstraint.minHeight.has_value());
-		REQUIRE(!deserializedConstraint.maxWidth.has_value());
-		REQUIRE(deserializedConstraint.maxHeight.has_value());
-		REQUIRE(*deserializedConstraint.maxHeight == 300.0);
+		REQUIRE(deserializedRegion.minWidth.has_value());
+		REQUIRE(*deserializedRegion.minWidth == 100.0);
+		REQUIRE(!deserializedRegion.minHeight.has_value());
+		REQUIRE(!deserializedRegion.maxWidth.has_value());
+		REQUIRE(deserializedRegion.maxHeight.has_value());
+		REQUIRE(*deserializedRegion.maxHeight == 300.0);
 	}
 
-	SECTION("BoxConstraint min/max serialization and deserialization")
+	SECTION("InlineRegion min/max serialization and deserialization")
 	{
-		// BoxConstraintでmin/maxサイズを設定
-		noco::BoxConstraint originalConstraint;
-		originalConstraint.sizeRatio = Vec2{ 0.8, 0.6 };
-		originalConstraint.sizeDelta = Vec2{ 50, 75 };
-		originalConstraint.flexibleWeight = 1.5;
-		originalConstraint.margin = noco::LRTB{ 5, 10, 15, 20 };
-		originalConstraint.minWidth = 120.0;
-		originalConstraint.minHeight = 90.0;
-		originalConstraint.maxWidth = 600.0;
-		originalConstraint.maxHeight = 450.0;
+		// InlineRegionでmin/maxサイズを設定
+		noco::InlineRegion originalRegion;
+		originalRegion.sizeRatio = Vec2{ 0.8, 0.6 };
+		originalRegion.sizeDelta = Vec2{ 50, 75 };
+		originalRegion.flexibleWeight = 1.5;
+		originalRegion.margin = noco::LRTB{ 5, 10, 15, 20 };
+		originalRegion.minWidth = 120.0;
+		originalRegion.minHeight = 90.0;
+		originalRegion.maxWidth = 600.0;
+		originalRegion.maxHeight = 450.0;
 		
 		// JSONにシリアライズ
-		JSON json = originalConstraint.toJSON();
+		JSON json = originalRegion.toJSON();
 		
 		// JSONの内容確認
-		REQUIRE(json[U"type"].getString() == U"BoxConstraint");
-		REQUIRE(json[U"sizeRatio"] == originalConstraint.sizeRatio);
-		REQUIRE(json[U"sizeDelta"] == originalConstraint.sizeDelta);
+		REQUIRE(json[U"type"].getString() == U"InlineRegion");
+		REQUIRE(json[U"sizeRatio"] == originalRegion.sizeRatio);
+		REQUIRE(json[U"sizeDelta"] == originalRegion.sizeDelta);
 		REQUIRE(json[U"flexibleWeight"].get<double>() == 1.5);
 		REQUIRE(json[U"minWidth"].get<double>() == 120.0);
 		REQUIRE(json[U"minHeight"].get<double>() == 90.0);
@@ -139,37 +139,37 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		REQUIRE(marginJson.getString() == U"(5, 10, 15, 20)");
 		
 		// JSONからデシリアライズ
-		noco::BoxConstraint deserializedConstraint = noco::BoxConstraint::FromJSON(json);
+		noco::InlineRegion deserializedRegion = noco::InlineRegion::FromJSON(json);
 		
 		// デシリアライズ結果の確認
-		REQUIRE(deserializedConstraint.sizeRatio == originalConstraint.sizeRatio);
-		REQUIRE(deserializedConstraint.sizeDelta == originalConstraint.sizeDelta);
-		REQUIRE(deserializedConstraint.flexibleWeight == originalConstraint.flexibleWeight);
-		REQUIRE(deserializedConstraint.margin.left == originalConstraint.margin.left);
-		REQUIRE(deserializedConstraint.margin.right == originalConstraint.margin.right);
-		REQUIRE(deserializedConstraint.margin.top == originalConstraint.margin.top);
-		REQUIRE(deserializedConstraint.margin.bottom == originalConstraint.margin.bottom);
-		REQUIRE(deserializedConstraint.minWidth.has_value());
-		REQUIRE(*deserializedConstraint.minWidth == 120.0);
-		REQUIRE(deserializedConstraint.minHeight.has_value());
-		REQUIRE(*deserializedConstraint.minHeight == 90.0);
-		REQUIRE(deserializedConstraint.maxWidth.has_value());
-		REQUIRE(*deserializedConstraint.maxWidth == 600.0);
-		REQUIRE(deserializedConstraint.maxHeight.has_value());
-		REQUIRE(*deserializedConstraint.maxHeight == 450.0);
+		REQUIRE(deserializedRegion.sizeRatio == originalRegion.sizeRatio);
+		REQUIRE(deserializedRegion.sizeDelta == originalRegion.sizeDelta);
+		REQUIRE(deserializedRegion.flexibleWeight == originalRegion.flexibleWeight);
+		REQUIRE(deserializedRegion.margin.left == originalRegion.margin.left);
+		REQUIRE(deserializedRegion.margin.right == originalRegion.margin.right);
+		REQUIRE(deserializedRegion.margin.top == originalRegion.margin.top);
+		REQUIRE(deserializedRegion.margin.bottom == originalRegion.margin.bottom);
+		REQUIRE(deserializedRegion.minWidth.has_value());
+		REQUIRE(*deserializedRegion.minWidth == 120.0);
+		REQUIRE(deserializedRegion.minHeight.has_value());
+		REQUIRE(*deserializedRegion.minHeight == 90.0);
+		REQUIRE(deserializedRegion.maxWidth.has_value());
+		REQUIRE(*deserializedRegion.maxWidth == 600.0);
+		REQUIRE(deserializedRegion.maxHeight.has_value());
+		REQUIRE(*deserializedRegion.maxHeight == 450.0);
 	}
 
-	SECTION("BoxConstraint with no min/max values")
+	SECTION("InlineRegion with no min/max values")
 	{
 		// min/maxが設定されていない場合
-		noco::BoxConstraint originalConstraint;
-		originalConstraint.sizeRatio = Vec2{ 1.0, 1.0 };
-		originalConstraint.sizeDelta = Vec2{ 200, 150 };
-		originalConstraint.flexibleWeight = 2.0;
+		noco::InlineRegion originalRegion;
+		originalRegion.sizeRatio = Vec2{ 1.0, 1.0 };
+		originalRegion.sizeDelta = Vec2{ 200, 150 };
+		originalRegion.flexibleWeight = 2.0;
 		// minWidth, minHeight, maxWidth, maxHeightは設定しない
 		
 		// JSONにシリアライズ
-		JSON json = originalConstraint.toJSON();
+		JSON json = originalRegion.toJSON();
 		
 		// min/maxプロパティはJSONに含まれない
 		REQUIRE(!json.contains(U"minWidth"));
@@ -178,39 +178,39 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		REQUIRE(!json.contains(U"maxHeight"));
 		
 		// JSONからデシリアライズ
-		noco::BoxConstraint deserializedConstraint = noco::BoxConstraint::FromJSON(json);
+		noco::InlineRegion deserializedRegion = noco::InlineRegion::FromJSON(json);
 		
 		// デシリアライズ結果の確認（min/maxは無効状態）
-		REQUIRE(!deserializedConstraint.minWidth.has_value());
-		REQUIRE(!deserializedConstraint.minHeight.has_value());
-		REQUIRE(!deserializedConstraint.maxWidth.has_value());
-		REQUIRE(!deserializedConstraint.maxHeight.has_value());
-		REQUIRE(deserializedConstraint.sizeRatio == originalConstraint.sizeRatio);
-		REQUIRE(deserializedConstraint.sizeDelta == originalConstraint.sizeDelta);
-		REQUIRE(deserializedConstraint.flexibleWeight == originalConstraint.flexibleWeight);
+		REQUIRE(!deserializedRegion.minWidth.has_value());
+		REQUIRE(!deserializedRegion.minHeight.has_value());
+		REQUIRE(!deserializedRegion.maxWidth.has_value());
+		REQUIRE(!deserializedRegion.maxHeight.has_value());
+		REQUIRE(deserializedRegion.sizeRatio == originalRegion.sizeRatio);
+		REQUIRE(deserializedRegion.sizeDelta == originalRegion.sizeDelta);
+		REQUIRE(deserializedRegion.flexibleWeight == originalRegion.flexibleWeight);
 	}
 
-	SECTION("Node with min/max constraints serialization")
+	SECTION("Node with min/max regions serialization")
 	{
 		// ノード全体でのシリアライゼーションテスト
-		auto originalNode = noco::Node::Create(U"TestNodeWithConstraints");
+		auto originalNode = noco::Node::Create(U"TestNodeWithRegions");
 		
-		// AnchorConstraintを設定
-		noco::AnchorConstraint anchorConstraint;
-		anchorConstraint.anchorMin = Vec2{ 0, 0 };
-		anchorConstraint.anchorMax = Vec2{ 1, 0 };
-		anchorConstraint.sizeDelta = Vec2{ 0, 100 };
-		anchorConstraint.minWidth = 200.0;
-		anchorConstraint.maxWidth = 800.0;
-		originalNode->setConstraint(anchorConstraint);
+		// AnchorRegionを設定
+		noco::AnchorRegion anchorRegion;
+		anchorRegion.anchorMin = Vec2{ 0, 0 };
+		anchorRegion.anchorMax = Vec2{ 1, 0 };
+		anchorRegion.sizeDelta = Vec2{ 0, 100 };
+		anchorRegion.minWidth = 200.0;
+		anchorRegion.maxWidth = 800.0;
+		originalNode->setRegion(anchorRegion);
 		
 		// 子ノードを追加
 		auto childNode = noco::Node::Create(U"ChildNode");
-		noco::BoxConstraint boxConstraint;
-		boxConstraint.sizeRatio = Vec2{ 0.5, 1.0 };
-		boxConstraint.minHeight = 50.0;
-		boxConstraint.maxHeight = 200.0;
-		childNode->setConstraint(boxConstraint);
+		noco::InlineRegion inlineRegion;
+		inlineRegion.sizeRatio = Vec2{ 0.5, 1.0 };
+		inlineRegion.minHeight = 50.0;
+		inlineRegion.maxHeight = 200.0;
+		childNode->setRegion(inlineRegion);
 		originalNode->addChild(childNode);
 		
 		// JSONにシリアライズ
@@ -220,20 +220,20 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		auto deserializedNode = noco::Node::CreateFromJSON(json);
 		
 		// ノード名の確認
-		REQUIRE(deserializedNode->name() == U"TestNodeWithConstraints");
+		REQUIRE(deserializedNode->name() == U"TestNodeWithRegions");
 		
 		// 親ノードの制約確認
-		const auto* parentAnchorConstraint = deserializedNode->anchorConstraint();
-		REQUIRE(parentAnchorConstraint != nullptr);
-		REQUIRE(parentAnchorConstraint->anchorMin == Vec2{ 0, 0 });
-		REQUIRE(parentAnchorConstraint->anchorMax == Vec2{ 1, 0 });
-		REQUIRE(parentAnchorConstraint->sizeDelta == Vec2{ 0, 100 });
-		REQUIRE(parentAnchorConstraint->minWidth.has_value());
-		REQUIRE(*parentAnchorConstraint->minWidth == 200.0);
-		REQUIRE(parentAnchorConstraint->maxWidth.has_value());
-		REQUIRE(*parentAnchorConstraint->maxWidth == 800.0);
-		REQUIRE(!parentAnchorConstraint->minHeight.has_value());
-		REQUIRE(!parentAnchorConstraint->maxHeight.has_value());
+		const auto* parentAnchorRegion = deserializedNode->anchorRegion();
+		REQUIRE(parentAnchorRegion != nullptr);
+		REQUIRE(parentAnchorRegion->anchorMin == Vec2{ 0, 0 });
+		REQUIRE(parentAnchorRegion->anchorMax == Vec2{ 1, 0 });
+		REQUIRE(parentAnchorRegion->sizeDelta == Vec2{ 0, 100 });
+		REQUIRE(parentAnchorRegion->minWidth.has_value());
+		REQUIRE(*parentAnchorRegion->minWidth == 200.0);
+		REQUIRE(parentAnchorRegion->maxWidth.has_value());
+		REQUIRE(*parentAnchorRegion->maxWidth == 800.0);
+		REQUIRE(!parentAnchorRegion->minHeight.has_value());
+		REQUIRE(!parentAnchorRegion->maxHeight.has_value());
 		
 		// 子ノードの確認
 		REQUIRE(deserializedNode->children().size() == 1);
@@ -241,15 +241,15 @@ TEST_CASE("Min/Max Size Constraints Serialization", "[Constraint][AnchorConstrai
 		REQUIRE(restoredChild->name() == U"ChildNode");
 		
 		// 子ノードの制約確認
-		const auto* childBoxConstraint = restoredChild->boxConstraint();
-		REQUIRE(childBoxConstraint != nullptr);
-		REQUIRE(childBoxConstraint->sizeRatio == Vec2{ 0.5, 1.0 });
-		REQUIRE(!childBoxConstraint->minWidth.has_value());
-		REQUIRE(childBoxConstraint->minHeight.has_value());
-		REQUIRE(*childBoxConstraint->minHeight == 50.0);
-		REQUIRE(!childBoxConstraint->maxWidth.has_value());
-		REQUIRE(childBoxConstraint->maxHeight.has_value());
-		REQUIRE(*childBoxConstraint->maxHeight == 200.0);
+		const auto* childInlineRegion = restoredChild->inlineRegion();
+		REQUIRE(childInlineRegion != nullptr);
+		REQUIRE(childInlineRegion->sizeRatio == Vec2{ 0.5, 1.0 });
+		REQUIRE(!childInlineRegion->minWidth.has_value());
+		REQUIRE(childInlineRegion->minHeight.has_value());
+		REQUIRE(*childInlineRegion->minHeight == 50.0);
+		REQUIRE(!childInlineRegion->maxWidth.has_value());
+		REQUIRE(childInlineRegion->maxHeight.has_value());
+		REQUIRE(*childInlineRegion->maxHeight == 200.0);
 	}
 }
 
@@ -354,64 +354,64 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(deserialized.bottom == 40.0);
 	}
 	
-	SECTION("LRTB in BoxConstraint with GetFromJSONOr")
+	SECTION("LRTB in InlineRegion with GetFromJSONOr")
 	{
-		// BoxConstraintのJSONでLRTBのテスト
-		JSON constraintJson;
-		constraintJson[U"type"] = U"BoxConstraint";
-		constraintJson[U"sizeRatio"] = Vec2{ 1.0, 1.0 };
-		constraintJson[U"sizeDelta"] = Vec2{ 100, 100 };
-		constraintJson[U"flexibleWeight"] = 0.0;
+		// InlineRegionのJSONでLRTBのテスト
+		JSON regionJson;
+		regionJson[U"type"] = U"InlineRegion";
+		regionJson[U"sizeRatio"] = Vec2{ 1.0, 1.0 };
+		regionJson[U"sizeDelta"] = Vec2{ 100, 100 };
+		regionJson[U"flexibleWeight"] = 0.0;
 		
 		// marginフィールドが文字列として存在する場合
-		constraintJson[U"margin"] = U"(5, 10, 15, 20)";
+		regionJson[U"margin"] = U"(5, 10, 15, 20)";
 		
-		noco::BoxConstraint constraint = noco::BoxConstraint::FromJSON(constraintJson);
-		REQUIRE(constraint.margin.left == 5.0);
-		REQUIRE(constraint.margin.right == 10.0);
-		REQUIRE(constraint.margin.top == 15.0);
-		REQUIRE(constraint.margin.bottom == 20.0);
+		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
+		REQUIRE(region.margin.left == 5.0);
+		REQUIRE(region.margin.right == 10.0);
+		REQUIRE(region.margin.top == 15.0);
+		REQUIRE(region.margin.bottom == 20.0);
 	}
 	
-	SECTION("LRTB in BoxConstraint with missing margin field")
+	SECTION("LRTB in InlineRegion with missing margin field")
 	{
 		// marginフィールドが欠落している場合
-		JSON constraintJson;
-		constraintJson[U"type"] = U"BoxConstraint";
-		constraintJson[U"sizeRatio"] = Vec2{ 0.5, 0.5 };
-		constraintJson[U"sizeDelta"] = Vec2{ 50, 50 };
-		constraintJson[U"flexibleWeight"] = 1.0;
+		JSON regionJson;
+		regionJson[U"type"] = U"InlineRegion";
+		regionJson[U"sizeRatio"] = Vec2{ 0.5, 0.5 };
+		regionJson[U"sizeDelta"] = Vec2{ 50, 50 };
+		regionJson[U"flexibleWeight"] = 1.0;
 		// marginフィールドなし
 		
-		noco::BoxConstraint constraint = noco::BoxConstraint::FromJSON(constraintJson);
+		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
 		
 		// デフォルト値(Zero)が使用される
-		REQUIRE(constraint.margin == noco::LRTB::Zero());
-		REQUIRE(constraint.margin.left == 0.0);
-		REQUIRE(constraint.margin.right == 0.0);
-		REQUIRE(constraint.margin.top == 0.0);
-		REQUIRE(constraint.margin.bottom == 0.0);
+		REQUIRE(region.margin == noco::LRTB::Zero());
+		REQUIRE(region.margin.left == 0.0);
+		REQUIRE(region.margin.right == 0.0);
+		REQUIRE(region.margin.top == 0.0);
+		REQUIRE(region.margin.bottom == 0.0);
 	}
 	
-	SECTION("LRTB in BoxConstraint with invalid margin format")
+	SECTION("LRTB in InlineRegion with invalid margin format")
 	{
 		// marginフィールドに不正な文字列が含まれる場合
-		JSON constraintJson;
-		constraintJson[U"type"] = U"BoxConstraint";
-		constraintJson[U"sizeRatio"] = Vec2{ 0.8, 0.8 };
-		constraintJson[U"sizeDelta"] = Vec2{ 80, 80 };
-		constraintJson[U"flexibleWeight"] = 0.5;
+		JSON regionJson;
+		regionJson[U"type"] = U"InlineRegion";
+		regionJson[U"sizeRatio"] = Vec2{ 0.8, 0.8 };
+		regionJson[U"sizeDelta"] = Vec2{ 80, 80 };
+		regionJson[U"flexibleWeight"] = 0.5;
 		
 		// 不正な形式の文字列
-		constraintJson[U"margin"] = U"invalid margin format";
+		regionJson[U"margin"] = U"invalid margin format";
 		
-		noco::BoxConstraint constraint = noco::BoxConstraint::FromJSON(constraintJson);
+		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
 		
 		// パースできない文字列の場合、デフォルト値(Zero)が使用される
-		REQUIRE(constraint.margin == noco::LRTB::Zero());
-		REQUIRE(constraint.margin.left == 0.0);
-		REQUIRE(constraint.margin.right == 0.0);
-		REQUIRE(constraint.margin.top == 0.0);
-		REQUIRE(constraint.margin.bottom == 0.0);
+		REQUIRE(region.margin == noco::LRTB::Zero());
+		REQUIRE(region.margin.left == 0.0);
+		REQUIRE(region.margin.right == 0.0);
+		REQUIRE(region.margin.top == 0.0);
+		REQUIRE(region.margin.bottom == 0.0);
 	}
 }

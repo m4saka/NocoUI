@@ -13,7 +13,7 @@ namespace noco::editor
 		// リサイズハンドル用のノードを作成
 		m_handleNode = editorCanvas->rootNode()->emplaceChild(
 			U"ResizableHandle",
-			AnchorConstraint
+			AnchorRegion
 			{
 				.anchorMin = Anchor::TopLeft,
 				.anchorMax = Anchor::TopLeft,
@@ -25,29 +25,29 @@ namespace noco::editor
 
 	void ResizableHandle::setPosition(const Vec2& position)
 	{
-		if (auto* pAnchorConstraint = m_handleNode->anchorConstraint())
+		if (auto* pAnchorRegion = m_handleNode->anchorRegion())
 		{
-			auto newConstraint = *pAnchorConstraint;
-			newConstraint.posDelta = position;
-			m_handleNode->setConstraint(newConstraint);
+			auto newRegion = *pAnchorRegion;
+			newRegion.posDelta = position;
+			m_handleNode->setRegion(newRegion);
 		}
 		else
 		{
-			Logger << U"[NocoEditor warning] AnchorConstraint not found in handleNode";
+			Logger << U"[NocoEditor warning] AnchorRegion not found in handleNode";
 		}
 	}
 
 	void ResizableHandle::setSize(const Vec2& size)
 	{
-		if (auto* pAnchorConstraint = m_handleNode->anchorConstraint())
+		if (auto* pAnchorRegion = m_handleNode->anchorRegion())
 		{
-			auto newConstraint = *pAnchorConstraint;
-			newConstraint.sizeDelta = size;
-			m_handleNode->setConstraint(newConstraint);
+			auto newRegion = *pAnchorRegion;
+			newRegion.sizeDelta = size;
+			m_handleNode->setRegion(newRegion);
 		}
 		else
 		{
-			Logger << U"[NocoEditor warning] AnchorConstraint not found in handleNode";
+			Logger << U"[NocoEditor warning] AnchorRegion not found in handleNode";
 		}
 	}
 

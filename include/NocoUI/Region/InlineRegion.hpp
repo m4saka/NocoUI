@@ -4,7 +4,7 @@
 
 namespace noco
 {
-	struct BoxConstraint
+	struct InlineRegion
 	{
 		Vec2 sizeRatio = Vec2::Zero();
 		Vec2 sizeDelta = Vec2::Zero();
@@ -16,7 +16,7 @@ namespace noco
 		Optional<double> maxHeight = none;
 
 		[[nodiscard]]
-		RectF applyConstraint(const RectF& parentRect, const Vec2& offset) const
+		RectF applyRegion(const RectF& parentRect, const Vec2& offset) const
 		{
 			Vec2 size{ parentRect.size * sizeRatio + sizeDelta };
 			
@@ -49,7 +49,7 @@ namespace noco
 		{
 			JSON json
 			{
-				{ U"type", U"BoxConstraint" },
+				{ U"type", U"InlineRegion" },
 				{ U"sizeRatio", sizeRatio },
 				{ U"sizeDelta", sizeDelta },
 				{ U"flexibleWeight", flexibleWeight },
@@ -77,9 +77,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-				static BoxConstraint FromJSON(const JSON& json)
+				static InlineRegion FromJSON(const JSON& json)
 		{
-			return BoxConstraint
+			return InlineRegion
 			{
 				.sizeRatio = GetFromJSONOr(json, U"sizeRatio", Vec2::Zero()),
 				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
@@ -93,6 +93,6 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool operator==(const BoxConstraint& other) const = default;
+		bool operator==(const InlineRegion& other) const = default;
 	};
 }

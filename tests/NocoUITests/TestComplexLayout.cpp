@@ -12,17 +12,17 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create();
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 200, 300 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 300 } });
 		
 		noco::FlowLayout flow;
 		flow.spacing = Vec2{ 10, 10 };
-		parent->setBoxChildrenLayout(flow);
+		parent->setChildrenLayout(flow);
 		
 		// 複数の子ノードを追加（幅を超えて折り返すように）
 		for (int i = 0; i < 6; ++i)
 		{
 			auto child = noco::Node::Create();
-			child->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 60, 40 } });
+			child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 60, 40 } });
 			parent->addChild(child);
 		}
 		
@@ -37,23 +37,23 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create();
-		parent->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 300, 100 } });
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 300, 100 } });
 		
 		noco::HorizontalLayout hLayout;
 		hLayout.spacing = 10;
-		parent->setBoxChildrenLayout(hLayout);
+		parent->setChildrenLayout(hLayout);
 		
 		// 固定サイズの子
 		auto fixedChild = noco::Node::Create();
-		fixedChild->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 50, 0 } });
+		fixedChild->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 0 } });
 		
 		// フレキシブルな子（重み1）
 		auto flexChild1 = noco::Node::Create();
-		flexChild1->setConstraint(noco::BoxConstraint{ .flexibleWeight = 1.0 });
+		flexChild1->setRegion(noco::InlineRegion{ .flexibleWeight = 1.0 });
 		
 		// フレキシブルな子（重み2）
 		auto flexChild2 = noco::Node::Create();
-		flexChild2->setConstraint(noco::BoxConstraint{ .flexibleWeight = 2.0 });
+		flexChild2->setRegion(noco::InlineRegion{ .flexibleWeight = 2.0 });
 		
 		parent->addChild(fixedChild);
 		parent->addChild(flexChild1);
@@ -70,23 +70,23 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto root = noco::Node::Create();
-		root->setConstraint(noco::BoxConstraint{ .sizeDelta = Vec2{ 400, 300 } });
+		root->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 400, 300 } });
 		
 		// 垂直レイアウトの親
 		noco::VerticalLayout vLayout;
-		root->setBoxChildrenLayout(vLayout);
+		root->setChildrenLayout(vLayout);
 		
 		// 水平レイアウトの子
 		auto hContainer = noco::Node::Create();
-		hContainer->setConstraint(noco::BoxConstraint{ .flexibleWeight = 1.0 });
+		hContainer->setRegion(noco::InlineRegion{ .flexibleWeight = 1.0 });
 		noco::HorizontalLayout hLayout;
-		hContainer->setBoxChildrenLayout(hLayout);
+		hContainer->setChildrenLayout(hLayout);
 		
 		// 孫ノード
 		for (int i = 0; i < 3; ++i)
 		{
 			auto grandchild = noco::Node::Create();
-			grandchild->setConstraint(noco::BoxConstraint{ .flexibleWeight = 1.0 });
+			grandchild->setRegion(noco::InlineRegion{ .flexibleWeight = 1.0 });
 			hContainer->addChild(grandchild);
 		}
 		

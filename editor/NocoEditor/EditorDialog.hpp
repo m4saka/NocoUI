@@ -50,7 +50,7 @@ namespace noco::editor
 			: m_dialogCanvas(dialogCanvas)
 			, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
 				U"Dialog_ScreenMask",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -60,7 +60,7 @@ namespace noco::editor
 				}))
 			, m_dialogNode(m_screenMaskNode->emplaceChild(
 				U"Dialog",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 0 },
 					.sizeDelta = Vec2{ dialogWidth, 0 },
@@ -68,7 +68,7 @@ namespace noco::editor
 				}))
 			, m_contentRootNode(m_dialogNode->emplaceChild(
 				U"Dialog_ContentRoot",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 0 },
@@ -76,7 +76,7 @@ namespace noco::editor
 				}))
 			, m_buttonRootNode(m_dialogNode->emplaceChild(
 				U"Dialog_ButtonRoot",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 0 },
@@ -87,19 +87,19 @@ namespace noco::editor
 
 			// ダイアログ背面を暗くする
 			m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
-			m_screenMaskNode->setBoxChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
+			m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
 
-			m_dialogNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } }, RefreshesLayoutYN::No);
+			m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } }, RefreshesLayoutYN::No);
 			m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 			const auto buttonParentNode = m_dialogNode->emplaceChild(
 				U"Dialog_ButtonParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 8, 0 },
 				});
-			buttonParentNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
+			buttonParentNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
 			for (const DialogButtonDesc& buttonDesc : buttonDescs)
 			{
 				const String buttonText = [](const DialogButtonDesc& buttonDesc) -> String
@@ -117,7 +117,7 @@ namespace noco::editor
 				const auto buttonNode = buttonParentNode->addChild(
 					CreateButtonNode(
 						buttonText,
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeDelta = Vec2{ 100, 24 },
 							.margin = LRTB{ 4, 4, 0, 0 },
@@ -148,8 +148,8 @@ namespace noco::editor
 					buttonNode->addClickHotKey(KeyEscape, EnabledWhileTextEditingYN::Yes);
 				}
 			}
-			buttonParentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-			m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			buttonParentNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 
 			// ダイアログの中身が大きすぎる場合用にスクロール可能にする
 			m_contentRootNode->setVerticalScrollable(true);
@@ -167,8 +167,8 @@ namespace noco::editor
 
 		void refreshLayoutForContent()
 		{
-			m_contentRootNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-			m_dialogNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			m_contentRootNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
 			m_dialogCanvas->refreshLayout();
 		}
 	};
@@ -232,7 +232,7 @@ namespace noco::editor
 		{
 			const auto labelNode = contentRootNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = SizeF{ 0, 48 },
@@ -288,7 +288,7 @@ namespace noco::editor
 		{
 			const auto labelNode = contentRootNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = SizeF{ 0, 24 },
@@ -304,7 +304,7 @@ namespace noco::editor
 
 			m_textBoxNode = contentRootNode->emplaceChild(
 				U"TextBox",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = SizeF{ 0, 26 },
 					.flexibleWeight = 1,
@@ -409,17 +409,17 @@ namespace noco::editor
 		{
 			const auto styleStateNode = parentNode->emplaceChild(
 				U"StyleStateSection",
-				BoxConstraint{
+				InlineRegion{
 					.sizeRatio = Vec2{1, 0},
 					.sizeDelta = SizeF{0, 36},
 					.margin = LRTB{0, 0, 0, 8},
 				});
-			styleStateNode->setBoxChildrenLayout(HorizontalLayout{.spacing = 4});
+			styleStateNode->setChildrenLayout(HorizontalLayout{.spacing = 4});
 		
 			// ラベル
 			const auto labelNode = styleStateNode->emplaceChild(
 				U"Label",
-				BoxConstraint{
+				InlineRegion{
 					.sizeRatio = Vec2{0, 1},
 					.sizeDelta = Vec2{80, 0},
 				});
@@ -435,7 +435,7 @@ namespace noco::editor
 			// コンボボックス
 			m_styleStateComboBox = styleStateNode->emplaceChild(
 				U"ComboBox",
-				BoxConstraint{
+				InlineRegion{
 					.sizeDelta = Vec2{0, 26},
 					.flexibleWeight = 1,
 				});
@@ -471,7 +471,7 @@ namespace noco::editor
 			// ＋追加ボタン
 			const auto addButton = styleStateNode->emplaceChild(
 				U"AddButton",
-				BoxConstraint{
+				InlineRegion{
 					.sizeDelta = Vec2{60, 26},
 				});
 			addButton->emplaceComponent<RectRenderer>(
@@ -491,7 +491,7 @@ namespace noco::editor
 			// －削除ボタン
 			m_removeButton = styleStateNode->emplaceChild(
 				U"RemoveButton",
-				BoxConstraint{
+				InlineRegion{
 					.sizeDelta = Vec2{60, 26},
 				});
 			m_removeButton->emplaceComponent<RectRenderer>(
@@ -512,7 +512,7 @@ namespace noco::editor
 			// 区切り線
 			const auto separatorNode = parentNode->emplaceChild(
 				U"Separator",
-				BoxConstraint{
+				InlineRegion{
 					.sizeRatio = Vec2{1, 0},
 					.sizeDelta = SizeF{0, 1},
 					.margin = LRTB{0, 0, 0, 8},

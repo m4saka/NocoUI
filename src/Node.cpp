@@ -148,7 +148,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 
-		const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding();
+		const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding();
 		if (!contentRectOpt)
 		{
 			m_scrollOffset = Vec2::Zero();
@@ -170,7 +170,7 @@ namespace noco
 		// ラバーバンドスクロールが無効な場合のみクランプする
 		if (!m_rubberBandScrollEnabled)
 		{
-			const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
+			const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
 			m_scrollOffset.x = Clamp(m_scrollOffset.x, -maxScrollX * scrollOffsetAnchor.x, maxScrollX * (1.0 - scrollOffsetAnchor.x));
 			m_scrollOffset.y = Clamp(m_scrollOffset.y, -maxScrollY * scrollOffsetAnchor.y, maxScrollY * (1.0 - scrollOffsetAnchor.y));
 		}
@@ -188,7 +188,7 @@ namespace noco
 			
 			if (horizontalScrollableValue || verticalScrollableValue)
 			{
-				const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding();
+				const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding();
 				if (contentRectOpt)
 				{
 					const RectF& contentRect = *contentRectOpt;
@@ -197,7 +197,7 @@ namespace noco
 					const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
 					const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
 					
-					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
 					
 					if (horizontalScrollableValue)
 					{
@@ -217,19 +217,19 @@ namespace noco
 		return { minScroll, maxScroll };
 	}
 
-	std::shared_ptr<Node> Node::Create(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
+	std::shared_ptr<Node> Node::Create(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
-		return std::shared_ptr<Node>{ new Node{ s_nextInternalId++, name, constraint, isHitTarget, inheritChildrenStateFlags } };
+		return std::shared_ptr<Node>{ new Node{ s_nextInternalId++, name, region, isHitTarget, inheritChildrenStateFlags } };
 	}
 
-	const ConstraintVariant& Node::constraint() const
+	const RegionVariant& Node::region() const
 	{
-		return m_constraint;
+		return m_region;
 	}
 
-	std::shared_ptr<Node> Node::setConstraint(const ConstraintVariant& constraint, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setRegion(const RegionVariant& region, RefreshesLayoutYN refreshesLayout)
 	{
-		m_constraint = constraint;
+		m_region = region;
 		if (refreshesLayout)
 		{
 			refreshContainedCanvasLayout();
@@ -237,14 +237,14 @@ namespace noco
 		return shared_from_this();
 	}
 
-	const BoxConstraint* Node::boxConstraint() const
+	const InlineRegion* Node::inlineRegion() const
 	{
-		return std::get_if<BoxConstraint>(&m_constraint);
+		return std::get_if<InlineRegion>(&m_region);
 	}
 
-	const AnchorConstraint* Node::anchorConstraint() const
+	const AnchorRegion* Node::anchorRegion() const
 	{
-		return std::get_if<AnchorConstraint>(&m_constraint);
+		return std::get_if<AnchorRegion>(&m_region);
 	}
 
 	TransformEffect& Node::transformEffect()
@@ -257,14 +257,14 @@ namespace noco
 		return m_transformEffect;
 	}
 
-	const LayoutVariant& Node::boxChildrenLayout() const
+	const LayoutVariant& Node::childrenLayout() const
 	{
-		return m_boxChildrenLayout;
+		return m_childrenLayout;
 	}
 
-	std::shared_ptr<Node> Node::setBoxChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
 	{
-		m_boxChildrenLayout = layout;
+		m_childrenLayout = layout;
 		if (refreshesLayout)
 		{
 			refreshContainedCanvasLayout();
@@ -274,43 +274,43 @@ namespace noco
 
 	const FlowLayout* Node::childrenFlowLayout() const
 	{
-		return std::get_if<FlowLayout>(&m_boxChildrenLayout);
+		return std::get_if<FlowLayout>(&m_childrenLayout);
 	}
 
 	const HorizontalLayout* Node::childrenHorizontalLayout() const
 	{
-		return std::get_if<HorizontalLayout>(&m_boxChildrenLayout);
+		return std::get_if<HorizontalLayout>(&m_childrenLayout);
 	}
 
 	const VerticalLayout* Node::childrenVerticalLayout() const
 	{
-		return std::get_if<VerticalLayout>(&m_boxChildrenLayout);
+		return std::get_if<VerticalLayout>(&m_childrenLayout);
 	}
 
 	SizeF Node::getFittingSizeToChildren() const
 	{
-		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_boxChildrenLayout);
+		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_childrenLayout);
 	}
 
-	std::shared_ptr<Node> Node::setBoxConstraintToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setInlineRegionToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
 	{
-		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setBoxConstraintToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_boxChildrenLayout);
+		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setInlineRegionToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_childrenLayout);
 		return shared_from_this();
 	}
 
-	const LRTB& Node::boxChildrenLayoutPadding() const
+	const LRTB& Node::childrenLayoutPadding() const
 	{
-		return std::visit([](const auto& layout) -> const LRTB& { return layout.padding; }, m_boxChildrenLayout);
+		return std::visit([](const auto& layout) -> const LRTB& { return layout.padding; }, m_childrenLayout);
 	}
 
-	bool Node::hasBoxConstraint() const
+	bool Node::hasInlineRegion() const
 	{
-		return std::holds_alternative<BoxConstraint>(m_constraint);
+		return std::holds_alternative<InlineRegion>(m_region);
 	}
 
-	bool Node::hasAnchorConstraint() const
+	bool Node::hasAnchorRegion() const
 	{
-		return std::holds_alternative<AnchorConstraint>(m_constraint);
+		return std::holds_alternative<AnchorRegion>(m_region);
 	}
 
 	JSON Node::toJSON() const
@@ -329,9 +329,9 @@ namespace noco
 		JSON result
 		{
 			{ U"name", m_name },
-			{ U"constraint", std::visit([](const auto& constraint) { return constraint.toJSON(); }, m_constraint) },
+			{ U"region", std::visit([](const auto& region) { return region.toJSON(); }, m_region) },
 			{ U"transformEffect", m_transformEffect.toJSON() },
-			{ U"boxChildrenLayout", std::visit([](const auto& boxChildrenLayout) { return boxChildrenLayout.toJSON(); }, m_boxChildrenLayout) },
+			{ U"childrenLayout", std::visit([](const auto& childrenLayout) { return childrenLayout.toJSON(); }, m_childrenLayout) },
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
@@ -383,48 +383,48 @@ namespace noco
 		{
 			node->m_name = json[U"name"].getOr<String>(U"");
 		}
-		if (json.contains(U"constraint") && json[U"constraint"].contains(U"type"))
+		if (json.contains(U"region") && json[U"region"].contains(U"type"))
 		{
-			const auto type = json[U"constraint"][U"type"].getString();
-			if (type == U"AnchorConstraint")
+			const auto type = json[U"region"][U"type"].getString();
+			if (type == U"AnchorRegion")
 			{
-				node->m_constraint = AnchorConstraint::FromJSON(json[U"constraint"]);
+				node->m_region = AnchorRegion::FromJSON(json[U"region"]);
 			}
-			else if (type == U"BoxConstraint")
+			else if (type == U"InlineRegion")
 			{
-				node->m_constraint = BoxConstraint::FromJSON(json[U"constraint"]);
+				node->m_region = InlineRegion::FromJSON(json[U"region"]);
 			}
 			else
 			{
-				// 不明な場合はBoxConstraint扱いにする
-				Logger << U"[NocoUI warning] Unknown constraint type: '{}'"_fmt(type);
-				node->m_constraint = BoxConstraint{};
+				// 不明な場合はInlineRegion扱いにする
+				Logger << U"[NocoUI warning] Unknown region type: '{}'"_fmt(type);
+				node->m_region = InlineRegion{};
 			}
 		}
 		if (json.contains(U"transformEffect"))
 		{
 			node->m_transformEffect.readFromJSON(json[U"transformEffect"]);
 		}
-		if (json.contains(U"boxChildrenLayout") && json[U"boxChildrenLayout"].contains(U"type"))
+		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
-			const auto type = json[U"boxChildrenLayout"][U"type"].getString();
+			const auto type = json[U"childrenLayout"][U"type"].getString();
 			if (type == U"FlowLayout")
 			{
-				node->m_boxChildrenLayout = FlowLayout::FromJSON(json[U"boxChildrenLayout"]);
+				node->m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"HorizontalLayout")
 			{
-				node->m_boxChildrenLayout = HorizontalLayout::FromJSON(json[U"boxChildrenLayout"]);
+				node->m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"VerticalLayout")
 			{
-				node->m_boxChildrenLayout = VerticalLayout::FromJSON(json[U"boxChildrenLayout"]);
+				node->m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else
 			{
 				// 不明な場合はFlowLayout扱いにする
-				Logger << U"[NocoUI warning] Unknown box children layout type: '{}'"_fmt(type);
-				node->m_boxChildrenLayout = FlowLayout{};
+				Logger << U"[NocoUI warning] Unknown inline children layout type: '{}'"_fmt(type);
+				node->m_childrenLayout = FlowLayout{};
 			}
 		}
 		if (json.contains(U"isHitTarget"))
@@ -731,9 +731,9 @@ namespace noco
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Node::emplaceChild(StringView name, const ConstraintVariant& constraint, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::emplaceChild(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags, RefreshesLayoutYN refreshesLayout)
 	{
-		auto child = Node::Create(name, constraint, isHitTarget, inheritChildrenStateFlags);
+		auto child = Node::Create(name, region, isHitTarget, inheritChildrenStateFlags);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
@@ -927,22 +927,22 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::refreshBoxChildrenLayout()
+	void Node::refreshChildrenLayout()
 	{
 		std::visit([this](const auto& layout)
 			{
 				layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 					{
 						child->m_layoutAppliedRect = rect;
-						if (child->hasBoxConstraint())
+						if (child->hasInlineRegion())
 						{
 							child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
 						}
 					});
-			}, m_boxChildrenLayout);
+			}, m_childrenLayout);
 		for (const auto& child : m_children)
 		{
-			child->refreshBoxChildrenLayout();
+			child->refreshChildrenLayout();
 		}
 
 		// レイアウト更新後の状態でスクロールオフセットを制限し、変化があれば反映
@@ -956,20 +956,20 @@ namespace noco
 					layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 						{
 							child->m_layoutAppliedRect = rect;
-							if (child->hasBoxConstraint())
+							if (child->hasInlineRegion())
 							{
 								child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
 							}
 						});
-				}, m_boxChildrenLayout);
+				}, m_childrenLayout);
 			for (const auto& child : m_children)
 			{
-				child->refreshBoxChildrenLayout();
+				child->refreshChildrenLayout();
 			}
 		}
 	}
 
-	Optional<RectF> Node::getBoxChildrenContentRect() const
+	Optional<RectF> Node::getChildrenContentRect() const
 	{
 		if (m_children.empty())
 		{
@@ -983,7 +983,7 @@ namespace noco
 		double bottom = -std::numeric_limits<double>::infinity();
 		for (const auto& child : m_children)
 		{
-			if (!child->hasBoxConstraint())
+			if (!child->hasInlineRegion())
 			{
 				continue;
 			}
@@ -1017,15 +1017,15 @@ namespace noco
 		return RectF{ left, top, width, height };
 	}
 
-	Optional<RectF> Node::getBoxChildrenContentRectWithPadding() const
+	Optional<RectF> Node::getChildrenContentRectWithPadding() const
 	{
-		const auto contentRectOpt = getBoxChildrenContentRect();
+		const auto contentRectOpt = getChildrenContentRect();
 		if (!contentRectOpt)
 		{
 			return none;
 		}
 		const RectF& contentRect = *contentRectOpt;
-		const LRTB& padding = boxChildrenLayoutPadding();
+		const LRTB& padding = childrenLayoutPadding();
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
@@ -1097,7 +1097,7 @@ namespace noco
 	{
 		if (horizontalScrollable() || verticalScrollable())
 		{
-			if (const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding())
+			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 			{
 				const RectF& contentRectLocal = *contentRectOpt;
 				if ((horizontalScrollable() && contentRectLocal.w > m_layoutAppliedRect.w) ||
@@ -1694,10 +1694,10 @@ namespace noco
 			const bool needVerticalScrollBar = verticalScrollable();
 			if (needHorizontalScrollBar || needVerticalScrollBar)
 			{
-				if (const Optional<RectF> contentRectOpt = getBoxChildrenContentRectWithPadding())
+				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
-					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_boxChildrenLayout);
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
 					const double roundRadius = 2.0;
 
 					// 背景より手前にするためにハンドル部分は後で描画
@@ -1953,9 +1953,9 @@ namespace noco
 
 	RectF Node::layoutAppliedRectWithMargin() const
 	{
-		if (const BoxConstraint* pBoxConstraint = boxConstraint())
+		if (const InlineRegion* pInlineRegion = inlineRegion())
 		{
-			const LRTB& margin = pBoxConstraint->margin;
+			const LRTB& margin = pInlineRegion->margin;
 			return RectF
 			{
 				m_layoutAppliedRect.x - margin.left,

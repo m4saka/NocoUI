@@ -3,7 +3,7 @@
 
 namespace noco
 {
-	struct AnchorConstraint
+	struct AnchorRegion
 	{
 		Vec2 anchorMin = Anchor::MiddleCenter;
 		Vec2 anchorMax = Anchor::MiddleCenter;
@@ -18,9 +18,9 @@ namespace noco
 		/* NonSerialized */ bool isCustomAnchorInEditor = false;
 
 		[[nodiscard]]
-		RectF applyConstraint(const RectF& parentRect, const Vec2&) const
+		RectF applyRegion(const RectF& parentRect, const Vec2&) const
 		{
-			// AnchorConstraintはオフセットの影響を受けないため、第2引数は無視
+			// AnchorRegionはオフセットの影響を受けないため、第2引数は無視
 			const Vec2 originalSize{ parentRect.size * (anchorMax - anchorMin) + sizeDelta };
 			Vec2 size = originalSize;
 			
@@ -57,7 +57,7 @@ namespace noco
 		{
 			JSON json
 			{
-				{ U"type", U"AnchorConstraint" },
+				{ U"type", U"AnchorRegion" },
 				{ U"anchorMin", anchorMin },
 				{ U"anchorMax", anchorMax },
 				{ U"posDelta", posDelta },
@@ -86,9 +86,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static AnchorConstraint FromJSON(const JSON& json)
+		static AnchorRegion FromJSON(const JSON& json)
 		{
-			return AnchorConstraint
+			return AnchorRegion
 			{
 				.anchorMin = GetFromJSONOr(json, U"anchorMin", Anchor::MiddleCenter),
 				.anchorMax = GetFromJSONOr(json, U"anchorMax", Anchor::MiddleCenter),
@@ -103,6 +103,6 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool operator==(const AnchorConstraint& other) const = default;
+		bool operator==(const AnchorRegion& other) const = default;
 	};
 }

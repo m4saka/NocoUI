@@ -36,7 +36,7 @@ namespace noco::editor
 			, m_editorOverlayCanvas(editorOverlayCanvas)
 			, m_toolbarRootNode(editorCanvas->rootNode()->emplaceChild(
 				U"Toolbar",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopRight,
@@ -45,7 +45,7 @@ namespace noco::editor
 					.sizeDeltaPivot = Anchor::TopLeft,
 				}))
 		{
-			m_toolbarRootNode->setBoxChildrenLayout(
+			m_toolbarRootNode->setChildrenLayout(
 				HorizontalLayout
 				{
 					.padding = LRTB{ .left = ButtonMargin, .top = BorderLineThickness },
@@ -57,7 +57,7 @@ namespace noco::editor
 			// MenuBarとの境界線を追加
 			m_toolbarRootNode->emplaceChild(
 				U"BorderLine",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopRight,
@@ -72,7 +72,7 @@ namespace noco::editor
 		{
 			auto buttonNode = m_toolbarRootNode->emplaceChild(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 0 },
 					.sizeDelta = Vec2{ ButtonSize, ButtonSize },
@@ -125,7 +125,7 @@ namespace noco::editor
 		{
 			m_toolbarRootNode->emplaceChild(
 				U"Separator",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 0.6 },
 					.sizeDelta = Vec2{ 1, 0 },

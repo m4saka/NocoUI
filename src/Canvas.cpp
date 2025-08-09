@@ -79,7 +79,7 @@ namespace noco
 	Canvas::Canvas()
 		: Canvas{ Node::Create(
 			U"Canvas",
-			AnchorConstraint
+			AnchorRegion
 			{
 				.anchorMin = Anchor::TopLeft,
 				.anchorMax = Anchor::BottomRight,
@@ -131,22 +131,22 @@ namespace noco
 
 	void Canvas::refreshLayout()
 	{
-		const auto& rootConstraint = m_rootNode->constraint();
-		if (const auto pBoxConstraint = std::get_if<BoxConstraint>(&rootConstraint))
+		const auto& rootRegion = m_rootNode->region();
+		if (const auto pInlineRegion = std::get_if<InlineRegion>(&rootRegion))
 		{
-			m_rootNode->m_layoutAppliedRect = pBoxConstraint->applyConstraint(Scene::Rect(), Vec2::Zero());
+			m_rootNode->m_layoutAppliedRect = pInlineRegion->applyRegion(Scene::Rect(), Vec2::Zero());
 		}
-		else if (const auto pAnchorConstraint = std::get_if<AnchorConstraint>(&rootConstraint))
+		else if (const auto pAnchorRegion = std::get_if<AnchorRegion>(&rootRegion))
 		{
-			m_rootNode->m_layoutAppliedRect = pAnchorConstraint->applyConstraint(Scene::Rect(), Vec2::Zero());
+			m_rootNode->m_layoutAppliedRect = pAnchorRegion->applyRegion(Scene::Rect(), Vec2::Zero());
 		}
 		else
 		{
 			// TODO: 実行時例外ではなくコンパイルエラーにしたい
-			throw Error{ U"Unknown root node constraint" };
+			throw Error{ U"Unknown root node region" };
 		}
 
-		m_rootNode->refreshBoxChildrenLayout();
+		m_rootNode->refreshChildrenLayout();
 		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 	}
 

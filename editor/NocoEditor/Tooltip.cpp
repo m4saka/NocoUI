@@ -22,7 +22,7 @@ namespace noco::editor
 			// ツールチップノードを生成
 			m_tooltipNode = m_overlayCanvas->rootNode()->emplaceChild(
 				U"Tooltip",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::TopLeft,
@@ -32,7 +32,7 @@ namespace noco::editor
 				},
 				IsHitTargetYN::No);
 			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
-			m_tooltipNode->setBoxChildrenLayout(
+			m_tooltipNode->setChildrenLayout(
 				VerticalLayout
 				{
 					.padding = LRTB{ 10, 10, 5, 5 },
@@ -43,7 +43,7 @@ namespace noco::editor
 			// メインテキスト用ノード
 			const auto mainTextNode = m_tooltipNode->emplaceChild(
 				U"MainText",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 				},
@@ -63,7 +63,7 @@ namespace noco::editor
 			{
 				const auto detailTextNode = m_tooltipNode->emplaceChild(
 					U"DetailText",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeDelta = Vec2{ 0, 0 }, // サイズは後で調整
 					},
@@ -106,24 +106,24 @@ namespace noco::editor
 			if (const auto label = child->getComponent<Label>())
 			{
 				const Vec2 contentSize = label->contentSize();
-				if (const auto* pBoxConstraint = child->boxConstraint())
+				if (const auto* pInlineRegion = child->inlineRegion())
 				{
-					auto newConstraint = *pBoxConstraint;
-					newConstraint.sizeDelta = contentSize;
-					child->setConstraint(newConstraint, RefreshesLayoutYN::No);
+					auto newRegion = *pInlineRegion;
+					newRegion.sizeDelta = contentSize;
+					child->setRegion(newRegion, RefreshesLayoutYN::No);
 				}
 			}
 		}
 
 		// ツールチップ全体のサイズを更新
-		if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+		if (const auto pRegion = m_tooltipNode->anchorRegion())
 		{
 			const Vec2 newSize = m_tooltipNode->getFittingSizeToChildren();
-			if (pConstraint->sizeDelta != newSize)
+			if (pRegion->sizeDelta != newSize)
 			{
-				AnchorConstraint newConstraint = *pConstraint;
-				newConstraint.sizeDelta = newSize;
-				m_tooltipNode->setConstraint(newConstraint);
+				AnchorRegion newRegion = *pRegion;
+				newRegion.sizeDelta = newSize;
+				m_tooltipNode->setRegion(newRegion);
 			}
 		}
 	}
@@ -160,10 +160,10 @@ namespace noco::editor
 			if (m_isShowing && m_tooltipNode)
 			{
 				// マウス位置にツールチップを移動
-				if (const auto pConstraint = m_tooltipNode->anchorConstraint())
+				if (const auto pRegion = m_tooltipNode->anchorRegion())
 				{
 					Vec2 newPos = Cursor::Pos() + Vec2{ 0, 20 };
-					const Vec2 tooltipSize = pConstraint->sizeDelta;
+					const Vec2 tooltipSize = pRegion->sizeDelta;
 
 					// 右端にはみ出す場合は左に寄せる
 					if (newPos.x + tooltipSize.x > Scene::Width())
@@ -178,11 +178,11 @@ namespace noco::editor
 						newPos.y = Cursor::Pos().y - tooltipSize.y - 5;
 					}
 
-					if (pConstraint->posDelta != newPos)
+					if (pRegion->posDelta != newPos)
 					{
-						AnchorConstraint newConstraint = *pConstraint;
-						newConstraint.posDelta = newPos;
-						m_tooltipNode->setConstraint(newConstraint);
+						AnchorRegion newRegion = *pRegion;
+						newRegion.posDelta = newPos;
+						m_tooltipNode->setRegion(newRegion);
 					}
 				}
 			}

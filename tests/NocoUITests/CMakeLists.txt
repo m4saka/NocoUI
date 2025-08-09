@@ -32,7 +32,7 @@ add_executable(${TARGET_NAME}
     TestTransformEffectHitTest.cpp
     TestComponent.cpp
     TestCanvas.cpp
-    TestConstraint.cpp
+    TestRegion.cpp
     TestLayout.cpp
     TestSerialization.cpp
     TestProperty.cpp

@@ -6,26 +6,26 @@ namespace noco::editor
 {
 	struct Defaults
 	{
-		ConstraintType constraintType;
+		RegionType regionType;
 
-		ConstraintVariant defaultConstraint() const
+		RegionVariant defaultRegion() const
 		{
-			switch (constraintType)
+			switch (regionType)
 			{
-			case ConstraintType::AnchorConstraint:
-				return AnchorConstraint
+			case RegionType::AnchorRegion:
+				return AnchorRegion
 				{
 					.sizeDelta = { 100, 100 },
 				};
 
-			case ConstraintType::BoxConstraint:
-				return BoxConstraint
+			case RegionType::InlineRegion:
+				return InlineRegion
 				{
 					.sizeDelta = { 100, 100 },
 				};
 
 			default:
-				throw Error{ U"Unknown constraint type: {}"_fmt(static_cast<uint8>(constraintType)) };
+				throw Error{ U"Unknown region type: {}"_fmt(static_cast<uint8>(regionType)) };
 			}
 		}
 	};

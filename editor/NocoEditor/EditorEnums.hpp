@@ -3,9 +3,9 @@
 
 namespace noco::editor
 {
-	enum class ConstraintType : uint8
+	enum class RegionType : uint8
 	{
-		AnchorConstraint,
-		BoxConstraint,
+		AnchorRegion,
+		InlineRegion,
 	};
 }

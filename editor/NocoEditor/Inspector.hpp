@@ -27,7 +27,7 @@ namespace noco::editor
 		std::weak_ptr<Node> m_targetNode;
 		std::function<void()> m_onChangeNodeName;
 
-		IsFoldedYN m_isFoldedConstraint = IsFoldedYN::No;
+		IsFoldedYN m_isFoldedRegion = IsFoldedYN::No;
 		IsFoldedYN m_isFoldedNodeSetting = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedTransformEffect = IsFoldedYN::Yes;
@@ -115,25 +115,25 @@ namespace noco::editor
 			
 			const Vec2 textureSize{ texture.size() };
 			
-			if (const auto* pBoxConstraint = node->boxConstraint())
+			if (const auto* pInlineRegion = node->inlineRegion())
 			{
-				BoxConstraint newConstraint = *pBoxConstraint;
-				newConstraint.sizeDelta = textureSize;
-				newConstraint.sizeRatio = Vec2::Zero();
-				newConstraint.flexibleWeight = 0.0;
-				node->setConstraint(newConstraint);
+				InlineRegion newRegion = *pInlineRegion;
+				newRegion.sizeDelta = textureSize;
+				newRegion.sizeRatio = Vec2::Zero();
+				newRegion.flexibleWeight = 0.0;
+				node->setRegion(newRegion);
 			}
-			else if (const auto* pAnchorConstraint = node->anchorConstraint())
+			else if (const auto* pAnchorRegion = node->anchorRegion())
 			{
-				AnchorConstraint newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta = textureSize;
-				newConstraint.anchorMin = noco::Anchor::MiddleCenter;
-				newConstraint.anchorMax = noco::Anchor::MiddleCenter;
-				node->setConstraint(newConstraint);
+				AnchorRegion newRegion = *pAnchorRegion;
+				newRegion.sizeDelta = textureSize;
+				newRegion.anchorMin = noco::Anchor::MiddleCenter;
+				newRegion.anchorMax = noco::Anchor::MiddleCenter;
+				node->setRegion(newRegion);
 			}
 			else
 			{
-				throw Error{ U"Unknown constraint type" };
+				throw Error{ U"Unknown region type" };
 			}
 		}
 
@@ -144,7 +144,7 @@ namespace noco::editor
 			, m_editorOverlayCanvas(editorOverlayCanvas)
 			, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
 				U"InspectorFrame",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopRight,
 					.anchorMax = Anchor::BottomRight,
@@ -154,7 +154,7 @@ namespace noco::editor
 				}))
 			, m_inspectorInnerFrameNode(m_inspectorFrameNode->emplaceChild(
 				U"InspectorInnerFrame",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -166,7 +166,7 @@ namespace noco::editor
 				InheritChildrenStateFlags::Pressed))
 			, m_inspectorRootNode(m_inspectorInnerFrameNode->emplaceChild(
 				U"Inspector",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
@@ -183,7 +183,7 @@ namespace noco::editor
 		{
 			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
-			m_inspectorRootNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
+			m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 			m_inspectorRootNode->setVerticalScrollable(true);
 		}
 
@@ -308,13 +308,13 @@ namespace noco::editor
 				const auto nodeNameNode = createNodeNameNode(targetNode);
 				m_inspectorRootNode->addChild(nodeNameNode);
 
-				const auto constraintNode = createConstraintNode(targetNode);
-				m_inspectorRootNode->addChild(constraintNode);
+				const auto regionNode = createRegionNode(targetNode);
+				m_inspectorRootNode->addChild(regionNode);
 
 				const auto nodeSettingNode = createNodeSettingNode(targetNode);
 				m_inspectorRootNode->addChild(nodeSettingNode);
 
-				const auto layoutNode = createBoxChildrenLayoutNode(targetNode);
+				const auto layoutNode = createChildrenLayoutNode(targetNode);
 				m_inspectorRootNode->addChild(layoutNode);
 
 				const auto transformEffectNode = createTransformEffectNode(&targetNode->transformEffect());
@@ -373,7 +373,7 @@ namespace noco::editor
 
 				m_inspectorRootNode->addChild(CreateButtonNode(
 					U"＋ コンポーネントを追加(A)",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
 						.sizeDelta = Vec2{ 0, 24 },
@@ -393,7 +393,7 @@ namespace noco::editor
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateHeadingNode(StringView name, const ColorF& color, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold = nullptr)
 		{
-			auto headingNode = Node::Create(U"Heading", BoxConstraint
+			auto headingNode = Node::Create(U"Heading", InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 24 },
@@ -470,15 +470,15 @@ namespace noco::editor
 						arrowLabel->setText(inactiveNodeExists ? U"▶" : U"▼");
 
 						// 折り畳み時はpaddingを付けない
-						LayoutVariant layout = parent->boxChildrenLayout();
+						LayoutVariant layout = parent->childrenLayout();
 						if (auto pVerticalLayout = std::get_if<VerticalLayout>(&layout))
 						{
 							pVerticalLayout->padding = inactiveNodeExists ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 };
 						}
-						parent->setBoxChildrenLayout(layout, RefreshesLayoutYN::No);
+						parent->setChildrenLayout(layout, RefreshesLayoutYN::No);
 
 						// 高さをフィットさせる
-						parent->setBoxConstraintToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
+						parent->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
 
 						// トグル時処理があれば実行
 						if (onToggleFold)
@@ -539,7 +539,7 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ -24, 32 },
@@ -547,7 +547,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes);
 			const auto textBoxNode = propertyNode->emplaceChild(
 				U"TextBox",
-				AnchorConstraint
+				AnchorRegion
 				{
 					.anchorMin = Anchor::MiddleLeft,
 					.anchorMax = Anchor::MiddleRight,
@@ -721,26 +721,26 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 			
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered | InheritChildrenStateFlags::Pressed);
-			labelNode->setBoxChildrenLayout(HorizontalLayout{});
+			labelNode->setChildrenLayout(HorizontalLayout{});
 			const auto labelComponent = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
@@ -760,7 +760,7 @@ namespace noco::editor
 			
 			const auto textBoxNode = propertyNode->emplaceChild(
 				U"TextBox",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -860,18 +860,18 @@ namespace noco::editor
 			
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, nodeHeight },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
@@ -894,7 +894,7 @@ namespace noco::editor
 				8.0);
 			const auto textAreaNode = propertyNode->emplaceChild(
 				U"TextArea",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, textAreaHeight },
 					.flexibleWeight = 1,
@@ -961,14 +961,14 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
@@ -977,7 +977,7 @@ namespace noco::editor
 
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
@@ -1001,19 +1001,19 @@ namespace noco::editor
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
 				U"TextBoxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			textBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+			textBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// Xラベル
 			const auto xLabelNode = textBoxParentNode->emplaceChild(
 				U"XLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 20, 26 },
 					.flexibleWeight = 0,
@@ -1029,7 +1029,7 @@ namespace noco::editor
 			// X
 			const auto textBoxXNode = textBoxParentNode->emplaceChild(
 				U"TextBoxX",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1044,7 +1044,7 @@ namespace noco::editor
 			// Yラベル
 			const auto yLabelNode = textBoxParentNode->emplaceChild(
 				U"YLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 20, 26 },
 					.flexibleWeight = 0,
@@ -1060,7 +1060,7 @@ namespace noco::editor
 			// Y
 			const auto textBoxYNode = textBoxParentNode->emplaceChild(
 				U"TextBoxY",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1132,7 +1132,7 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
@@ -1147,7 +1147,7 @@ namespace noco::editor
 
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
@@ -1171,19 +1171,19 @@ namespace noco::editor
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
 				U"TextBoxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			textBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+			textBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// X
 			const auto textBoxXNode = textBoxParentNode->emplaceChild(
 				U"TextBoxX",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1198,7 +1198,7 @@ namespace noco::editor
 			// Y
 			const auto textBoxYNode = textBoxParentNode->emplaceChild(
 				U"TextBoxY",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1213,7 +1213,7 @@ namespace noco::editor
 			// Z
 			const auto textBoxZNode = textBoxParentNode->emplaceChild(
 				U"TextBoxZ",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1228,7 +1228,7 @@ namespace noco::editor
 			// W
 			const auto textBoxWNode = textBoxParentNode->emplaceChild(
 				U"TextBoxW",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1261,14 +1261,14 @@ namespace noco::editor
 			constexpr int32 LineHeight = 32;
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, LineHeight * 2 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
@@ -1277,19 +1277,19 @@ namespace noco::editor
 
 			const auto line1 = propertyNode->emplaceChild(
 				U"Line1",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			line1->setBoxChildrenLayout(HorizontalLayout{});
+			line1->setChildrenLayout(HorizontalLayout{});
 
 			const auto line1LabelNode =
 				line1->emplaceChild(
 					U"Label",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 0, 1 },
 						.flexibleWeight = 0.85,
@@ -1313,19 +1313,19 @@ namespace noco::editor
 
 			const auto line1TextBoxParentNode = line1->emplaceChild(
 				U"TextBoxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			line1TextBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+			line1TextBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// Lラベル
 			const auto lLabelNode = line1TextBoxParentNode->emplaceChild(
 				U"LLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1341,7 +1341,7 @@ namespace noco::editor
 			// L
 			const auto textBoxLNode = line1TextBoxParentNode->emplaceChild(
 				U"TextBoxL",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -1356,7 +1356,7 @@ namespace noco::editor
 			// Rラベル
 			const auto rLabelNode = line1TextBoxParentNode->emplaceChild(
 				U"RLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1372,7 +1372,7 @@ namespace noco::editor
 			// R
 			const auto textBoxRNode = line1TextBoxParentNode->emplaceChild(
 				U"TextBoxR",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -1386,19 +1386,19 @@ namespace noco::editor
 
 			const auto line2 = propertyNode->emplaceChild(
 				U"Line2",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			line2->setBoxChildrenLayout(HorizontalLayout{});
+			line2->setChildrenLayout(HorizontalLayout{});
 
 			const auto line2LabelNode =
 				line2->emplaceChild(
 					U"Label",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 0, 1 },
 						.flexibleWeight = 0.85,
@@ -1422,19 +1422,19 @@ namespace noco::editor
 
 			const auto line2TextBoxParentNode = line2->emplaceChild(
 				U"TextBoxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			line2TextBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+			line2TextBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// Tラベル
 			const auto tLabelNode = line2TextBoxParentNode->emplaceChild(
 				U"TLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1450,7 +1450,7 @@ namespace noco::editor
 			// T
 			const auto textBoxTNode = line2TextBoxParentNode->emplaceChild(
 				U"TextBoxT",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -1465,7 +1465,7 @@ namespace noco::editor
 			// Bラベル
 			const auto bLabelNode = line2TextBoxParentNode->emplaceChild(
 				U"BLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1481,7 +1481,7 @@ namespace noco::editor
 			// B
 			const auto textBoxBNode = line2TextBoxParentNode->emplaceChild(
 				U"TextBoxB",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -1593,19 +1593,19 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 36 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
@@ -1629,18 +1629,18 @@ namespace noco::editor
 
 			const auto rowNode = propertyNode->emplaceChild(
 				U"ColorPropertyRow",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			rowNode->setBoxChildrenLayout(HorizontalLayout{});
+			rowNode->setChildrenLayout(HorizontalLayout{});
 
 			const auto previewRootNode = rowNode->emplaceChild(
 				U"ColorPreviewRoot",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.sizeDelta = Vec2{ 26, 0 },
@@ -1657,7 +1657,7 @@ namespace noco::editor
 					const bool isOdd = (x + y) % 2 == 1;
 					const auto previewNode = previewRootNode->emplaceChild(
 						U"Transparent",
-						AnchorConstraint
+						AnchorRegion
 						{
 							.anchorMin = { static_cast<double>(x) / GridSize, static_cast<double>(y) / GridSize },
 							.anchorMax = { static_cast<double>(x + 1) / GridSize, static_cast<double>(y + 1) / GridSize },
@@ -1671,7 +1671,7 @@ namespace noco::editor
 			// 色プレビュー
 			const auto previewNode = previewRootNode->emplaceChild(
 				U"ColorPreview",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.sizeDelta = Vec2{ 26, 0 },
@@ -1682,19 +1682,19 @@ namespace noco::editor
 
 			const auto textBoxParentNode = rowNode->emplaceChild(
 				U"TextBoxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			textBoxParentNode->setBoxChildrenLayout(HorizontalLayout{});
+			textBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// Rラベル
 			const auto rLabelNode = textBoxParentNode->emplaceChild(
 				U"RLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1710,7 +1710,7 @@ namespace noco::editor
 			// R
 			const auto textBoxRNode = textBoxParentNode->emplaceChild(
 				U"TextBoxR",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1725,7 +1725,7 @@ namespace noco::editor
 			// Gラベル
 			const auto gLabelNode = textBoxParentNode->emplaceChild(
 				U"GLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1741,7 +1741,7 @@ namespace noco::editor
 			// G
 			const auto textBoxGNode = textBoxParentNode->emplaceChild(
 				U"TextBoxG",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1756,7 +1756,7 @@ namespace noco::editor
 			// Bラベル
 			const auto bLabelNode = textBoxParentNode->emplaceChild(
 				U"BLabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1772,7 +1772,7 @@ namespace noco::editor
 			// B
 			const auto textBoxBNode = textBoxParentNode->emplaceChild(
 				U"TextBoxB",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1787,7 +1787,7 @@ namespace noco::editor
 			// Aラベル
 			const auto aLabelNode = textBoxParentNode->emplaceChild(
 				U"ALabel",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 16, 26 },
 					.flexibleWeight = 0,
@@ -1803,7 +1803,7 @@ namespace noco::editor
 			// A
 			const auto textBoxANode = textBoxParentNode->emplaceChild(
 				U"TextBoxA",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
@@ -1918,20 +1918,20 @@ namespace noco::editor
 		{
 			const auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 
 			const auto labelNode =
 				propertyNode->emplaceChild(
 					U"Label",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 0, 1 },
 						.flexibleWeight = 0.85,
@@ -1955,7 +1955,7 @@ namespace noco::editor
 
 			const auto comboBoxNode = propertyNode->emplaceChild(
 				U"ComboBox",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
@@ -1999,7 +1999,7 @@ namespace noco::editor
 		{
 			auto checkboxNode = Node::Create(
 				U"Checkbox",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 0 },
 					.sizeDelta = Vec2{ 18, 18 },
@@ -2034,12 +2034,12 @@ namespace noco::editor
 		{
 			auto propertyNode = Node::Create(
 				name,
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
 				});
-			propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
@@ -2048,7 +2048,7 @@ namespace noco::editor
 
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
@@ -2073,15 +2073,15 @@ namespace noco::editor
 
 			const auto checkboxParentNode = propertyNode->emplaceChild(
 				U"CheckboxParent",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No);
 			const auto checkboxNode = CreateCheckboxNode(currentValue, fnSetValue, true);
-			checkboxNode->setConstraint(
-				AnchorConstraint
+			checkboxNode->setRegion(
+				AnchorRegion
 				{
 					.anchorMin = Anchor::MiddleRight,
 					.anchorMax = Anchor::MiddleRight,
@@ -2099,13 +2099,13 @@ namespace noco::editor
 		{
 			const auto nodeNameNode = Node::Create(
 				U"NodeName",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 40 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			nodeNameNode->setBoxChildrenLayout(HorizontalLayout{ .padding = 6 });
+			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6 });
 			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 			// Activeチェックボックスを追加
@@ -2164,12 +2164,12 @@ namespace noco::editor
 		{
 			auto nodeSettingNode = Node::Create(
 				U"NodeSetting",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			nodeSettingNode->setBoxChildrenLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			nodeSettingNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			nodeSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 			nodeSettingNode->addChild(CreateHeadingNode(U"Node Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedNodeSetting,
@@ -2181,7 +2181,7 @@ namespace noco::editor
 			nodeSettingNode->addChild(
 				Node::Create(
 					U"TopPadding",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
 						.sizeDelta = Vec2{ 0, 8 },
@@ -2244,7 +2244,7 @@ namespace noco::editor
 				};
 			fnAddTextChild(U"styleState", node->styleState(), [node](StringView value) { node->setStyleState(String(value)); });
 
-			nodeSettingNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			nodeSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			return nodeSettingNode;
 		}
@@ -2257,18 +2257,18 @@ namespace noco::editor
 		};
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createBoxChildrenLayoutNode(const std::shared_ptr<Node>& node)
+		std::shared_ptr<Node> createChildrenLayoutNode(const std::shared_ptr<Node>& node)
 		{
 			auto layoutNode = Node::Create(
-				U"BoxChildrenLayout",
-				BoxConstraint
+				U"ChildrenLayout",
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			layoutNode->setBoxChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			layoutNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
-			layoutNode->addChild(CreateHeadingNode(U"Box Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
+			layoutNode->addChild(CreateHeadingNode(U"Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
 				[this](IsFoldedYN isFolded)
 				{
 					m_isFoldedLayout = isFolded;
@@ -2317,19 +2317,19 @@ namespace noco::editor
 						case LayoutType::FlowLayout:
 							break;
 						case LayoutType::HorizontalLayout:
-							node->setBoxChildrenLayout(HorizontalLayout{});
+							node->setChildrenLayout(HorizontalLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						case LayoutType::VerticalLayout:
-							node->setBoxChildrenLayout(VerticalLayout{});
+							node->setChildrenLayout(VerticalLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						}
 					});
-				fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+				fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.spacing = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 			}
 			else if (const auto pHorizontalLayout = node->childrenHorizontalLayout())
 			{
@@ -2341,21 +2341,21 @@ namespace noco::editor
 						switch (type)
 						{
 						case LayoutType::FlowLayout:
-							node->setBoxChildrenLayout(FlowLayout{});
+							node->setChildrenLayout(FlowLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						case LayoutType::HorizontalLayout:
 							break;
 						case LayoutType::VerticalLayout:
-							node->setBoxChildrenLayout(VerticalLayout{});
+							node->setChildrenLayout(VerticalLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						}
 					});
-				fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+				fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+				fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.spacing = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenHorizontalLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 			}
 			else if (const auto pVerticalLayout = node->childrenVerticalLayout())
 			{
@@ -2367,101 +2367,101 @@ namespace noco::editor
 						switch (type)
 						{
 						case LayoutType::FlowLayout:
-							node->setBoxChildrenLayout(FlowLayout{});
+							node->setChildrenLayout(FlowLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						case LayoutType::HorizontalLayout:
-							node->setBoxChildrenLayout(HorizontalLayout{});
+							node->setChildrenLayout(HorizontalLayout{});
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						case LayoutType::VerticalLayout:
 							break;
 						}
 					});
-				fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.padding = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.spacing = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.horizontalAlign = value; node->setBoxChildrenLayout(newLayout); });
-				fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.verticalAlign = value; node->setBoxChildrenLayout(newLayout); });
+				fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
+				fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this, node](double value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.spacing = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenVerticalLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 			}
 			else
 			{
 				throw Error{ U"Unknown layout type" };
 			}
 
-			layoutNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			layoutNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			return layoutNode;
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createConstraintNode(const std::shared_ptr<Node>& node)
+		std::shared_ptr<Node> createRegionNode(const std::shared_ptr<Node>& node)
 		{
-			auto constraintNode = Node::Create(
-				U"Constraint",
-				BoxConstraint
+			auto regionNode = Node::Create(
+				U"Region",
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			constraintNode->setBoxChildrenLayout(VerticalLayout{ .padding = m_isFoldedConstraint ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			constraintNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			regionNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedRegion ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			regionNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			constraintNode->addChild(CreateHeadingNode(U"Constraint", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedConstraint,
+			regionNode->addChild(CreateHeadingNode(U"Region", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedRegion,
 				[this](IsFoldedYN isFolded)
 				{
-					m_isFoldedConstraint = isFolded;
+					m_isFoldedRegion = isFolded;
 				}));
 
-			// 現在のConstraintタイプを取得
-			const String constraintTypeName = node->boxConstraint() ? U"BoxConstraint" : U"AnchorConstraint";
+			// 現在のRegionタイプを取得
+			const String regionTypeName = node->inlineRegion() ? U"InlineRegion" : U"AnchorRegion";
 			
 			const auto fnAddChild =
-				[this, &constraintNode, &constraintTypeName](StringView name, const auto& value, auto fnSetValue)
+				[this, &regionNode, &regionTypeName](StringView name, const auto& value, auto fnSetValue)
 				{
-					constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
+					regionNode->addChild(createPropertyNodeWithTooltip(regionTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddDoubleChild =
-				[this, &constraintNode, &constraintTypeName](StringView name, double currentValue, auto fnSetValue)
+				[this, &regionNode, &regionTypeName](StringView name, double currentValue, auto fnSetValue)
 				{
-					constraintNode->addChild(createPropertyNodeWithTooltip(constraintTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedConstraint.getBool());
+					regionNode->addChild(createPropertyNodeWithTooltip(regionTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddEnumChild =
-				[this, &constraintNode, &constraintTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
+				[this, &regionNode, &regionTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
 				{
 					auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
-					constraintNode->addChild(createEnumPropertyNodeWithTooltip(constraintTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedConstraint.getBool());
+					regionNode->addChild(createEnumPropertyNodeWithTooltip(regionTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddVec2Child =
-				[this, &constraintNode, &constraintTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
+				[this, &regionNode, &regionTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
 				{
-					constraintNode->addChild(createVec2PropertyNodeWithTooltip(constraintTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedConstraint.getBool());
+					regionNode->addChild(createVec2PropertyNodeWithTooltip(regionTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddOptionalDoubleChild =
-				[this, &constraintNode, &constraintTypeName](StringView name, const Optional<double>& currentValue, auto fnSetValue)
+				[this, &regionNode, &regionTypeName](StringView name, const Optional<double>& currentValue, auto fnSetValue)
 				{
 					const auto propertyNode = Node::Create(
 						name,
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ 0, 32 },
 						},
 						IsHitTargetYN::Yes,
 						InheritChildrenStateFlags::Hovered);
-					propertyNode->setBoxChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+					propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 					propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
 					
 					// ラベル領域（チェックボックスを含む）
 					const auto labelNode = propertyNode->emplaceChild(
 						U"Label",
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeRatio = Vec2{ 0, 1 },
 							.flexibleWeight = 0.85,
 						},
 						IsHitTargetYN::Yes,
 						InheritChildrenStateFlags::Hovered);
-					labelNode->setBoxChildrenLayout(HorizontalLayout{ .verticalAlign = VerticalAlign::Middle });
+					labelNode->setChildrenLayout(HorizontalLayout{ .verticalAlign = VerticalAlign::Middle });
 					
 					// チェックボックスは後で追加（textBoxとtextBoxNodeを参照するため）
 					
@@ -2479,7 +2479,7 @@ namespace noco::editor
 						->setSizingMode(LabelSizingMode::ShrinkToFit);
 					
 					// メタデータに基づいてツールチップを追加
-					if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ constraintTypeName }, String{ name } }); it != m_propertyMetadata.end())
+					if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ regionTypeName }, String{ name } }); it != m_propertyMetadata.end())
 					{
 						const auto& metadata = it->second;
 						if (metadata.tooltip)
@@ -2495,7 +2495,7 @@ namespace noco::editor
 					// テキストボックス
 					const auto textBoxNode = propertyNode->emplaceChild(
 						U"TextBox",
-						BoxConstraint
+						InlineRegion
 						{
 							.sizeDelta = Vec2{ 0, 26 },
 							.flexibleWeight = 1,
@@ -2523,7 +2523,7 @@ namespace noco::editor
 								fnSetValue(none);
 							}
 						}, true);  // useParentHoverState = true
-					checkboxNode->setConstraint(BoxConstraint
+					checkboxNode->setRegion(InlineRegion
 					{
 						.sizeDelta = Vec2{ 18, 18 },
 						.margin = LRTB{ 0, 4, 0, 0 },
@@ -2543,21 +2543,21 @@ namespace noco::editor
 							}
 						}));
 					
-					propertyNode->setActive(!m_isFoldedConstraint.getBool());
-					constraintNode->addChild(propertyNode);
+					propertyNode->setActive(!m_isFoldedRegion.getBool());
+					regionNode->addChild(propertyNode);
 				};
 
-			if (const auto pBoxConstraint = node->boxConstraint())
+			if (const auto pInlineRegion = node->inlineRegion())
 			{
 				fnAddEnumChild(
 					U"type",
-					ConstraintType::BoxConstraint,
-					[this, node](ConstraintType type)
+					RegionType::InlineRegion,
+					[this, node](RegionType type)
 					{
 						switch (type)
 						{
-						case ConstraintType::AnchorConstraint:
-							node->setConstraint(AnchorConstraint
+						case RegionType::AnchorRegion:
+							node->setRegion(AnchorRegion
 							{
 								.anchorMin = Anchor::MiddleCenter,
 								.anchorMax = Anchor::MiddleCenter,
@@ -2565,29 +2565,29 @@ namespace noco::editor
 								.sizeDelta = node->layoutAppliedRect().size,
 								.sizeDeltaPivot = Vec2{ 0.5, 0.5 },
 							});
-							m_defaults->constraintType = ConstraintType::AnchorConstraint; // 次回のデフォルト値として記憶
+							m_defaults->regionType = RegionType::AnchorRegion; // 次回のデフォルト値として記憶
 							refreshInspector(); // 項目に変更があるため更新
 							break;
-						case ConstraintType::BoxConstraint:
+						case RegionType::InlineRegion:
 							break;
 						}
 					});
-				fnAddVec2Child(U"sizeRatio", pBoxConstraint->sizeRatio, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeRatio = value; node->setConstraint(newConstraint); });
-				fnAddVec2Child(U"sizeDelta", pBoxConstraint->sizeDelta, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.sizeDelta = value; node->setConstraint(newConstraint); });
-				fnAddDoubleChild(U"flexibleWeight", pBoxConstraint->flexibleWeight, [this, node](double value) { auto newConstraint = *node->boxConstraint(); newConstraint.flexibleWeight = value; node->setConstraint(newConstraint); });
-				fnAddVec2Child(U"margin (L, R)", Vec2{ pBoxConstraint->margin.left, pBoxConstraint->margin.right }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.left = value.x; newConstraint.margin.right = value.y; node->setConstraint(newConstraint); });
-				fnAddVec2Child(U"margin (T, B)", Vec2{ pBoxConstraint->margin.top, pBoxConstraint->margin.bottom }, [this, node](const Vec2& value) { auto newConstraint = *node->boxConstraint(); newConstraint.margin.top = value.x; newConstraint.margin.bottom = value.y; node->setConstraint(newConstraint); });
+				fnAddVec2Child(U"sizeRatio", pInlineRegion->sizeRatio, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeRatio = value; node->setRegion(newRegion); });
+				fnAddVec2Child(U"sizeDelta", pInlineRegion->sizeDelta, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeDelta = value; node->setRegion(newRegion); });
+				fnAddDoubleChild(U"flexibleWeight", pInlineRegion->flexibleWeight, [this, node](double value) { auto newRegion = *node->inlineRegion(); newRegion.flexibleWeight = value; node->setRegion(newRegion); });
+				fnAddVec2Child(U"margin (L, R)", Vec2{ pInlineRegion->margin.left, pInlineRegion->margin.right }, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.margin.left = value.x; newRegion.margin.right = value.y; node->setRegion(newRegion); });
+				fnAddVec2Child(U"margin (T, B)", Vec2{ pInlineRegion->margin.top, pInlineRegion->margin.bottom }, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.margin.top = value.x; newRegion.margin.bottom = value.y; node->setRegion(newRegion); });
 				
-				fnAddOptionalDoubleChild(U"minWidth", pBoxConstraint->minWidth,
-					[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.minWidth = value; node->setConstraint(newConstraint); });
-				fnAddOptionalDoubleChild(U"minHeight", pBoxConstraint->minHeight,
-					[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.minHeight = value; node->setConstraint(newConstraint); });
-				fnAddOptionalDoubleChild(U"maxWidth", pBoxConstraint->maxWidth,
-					[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.maxWidth = value; node->setConstraint(newConstraint); });
-				fnAddOptionalDoubleChild(U"maxHeight", pBoxConstraint->maxHeight,
-					[this, node](const Optional<double>& value) { auto newConstraint = *node->boxConstraint(); newConstraint.maxHeight = value; node->setConstraint(newConstraint); });
+				fnAddOptionalDoubleChild(U"minWidth", pInlineRegion->minWidth,
+					[this, node](const Optional<double>& value) { auto newRegion = *node->inlineRegion(); newRegion.minWidth = value; node->setRegion(newRegion); });
+				fnAddOptionalDoubleChild(U"minHeight", pInlineRegion->minHeight,
+					[this, node](const Optional<double>& value) { auto newRegion = *node->inlineRegion(); newRegion.minHeight = value; node->setRegion(newRegion); });
+				fnAddOptionalDoubleChild(U"maxWidth", pInlineRegion->maxWidth,
+					[this, node](const Optional<double>& value) { auto newRegion = *node->inlineRegion(); newRegion.maxWidth = value; node->setRegion(newRegion); });
+				fnAddOptionalDoubleChild(U"maxHeight", pInlineRegion->maxHeight,
+					[this, node](const Optional<double>& value) { auto newRegion = *node->inlineRegion(); newRegion.maxHeight = value; node->setRegion(newRegion); });
 			}
-			else if (const auto pAnchorConstraint = node->anchorConstraint())
+			else if (const auto pAnchorRegion = node->anchorRegion())
 			{
 				auto setDouble =
 					[this, node](auto setter)
@@ -2597,11 +2597,11 @@ namespace noco::editor
 							{
 								if (auto optVal = ParseOpt<double>(s))
 								{
-									if (auto ac = node->anchorConstraint())
+									if (auto ac = node->anchorRegion())
 									{
 										auto copy = *ac;
 										setter(copy, *optVal);
-										node->setConstraint(copy);
+										node->setRegion(copy);
 										m_canvas->refreshLayout();
 									}
 								}
@@ -2613,11 +2613,11 @@ namespace noco::editor
 						return
 							[this, node, setter](const Vec2& val)
 							{
-								if (auto ac = node->anchorConstraint())
+								if (auto ac = node->anchorRegion())
 								{
 									auto copy = *ac;
 									setter(copy, val);
-									node->setConstraint(copy);
+									node->setRegion(copy);
 									m_canvas->refreshLayout();
 								}
 							};
@@ -2625,20 +2625,20 @@ namespace noco::editor
 
 				fnAddEnumChild(
 					U"type",
-					ConstraintType::AnchorConstraint,
-					[this, node](ConstraintType type)
+					RegionType::AnchorRegion,
+					[this, node](RegionType type)
 					{
 						switch (type)
 						{
-						case ConstraintType::AnchorConstraint:
+						case RegionType::AnchorRegion:
 							break;
-						case ConstraintType::BoxConstraint:
-							node->setConstraint(BoxConstraint
+						case RegionType::InlineRegion:
+							node->setRegion(InlineRegion
 							{
 								.sizeRatio = Vec2::Zero(),
 								.sizeDelta = node->layoutAppliedRect().size,
 							});
-							m_defaults->constraintType = ConstraintType::BoxConstraint; // 次回のデフォルト値として記憶
+							m_defaults->regionType = RegionType::InlineRegion; // 次回のデフォルト値として記憶
 							refreshInspector(); // 項目に変更があるため更新
 							break;
 						}
@@ -2646,18 +2646,18 @@ namespace noco::editor
 				);
 
 				const AnchorPreset anchorPreset =
-					pAnchorConstraint->isCustomAnchorInEditor
+					pAnchorRegion->isCustomAnchorInEditor
 						? AnchorPreset::Custom
-						: ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->sizeDeltaPivot);
+						: ToAnchorPreset(pAnchorRegion->anchorMin, pAnchorRegion->anchorMax, pAnchorRegion->sizeDeltaPivot);
 
 				fnAddEnumChild(
 					U"anchor",
 					anchorPreset,
 					[this, node](AnchorPreset preset)
 					{
-						if (const auto pAnchorConstraint = node->anchorConstraint())
+						if (const auto pAnchorRegion = node->anchorRegion())
 						{
-							auto copy = *pAnchorConstraint;
+							auto copy = *pAnchorRegion;
 							if (const auto tuple = FromAnchorPreset(preset))
 							{
 								// プリセットを選んだ場合
@@ -2671,11 +2671,11 @@ namespace noco::editor
 							}
 
 							// 変更がある場合のみ更新
-							if (copy != *pAnchorConstraint)
+							if (copy != *pAnchorRegion)
 							{
 								if (!copy.isCustomAnchorInEditor)
 								{
-									const auto beforePreset = ToAnchorPreset(pAnchorConstraint->anchorMin, pAnchorConstraint->anchorMax, pAnchorConstraint->sizeDeltaPivot);
+									const auto beforePreset = ToAnchorPreset(pAnchorRegion->anchorMin, pAnchorRegion->anchorMax, pAnchorRegion->sizeDeltaPivot);
 
 									// 横ストレッチに変更した場合はleftとrightを0にする
 									const auto fnIsHorizontalStretch = [](AnchorPreset preset)
@@ -2706,7 +2706,7 @@ namespace noco::editor
 									}
 								}
 
-								node->setConstraint(copy);
+								node->setRegion(copy);
 								m_canvas->refreshLayout();
 								refreshInspector(); // 項目に変更があるため更新
 							}
@@ -2716,268 +2716,268 @@ namespace noco::editor
 				switch (anchorPreset)
 				{
 				case AnchorPreset::TopLeft:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
+					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
 					break;
 
 				case AnchorPreset::TopCenter:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddChild(U"xDelta", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
+					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"xDelta", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
 					break;
 
 				case AnchorPreset::TopRight:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-					fnAddChild(U"right", -pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
+					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
 					break;
 
 				case AnchorPreset::MiddleLeft:
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddChild(U"yDelta", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
+					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"yDelta", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					break;
 
 				case AnchorPreset::MiddleCenter:
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddVec2Child(U"posDelta", pAnchorConstraint->posDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.posDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.posDelta = v; }));
 					break;
 
 				case AnchorPreset::MiddleRight:
-					fnAddChild(U"right", -pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddChild(U"yDelta", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
+					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"yDelta", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					break;
 
 				case AnchorPreset::BottomLeft:
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-					fnAddChild(U"bottom", -pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
+					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
 					break;
 
 				case AnchorPreset::BottomCenter:
-					fnAddChild(U"bottom", -pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddChild(U"xDelta", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
+					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"xDelta", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
 					break;
 
 				case AnchorPreset::BottomRight:
-					fnAddChild(U"right", -pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
-					fnAddChild(U"bottom", -pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
+					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
 					break;
 
 				case AnchorPreset::StretchTop:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
+					fnAddChild(U"left", pAnchorRegion->posDelta.x,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorConstraint->posDelta.x;
+								double oldLeft = pAnchorRegion->posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
-					fnAddChild(U"right", -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x);
+								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
-					fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
-					fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"height", pAnchorRegion->sizeDelta.y, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.y = v; }));
+					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxWidth", pAnchorRegion->maxWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxWidth = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchMiddle:
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"left", pAnchorRegion->posDelta.x,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorConstraint->posDelta.x;
+								double oldLeft = pAnchorRegion->posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
-					fnAddChild(U"right", -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x);
+								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
-					fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
-					fnAddChild(U"yDelta", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = v; }));
-					fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"height", pAnchorRegion->sizeDelta.y, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.y = v; }));
+					fnAddChild(U"yDelta", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
+					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxWidth", pAnchorRegion->maxWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxWidth = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchBottom:
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"left", pAnchorRegion->posDelta.x,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorConstraint->posDelta.x;
+								double oldLeft = pAnchorRegion->posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
-					fnAddChild(U"right", -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x);
+								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
-					fnAddChild(U"bottom", pAnchorConstraint->posDelta.y, setDouble([](AnchorConstraint& c, double v) { c.posDelta.y = -v; }));
-					fnAddChild(U"height", pAnchorConstraint->sizeDelta.y, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.y = v; }));
-					fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"bottom", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
+					fnAddChild(U"height", pAnchorRegion->sizeDelta.y, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.y = v; }));
+					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxWidth", pAnchorRegion->maxWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxWidth = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchLeft:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"top", pAnchorRegion->posDelta.y,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorConstraint->posDelta.y;
+								double oldTop = pAnchorRegion->posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
-					fnAddChild(U"bottom", -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y);
+								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-					fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
-					fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
+					fnAddChild(U"width", pAnchorRegion->sizeDelta.x, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.x = v; }));
+					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minHeight = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxHeight", pAnchorRegion->maxHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxHeight = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchCenter:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"top", pAnchorRegion->posDelta.y,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorConstraint->posDelta.y;
+								double oldTop = pAnchorRegion->posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
-					fnAddChild(U"bottom", -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y);
+								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
-					fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
-					fnAddChild(U"xDelta", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = v; }));
-					fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"width", pAnchorRegion->sizeDelta.x, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.x = v; }));
+					fnAddChild(U"xDelta", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
+					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minHeight = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxHeight", pAnchorRegion->maxHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxHeight = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchRight:
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"top", pAnchorRegion->posDelta.y,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorConstraint->posDelta.y;
+								double oldTop = pAnchorRegion->posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
-					fnAddChild(U"bottom", -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y);
+								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
-					fnAddChild(U"right", pAnchorConstraint->posDelta.x, setDouble([](AnchorConstraint& c, double v) { c.posDelta.x = -v; }));
-					fnAddChild(U"width", pAnchorConstraint->sizeDelta.x, setDouble([](AnchorConstraint& c, double v) { c.sizeDelta.x = v; }));
-					fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
+					fnAddChild(U"right", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
+					fnAddChild(U"width", pAnchorRegion->sizeDelta.x, setDouble([](AnchorRegion& c, double v) { c.sizeDelta.x = v; }));
+					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minHeight = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxHeight", pAnchorRegion->maxHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxHeight = v; node->setRegion(newRegion); });
 					break;
 
 				case AnchorPreset::StretchFull:
-					fnAddChild(U"left", pAnchorConstraint->posDelta.x,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"left", pAnchorRegion->posDelta.x,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorConstraint->posDelta.x;
+								double oldLeft = pAnchorRegion->posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
-					fnAddChild(U"right", -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorConstraint->posDelta.x + pAnchorConstraint->sizeDelta.x);
+								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
-					fnAddChild(U"top", pAnchorConstraint->posDelta.y,
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"top", pAnchorRegion->posDelta.y,
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorConstraint->posDelta.y;
+								double oldTop = pAnchorRegion->posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
-					fnAddChild(U"bottom", -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y),
-						setDouble([pAnchorConstraint](AnchorConstraint& c, double v)
+					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
+						setDouble([pAnchorRegion](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorConstraint->posDelta.y + pAnchorConstraint->sizeDelta.y);
+								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
-					fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
+					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minHeight = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxWidth", pAnchorRegion->maxWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxHeight", pAnchorRegion->maxHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxHeight = v; node->setRegion(newRegion); });
 					break;
 
 				default:
-					fnAddVec2Child(U"anchorMin", pAnchorConstraint->anchorMin, setVec2([](AnchorConstraint& c, const Vec2& val) { c.anchorMin = val; }));
-					fnAddVec2Child(U"anchorMax", pAnchorConstraint->anchorMax, setVec2([](AnchorConstraint& c, const Vec2& val) { c.anchorMax = val; }));
-					fnAddVec2Child(U"sizeDeltaPivot", pAnchorConstraint->sizeDeltaPivot, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
-					fnAddVec2Child(U"posDelta", pAnchorConstraint->posDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.posDelta = val; }));
-					fnAddVec2Child(U"sizeDelta", pAnchorConstraint->sizeDelta, setVec2([](AnchorConstraint& c, const Vec2& val) { c.sizeDelta = val; }));
-					fnAddOptionalDoubleChild(U"minWidth", pAnchorConstraint->minWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"minHeight", pAnchorConstraint->minHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.minHeight = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxWidth", pAnchorConstraint->maxWidth, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxWidth = v; node->setConstraint(newConstraint); });
-					fnAddOptionalDoubleChild(U"maxHeight", pAnchorConstraint->maxHeight, 
-						[this, node](const Optional<double>& v) { auto newConstraint = *node->anchorConstraint(); newConstraint.maxHeight = v; node->setConstraint(newConstraint); });
+					fnAddVec2Child(U"anchorMin", pAnchorRegion->anchorMin, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMin = val; }));
+					fnAddVec2Child(U"anchorMax", pAnchorRegion->anchorMax, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMax = val; }));
+					fnAddVec2Child(U"sizeDeltaPivot", pAnchorRegion->sizeDeltaPivot, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
+					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.posDelta = val; }));
+					fnAddVec2Child(U"sizeDelta", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDelta = val; }));
+					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minHeight = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxWidth", pAnchorRegion->maxWidth, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxWidth = v; node->setRegion(newRegion); });
+					fnAddOptionalDoubleChild(U"maxHeight", pAnchorRegion->maxHeight, 
+						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.maxHeight = v; node->setRegion(newRegion); });
 					break;
 				}
 			}
 			else
 			{
-				throw Error{ U"Unknown constraint type" };
+				throw Error{ U"Unknown region type" };
 			}
 
-			constraintNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			regionNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
-			return constraintNode;
+			return regionNode;
 		}
 
 		[[nodiscard]]
@@ -2985,12 +2985,12 @@ namespace noco::editor
 		{
 			auto transformEffectNode = Node::Create(
 				U"TransformEffect",
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			transformEffectNode->setBoxChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			transformEffectNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransformEffect ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			transformEffectNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 			transformEffectNode->addChild(CreateHeadingNode(U"TransformEffect", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransformEffect,
@@ -3075,7 +3075,7 @@ namespace noco::editor
 				};
 			fnAddColorChild(U"color", &pTransformEffect->color(), [this, pTransformEffect](const ColorF& value) { pTransformEffect->setColor(value); });
 
-			transformEffectNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			transformEffectNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			return transformEffectNode;
 		}
@@ -3085,12 +3085,12 @@ namespace noco::editor
 		{
 			auto componentNode = Node::Create(
 				component->type(),
-				BoxConstraint
+				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			componentNode->setBoxChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			componentNode->setChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 			const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
@@ -3114,7 +3114,7 @@ namespace noco::editor
 			{
 				const auto noPropertyLabelNode = componentNode->emplaceChild(
 					U"NoProperty",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = { 1, 0 },
 						.sizeDelta = { 0, 24 },
@@ -3372,7 +3372,7 @@ namespace noco::editor
 			{
 				auto snapButton = componentNode->addChild(CreateButtonNode(
 					U"テクスチャサイズへスナップ",
-					BoxConstraint
+					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
 						.sizeDelta = Vec2{ -24, 24 },
@@ -3390,7 +3390,7 @@ namespace noco::editor
 				}
 			}
 
-			componentNode->setBoxConstraintToFitToChildren(FitTarget::HeightOnly);
+			componentNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			return componentNode;
 		}
@@ -3412,15 +3412,15 @@ namespace noco::editor
 		
 		void setWidth(double width)
 		{
-			if (auto* pAnchorConstraint = m_inspectorFrameNode->anchorConstraint())
+			if (auto* pAnchorRegion = m_inspectorFrameNode->anchorRegion())
 			{
-				auto newConstraint = *pAnchorConstraint;
-				newConstraint.sizeDelta.x = width;
-				m_inspectorFrameNode->setConstraint(newConstraint);
+				auto newRegion = *pAnchorRegion;
+				newRegion.sizeDelta.x = width;
+				m_inspectorFrameNode->setRegion(newRegion);
 			}
 			else
 			{
-				Logger << U"[NocoEditor warning] AnchorConstraint not found in inspectorFrameNode";
+				Logger << U"[NocoEditor warning] AnchorRegion not found in inspectorFrameNode";
 			}
 		}
 		
