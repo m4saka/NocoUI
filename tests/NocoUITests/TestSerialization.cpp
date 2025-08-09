@@ -11,7 +11,7 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 	SECTION("Node to JSON")
 	{
 		auto node = noco::Node::Create(U"TestNode");
-		node->transform().setPosition(Vec2{ 100, 200 });
+		node->transform().setTranslate(Vec2{ 100, 200 });
 		node->transform().setScale(Vec2{ 2, 2 });
 		
 		// JSONに変換

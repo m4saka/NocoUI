@@ -11,7 +11,7 @@ namespace noco
 	class Transform
 	{
 	private:
-		SmoothProperty<Vec2> m_position;
+		SmoothProperty<Vec2> m_translate;
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
 		SmoothProperty<double> m_rotation;
@@ -20,19 +20,19 @@ namespace noco
 
 	public:
 		Transform(
-			const PropertyValue<Vec2>& position = Vec2::Zero(),
+			const PropertyValue<Vec2>& translate = Vec2::Zero(),
 			const PropertyValue<Vec2>& scale = Vec2::One(),
 			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
 			const PropertyValue<double>& rotation = 0.0,
 			const PropertyValue<ColorF>& color = ColorF{ 1.0 });
 
 		[[nodiscard]]
-		const SmoothProperty<Vec2>& position() const;
+		const SmoothProperty<Vec2>& translate() const;
 
 		[[nodiscard]]
-		SmoothProperty<Vec2>& position();
+		SmoothProperty<Vec2>& translate();
 
-		void setPosition(const PropertyValue<Vec2>& position);
+		void setTranslate(const PropertyValue<Vec2>& translate);
 
 		[[nodiscard]]
 		const SmoothProperty<Vec2>& scale() const;

@@ -75,14 +75,14 @@ namespace noco
 		}
 	}
 
-	void Tween::updatePosition(const std::shared_ptr<Node>& node, double progress)
+	void Tween::updateTranslate(const std::shared_ptr<Node>& node, double progress)
 	{
 		const Vec2& value1 = m_value1Vec2.value();
 		const Vec2& value2 = m_value2Vec2.value();
 		const Vec2 interpolated = Math::Lerp(value1, value2, progress);
 
 		auto& transform = node->transform();
-		transform.position().setOverrideValue(interpolated);
+		transform.translate().setOverrideValue(interpolated);
 	}
 
 	void Tween::updateScale(const std::shared_ptr<Node>& node, double progress)
@@ -144,8 +144,8 @@ namespace noco
 			case TweenTarget::None:
 				// 何もしない
 				break;
-			case TweenTarget::Position:
-				updatePosition(node, easedProgress);
+			case TweenTarget::Translate:
+				updateTranslate(node, easedProgress);
 				break;
 			case TweenTarget::Scale:
 				updateScale(node, easedProgress);
@@ -173,8 +173,8 @@ namespace noco
 			case TweenTarget::None:
 				// 何もしない
 				break;
-			case TweenTarget::Position:
-				updatePosition(node, easedProgress);
+			case TweenTarget::Translate:
+				updateTranslate(node, easedProgress);
 				break;
 			case TweenTarget::Scale:
 				updateScale(node, easedProgress);
@@ -227,8 +227,8 @@ namespace noco
 		case TweenTarget::None:
 			// 何もしない
 			break;
-		case TweenTarget::Position:
-			updatePosition(node, easedProgress);
+		case TweenTarget::Translate:
+			updateTranslate(node, easedProgress);
 			break;
 		case TweenTarget::Scale:
 			updateScale(node, easedProgress);

@@ -3013,7 +3013,7 @@ namespace noco::editor
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
 			// Note: アクセサからポインタを取得しているので注意が必要
-			fnAddVec2Child(U"position", &pTransform->position(), [this, pTransform](const Vec2& value) { pTransform->setPosition(value); m_canvas->refreshLayout(); });
+			fnAddVec2Child(U"translate", &pTransform->translate(), [this, pTransform](const Vec2& value) { pTransform->setTranslate(value); m_canvas->refreshLayout(); });
 			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayout(); });
 			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayout(); });
 			

@@ -110,18 +110,18 @@ TEST_CASE("Node properties and state management", "[Node]")
 		
 		// 初期値の確認
 		auto& transform = node->transform();
-		REQUIRE(transform.position().value() == Vec2{ 0, 0 });
+		REQUIRE(transform.translate().value() == Vec2{ 0, 0 });
 		REQUIRE(transform.scale().value() == Vec2{ 1, 1 });
 		
 		// Transformを使用して変換を設定
-		transform.setPosition(Vec2{ 100, 200 });
+		transform.setTranslate(Vec2{ 100, 200 });
 		transform.setScale(Vec2{ 2.0, 3.0 });
 		
 		// updateを呼んで値を更新
 		canvas->update();
 		
 		// 更新後の値の確認
-		REQUIRE(transform.position().value() == Vec2{ 100, 200 });
+		REQUIRE(transform.translate().value() == Vec2{ 100, 200 });
 		REQUIRE(transform.scale().value() == Vec2{ 2.0, 3.0 });
 	}
 
@@ -296,18 +296,18 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		parent->addChild(child);
 		
 		// 初期値の確認
-		REQUIRE(parent->transform().position().value() == Vec2{ 0, 0 });
-		REQUIRE(child->transform().position().value() == Vec2{ 0, 0 });
+		REQUIRE(parent->transform().translate().value() == Vec2{ 0, 0 });
+		REQUIRE(child->transform().translate().value() == Vec2{ 0, 0 });
 		
-		parent->transform().setPosition(Vec2{ 100, 100 });
-		child->transform().setPosition(Vec2{ 50, 50 });
+		parent->transform().setTranslate(Vec2{ 100, 100 });
+		child->transform().setTranslate(Vec2{ 50, 50 });
 		
 		// Canvasをupdateして変換を適用
 		canvas->update();
 		
 		// 更新後の座標の確認
-		REQUIRE(parent->transform().position().value() == Vec2{ 100, 100 });
-		REQUIRE(child->transform().position().value() == Vec2{ 50, 50 });
+		REQUIRE(parent->transform().translate().value() == Vec2{ 100, 100 });
+		REQUIRE(child->transform().translate().value() == Vec2{ 50, 50 });
 	}
 
 	SECTION("Scale inheritance")
@@ -334,30 +334,6 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		REQUIRE(child->transform().scale().value() == Vec2{ 0.5, 0.5 });
 	}
 
-	SECTION("Rotation inheritance")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto parent = noco::Node::Create();
-		auto child = noco::Node::Create();
-		
-		canvas->rootNode()->addChild(parent);
-		parent->addChild(child);
-		
-		// 初期値の確認
-		REQUIRE(parent->transform().position().value() == Vec2{ 0, 0 });
-		REQUIRE(child->transform().position().value() == Vec2{ 0, 0 });
-		
-		// Transformにはangleがないので、positionとscaleのみテスト
-		parent->transform().setPosition(Vec2{ 10, 10 });
-		child->transform().setPosition(Vec2{ 20, 20 });
-		
-		// Canvasをupdateして変換を適用
-		canvas->update();
-		
-		// 更新後の位置の確認
-		REQUIRE(parent->transform().position().value() == Vec2{ 10, 10 });
-		REQUIRE(child->transform().position().value() == Vec2{ 20, 20 });
-	}
 }
 
 // Nodeのスクロール機能
@@ -438,12 +414,12 @@ TEST_CASE("Transform", "[Node][Transform]")
 		
 		// 初期値の確認
 		auto& transform = node->transform();
-		REQUIRE(transform.position().value() == Vec2{ 0, 0 });
+		REQUIRE(transform.translate().value() == Vec2{ 0, 0 });
 		REQUIRE(transform.scale().value() == Vec2{ 1, 1 });
 		REQUIRE(transform.pivot().value() == Vec2{ 0.5, 0.5 });
 		
 		// Transformの設定
-		transform.setPosition(Vec2{ 10, 20 });
+		transform.setTranslate(Vec2{ 10, 20 });
 		transform.setScale(Vec2{ 1.5, 1.5 });
 		transform.setPivot(Vec2{ 0.5, 0.5 });
 		
@@ -451,7 +427,7 @@ TEST_CASE("Transform", "[Node][Transform]")
 		canvas->update();
 		
 		// 更新後のTransformの確認
-		REQUIRE(node->transform().position().value() == Vec2{ 10, 20 });
+		REQUIRE(node->transform().translate().value() == Vec2{ 10, 20 });
 		REQUIRE(node->transform().scale().value() == Vec2{ 1.5, 1.5 });
 		REQUIRE(node->transform().pivot().value() == Vec2{ 0.5, 0.5 });
 	}

@@ -7,7 +7,7 @@ namespace noco
 	enum class TweenTarget : uint8
 	{
 		None,
-		Position,
+		Translate,
 		Scale,
 		Rotation,
 		Color,
@@ -61,7 +61,7 @@ namespace noco
 		Property<bool> m_active;
 		PropertyNonInteractive<TweenTarget> m_target;
 		
-		// Vec2用（Position/Scale）
+		// Vec2用（Translate/Scale）
 		PropertyNonInteractive<Vec2> m_value1Vec2;
 		PropertyNonInteractive<Vec2> m_value2Vec2;
 		
@@ -87,7 +87,7 @@ namespace noco
 		[[nodiscard]]
 		double applyEasing(double t) const;
 
-		void updatePosition(const std::shared_ptr<Node>& node, double progress);
+		void updateTranslate(const std::shared_ptr<Node>& node, double progress);
 		void updateScale(const std::shared_ptr<Node>& node, double progress);
 		void updateRotation(const std::shared_ptr<Node>& node, double progress);
 		void updateColor(const std::shared_ptr<Node>& node, double progress);

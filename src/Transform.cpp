@@ -3,12 +3,12 @@
 namespace noco
 {
 	Transform::Transform(
-		const PropertyValue<Vec2>& position,
+		const PropertyValue<Vec2>& translate,
 		const PropertyValue<Vec2>& scale,
 		const PropertyValue<Vec2>& pivot,
 		const PropertyValue<double>& rotation,
 		const PropertyValue<ColorF>& color)
-		: m_position{ U"position", position }
+		: m_translate{ U"translate", translate }
 		, m_scale{ U"scale", scale }
 		, m_pivot{ U"pivot", pivot }
 		, m_rotation{ U"rotation", rotation }
@@ -17,19 +17,19 @@ namespace noco
 	{
 	}
 
-	const SmoothProperty<Vec2>& Transform::position() const
+	const SmoothProperty<Vec2>& Transform::translate() const
 	{
-		return m_position;
+		return m_translate;
 	}
 
-	SmoothProperty<Vec2>& Transform::position()
+	SmoothProperty<Vec2>& Transform::translate()
 	{
-		return m_position;
+		return m_translate;
 	}
 
-	void Transform::setPosition(const PropertyValue<Vec2>& position)
+	void Transform::setTranslate(const PropertyValue<Vec2>& translate)
 	{
-		m_position.setPropertyValue(position);
+		m_translate.setPropertyValue(translate);
 	}
 
 	const SmoothProperty<Vec2>& Transform::scale() const
@@ -109,7 +109,7 @@ namespace noco
 
 	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
 	{
-		m_position.update(interactionState, activeStyleStates, deltaTime);
+		m_translate.update(interactionState, activeStyleStates, deltaTime);
 		m_scale.update(interactionState, activeStyleStates, deltaTime);
 		m_pivot.update(interactionState, activeStyleStates, deltaTime);
 		m_rotation.update(interactionState, activeStyleStates, deltaTime);
@@ -120,7 +120,7 @@ namespace noco
 	JSON Transform::toJSON() const
 	{
 		JSON json;
-		m_position.appendJSON(json);
+		m_translate.appendJSON(json);
 		m_scale.appendJSON(json);
 		m_pivot.appendJSON(json);
 		m_rotation.appendJSON(json);
@@ -131,7 +131,7 @@ namespace noco
 
 	void Transform::readFromJSON(const JSON& json)
 	{
-		m_position.readFromJSON(json);
+		m_translate.readFromJSON(json);
 		m_scale.readFromJSON(json);
 		m_pivot.readFromJSON(json);
 		m_rotation.readFromJSON(json);

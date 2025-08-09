@@ -1439,7 +1439,7 @@ namespace noco
 		
 		const Vec2& scale = m_transform.scale().value();
 		const Vec2& pivot = m_transform.pivot().value();
-		const Vec2& position = m_transform.position().value();
+		const Vec2& translate = m_transform.translate().value();
 		const double rotation = m_transform.rotation().value();
 		
 		const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
@@ -1452,7 +1452,7 @@ namespace noco
 			selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 		}
 		
-		selfTransform = selfTransform * Mat3x2::Translate(position);
+		selfTransform = selfTransform * Mat3x2::Translate(translate);
 		
 		// 親の変換と合成（親の変換が先に適用される）
 		m_transformMatInHierarchy = selfTransform * parentTransformMat;
@@ -1862,7 +1862,7 @@ namespace noco
 			// TransformをHitTestに適用
 			const Vec2& scale = m_transform.scale().value();
 			const Vec2& pivot = m_transform.pivot().value();
-			const Vec2& position = m_transform.position().value();
+			const Vec2& translate = m_transform.translate().value();
 			const double rotation = m_transform.rotation().value();
 			
 			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
@@ -1875,7 +1875,7 @@ namespace noco
 				selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 			}
 			
-			selfTransform = selfTransform * Mat3x2::Translate(position);
+			selfTransform = selfTransform * Mat3x2::Translate(translate);
 			
 			return selfTransform * parentHitTestMat;
 		}
