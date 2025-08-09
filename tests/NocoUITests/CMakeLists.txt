@@ -43,18 +43,8 @@ add_executable(${TARGET_NAME}
     TestStyleState.cpp
 )
 
-# NocoUIライブラリのインクルードパスを追加
-target_include_directories(${TARGET_NAME} PRIVATE ../../include)
-
-# NocoUIのソースファイルを追加
-file(GLOB_RECURSE NOCOUI_SOURCES
-    ../../src/*.cpp
-)
-target_sources(${TARGET_NAME} PRIVATE ${NOCOUI_SOURCES})
-
-# Siv3Dの設定
 find_package(Siv3D REQUIRED)
-target_link_libraries(${TARGET_NAME} PUBLIC Siv3D::Siv3D)
+target_link_libraries(${TARGET_NAME} PRIVATE NocoUI Siv3D::Siv3D)
 
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
 # target_precompile_headers(${TARGET_NAME} PRIVATE <Siv3D.hpp>)

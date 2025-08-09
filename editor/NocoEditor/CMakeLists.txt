@@ -11,20 +11,14 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-file(GLOB_RECURSE NOCO_SRC_FILES ../../src/*.cpp)
 file(GLOB EDITOR_SRC_FILES *.cpp)
 
 add_executable(NocoEditor
   ${EDITOR_SRC_FILES}
-  ${NOCO_SRC_FILES}
   )
 
-target_include_directories(NocoEditor PRIVATE
-  ../../include
-  )
-
-find_package(Siv3D)
-target_link_libraries(NocoEditor PUBLIC Siv3D::Siv3D)
+find_package(Siv3D REQUIRED)
+target_link_libraries(NocoEditor PRIVATE NocoUI Siv3D::Siv3D)
 
 target_compile_features(NocoEditor PRIVATE cxx_std_20)
 
