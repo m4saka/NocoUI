@@ -69,11 +69,11 @@ namespace noco
 
 	Mat3x2 Canvas::rootPosScaleMat() const
 	{
-		if (m_scale == Vec2::One() && m_offset == Vec2::Zero())
+		if (m_scale == Vec2::One() && m_position == Vec2::Zero() && m_rotation == 0.0)
 		{
 			return Mat3x2::Identity();
 		}
-		return Mat3x2::Scale(m_scale) * Mat3x2::Translate(m_offset);
+		return Mat3x2::Scale(m_scale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
 	}
 
 	Canvas::Canvas()
@@ -432,9 +432,9 @@ namespace noco
 		}
 	}
 
-	std::shared_ptr<Canvas> Canvas::setOffset(const Vec2& offset)
+	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
 	{
-		m_offset = offset;
+		m_position = position;
 		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 		return shared_from_this();
 	}
@@ -446,10 +446,26 @@ namespace noco
 		return shared_from_this();
 	}
 	
-	std::shared_ptr<Canvas> Canvas::setOffsetScale(const Vec2& offset, const Vec2& scale)
+	std::shared_ptr<Canvas> Canvas::setPositionScale(const Vec2& position, const Vec2& scale)
 	{
-		m_offset = offset;
+		m_position = position;
 		m_scale = scale;
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Canvas> Canvas::setRotation(double rotation)
+	{
+		m_rotation = rotation;
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Canvas> Canvas::setTransform(const Vec2& position, const Vec2& scale, double rotation)
+	{
+		m_position = position;
+		m_scale = scale;
+		m_rotation = rotation;
 		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
 		return shared_from_this();
 	}

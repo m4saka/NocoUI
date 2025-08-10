@@ -348,10 +348,11 @@ namespace noco
 		};
 
 		std::shared_ptr<Node> m_rootNode;
-		Vec2 m_offset = Vec2::Zero();
-		Vec2 m_scale = Vec2::One();
-		EventRegistry m_eventRegistry;
-		bool m_prevDragScrollingWithThresholdExceeded = false;
+		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
+		/* NonSerialized */ Vec2 m_scale = Vec2::One();
+		/* NonSerialized */ double m_rotation = 0.0;
+		/* NonSerialized */ EventRegistry m_eventRegistry;
+		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
@@ -404,12 +405,12 @@ namespace noco
 			const String& name = U"Canvas",
 			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		std::shared_ptr<Canvas> setOffset(const Vec2& offset);
+		std::shared_ptr<Canvas> setPosition(const Vec2& position);
 
 		[[nodiscard]]
-		const Vec2& offset() const
+		const Vec2& position() const
 		{
-			return m_offset;
+			return m_position;
 		}
 
 		std::shared_ptr<Canvas> setScale(const Vec2& scale);
@@ -420,7 +421,17 @@ namespace noco
 			return m_scale;
 		}
 
-		std::shared_ptr<Canvas> setOffsetScale(const Vec2& offset, const Vec2& scale);
+		std::shared_ptr<Canvas> setPositionScale(const Vec2& position, const Vec2& scale);
+
+		std::shared_ptr<Canvas> setRotation(double rotation);
+
+		[[nodiscard]]
+		double rotation() const
+		{
+			return m_rotation;
+		}
+
+		std::shared_ptr<Canvas> setTransform(const Vec2& position, const Vec2& scale, double rotation);
 
 		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 

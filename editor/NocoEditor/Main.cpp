@@ -85,7 +85,7 @@ private:
 		m_scrollOffset += (cursorPosInWorldBefore - cursorPosInWorldAfter) * m_scrollScale;
 		if (beforeOffset != m_scrollOffset || beforeScale != m_scrollScale)
 		{
-			m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+			m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 		}
 	}
 
@@ -182,7 +182,7 @@ public:
 		m_toolbar.addSeparator();
 
 		// 初期位置を反映
-		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 		
 		// ツールバーの初期状態を更新
 		m_toolbar.updateButtonStates();
@@ -329,8 +329,8 @@ public:
 							// 前回との差分を取るため、最初のフレーム(downがtrue)は無視
 							if (!MouseL.down())
 							{
-								m_canvas->setOffset(m_canvas->offset() + Cursor::DeltaF());
-								m_scrollOffset = -m_canvas->offset();
+								m_canvas->setPosition(m_canvas->position() + Cursor::DeltaF());
+								m_scrollOffset = -m_canvas->position();
 							}
 
 							Cursor::RequestStyle(U"HandSmall");
@@ -828,7 +828,7 @@ public:
 	{
 		m_scrollOffset = InitialCanvasScrollOffset;
 		m_scrollScale = 1.0;
-		m_canvas->setOffsetScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
 	void onClickMenuToolChangeAssetDirectory()
