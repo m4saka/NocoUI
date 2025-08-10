@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Canvas.hpp"
+#include "NocoUI/Version.hpp"
 #include <cassert>
 
 namespace noco
@@ -170,27 +171,55 @@ namespace noco
 	
 	JSON Canvas::toJSON() const
 	{
-		return m_rootNode->toJSON();
+		return JSON
+		{
+			{ U"version", NocoUIVersion },
+			{ U"rootNode", m_rootNode->toJSON() }
+		};
 	}
 	
 	JSON Canvas::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
 	{
-		return m_rootNode->toJSONImpl(includesInternalId);
+		return JSON
+		{
+			{ U"version", NocoUIVersion },
+			{ U"rootNode", m_rootNode->toJSONImpl(includesInternalId) }
+		};
 	}
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
 	{
-		return Create(Node::CreateFromJSON(json), refreshesLayout);
+		if (!json.contains(U"rootNode"))
+		{
+			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			return nullptr;
+		}
+		return Create(Node::CreateFromJSON(json[U"rootNode"]), refreshesLayout);
 	}
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout)
 	{
-		return Create(Node::CreateFromJSONImpl(json, includesInternalId), refreshesLayout);
+		if (!json.contains(U"rootNode"))
+		{
+			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			return nullptr;
+		}
+		return Create(Node::CreateFromJSONImpl(json[U"rootNode"], includesInternalId), refreshesLayout);
 	}
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
-		m_rootNode = Node::CreateFromJSON(json);
+		if (!json.contains(U"rootNode"))
+		{
+			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			return false;
+		}
+		m_rootNode = Node::CreateFromJSON(json[U"rootNode"]);
+		if (!m_rootNode)
+		{
+			Logger << U"[NocoUI error] Failed to create root node from JSON";
+			return false;
+		}
 		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 		if (refreshesLayoutPre)
 		{
@@ -201,12 +230,22 @@ namespace noco
 		{
 			refreshLayout();
 		}
-		return true; // TODO: 失敗したらfalseを返す
+		return true;
 	}
 	
 	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
-		m_rootNode = Node::CreateFromJSONImpl(json, includesInternalId);
+		if (!json.contains(U"rootNode"))
+		{
+			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			return false;
+		}
+		m_rootNode = Node::CreateFromJSONImpl(json[U"rootNode"], includesInternalId);
+		if (!m_rootNode)
+		{
+			Logger << U"[NocoUI error] Failed to create root node from JSON";
+			return false;
+		}
 		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 		if (refreshesLayoutPre)
 		{
@@ -217,7 +256,7 @@ namespace noco
 		{
 			refreshLayout();
 		}
-		return true; // TODO: 失敗したらfalseを返す
+		return true;
 	}
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)

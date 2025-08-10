@@ -1,6 +1,6 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
 // シリアライゼーション詳細テスト
@@ -71,9 +71,56 @@ TEST_CASE("Serialization details", "[Serialization]")
 		JSON canvasJson = canvas->toJSON();
 		
 		// 階層構造が保持されているか確認
-		// canvas->toJSON()はrootNodeのJSONを直接返す
-		REQUIRE(canvasJson.hasElement(U"children"));
-		REQUIRE(canvasJson[U"children"].size() == 1);
-		REQUIRE(canvasJson[U"children"][0][U"name"].get<String>() == U"Parent");
+		REQUIRE(canvasJson.hasElement(U"rootNode"));
+		JSON rootNodeJson = canvasJson[U"rootNode"];
+		REQUIRE(rootNodeJson.hasElement(U"children"));
+		REQUIRE(rootNodeJson[U"children"].size() == 1);
+		REQUIRE(rootNodeJson[U"children"][0][U"name"].get<String>() == U"Parent");
+	}
+
+	SECTION("Canvas round-trip serialization")
+	{
+		// Canvasを作成して複雑な構造を構築
+		auto canvas1 = noco::Canvas::Create();
+		auto root1 = canvas1->rootNode();
+		
+		auto node1 = noco::Node::Create(U"TestNode");
+		node1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		node1->emplaceComponent<noco::Label>()->setText(U"TestLabel");
+		root1->addChild(node1);
+		
+		// JSON化
+		JSON json = canvas1->toJSON();
+		
+		// JSONから新しいCanvasを作成
+		auto canvas2 = noco::Canvas::CreateFromJSON(json);
+		REQUIRE(canvas2 != nullptr);
+		
+		// 再度JSON化して同じ構造か確認
+		JSON json2 = canvas2->toJSON();
+		
+		REQUIRE(json2[U"rootNode"][U"children"].size() == 1);
+		REQUIRE(json2[U"rootNode"][U"children"][0][U"name"].get<String>() == U"TestNode");
+	}
+
+	SECTION("Error handling for missing rootNode field")
+	{
+		JSON invalidJson = JSON{};
+		invalidJson[U"version"] = noco::NocoUIVersion;
+		
+		auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
+		REQUIRE(canvas == nullptr);
+	}
+
+
+	SECTION("Version field is correctly written and read")
+	{
+		auto canvas = noco::Canvas::Create();
+		JSON json = canvas->toJSON();
+		
+		// versionフィールドが存在し、正しい値を持つことを確認
+		REQUIRE(json.hasElement(U"version"));
+		REQUIRE(json[U"version"].isString());
+		REQUIRE(json[U"version"].get<String>() == noco::NocoUIVersion);
 	}
 }
