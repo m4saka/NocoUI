@@ -107,14 +107,14 @@ namespace noco
 		m_color.setPropertyValue(color);
 	}
 
-	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime)
+	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params)
 	{
-		m_translate.update(interactionState, activeStyleStates, deltaTime);
-		m_scale.update(interactionState, activeStyleStates, deltaTime);
-		m_pivot.update(interactionState, activeStyleStates, deltaTime);
-		m_rotation.update(interactionState, activeStyleStates, deltaTime);
-		m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime);
-		m_color.update(interactionState, activeStyleStates, deltaTime);
+		m_translate.update(interactionState, activeStyleStates, deltaTime, params);
+		m_scale.update(interactionState, activeStyleStates, deltaTime, params);
+		m_pivot.update(interactionState, activeStyleStates, deltaTime, params);
+		m_rotation.update(interactionState, activeStyleStates, deltaTime, params);
+		m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime, params);
+		m_color.update(interactionState, activeStyleStates, deltaTime, params);
 	}
 
 	JSON Transform::toJSON() const

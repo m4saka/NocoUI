@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 #include "Node.hpp"
 #include "Component/IFocusable.hpp"
+#include "Param.hpp"
 
 namespace noco
 {
@@ -348,6 +349,7 @@ namespace noco
 		};
 
 		std::shared_ptr<Node> m_rootNode;
+		HashTable<String, std::shared_ptr<Param>> m_params;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
 		/* NonSerialized */ double m_rotation = 0.0;
@@ -456,6 +458,27 @@ namespace noco
 		template <class Fty>
 		void walkPlaceholders(StringView tag, Fty&& func) const
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
+
+		[[nodiscard]]
+		const HashTable<String, std::shared_ptr<Param>>& params() const
+		{
+			return m_params;
+		}
+
+		[[nodiscard]]
+		HashTable<String, std::shared_ptr<Param>>& params()
+		{
+			return m_params;
+		}
+
+		void setParam(const std::shared_ptr<Param>& param);
+
+		[[nodiscard]]
+		std::shared_ptr<Param> getParam(const String& name) const;
+
+		void removeParam(const String& name);
+
+		void clearParams();
 	};
 
 	template <class Fty>

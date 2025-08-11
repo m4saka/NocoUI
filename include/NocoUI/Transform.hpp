@@ -74,7 +74,7 @@ namespace noco
 
 		void setColor(const PropertyValue<ColorF>& color);
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime);
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params);
 
 		[[nodiscard]]
 		JSON toJSON() const;

@@ -5,6 +5,7 @@
 #include "YN.hpp"
 #include "Smoothing.hpp"
 #include "LRTB.hpp"
+#include "Param.hpp"
 
 namespace noco
 {
@@ -23,7 +24,7 @@ namespace noco
 	public:
 		virtual ~IProperty() = default;
 		virtual StringView name() const = 0;
-		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime) = 0;
+		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueStringOfDefault() const = 0;
@@ -85,6 +86,7 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
+		String m_paramRef;  // パラメータ参照名
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
@@ -133,6 +135,17 @@ namespace noco
 			m_propertyValue = propertyValue;
 		}
 
+		void setParamRef(const String& paramRef)
+		{
+			m_paramRef = paramRef;
+		}
+
+		[[nodiscard]]
+		const String& paramRef() const
+		{
+			return m_paramRef;
+		}
+
 		[[nodiscard]]
 		const T& value() const
 		{
@@ -160,15 +173,37 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, std::shared_ptr<Param>>& params) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
+			
+			// パラメータ参照がある場合
+			if (!m_paramRef.isEmpty())
+			{
+				if constexpr (Param::isSupportedType<T>())
+				{
+					if (auto it = params.find(m_paramRef); it != params.end())
+					{
+						if (auto param = it->second)
+						{
+							if (auto val = param->valueAsOpt<T>())
+							{
+								setCurrentFrameOverride(*val);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
+			if (!m_paramRef.isEmpty())
+			{
+				json[String(m_name) + U"_paramRef"] = m_paramRef;
+			}
 		}
 
 		void readFromJSON(const JSON& json) override
@@ -178,6 +213,12 @@ namespace noco
 				return;
 			}
 			m_propertyValue = PropertyValue<T>::fromJSON(json[m_name]);
+			
+			const String paramRefKey = String(m_name) + U"_paramRef";
+			if (json.contains(paramRefKey))
+			{
+				m_paramRef = json[paramRefKey].getString();
+			}
 		}
 
 		[[nodiscard]]
@@ -381,6 +422,7 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
+		String m_paramRef;  // パラメータ参照名
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
@@ -424,6 +466,17 @@ namespace noco
 			m_propertyValue = propertyValue;
 		}
 
+		void setParamRef(const String& paramRef)
+		{
+			m_paramRef = paramRef;
+		}
+
+		[[nodiscard]]
+		const String& paramRef() const
+		{
+			return m_paramRef;
+		}
+
 		[[nodiscard]]
 		const T& value() const
 		{
@@ -434,8 +487,26 @@ namespace noco
 			return m_smoothing.currentValue();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params) override
 		{
+			// パラメータ参照がある場合
+			if (!m_paramRef.isEmpty())
+			{
+				if constexpr (Param::isSupportedType<T>())
+				{
+					if (auto it = params.find(m_paramRef); it != params.end())
+					{
+						if (auto param = it->second)
+						{
+							if (auto val = param->valueAsOpt<T>())
+							{
+								setCurrentFrameOverride(*val);
+							}
+						}
+					}
+				}
+			}
+			
 			m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime, deltaTime);
 		}
 
@@ -459,6 +530,10 @@ namespace noco
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
+			if (!m_paramRef.isEmpty())
+			{
+				json[String(m_name) + U"_paramRef"] = m_paramRef;
+			}
 		}
 
 		void readFromJSON(const JSON& json) override
@@ -469,6 +544,12 @@ namespace noco
 			}
 			m_propertyValue = PropertyValue<T>::fromJSON(json[m_name]);
 			m_smoothing = Smoothing<T>{ m_propertyValue.value(InteractionState::Default, Array<String>{}) };
+			
+			const String paramRefKey = String(m_name) + U"_paramRef";
+			if (json.contains(paramRefKey))
+			{
+				m_paramRef = json[paramRefKey].getString();
+			}
 		}
 
 		[[nodiscard]]
@@ -594,6 +675,7 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
+		String m_paramRef;  // パラメータ参照名
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
@@ -630,6 +712,17 @@ namespace noco
 			m_value = String{ value };
 		}
 
+		void setParamRef(const String& paramRef)
+		{
+			m_paramRef = paramRef;
+		}
+
+		[[nodiscard]]
+		const String& paramRef() const
+		{
+			return m_paramRef;
+		}
+
 		[[nodiscard]]
 		const T& value() const
 		{
@@ -657,8 +750,28 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState, const Array<String>&, double) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, std::shared_ptr<Param>>& params) override
 		{
+			m_interactionState = interactionState;
+			m_activeStyleStates = activeStyleStates;
+			
+			// パラメータ参照がある場合
+			if (!m_paramRef.isEmpty())
+			{
+				if constexpr (Param::isSupportedType<T>())
+				{
+					if (auto it = params.find(m_paramRef); it != params.end())
+					{
+						if (auto param = it->second)
+						{
+							if (auto val = param->valueAsOpt<T>())
+							{
+								setCurrentFrameOverride(*val);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		void appendJSON(JSON& json) const override
@@ -675,6 +788,10 @@ namespace noco
 			{
 				json[m_name] = m_value;
 			}
+			if (!m_paramRef.isEmpty())
+			{
+				json[String(m_name) + U"_paramRef"] = m_paramRef;
+			}
 		}
 
 		void readFromJSON(const JSON& json) override
@@ -686,6 +803,12 @@ namespace noco
 
 			// Propertyが後からPropertyNonInteractiveに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
 			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue;
+			
+			const String paramRefKey = String(m_name) + U"_paramRef";
+			if (json.contains(paramRefKey))
+			{
+				m_paramRef = json[paramRefKey].getString();
+			}
 		}
 
 		[[nodiscard]]

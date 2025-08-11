@@ -1183,7 +1183,7 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const Array<String>& parentActiveStyleStates)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, std::shared_ptr<Param>>& params, const Array<String>& parentActiveStyleStates)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1320,7 +1320,7 @@ namespace noco
 		
 		if (m_activeInHierarchy)
 		{
-			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat);
+			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
 		}
 
 		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
@@ -1352,7 +1352,7 @@ namespace noco
 			
 			for (const auto& child : m_childrenTempBuffer)
 			{
-				child->update(scrollableHoveredNode, deltaTime, m_transformMatInHierarchy, childHitTestMat, m_activeStyleStates);
+				child->update(scrollableHoveredNode, deltaTime, m_transformMatInHierarchy, childHitTestMat, params, m_activeStyleStates);
 			}
 
 			m_childrenTempBuffer.clear();
@@ -1410,32 +1410,32 @@ namespace noco
 		}
 	}
 
-	void Node::postLateUpdate(double deltaTime)
+	void Node::postLateUpdate(double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params)
 	{
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
 		// Transformのプロパティ値更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params);
 
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
 			// m_activeStyleStatesはupdateで構築済み
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params);
 		}
 
 		// 子ノードのpostLateUpdate実行
 		for (const auto& child : m_children)
 		{
-			child->postLateUpdate(deltaTime);
+			child->postLateUpdate(deltaTime, params);
 		}
 
 		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
-	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat)
+	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, std::shared_ptr<Param>>& params)
 	{
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params);
 		
 		const Vec2& scale = m_transform.scale().value();
 		const Vec2& pivot = m_transform.pivot().value();
@@ -1562,7 +1562,7 @@ namespace noco
 			// 子ノードの変換行列を更新
 			for (const auto& child : m_children)
 			{
-				child->refreshTransformMat(RecursiveYN::Yes, m_transformMatInHierarchy, m_hitTestMatInHierarchy);
+				child->refreshTransformMat(RecursiveYN::Yes, m_transformMatInHierarchy, m_hitTestMatInHierarchy, params);
 			}
 		}
 	}

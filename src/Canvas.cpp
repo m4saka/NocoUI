@@ -148,7 +148,7 @@ namespace noco
 		}
 
 		m_rootNode->refreshChildrenLayout();
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
@@ -171,20 +171,44 @@ namespace noco
 	
 	JSON Canvas::toJSON() const
 	{
-		return JSON
+		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
 			{ U"rootNode", m_rootNode->toJSON() }
 		};
+
+		if (!m_params.empty())
+		{
+			Array<JSON> paramsArray;
+			for (const auto& [name, param] : m_params)
+			{
+				paramsArray.push_back(param->toJSON());
+			}
+			json[U"params"] = paramsArray;
+		}
+
+		return json;
 	}
 	
 	JSON Canvas::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
 	{
-		return JSON
+		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
 			{ U"rootNode", m_rootNode->toJSONImpl(includesInternalId) }
 		};
+
+		if (!m_params.empty())
+		{
+			Array<JSON> paramsArray;
+			for (const auto& [name, param] : m_params)
+			{
+				paramsArray.push_back(param->toJSON());
+			}
+			json[U"params"] = paramsArray;
+		}
+
+		return json;
 	}
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
@@ -221,6 +245,20 @@ namespace noco
 			return false;
 		}
 		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
+
+		// パラメータの読み込み
+		m_params.clear();
+		if (json.contains(U"params") && json[U"params"].isArray())
+		{
+			for (const auto& paramJson : json[U"params"].arrayView())
+			{
+				if (auto param = Param::fromJSON(paramJson))
+				{
+					m_params[param->name()] = param;
+				}
+			}
+		}
+
 		if (refreshesLayoutPre)
 		{
 			refreshLayout();
@@ -247,6 +285,20 @@ namespace noco
 			return false;
 		}
 		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
+
+		// パラメータの読み込み
+		m_params.clear();
+		if (json.contains(U"params") && json[U"params"].isArray())
+		{
+			for (const auto& paramJson : json[U"params"].arrayView())
+			{
+				if (auto param = Param::fromJSON(paramJson))
+				{
+					m_params[param->name()] = param;
+				}
+			}
+		}
+
 		if (refreshesLayoutPre)
 		{
 			refreshLayout();
@@ -409,9 +461,9 @@ namespace noco
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
 		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
 		m_rootNode->updateKeyInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), {});
+		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params, {});
 		m_rootNode->lateUpdate();
-		m_rootNode->postLateUpdate(Scene::DeltaTime());
+		m_rootNode->postLateUpdate(Scene::DeltaTime(), m_params);
 
 		// ドラッグスクロール開始判定
 		// (ドラッグアンドドロップと競合しないよう、フレームの最後に実施)
@@ -474,14 +526,14 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
 	{
 		m_position = position;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		return shared_from_this();
 	}
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		return shared_from_this();
 	}
 	
@@ -489,14 +541,14 @@ namespace noco
 	{
 		m_position = position;
 		m_scale = scale;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		return shared_from_this();
 	}
 
 	std::shared_ptr<Canvas> Canvas::setRotation(double rotation)
 	{
 		m_rotation = rotation;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		return shared_from_this();
 	}
 
@@ -505,7 +557,7 @@ namespace noco
 		m_position = position;
 		m_scale = scale;
 		m_rotation = rotation;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat());
+		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		return shared_from_this();
 	}
 	
@@ -541,5 +593,32 @@ namespace noco
 	const Array<Event>& Canvas::getFiredEventsAll() const
 	{
 		return m_eventRegistry.getFiredEventsAll();
+	}
+
+	void Canvas::setParam(const std::shared_ptr<Param>& param)
+	{
+		if (param)
+		{
+			m_params[param->name()] = param;
+		}
+	}
+
+	std::shared_ptr<Param> Canvas::getParam(const String& name) const
+	{
+		if (auto it = m_params.find(name); it != m_params.end())
+		{
+			return it->second;
+		}
+		return nullptr;
+	}
+
+	void Canvas::removeParam(const String& name)
+	{
+		m_params.erase(name);
+	}
+
+	void Canvas::clearParams()
+	{
+		m_params.clear();
 	}
 }
