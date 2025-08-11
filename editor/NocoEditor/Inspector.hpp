@@ -9,6 +9,9 @@
 #include "PropertyMetaData.hpp"
 #include "Vec4PropertyTextBox.hpp"
 #include "PropertyLabelDragger.hpp"
+#include "PropertyTextBox.hpp"
+#include "AddParamDialog.hpp"
+#include "ParamRefDialog.hpp"
 
 namespace noco::editor
 {
@@ -25,12 +28,27 @@ namespace noco::editor
 		std::shared_ptr<DialogOpener> m_dialogOpener;
 		HashTable<PropertyKey, PropertyMetadata> m_propertyMetadata;
 		std::weak_ptr<Node> m_targetNode;
+		bool m_isCanvasSelected = false;  // Canvasが選択されているか
 		std::function<void()> m_onChangeNodeName;
+		
+		// パラメータ存在チェック用ヘルパー関数
+		[[nodiscard]]
+		bool hasAnyParamsForType(ParamType type) const
+		{
+			if (!m_canvas) return false;
+			const auto& params = m_canvas->params();
+			for (const auto& [name, param] : params)
+			{
+				if (param->type() == type) return true;
+			}
+			return false;
+		}
 
 		IsFoldedYN m_isFoldedRegion = IsFoldedYN::No;
 		IsFoldedYN m_isFoldedNodeSetting = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedTransform = IsFoldedYN::Yes;
+		IsFoldedYN m_isFoldedParams = IsFoldedYN::No;  // Paramsセクションの折り畳み状態
 		Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
 		std::shared_ptr<Defaults> m_defaults;
@@ -300,6 +318,7 @@ namespace noco::editor
 			}
 
 			m_targetNode = targetNode;
+			m_isCanvasSelected = !targetNode;  // targetNodeがnullptrの場合はCanvas選択
 
 			m_inspectorRootNode->removeChildrenAll();
 
@@ -384,6 +403,31 @@ namespace noco::editor
 					{
 						m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->layoutAppliedRect().center());
 					}))->addClickHotKey(KeyA, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
+			}
+			else
+			{
+				// Canvas設定を表示
+				const auto canvasNameNode = Node::Create(
+					U"CanvasName",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 32 },
+						.margin = LRTB{ 0, 0, 4, 4 },
+					});
+				canvasNameNode->emplaceComponent<Label>(
+					U"Canvas",
+					U"",
+					18,
+					Palette::White,
+					HorizontalAlign::Center,
+					VerticalAlign::Middle);
+				canvasNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.2, 0.2 }, ColorF{ 0.4, 0.4 }, 0.0, 4.0);
+				m_inspectorRootNode->addChild(canvasNameNode);
+
+				// Paramsセクションを追加
+				const auto paramsNode = createParamsNode();
+				m_inspectorRootNode->addChild(paramsNode);
 			}
 			
 			// TabStopを持つすべてのノードを収集してリンクを設定
@@ -491,48 +535,6 @@ namespace noco::editor
 			return headingNode;
 		}
 
-		class PropertyTextBox : public ComponentBase
-		{
-		private:
-			std::shared_ptr<TextBox> m_textBox;
-			std::function<void(StringView)> m_fnSetValue;
-			std::function<String()> m_fnGetValue;
-			String m_prevExternalValue;
-
-			void update(const std::shared_ptr<Node>&) override
-			{
-				// 外部からの値の変更をチェック
-				if (m_fnGetValue)
-				{
-					const String currentExternalValue = String(m_fnGetValue());
-					if (!m_textBox->isEditing() && currentExternalValue != m_prevExternalValue)
-					{
-						m_textBox->setText(currentExternalValue, IgnoreIsChangedYN::Yes);
-						m_prevExternalValue = currentExternalValue;
-					}
-				}
-
-				// ユーザーによる変更をチェック
-				if (m_textBox->isChanged())
-				{
-					m_fnSetValue(m_textBox->text());
-					if (m_fnGetValue)
-					{
-						m_prevExternalValue = String{ m_fnGetValue() };
-					}
-				}
-			}
-
-		public:
-			explicit PropertyTextBox(const std::shared_ptr<TextBox>& textBox, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
-				: ComponentBase{ {} }
-				, m_textBox(textBox)
-				, m_fnSetValue(std::move(fnSetValue))
-				, m_fnGetValue(std::move(fnGetValue))
-				, m_prevExternalValue(m_fnGetValue ? String{ m_fnGetValue() } : U"")
-			{
-			}
-		};
 
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateNodeNameTextboxNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue)
@@ -565,7 +567,7 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr)
+		std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, std::function<String()> fnGetValue = nullptr)
 		{
 			// メタデータをチェックしてTextAreaを使うかどうか判断
 			std::shared_ptr<Node> propertyNode;
@@ -580,7 +582,7 @@ namespace noco::editor
 				else
 				{
 					// 通常のTextBoxを使用
-					propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), metadata.dragValueChangeStep);
+					propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), metadata.dragValueChangeStep);
 				}
 				
 				// ツールチップを追加
@@ -595,7 +597,7 @@ namespace noco::editor
 			else
 			{
 				// メタデータがない場合は通常のTextBoxを使用
-				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, std::move(fnGetValue), none);
+				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), none);
 			}
 			
 			return propertyNode;
@@ -603,9 +605,9 @@ namespace noco::editor
 
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+			const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -624,9 +626,9 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue);
+			const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -645,9 +647,9 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+			const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -677,9 +679,9 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+			const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -696,9 +698,9 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+		std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue);
+			const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -717,7 +719,7 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, std::function<String()> fnGetValue = nullptr, Optional<double> dragValueChangeStep = none)
+		static std::shared_ptr<Node> CreatePropertyNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, std::function<String()> fnGetValue = nullptr, Optional<double> dragValueChangeStep = none)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -752,8 +754,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Limegreen, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -785,7 +787,7 @@ namespace noco::editor
 					double initialValue = ParseOpt<double>(fnGetValue()).value_or(0.0);
 					
 					labelNode->emplaceComponent<PropertyLabelDragger>(
-						[fnSetValue, textBoxWeak, labelComponentWeak, initialValue, hasInteractivePropertyValue](double newValue) mutable {
+						[fnSetValue, textBoxWeak, labelComponentWeak, initialValue, hasInteractivePropertyValue, hasParameterRef](double newValue) mutable {
 							// 値が実際に変更された場合のみ更新
 							if (std::abs(newValue - initialValue) > 0.0001)  // 浮動小数点の誤差を考慮
 							{
@@ -794,8 +796,8 @@ namespace noco::editor
 								{
 									tb->setText(Format(newValue));
 								}
-								// インタラクティブ値があった場合は下線を消す
-								if (hasInteractivePropertyValue)
+								// インタラクティブ値があった場合は下線を消す（パラメータ参照がある場合は緑の下線を維持）
+								if (hasInteractivePropertyValue && !hasParameterRef)
 								{
 									if (const auto label = labelComponentWeak.lock())
 									{
@@ -812,7 +814,7 @@ namespace noco::editor
 				else
 				{
 					labelNode->emplaceComponent<PropertyLabelDragger>(
-						[fnSetValue, textBoxWeak, labelComponentWeak, hasInteractivePropertyValue](double newValue) {
+						[fnSetValue, textBoxWeak, labelComponentWeak, hasInteractivePropertyValue, hasParameterRef](double newValue) {
 							// 現在の値を取得
 							double currentValue = 0.0;
 							if (const auto tb = textBoxWeak.lock())
@@ -828,8 +830,8 @@ namespace noco::editor
 								{
 									tb->setText(Format(newValue));
 								}
-								// インタラクティブ値があった場合は下線を消す
-								if (hasInteractivePropertyValue)
+								// インタラクティブ値があった場合は下線を消す（パラメータ参照がある場合は緑の下線を維持）
+								if (hasInteractivePropertyValue && !hasParameterRef)
 								{
 									if (const auto label = labelComponentWeak.lock())
 									{
@@ -957,7 +959,8 @@ namespace noco::editor
 			StringView name,
 			const Vec2& currentValue,
 			std::function<void(const Vec2&)> fnSetValue,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -1256,7 +1259,8 @@ namespace noco::editor
 			StringView name,
 			const LRTB& currentValue,
 			std::function<void(const LRTB&)> fnSetValue,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			constexpr int32 LineHeight = 32;
 			const auto propertyNode = Node::Create(
@@ -1589,7 +1593,8 @@ namespace noco::editor
 			StringView name,
 			const ColorF& currentValue,
 			std::function<void(const ColorF&)> fnSetValue,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -1914,7 +1919,8 @@ namespace noco::editor
 			std::function<void(StringView)> fnSetValue,
 			const std::shared_ptr<ContextMenu>& contextMenu,
 			const Array<String>& enumCandidates,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -2030,7 +2036,8 @@ namespace noco::editor
 			StringView name,
 			bool currentValue,
 			std::function<void(bool)> fnSetValue,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			auto propertyNode = Node::Create(
 				name,
@@ -2225,7 +2232,7 @@ namespace noco::editor
 				const auto fnAddDoubleChild =
 					[this, &nodeSettingNode](StringView name, double currentValue, auto fnSetValue)
 					{
-						nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedNodeSetting.getBool());
+						nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, nullptr))->setActive(!m_isFoldedNodeSetting.getBool());
 					};
 				fnAddDoubleChild(U"decelerationRate", node->decelerationRate(), [node](double value) { node->setDecelerationRate(Clamp(value, 0.0, 1.0)); });
 			}
@@ -2292,7 +2299,7 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
 				{
-					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedLayout.getBool());
+					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, nullptr))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddLRTBChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
@@ -2423,7 +2430,7 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &regionNode, &regionTypeName](StringView name, double currentValue, auto fnSetValue)
 				{
-					regionNode->addChild(createPropertyNodeWithTooltip(regionTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, nullptr))->setActive(!m_isFoldedRegion.getBool());
+					regionNode->addChild(createPropertyNodeWithTooltip(regionTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, nullptr))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddEnumChild =
 				[this, &regionNode, &regionTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
@@ -3002,12 +3009,32 @@ namespace noco::editor
 			const auto fnAddVec2Child =
 				[this, &transformNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
-						MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
+						MenuItem
+						{ 
+							U"ステート毎に値を変更..."_fmt(name), 
+							U"", 
+							KeyC, 
+							[this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
+							} 
+						},
+						MenuItem
+						{ 
+							.text = U"参照パラメータを選択..."_fmt(name), 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyP, 
+							.onClick = [this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+							},
+							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Vec2); }
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3021,12 +3048,32 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &transformNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createPropertyNodeWithTooltip(U"Transform", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					const auto propertyNode = transformNode->addChild(createPropertyNodeWithTooltip(U"Transform", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
-						MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
+						MenuItem
+						{ 
+							U"ステート毎に値を変更..."_fmt(name), 
+							U"", 
+							KeyC, 
+							[this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
+							} 
+						},
+						MenuItem
+						{ 
+							.text = U"参照パラメータを選択..."_fmt(name), 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyP, 
+							.onClick = [this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+							},
+							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Number); }
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3054,21 +3101,66 @@ namespace noco::editor
 			const auto fnAddBoolChild =
 				[this, &transformNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createBoolPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					const auto propertyNode = transformNode->addChild(createBoolPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
-					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, Array<MenuElement>{ MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } } }, nullptr, RecursiveYN::Yes);
+					Array<MenuElement> menuElements
+					{
+						MenuItem
+						{ 
+							U"ステート毎に値を変更..."_fmt(name), 
+							U"", 
+							KeyC, 
+							[this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
+							} 
+						},
+						MenuItem
+						{ 
+							.text = U"参照パラメータを選択..."_fmt(name), 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyP, 
+							.onClick = [this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+							},
+							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Bool); }
+						},
+					};
+					
+					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
 			fnAddBoolChild(U"appliesToHitTest", &pTransform->appliesToHitTest(), [this, pTransform](bool value) { pTransform->setAppliesToHitTest(value); });
 
 			const auto fnAddColorChild =
 				[this, &transformNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createColorPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }));
+					const auto propertyNode = transformNode->addChild(createColorPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
 					{
-						MenuItem{ U"ステート毎に値を変更..."_fmt(name), U"", KeyC, [this, pProperty] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); } },
+						MenuItem
+						{ 
+							U"ステート毎に値を変更..."_fmt(name), 
+							U"", 
+							KeyC, 
+							[this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
+							} 
+						},
+						MenuItem
+						{ 
+							.text = U"参照パラメータを選択..."_fmt(name), 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyP, 
+							.onClick = [this, pProperty] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+							},
+							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Color); }
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3078,6 +3170,307 @@ namespace noco::editor
 			transformNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			return transformNode;
+		}
+
+		[[nodiscard]]
+		std::shared_ptr<Node> createSingleParamNode(const std::shared_ptr<Param>& param)
+		{
+			auto paramNode = Node::Create(
+				U"Param_" + param->name(),
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 32 },
+					.margin = LRTB{ 0, 0, 4, 4 },
+				});
+			
+			// パラメータ名ラベル
+			const auto labelNode = paramNode->emplaceChild(
+				U"Label",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 100, 32 },
+				});
+			labelNode->emplaceComponent<Label>(
+				param->name(),
+				U"",
+				14,
+				Palette::White,
+				HorizontalAlign::Left,
+				VerticalAlign::Middle,
+				LRTB{ 8, 0, 0, 0 });
+			
+			// 型表示
+			const auto typeNode = paramNode->emplaceChild(
+				U"Type",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 60, 32 },
+				});
+			typeNode->emplaceComponent<Label>(
+				ParamTypeToString(param->type()),
+				U"",
+				12,
+				ColorF{ 0.7, 0.7, 0.7 },
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			
+			// パラメータの型に応じて適切な編集UIを作成
+			std::shared_ptr<Node> valueNode;
+			
+			switch (param->type())
+			{
+			case ParamType::Bool:
+				{
+					const bool currentValue = param->valueAs<bool>();
+					// CreateBoolPropertyNodeを使用
+					valueNode = CreateBoolPropertyNode(
+						U"",  // ラベルは既に表示しているので空
+						currentValue,
+						[this, param](bool value) 
+						{ 
+							param->setValue(value);
+							refreshInspector(); 
+						});
+					// 余分なパディングを削除
+					if (auto* pRegion = valueNode->inlineRegion())
+					{
+						auto newRegion = *pRegion;
+						newRegion.sizeRatio = Vec2{ 1, 0 };
+						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
+						valueNode->setRegion(newRegion);
+					}
+				}
+				break;
+				
+			case ParamType::Number:
+				{
+					// シンプルなテキストボックス版を使用
+					valueNode = Node::Create(
+						U"Value",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ -160 - 32, 26 },
+						});
+					valueNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.4 }, 1.0, 4.0);
+					const auto textBox = valueNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle);
+					textBox->setText(Format(param->valueAs<double>()), IgnoreIsChangedYN::Yes);
+					valueNode->addComponent(std::make_shared<PropertyTextBox>(textBox, 
+						[this, param](StringView text) 
+						{ 
+							if (const auto val = ParseOpt<double>(text))
+							{
+								param->setValue(*val);
+							}
+						}));
+				}
+				break;
+				
+			case ParamType::String:
+				{
+					// シンプルなテキストボックス版を使用
+					valueNode = Node::Create(
+						U"Value",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ -160 - 32, 26 },
+						});
+					valueNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.4 }, 1.0, 4.0);
+					const auto textBox = valueNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle);
+					textBox->setText(param->valueAs<String>(), IgnoreIsChangedYN::Yes);
+					valueNode->addComponent(std::make_shared<PropertyTextBox>(textBox, 
+						[this, param](StringView text) 
+						{ 
+							param->setValue(String{ text });
+						}));
+				}
+				break;
+				
+			case ParamType::Color:
+				{
+					const ColorF currentColor = param->valueAs<ColorF>();
+					// CreateColorPropertyNodeを使用
+					valueNode = CreateColorPropertyNode(
+						U"",  // ラベルは既に表示しているので空
+						currentColor,
+						[this, param](const ColorF& color) 
+						{ 
+							param->setValue(color);
+							refreshInspector();
+						});
+					// 余分なパディングを削除
+					if (auto* pRegion = valueNode->inlineRegion())
+					{
+						auto newRegion = *pRegion;
+						newRegion.sizeRatio = Vec2{ 1, 0 };
+						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
+						valueNode->setRegion(newRegion);
+					}
+				}
+				break;
+				
+			case ParamType::Vec2:
+				{
+					const Vec2 currentVec = param->valueAs<Vec2>();
+					// CreateVec2PropertyNodeを使用
+					valueNode = CreateVec2PropertyNode(
+						U"",  // ラベルは既に表示しているので空
+						currentVec,
+						[this, param](const Vec2& vec) 
+						{ 
+							param->setValue(vec);
+							refreshInspector();
+						});
+					// 余分なパディングを削除
+					if (auto* pRegion = valueNode->inlineRegion())
+					{
+						auto newRegion = *pRegion;
+						newRegion.sizeRatio = Vec2{ 1, 0 };
+						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
+						valueNode->setRegion(newRegion);
+					}
+				}
+				break;
+				
+			case ParamType::LRTB:
+				{
+					const LRTB currentLRTB = param->valueAs<LRTB>();
+					// CreateLRTBPropertyNodeを使用
+					valueNode = CreateLRTBPropertyNode(
+						U"",  // ラベルは既に表示しているので空
+						currentLRTB,
+						[this, param](const LRTB& lrtb) 
+						{ 
+							param->setValue(lrtb);
+							refreshInspector();
+						});
+					// 余分なパディングを削除  
+					if (auto* pRegion = valueNode->inlineRegion())
+					{
+						auto newRegion = *pRegion;
+						newRegion.sizeRatio = Vec2{ 1, 0 };
+						newRegion.sizeDelta = Vec2{ -160 - 32, 64 };  // LRTBは2行なので高さを調整
+						valueNode->setRegion(newRegion);
+					}
+				}
+				break;
+			}
+			
+			// valueNodeをparamNodeに追加
+			if (valueNode)
+			{
+				paramNode->addChild(valueNode);
+			}
+			
+			// 削除ボタン
+			const auto deleteButtonNode = paramNode->emplaceChild(
+				U"Delete",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 24, 24 },
+				});
+			deleteButtonNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>{ ColorF{ 0.3, 0.1, 0.1 } }.withHovered(ColorF{ 0.5, 0.1, 0.1 }),
+				PropertyValue<ColorF>{ ColorF{ 0.6, 0.2, 0.2 } }.withHovered(ColorF{ 0.8, 0.2, 0.2 }),
+				1.0, 4.0);
+			deleteButtonNode->emplaceComponent<Label>(
+				U"×",
+				U"",
+				16,
+				Palette::White,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			deleteButtonNode->emplaceComponent<UpdaterComponent>([this, name = param->name()](const std::shared_ptr<Node>& node) 
+				{
+					if (node->isClicked())
+					{
+						m_canvas->removeParam(name);
+						refreshInspector();
+					}
+				});
+			
+			paramNode->setChildrenLayout(HorizontalLayout{ .spacing = 4 });
+			
+			return paramNode;
+		}
+
+		[[nodiscard]]
+		std::shared_ptr<Node> createParamsNode()
+		{
+			auto paramsNode = Node::Create(
+				U"Params",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.margin = LRTB{ 0, 0, 0, 8 },
+				});
+			paramsNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedParams ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			paramsNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+
+			paramsNode->addChild(CreateHeadingNode(U"Params", ColorF{ 0.5, 0.3, 0.5 }, m_isFoldedParams,
+				[this](IsFoldedYN isFolded)
+				{
+					m_isFoldedParams = isFolded;
+				}));
+
+			if (!m_isFoldedParams.getBool())
+			{
+				// パラメータ一覧を表示
+				const auto& params = m_canvas->params();
+				
+				if (params.empty())
+				{
+					const auto noParamLabelNode = paramsNode->emplaceChild(
+						U"NoParams",
+						InlineRegion
+						{
+							.sizeRatio = { 1, 0 },
+							.sizeDelta = { 0, 24 },
+							.margin = { .top = 4 },
+						});
+					noParamLabelNode->emplaceComponent<Label>(
+						U"(パラメータなし)",
+						U"",
+						14,
+						Palette::Gray,
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+					noParamLabelNode->setActive(!m_isFoldedParams.getBool());
+				}
+				else
+				{
+					// 各パラメータを表示
+					for (const auto& [name, param] : params)
+					{
+						const auto paramNode = createSingleParamNode(param);
+						paramNode->setActive(!m_isFoldedParams.getBool());
+						paramsNode->addChild(paramNode);
+					}
+				}
+				
+				// 新規パラメータ追加ボタン
+				const auto addButton = paramsNode->addChild(CreateButtonNode(
+					U"＋ 新規パラメータ",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 28 },
+						.margin = LRTB{ 0, 0, 8, 0 },
+						.maxWidth = 240,
+					},
+					[this](const std::shared_ptr<Node>&) 
+					{ 
+						// 新規パラメータ追加ダイアログを開く
+						m_dialogOpener->openDialog(std::make_shared<AddParamDialog>(m_canvas, [this] { refreshInspector(); }));
+					}));
+				addButton->setActive(!m_isFoldedParams.getBool());
+			}
+
+			paramsNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+
+			return paramsNode;
 		}
 
 		[[nodiscard]]
@@ -3170,6 +3563,7 @@ namespace noco::editor
 								property->propertyValueStringOfDefault(),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No,
 								fnGetValue));
 					}
 					break;
@@ -3198,7 +3592,8 @@ namespace noco::editor
 								property->name(),
 								ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 								onChange,
-								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No));
 					}
 					break;
 				case PropertyEditType::Vec2:
@@ -3226,7 +3621,8 @@ namespace noco::editor
 								property->name(),
 								ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
 								onChange,
-								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No));
 					}
 					break;
 				case PropertyEditType::Color:
@@ -3254,7 +3650,8 @@ namespace noco::editor
 								property->name(),
 								ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
 								onChange,
-								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No));
 					}
 					break;
 				case PropertyEditType::LRTB:
@@ -3282,7 +3679,8 @@ namespace noco::editor
 								property->name(),
 								ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
 								onChange,
-								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No));
 					}
 					break;
 				case PropertyEditType::Enum:
@@ -3312,7 +3710,8 @@ namespace noco::editor
 								onChange,
 								m_contextMenu,
 								property->enumCandidates(),
-								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() }));
+								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
+								HasParameterRefYN::No));
 					}
 					break;
 				}
@@ -3355,12 +3754,65 @@ namespace noco::editor
 				
 				if (property->isInteractiveProperty())
 				{
+					// プロパティの型に応じて必要なパラメータ型を決定
+					ParamType requiredParamType = ParamType::String; // デフォルト
+					switch (property->editType())
+					{
+					case PropertyEditType::Bool:
+						requiredParamType = ParamType::Bool;
+						break;
+					case PropertyEditType::Vec2:
+						requiredParamType = ParamType::Vec2;
+						break;
+					case PropertyEditType::Color:
+						requiredParamType = ParamType::Color;
+						break;
+					case PropertyEditType::LRTB:
+						requiredParamType = ParamType::LRTB;
+						break;
+					case PropertyEditType::Text:
+					case PropertyEditType::Enum:
+						// テキストとEnumは複雑なので別処理
+						requiredParamType = ParamType::String;
+						break;
+					}
+					
+					Array<MenuElement> menuElements
+					{
+						MenuItem
+						{ 
+							U"ステート毎に値を変更..."_fmt(property->name()), 
+							U"", 
+							KeyC, 
+							[this, property] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); }, m_dialogOpener)); 
+							} 
+						},
+						MenuItem
+						{ 
+							.text = U"参照パラメータを選択..."_fmt(property->name()), 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyP, 
+							.onClick = [this, property] 
+							{ 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); })); 
+							},
+							.fnIsEnabled = [this, property, requiredParamType] 
+							{ 
+								// Text/Enumの場合は特別処理
+								if (property->editType() == PropertyEditType::Text || property->editType() == PropertyEditType::Enum)
+								{
+									return hasAnyParamsForType(ParamType::Number) || hasAnyParamsForType(ParamType::String);
+								}
+								return hasAnyParamsForType(requiredParamType);
+							}
+						},
+					};
+					
 					propertyNode->emplaceComponent<ContextMenuOpener>(
 						m_contextMenu,
-						Array<MenuElement>
-						{
-							MenuItem{ U"ステート毎に値を変更..."_fmt(property->name()), U"", KeyC, [this, property] { m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); }, m_dialogOpener)); } },
-						},
+						menuElements,
 						nullptr,
 						RecursiveYN::Yes);
 				}
