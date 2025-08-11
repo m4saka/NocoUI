@@ -147,7 +147,6 @@ namespace noco
 						}
 					}
 					return static_cast<T>(*ptr);
-					}
 				}
 			}
 			else if constexpr (std::is_same_v<T, Color>)

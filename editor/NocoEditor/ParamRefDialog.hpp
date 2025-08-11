@@ -164,8 +164,8 @@ namespace noco::editor
 		Array<DialogButtonDesc> buttonDescs() const override
 		{
 			return {
-				DialogButtonDesc{ .text = U"OK", .mnemonicInput = KeyEnter, .isDefaultButton = IsDefaultButtonYN::Yes },
-				DialogButtonDesc{ .text = U"キャンセル", .mnemonicInput = KeyEscape, .isCancelButton = IsCancelButtonYN::Yes }
+				DialogButtonDesc{ .text = U"OK", .mnemonicInput = KeyO, .appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No, .isDefaultButton = IsDefaultButtonYN::Yes },
+				DialogButtonDesc{ .text = U"キャンセル", .mnemonicInput = KeyC, .isCancelButton = IsCancelButtonYN::Yes }
 			};
 		}
 		
@@ -239,8 +239,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{ -100, 26 },
 				});
 			m_comboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.15, 0.85 }),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue),
+				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0, 4.0);
 			
 			// 現在選択されているパラメータ名を表示
@@ -250,8 +250,19 @@ namespace noco::editor
 				U"",
 				14,
 				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				HorizontalAlign::Left,
+				VerticalAlign::Middle,
+				LRTB{ 8, 25, 0, 0 });
+			
+			// 下三角アイコンを追加
+			m_comboBox->emplaceComponent<Label>(
+				U"▼",
+				U"",
+				10,
+				Palette::White,
+				HorizontalAlign::Right,
+				VerticalAlign::Middle,
+				LRTB{ 5, 7, 5, 5 });
 			
 			m_comboBox->emplaceComponent<UpdaterComponent>([this, dialogContextMenu](const std::shared_ptr<Node>& node)
 			{
@@ -293,7 +304,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ -100, 26 },
 				});
-			valueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.15, 0.8 }, ColorF{ 0.4, 0.4 }, 1.0, 4.0);
+			valueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.05, 0.8 }, ColorF{ 0.5, 0.4 }, 1.0, 4.0);
 			
 			// 現在選択されているパラメータの値を表示
 			String valueText = U"";

@@ -755,7 +755,7 @@ namespace noco::editor
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				hasParameterRef ? ColorF{ Palette::Limegreen, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -1284,7 +1284,7 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.flexibleWeight = 1,
+					.sizeDelta = Vec2{ 0, LineHeight },
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
@@ -1299,7 +1299,7 @@ namespace noco::editor
 						.flexibleWeight = 0.85,
 					});
 			line1LabelNode->emplaceComponent<Label>(
-				U"{} (L, R)"_fmt(name),
+				name,
 				U"",
 				14,
 				Palette::White,
@@ -1393,7 +1393,7 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.flexibleWeight = 1,
+					.sizeDelta = Vec2{ 0, LineHeight },
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
@@ -1408,7 +1408,7 @@ namespace noco::editor
 						.flexibleWeight = 0.85,
 					});
 			line2LabelNode->emplaceComponent<Label>(
-				U"{} (T, B)"_fmt(name),
+				U"",
 				U"",
 				14,
 				Palette::White,
@@ -1418,7 +1418,7 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				LabelUnderlineStyle::None,
 				ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
@@ -3175,225 +3175,153 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createSingleParamNode(const std::shared_ptr<Param>& param)
 		{
-			auto paramNode = Node::Create(
-				U"Param_" + param->name(),
-				InlineRegion
-				{
-					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ 0, 32 },
-					.margin = LRTB{ 0, 0, 4, 4 },
-				});
-			
-			// パラメータ名ラベル
-			const auto labelNode = paramNode->emplaceChild(
-				U"Label",
-				InlineRegion
-				{
-					.sizeDelta = Vec2{ 100, 32 },
-				});
-			labelNode->emplaceComponent<Label>(
-				param->name(),
-				U"",
-				14,
-				Palette::White,
-				HorizontalAlign::Left,
-				VerticalAlign::Middle,
-				LRTB{ 8, 0, 0, 0 });
-			
-			// 型表示
-			const auto typeNode = paramNode->emplaceChild(
-				U"Type",
-				InlineRegion
-				{
-					.sizeDelta = Vec2{ 60, 32 },
-				});
-			typeNode->emplaceComponent<Label>(
-				ParamTypeToString(param->type()),
-				U"",
-				12,
-				ColorF{ 0.7, 0.7, 0.7 },
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+			// パラメータ名に型情報を角括弧で付加
+			const String typeStr = ParamTypeToString(param->type());
+			const String labelText = U"{} [{}]"_fmt(param->name(), typeStr);
 			
 			// パラメータの型に応じて適切な編集UIを作成
-			std::shared_ptr<Node> valueNode;
+			std::shared_ptr<Node> propertyNode;
 			
 			switch (param->type())
 			{
 			case ParamType::Bool:
 				{
 					const bool currentValue = param->valueAs<bool>();
-					// CreateBoolPropertyNodeを使用
-					valueNode = CreateBoolPropertyNode(
-						U"",  // ラベルは既に表示しているので空
+					propertyNode = CreateBoolPropertyNode(
+						labelText,
 						currentValue,
-						[this, param](bool value) 
+						[param](bool value) 
 						{ 
 							param->setValue(value);
-							refreshInspector(); 
 						});
-					// 余分なパディングを削除
-					if (auto* pRegion = valueNode->inlineRegion())
-					{
-						auto newRegion = *pRegion;
-						newRegion.sizeRatio = Vec2{ 1, 0 };
-						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
-						valueNode->setRegion(newRegion);
-					}
 				}
 				break;
 				
 			case ParamType::Number:
 				{
-					// シンプルなテキストボックス版を使用
-					valueNode = Node::Create(
-						U"Value",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 1, 0 },
-							.sizeDelta = Vec2{ -160 - 32, 26 },
-						});
-					valueNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.4 }, 1.0, 4.0);
-					const auto textBox = valueNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle);
-					textBox->setText(Format(param->valueAs<double>()), IgnoreIsChangedYN::Yes);
-					valueNode->addComponent(std::make_shared<PropertyTextBox>(textBox, 
+					const double currentValue = param->valueAs<double>();
+					propertyNode = CreatePropertyNode(
+						labelText,
+						Format(currentValue),
 						[this, param](StringView text) 
 						{ 
 							if (const auto val = ParseOpt<double>(text))
 							{
 								param->setValue(*val);
 							}
-						}));
+						},
+						HasInteractivePropertyValueYN::No,
+						HasParameterRefYN::No,
+						[param]() -> String { return Format(param->valueAs<double>()); },
+						0.01  // ドラッグステップ
+					);
 				}
 				break;
 				
 			case ParamType::String:
 				{
-					// シンプルなテキストボックス版を使用
-					valueNode = Node::Create(
-						U"Value",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 1, 0 },
-							.sizeDelta = Vec2{ -160 - 32, 26 },
-						});
-					valueNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.4 }, 1.0, 4.0);
-					const auto textBox = valueNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle);
-					textBox->setText(param->valueAs<String>(), IgnoreIsChangedYN::Yes);
-					valueNode->addComponent(std::make_shared<PropertyTextBox>(textBox, 
+					const String currentValue = param->valueAs<String>();
+					propertyNode = CreatePropertyNode(
+						labelText,
+						currentValue,
 						[this, param](StringView text) 
 						{ 
 							param->setValue(String{ text });
-						}));
+						});
 				}
 				break;
 				
 			case ParamType::Color:
 				{
 					const ColorF currentColor = param->valueAs<ColorF>();
-					// CreateColorPropertyNodeを使用
-					valueNode = CreateColorPropertyNode(
-						U"",  // ラベルは既に表示しているので空
+					propertyNode = CreateColorPropertyNode(
+						labelText,
 						currentColor,
-						[this, param](const ColorF& color) 
+						[param](const ColorF& color) 
 						{ 
 							param->setValue(color);
-							refreshInspector();
 						});
-					// 余分なパディングを削除
-					if (auto* pRegion = valueNode->inlineRegion())
-					{
-						auto newRegion = *pRegion;
-						newRegion.sizeRatio = Vec2{ 1, 0 };
-						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
-						valueNode->setRegion(newRegion);
-					}
 				}
 				break;
 				
 			case ParamType::Vec2:
 				{
 					const Vec2 currentVec = param->valueAs<Vec2>();
-					// CreateVec2PropertyNodeを使用
-					valueNode = CreateVec2PropertyNode(
-						U"",  // ラベルは既に表示しているので空
+					propertyNode = CreateVec2PropertyNode(
+						labelText,
 						currentVec,
-						[this, param](const Vec2& vec) 
+						[param](const Vec2& vec) 
 						{ 
 							param->setValue(vec);
-							refreshInspector();
 						});
-					// 余分なパディングを削除
-					if (auto* pRegion = valueNode->inlineRegion())
-					{
-						auto newRegion = *pRegion;
-						newRegion.sizeRatio = Vec2{ 1, 0 };
-						newRegion.sizeDelta = Vec2{ -160 - 32, 32 };
-						valueNode->setRegion(newRegion);
-					}
 				}
 				break;
 				
 			case ParamType::LRTB:
 				{
 					const LRTB currentLRTB = param->valueAs<LRTB>();
-					// CreateLRTBPropertyNodeを使用
-					valueNode = CreateLRTBPropertyNode(
-						U"",  // ラベルは既に表示しているので空
+					propertyNode = CreateLRTBPropertyNode(
+						labelText,
 						currentLRTB,
-						[this, param](const LRTB& lrtb) 
+						[param](const LRTB& lrtb) 
 						{ 
 							param->setValue(lrtb);
-							refreshInspector();
 						});
-					// 余分なパディングを削除  
-					if (auto* pRegion = valueNode->inlineRegion())
-					{
-						auto newRegion = *pRegion;
-						newRegion.sizeRatio = Vec2{ 1, 0 };
-						newRegion.sizeDelta = Vec2{ -160 - 32, 64 };  // LRTBは2行なので高さを調整
-						valueNode->setRegion(newRegion);
-					}
 				}
+				break;
+			
+			default:
 				break;
 			}
 			
-			// valueNodeをparamNodeに追加
-			if (valueNode)
+			// プロパティノードにコンテキストメニューを追加
+			if (propertyNode)
 			{
-				paramNode->addChild(valueNode);
+				Array<MenuElement> menuElements
+				{
+					MenuItem
+					{
+						.text = U"パラメータ削除",
+						.mnemonicInput = KeyD,
+						.onClick = [this, paramName = param->name()]
+						{
+							// 削除確認ダイアログを表示
+							m_dialogOpener->openDialog(
+								std::make_shared<SimpleDialog>(
+									U"パラメータ '{}'を削除しますか？"_fmt(paramName),
+									[this, paramName](StringView resultButtonText)
+									{
+										if (resultButtonText == U"はい")
+										{
+											m_canvas->removeParam(paramName);
+											refreshInspector();
+										}
+									},
+									Array<DialogButtonDesc>
+									{
+										DialogButtonDesc
+										{
+											.text = U"はい",
+											.mnemonicInput = KeyY,
+											.isDefaultButton = IsDefaultButtonYN::Yes,
+										},
+										DialogButtonDesc
+										{
+											.text = U"いいえ",
+											.mnemonicInput = KeyN,
+											.isCancelButton = IsCancelButtonYN::Yes,
+										},
+									}
+								)
+							);
+						}
+					},
+				};
+				
+				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 			}
 			
-			// 削除ボタン
-			const auto deleteButtonNode = paramNode->emplaceChild(
-				U"Delete",
-				InlineRegion
-				{
-					.sizeDelta = Vec2{ 24, 24 },
-				});
-			deleteButtonNode->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.3, 0.1, 0.1 } }.withHovered(ColorF{ 0.5, 0.1, 0.1 }),
-				PropertyValue<ColorF>{ ColorF{ 0.6, 0.2, 0.2 } }.withHovered(ColorF{ 0.8, 0.2, 0.2 }),
-				1.0, 4.0);
-			deleteButtonNode->emplaceComponent<Label>(
-				U"×",
-				U"",
-				16,
-				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			deleteButtonNode->emplaceComponent<UpdaterComponent>([this, name = param->name()](const std::shared_ptr<Node>& node) 
-				{
-					if (node->isClicked())
-					{
-						m_canvas->removeParam(name);
-						refreshInspector();
-					}
-				});
-			
-			paramNode->setChildrenLayout(HorizontalLayout{ .spacing = 4 });
-			
-			return paramNode;
+			return propertyNode;
 		}
 
 		[[nodiscard]]
@@ -3409,7 +3337,7 @@ namespace noco::editor
 			paramsNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedParams ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			paramsNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			paramsNode->addChild(CreateHeadingNode(U"Params", ColorF{ 0.5, 0.3, 0.5 }, m_isFoldedParams,
+			paramsNode->addChild(CreateHeadingNode(U"Params", ColorF{ 0.3, 0.5, 0.6 }, m_isFoldedParams,
 				[this](IsFoldedYN isFolded)
 				{
 					m_isFoldedParams = isFolded;

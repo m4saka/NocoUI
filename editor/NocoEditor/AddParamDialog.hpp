@@ -40,8 +40,8 @@ namespace noco::editor
 		Array<DialogButtonDesc> buttonDescs() const override
 		{
 			return {
-				DialogButtonDesc{ .text = U"作成", .mnemonicInput = KeyEnter, .isDefaultButton = IsDefaultButtonYN::Yes },
-				DialogButtonDesc{ .text = U"キャンセル", .mnemonicInput = KeyEscape, .isCancelButton = IsCancelButtonYN::Yes }
+				DialogButtonDesc{ .text = U"作成", .isDefaultButton = IsDefaultButtonYN::Yes },
+				DialogButtonDesc{ .text = U"キャンセル", .mnemonicInput = KeyC, .isCancelButton = IsCancelButtonYN::Yes }
 			};
 		}
 		
@@ -96,7 +96,10 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ -80, 26 },
 				});
-			nameTextBoxNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.4 }, 1.0, 4.0);
+			nameTextBoxNode->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05),
+				1.0, 4.0);
 			m_nameTextBox = nameTextBoxNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, 
 				HorizontalAlign::Left, VerticalAlign::Middle, 
@@ -136,16 +139,28 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 120, 26 },
 				});
 			m_typeComboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.15, 0.85 }),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue),
+				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0, 4.0);
 			m_typeLabel = m_typeComboBox->emplaceComponent<Label>(
 				m_selectedType,
 				U"",
 				14,
 				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				HorizontalAlign::Left,
+				VerticalAlign::Middle,
+				LRTB{ 8, 25, 0, 0 });
+			
+			// 下三角アイコンを追加
+			m_typeComboBox->emplaceComponent<Label>(
+				U"▼",
+				U"",
+				10,
+				Palette::White,
+				HorizontalAlign::Right,
+				VerticalAlign::Middle,
+				LRTB{ 5, 7, 5, 5 });
+			
 			m_typeComboBox->emplaceComponent<UpdaterComponent>([this, dialogContextMenu](const std::shared_ptr<Node>& node) 
 				{
 					if (node->isClicked())
