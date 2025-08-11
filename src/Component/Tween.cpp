@@ -242,7 +242,7 @@ namespace noco
 		}
 	}
 
-	void Tween::updateInactive(const std::shared_ptr<Node>& node)
+	void Tween::updateInactive(const std::shared_ptr<Node>&)
 	{
 		m_prevActive = false;
 	}

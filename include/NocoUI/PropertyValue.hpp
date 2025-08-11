@@ -27,8 +27,8 @@ namespace noco
 		Optional<T> pressedValue = none;
 		Optional<T> disabledValue = none;
 		
-		/*implicit*/ InteractionValues(const T& defaultValue)
-			: defaultValue{ static_cast<T>(defaultValue) }
+		/*implicit*/ InteractionValues(const T& defaultVal)
+			: defaultValue{ static_cast<T>(defaultVal) }
 		{
 		}
 		
@@ -50,8 +50,8 @@ namespace noco
 		
 		std::unique_ptr<HashTable<String, InteractionValues<T>>> styleStateValues;
 
-		/*implicit*/ PropertyValue(const T& defaultValue)
-			: defaultValue{ static_cast<T>(defaultValue) }
+		/*implicit*/ PropertyValue(const T& defaultVal)
+			: defaultValue{ static_cast<T>(defaultVal) }
 		{
 		}
 		
@@ -94,22 +94,22 @@ namespace noco
 		PropertyValue& operator=(PropertyValue&& other) noexcept = default;
 
 		template <class U>
-		/*implicit*/ PropertyValue(const U& defaultValue) requires std::convertible_to<U, T>
-			: defaultValue{ static_cast<T>(defaultValue) }
+		/*implicit*/ PropertyValue(const U& defaultVal) requires std::convertible_to<U, T>
+			: defaultValue{ static_cast<T>(defaultVal) }
 		{
 		}
 
-		/*implicit*/ PropertyValue(StringView defaultValue) requires std::same_as<T, String>
-			: defaultValue{ static_cast<T>(String{ defaultValue }) }
+		/*implicit*/ PropertyValue(StringView defaultVal) requires std::same_as<T, String>
+			: defaultValue{ static_cast<T>(String{ defaultVal }) }
 		{
 		}
 
-		PropertyValue(const T& defaultValue, const Optional<T>& hoveredValue, const Optional<T>& pressedValue, const Optional<T>& disabledValue, double smoothTime = 0.0)
-			: defaultValue{ defaultValue }
-			, hoveredValue{ hoveredValue }
-			, pressedValue{ pressedValue }
-			, disabledValue{ disabledValue }
-			, smoothTime{ smoothTime }
+		PropertyValue(const T& defaultVal, const Optional<T>& hoveredVal, const Optional<T>& pressedVal, const Optional<T>& disabledVal, double smoothTimeVal = 0.0)
+			: defaultValue{ defaultVal }
+			, hoveredValue{ hoveredVal }
+			, pressedValue{ pressedVal }
+			, disabledValue{ disabledVal }
+			, smoothTime{ smoothTimeVal }
 		{
 		}
 
@@ -1015,6 +1015,8 @@ namespace noco
 							return values.pressedValue.has_value();
 						case InteractionState::Disabled:
 							return values.disabledValue.has_value();
+						default:
+							return false;
 						}
 					}
 				}
@@ -1028,9 +1030,9 @@ namespace noco
 				return pressedValue.has_value();
 			case InteractionState::Disabled:
 				return disabledValue.has_value();
+			default:
+				return false;
 			}
-
-			return false;
 		}
 
 		[[nodiscard]]
