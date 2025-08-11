@@ -3286,13 +3286,15 @@ namespace noco::editor
 						.onClick = [this, paramName = param->name()]
 						{
 							// 削除確認ダイアログを表示
+							const size_t refCount = m_canvas->countParamRef(paramName);
 							m_dialogOpener->openDialog(
 								std::make_shared<SimpleDialog>(
-									U"パラメータ '{}'を削除しますか？"_fmt(paramName),
+									U"パラメータ '{}'を削除しますか？\n参照しているプロパティ数: {}\n※参照しているプロパティからは参照が解除されます"_fmt(paramName, refCount),
 									[this, paramName](StringView resultButtonText)
 									{
 										if (resultButtonText == U"はい")
 										{
+											m_canvas->clearParamRef(paramName);
 											m_canvas->removeParam(paramName);
 											refreshInspector();
 										}

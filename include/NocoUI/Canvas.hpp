@@ -476,9 +476,22 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Param> getParam(const String& name) const;
 
+		[[nodiscard]]
+		bool hasParam(const String& name) const;
+
+		[[nodiscard]]
+		bool hasParamOfType(const String& name, ParamType paramType) const;
+
 		void removeParam(const String& name);
 
 		void clearParams();
+
+		[[nodiscard]]
+		size_t countParamRef(StringView paramName) const;
+
+		void clearParamRef(StringView paramName);
+
+		Array<String> clearInvalidParamRefs();
 	};
 
 	template <class Fty>

@@ -25,6 +25,7 @@ namespace noco::editor
 		Array<JSON> m_copiedNodeJSONs;
 		bool m_prevClipboardHasContent = false;
 		std::shared_ptr<Defaults> m_defaults;
+		std::shared_ptr<DialogOpener> m_dialogOpener;
 
 		struct ElementDetail
 		{
@@ -624,7 +625,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults)
+		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener)
 			: m_canvas(canvas)
 			, m_hierarchyFrameNode(editorCanvas->rootNode()->emplaceChild(
 				U"HierarchyFrame",
@@ -661,6 +662,7 @@ namespace noco::editor
 			, m_editorCanvas(editorCanvas)
 			, m_contextMenu(contextMenu)
 			, m_defaults(defaults)
+			, m_dialogOpener(dialogOpener)
 		{
 			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -1021,6 +1023,52 @@ namespace noco::editor
 			selectNodes(newNodes);
 		}
 
+		void showClearedParamRefsDialog(const Array<String>& clearedParams)
+		{
+			if (clearedParams.empty())
+			{
+				return;
+			}
+			
+			// アルファベット順でソート
+			Array<String> sortedParams = clearedParams;
+			sortedParams.sort();
+			
+			// 最大10件まで表示
+			String paramList;
+			const size_t displayCount = Min(sortedParams.size(), size_t(10));
+			for (size_t i = 0; i < displayCount; ++i)
+			{
+				if (i > 0)
+				{
+					paramList += U"\n";
+				}
+				paramList += U"・" + sortedParams[i];
+			}
+			
+			// 10件を超える場合は合計数を表示
+			if (sortedParams.size() > 10)
+			{
+				paramList += U"\n... (全" + Format(sortedParams.size()) + U"件)";
+			}
+			
+			// ダイアログを表示
+			m_dialogOpener->openDialog(
+				std::make_shared<SimpleDialog>(
+					U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList,
+					[](StringView) {},
+					Array<DialogButtonDesc>
+					{
+						DialogButtonDesc
+						{
+							.text = U"OK",
+							.mnemonicInput = KeyO,
+							.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No,
+							.isDefaultButton = IsDefaultButtonYN::Yes,
+						},
+					}));
+		}
+
 		void onClickPaste()
 		{
 			// 最後に選択したノードの兄弟として貼り付け
@@ -1072,8 +1120,12 @@ namespace noco::editor
 				}
 			}
 			m_canvas->refreshLayout();
+			// 無効なパラメータ参照を解除
+			const auto clearedParams = m_canvas->clearInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
+			// 解除されたパラメータがあれば警告ダイアログを表示
+			showClearedParamRefsDialog(clearedParams);
 		}
 
 		void onClickCreateEmptyParent()

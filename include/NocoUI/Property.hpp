@@ -49,6 +49,12 @@ namespace noco
 		virtual double smoothTime() const = 0;
 		virtual bool trySetSmoothTime(double smoothTime) = 0;
 		virtual Array<String> styleStateKeys() const = 0;
+		
+		// パラメータ参照関連
+		virtual const String& paramRef() const = 0;
+		virtual void setParamRef(const String& paramRef) = 0;
+		virtual bool hasParamRef() const = 0;
+		virtual void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) = 0;
 	};
 
 	template <typename T>
@@ -135,15 +141,29 @@ namespace noco
 			m_propertyValue = propertyValue;
 		}
 
-		void setParamRef(const String& paramRef)
+		[[nodiscard]]
+		const String& paramRef() const override
+		{
+			return m_paramRef;
+		}
+
+		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
 		}
-
-		[[nodiscard]]
-		const String& paramRef() const
+		
+		bool hasParamRef() const override
 		{
-			return m_paramRef;
+			return !m_paramRef.isEmpty();
+		}
+		
+		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		{
+			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			{
+				clearedParams.insert(m_paramRef);
+				m_paramRef = U"";
+			}
 		}
 
 		[[nodiscard]]
@@ -466,15 +486,29 @@ namespace noco
 			m_propertyValue = propertyValue;
 		}
 
-		void setParamRef(const String& paramRef)
+		[[nodiscard]]
+		const String& paramRef() const override
+		{
+			return m_paramRef;
+		}
+
+		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
 		}
-
-		[[nodiscard]]
-		const String& paramRef() const
+		
+		bool hasParamRef() const override
 		{
-			return m_paramRef;
+			return !m_paramRef.isEmpty();
+		}
+		
+		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		{
+			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			{
+				clearedParams.insert(m_paramRef);
+				m_paramRef = U"";
+			}
 		}
 
 		[[nodiscard]]
@@ -712,15 +746,29 @@ namespace noco
 			m_value = String{ value };
 		}
 
-		void setParamRef(const String& paramRef)
+		[[nodiscard]]
+		const String& paramRef() const override
+		{
+			return m_paramRef;
+		}
+
+		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
 		}
-
-		[[nodiscard]]
-		const String& paramRef() const
+		
+		bool hasParamRef() const override
 		{
-			return m_paramRef;
+			return !m_paramRef.isEmpty();
+		}
+		
+		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		{
+			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			{
+				clearedParams.insert(m_paramRef);
+				m_paramRef = U"";
+			}
 		}
 
 		[[nodiscard]]

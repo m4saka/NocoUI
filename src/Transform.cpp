@@ -138,4 +138,113 @@ namespace noco
 		m_appliesToHitTest.readFromJSON(json);
 		m_color.readFromJSON(json);
 	}
+
+	size_t Transform::countParamRef(StringView paramName) const
+	{
+		size_t count = 0;
+		
+		if (m_translate.paramRef() == paramName)
+		{
+			count++;
+		}
+		if (m_scale.paramRef() == paramName)
+		{
+			count++;
+		}
+		if (m_pivot.paramRef() == paramName)
+		{
+			count++;
+		}
+		if (m_rotation.paramRef() == paramName)
+		{
+			count++;
+		}
+		if (m_appliesToHitTest.paramRef() == paramName)
+		{
+			count++;
+		}
+		if (m_color.paramRef() == paramName)
+		{
+			count++;
+		}
+		
+		return count;
+	}
+
+	void Transform::clearParamRef(StringView paramName)
+	{
+		if (m_translate.paramRef() == paramName)
+		{
+			m_translate.setParamRef(U"");
+		}
+		if (m_scale.paramRef() == paramName)
+		{
+			m_scale.setParamRef(U"");
+		}
+		if (m_pivot.paramRef() == paramName)
+		{
+			m_pivot.setParamRef(U"");
+		}
+		if (m_rotation.paramRef() == paramName)
+		{
+			m_rotation.setParamRef(U"");
+		}
+		if (m_appliesToHitTest.paramRef() == paramName)
+		{
+			m_appliesToHitTest.setParamRef(U"");
+		}
+		if (m_color.paramRef() == paramName)
+		{
+			m_color.setParamRef(U"");
+		}
+	}
+
+	Array<String> Transform::clearInvalidParamRefs(const HashTable<String, std::shared_ptr<Param>>& validParams)
+	{
+		HashSet<String> clearedParamsSet;
+		
+		// translateの参照をチェック
+		if (!m_translate.paramRef().isEmpty() && !validParams.contains(m_translate.paramRef()))
+		{
+			clearedParamsSet.insert(m_translate.paramRef());
+			m_translate.setParamRef(U"");
+		}
+		
+		// scaleの参照をチェック
+		if (!m_scale.paramRef().isEmpty() && !validParams.contains(m_scale.paramRef()))
+		{
+			clearedParamsSet.insert(m_scale.paramRef());
+			m_scale.setParamRef(U"");
+		}
+		
+		// pivotの参照をチェック
+		if (!m_pivot.paramRef().isEmpty() && !validParams.contains(m_pivot.paramRef()))
+		{
+			clearedParamsSet.insert(m_pivot.paramRef());
+			m_pivot.setParamRef(U"");
+		}
+		
+		// rotationの参照をチェック
+		if (!m_rotation.paramRef().isEmpty() && !validParams.contains(m_rotation.paramRef()))
+		{
+			clearedParamsSet.insert(m_rotation.paramRef());
+			m_rotation.setParamRef(U"");
+		}
+		
+		// appliesToHitTestの参照をチェック
+		if (!m_appliesToHitTest.paramRef().isEmpty() && !validParams.contains(m_appliesToHitTest.paramRef()))
+		{
+			clearedParamsSet.insert(m_appliesToHitTest.paramRef());
+			m_appliesToHitTest.setParamRef(U"");
+		}
+		
+		// colorの参照をチェック
+		if (!m_color.paramRef().isEmpty() && !validParams.contains(m_color.paramRef()))
+		{
+			clearedParamsSet.insert(m_color.paramRef());
+			m_color.setParamRef(U"");
+		}
+		
+		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
+	}
 }

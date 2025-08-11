@@ -99,7 +99,7 @@ public:
 		, m_dialogOverlayCanvas(Canvas::Create())
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults)
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener)
 		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
@@ -643,6 +643,7 @@ public:
 			[this]
 			{
 				m_filePath = none;
+				m_canvas->clearParams();
 				m_canvas->resetWithNewRootNode(
 					AnchorRegion
 					{
@@ -662,6 +663,52 @@ public:
 
 				resetDirtyState();
 			});
+	}
+
+	void showClearedParamRefsDialog(const Array<String>& clearedParams)
+	{
+		if (clearedParams.empty())
+		{
+			return;
+		}
+		
+		// アルファベット順でソート
+		Array<String> sortedParams = clearedParams;
+		sortedParams.sort();
+		
+		// 最大10件まで表示
+		String paramList;
+		const size_t displayCount = Min(sortedParams.size(), size_t(10));
+		for (size_t i = 0; i < displayCount; ++i)
+		{
+			if (i > 0)
+			{
+				paramList += U"\n";
+			}
+			paramList += U"・" + sortedParams[i];
+		}
+		
+		// 10件を超える場合は合計数を表示
+		if (sortedParams.size() > 10)
+		{
+			paramList += U"\n... (全" + Format(sortedParams.size()) + U"件)";
+		}
+		
+		// ダイアログを表示
+		m_dialogOpener->openDialog(
+			std::make_shared<SimpleDialog>(
+				U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList,
+				[](StringView) {},
+				Array<DialogButtonDesc>
+				{ 
+					DialogButtonDesc
+					{ 
+						.text = U"OK", 
+						.mnemonicInput = KeyO, 
+						.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No, 
+						.isDefaultButton = IsDefaultButtonYN::Yes,
+					}, 
+				}));
 	}
 
 	void onClickMenuFileOpen()
@@ -687,6 +734,8 @@ public:
 						System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
 						return;
 					}
+					// 無効なパラメータ参照を解除
+					const auto clearedParams = m_canvas->clearInvalidParamRefs();
 					refresh();
 					m_historySystem.clear();
 					m_toolbar.updateButtonStates();
@@ -696,6 +745,8 @@ public:
 					noco::Asset::SetBaseDirectoryPath(folderPath);
 
 					resetDirtyState();
+					// 解除されたパラメータがあれば警告ダイアログを表示
+					showClearedParamRefsDialog(clearedParams);
 				}
 			});
 	}

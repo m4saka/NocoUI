@@ -80,5 +80,12 @@ namespace noco
 		JSON toJSON() const;
 
 		void readFromJSON(const JSON& json);
+
+		[[nodiscard]]
+		size_t countParamRef(StringView paramName) const;
+
+		void clearParamRef(StringView paramName);
+
+		Array<String> clearInvalidParamRefs(const HashTable<String, std::shared_ptr<Param>>& validParams);
 	};
 }

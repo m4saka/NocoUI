@@ -612,6 +612,20 @@ namespace noco
 		return nullptr;
 	}
 
+	bool Canvas::hasParam(const String& name) const
+	{
+		return m_params.contains(name);
+	}
+
+	bool Canvas::hasParamOfType(const String& name, ParamType paramType) const
+	{
+		if (const auto it = m_params.find(name); it != m_params.end())
+		{
+			return it->second->type() == paramType;
+		}
+		return false;
+	}
+
 	void Canvas::removeParam(const String& name)
 	{
 		m_params.erase(name);
@@ -620,5 +634,114 @@ namespace noco
 	void Canvas::clearParams()
 	{
 		m_params.clear();
+	}
+
+	size_t Canvas::countParamRef(StringView paramName) const
+	{
+		if (!m_rootNode)
+		{
+			return 0;
+		}
+
+		size_t count = 0;
+		
+		// ルートノードから再帰的に全ノードを走査
+		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
+		{
+			// Transformコンポーネントのプロパティをチェック
+			count += node->transform().countParamRef(paramName);
+			
+			// コンポーネントのプロパティをチェック
+			for (const auto& component : node->components())
+			{
+				for (IProperty* property : component->properties())
+				{
+					if (property->paramRef() == paramName)
+					{
+						count++;
+					}
+				}
+			}
+
+			for (const auto& child : node->children())
+			{
+				walkNode(child);
+			}
+		};
+
+		walkNode(m_rootNode);
+		return count;
+	}
+
+	void Canvas::clearParamRef(StringView paramName)
+	{
+		if (!m_rootNode)
+		{
+			return;
+		}
+		
+		// ルートノードから再帰的に全ノードを走査
+		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
+		{
+			// Transformコンポーネントのプロパティから参照を解除
+			node->transform().clearParamRef(paramName);
+			
+			// コンポーネントのプロパティから参照を解除
+			for (const auto& component : node->components())
+			{
+				for (IProperty* property : component->properties())
+				{
+					if (property->paramRef() == paramName)
+					{
+						property->setParamRef(U"");
+					}
+				}
+			}
+
+			for (const auto& child : node->children())
+			{
+				walkNode(child);
+			}
+		};
+
+		walkNode(m_rootNode);
+	}
+
+	Array<String> Canvas::clearInvalidParamRefs()
+	{
+		HashSet<String> clearedParamsSet;
+		
+		if (!m_rootNode)
+		{
+			return {};
+		}
+		
+		// ルートノードから再帰的に全ノードを走査
+		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
+		{
+			// Transformの無効な参照を解除
+			const auto clearedFromTransform = node->transform().clearInvalidParamRefs(m_params);
+			for (const auto& paramName : clearedFromTransform)
+			{
+				clearedParamsSet.insert(paramName);
+			}
+			
+			// コンポーネントのプロパティの無効な参照を解除
+			for (const auto& component : node->components())
+			{
+				for (IProperty* property : component->properties())
+				{
+					property->clearParamRefIfInvalid(m_params, clearedParamsSet);
+				}
+			}
+
+			for (const auto& child : node->children())
+			{
+				walkNode(child);
+			}
+		};
+
+		walkNode(m_rootNode);
+		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
 }
