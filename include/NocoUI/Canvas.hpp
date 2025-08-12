@@ -349,7 +349,7 @@ namespace noco
 		};
 
 		std::shared_ptr<Node> m_rootNode;
-		HashTable<String, Param> m_params;
+		HashTable<String, ParamValue> m_params;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
 		/* NonSerialized */ double m_rotation = 0.0;
@@ -460,21 +460,58 @@ namespace noco
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		[[nodiscard]]
-		const HashTable<String, Param>& params() const
+		const HashTable<String, ParamValue>& params() const
 		{
 			return m_params;
 		}
 
 		[[nodiscard]]
-		HashTable<String, Param>& params()
+		HashTable<String, ParamValue>& params()
 		{
 			return m_params;
 		}
 
-		void setParam(const Param& param);
+		// 新しいAPI
+		template<typename T>
+		void setParamValue(const String& name, const T& value)
+		{
+			m_params[name] = ConvertToParamValue(value);
+		}
+
+		// 複数パラメータの一括設定
+		template<typename... Args>
+		void setParamValues(const std::pair<String, Args>&... params)
+		{
+			(setParamValue(params.first, params.second), ...);
+		}
+		
+		// 初期化リスト版（より簡潔な記述用）
+		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int, double, const char32_t*, String, ColorF, Vec2, LRTB>>> params)
+		{
+			for (const auto& [name, value] : params)
+			{
+				std::visit([this, n = String{name}](const auto& v) {
+					if constexpr (std::is_same_v<std::decay_t<decltype(v)>, const char32_t*>)
+						setParamValue(n, String{v});
+					else
+						setParamValue(n, v);
+				}, value);
+			}
+		}
 
 		[[nodiscard]]
-		Optional<Param> getParam(const String& name) const;
+		Optional<ParamValue> param(const String& name) const;
+
+		template<typename T>
+		[[nodiscard]]
+		Optional<T> paramValueOpt(const String& name) const
+		{
+			if (auto p = param(name))
+			{
+				return GetParamValueAs<T>(*p);
+			}
+			return none;
+		}
 
 		[[nodiscard]]
 		bool hasParam(const String& name) const;

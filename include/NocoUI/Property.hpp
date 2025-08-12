@@ -24,7 +24,7 @@ namespace noco
 	public:
 		virtual ~IProperty() = default;
 		virtual StringView name() const = 0;
-		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params) = 0;
+		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueStringOfDefault() const = 0;
@@ -54,7 +54,7 @@ namespace noco
 		virtual const String& paramRef() const = 0;
 		virtual void setParamRef(const String& paramRef) = 0;
 		virtual bool hasParamRef() const = 0;
-		virtual void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) = 0;
+		virtual void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) = 0;
 	};
 
 	template <typename T>
@@ -157,7 +157,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -193,19 +193,23 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, Param>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 			
-			// パラメータ参照がある場合
+			// パラメータ参照がある場合（サポートされている型のみ）
 			if (!m_paramRef.isEmpty())
 			{
-				if constexpr (Param::isSupportedType<T>())
+				// ParamValueがサポートする型のみパラメータバインディングを行う
+				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
+				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
+				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
+				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto val = it->second.valueAsOpt<T>())
+						if (auto val = GetParamValueAs<T>(it->second))
 						{
 							setCurrentFrameOverride(*val);
 						}
@@ -499,7 +503,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -518,16 +522,20 @@ namespace noco
 			return m_smoothing.currentValue();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params) override
 		{
-			// パラメータ参照がある場合
+			// パラメータ参照がある場合（サポートされている型のみ）
 			if (!m_paramRef.isEmpty())
 			{
-				if constexpr (Param::isSupportedType<T>())
+				// ParamValueがサポートする型のみパラメータバインディングを行う
+				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
+				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
+				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
+				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto val = it->second.valueAsOpt<T>())
+						if (auto val = GetParamValueAs<T>(it->second))
 						{
 							setCurrentFrameOverride(*val);
 						}
@@ -756,7 +764,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -792,19 +800,23 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, Param>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 			
-			// パラメータ参照がある場合
+			// パラメータ参照がある場合（サポートされている型のみ）
 			if (!m_paramRef.isEmpty())
 			{
-				if constexpr (Param::isSupportedType<T>())
+				// ParamValueがサポートする型のみパラメータバインディングを行う
+				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
+				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
+				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
+				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto val = it->second.valueAsOpt<T>())
+						if (auto val = GetParamValueAs<T>(it->second))
 						{
 							setCurrentFrameOverride(*val);
 						}

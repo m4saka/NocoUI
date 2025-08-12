@@ -179,12 +179,12 @@ namespace noco
 
 		if (!m_params.empty())
 		{
-			Array<JSON> paramsArray;
-			for (const auto& [name, param] : m_params)
+			JSON paramsObj = JSON{};
+			for (const auto& [name, value] : m_params)
 			{
-				paramsArray.push_back(param.toJSON());
+				paramsObj[name] = ParamValueToJSON(value);
 			}
-			json[U"params"] = paramsArray;
+			json[U"params"] = paramsObj;
 		}
 
 		return json;
@@ -200,12 +200,12 @@ namespace noco
 
 		if (!m_params.empty())
 		{
-			Array<JSON> paramsArray;
-			for (const auto& [name, param] : m_params)
+			JSON paramsObj = JSON{};
+			for (const auto& [name, value] : m_params)
 			{
-				paramsArray.push_back(param.toJSON());
+				paramsObj[name] = ParamValueToJSON(value);
 			}
-			json[U"params"] = paramsArray;
+			json[U"params"] = paramsObj;
 		}
 
 		return json;
@@ -248,13 +248,34 @@ namespace noco
 
 		// パラメータの読み込み
 		m_params.clear();
-		if (json.contains(U"params") && json[U"params"].isArray())
+		if (json.contains(U"params"))
 		{
-			for (const auto& paramJson : json[U"params"].arrayView())
+			if (json[U"params"].isObject())
 			{
-				if (auto param = Param::fromJSON(paramJson))
+				// 新しい形式 (オブジェクト)
+				for (const auto& member : json[U"params"])
 				{
-					m_params[param->name()] = *param;
+					const String name = member.key;
+					const auto& paramJson = member.value;
+					if (auto value = ParamValueFromJSON(paramJson))
+					{
+						m_params[name] = *value;
+					}
+				}
+			}
+			else if (json[U"params"].isArray())
+			{
+				// 旧形式 (配列) の互換性維持
+				for (const auto& paramJson : json[U"params"].arrayView())
+				{
+					if (paramJson.contains(U"name") && paramJson.contains(U"type") && paramJson.contains(U"value"))
+					{
+						const String name = paramJson[U"name"].getString();
+						if (auto value = ParamValueFromJSON(paramJson))
+						{
+							m_params[name] = *value;
+						}
+					}
 				}
 			}
 		}
@@ -288,13 +309,34 @@ namespace noco
 
 		// パラメータの読み込み
 		m_params.clear();
-		if (json.contains(U"params") && json[U"params"].isArray())
+		if (json.contains(U"params"))
 		{
-			for (const auto& paramJson : json[U"params"].arrayView())
+			if (json[U"params"].isObject())
 			{
-				if (auto param = Param::fromJSON(paramJson))
+				// 新しい形式 (オブジェクト)
+				for (const auto& member : json[U"params"])
 				{
-					m_params[param->name()] = *param;
+					const String name = member.key;
+					const auto& paramJson = member.value;
+					if (auto value = ParamValueFromJSON(paramJson))
+					{
+						m_params[name] = *value;
+					}
+				}
+			}
+			else if (json[U"params"].isArray())
+			{
+				// 旧形式 (配列) の互換性維持
+				for (const auto& paramJson : json[U"params"].arrayView())
+				{
+					if (paramJson.contains(U"name") && paramJson.contains(U"type") && paramJson.contains(U"value"))
+					{
+						const String name = paramJson[U"name"].getString();
+						if (auto value = ParamValueFromJSON(paramJson))
+						{
+							m_params[name] = *value;
+						}
+					}
 				}
 			}
 		}
@@ -595,12 +637,7 @@ namespace noco
 		return m_eventRegistry.getFiredEventsAll();
 	}
 
-	void Canvas::setParam(const Param& param)
-	{
-		m_params[param.name()] = param;
-	}
-
-	Optional<Param> Canvas::getParam(const String& name) const
+	Optional<ParamValue> Canvas::param(const String& name) const
 	{
 		if (auto it = m_params.find(name); it != m_params.end())
 		{
@@ -618,7 +655,7 @@ namespace noco
 	{
 		if (const auto it = m_params.find(name); it != m_params.end())
 		{
-			return it->second.type() == paramType;
+			return GetParamType(it->second) == paramType;
 		}
 		return false;
 	}

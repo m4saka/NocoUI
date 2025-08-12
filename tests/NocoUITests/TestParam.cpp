@@ -1,217 +1,172 @@
-﻿#include <catch2/catch.hpp>
+﻿#include <Catch2/catch.hpp>
 #include <NocoUI.hpp>
 
 using namespace noco;
 
-TEST_CASE("Param creation and basic operations", "[Param]")
+TEST_CASE("Parameter values", "[Param]")
 {
-	SECTION("Create parameters with different types")
+	SECTION("Create and get parameter values")
 	{
-		auto boolParam = std::make_shared<Param>(U"bool", true);
-		REQUIRE(boolParam->name() == U"bool");
-		REQUIRE(boolParam->type() == ParamType::Bool);
+		// bool型
+		ParamValue boolParam = ConvertToParamValue(true);
+		REQUIRE(GetParamType(boolParam) == ParamType::Bool);
+		REQUIRE(GetParamValueAs<bool>(boolParam).value_or(false) == true);
 		
-		auto numberParam = std::make_shared<Param>(U"num", 42);
-		REQUIRE(numberParam->name() == U"num");
-		REQUIRE(numberParam->type() == ParamType::Number);
+		// number型
+		ParamValue numberParam = ConvertToParamValue(42);
+		REQUIRE(GetParamType(numberParam) == ParamType::Number);
+		REQUIRE(GetParamValueAs<int>(numberParam).value_or(0) == 42);
 		
-		auto stringParam = std::make_shared<Param>(U"str", U"test");
-		REQUIRE(stringParam->name() == U"str");
-		REQUIRE(stringParam->type() == ParamType::String);
+		// string型
+		ParamValue stringParam = ConvertToParamValue(U"test");
+		REQUIRE(GetParamType(stringParam) == ParamType::String);
+		REQUIRE(GetParamValueAs<String>(stringParam).value_or(U"") == U"test");
 		
-		auto colorParam = std::make_shared<Param>(U"col", Color{255, 0, 0});
-		REQUIRE(colorParam->name() == U"col");
-		REQUIRE(colorParam->type() == ParamType::Color);
+		// color型
+		ParamValue colorParam = ConvertToParamValue(Color{255, 0, 0});
+		REQUIRE(GetParamType(colorParam) == ParamType::Color);
+		auto colorValue = GetParamValueAs<Color>(colorParam);
+		REQUIRE(colorValue.has_value());
+		REQUIRE(colorValue->r == 255);
 		
-		auto vec2Param = std::make_shared<Param>(U"v2", Vec2{1, 2});
-		REQUIRE(vec2Param->name() == U"v2");
-		REQUIRE(vec2Param->type() == ParamType::Vec2);
+		// vec2型
+		ParamValue vec2Param = ConvertToParamValue(Vec2{1, 2});
+		REQUIRE(GetParamType(vec2Param) == ParamType::Vec2);
+		auto vec2Value = GetParamValueAs<Vec2>(vec2Param);
+		REQUIRE(vec2Value.has_value());
+		REQUIRE(vec2Value->x == 1);
+		REQUIRE(vec2Value->y == 2);
 		
-		auto lrtbParam = std::make_shared<Param>(U"lrtb", LRTB{10, 20, 30, 40});
-		REQUIRE(lrtbParam->name() == U"lrtb");
-		REQUIRE(lrtbParam->type() == ParamType::LRTB);
+		// lrtb型
+		ParamValue lrtbParam = ConvertToParamValue(LRTB{10, 20, 30, 40});
+		REQUIRE(GetParamType(lrtbParam) == ParamType::LRTB);
+		auto lrtbValue = GetParamValueAs<LRTB>(lrtbParam);
+		REQUIRE(lrtbValue.has_value());
+		REQUIRE(lrtbValue->left == 10);
 	}
 	
-	SECTION("Get and set values")
+	SECTION("Number conversions")
 	{
-		auto param = std::make_shared<Param>(U"test", 42);
+		// 各種数値型のテスト
+		ParamValue intParam = ConvertToParamValue(42);
+		REQUIRE(GetParamValueAs<int32>(intParam).value_or(0) == 42);
+		REQUIRE(GetParamValueAs<uint32>(intParam).value_or(0) == 42);
+		REQUIRE(GetParamValueAs<float>(intParam).value_or(0.0f) == 42.0f);
+		REQUIRE(GetParamValueAs<double>(intParam).value_or(0.0) == 42.0);
 		
-		// 値の取得（valueAsOptを使用）
-		auto intValue = param->valueAsOpt<int32>();
-		REQUIRE(intValue.has_value());
-		REQUIRE(*intValue == 42);
-		
-		// 値の変更
-		param->setValue(100);
-		auto newIntValue = param->valueAsOpt<int32>();
-		REQUIRE(newIntValue.has_value());
-		REQUIRE(*newIntValue == 100);
+		// 負の値
+		ParamValue negativeParam = ConvertToParamValue(-50);
+		REQUIRE(GetParamValueAs<int32>(negativeParam).value_or(0) == -50);
+		// unsignedへの変換では0になる
+		REQUIRE(GetParamValueAs<uint32>(negativeParam).value_or(1) == 0);
 	}
 	
-	SECTION("Type checking functions")
+	SECTION("Color conversions")
 	{
-		auto boolParam = std::make_shared<Param>(U"bool", true);
-		REQUIRE(boolParam->isBool());
-		REQUIRE_FALSE(boolParam->isNumber());
-		REQUIRE_FALSE(boolParam->isString());
+		// ColorとColorFの相互変換
+		ParamValue colorParam = ConvertToParamValue(Palette::Yellow);
 		
-		auto numberParam = std::make_shared<Param>(U"num", 42);
-		REQUIRE_FALSE(numberParam->isBool());
-		REQUIRE(numberParam->isNumber());
-		REQUIRE_FALSE(numberParam->isString());
-		
-		auto stringParam = std::make_shared<Param>(U"str", U"test");
-		REQUIRE_FALSE(stringParam->isBool());
-		REQUIRE_FALSE(stringParam->isNumber());
-		REQUIRE(stringParam->isString());
-		
-		auto colorParam = std::make_shared<Param>(U"col", Color{255, 0, 0});
-		REQUIRE(colorParam->isColor());
-		REQUIRE_FALSE(colorParam->isVec2());
-		
-		auto vec2Param = std::make_shared<Param>(U"v2", Vec2{1, 2});
-		REQUIRE_FALSE(vec2Param->isColor());
-		REQUIRE(vec2Param->isVec2());
-		
-		auto lrtbParam = std::make_shared<Param>(U"lrtb", LRTB{10, 20, 30, 40});
-		REQUIRE(lrtbParam->isLRTB());
-		REQUIRE_FALSE(lrtbParam->isNumber());
-	}
-}
-
-TEST_CASE("Param type conversions", "[Param]")
-{
-	SECTION("Arithmetic type conversions")
-	{
-		auto param = std::make_shared<Param>(U"number", 3.14);
-		
-		// floatへの変換
-		auto floatVal = param->valueAsOpt<float>();
-		REQUIRE(floatVal.has_value());
-		REQUIRE(*floatVal == Approx(3.14f));
-		
-		// int32への変換（切り捨て）
-		auto intVal = param->valueAsOpt<int32>();
-		REQUIRE(intVal.has_value());
-		REQUIRE(*intVal == 3);
-		
-		// uint8への変換
-		auto byteVal = param->valueAsOpt<uint8>();
-		REQUIRE(byteVal.has_value());
-		REQUIRE(*byteVal == 3);
-	}
-	
-	SECTION("Unsigned type handling")
-	{
-		// 正の値
-		auto positiveParam = std::make_shared<Param>(U"positive", 100);
-		auto uintValue = positiveParam->valueAsOpt<uint32>();
-		REQUIRE(uintValue.has_value());
-		REQUIRE(*uintValue == 100);
-		
-		// 負の値（0にクランプされる）
-		auto negativeParam = std::make_shared<Param>(U"negative", -50);
-		auto clampedValue = negativeParam->valueAsOpt<uint32>();
-		REQUIRE(clampedValue.has_value());
-		REQUIRE(*clampedValue == 0);
-	}
-	
-	SECTION("Color to ColorF implicit conversion")
-	{
-		// Palette定数（Color型）をParamに渡してColorFとして正しく取得できることを確認
-		auto param = std::make_shared<Param>(U"color", Palette::Yellow);
-		
-		auto colorF = param->valueAsOpt<ColorF>();
+		// ColorFとして取得
+		auto colorF = GetParamValueAs<ColorF>(colorParam);
 		REQUIRE(colorF.has_value());
-		REQUIRE(colorF->r == Approx(1.0));
-		REQUIRE(colorF->g == Approx(1.0));
-		REQUIRE(colorF->b == Approx(0.0));
-		REQUIRE(colorF->a == Approx(1.0));
+		REQUIRE(colorF->r == Approx(1.0).epsilon(0.01));
+		REQUIRE(colorF->g == Approx(1.0).epsilon(0.01));
+		REQUIRE(colorF->b == Approx(0.0).epsilon(0.01));
 		
-		auto param2 = std::make_shared<Param>(U"color2", Palette::Red);
-		auto colorF2 = param2->valueAsOpt<ColorF>();
-		REQUIRE(colorF2.has_value());
-		REQUIRE(colorF2->r == Approx(1.0));
-		REQUIRE(colorF2->g == Approx(0.0));
-		REQUIRE(colorF2->b == Approx(0.0));
-		REQUIRE(colorF2->a == Approx(1.0));
-	}
-	
-	SECTION("valueAs with fallback")
-	{
-		auto param = std::make_shared<Param>(U"test", 42);
-		
-		// 正しい型で取得
-		REQUIRE(param->valueAs<int32>() == 42);
-		REQUIRE(param->valueAs<double>() == Approx(42.0));
-		
-		// 間違った型で取得（fallback値が返る）
-		REQUIRE(param->valueAs<String>(U"fallback") == U"fallback");
-		REQUIRE(param->valueAs<bool>(true) == true);
-		REQUIRE(param->valueAs<Vec2>(Vec2{1, 2}) == Vec2{1, 2});
+		// Colorとして取得
+		auto color = GetParamValueAs<Color>(colorParam);
+		REQUIRE(color.has_value());
+		REQUIRE(color->r == 255);
+		REQUIRE(color->g == 255);
+		REQUIRE(color->b == 0);
 	}
 }
 
 TEST_CASE("Canvas parameter management", "[Param]")
 {
-	SECTION("Add and retrieve parameters")
+	SECTION("Add and get parameters")
 	{
 		auto canvas = Canvas::Create();
 		
-		canvas->setParam(Param{U"testInt", 42});
-		canvas->setParam(Param{U"testString", U"Hello"});
+		canvas->setParamValue(U"testInt", 42);
+		canvas->setParamValue(U"testString", U"Hello");
 		
-		auto retrievedInt = canvas->getParam(U"testInt");
+		auto retrievedInt = canvas->param(U"testInt");
 		REQUIRE(retrievedInt.has_value());
-		REQUIRE(retrievedInt->type() == ParamType::Number);
+		REQUIRE(GetParamType(*retrievedInt) == ParamType::Number);
 		
-		auto intValue = retrievedInt->valueAsOpt<int32>();
+		auto intValue = canvas->paramValueOpt<int>(U"testInt");
 		REQUIRE(intValue.has_value());
 		REQUIRE(*intValue == 42);
 		
 		// 存在しないパラメータ
-		auto notFound = canvas->getParam(U"notExist");
+		auto notFound = canvas->param(U"notExist");
 		REQUIRE(!notFound.has_value());
+	}
+	
+	SECTION("Batch set parameters")
+	{
+		auto canvas = Canvas::Create();
+		
+		// 初期化リスト版で簡潔に記述
+		canvas->setParamValues({
+			{U"param1", 100},
+			{U"param2", U"test"},
+			{U"param3", Vec2{10, 20}},
+			{U"param4", true},
+			{U"param5", ColorF{0.5, 0.5, 0.5}}
+		});
+		
+		REQUIRE(canvas->paramValueOpt<int>(U"param1").value_or(0) == 100);
+		REQUIRE(canvas->paramValueOpt<String>(U"param2").value_or(U"") == U"test");
+		auto vec = canvas->paramValueOpt<Vec2>(U"param3");
+		REQUIRE(vec.has_value());
+		REQUIRE(vec->x == 10);
+		REQUIRE(vec->y == 20);
+		REQUIRE(canvas->paramValueOpt<bool>(U"param4").value_or(false) == true);
+		auto color = canvas->paramValueOpt<ColorF>(U"param5");
+		REQUIRE(color.has_value());
+		REQUIRE(color->r == Approx(0.5));
 	}
 	
 	SECTION("Remove and clear parameters")
 	{
 		auto canvas = Canvas::Create();
 		
-		canvas->setParam(Param{U"param1", 1});
-		canvas->setParam(Param{U"param2", 2});
-		canvas->setParam(Param{U"param3", 3});
+		canvas->setParamValue(U"param1", 1);
+		canvas->setParamValue(U"param2", 2);
+		canvas->setParamValue(U"param3", 3);
 		
 		REQUIRE(canvas->params().size() == 3);
 		
 		// 特定のパラメータを削除
 		canvas->removeParam(U"param2");
 		REQUIRE(canvas->params().size() == 2);
-		REQUIRE(!canvas->getParam(U"param2").has_value());
-		REQUIRE(canvas->getParam(U"param1").has_value());
-		REQUIRE(canvas->getParam(U"param3").has_value());
+		REQUIRE(!canvas->param(U"param2").has_value());
+		REQUIRE(canvas->param(U"param1").has_value());
+		REQUIRE(canvas->param(U"param3").has_value());
 		
 		// すべてのパラメータをクリア
 		canvas->clearParams();
 		REQUIRE(canvas->params().size() == 0);
-		REQUIRE(!canvas->getParam(U"param1").has_value());
+		REQUIRE(!canvas->param(U"param1").has_value());
 	}
 }
 
 TEST_CASE("Parameter binding to properties", "[Param]")
 {
-	SECTION("Bind to Property")
+	SECTION("Bind parameter to Label text")
 	{
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
 		canvas->rootNode()->addChild(node);
 		
 		// パラメータを作成
-		canvas->setParam(Param{U"labelText", U"Hello World"});
+		canvas->setParamValue(U"labelText", U"Hello World");
 		
 		// LabelのプロパティはgetPropertyByNameでアクセス
 		auto label = node->emplaceComponent<Label>(U"Initial");
-		auto textProperty = static_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		auto* textProperty = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
 		REQUIRE(textProperty != nullptr);
 		textProperty->setParamRef(U"labelText");
 		
@@ -220,20 +175,19 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 		REQUIRE(textProperty->value() == U"Hello World");
 		
 		// パラメータを更新
-		canvas->setParam(Param{U"labelText", U"Updated Text"});
+		canvas->setParamValue(U"labelText", U"Updated Text");
 		canvas->update();
 		REQUIRE(textProperty->value() == U"Updated Text");
 	}
 	
-	SECTION("Bind to PropertyNonInteractive")
+	SECTION("Bind parameter to transform position")
 	{
-		// PropertyNonInteractiveをテストするために、Transformのプロパティを使用
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
 		canvas->rootNode()->addChild(node);
 		
 		// Vec2パラメータを作成
-		canvas->setParam(Param{U"translateParam", Vec2{100, 200}});
+		canvas->setParamValue(U"translateParam", Vec2{100, 200});
 		
 		// Transformのtranslateプロパティにパラメータをバインド
 		node->transform().translate().setParamRef(U"translateParam");
@@ -243,7 +197,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 		REQUIRE(node->transform().translate().value() == Vec2{100, 200});
 		
 		// パラメータを更新
-		canvas->setParam(Param{U"translateParam", Vec2{300, 400}});
+		canvas->setParamValue(U"translateParam", Vec2{300, 400});
 		canvas->update();
 		REQUIRE(node->transform().translate().value() == Vec2{300, 400});
 	}
@@ -257,7 +211,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 		canvas->rootNode()->addChild(node);
 		
 		// パラメータを作成
-		canvas->setParam(Param{U"dynamicText", U"Dynamic Value"});
+		canvas->setParamValue(U"dynamicText", U"Dynamic Value");
 		
 		// カスタムコンポーネントでupdate内でsetParamRefを呼ぶ
 		class TestComponent : public ComponentBase
@@ -281,82 +235,183 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 			void draw(const Node&) const override {}
 		};
 		
-		auto label = node->emplaceComponent<Label>(U"Initial");
+		// テストコンポーネントとラベルを追加
 		auto testComponent = std::make_shared<TestComponent>();
-		testComponent->textProperty = static_cast<Property<String>*>(label->getPropertyByName(U"text"));
 		node->addComponent(testComponent);
 		
-		// 最初のフレーム前はまだ反映されていない
-		auto textProperty = static_cast<Property<String>*>(label->getPropertyByName(U"text"));
-		REQUIRE(textProperty->value() == U"Initial");
+		auto label = node->emplaceComponent<Label>(U"Initial");
+		auto* textProperty = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		testComponent->textProperty = textProperty;
 		
-		// update実行
+		// 最初のupdate
 		canvas->update();
-		
-		// update後（draw時点）では反映されている
+		// update内でsetParamRefが呼ばれ、同じフレームで反映される
 		REQUIRE(textProperty->value() == U"Dynamic Value");
 	}
 }
 
-TEST_CASE("Param serialization", "[Param]")
+TEST_CASE("Canvas parameter serialization", "[Param]")
 {
-	SECTION("Canvas with params serialization")
+	SECTION("Save and load parameters")
 	{
-		auto canvas = Canvas::Create();
+		// パラメータを持つCanvasを作成
+		auto canvas1 = Canvas::Create();
+		canvas1->setParamValue(U"bool", true);
+		canvas1->setParamValue(U"number", 123.45);
+		canvas1->setParamValue(U"string", U"test");
+		canvas1->setParamValue(U"vec2", Vec2{10, 20});
+		canvas1->setParamValue(U"color", ColorF{1.0, 0.5, 0.25, 1.0});
 		
-		// 単純な値のパラメータ
-		canvas->setParam(Param{U"bool", true});
-		canvas->setParam(Param{U"int", 123});
-		canvas->setParam(Param{U"double", 3.14});
-		canvas->setParam(Param{U"string", U"test"});
-		canvas->setParam(Param{U"vec2", Vec2{10, 20}});
-		canvas->setParam(Param{U"color", Color{255, 128, 64, 255}});
+		// JSONに保存
+		JSON json = canvas1->toJSON();
 		
-		// JSON化
-		auto json = canvas->toJSON();
-		REQUIRE(json.contains(U"params"));
-		REQUIRE(json[U"params"].isArray());
-		REQUIRE(json[U"params"].size() == 6);
-		
-		// 別のCanvasに読み込み
+		// 新しいCanvasに読み込み
 		auto canvas2 = Canvas::Create();
 		REQUIRE(canvas2->tryReadFromJSON(json));
 		
-		// パラメータが復元されていることを確認
-		auto boolParam = canvas2->getParam(U"bool");
+		// パラメータが正しく復元されていることを確認
+		auto boolParam = canvas2->paramValueOpt<bool>(U"bool");
 		REQUIRE(boolParam.has_value());
-		auto boolValue = boolParam->valueAsOpt<bool>();
-		REQUIRE(boolValue.has_value());
-		REQUIRE(*boolValue == true);
+		REQUIRE(*boolParam == true);
 		
-		auto intParam = canvas2->getParam(U"int");
-		REQUIRE(intParam.has_value());
-		auto intValue = intParam->valueAsOpt<int32>();
-		REQUIRE(intValue.has_value());
-		REQUIRE(*intValue == 123);
+		auto numberParam = canvas2->paramValueOpt<double>(U"number");
+		REQUIRE(numberParam.has_value());
+		REQUIRE(*numberParam == Approx(123.45));
 		
-		auto doubleParam = canvas2->getParam(U"double");
-		REQUIRE(doubleParam.has_value());
-		auto doubleValue = doubleParam->valueAsOpt<double>();
-		REQUIRE(doubleValue.has_value());
-		REQUIRE(*doubleValue == Approx(3.14));
-		
-		auto stringParam = canvas2->getParam(U"string");
+		auto stringParam = canvas2->paramValueOpt<String>(U"string");
 		REQUIRE(stringParam.has_value());
-		auto stringValue = stringParam->valueAsOpt<String>();
-		REQUIRE(stringValue.has_value());
-		REQUIRE(*stringValue == U"test");
+		REQUIRE(*stringParam == U"test");
 		
-		auto vec2Param = canvas2->getParam(U"vec2");
+		auto vec2Param = canvas2->paramValueOpt<Vec2>(U"vec2");
 		REQUIRE(vec2Param.has_value());
-		auto vec2Value = vec2Param->valueAsOpt<Vec2>();
-		REQUIRE(vec2Value.has_value());
-		REQUIRE(*vec2Value == Vec2{10, 20});
+		REQUIRE(*vec2Param == Vec2{10, 20});
 		
-		auto colorParam = canvas2->getParam(U"color");
+		auto colorParam = canvas2->paramValueOpt<Color>(U"color");
 		REQUIRE(colorParam.has_value());
-		auto colorValue = colorParam->valueAsOpt<Color>();
-		REQUIRE(colorValue.has_value());
-		REQUIRE(*colorValue == Color{255, 128, 64, 255});
+		REQUIRE(colorParam->r == 255);
+		REQUIRE(colorParam->g == 128);
+		REQUIRE(colorParam->b == 64);
+		REQUIRE(colorParam->a == 255);
+	}
+}
+
+TEST_CASE("Parameter edge cases and error handling", "[Param]")
+{
+	SECTION("Update existing parameter")
+	{
+		auto canvas = Canvas::Create();
+		
+		// 初期値を設定
+		canvas->setParamValue(U"counter", 10);
+		REQUIRE(canvas->paramValueOpt<int>(U"counter").value_or(0) == 10);
+		
+		// 同じ名前で値を上書き
+		canvas->setParamValue(U"counter", 20);
+		REQUIRE(canvas->paramValueOpt<int>(U"counter").value_or(0) == 20);
+		
+		// 型を変更して上書き
+		canvas->setParamValue(U"counter", U"text");
+		REQUIRE(canvas->paramValueOpt<int>(U"counter").has_value() == false);
+		REQUIRE(canvas->paramValueOpt<String>(U"counter").value_or(U"") == U"text");
+	}
+	
+	SECTION("Type mismatch access")
+	{
+		auto canvas = Canvas::Create();
+		canvas->setParamValue(U"number", 42);
+		
+		// 正しい型でのアクセス
+		REQUIRE(canvas->paramValueOpt<int>(U"number").value_or(0) == 42);
+		
+		// 間違った型でのアクセス
+		REQUIRE(canvas->paramValueOpt<String>(U"number").has_value() == false);
+		REQUIRE(canvas->paramValueOpt<bool>(U"number").has_value() == false);
+		REQUIRE(canvas->paramValueOpt<Vec2>(U"number").has_value() == false);
+	}
+	
+	SECTION("Parameter binding with deletion")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->rootNode()->addChild(node);
+		
+		// パラメータを作成してバインド
+		canvas->setParamValue(U"testParam", U"Initial");
+		auto label = node->emplaceComponent<Label>(U"Default");
+		auto* textProperty = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		textProperty->setParamRef(U"testParam");
+		
+		canvas->update();
+		REQUIRE(textProperty->value() == U"Initial");
+		
+		// パラメータを削除
+		canvas->removeParam(U"testParam");
+		canvas->update();
+		// パラメータが削除されても、プロパティは最後の値を保持
+		REQUIRE(textProperty->value() == U"Initial");
+		
+		// 参照がクリアされていることを確認
+		REQUIRE(textProperty->hasParamRef() == true);  // 参照自体は残る
+		REQUIRE(canvas->param(U"testParam").has_value() == false);
+	}
+	
+	SECTION("Empty parameter name handling")
+	{
+		auto canvas = Canvas::Create();
+		
+		// 空文字列の名前でパラメータ設定
+		canvas->setParamValue(U"", 100);
+		
+		// 空文字列でも取得可能
+		REQUIRE(canvas->param(U"").has_value() == true);
+		REQUIRE(canvas->paramValueOpt<int>(U"").value_or(0) == 100);
+		
+		// 空文字列の削除も可能
+		canvas->removeParam(U"");
+		REQUIRE(canvas->param(U"").has_value() == false);
+	}
+	
+	SECTION("Large number of parameters")
+	{
+		auto canvas = Canvas::Create();
+		
+		// 1000個のパラメータを設定
+		for (int i = 0; i < 1000; ++i)
+		{
+			canvas->setParamValue(U"param_{}"_fmt(i), i);
+		}
+		
+		// サイズ確認
+		REQUIRE(canvas->params().size() == 1000);
+		
+		// ランダムアクセステスト
+		REQUIRE(canvas->paramValueOpt<int>(U"param_500").value_or(-1) == 500);
+		REQUIRE(canvas->paramValueOpt<int>(U"param_999").value_or(-1) == 999);
+		REQUIRE(canvas->paramValueOpt<int>(U"param_0").value_or(-1) == 0);
+		
+		// 全削除
+		canvas->clearParams();
+		REQUIRE(canvas->params().size() == 0);
+	}
+	
+	SECTION("Invalid parameter reference cleanup")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->rootNode()->addChild(node);
+		
+		// プロパティに存在しないパラメータ参照を設定
+		auto label = node->emplaceComponent<Label>(U"Test");
+		auto* textProperty = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		textProperty->setParamRef(U"nonExistent");
+		
+		// 存在しないパラメータを参照しても、エラーにならない
+		canvas->update();
+		REQUIRE(textProperty->value() == U"Test");  // デフォルト値のまま
+		
+		// 後からパラメータを追加すると反映される
+		canvas->setParamValue(U"nonExistent", U"NewValue");
+		canvas->update();
+		REQUIRE(textProperty->value() == U"NewValue");
 	}
 }

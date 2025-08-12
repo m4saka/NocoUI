@@ -1183,7 +1183,7 @@ namespace noco
 		m_componentTempBuffer.clear();
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, Param>& params, const Array<String>& parentActiveStyleStates)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1410,7 +1410,7 @@ namespace noco
 		}
 	}
 
-	void Node::postLateUpdate(double deltaTime, const HashTable<String, Param>& params)
+	void Node::postLateUpdate(double deltaTime, const HashTable<String, ParamValue>& params)
 	{
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
@@ -1433,7 +1433,7 @@ namespace noco
 		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
-	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, Param>& params)
+	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params);
 		

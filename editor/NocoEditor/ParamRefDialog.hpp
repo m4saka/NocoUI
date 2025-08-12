@@ -18,7 +18,7 @@ namespace noco::editor
 		std::shared_ptr<Label> m_valueLabel;
 		
 		String m_selectedParamName;
-		Array<std::pair<String, Param>> m_availableParams;
+		Array<std::pair<String, ParamValue>> m_availableParams;
 		
 		Optional<ParamType> getPropertyParamType() const
 		{
@@ -68,36 +68,20 @@ namespace noco::editor
 				return;
 			}
 			
-			for (const auto& [name, param] : m_canvas->params())
+			for (const auto& [name, value] : m_canvas->params())
 			{
-				if (param.type() == *propertyType)
+				if (GetParamType(value) == *propertyType)
 				{
-					m_availableParams.push_back({name, param});
+					m_availableParams.push_back({name, value});
 				}
 			}
 			
 			m_availableParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 		}
 		
-		String getParamValueString(const Param& param) const
+		String getParamValueString(const ParamValue& value) const
 		{
-			switch (param.type())
-			{
-			case ParamType::Bool:
-				return ValueToString(param.valueAs<bool>());
-			case ParamType::Number:
-				return ValueToString(param.valueAs<double>());
-			case ParamType::String:
-				return param.valueAs<String>();
-			case ParamType::Color:
-				return ValueToString(param.valueAs<ColorF>());
-			case ParamType::Vec2:
-				return ValueToString(param.valueAs<Vec2>());
-			case ParamType::LRTB:
-				return ValueToString(param.valueAs<LRTB>());
-			default:
-				return U"";
-			}
+			return ParamValueToString(value);
 		}
 		
 	public:
@@ -305,7 +289,7 @@ namespace noco::editor
 			String valueText = U"";
 			if (!m_selectedParamName.isEmpty())
 			{
-				if (const auto param = m_canvas->getParam(m_selectedParamName))
+				if (const auto param = m_canvas->param(m_selectedParamName))
 				{
 					valueText = getParamValueString(*param);
 				}
@@ -356,9 +340,9 @@ namespace noco::editor
 				menuElements.push_back(MenuSeparator{});
 				
 				// 利用可能なパラメータを追加
-				for (const auto& [paramName, param] : m_availableParams)
+				for (const auto& [paramName, value] : m_availableParams)
 				{
-					const String valueStr = getParamValueString(param);
+					const String valueStr = getParamValueString(value);
 					const String displayText = U"{} = {}"_fmt(paramName, valueStr);
 					
 					menuElements.push_back(MenuItem{
@@ -385,7 +369,7 @@ namespace noco::editor
 			String valueText = U"";
 			if (!paramName.isEmpty())
 			{
-				if (const auto param = m_canvas->getParam(paramName))
+				if (const auto param = m_canvas->param(paramName))
 				{
 					valueText = getParamValueString(*param);
 				}

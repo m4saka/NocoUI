@@ -37,9 +37,9 @@ namespace noco::editor
 		{
 			if (!m_canvas) return false;
 			const auto& params = m_canvas->params();
-			for (const auto& [name, param] : params)
+			for (const auto& [name, value] : params)
 			{
-				if (param.type() == type) return true;
+				if (GetParamType(value) == type) return true;
 			}
 			return false;
 		}
@@ -3173,33 +3173,33 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createSingleParamNode(const String& paramName, const Param& param)
+		std::shared_ptr<Node> createSingleParamNode(const String& paramName, const ParamValue& value)
 		{
 			// パラメータ名に型情報を角括弧で付加
-			const String typeStr = ParamTypeToString(param.type());
+			const String typeStr = ParamTypeToString(GetParamType(value));
 			const String labelText = U"{} [{}]"_fmt(paramName, typeStr);
 			
 			// パラメータの型に応じて適切な編集UIを作成
 			std::shared_ptr<Node> propertyNode;
 			
-			switch (param.type())
+			switch (GetParamType(value))
 			{
 			case ParamType::Bool:
 				{
-					const bool currentValue = param.valueAs<bool>();
+					const bool currentValue = GetParamValueAs<bool>(value).value_or(false);
 					propertyNode = CreateBoolPropertyNode(
 						labelText,
 						currentValue,
 						[this, paramName](bool value) 
 						{ 
-							m_canvas->setParam(Param{paramName, value});
+							m_canvas->setParamValue(paramName, value);
 						});
 				}
 				break;
 				
 			case ParamType::Number:
 				{
-					const double currentValue = param.valueAs<double>();
+					const double currentValue = GetParamValueAs<double>(value).value_or(0.0);
 					propertyNode = CreatePropertyNode(
 						labelText,
 						Format(currentValue),
@@ -3207,15 +3207,15 @@ namespace noco::editor
 						{ 
 							if (const auto val = ParseOpt<double>(text))
 							{
-								m_canvas->setParam(Param{paramName, *val});
+								m_canvas->setParamValue(paramName, *val);
 							}
 						},
 						HasInteractivePropertyValueYN::No,
 						HasParameterRefYN::No,
 						[this, paramName]() -> String { 
-							if (auto p = m_canvas->getParam(paramName))
+							if (auto p = m_canvas->param(paramName))
 							{
-								return Format(p->valueAs<double>());
+								return Format(GetParamValueAs<double>(*p).value_or(0.0));
 							}
 							return U"0";
 						},
@@ -3226,52 +3226,52 @@ namespace noco::editor
 				
 			case ParamType::String:
 				{
-					const String currentValue = param.valueAs<String>();
+					const String currentValue = GetParamValueAs<String>(value).value_or(U"");
 					propertyNode = CreatePropertyNode(
 						labelText,
 						currentValue,
 						[this, paramName](StringView text) 
 						{ 
-							m_canvas->setParam(Param{paramName, String{ text }});
+							m_canvas->setParamValue(paramName, String{ text });
 						});
 				}
 				break;
 				
 			case ParamType::Color:
 				{
-					const ColorF currentColor = param.valueAs<ColorF>();
+					const ColorF currentColor = GetParamValueAs<ColorF>(value).value_or(ColorF{});
 					propertyNode = CreateColorPropertyNode(
 						labelText,
 						currentColor,
 						[this, paramName](const ColorF& color) 
 						{ 
-							m_canvas->setParam(Param{paramName, color});
+							m_canvas->setParamValue(paramName, color);
 						});
 				}
 				break;
 				
 			case ParamType::Vec2:
 				{
-					const Vec2 currentVec = param.valueAs<Vec2>();
+					const Vec2 currentVec = GetParamValueAs<Vec2>(value).value_or(Vec2{});
 					propertyNode = CreateVec2PropertyNode(
 						labelText,
 						currentVec,
 						[this, paramName](const Vec2& vec) 
 						{ 
-							m_canvas->setParam(Param{paramName, vec});
+							m_canvas->setParamValue(paramName, vec);
 						});
 				}
 				break;
 				
 			case ParamType::LRTB:
 				{
-					const LRTB currentLRTB = param.valueAs<LRTB>();
+					const LRTB currentLRTB = GetParamValueAs<LRTB>(value).value_or(LRTB{});
 					propertyNode = CreateLRTBPropertyNode(
 						labelText,
 						currentLRTB,
 						[this, paramName](const LRTB& lrtb) 
 						{ 
-							m_canvas->setParam(Param{paramName, lrtb});
+							m_canvas->setParamValue(paramName, lrtb);
 						});
 				}
 				break;
@@ -3378,9 +3378,9 @@ namespace noco::editor
 				else
 				{
 					// 各パラメータを表示
-					for (auto& [name, param] : params)
+					for (auto& [name, value] : params)
 					{
-						const auto paramNode = createSingleParamNode(name, param);
+						const auto paramNode = createSingleParamNode(name, value);
 						paramNode->setActive(!m_isFoldedParams.getBool());
 						paramsNode->addChild(paramNode);
 					}

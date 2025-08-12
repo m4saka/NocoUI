@@ -241,34 +241,34 @@ namespace noco::editor
 					return;
 				}
 				
-				if (m_canvas->getParam(name).has_value())
+				if (m_canvas->param(name).has_value())
 				{
 					return;
 				}
 				
 				if (m_selectedType == U"Bool")
 				{
-					m_canvas->setParam(Param{name, std::get<bool>(m_value)});
+					m_canvas->setParamValue(name, std::get<bool>(m_value));
 				}
 				else if (m_selectedType == U"Number")
 				{
-					m_canvas->setParam(Param{name, std::get<double>(m_value)});
+					m_canvas->setParamValue(name, std::get<double>(m_value));
 				}
 				else if (m_selectedType == U"String")
 				{
-					m_canvas->setParam(Param{name, std::get<String>(m_value)});
+					m_canvas->setParamValue(name, std::get<String>(m_value));
 				}
 				else if (m_selectedType == U"Color")
 				{
-					m_canvas->setParam(Param{name, std::get<ColorF>(m_value)});
+					m_canvas->setParamValue(name, std::get<ColorF>(m_value));
 				}
 				else if (m_selectedType == U"Vec2")
 				{
-					m_canvas->setParam(Param{name, std::get<Vec2>(m_value)});
+					m_canvas->setParamValue(name, std::get<Vec2>(m_value));
 				}
 				else if (m_selectedType == U"LRTB")
 				{
-					m_canvas->setParam(Param{name, std::get<LRTB>(m_value)});
+					m_canvas->setParamValue(name, std::get<LRTB>(m_value));
 				}
 				
 				if (m_selectedType != U"")

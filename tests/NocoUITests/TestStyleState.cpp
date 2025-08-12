@@ -63,7 +63,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 			void update(noco::InteractionState interactionState, 
 			           const Array<String>& activeStyleStates, 
 			           double deltaTime,
-			           const HashTable<String, noco::Param>& params) override
+			           const HashTable<String, noco::ParamValue>& params) override
 			{
 				// 親クラスのupdateを呼ぶ
 				Property::update(interactionState, activeStyleStates, deltaTime, params);
