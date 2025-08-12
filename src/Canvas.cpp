@@ -182,7 +182,7 @@ namespace noco
 			Array<JSON> paramsArray;
 			for (const auto& [name, param] : m_params)
 			{
-				paramsArray.push_back(param->toJSON());
+				paramsArray.push_back(param.toJSON());
 			}
 			json[U"params"] = paramsArray;
 		}
@@ -203,7 +203,7 @@ namespace noco
 			Array<JSON> paramsArray;
 			for (const auto& [name, param] : m_params)
 			{
-				paramsArray.push_back(param->toJSON());
+				paramsArray.push_back(param.toJSON());
 			}
 			json[U"params"] = paramsArray;
 		}
@@ -254,7 +254,7 @@ namespace noco
 			{
 				if (auto param = Param::fromJSON(paramJson))
 				{
-					m_params[param->name()] = param;
+					m_params[param->name()] = *param;
 				}
 			}
 		}
@@ -294,7 +294,7 @@ namespace noco
 			{
 				if (auto param = Param::fromJSON(paramJson))
 				{
-					m_params[param->name()] = param;
+					m_params[param->name()] = *param;
 				}
 			}
 		}
@@ -595,21 +595,18 @@ namespace noco
 		return m_eventRegistry.getFiredEventsAll();
 	}
 
-	void Canvas::setParam(const std::shared_ptr<Param>& param)
+	void Canvas::setParam(const Param& param)
 	{
-		if (param)
-		{
-			m_params[param->name()] = param;
-		}
+		m_params[param.name()] = param;
 	}
 
-	std::shared_ptr<Param> Canvas::getParam(const String& name) const
+	Optional<Param> Canvas::getParam(const String& name) const
 	{
 		if (auto it = m_params.find(name); it != m_params.end())
 		{
 			return it->second;
 		}
-		return nullptr;
+		return none;
 	}
 
 	bool Canvas::hasParam(const String& name) const
@@ -621,7 +618,7 @@ namespace noco
 	{
 		if (const auto it = m_params.find(name); it != m_params.end())
 		{
-			return it->second->type() == paramType;
+			return it->second.type() == paramType;
 		}
 		return false;
 	}

@@ -51,7 +51,7 @@ namespace noco
 		{
 		}
 
-		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params);
+		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params);
 
 		[[nodiscard]]
 		const Array<IProperty*>& properties() const

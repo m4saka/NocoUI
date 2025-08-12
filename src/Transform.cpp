@@ -107,7 +107,7 @@ namespace noco
 		m_color.setPropertyValue(color);
 	}
 
-	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params)
+	void Transform::update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params)
 	{
 		m_translate.update(interactionState, activeStyleStates, deltaTime, params);
 		m_scale.update(interactionState, activeStyleStates, deltaTime, params);
@@ -199,7 +199,7 @@ namespace noco
 		}
 	}
 
-	Array<String> Transform::clearInvalidParamRefs(const HashTable<String, std::shared_ptr<Param>>& validParams)
+	Array<String> Transform::clearInvalidParamRefs(const HashTable<String, Param>& validParams)
 	{
 		HashSet<String> clearedParamsSet;
 		

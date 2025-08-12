@@ -241,40 +241,38 @@ namespace noco::editor
 					return;
 				}
 				
-				if (m_canvas->getParam(name))
+				if (m_canvas->getParam(name).has_value())
 				{
 					return;
 				}
 				
-				std::shared_ptr<Param> newParam;
 				if (m_selectedType == U"Bool")
 				{
-					newParam = std::make_shared<Param>(name, std::get<bool>(m_value));
+					m_canvas->setParam(Param{name, std::get<bool>(m_value)});
 				}
 				else if (m_selectedType == U"Number")
 				{
-					newParam = std::make_shared<Param>(name, std::get<double>(m_value));
+					m_canvas->setParam(Param{name, std::get<double>(m_value)});
 				}
 				else if (m_selectedType == U"String")
 				{
-					newParam = std::make_shared<Param>(name, std::get<String>(m_value));
+					m_canvas->setParam(Param{name, std::get<String>(m_value)});
 				}
 				else if (m_selectedType == U"Color")
 				{
-					newParam = std::make_shared<Param>(name, std::get<ColorF>(m_value));
+					m_canvas->setParam(Param{name, std::get<ColorF>(m_value)});
 				}
 				else if (m_selectedType == U"Vec2")
 				{
-					newParam = std::make_shared<Param>(name, std::get<Vec2>(m_value));
+					m_canvas->setParam(Param{name, std::get<Vec2>(m_value)});
 				}
 				else if (m_selectedType == U"LRTB")
 				{
-					newParam = std::make_shared<Param>(name, std::get<LRTB>(m_value));
+					m_canvas->setParam(Param{name, std::get<LRTB>(m_value)});
 				}
 				
-				if (newParam)
+				if (m_selectedType != U"")
 				{
-					m_canvas->setParam(newParam);
 					if (m_onComplete)
 					{
 						m_onComplete();

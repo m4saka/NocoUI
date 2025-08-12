@@ -18,7 +18,7 @@ namespace noco::editor
 		std::shared_ptr<Label> m_valueLabel;
 		
 		String m_selectedParamName;
-		Array<std::shared_ptr<Param>> m_availableParams;
+		Array<std::pair<String, Param>> m_availableParams;
 		
 		Optional<ParamType> getPropertyParamType() const
 		{
@@ -70,36 +70,31 @@ namespace noco::editor
 			
 			for (const auto& [name, param] : m_canvas->params())
 			{
-				if (param && param->type() == *propertyType)
+				if (param.type() == *propertyType)
 				{
-					m_availableParams.push_back(param);
+					m_availableParams.push_back({name, param});
 				}
 			}
 			
-			m_availableParams.sort_by([](const auto& a, const auto& b) { return a->name() < b->name(); });
+			m_availableParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 		}
 		
-		String getParamValueString(const std::shared_ptr<Param>& param) const
+		String getParamValueString(const Param& param) const
 		{
-			if (!param)
-			{
-				return U"";
-			}
-			
-			switch (param->type())
+			switch (param.type())
 			{
 			case ParamType::Bool:
-				return ValueToString(param->valueAs<bool>());
+				return ValueToString(param.valueAs<bool>());
 			case ParamType::Number:
-				return ValueToString(param->valueAs<double>());
+				return ValueToString(param.valueAs<double>());
 			case ParamType::String:
-				return param->valueAs<String>();
+				return param.valueAs<String>();
 			case ParamType::Color:
-				return ValueToString(param->valueAs<ColorF>());
+				return ValueToString(param.valueAs<ColorF>());
 			case ParamType::Vec2:
-				return ValueToString(param->valueAs<Vec2>());
+				return ValueToString(param.valueAs<Vec2>());
 			case ParamType::LRTB:
-				return ValueToString(param->valueAs<LRTB>());
+				return ValueToString(param.valueAs<LRTB>());
 			default:
 				return U"";
 			}
@@ -312,7 +307,7 @@ namespace noco::editor
 			{
 				if (const auto param = m_canvas->getParam(m_selectedParamName))
 				{
-					valueText = getParamValueString(param);
+					valueText = getParamValueString(*param);
 				}
 			}
 			m_valueLabel = valueDisplayNode->emplaceComponent<Label>(
@@ -361,16 +356,16 @@ namespace noco::editor
 				menuElements.push_back(MenuSeparator{});
 				
 				// 利用可能なパラメータを追加
-				for (const auto& param : m_availableParams)
+				for (const auto& [paramName, param] : m_availableParams)
 				{
 					const String valueStr = getParamValueString(param);
-					const String displayText = U"{} = {}"_fmt(param->name(), valueStr);
+					const String displayText = U"{} = {}"_fmt(paramName, valueStr);
 					
 					menuElements.push_back(MenuItem{
 						.text = displayText,
 						.hotKeyText = U"",
 						.mnemonicInput = none,
-						.onClick = [this, name = param->name()]() { selectParam(name); }
+						.onClick = [this, paramName]() { selectParam(paramName); }
 					});
 				}
 			}
@@ -392,7 +387,7 @@ namespace noco::editor
 			{
 				if (const auto param = m_canvas->getParam(paramName))
 				{
-					valueText = getParamValueString(param);
+					valueText = getParamValueString(*param);
 				}
 			}
 			m_valueLabel->setText(valueText);

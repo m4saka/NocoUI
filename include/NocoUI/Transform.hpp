@@ -74,7 +74,7 @@ namespace noco
 
 		void setColor(const PropertyValue<ColorF>& color);
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params);
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params);
 
 		[[nodiscard]]
 		JSON toJSON() const;
@@ -86,6 +86,6 @@ namespace noco
 
 		void clearParamRef(StringView paramName);
 
-		Array<String> clearInvalidParamRefs(const HashTable<String, std::shared_ptr<Param>>& validParams);
+		Array<String> clearInvalidParamRefs(const HashTable<String, Param>& validParams);
 	};
 }

@@ -101,6 +101,14 @@ namespace noco
 		}
 
 	public:
+		// デフォルトコンストラクタ（空のString、Number型、値0.0）
+		Param()
+			: m_name(U"")
+			, m_type(ParamType::Number)
+			, m_value(0.0)
+		{
+		}
+		
 		template<typename T>
 		static constexpr bool isSupportedType()
 		{
@@ -242,11 +250,11 @@ namespace noco
 			}, m_value);
 		}
 		
-		static std::shared_ptr<Param> fromJSON(const JSON& json)
+		static Optional<Param> fromJSON(const JSON& json)
 		{
 			if (!json.contains(U"name") || !json.contains(U"type") || !json.contains(U"value"))
 			{
-				return nullptr;
+				return none;
 			}
 			
 			const String name = json[U"name"].getString();
@@ -259,7 +267,7 @@ namespace noco
 				{
 					if (auto opt = StringToValueOpt<bool>(valueJson.getString()))
 					{
-						return std::make_shared<Param>(name, *opt);
+						return Param{name, *opt};
 					}
 				}
 				else
@@ -273,7 +281,7 @@ namespace noco
 				{
 					if (auto opt = StringToValueOpt<double>(valueJson.getString()))
 					{
-						return std::make_shared<Param>(name, *opt);
+						return Param{name, *opt};
 					}
 				}
 				else
@@ -285,7 +293,7 @@ namespace noco
 			{
 				if (valueJson.isString())
 				{
-					return std::make_shared<Param>(name, valueJson.getString());
+					return Param{name, valueJson.getString()};
 				}
 				else
 				{
@@ -298,7 +306,7 @@ namespace noco
 				{
 					if (auto opt = StringToValueOpt<ColorF>(valueJson.getString()))
 					{
-						return std::make_shared<Param>(name, *opt);
+						return Param{name, *opt};
 					}
 				}
 				else
@@ -312,7 +320,7 @@ namespace noco
 				{
 					if (auto opt = StringToValueOpt<Vec2>(valueJson.getString()))
 					{
-						return std::make_shared<Param>(name, *opt);
+						return Param{name, *opt};
 					}
 				}
 				else
@@ -326,7 +334,7 @@ namespace noco
 				{
 					if (auto opt = StringToValueOpt<LRTB>(valueJson.getString()))
 					{
-						return std::make_shared<Param>(name, *opt);
+						return Param{name, *opt};
 					}
 				}
 				else
@@ -335,7 +343,7 @@ namespace noco
 				}
 			}
 			
-			return nullptr;
+			return none;
 		}
 	};
 }

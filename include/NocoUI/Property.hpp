@@ -24,7 +24,7 @@ namespace noco
 	public:
 		virtual ~IProperty() = default;
 		virtual StringView name() const = 0;
-		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params) = 0;
+		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueStringOfDefault() const = 0;
@@ -54,7 +54,7 @@ namespace noco
 		virtual const String& paramRef() const = 0;
 		virtual void setParamRef(const String& paramRef) = 0;
 		virtual bool hasParamRef() const = 0;
-		virtual void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) = 0;
+		virtual void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) = 0;
 	};
 
 	template <typename T>
@@ -157,7 +157,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -193,7 +193,7 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, std::shared_ptr<Param>>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, Param>& params) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
@@ -205,12 +205,9 @@ namespace noco
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto param = it->second)
+						if (auto val = it->second.valueAsOpt<T>())
 						{
-							if (auto val = param->valueAsOpt<T>())
-							{
-								setCurrentFrameOverride(*val);
-							}
+							setCurrentFrameOverride(*val);
 						}
 					}
 				}
@@ -502,7 +499,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -521,7 +518,7 @@ namespace noco
 			return m_smoothing.currentValue();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, std::shared_ptr<Param>>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, Param>& params) override
 		{
 			// パラメータ参照がある場合
 			if (!m_paramRef.isEmpty())
@@ -530,12 +527,9 @@ namespace noco
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto param = it->second)
+						if (auto val = it->second.valueAsOpt<T>())
 						{
-							if (auto val = param->valueAsOpt<T>())
-							{
-								setCurrentFrameOverride(*val);
-							}
+							setCurrentFrameOverride(*val);
 						}
 					}
 				}
@@ -762,7 +756,7 @@ namespace noco
 			return !m_paramRef.isEmpty();
 		}
 		
-		void clearParamRefIfInvalid(const HashTable<String, std::shared_ptr<Param>>& validParams, HashSet<String>& clearedParams) override
+		void clearParamRefIfInvalid(const HashTable<String, Param>& validParams, HashSet<String>& clearedParams) override
 		{
 			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
 			{
@@ -798,7 +792,7 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, std::shared_ptr<Param>>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, Param>& params) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
@@ -810,12 +804,9 @@ namespace noco
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto param = it->second)
+						if (auto val = it->second.valueAsOpt<T>())
 						{
-							if (auto val = param->valueAsOpt<T>())
-							{
-								setCurrentFrameOverride(*val);
-							}
+							setCurrentFrameOverride(*val);
 						}
 					}
 				}

@@ -349,7 +349,7 @@ namespace noco
 		};
 
 		std::shared_ptr<Node> m_rootNode;
-		HashTable<String, std::shared_ptr<Param>> m_params;
+		HashTable<String, Param> m_params;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
 		/* NonSerialized */ double m_rotation = 0.0;
@@ -460,21 +460,21 @@ namespace noco
 			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		[[nodiscard]]
-		const HashTable<String, std::shared_ptr<Param>>& params() const
+		const HashTable<String, Param>& params() const
 		{
 			return m_params;
 		}
 
 		[[nodiscard]]
-		HashTable<String, std::shared_ptr<Param>>& params()
+		HashTable<String, Param>& params()
 		{
 			return m_params;
 		}
 
-		void setParam(const std::shared_ptr<Param>& param);
+		void setParam(const Param& param);
 
 		[[nodiscard]]
-		std::shared_ptr<Param> getParam(const String& name) const;
+		Optional<Param> getParam(const String& name) const;
 
 		[[nodiscard]]
 		bool hasParam(const String& name) const;

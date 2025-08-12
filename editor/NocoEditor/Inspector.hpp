@@ -39,7 +39,7 @@ namespace noco::editor
 			const auto& params = m_canvas->params();
 			for (const auto& [name, param] : params)
 			{
-				if (param->type() == type) return true;
+				if (param.type() == type) return true;
 			}
 			return false;
 		}
@@ -3173,46 +3173,52 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createSingleParamNode(const std::shared_ptr<Param>& param)
+		std::shared_ptr<Node> createSingleParamNode(const String& paramName, const Param& param)
 		{
 			// パラメータ名に型情報を角括弧で付加
-			const String typeStr = ParamTypeToString(param->type());
-			const String labelText = U"{} [{}]"_fmt(param->name(), typeStr);
+			const String typeStr = ParamTypeToString(param.type());
+			const String labelText = U"{} [{}]"_fmt(paramName, typeStr);
 			
 			// パラメータの型に応じて適切な編集UIを作成
 			std::shared_ptr<Node> propertyNode;
 			
-			switch (param->type())
+			switch (param.type())
 			{
 			case ParamType::Bool:
 				{
-					const bool currentValue = param->valueAs<bool>();
+					const bool currentValue = param.valueAs<bool>();
 					propertyNode = CreateBoolPropertyNode(
 						labelText,
 						currentValue,
-						[param](bool value) 
+						[this, paramName](bool value) 
 						{ 
-							param->setValue(value);
+							m_canvas->setParam(Param{paramName, value});
 						});
 				}
 				break;
 				
 			case ParamType::Number:
 				{
-					const double currentValue = param->valueAs<double>();
+					const double currentValue = param.valueAs<double>();
 					propertyNode = CreatePropertyNode(
 						labelText,
 						Format(currentValue),
-						[this, param](StringView text) 
+						[this, paramName](StringView text) 
 						{ 
 							if (const auto val = ParseOpt<double>(text))
 							{
-								param->setValue(*val);
+								m_canvas->setParam(Param{paramName, *val});
 							}
 						},
 						HasInteractivePropertyValueYN::No,
 						HasParameterRefYN::No,
-						[param]() -> String { return Format(param->valueAs<double>()); },
+						[this, paramName]() -> String { 
+							if (auto p = m_canvas->getParam(paramName))
+							{
+								return Format(p->valueAs<double>());
+							}
+							return U"0";
+						},
 						0.01  // ドラッグステップ
 					);
 				}
@@ -3220,52 +3226,52 @@ namespace noco::editor
 				
 			case ParamType::String:
 				{
-					const String currentValue = param->valueAs<String>();
+					const String currentValue = param.valueAs<String>();
 					propertyNode = CreatePropertyNode(
 						labelText,
 						currentValue,
-						[this, param](StringView text) 
+						[this, paramName](StringView text) 
 						{ 
-							param->setValue(String{ text });
+							m_canvas->setParam(Param{paramName, String{ text }});
 						});
 				}
 				break;
 				
 			case ParamType::Color:
 				{
-					const ColorF currentColor = param->valueAs<ColorF>();
+					const ColorF currentColor = param.valueAs<ColorF>();
 					propertyNode = CreateColorPropertyNode(
 						labelText,
 						currentColor,
-						[param](const ColorF& color) 
+						[this, paramName](const ColorF& color) 
 						{ 
-							param->setValue(color);
+							m_canvas->setParam(Param{paramName, color});
 						});
 				}
 				break;
 				
 			case ParamType::Vec2:
 				{
-					const Vec2 currentVec = param->valueAs<Vec2>();
+					const Vec2 currentVec = param.valueAs<Vec2>();
 					propertyNode = CreateVec2PropertyNode(
 						labelText,
 						currentVec,
-						[param](const Vec2& vec) 
+						[this, paramName](const Vec2& vec) 
 						{ 
-							param->setValue(vec);
+							m_canvas->setParam(Param{paramName, vec});
 						});
 				}
 				break;
 				
 			case ParamType::LRTB:
 				{
-					const LRTB currentLRTB = param->valueAs<LRTB>();
+					const LRTB currentLRTB = param.valueAs<LRTB>();
 					propertyNode = CreateLRTBPropertyNode(
 						labelText,
 						currentLRTB,
-						[param](const LRTB& lrtb) 
+						[this, paramName](const LRTB& lrtb) 
 						{ 
-							param->setValue(lrtb);
+							m_canvas->setParam(Param{paramName, lrtb});
 						});
 				}
 				break;
@@ -3283,7 +3289,7 @@ namespace noco::editor
 					{
 						.text = U"パラメータ削除",
 						.mnemonicInput = KeyD,
-						.onClick = [this, paramName = param->name()]
+						.onClick = [this, paramName]
 						{
 							// 削除確認ダイアログを表示
 							const size_t refCount = m_canvas->countParamRef(paramName);
@@ -3372,9 +3378,9 @@ namespace noco::editor
 				else
 				{
 					// 各パラメータを表示
-					for (const auto& [name, param] : params)
+					for (auto& [name, param] : params)
 					{
-						const auto paramNode = createSingleParamNode(param);
+						const auto paramNode = createSingleParamNode(name, param);
 						paramNode->setActive(!m_isFoldedParams.getBool());
 						paramsNode->addChild(paramNode);
 					}
