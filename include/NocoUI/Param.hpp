@@ -85,7 +85,7 @@ namespace noco
 	
 	// 値をParamValue用の型に変換
 	template<typename T>
-	inline ParamValue ConvertToParamValue(const T& value)
+	inline ParamValue MakeParamValue(const T& value)
 	{
 		if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 		{

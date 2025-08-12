@@ -475,7 +475,7 @@ namespace noco
 		template<typename T>
 		void setParamValue(const String& name, const T& value)
 		{
-			m_params[name] = ConvertToParamValue(value);
+			m_params[name] = MakeParamValue(value);
 		}
 
 		// 複数パラメータの一括設定

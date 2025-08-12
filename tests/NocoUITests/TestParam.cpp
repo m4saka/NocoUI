@@ -8,29 +8,29 @@ TEST_CASE("Parameter values", "[Param]")
 	SECTION("Create and get parameter values")
 	{
 		// bool型
-		ParamValue boolParam = ConvertToParamValue(true);
+		ParamValue boolParam = MakeParamValue(true);
 		REQUIRE(GetParamType(boolParam) == ParamType::Bool);
 		REQUIRE(GetParamValueAs<bool>(boolParam).value_or(false) == true);
 		
 		// number型
-		ParamValue numberParam = ConvertToParamValue(42);
+		ParamValue numberParam = MakeParamValue(42);
 		REQUIRE(GetParamType(numberParam) == ParamType::Number);
 		REQUIRE(GetParamValueAs<int>(numberParam).value_or(0) == 42);
 		
 		// string型
-		ParamValue stringParam = ConvertToParamValue(U"test");
+		ParamValue stringParam = MakeParamValue(U"test");
 		REQUIRE(GetParamType(stringParam) == ParamType::String);
 		REQUIRE(GetParamValueAs<String>(stringParam).value_or(U"") == U"test");
 		
 		// color型
-		ParamValue colorParam = ConvertToParamValue(Color{255, 0, 0});
+		ParamValue colorParam = MakeParamValue(Color{255, 0, 0});
 		REQUIRE(GetParamType(colorParam) == ParamType::Color);
 		auto colorValue = GetParamValueAs<Color>(colorParam);
 		REQUIRE(colorValue.has_value());
 		REQUIRE(colorValue->r == 255);
 		
 		// vec2型
-		ParamValue vec2Param = ConvertToParamValue(Vec2{1, 2});
+		ParamValue vec2Param = MakeParamValue(Vec2{1, 2});
 		REQUIRE(GetParamType(vec2Param) == ParamType::Vec2);
 		auto vec2Value = GetParamValueAs<Vec2>(vec2Param);
 		REQUIRE(vec2Value.has_value());
@@ -38,7 +38,7 @@ TEST_CASE("Parameter values", "[Param]")
 		REQUIRE(vec2Value->y == 2);
 		
 		// lrtb型
-		ParamValue lrtbParam = ConvertToParamValue(LRTB{10, 20, 30, 40});
+		ParamValue lrtbParam = MakeParamValue(LRTB{10, 20, 30, 40});
 		REQUIRE(GetParamType(lrtbParam) == ParamType::LRTB);
 		auto lrtbValue = GetParamValueAs<LRTB>(lrtbParam);
 		REQUIRE(lrtbValue.has_value());
@@ -48,14 +48,14 @@ TEST_CASE("Parameter values", "[Param]")
 	SECTION("Number conversions")
 	{
 		// 各種数値型のテスト
-		ParamValue intParam = ConvertToParamValue(42);
+		ParamValue intParam = MakeParamValue(42);
 		REQUIRE(GetParamValueAs<int32>(intParam).value_or(0) == 42);
 		REQUIRE(GetParamValueAs<uint32>(intParam).value_or(0) == 42);
 		REQUIRE(GetParamValueAs<float>(intParam).value_or(0.0f) == 42.0f);
 		REQUIRE(GetParamValueAs<double>(intParam).value_or(0.0) == 42.0);
 		
 		// 負の値
-		ParamValue negativeParam = ConvertToParamValue(-50);
+		ParamValue negativeParam = MakeParamValue(-50);
 		REQUIRE(GetParamValueAs<int32>(negativeParam).value_or(0) == -50);
 		// unsignedへの変換では0になる
 		REQUIRE(GetParamValueAs<uint32>(negativeParam).value_or(1) == 0);
@@ -64,7 +64,7 @@ TEST_CASE("Parameter values", "[Param]")
 	SECTION("Color conversions")
 	{
 		// ColorとColorFの相互変換
-		ParamValue colorParam = ConvertToParamValue(Palette::Yellow);
+		ParamValue colorParam = MakeParamValue(Palette::Yellow);
 		
 		// ColorFとして取得
 		auto colorF = GetParamValueAs<ColorF>(colorParam);
