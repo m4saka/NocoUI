@@ -47,6 +47,15 @@ namespace noco::editor
 		
 		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override
 		{
+			// 既存のパラメータ名から重複しない初期名を生成
+			constexpr StringView DefaultName = U"param";
+			int suffixNum = 1;
+			String initialName = U"{}{}"_fmt(DefaultName, suffixNum);
+			while (m_canvas->param(initialName).has_value())
+			{
+				suffixNum++;
+				initialName = U"{}{}"_fmt(DefaultName, suffixNum);
+			}
 			// タイトル
 			const auto titleNode = contentRootNode->emplaceChild(
 				U"Title",
@@ -94,7 +103,7 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ -80, 26 },
+					.sizeDelta = Vec2{ -88, 26 },
 				});
 			nameTextBoxNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
@@ -104,7 +113,7 @@ namespace noco::editor
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, 
 				HorizontalAlign::Left, VerticalAlign::Middle, 
 				Palette::White, ColorF{ Palette::Orange, 0.5 });
-			m_nameTextBox->setText(U"param1");
+			m_nameTextBox->setText(initialName);
 			nameTextBoxNode->emplaceComponent<TabStop>();
 			
 			// 型選択
