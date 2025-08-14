@@ -760,7 +760,7 @@ namespace noco
 		const RectF rect = node.regionRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 		
 		// クリッピング用の矩形（Transformer2DがScissorRectに効かないため）
-		const RectF clipRect = node.unrotatedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF clipRect = node.unrotatedTransformedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text.value(),

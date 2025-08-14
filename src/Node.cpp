@@ -1043,7 +1043,7 @@ namespace noco
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_rotatedQuad.contains(point))
+		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
 		}
@@ -1075,7 +1075,7 @@ namespace noco
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
 		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_rotatedQuad.contains(point))
+		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
 		}
@@ -1457,7 +1457,7 @@ namespace noco
 		// 親の変換と合成（親の変換が先に適用される）
 		m_transformMatInHierarchy = selfTransform * parentTransformMat;
 		
-		// rotatedQuadを計算
+		// transformedQuadを計算
 		const Vec2 topLeft = m_transformMatInHierarchy.transformPoint(m_regionRect.pos);
 		const Vec2 topRight = m_transformMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{m_regionRect.w, 0});
 		const Vec2 bottomRight = m_transformMatInHierarchy.transformPoint(m_regionRect.br());
@@ -1470,22 +1470,22 @@ namespace noco
 			if (visualScale.x < 0 && visualScale.y >= 0)
 			{
 				// X軸のみ反転
-				m_rotatedQuad = Quad{ topRight, topLeft, bottomLeft, bottomRight };
+				m_transformedQuad = Quad{ topRight, topLeft, bottomLeft, bottomRight };
 			}
 			else if (visualScale.x >= 0 && visualScale.y < 0)
 			{
 				// Y軸のみ反転
-				m_rotatedQuad = Quad{ bottomLeft, bottomRight, topRight, topLeft };
+				m_transformedQuad = Quad{ bottomLeft, bottomRight, topRight, topLeft };
 			}
 			else
 			{
 				// XY両軸反転
-				m_rotatedQuad = Quad{ bottomRight, bottomLeft, topLeft, topRight };
+				m_transformedQuad = Quad{ bottomRight, bottomLeft, topLeft, topRight };
 			}
 		}
 		else
 		{
-			m_rotatedQuad = Quad{ topLeft, topRight, bottomRight, bottomLeft };
+			m_transformedQuad = Quad{ topLeft, topRight, bottomRight, bottomLeft };
 		}
 		
 		// HitTest用の変換行列を計算
@@ -1644,7 +1644,7 @@ namespace noco
 		Optional<detail::ScopedScissorRect> scissorRect;
 		if (m_clippingEnabled)
 		{
-			scissorRect.emplace(unrotatedRect().asRect());
+			scissorRect.emplace(unrotatedTransformedRect().asRect());
 		}
 
 		// Transformの乗算カラーを適用
@@ -1719,7 +1719,7 @@ namespace noco
 							const double x = scrolledRatio * (viewWidth - w);
 							const double thickness = 4.0 * scale.y;
 
-							const RectF unrotated = unrotatedRect();
+							const RectF unrotated = unrotatedTransformedRect();
 							const RectF backgroundRect
 							{
 								unrotated.x,
@@ -1752,7 +1752,7 @@ namespace noco
 							const double y = scrolledRatio * (viewHeight - h);
 							const double thickness = 4.0 * scale.x;
 
-							const RectF unrotated = unrotatedRect();
+							const RectF unrotated = unrotatedTransformedRect();
 							const RectF backgroundRect
 							{
 								unrotated.x + unrotated.w - thickness,
@@ -1831,18 +1831,18 @@ namespace noco
 		return Math::Atan2(m_transformMatInHierarchy._21 / scaleX, m_transformMatInHierarchy._11 / scaleX);
 	}
 	
-	RectF Node::unrotatedRect() const
+	RectF Node::unrotatedTransformedRect() const
 	{	
 		// 変換行列から回転成分を抽出
 		const double rotation = Math::Atan2(m_transformMatInHierarchy._21, m_transformMatInHierarchy._11);
 		
 		// Quadの中心を軸に逆回転
-		const Vec2 center = (m_rotatedQuad.p0 + m_rotatedQuad.p1 + m_rotatedQuad.p2 + m_rotatedQuad.p3) / 4;
+		const Vec2 center = (m_transformedQuad.p0 + m_transformedQuad.p1 + m_transformedQuad.p2 + m_transformedQuad.p3) / 4;
 		const Mat3x2 inverseRotationMat = Mat3x2::Rotate(-rotation, center);
-		const Vec2 p0 = inverseRotationMat.transformPoint(m_rotatedQuad.p0);
-		const Vec2 p1 = inverseRotationMat.transformPoint(m_rotatedQuad.p1);
-		const Vec2 p2 = inverseRotationMat.transformPoint(m_rotatedQuad.p2);
-		const Vec2 p3 = inverseRotationMat.transformPoint(m_rotatedQuad.p3);
+		const Vec2 p0 = inverseRotationMat.transformPoint(m_transformedQuad.p0);
+		const Vec2 p1 = inverseRotationMat.transformPoint(m_transformedQuad.p1);
+		const Vec2 p2 = inverseRotationMat.transformPoint(m_transformedQuad.p2);
+		const Vec2 p3 = inverseRotationMat.transformPoint(m_transformedQuad.p3);
 		
 		// スケールの縦横比が1:1でなく平行四辺形になる場合用に、幅と高さは対辺の中点を結んで算出
 		const Vec2 midTop = (p0 + p1) / 2;
@@ -1918,13 +1918,13 @@ namespace noco
 	Vec2 Node::transformPivotPos() const
 	{
 		const Vec2& pivot = m_transform.pivot().value();
-		const RectF unrotated = unrotatedRect();
+		const RectF unrotated = unrotatedTransformedRect();
 		return unrotated.pos + unrotated.size * pivot;
 	}
 
-	const Quad& Node::rotatedQuad() const
+	const Quad& Node::transformedQuad() const
 	{
-		return m_rotatedQuad;
+		return m_transformedQuad;
 	}
 
 	Quad Node::hitTestQuad(IncludingPaddingYN includingPadding) const

@@ -489,7 +489,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		child->transform().setRotation(45.0);
 		canvas->update();
 		
-		Console << U"Child rotatedQuad: " << child->rotatedQuad();
+		Console << U"Child transformedQuad: " << child->transformedQuad();
 		Console << U"Child hitTestQuad: " << child->hitTestQuad();
 		
 		// 子の実際の位置でテスト (回転後の子の中心付近の点)
@@ -541,8 +541,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 親のappliesToHitTest=falseなので、子は元の位置(0,0)基準で自身の回転のみ適用
 		// 子の元の位置は(20,20-80,80)、30度回転で左辺中央を中心に回転
 		
-		Console << U"Parent rotatedQuad: " << parent->rotatedQuad();
-		Console << U"Child rotatedQuad: " << child->rotatedQuad();
+		Console << U"Parent transformedQuad: " << parent->transformedQuad();
+		Console << U"Child transformedQuad: " << child->transformedQuad();
 		Console << U"Child quad p0: " << child->hitTestQuad().p0;
 		
 		// 子は20,20から80,80の矩形で、左辺中央(20,50)を中心に30度回転
@@ -819,9 +819,9 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		Console << U"Grandparent rotatedQuad: " << grandparent->rotatedQuad();
-		Console << U"Parent rotatedQuad: " << parent->rotatedQuad();
-		Console << U"Child rotatedQuad: " << child->rotatedQuad();
+		Console << U"Grandparent transformedQuad: " << grandparent->transformedQuad();
+		Console << U"Parent transformedQuad: " << parent->transformedQuad();
+		Console << U"Child transformedQuad: " << child->transformedQuad();
 		Console << U"Child hitTestQuad p0: " << child->hitTestQuad().p0;
 		
 		// 子の総回転は60°（祖父母の20° + 子の40°）、親の30°はスキップされる
@@ -860,8 +860,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		Console << U"Parent rotatedQuad: " << parent->rotatedQuad();
-		Console << U"Child rotatedQuad: " << child->rotatedQuad();
+		Console << U"Parent transformedQuad: " << parent->transformedQuad();
+		Console << U"Child transformedQuad: " << child->transformedQuad();
 		
 		// 親のスケールは無視される（実際は(0,0)から(100,100)）
 		// 子の範囲(0,0)-(50,50)外で親の範囲内の点をテスト
@@ -901,8 +901,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		Console << U"Parent rotatedQuad: " << parent->rotatedQuad();
-		Console << U"Child rotatedQuad: " << child->rotatedQuad();
+		Console << U"Parent transformedQuad: " << parent->transformedQuad();
+		Console << U"Child transformedQuad: " << child->transformedQuad();
 		
 		// 両方とも変換が無視される
 		// 親のヒットテスト範囲：(0,0)から(200,200)（位置変換が無視される）
@@ -944,7 +944,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		const double expectedX = 235.35534;
 		const double expectedY = 93.93398;
 		
-		auto childQuad = child->rotatedQuad();
+		auto childQuad = child->transformedQuad();
 		Console << U"Parent rotation test - child quad: " << childQuad;
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
 		Console << U"Child regionRect: " << child->regionRect();
@@ -984,7 +984,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		const double expectedX = 100.0;
 		const double expectedY = 175.0;
 		
-		auto childQuad = child->rotatedQuad();
+		auto childQuad = child->transformedQuad();
 		Console << U"Parent scale test - child quad: " << childQuad;
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
 		REQUIRE(childQuad.p0.x == Approx(expectedX).margin(0.01));
@@ -1017,14 +1017,14 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		const double expectedX = 197.05771;
 		const double expectedY = 25.09619;
 		
-		auto childQuad = child->rotatedQuad();
-		auto childRect = child->unrotatedRect();
+		auto childQuad = child->transformedQuad();
+		auto childRect = child->unrotatedTransformedRect();
 		Console << U"Combined test - child quad: " << childQuad;
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
 		// 変換後の実際の位置（左上頂点）を確認
 		REQUIRE(childQuad.p0.x == Approx(expectedX).margin(0.01));
 		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
-		// 親のスケール(1.5, 1.5)が子のサイズにも適用される（unrotatedRectで確認）
+		// 親のスケール(1.5, 1.5)が子のサイズにも適用される（unrotatedTransformedRectで確認）
 		REQUIRE(childRect.w == Approx(120.0).margin(0.01));
 		REQUIRE(childRect.h == Approx(120.0).margin(0.01));
 	}
@@ -1054,8 +1054,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 親の中心(50,50) + 回転後のオフセット(0,40) = (50,90)
 		const Vec2 expectedCenter{ 50.0, 90.0 };
 		
-		// 描画位置を確認（rotatedQuadで回転を含む完全な変換後の位置を取得）
-		auto childRotatedQuad = child->rotatedQuad();
+		// 描画位置を確認（transformedQuadで回転を含む完全な変換後の位置を取得）
+		auto childRotatedQuad = child->transformedQuad();
 		Console << U"90° rotation test - child rotated quad: " << childRotatedQuad;
 		
 		// 実際の変換後の位置を確認
@@ -1105,8 +1105,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 親の中心(150,150) + 回転後のオフセット(0,-30) = (150,120)
 		const Vec2 expectedCenter{ 150.0, 120.0 };
 		
-		// 描画位置を確認（rotatedQuadで回転を含む完全な変換後の位置を取得）
-		auto childRotatedQuad = child->rotatedQuad();
+		// 描画位置を確認（transformedQuadで回転を含む完全な変換後の位置を取得）
+		auto childRotatedQuad = child->transformedQuad();
 		Console << U"-90° rotation test - child rotated quad: " << childRotatedQuad;
 		
 		// 実際の変換後の位置を確認  
@@ -1133,10 +1133,10 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 }
 
 // ========================================
-// unrotatedRect のテスト
+// unrotatedTransformedRect のテスト
 // ========================================
 
-TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform][unrotatedRect]")
+TEST_CASE("Node::unrotatedTransformedRect with various transformations", "[Node][Transform][unrotatedTransformedRect]")
 {
 	SECTION("No rotation with scale")
 	{
@@ -1151,7 +1151,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		canvas->rootNode()->addChild(node);
 		canvas->update();
 		
-		const RectF unrotated = node->unrotatedRect();
+		const RectF unrotated = node->unrotatedTransformedRect();
 		
 		// サイズの確認（100×2.0 = 200, 50×1.5 = 75）
 		REQUIRE(Math::Abs(unrotated.w - 200.0) < 0.01);
@@ -1170,7 +1170,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		canvas->rootNode()->addChild(node);
 		canvas->update();
 		
-		const RectF unrotated = node->unrotatedRect();
+		const RectF unrotated = node->unrotatedTransformedRect();
 		
 		// サイズの確認（回転しても元のサイズを保持）
 		REQUIRE(Math::Abs(unrotated.w - 100.0) < 0.01);
@@ -1190,7 +1190,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		canvas->rootNode()->addChild(node);
 		canvas->update();
 		
-		const RectF unrotated = node->unrotatedRect();
+		const RectF unrotated = node->unrotatedTransformedRect();
 		
 		// サイズの確認
 		REQUIRE(Math::Abs(unrotated.w - 200.0) < 0.01);
@@ -1214,7 +1214,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		parent->addChild(child);
 		canvas->update();
 		
-		const RectF unrotated = child->unrotatedRect();
+		const RectF unrotated = child->unrotatedTransformedRect();
 		
 		// 縦横比が保持されることを確認
 		const double aspectRatio = unrotated.w / unrotated.h;
@@ -1239,7 +1239,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		canvas->rootNode()->addChild(node);
 		canvas->update();
 		
-		const RectF unrotated = node->unrotatedRect();
+		const RectF unrotated = node->unrotatedTransformedRect();
 		
 		// サイズの確認（100×1.5 = 150, 50×2.0 = 100）
 		REQUIRE(Math::Abs(unrotated.w - 150.0) < 0.01);
@@ -1268,7 +1268,7 @@ TEST_CASE("Node::unrotatedRect with various transformations", "[Node][Transform]
 		parent->addChild(child);
 		canvas->update();
 		
-		const RectF unrotated = child->unrotatedRect();
+		const RectF unrotated = child->unrotatedTransformedRect();
 		
 		// 合計45度の回転があっても、正しいサイズを保持
 		REQUIRE(Math::Abs(unrotated.w - 200.0) < 0.01);

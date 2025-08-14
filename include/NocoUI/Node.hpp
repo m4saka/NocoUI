@@ -50,7 +50,7 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_regionRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ Quad m_rotatedQuad;
+		/* NonSerialized */ Quad m_transformedQuad;
 		/* NonSerialized */ Quad m_hitTestQuad;
 		/* NonSerialized */ Quad m_hitTestQuadWithPadding;
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
@@ -330,7 +330,7 @@ namespace noco
 
 		// 回転を除いた矩形を取得
 		[[nodiscard]]
-		RectF unrotatedRect() const;
+		RectF unrotatedTransformedRect() const;
 
 		[[nodiscard]]
 		double extractRotationFromTransformMat() const;
@@ -348,7 +348,7 @@ namespace noco
 		Vec2 transformPivotPos() const;
 
 		[[nodiscard]]
-		const Quad& rotatedQuad() const;
+		const Quad& transformedQuad() const;
 
 		[[nodiscard]]
 		Quad hitTestQuad(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;

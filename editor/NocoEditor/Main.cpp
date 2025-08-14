@@ -402,7 +402,7 @@ public:
 	{
 		m_canvas->draw();
 		constexpr double Thickness = 2.0;
-		m_canvas->rootNode()->rotatedQuad().drawFrame(0.0, Thickness, ColorF{ 1.0 });
+		m_canvas->rootNode()->transformedQuad().drawFrame(0.0, Thickness, ColorF{ 1.0 });
 		m_hierarchy.drawSelectedNodesGizmo();
 		m_editorCanvas->draw();
 		m_editorOverlayCanvas->draw();
