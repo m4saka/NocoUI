@@ -46,14 +46,7 @@ namespace noco::editor
 					.sizeDelta = SizeF{ -20, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			propertyNode->emplaceChild(
-				U"Spacing",
-				InlineRegion
-				{
-					.sizeRatio = Vec2{ 0, 0 },
-					.sizeDelta = SizeF{ 8, 0 },
-				});
-			propertyNode->setChildrenLayout(HorizontalLayout{}, RefreshesLayoutYN::No);
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 8, 0, 0, 0 } }, RefreshesLayoutYN::No);
 			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates));
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())

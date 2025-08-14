@@ -102,8 +102,9 @@ namespace noco::editor
 				U"NameTextBox",
 				InlineRegion
 				{
-					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ -88, 26 },
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ 0, 26 },
+					.flexibleWeight = 1.0,
 				});
 			nameTextBoxNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),

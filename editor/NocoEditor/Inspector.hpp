@@ -544,7 +544,8 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ -24, 32 },
+					.sizeDelta = Vec2{ 0, 32 },
+					.margin = LRTB{ 12, 12, 0, 0 },
 				},
 				IsHitTargetYN::Yes);
 			const auto textBoxNode = propertyNode->emplaceChild(
@@ -554,7 +555,7 @@ namespace noco::editor
 					.anchorMin = Anchor::MiddleLeft,
 					.anchorMax = Anchor::MiddleRight,
 					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ -16, 26 },
+					.sizeDelta = Vec2{ -4, 26 },
 					.sizeDeltaPivot = Anchor::MiddleCenter,
 				});
 			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
@@ -3763,7 +3764,7 @@ namespace noco::editor
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ -24, 24 },
+						.sizeDelta = Vec2{ 0, 24 },
 						.margin = LRTB{ 12, 12, 4, 0 },
 					},
 					[this, sprite, node](const std::shared_ptr<Node>&)
