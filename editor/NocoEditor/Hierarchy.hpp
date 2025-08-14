@@ -246,7 +246,7 @@ namespace noco::editor
 					Array<std::shared_ptr<Node>> newSelection;
 					newSelection.reserve(sourceNodes.size());
 
-					const auto rect = hierarchyNode->layoutAppliedRect();
+					const auto rect = hierarchyNode->regionRect();
 					const auto mouseX = Cursor::PosF().x;
 				
 					// X座標による階層の判定
@@ -468,7 +468,7 @@ namespace noco::editor
 					const auto& targetElement = *pTargetElement;
 
 					constexpr double Thickness = 4.0;
-					const auto rect = node.layoutAppliedRect();
+					const auto rect = node.regionRect();
 					const auto mouseX = Cursor::PosF().x;
 				
 					// X座標による階層の判定
@@ -754,7 +754,7 @@ namespace noco::editor
 				{
 					// 末尾にドロップする際のオレンジ色の線を描画
 					constexpr double Thickness = 4.0;
-					const auto rect = node.layoutAppliedRect();
+					const auto rect = node.regionRect();
 				
 					// ドラッグ中のノードを除外して最後の表示要素を見つける
 					const Element* pLastVisibleElement = nullptr;
@@ -776,7 +776,7 @@ namespace noco::editor
 				
 					if (pLastVisibleElement)
 					{
-						const auto lastRect = pLastVisibleElement->hierarchyNode()->layoutAppliedRect();
+						const auto lastRect = pLastVisibleElement->hierarchyNode()->regionRect();
 						// ルートノードの子として移動（nestLevel=0のラベル位置に合わせる）
 						const double lineY = lastRect.y + lastRect.h;
 						const Line line{ Vec2{rect.x + 35, lineY}, Vec2{rect.x + rect.w, lineY} };
@@ -1162,7 +1162,7 @@ namespace noco::editor
 			newParent->addChild(selectedNode);
 
 			// 元オブジェクトはアンカーがMiddleCenterのAnchorRegionに変更する
-			const RectF originalCalculatedRect = selectedNode->layoutAppliedRect();
+			const RectF originalCalculatedRect = selectedNode->regionRect();
 			selectedNode->setRegion(AnchorRegion
 			{
 				.anchorMin = Anchor::MiddleCenter,

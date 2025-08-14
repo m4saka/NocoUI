@@ -49,7 +49,7 @@ namespace noco
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
-		/* NonSerialized */ RectF m_layoutAppliedRect{ 0.0, 0.0, 0.0, 0.0 };
+		/* NonSerialized */ RectF m_regionRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Quad m_rotatedQuad;
 		/* NonSerialized */ Quad m_hitTestQuad;
 		/* NonSerialized */ Quad m_hitTestQuadWithPadding;
@@ -354,10 +354,10 @@ namespace noco
 		Quad hitTestQuad(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;
 
 		[[nodiscard]]
-		const RectF& layoutAppliedRect() const;
+		const RectF& regionRect() const;
 
 		[[nodiscard]]
-		RectF layoutAppliedRectWithMargin() const;
+		RectF regionRectWithMargin() const;
 
 		[[nodiscard]]
 		const Mat3x2& transformMatInHierarchy() const;

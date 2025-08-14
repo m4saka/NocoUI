@@ -77,7 +77,7 @@ namespace noco
 			node.setRegion(
 				InlineRegion
 				{
-					.sizeDelta = Vec2{ fitsWidth ? totalWidth : node.layoutAppliedRect().w, fitsHeight ? maxHeight : node.layoutAppliedRect().h },
+					.sizeDelta = Vec2{ fitsWidth ? totalWidth : node.regionRect().w, fitsHeight ? maxHeight : node.regionRect().h },
 					.maxWidth = none,
 					.maxHeight = none,
 				});

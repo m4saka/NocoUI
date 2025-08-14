@@ -401,7 +401,7 @@ namespace noco::editor
 					},
 					[this] (const std::shared_ptr<Node>& node)
 					{
-						m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->layoutAppliedRect().center());
+						m_inspectorInnerFrameNode->getComponent<ContextMenuOpener>()->openManually(node->regionRect().center());
 					}))->addClickHotKey(KeyA, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 			}
 			else
@@ -2570,7 +2570,7 @@ namespace noco::editor
 								.anchorMin = Anchor::MiddleCenter,
 								.anchorMax = Anchor::MiddleCenter,
 								.posDelta = Vec2::Zero(),
-								.sizeDelta = node->layoutAppliedRect().size,
+								.sizeDelta = node->regionRect().size,
 								.sizeDeltaPivot = Vec2{ 0.5, 0.5 },
 							});
 							m_defaults->regionType = RegionType::AnchorRegion; // 次回のデフォルト値として記憶
@@ -2644,7 +2644,7 @@ namespace noco::editor
 							node->setRegion(InlineRegion
 							{
 								.sizeRatio = Vec2::Zero(),
-								.sizeDelta = node->layoutAppliedRect().size,
+								.sizeDelta = node->regionRect().size,
 							});
 							m_defaults->regionType = RegionType::InlineRegion; // 次回のデフォルト値として記憶
 							refreshInspector(); // 項目に変更があるため更新

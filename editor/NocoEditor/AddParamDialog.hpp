@@ -206,7 +206,7 @@ namespace noco::editor
 				});
 			}
 			
-			dialogContextMenu->show(m_typeComboBox->layoutAppliedRect().bl(), menuElements);
+			dialogContextMenu->show(m_typeComboBox->regionRect().bl(), menuElements);
 		}
 		
 		void selectType(const String& type)

@@ -255,7 +255,7 @@ namespace noco
 			texture = GetTexture(textureFilePath, textureAssetName);
 		}
 		
-		const RectF rect = node.layoutAppliedRect();
+		const RectF rect = node.regionRect();
 		const ColorF& color = m_color.value();
 		const ColorF& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();

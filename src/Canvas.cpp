@@ -135,11 +135,11 @@ namespace noco
 		const auto& rootRegion = m_rootNode->region();
 		if (const auto pInlineRegion = std::get_if<InlineRegion>(&rootRegion))
 		{
-			m_rootNode->m_layoutAppliedRect = pInlineRegion->applyRegion(Scene::Rect(), Vec2::Zero());
+			m_rootNode->m_regionRect = pInlineRegion->applyRegion(Scene::Rect(), Vec2::Zero());
 		}
 		else if (const auto pAnchorRegion = std::get_if<AnchorRegion>(&rootRegion))
 		{
-			m_rootNode->m_layoutAppliedRect = pAnchorRegion->applyRegion(Scene::Rect(), Vec2::Zero());
+			m_rootNode->m_regionRect = pAnchorRegion->applyRegion(Scene::Rect(), Vec2::Zero());
 		}
 		else
 		{

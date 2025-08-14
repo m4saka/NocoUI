@@ -429,7 +429,7 @@ namespace noco
 		const Vec2 verticalPadding = m_verticalPadding.value();
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node->layoutAppliedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node->regionRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
@@ -929,7 +929,7 @@ namespace noco
 		const Vec2 verticalPadding = m_verticalPadding.value();
 
 		// stretchedはtop,right,bottom,leftの順
-		const RectF rect = node.layoutAppliedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+		const RectF rect = node.regionRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
 		
 		// クリッピング用の矩形（Transformer2DがScissorRectに効かないため）
 		const RectF clipRect = node.unrotatedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);

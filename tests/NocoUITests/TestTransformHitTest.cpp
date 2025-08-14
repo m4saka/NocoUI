@@ -947,8 +947,8 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		auto childQuad = child->rotatedQuad();
 		Console << U"Parent rotation test - child quad: " << childQuad;
 		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
-		Console << U"Child layoutAppliedRect: " << child->layoutAppliedRect();
-		Console << U"Parent layoutAppliedRect: " << parent->layoutAppliedRect();
+		Console << U"Child regionRect: " << child->regionRect();
+		Console << U"Parent regionRect: " << parent->regionRect();
 		INFO("Parent transform translate: " << parent->transform().translate().value());
 		INFO("Parent transform rotation: " << parent->transform().rotation().value());
 		INFO("Child transform translate: " << child->transform().translate().value());

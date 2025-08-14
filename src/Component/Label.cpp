@@ -119,7 +119,7 @@ namespace noco
 		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
 
-		const RectF rect = node.layoutAppliedRect().stretched(
+		const RectF rect = node.regionRect().stretched(
 			-padding.top,
 			-padding.right,
 			-padding.bottom,

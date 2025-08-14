@@ -157,8 +157,8 @@ namespace noco
 
 		const RectF& contentRect = *contentRectOpt;
 
-		const double viewWidth = m_layoutAppliedRect.w;
-		const double viewHeight = m_layoutAppliedRect.h;
+		const double viewWidth = m_regionRect.w;
+		const double viewHeight = m_regionRect.h;
 		const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
 		const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
 		if (maxScrollX <= 0.0 && maxScrollY <= 0.0)
@@ -192,8 +192,8 @@ namespace noco
 				if (contentRectOpt)
 				{
 					const RectF& contentRect = *contentRectOpt;
-					const double viewWidth = m_layoutAppliedRect.w;
-					const double viewHeight = m_layoutAppliedRect.h;
+					const double viewWidth = m_regionRect.w;
+					const double viewHeight = m_regionRect.h;
 					const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
 					const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
 					
@@ -289,12 +289,12 @@ namespace noco
 
 	SizeF Node::getFittingSizeToChildren() const
 	{
-		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_layoutAppliedRect, m_children); }, m_childrenLayout);
+		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_regionRect, m_children); }, m_childrenLayout);
 	}
 
 	std::shared_ptr<Node> Node::setInlineRegionToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
 	{
-		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setInlineRegionToFitToChildren(m_layoutAppliedRect, m_children, *this, fitTarget, refreshesLayout); }, m_childrenLayout);
+		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setInlineRegionToFitToChildren(m_regionRect, m_children, *this, fitTarget, refreshesLayout); }, m_childrenLayout);
 		return shared_from_this();
 	}
 
@@ -931,12 +931,12 @@ namespace noco
 	{
 		std::visit([this](const auto& layout)
 			{
-				layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
+				layout.execute(m_regionRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 					{
-						child->m_layoutAppliedRect = rect;
+						child->m_regionRect = rect;
 						if (child->hasInlineRegion())
 						{
-							child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
+							child->m_regionRect.moveBy(-m_scrollOffset);
 						}
 					});
 			}, m_childrenLayout);
@@ -953,12 +953,12 @@ namespace noco
 		{
 			std::visit([this](const auto& layout)
 				{
-					layout.execute(m_layoutAppliedRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
+					layout.execute(m_regionRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 						{
-							child->m_layoutAppliedRect = rect;
+							child->m_regionRect = rect;
 							if (child->hasInlineRegion())
 							{
-								child->m_layoutAppliedRect.moveBy(-m_scrollOffset);
+								child->m_regionRect.moveBy(-m_scrollOffset);
 							}
 						});
 				}, m_childrenLayout);
@@ -989,7 +989,7 @@ namespace noco
 			}
 			exists = true;
 
-			const RectF& childRect = child->layoutAppliedRectWithMargin();
+			const RectF& childRect = child->regionRectWithMargin();
 			left = Min(left, childRect.x);
 			top = Min(top, childRect.y);
 			right = Max(right, childRect.x + childRect.w);
@@ -1100,8 +1100,8 @@ namespace noco
 			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 			{
 				const RectF& contentRectLocal = *contentRectOpt;
-				if ((horizontalScrollable() && contentRectLocal.w > m_layoutAppliedRect.w) ||
-					(verticalScrollable() && contentRectLocal.h > m_layoutAppliedRect.h))
+				if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
+					(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
 				{
 					return shared_from_this();
 				}
@@ -1442,7 +1442,7 @@ namespace noco
 		const Vec2& translate = m_transform.translate().value();
 		const double rotation = m_transform.rotation().value();
 		
-		const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
+		const Vec2 pivotPos = m_regionRect.pos + m_regionRect.size * pivot;
 		
 		// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
 		Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
@@ -1458,10 +1458,10 @@ namespace noco
 		m_transformMatInHierarchy = selfTransform * parentTransformMat;
 		
 		// rotatedQuadを計算
-		const Vec2 topLeft = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 topRight = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{m_layoutAppliedRect.w, 0});
-		const Vec2 bottomRight = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.br());
-		const Vec2 bottomLeft = m_transformMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
+		const Vec2 topLeft = m_transformMatInHierarchy.transformPoint(m_regionRect.pos);
+		const Vec2 topRight = m_transformMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{m_regionRect.w, 0});
+		const Vec2 bottomRight = m_transformMatInHierarchy.transformPoint(m_regionRect.br());
+		const Vec2 bottomLeft = m_transformMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{0, m_regionRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
 		const Vec2& visualScale = m_transform.scale().value();
@@ -1492,10 +1492,10 @@ namespace noco
 		m_hitTestMatInHierarchy = calculateHitTestMatrix(parentHitTestMat);
 		
 		// HitTest用のQuadを計算
-		const Vec2 hitTopLeft = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos);
-		const Vec2 hitTopRight = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{m_layoutAppliedRect.w, 0});
-		const Vec2 hitBottomRight = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.br());
-		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_layoutAppliedRect.pos + Vec2{0, m_layoutAppliedRect.h});
+		const Vec2 hitTopLeft = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos);
+		const Vec2 hitTopRight = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{m_regionRect.w, 0});
+		const Vec2 hitBottomRight = m_hitTestMatInHierarchy.transformPoint(m_regionRect.br());
+		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{0, m_regionRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
 		if (m_transform.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
@@ -1523,10 +1523,10 @@ namespace noco
 		
 		// パディング有りのHitTestQuadを計算
 		const RectF paddedRect{
-			m_layoutAppliedRect.x - m_hitTestPadding.left,
-			m_layoutAppliedRect.y - m_hitTestPadding.top,
-			m_layoutAppliedRect.w + m_hitTestPadding.totalWidth(),
-			m_layoutAppliedRect.h + m_hitTestPadding.totalHeight()
+			m_regionRect.x - m_hitTestPadding.left,
+			m_regionRect.y - m_hitTestPadding.top,
+			m_regionRect.w + m_hitTestPadding.totalWidth(),
+			m_regionRect.h + m_hitTestPadding.totalHeight()
 		};
 		const Vec2 paddedTopLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos);
 		const Vec2 paddedTopRight = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{paddedRect.w, 0});
@@ -1709,7 +1709,7 @@ namespace noco
 					// 横スクロールバー
 					if (needHorizontalScrollBar)
 					{
-						const double viewWidth = m_layoutAppliedRect.w * scale.x;
+						const double viewWidth = m_regionRect.w * scale.x;
 						const double contentWidth = contentRectLocal.w * scale.x;
 						const double maxScrollX = (contentWidth > viewWidth) ? (contentWidth - viewWidth) : 0.0;
 						if (maxScrollX > 0.0)
@@ -1742,7 +1742,7 @@ namespace noco
 					// 縦スクロールバー
 					if (needVerticalScrollBar)
 					{
-						const double viewHeight = m_layoutAppliedRect.h * scale.y;
+						const double viewHeight = m_regionRect.h * scale.y;
 						const double contentHeight = contentRectLocal.h * scale.y;
 						const double maxScrollY = (contentHeight > viewHeight) ? (contentHeight - viewHeight) : 0.0;
 						if (maxScrollY > 0.0)
@@ -1865,7 +1865,7 @@ namespace noco
 			const Vec2& translate = m_transform.translate().value();
 			const double rotation = m_transform.rotation().value();
 			
-			const Vec2 pivotPos = m_layoutAppliedRect.pos + m_layoutAppliedRect.size * pivot;
+			const Vec2 pivotPos = m_regionRect.pos + m_regionRect.size * pivot;
 			
 			// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
 			Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
@@ -1941,9 +1941,9 @@ namespace noco
 		}
 	}
 
-	const RectF& Node::layoutAppliedRect() const
+	const RectF& Node::regionRect() const
 	{
-		return m_layoutAppliedRect;
+		return m_regionRect;
 	}
 
 	const Mat3x2& Node::transformMatInHierarchy() const
@@ -1951,22 +1951,22 @@ namespace noco
 		return m_transformMatInHierarchy;
 	}
 
-	RectF Node::layoutAppliedRectWithMargin() const
+	RectF Node::regionRectWithMargin() const
 	{
 		if (const InlineRegion* pInlineRegion = inlineRegion())
 		{
 			const LRTB& margin = pInlineRegion->margin;
 			return RectF
 			{
-				m_layoutAppliedRect.x - margin.left,
-				m_layoutAppliedRect.y - margin.top,
-				m_layoutAppliedRect.w + margin.left + margin.right,
-				m_layoutAppliedRect.h + margin.top + margin.bottom,
+				m_regionRect.x - margin.left,
+				m_regionRect.y - margin.top,
+				m_regionRect.w + margin.left + margin.right,
+				m_regionRect.h + margin.top + margin.bottom,
 			};
 		}
 		else
 		{
-			return m_layoutAppliedRect;
+			return m_regionRect;
 		}
 	}
 

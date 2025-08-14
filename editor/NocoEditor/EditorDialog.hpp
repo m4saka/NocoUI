@@ -543,7 +543,7 @@ namespace noco::editor
 			}
 		
 			// コンテキストメニュー表示
-			dialogContextMenu->show(m_styleStateComboBox->layoutAppliedRect().bl(), menuElements);
+			dialogContextMenu->show(m_styleStateComboBox->regionRect().bl(), menuElements);
 		}
 	
 		void selectStyleState(const String& styleState)

@@ -356,7 +356,7 @@ namespace noco::editor
 				}
 			}
 			
-			dialogContextMenu->show(m_comboBox->layoutAppliedRect().bl(), menuElements);
+			dialogContextMenu->show(m_comboBox->regionRect().bl(), menuElements);
 		}
 		
 		void selectParam(const String& paramName)
