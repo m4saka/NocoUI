@@ -711,6 +711,47 @@ public:
 				}));
 	}
 
+	bool loadFromFile(const FilePath& filePath, bool showMessageBoxOnError = true)
+	{
+		JSON json;
+		try
+		{
+			json = JSON::Load(filePath, AllowExceptions::Yes);
+		}
+		catch (...)
+		{
+			if (showMessageBoxOnError)
+			{
+				System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
+			}
+			return false;
+		}
+		m_filePath = filePath;
+		if (!m_canvas->tryReadFromJSON(json))
+		{
+			if (showMessageBoxOnError)
+			{
+				System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
+			}
+			return false;
+		}
+		const auto clearedParams = m_canvas->clearInvalidParamRefs();
+		refresh();
+		m_historySystem.clear();
+		m_toolbar.updateButtonStates();
+
+		// ファイルと同じディレクトリをアセットのルートディレクトリに設定
+		const String folderPath = FileSystem::ParentPath(filePath);
+		noco::Asset::SetBaseDirectoryPath(folderPath);
+
+		resetDirtyState();
+		if (showMessageBoxOnError)
+		{
+			showClearedParamRefsDialog(clearedParams);
+		}
+		return true;
+	}
+
 	void onClickMenuFileOpen()
 	{
 		showConfirmSaveIfDirty(
@@ -718,35 +759,7 @@ public:
 			{
 				if (const auto filePath = Dialog::OpenFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } }, FileFilter::AllFiles() }))
 				{
-					JSON json;
-					try
-					{
-						json = JSON::Load(*filePath, AllowExceptions::Yes);
-					}
-					catch (...)
-					{
-						System::MessageBoxOK(U"エラー", U"ファイルの読み込みに失敗しました", MessageBoxStyle::Error);
-						return;
-					}
-					m_filePath = filePath;
-					if (!m_canvas->tryReadFromJSON(json))
-					{
-						System::MessageBoxOK(U"エラー", U"データの読み取りに失敗しました", MessageBoxStyle::Error);
-						return;
-					}
-					// 無効なパラメータ参照を解除
-					const auto clearedParams = m_canvas->clearInvalidParamRefs();
-					refresh();
-					m_historySystem.clear();
-					m_toolbar.updateButtonStates();
-
-					// ファイルと同じディレクトリをアセットのルートディレクトリに設定
-					const String folderPath = FileSystem::ParentPath(*filePath);
-					noco::Asset::SetBaseDirectoryPath(folderPath);
-
-					resetDirtyState();
-					// 解除されたパラメータがあれば警告ダイアログを表示
-					showClearedParamRefsDialog(clearedParams);
+					loadFromFile(*filePath);
 				}
 			});
 	}
@@ -913,16 +926,38 @@ void Main()
 	System::SetTerminationTriggers(UserAction::NoAction);
 
 	Editor editor;
-	editor.rootNode()->setRegion(AnchorRegion
+	
+	const Array<String> commandLineArgs = System::GetCommandLineArgs();
+	bool fileLoaded = false;
+	
+	for (size_t i = 1; i < commandLineArgs.size(); ++i)
 	{
-		.anchorMin = Anchor::MiddleCenter,
-		.anchorMax = Anchor::MiddleCenter,
-		.posDelta = Vec2{ 0, 0 },
-		.sizeDelta = Vec2{ 800, 600 },
-	});
-	editor.refresh();
-	editor.createInitialNode();
-	editor.resetDirtyState();
+		const String& arg = commandLineArgs[i];
+		// .nocoファイルの場合は開く
+		if (FileSystem::Extension(arg) == U"noco" && FileSystem::Exists(arg))
+		{
+			if (editor.loadFromFile(arg, false))
+			{
+				fileLoaded = true;
+				break;
+			}
+		}
+	}
+	
+	// ファイルが読み込まれなかった場合は新規作成
+	if (!fileLoaded)
+	{
+		editor.rootNode()->setRegion(AnchorRegion
+		{
+			.anchorMin = Anchor::MiddleCenter,
+			.anchorMax = Anchor::MiddleCenter,
+			.posDelta = Vec2{ 0, 0 },
+			.sizeDelta = Vec2{ 800, 600 },
+		});
+		editor.refresh();
+		editor.createInitialNode();
+		editor.resetDirtyState();
+	}
 	
 	// 初期状態を記録
 	editor.recordInitialHistoryState();
