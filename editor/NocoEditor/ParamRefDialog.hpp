@@ -35,7 +35,8 @@ namespace noco::editor
 			{
 				return ParamType::Number;
 			}
-			else if (dynamic_cast<PropertyNonInteractive<String>*>(m_pProperty))
+			else if (dynamic_cast<Property<String>*>(m_pProperty) ||
+					 dynamic_cast<PropertyNonInteractive<String>*>(m_pProperty))
 			{
 				return ParamType::String;
 			}
@@ -102,6 +103,10 @@ namespace noco::editor
 				m_selectedParamName = pProp->paramRef();
 			}
 			else if (auto* pProp = dynamic_cast<SmoothProperty<double>*>(m_pProperty))
+			{
+				m_selectedParamName = pProp->paramRef();
+			}
+			else if (auto* pProp = dynamic_cast<Property<String>*>(m_pProperty))
 			{
 				m_selectedParamName = pProp->paramRef();
 			}
@@ -393,6 +398,10 @@ namespace noco::editor
 					pProp->setParamRef(m_selectedParamName);
 				}
 				else if (auto* pProp = dynamic_cast<SmoothProperty<double>*>(m_pProperty))
+				{
+					pProp->setParamRef(m_selectedParamName);
+				}
+				else if (auto* pProp = dynamic_cast<Property<String>*>(m_pProperty))
 				{
 					pProp->setParamRef(m_selectedParamName);
 				}

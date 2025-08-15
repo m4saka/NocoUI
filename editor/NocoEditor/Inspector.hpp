@@ -3228,13 +3228,15 @@ namespace noco::editor
 			case ParamType::String:
 				{
 					const String currentValue = GetParamValueAs<String>(value).value_or(U"");
-					propertyNode = CreatePropertyNode(
+					propertyNode = CreatePropertyNodeWithTextArea(
 						labelText,
 						currentValue,
 						[this, paramName](StringView text) 
 						{ 
 							m_canvas->setParamValue(paramName, String{ text });
-						});
+						},
+						HasInteractivePropertyValueYN::No,
+						3);
 				}
 				break;
 				
@@ -3689,70 +3691,95 @@ namespace noco::editor
 					}
 				}
 				
-				if (property->isInteractiveProperty())
+				// プロパティに対応するパラメータ型を取得する関数
+				auto getRequiredParamTypes = [](IProperty* prop) -> Array<ParamType>
 				{
-					// プロパティの型に応じて必要なパラメータ型を決定
-					ParamType requiredParamType = ParamType::String; // デフォルト
-					switch (property->editType())
+					// 型を直接チェックして適切なParamTypeを返す
+					if (dynamic_cast<Property<bool>*>(prop))
 					{
-					case PropertyEditType::Bool:
-						requiredParamType = ParamType::Bool;
-						break;
-					case PropertyEditType::Vec2:
-						requiredParamType = ParamType::Vec2;
-						break;
-					case PropertyEditType::Color:
-						requiredParamType = ParamType::Color;
-						break;
-					case PropertyEditType::LRTB:
-						requiredParamType = ParamType::LRTB;
-						break;
-					case PropertyEditType::Text:
-					case PropertyEditType::Enum:
-						// テキストとEnumは複雑なので別処理
-						requiredParamType = ParamType::String;
-						break;
+						return { ParamType::Bool };
 					}
-					
-					Array<MenuElement> menuElements
+					else if (dynamic_cast<Property<double>*>(prop) ||
+							 dynamic_cast<SmoothProperty<double>*>(prop) ||
+							 dynamic_cast<Property<int32>*>(prop) ||
+							 dynamic_cast<Property<uint32>*>(prop))
 					{
-						MenuItem
+						return { ParamType::Number };
+					}
+					else if (dynamic_cast<Property<String>*>(prop) ||
+							 dynamic_cast<PropertyNonInteractive<String>*>(prop))
+					{
+						return { ParamType::String };
+					}
+					else if (dynamic_cast<Property<ColorF>*>(prop) ||
+							 dynamic_cast<SmoothProperty<ColorF>*>(prop))
+					{
+						return { ParamType::Color };
+					}
+					else if (dynamic_cast<Property<Vec2>*>(prop) ||
+							 dynamic_cast<SmoothProperty<Vec2>*>(prop))
+					{
+						return { ParamType::Vec2 };
+					}
+					else if (dynamic_cast<Property<LRTB>*>(prop) ||
+							 dynamic_cast<SmoothProperty<LRTB>*>(prop))
+					{
+						return { ParamType::LRTB };
+					}
+					else
+					{
+						return { ParamType::String };
+					}
+				};
+				
+				const Array<ParamType> requiredParamTypes = getRequiredParamTypes(property);
+				
+				// インタラクティブプロパティか否かに関わらず右クリックメニューを追加
+				const bool isInteractive = property->isInteractiveProperty();
+				
+				Array<MenuElement> menuElements
+				{
+					MenuItem
+					{ 
+						.text = U"ステート毎に値を変更..."_fmt(property->name()), 
+						.hotKeyText = U"", 
+						.mnemonicInput = KeyC, 
+						.onClick = [this, property] 
 						{ 
-							U"ステート毎に値を変更..."_fmt(property->name()), 
-							U"", 
-							KeyC, 
-							[this, property] 
-							{ 
-								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); }, m_dialogOpener)); 
-							} 
+							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(property, [this] { refreshInspector(); }, m_dialogOpener)); 
 						},
-						MenuItem
+						// PropertyNonInteractiveの場合は無効化
+						.fnIsEnabled = [isInteractive] { return isInteractive; }
+					},
+					MenuItem
+					{ 
+						.text = U"参照パラメータを選択..."_fmt(property->name()), 
+						.hotKeyText = U"", 
+						.mnemonicInput = KeyP, 
+						.onClick = [this, property] 
 						{ 
-							.text = U"参照パラメータを選択..."_fmt(property->name()), 
-							.hotKeyText = U"", 
-							.mnemonicInput = KeyP, 
-							.onClick = [this, property] 
-							{ 
-								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); })); 
-							},
-							.fnIsEnabled = [this, property, requiredParamType] 
-							{ 
-								// Text/Enumの場合は特別処理
-								if (property->editType() == PropertyEditType::Text || property->editType() == PropertyEditType::Enum)
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); })); 
+						},
+						.fnIsEnabled = [this, requiredParamTypes] 
+						{ 
+							// 必要なパラメータ型のいずれかが存在するかチェック
+							for (const auto& paramType : requiredParamTypes)
+							{
+								if (hasAnyParamsForType(paramType))
 								{
-									return hasAnyParamsForType(ParamType::Number) || hasAnyParamsForType(ParamType::String);
+									return true;
 								}
-								return hasAnyParamsForType(requiredParamType);
 							}
-						},
-					};
-					
-					propertyNode->emplaceComponent<ContextMenuOpener>(
-						m_contextMenu,
-						menuElements,
-						nullptr,
-						RecursiveYN::Yes);
-				}
+							return false;
+						}
+					},
+				};
+				
+				propertyNode->emplaceComponent<ContextMenuOpener>(
+					m_contextMenu,
+					menuElements,
+					nullptr,
+					RecursiveYN::Yes);
 			}
 
 			// Spriteコンポーネントの場合、スナップボタンを追加
