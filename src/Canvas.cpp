@@ -79,7 +79,7 @@ namespace noco
 
 	Canvas::Canvas()
 		: Canvas{ Node::Create(
-			U"Canvas",
+			U"Root",
 			AnchorRegion
 			{
 				.anchorMin = Anchor::TopLeft,

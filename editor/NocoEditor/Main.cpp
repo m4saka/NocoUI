@@ -652,7 +652,7 @@ public:
 						.posDelta = Vec2{ 0, 0 },
 						.sizeDelta = Vec2{ 800, 600 },
 					},
-					U"Canvas");
+					U"Root");
 				refresh();
 				createInitialNode();
 				m_historySystem.clear();

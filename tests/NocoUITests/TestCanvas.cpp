@@ -13,7 +13,7 @@ TEST_CASE("Canvas system", "[Canvas]")
 		auto canvas = noco::Canvas::Create();
 		REQUIRE(canvas != nullptr);
 		REQUIRE(canvas->rootNode() != nullptr);
-		REQUIRE(canvas->rootNode()->name() == U"Canvas");
+		REQUIRE(canvas->rootNode()->name() == U"Root");
 	}
 
 	SECTION("Add node to canvas")

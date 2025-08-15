@@ -404,7 +404,7 @@ namespace noco
 
 		void resetWithNewRootNode(
 			const RegionVariant& region,
-			const String& name = U"Canvas",
+			const String& name = U"Root",
 			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		std::shared_ptr<Canvas> setPosition(const Vec2& position);
