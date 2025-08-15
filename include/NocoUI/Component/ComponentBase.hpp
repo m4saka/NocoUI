@@ -150,6 +150,17 @@ namespace noco
 		{
 			return m_internalId;
 		}
+
+		void replaceParamRef(StringView oldName, StringView newName)
+		{
+			for (IProperty* property : properties())
+			{
+				if (property->paramRef() == oldName)
+				{
+					property->setParamRef(String{ newName });
+				}
+			}
+		}
 	};
 
 	inline SerializableComponentBase::~SerializableComponentBase() = default;

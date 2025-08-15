@@ -85,6 +85,8 @@ namespace noco
 		size_t countParamRef(StringView paramName) const;
 
 		void clearParamRef(StringView paramName);
+		
+		void replaceParamRef(StringView oldName, StringView newName);
 
 		Array<String> clearInvalidParamRefs(const HashTable<String, ParamValue>& validParams);
 	};

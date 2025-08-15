@@ -199,6 +199,34 @@ namespace noco
 		}
 	}
 
+	void Transform::replaceParamRef(StringView oldName, StringView newName)
+	{
+		if (m_translate.paramRef() == oldName)
+		{
+			m_translate.setParamRef(String{ newName });
+		}
+		if (m_scale.paramRef() == oldName)
+		{
+			m_scale.setParamRef(String{ newName });
+		}
+		if (m_pivot.paramRef() == oldName)
+		{
+			m_pivot.setParamRef(String{ newName });
+		}
+		if (m_rotation.paramRef() == oldName)
+		{
+			m_rotation.setParamRef(String{ newName });
+		}
+		if (m_appliesToHitTest.paramRef() == oldName)
+		{
+			m_appliesToHitTest.setParamRef(String{ newName });
+		}
+		if (m_color.paramRef() == oldName)
+		{
+			m_color.setParamRef(String{ newName });
+		}
+	}
+
 	Array<String> Transform::clearInvalidParamRefs(const HashTable<String, ParamValue>& validParams)
 	{
 		HashSet<String> clearedParamsSet;

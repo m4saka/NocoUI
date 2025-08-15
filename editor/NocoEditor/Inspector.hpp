@@ -31,7 +31,6 @@ namespace noco::editor
 		bool m_isCanvasSelected = false;  // Canvasが選択されているか
 		std::function<void()> m_onChangeNodeName;
 		
-		// パラメータ存在チェック用ヘルパー関数
 		[[nodiscard]]
 		bool hasAnyParamsForType(ParamType type) const
 		{
@@ -42,6 +41,49 @@ namespace noco::editor
 				if (GetParamType(value) == type) return true;
 			}
 			return false;
+		}
+		
+		void renameParam(const String& oldName, const String& newName)
+		{
+			if (!m_canvas)
+			{
+				return;
+			}
+			
+			const auto paramValue = m_canvas->param(oldName);
+			if (!paramValue)
+			{
+				return;
+			}
+			
+			m_canvas->setParamValue(newName, *paramValue);
+			
+			updateParamReferencesRecursive(m_canvas->rootNode(), oldName, newName);
+			
+			m_canvas->removeParam(oldName);
+		}
+		
+		void updateParamReferencesRecursive(const std::shared_ptr<Node>& node, const String& oldName, const String& newName)
+		{
+			if (!node)
+			{
+				return;
+			}
+			
+			node->transform().replaceParamRef(oldName, newName);
+			
+			for (const auto& component : node->components())
+			{
+				if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
+				{
+					serializableComponent->replaceParamRef(oldName, newName);
+				}
+			}
+			
+			for (const auto& child : node->children())
+			{
+				updateParamReferencesRecursive(child, oldName, newName);
+			}
 		}
 
 		IsFoldedYN m_isFoldedRegion = IsFoldedYN::No;
@@ -3288,6 +3330,102 @@ namespace noco::editor
 			{
 				Array<MenuElement> menuElements
 				{
+					MenuItem
+					{
+						.text = U"名前の変更...",
+						.mnemonicInput = KeyR,
+						.onClick = [this, paramName, value]
+						{
+							const size_t refCount = m_canvas ? m_canvas->countParamRef(paramName) : 0;
+							String dialogMessage = U"新しいパラメータ名を入力してください";
+							if (refCount > 0)
+							{
+								dialogMessage += U"\n({}件の参照も名前変更後のパラメータへ更新されます)"_fmt(refCount);
+							}
+							
+							m_dialogOpener->openDialog(
+								std::make_shared<SimpleInputDialog>(
+									dialogMessage,
+									paramName,
+									[this, paramName, value](StringView resultButtonText, StringView inputText)
+									{
+										if (resultButtonText == U"OK")
+										{
+											const String newName = String{ inputText }.trimmed();
+											
+											if (newName.isEmpty())
+											{
+												m_dialogOpener->openDialog(
+													std::make_shared<SimpleDialog>(
+														U"パラメータ名を空にすることはできません",
+														[](StringView) {},
+														Array<DialogButtonDesc>
+														{
+															DialogButtonDesc
+															{
+																.text = U"OK",
+																.mnemonicInput = KeyO,
+																.isDefaultButton = IsDefaultButtonYN::Yes,
+															},
+														}));
+											}
+											else if (newName == paramName)
+											{
+												m_dialogOpener->openDialog(
+													std::make_shared<SimpleDialog>(
+														U"パラメータ名が変更されていません",
+														[](StringView) {},
+														Array<DialogButtonDesc>
+														{
+															DialogButtonDesc
+															{
+																.text = U"OK",
+																.mnemonicInput = KeyO,
+																.isDefaultButton = IsDefaultButtonYN::Yes,
+															},
+														}));
+											}
+											else if (m_canvas->hasParam(newName))
+											{
+												m_dialogOpener->openDialog(
+													std::make_shared<SimpleDialog>(
+														U"パラメータ '{}' は既に存在します"_fmt(newName),
+														[](StringView) {},
+														Array<DialogButtonDesc>
+														{
+															DialogButtonDesc
+															{
+																.text = U"OK",
+																.mnemonicInput = KeyO,
+																.isDefaultButton = IsDefaultButtonYN::Yes,
+															},
+														}));
+											}
+											else
+											{
+												renameParam(paramName, newName);
+												refreshInspector();
+											}
+										}
+									},
+									Array<DialogButtonDesc>
+									{
+										DialogButtonDesc
+										{
+											.text = U"OK",
+											.mnemonicInput = KeyO,
+											.isDefaultButton = IsDefaultButtonYN::Yes,
+										},
+										DialogButtonDesc
+										{
+											.text = U"キャンセル",
+											.mnemonicInput = KeyC,
+											.isCancelButton = IsCancelButtonYN::Yes,
+										},
+									}));
+						}
+					},
+					MenuSeparator{},
 					MenuItem
 					{
 						.text = U"パラメータ削除",
