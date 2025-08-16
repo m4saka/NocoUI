@@ -80,15 +80,12 @@ namespace noco
 
 	Canvas::Canvas()
 	{
-		m_width = DefaultSize.x;
-		m_height = DefaultSize.y;
 	}
 
 	std::shared_ptr<Canvas> Canvas::Create(const SizeF& size)
 	{
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
-		canvas->m_width = size.x;
-		canvas->m_height = size.y;
+		canvas->m_size = size;
 		return canvas;
 	}
 	
@@ -99,7 +96,7 @@ namespace noco
 
 	void Canvas::refreshLayout()
 	{
-		const RectF canvasRect{ 0, 0, m_width, m_height };
+		const RectF canvasRect{ 0, 0, m_size.x, m_size.y };
 		
 		for (const auto& child : m_children)
 		{
@@ -159,8 +156,7 @@ namespace noco
 		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
-			{ U"width", m_width },
-			{ U"height", m_height },
+			{ U"size", ValueToString(m_size) },
 		};
 
 		Array<JSON> childrenArray;
@@ -188,8 +184,7 @@ namespace noco
 		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
-			{ U"width", m_width },
-			{ U"height", m_height },
+			{ U"size", ValueToString(m_size) },
 		};
 
 		Array<JSON> childrenArray;
@@ -214,9 +209,9 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!json.contains(U"width") || !json.contains(U"height"))
+		if (!json.contains(U"size"))
 		{
-			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required fields 'width' or 'height'";
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'size'";
 			return nullptr;
 		}
 		
@@ -228,8 +223,14 @@ namespace noco
 		
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
 		
-		canvas->m_width = json[U"width"].get<double>();
-		canvas->m_height = json[U"height"].get<double>();
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
+		{
+			canvas->m_size = *sizeOpt;
+		}
+		else
+		{
+			Logger << U"[NocoUI warning] Canvas::CreateFromJSON: Failed to parse size, using default";
+		}
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
@@ -265,9 +266,9 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!json.contains(U"width") || !json.contains(U"height"))
+		if (!json.contains(U"size"))
 		{
-			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required fields 'width' or 'height'";
+			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required field 'size'";
 			return nullptr;
 		}
 		
@@ -279,8 +280,14 @@ namespace noco
 		
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
 		
-		canvas->m_width = json[U"width"].get<double>();
-		canvas->m_height = json[U"height"].get<double>();
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
+		{
+			canvas->m_size = *sizeOpt;
+		}
+		else
+		{
+			Logger << U"[NocoUI warning] Canvas::CreateFromJSONImpl: Failed to parse size, using default";
+		}
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
@@ -316,16 +323,25 @@ namespace noco
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
+		if (!json.contains(U"size"))
+		{
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'size'";
+			return false;
+		}
+		
 		if (!json.contains(U"children"))
 		{
 			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'children'";
 			return false;
 		}
 		
-		if (json.contains(U"width") && json.contains(U"height"))
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
 		{
-			m_width = json[U"width"].get<double>();
-			m_height = json[U"height"].get<double>();
+			m_size = *sizeOpt;
+		}
+		else
+		{
+			Logger << U"[NocoUI warning] Canvas::tryReadFromJSON: Failed to parse size";
 		}
 
 		for (const auto& child : m_children)
@@ -378,16 +394,25 @@ namespace noco
 	
 	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
+		if (!json.contains(U"size"))
+		{
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSONImpl: Missing required field 'size'";
+			return false;
+		}
+		
 		if (!json.contains(U"children"))
 		{
 			Logger << U"[NocoUI error] Canvas::tryReadFromJSONImpl: Missing required field 'children'";
 			return false;
 		}
 		
-		if (json.contains(U"width") && json.contains(U"height"))
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
 		{
-			m_width = json[U"width"].get<double>();
-			m_height = json[U"height"].get<double>();
+			m_size = *sizeOpt;
+		}
+		else
+		{
+			Logger << U"[NocoUI warning] Canvas::tryReadFromJSONImpl: Failed to parse size";
 		}
 
 		for (const auto& child : m_children)
@@ -1138,7 +1163,7 @@ namespace noco
 
 	Quad Canvas::quad() const
 	{
-		const RectF rect{ 0, 0, m_width, m_height };
+		const RectF rect{ 0, 0, m_size.x, m_size.y };
 		const Mat3x2 transform = rootPosScaleMat();
 		
 		const Vec2 topLeft = transform.transformPoint(rect.tl());
@@ -1151,12 +1176,12 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setCenter(const Vec2& center)
 	{
-		m_position = center - Vec2{ m_width / 2, m_height / 2 };
+		m_position = center - Vec2{ m_size.x / 2, m_size.y / 2 };
 		return shared_from_this();
 	}
 
 	Vec2 Canvas::center() const
 	{
-		return m_position + Vec2{ m_width / 2, m_height / 2 };
+		return m_position + Vec2{ m_size.x / 2, m_size.y / 2 };
 	}
 }

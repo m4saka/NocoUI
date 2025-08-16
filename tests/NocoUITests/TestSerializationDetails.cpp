@@ -108,7 +108,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 
 	SECTION("Error handling for missing required fields")
 	{
-		SECTION("Missing width and height")
+		SECTION("Missing size")
 		{
 			JSON invalidJson = JSON{};
 			invalidJson[U"version"] = noco::NocoUIVersion;
@@ -122,8 +122,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 		{
 			JSON invalidJson = JSON{};
 			invalidJson[U"version"] = noco::NocoUIVersion;
-			invalidJson[U"width"] = 800.0;
-			invalidJson[U"height"] = 600.0;
+			invalidJson[U"size"] = U"(800, 600)";
 			
 			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
 			REQUIRE(canvas == nullptr);
@@ -133,8 +132,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 		{
 			JSON validJson = JSON{};
 			validJson[U"version"] = noco::NocoUIVersion;
-			validJson[U"width"] = 800.0;
-			validJson[U"height"] = 600.0;
+			validJson[U"size"] = U"(800, 600)";
 			validJson[U"children"] = Array<JSON>{};
 			
 			auto canvas = noco::Canvas::CreateFromJSON(validJson);

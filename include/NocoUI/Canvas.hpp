@@ -325,8 +325,7 @@ namespace noco
 
 	private:
 		Array<std::shared_ptr<Node>> m_children;
-		double m_width = 800.0;
-		double m_height = 600.0;
+		SizeF m_size = DefaultSize;
 
 		class EventRegistry
 		{
@@ -537,8 +536,7 @@ namespace noco
 
 		void setSize(double width, double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			m_width = width;
-			m_height = height;
+			m_size = SizeF{ width, height };
 			if (refreshesLayout)
 			{
 				refreshLayout();
@@ -547,8 +545,7 @@ namespace noco
 		
 		void setSize(const SizeF& size, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			m_width = size.x;
-			m_height = size.y;
+			m_size = size;
 			if (refreshesLayout)
 			{
 				refreshLayout();
@@ -557,7 +554,7 @@ namespace noco
 		
 		void setWidth(double width, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			m_width = width;
+			m_size.x = width;
 			if (refreshesLayout)
 			{
 				refreshLayout();
@@ -566,7 +563,7 @@ namespace noco
 		
 		void setHeight(double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
-			m_height = height;
+			m_size.y = height;
 			if (refreshesLayout)
 			{
 				refreshLayout();
@@ -576,19 +573,19 @@ namespace noco
 		[[nodiscard]]
 		double width() const
 		{
-			return m_width;
+			return m_size.x;
 		}
 
 		[[nodiscard]]
 		double height() const
 		{
-			return m_height;
+			return m_size.y;
 		}
 		
 		[[nodiscard]]
-		SizeF size() const
+		const SizeF& size() const
 		{
-			return SizeF{ m_width, m_height };
+			return m_size;
 		}
 
 		[[nodiscard]]
