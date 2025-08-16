@@ -344,7 +344,7 @@ namespace noco::editor
 
 			m_targetNode = targetNode;
 
-			m_inspectorRootNode->removeChildrenAll();
+			m_inspectorRootNode->removeChildrenAll(RefreshesLayoutYN::No);
 
 			if (targetNode)
 			{
