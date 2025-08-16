@@ -28,7 +28,6 @@ namespace noco::editor
 		std::shared_ptr<DialogOpener> m_dialogOpener;
 		HashTable<PropertyKey, PropertyMetadata> m_propertyMetadata;
 		std::weak_ptr<Node> m_targetNode;
-		bool m_isCanvasSelected = false;  // Canvasが選択されているか
 		std::function<void()> m_onChangeNodeName;
 		
 		[[nodiscard]]
@@ -360,7 +359,6 @@ namespace noco::editor
 			}
 
 			m_targetNode = targetNode;
-			m_isCanvasSelected = !targetNode;  // targetNodeがnullptrの場合はCanvas選択
 
 			m_inspectorRootNode->removeChildrenAll();
 
