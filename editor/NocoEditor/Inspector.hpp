@@ -33,11 +33,17 @@ namespace noco::editor
 		[[nodiscard]]
 		bool hasAnyParamsForType(ParamType type) const
 		{
-			if (!m_canvas) return false;
+			if (!m_canvas)
+			{
+				return false;
+			}
 			const auto& params = m_canvas->params();
 			for (const auto& [name, value] : params)
 			{
-				if (GetParamType(value) == type) return true;
+				if (GetParamType(value) == type)
+				{
+					return true;
+				}
 			}
 			return false;
 		}
@@ -57,32 +63,9 @@ namespace noco::editor
 			
 			m_canvas->setParamValue(newName, *paramValue);
 			
-			updateParamReferencesRecursive(m_canvas->rootNode(), oldName, newName);
+			m_canvas->replaceParamRefAll(oldName, newName);
 			
 			m_canvas->removeParam(oldName);
-		}
-		
-		void updateParamReferencesRecursive(const std::shared_ptr<Node>& node, const String& oldName, const String& newName)
-		{
-			if (!node)
-			{
-				return;
-			}
-			
-			node->transform().replaceParamRef(oldName, newName);
-			
-			for (const auto& component : node->components())
-			{
-				if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
-				{
-					serializableComponent->replaceParamRef(oldName, newName);
-				}
-			}
-			
-			for (const auto& child : node->children())
-			{
-				updateParamReferencesRecursive(child, oldName, newName);
-			}
 		}
 
 		IsFoldedYN m_isFoldedRegion = IsFoldedYN::No;
@@ -201,7 +184,7 @@ namespace noco::editor
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
-			, m_inspectorFrameNode(editorCanvas->rootNode()->emplaceChild(
+			, m_inspectorFrameNode(editorCanvas->emplaceChild(
 				U"InspectorFrame",
 				AnchorRegion
 				{
@@ -273,7 +256,7 @@ namespace noco::editor
 						focusedNodeName = focusedNode->name();
 						break;
 					}
-					currentNode = currentNode->parent();
+					currentNode = currentNode->parentNode();
 				}
 			}
 			
@@ -510,7 +493,7 @@ namespace noco::editor
 				VerticalOverflow::Clip);
 			headingNode->addOnClick([arrowLabel, onToggleFold = std::move(onToggleFold)](const std::shared_ptr<Node>& node)
 				{
-					if (const auto parent = node->parent())
+					if (const auto parent = node->parentNode())
 					{
 						bool inactiveNodeExists = false;
 
@@ -2323,9 +2306,18 @@ namespace noco::editor
 				}));
 			// 現在のLayoutタイプを取得
 			String layoutTypeName;
-			if (node->childrenFlowLayout()) layoutTypeName = U"FlowLayout";
-			else if (node->childrenHorizontalLayout()) layoutTypeName = U"HorizontalLayout";
-			else if (node->childrenVerticalLayout()) layoutTypeName = U"VerticalLayout";
+			if (node->childrenFlowLayout())
+			{
+				layoutTypeName = U"FlowLayout";
+			}
+			else if (node->childrenHorizontalLayout())
+			{
+				layoutTypeName = U"HorizontalLayout";
+			}
+			else if (node->childrenVerticalLayout())
+			{
+				layoutTypeName = U"VerticalLayout";
+			}
 			
 			const auto fnAddChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, const auto& value, auto fnSetValue)

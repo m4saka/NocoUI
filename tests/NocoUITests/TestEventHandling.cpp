@@ -17,7 +17,7 @@ TEST_CASE("Event handling", "[Events]")
 		// EventTriggerコンポーネントを追加
 		auto trigger = node->emplaceComponent<noco::EventTrigger>(U"testButton", noco::EventTriggerType::Click);
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// requestClickメソッドでクリックをシミュレート
 		node->requestClick();
@@ -43,7 +43,7 @@ TEST_CASE("Event handling", "[Events]")
 		// ClickトリガーのEventTriggerを追加（右クリックも通常のClickイベントとして扱われる）
 		auto trigger = node->emplaceComponent<noco::EventTrigger>(U"rightClickTest", noco::EventTriggerType::RightClick);
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// requestRightClickメソッドで右クリックをシミュレート
 		node->requestRightClick();
@@ -73,8 +73,8 @@ TEST_CASE("Event handling", "[Events]")
 		node1->emplaceComponent<noco::EventTrigger>(U"button1");
 		node2->emplaceComponent<noco::EventTrigger>(U"button2");
 		
-		canvas->rootNode()->addChild(node1);
-		canvas->rootNode()->addChild(node2);
+		canvas->addChild(node1);
+		canvas->addChild(node2);
 		
 		// node1をクリック
 		node1->requestClick();
@@ -104,7 +104,7 @@ TEST_CASE("Event handling", "[Events]")
 		// 子ノードにEventTriggerを設定
 		child->emplaceComponent<noco::EventTrigger>(U"childButton");
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// 子ノードをクリック
@@ -130,9 +130,9 @@ TEST_CASE("Event handling", "[Events]")
 		node2->emplaceComponent<noco::EventTrigger>(U"button2");
 		node3->emplaceComponent<noco::EventTrigger>(U"button3");
 		
-		canvas->rootNode()->addChild(node1);
-		canvas->rootNode()->addChild(node2);
-		canvas->rootNode()->addChild(node3);
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
 		
 		// 複数のノードをクリック（同一フレーム内）
 		node1->requestClick();
@@ -165,7 +165,7 @@ TEST_CASE("Event handling", "[Events]")
 			clickedNode = n;
 		});
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// クリックをシミュレート
 		node->requestClick();
@@ -190,7 +190,7 @@ TEST_CASE("Event handling", "[Events]")
 			clickHandlerCalled = true;
 		});
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// クリックをシミュレート
 		node->requestClick();
@@ -216,7 +216,7 @@ TEST_CASE("Event handling", "[Events]")
 			rightClickedNode = n;
 		});
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// 右クリックをシミュレート
 		node->requestRightClick();
@@ -241,7 +241,7 @@ TEST_CASE("Event handling", "[Events]")
 			rightClickHandlerCalled = true;
 		});
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// 右クリックをシミュレート
 		node->requestRightClick();
@@ -265,7 +265,7 @@ TEST_CASE("Event handling", "[Events]")
 		    ->addOnRightClick([&rightClickCount]() { rightClickCount++; })
 		    ->addOnClick([&clickCount]() { clickCount++; });  // 複数のハンドラを追加
 		
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// クリックをシミュレート
 		node->requestClick();

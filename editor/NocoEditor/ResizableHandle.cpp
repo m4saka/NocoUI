@@ -10,8 +10,7 @@ namespace noco::editor
 		, m_direction(direction)
 		, m_handleThickness(handleThickness)
 	{
-		// リサイズハンドル用のノードを作成
-		m_handleNode = editorCanvas->rootNode()->emplaceChild(
+		m_handleNode = editorCanvas->emplaceChild(
 			U"ResizableHandle",
 			AnchorRegion
 			{

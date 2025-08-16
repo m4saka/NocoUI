@@ -47,7 +47,6 @@ TEST_CASE("Serialization details", "[Serialization]")
 	SECTION("Complex hierarchy serialization")
 	{
 		auto canvas = noco::Canvas::Create();
-		auto root = canvas->rootNode();
 		
 		// 複雑な階層構造を作成
 		auto parent = noco::Node::Create(U"Parent");
@@ -65,24 +64,26 @@ TEST_CASE("Serialization details", "[Serialization]")
 		parent->addChild(child1);
 		parent->addChild(child2);
 		child2->addChild(grandchild);
-		root->addChild(parent);
+		canvas->addChild(parent);
 		
 		// Canvas全体をJSON化
 		JSON canvasJson = canvas->toJSON();
 		
 		// 階層構造が保持されているか確認
-		REQUIRE(canvasJson.hasElement(U"rootNode"));
-		JSON rootNodeJson = canvasJson[U"rootNode"];
-		REQUIRE(rootNodeJson.hasElement(U"children"));
-		REQUIRE(rootNodeJson[U"children"].size() == 1);
-		REQUIRE(rootNodeJson[U"children"][0][U"name"].get<String>() == U"Parent");
+		REQUIRE(canvasJson.hasElement(U"children"));
+		REQUIRE(canvasJson[U"children"].size() == 1);
+		REQUIRE(canvasJson[U"children"][0][U"name"].get<String>() == U"Parent");
 	}
 
 	SECTION("Canvas round-trip serialization")
 	{
 		// Canvasを作成して複雑な構造を構築
 		auto canvas1 = noco::Canvas::Create();
-		auto root1 = canvas1->rootNode();
+		canvas1->setSize(1024, 768);
+		
+		// ルートノードを追加
+		auto root1 = noco::Node::Create(U"Root");
+		canvas1->addChild(root1);
 		
 		auto node1 = noco::Node::Create(U"TestNode");
 		node1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
@@ -99,17 +100,47 @@ TEST_CASE("Serialization details", "[Serialization]")
 		// 再度JSON化して同じ構造か確認
 		JSON json2 = canvas2->toJSON();
 		
-		REQUIRE(json2[U"rootNode"][U"children"].size() == 1);
-		REQUIRE(json2[U"rootNode"][U"children"][0][U"name"].get<String>() == U"TestNode");
+		// ルートノードの下に1つの子ノードがある
+		REQUIRE(json2[U"children"].size() == 1);
+		REQUIRE(json2[U"children"][0][U"children"].size() == 1);
+		REQUIRE(json2[U"children"][0][U"children"][0][U"name"].get<String>() == U"TestNode");
 	}
 
-	SECTION("Error handling for missing rootNode field")
+	SECTION("Error handling for missing required fields")
 	{
-		JSON invalidJson = JSON{};
-		invalidJson[U"version"] = noco::NocoUIVersion;
+		SECTION("Missing width and height")
+		{
+			JSON invalidJson = JSON{};
+			invalidJson[U"version"] = noco::NocoUIVersion;
+			invalidJson[U"children"] = Array<JSON>{};
+			
+			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
+			REQUIRE(canvas == nullptr);
+		}
 		
-		auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
-		REQUIRE(canvas == nullptr);
+		SECTION("Missing children")
+		{
+			JSON invalidJson = JSON{};
+			invalidJson[U"version"] = noco::NocoUIVersion;
+			invalidJson[U"width"] = 800.0;
+			invalidJson[U"height"] = 600.0;
+			
+			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
+			REQUIRE(canvas == nullptr);
+		}
+		
+		SECTION("Valid JSON with empty children")
+		{
+			JSON validJson = JSON{};
+			validJson[U"version"] = noco::NocoUIVersion;
+			validJson[U"width"] = 800.0;
+			validJson[U"height"] = 600.0;
+			validJson[U"children"] = Array<JSON>{};
+			
+			auto canvas = noco::Canvas::CreateFromJSON(validJson);
+			REQUIRE(canvas != nullptr);
+			REQUIRE(canvas->children().size() == 0);
+		}
 	}
 
 

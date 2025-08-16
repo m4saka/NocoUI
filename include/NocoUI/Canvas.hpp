@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "INodeContainer.hpp"
 #include "Node.hpp"
 #include "Component/IFocusable.hpp"
 #include "Param.hpp"
@@ -318,11 +319,15 @@ namespace noco
 		std::weak_ptr<Node> sourceNode;
 	};
 
-	class Canvas : public std::enable_shared_from_this<Canvas>
+	class Canvas : public INodeContainer, public std::enable_shared_from_this<Canvas>
 	{
 		friend class Node;
 
 	private:
+		Array<std::shared_ptr<Node>> m_children;
+		double m_width = 800.0;
+		double m_height = 600.0;
+
 		class EventRegistry
 		{
 		private:
@@ -348,27 +353,27 @@ namespace noco
 			const Array<Event>& getFiredEventsAll() const;
 		};
 
-		std::shared_ptr<Node> m_rootNode;
 		HashTable<String, ParamValue> m_params;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
 		/* NonSerialized */ double m_rotation = 0.0;
 		/* NonSerialized */ EventRegistry m_eventRegistry;
 		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
+		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
 
 		Canvas();
 
-		explicit Canvas(const std::shared_ptr<Node>& rootNode);
-
 	public:
+		static constexpr SizeF DefaultSize{ 800, 600 };
+		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> Create();
-
+		static std::shared_ptr<Canvas> Create(const SizeF& size = DefaultSize);
+		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> Create(const std::shared_ptr<Node>& rootNode, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		static std::shared_ptr<Canvas> Create(double width, double height);
 
 		void refreshLayout();
 
@@ -395,17 +400,12 @@ namespace noco
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
+		[[nodiscard]]
+		std::shared_ptr<Node> hitTest(const Vec2& point) const;
+
 		void draw() const;
 
-		[[nodiscard]]
-		const std::shared_ptr<Node>& rootNode() const;
-
-		void removeChildrenAll();
-
-		void resetWithNewRootNode(
-			const RegionVariant& region,
-			const String& name = U"Root",
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void clearAll();
 
 		std::shared_ptr<Canvas> setPosition(const Vec2& position);
 
@@ -414,6 +414,11 @@ namespace noco
 		{
 			return m_position;
 		}
+
+		std::shared_ptr<Canvas> setCenter(const Vec2& center);
+
+		[[nodiscard]]
+		Vec2 center() const;
 
 		std::shared_ptr<Canvas> setScale(const Vec2& scale);
 
@@ -529,15 +534,155 @@ namespace noco
 		void clearParamRef(StringView paramName);
 
 		Array<String> clearInvalidParamRefs();
+
+		void setSize(double width, double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		{
+			m_width = width;
+			m_height = height;
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
+		}
+		
+		void setSize(const SizeF& size, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		{
+			m_width = size.x;
+			m_height = size.y;
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
+		}
+		
+		void setWidth(double width, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		{
+			m_width = width;
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
+		}
+		
+		void setHeight(double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		{
+			m_height = height;
+			if (refreshesLayout)
+			{
+				refreshLayout();
+			}
+		}
+
+		[[nodiscard]]
+		double width() const
+		{
+			return m_width;
+		}
+
+		[[nodiscard]]
+		double height() const
+		{
+			return m_height;
+		}
+		
+		[[nodiscard]]
+		SizeF size() const
+		{
+			return SizeF{ m_width, m_height };
+		}
+
+		[[nodiscard]]
+		Quad quad() const;
+
+		// INodeContainer interface implementation
+		[[nodiscard]]
+		const Array<std::shared_ptr<Node>>& children() const override
+		{
+			return m_children;
+		}
+
+		[[nodiscard]]
+		size_t childCount() const override
+		{
+			return m_children.size();
+		}
+
+		[[nodiscard]]
+		std::shared_ptr<Node> childAt(size_t index) const override;
+
+		[[nodiscard]]
+		bool isNode() const override
+		{
+			return false;
+		}
+
+		[[nodiscard]]
+		bool isCanvas() const override
+		{
+			return true;
+		}
+
+		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		const std::shared_ptr<Node>& addChildAtIndex(
+			const std::shared_ptr<Node>& child,
+			size_t index,
+			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		[[nodiscard]]
+		bool containsChild(
+			const std::shared_ptr<Node>& child,
+			RecursiveYN recursive = RecursiveYN::No) const;
+		
+		[[nodiscard]]
+		bool containsChildByName(
+			StringView name,
+			RecursiveYN recursive = RecursiveYN::No) const;
+		
+		[[nodiscard]]
+		std::shared_ptr<Node> getChildByNameOrNull(
+			StringView name,
+			RecursiveYN recursive = RecursiveYN::No);
+		
+		[[nodiscard]]
+		Optional<size_t> indexOfChildOpt(
+			const std::shared_ptr<Node>& child) const;
+		
+		const std::shared_ptr<Node>& emplaceChild(
+			StringView name = U"Node",
+			const RegionVariant& region = InlineRegion{},
+			IsHitTargetYN isHitTarget = IsHitTargetYN::Yes,
+			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None,
+			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+	// JSONから子ノードを追加
+	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+
+	// 全ノードのパラメータ参照を一括更新
+	void replaceParamRefAll(const String& oldName, const String& newName);
+
+	// internalIdによるノード検索
+	[[nodiscard]]
+	std::shared_ptr<Node> findNodeByInternalId(uint64 internalId) const;
+
+private:
+	// ノードツリー内でinternalIdによるノード検索（再帰）
+	[[nodiscard]]
+	std::shared_ptr<Node> findNodeByInternalIdRecursive(const std::shared_ptr<Node>& node, uint64 internalId) const;
 	};
 
 	template <class Fty>
 	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
-		if (m_rootNode)
+		for (const auto& child : m_children)
 		{
-			m_rootNode->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
+			child->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
 		}
 	}
 
@@ -545,9 +690,9 @@ namespace noco
 	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
 	{
-		if (m_rootNode)
+		for (const auto& child : m_children)
 		{
-			m_rootNode->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
+			child->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
 		}
 	}
 }

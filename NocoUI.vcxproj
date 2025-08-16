@@ -168,6 +168,7 @@
     <ClInclude Include="include\NocoUI\Region\Region.hpp" />
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp" />
     <ClInclude Include="include\NocoUI\Enums.hpp" />
+    <ClInclude Include="include\NocoUI\INodeContainer.hpp" />
     <ClInclude Include="include\NocoUI\InheritChildrenStateFlags.hpp" />
     <ClInclude Include="include\NocoUI\InteractionState.hpp" />
     <ClInclude Include="include\NocoUI\Layout\FlowLayout.hpp" />

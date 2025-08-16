@@ -15,6 +15,7 @@
 #include "Component/DataStore.hpp"
 #include "Enums.hpp"
 #include "Param.hpp"
+#include "INodeContainer.hpp"
 
 namespace noco
 {
@@ -22,7 +23,7 @@ namespace noco
 
 	struct CanvasUpdateContext;
 
-	class Node : public std::enable_shared_from_this<Node>
+	class Node : public INodeContainer, public std::enable_shared_from_this<Node>
 	{
 		friend class Canvas;
 
@@ -67,8 +68,8 @@ namespace noco
 		/* NonSerialized */ bool m_rightClickRequested = false;
 		/* NonSerialized */ bool m_prevClickRequested = false;
 		/* NonSerialized */ bool m_prevRightClickRequested = false;
-		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer; // 一時バッファ
-		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer; // 一時バッファ
+		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer;
+		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 		/* NonSerialized */ Optional<Vec2> m_dragStartPos; // ドラッグ開始位置
 		/* NonSerialized */ Vec2 m_dragStartScrollOffset{ 0.0, 0.0 }; // ドラッグ開始時のスクロールオフセット
 		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
@@ -172,7 +173,13 @@ namespace noco
 		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> parent() const;
+		std::shared_ptr<Node> parentNode() const;
+
+		[[nodiscard]]
+		std::shared_ptr<INodeContainer> parentContainer() const;
+
+		[[nodiscard]]
+		bool isTopLevelNode() const;
 
 		[[nodiscard]]
 		std::shared_ptr<const Node> findHoverTargetParent() const;
@@ -317,6 +324,9 @@ namespace noco
 
 		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
+		// パラメータ参照を置換
+		void replaceParamRef(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);
+
 		void draw() const;
 
 		void requestClick();
@@ -361,9 +371,6 @@ namespace noco
 
 		[[nodiscard]]
 		const Mat3x2& transformMatInHierarchy() const;
-
-		[[nodiscard]]
-		const Array<std::shared_ptr<Node>>& children() const;
 
 		[[nodiscard]]
 		bool hasChildren() const;
@@ -583,6 +590,34 @@ namespace noco
 		uint64 internalId() const
 		{
 			return m_internalId;
+		}
+
+		// INodeContainer interface implementation
+		[[nodiscard]]
+		const Array<std::shared_ptr<Node>>& children() const override
+		{
+			return m_children;
+		}
+
+		[[nodiscard]]
+		size_t childCount() const override
+		{
+			return m_children.size();
+		}
+
+		[[nodiscard]]
+		std::shared_ptr<Node> childAt(size_t index) const override;
+
+		[[nodiscard]]
+		bool isNode() const override
+		{
+			return true;
+		}
+
+		[[nodiscard]]
+		bool isCanvas() const override
+		{
+			return false;
 		}
 	};
 

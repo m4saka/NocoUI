@@ -87,7 +87,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"Node");
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		node->setStyleState(U"selected");
 		
 		auto testComponent = std::make_shared<TestComponent>();
@@ -105,7 +105,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"Node");
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		// styleStateが空の場合
 		
 		auto testComponent = std::make_shared<TestComponent>();
@@ -122,7 +122,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"Parent");
 		auto child = noco::Node::Create(U"Child");
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		parent->setStyleState(U"tab1");
@@ -147,7 +147,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto nodeC = noco::Node::Create(U"C");
 		auto nodeD = noco::Node::Create(U"D");
 		
-		canvas->rootNode()->addChild(nodeA);
+		canvas->addChild(nodeA);
 		nodeA->addChild(nodeB);
 		nodeB->addChild(nodeC);
 		nodeC->addChild(nodeD);
@@ -175,7 +175,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto parent = noco::Node::Create(U"Parent");
 		auto child = noco::Node::Create(U"Child");
 		
-		canvas->rootNode()->addChild(grandparent);
+		canvas->addChild(grandparent);
 		grandparent->addChild(parent);
 		parent->addChild(child);
 		
@@ -208,7 +208,6 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		//   |             /    \
 		// subA1      subB1a  subB1b
 		
-		auto root = canvas->rootNode();
 		auto tabA = noco::Node::Create(U"TabA");
 		auto tabB = noco::Node::Create(U"TabB");
 		auto itemA1 = noco::Node::Create(U"ItemA1");
@@ -219,8 +218,8 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto subB1b = noco::Node::Create(U"SubB1b");
 		
 		// 階層構造を構築
-		root->addChild(tabA);
-		root->addChild(tabB);
+		canvas->addChild(tabA);
+		canvas->addChild(tabB);
 		tabA->addChild(itemA1);
 		tabA->addChild(itemA2);
 		tabB->addChild(itemB1);
@@ -280,7 +279,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto nodeB = noco::Node::Create(U"B");
 		auto nodeC = noco::Node::Create(U"C");
 		
-		canvas->rootNode()->addChild(nodeA);
+		canvas->addChild(nodeA);
 		nodeA->addChild(nodeB);
 		nodeB->addChild(nodeC);
 		
@@ -313,7 +312,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		// さらに階層を変更: Cをrootの直接の子にする
 		nodeA->removeChild(nodeC);
-		canvas->rootNode()->addChild(nodeC);
+		canvas->addChild(nodeC);
 		
 		canvas->update();
 		
@@ -328,13 +327,20 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		// 深い階層を作成（10レベル）
 		std::vector<std::shared_ptr<noco::Node>> nodes;
-		auto parent = canvas->rootNode();
+		std::shared_ptr<noco::Node> parent = nullptr;
 		
 		for (int i = 0; i < 10; ++i)
 		{
 			auto node = noco::Node::Create(Format(U"Level{}", i));
 			node->setStyleState(Format(U"state{}", i));
-			parent->addChild(node);
+			if (parent)
+			{
+				parent->addChild(node);
+			}
+			else
+			{
+				canvas->addChild(node);
+			}
 			nodes.push_back(node);
 			parent = node;
 		}
@@ -357,7 +363,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create(U"Parent");
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->setStyleState(U"parent-state");
 		
 		// 5つの兄弟ノードを作成

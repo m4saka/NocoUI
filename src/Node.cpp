@@ -507,10 +507,27 @@ namespace noco
 		return node;
 	}
 
-
-	std::shared_ptr<Node> Node::parent() const
+	std::shared_ptr<Node> Node::parentNode() const
 	{
 		return m_parent.lock();
+	}
+
+	std::shared_ptr<INodeContainer> Node::parentContainer() const
+	{
+		if (auto parentNodePtr = m_parent.lock())
+		{
+			return parentNodePtr;
+		}
+		if (auto canvasPtr = m_canvas.lock())
+		{
+			return canvasPtr;
+		}
+		return nullptr;
+	}
+
+	bool Node::isTopLevelNode() const
+	{
+		return m_parent.expired() && !m_canvas.expired();
 	}
 
 	std::shared_ptr<const Node> Node::findHoverTargetParent() const
@@ -555,10 +572,26 @@ namespace noco
 
 	std::shared_ptr<Node> Node::setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!m_parent.expired())
+		// 既に同じ親の場合は何もしない
+		if (m_parent.lock() == parent)
 		{
-			removeFromParent(RefreshesLayoutYN{ refreshesLayout && parent->m_canvas.lock() != m_canvas.lock() });
+			return shared_from_this();
 		}
+		
+		if (parent.get() == this)
+		{
+			throw Error{ U"setParent: Cannot set self as parent" };
+		}
+		if (isAncestorOf(parent))
+		{
+			throw Error{ U"setParent: Cannot create circular reference by setting ancestor as parent" };
+		}
+		
+		if (!m_parent.expired() || isTopLevelNode())
+		{
+			removeFromParent(refreshesLayout);
+		}
+		
 		parent->addChild(shared_from_this(), refreshesLayout);
 		return shared_from_this();
 	}
@@ -569,6 +602,16 @@ namespace noco
 		{
 			parent->removeChild(shared_from_this(), refreshesLayout);
 			return true;
+		}
+		// Canvasの直下にある場合
+		else if (const auto canvas = m_canvas.lock())
+		{
+			// isTopLevelNode()でトップレベルかチェック
+			if (isTopLevelNode())
+			{
+				canvas->removeChild(shared_from_this(), refreshesLayout);
+				return true;
+			}
 		}
 		return false;
 	}
@@ -587,9 +630,21 @@ namespace noco
 				throw Error{ U"Node::siblingIndex: Node '{}' is not a child of its parent"_fmt(m_name) };
 			}
 		}
+		else if (const auto canvas = m_canvas.lock())
+		{
+			const auto it = std::find(canvas->children().begin(), canvas->children().end(), shared_from_this());
+			if (it != canvas->children().end())
+			{
+				return static_cast<size_t>(std::distance(canvas->children().begin(), it));
+			}
+			else
+			{
+				throw Error{ U"Node::siblingIndex: Node '{}' is not a child of its canvas"_fmt(m_name) };
+			}
+		}
 		else
 		{
-			throw Error{ U"Node::siblingIndex: Node '{}' has no parent"_fmt(m_name) };
+			throw Error{ U"Node::siblingIndex: Node '{}' has no parent or canvas"_fmt(m_name) };
 		}
 	}
 
@@ -602,6 +657,14 @@ namespace noco
 			if (it != parent->m_children.end())
 			{
 				return static_cast<size_t>(std::distance(parent->m_children.begin(), it));
+			}
+		}
+		else if (const auto canvas = m_canvas.lock())
+		{
+			const auto it = std::find(canvas->children().begin(), canvas->children().end(), shared_from_this());
+			if (it != canvas->children().end())
+			{
+				return static_cast<size_t>(std::distance(canvas->children().begin(), it));
 			}
 		}
 		return none;
@@ -683,9 +746,9 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChild(std::shared_ptr<Node>&& child, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!child->m_parent.expired())
+		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
-			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
+			throw Error{ U"addChild: Child node '{}' already has a parent node or parent canvas"_fmt(child->m_name) };
 		}
 		if (child.get() == this)
 		{
@@ -708,9 +771,9 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!child->m_parent.expired())
+		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
-			throw Error{ U"addChild: Child node '{}' already has a parent"_fmt(child->m_name) };
+			throw Error{ U"addChild: Child node '{}' already has a parent node or parent canvas"_fmt(child->m_name) };
 		}
 		if (child.get() == this)
 		{
@@ -794,9 +857,9 @@ namespace noco
 
 	const std::shared_ptr<Node>& Node::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!child->m_parent.expired())
+		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
-			throw Error{ U"addChildAtIndex: Child node '{}' already has a parent"_fmt(child->m_name) };
+			throw Error{ U"addChildAtIndex: Child node '{}' already has a parent node or parent canvas"_fmt(child->m_name) };
 		}
 		if (child.get() == this)
 		{
@@ -1633,6 +1696,27 @@ namespace noco
 		}
 	}
 
+	void Node::replaceParamRef(const String& oldName, const String& newName, RecursiveYN recursive)
+	{
+		m_transform.replaceParamRef(oldName, newName);
+		
+		for (const auto& component : m_components)
+		{
+			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
+			{
+				serializableComponent->replaceParamRef(oldName, newName);
+			}
+		}
+		
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->replaceParamRef(oldName, newName, RecursiveYN::Yes);
+			}
+		}
+	}
+
 	void Node::draw() const
 	{
 		if (!m_activeSelf || !m_activeInHierarchy)
@@ -1970,10 +2054,6 @@ namespace noco
 		}
 	}
 
-	const Array<std::shared_ptr<Node>>& Node::children() const
-	{
-		return m_children;
-	}
 
 	bool Node::hasChildren() const
 	{
@@ -2548,6 +2628,15 @@ namespace noco
 	std::shared_ptr<Node> Node::clone() const
 	{
 		return CreateFromJSON(toJSON());
+	}
+
+	std::shared_ptr<Node> Node::childAt(size_t index) const
+	{
+		if (index >= m_children.size())
+		{
+			return nullptr;
+		}
+		return m_children[index];
 	}
 
 	std::shared_ptr<Node> Node::addKeyInputUpdater(std::function<void(const std::shared_ptr<Node>&)> keyInputUpdater)

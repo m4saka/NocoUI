@@ -191,6 +191,9 @@
     <ClInclude Include="include\NocoUI\Enums.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\INodeContainer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\InheritChildrenStateFlags.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

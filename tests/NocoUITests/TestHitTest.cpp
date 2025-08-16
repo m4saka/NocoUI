@@ -13,7 +13,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -34,7 +34,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
 		node->transform().setAppliesToHitTest(true);
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -55,7 +55,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
 		node->transform().setAppliesToHitTest(false); // 明示的にfalseに設定
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -76,7 +76,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
 		node->transform().setAppliesToHitTest(true);
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -96,7 +96,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setScale(Vec2{ 2.0, 2.0 }); // 2倍にスケール
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -139,7 +139,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 200 } });
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -163,7 +163,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
@@ -191,7 +191,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		child->transform().setTranslate(Vec2{ 50, 50 }); // 部分的に親の外に出る
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// クリッピングを有効化
@@ -222,7 +222,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		// 大きな子ノード（スクロールが必要）
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 400, 400 } });
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -263,7 +263,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		// 大きな子ノード（スクロールが必要）
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 400, 400 } });
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// Canvasをupdateしてレイアウトを適用

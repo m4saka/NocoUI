@@ -18,10 +18,12 @@ namespace noco
 
 	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, AllowExceptions allowExceptions)
 	{
-		if (const auto node = LoadNode(path, allowExceptions))
+		// JSONファイルを直接読み込んでCanvasとして解釈
+		const JSON json = JSON::Load(path, allowExceptions);
+		if (!json)
 		{
-			return Canvas::Create(node, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes);
+			return nullptr;
 		}
-		return nullptr;
+		return Canvas::CreateFromJSON(json);
 	}
 }

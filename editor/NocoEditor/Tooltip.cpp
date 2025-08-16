@@ -20,7 +20,7 @@ namespace noco::editor
 		if (!m_tooltipText.empty() && !m_tooltipNode)
 		{
 			// ツールチップノードを生成
-			m_tooltipNode = m_overlayCanvas->rootNode()->emplaceChild(
+			m_tooltipNode = m_overlayCanvas->emplaceChild(
 				U"Tooltip",
 				AnchorRegion
 				{
@@ -88,7 +88,7 @@ namespace noco::editor
 	{
 		if (m_tooltipNode)
 		{
-			m_overlayCanvas->rootNode()->removeChild(m_tooltipNode);
+			m_overlayCanvas->removeChild(m_tooltipNode, RefreshesLayoutYN::No);
 			m_tooltipNode = nullptr;
 		}
 	}

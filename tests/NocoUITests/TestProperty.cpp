@@ -13,7 +13,7 @@ TEST_CASE("PropertyValue smoothing", "[Property]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		auto label = node->emplaceComponent<noco::Label>();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// スムージング時間を設定した色のプロパティ
 		noco::PropertyValue<ColorF> colorProp{ ColorF{ 1.0, 0.0, 0.0, 1.0 } }; // 赤
@@ -46,7 +46,7 @@ TEST_CASE("PropertyValue smoothing", "[Property]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		auto label = node->emplaceComponent<noco::Label>();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// スムージング時間なしの色のプロパティ
 		noco::PropertyValue<ColorF> colorProp{ ColorF{ 1.0, 0.0, 0.0, 1.0 } }; // 赤（デフォルト値）
@@ -74,7 +74,7 @@ TEST_CASE("PropertyValue smoothing", "[Property]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		auto rect = node->emplaceComponent<noco::RectRenderer>();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// スムージング時間を設定
 		noco::PropertyValue<double> alphaProp{ 1.0 }; // デフォルト値

@@ -4,6 +4,7 @@
 
 namespace noco
 {
+	class Node;
 	void Canvas::EventRegistry::addEvent(const Event& event)
 	{
 		m_events.push_back(event);
@@ -78,95 +79,79 @@ namespace noco
 	}
 
 	Canvas::Canvas()
-		: Canvas{ Node::Create(
-			U"Root",
-			AnchorRegion
-			{
-				.anchorMin = Anchor::TopLeft,
-				.anchorMax = Anchor::BottomRight,
-				.posDelta = Vec2{ 0, 0 },
-				.sizeDelta = Vec2{ 0, 0 },
-				.sizeDeltaPivot = Anchor::MiddleCenter,
-			},
-			IsHitTargetYN::No) }
 	{
+		m_width = DefaultSize.x;
+		m_height = DefaultSize.y;
 	}
 
-	Canvas::Canvas(const std::shared_ptr<Node>& rootNode)
-		: m_rootNode{ rootNode }
-	{
-		refreshLayout();
-	}
-
-	std::shared_ptr<Canvas> Canvas::Create()
+	std::shared_ptr<Canvas> Canvas::Create(const SizeF& size)
 	{
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
-
-		// コンストラクタ内ではshared_from_this()が使えないためここで設定
-		canvas->rootNode()->setCanvasRecursive(canvas);
-
+		canvas->m_width = size.x;
+		canvas->m_height = size.y;
 		return canvas;
 	}
-
-	std::shared_ptr<Canvas> Canvas::Create(const std::shared_ptr<Node>& rootNode, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	
+	std::shared_ptr<Canvas> Canvas::Create(double width, double height)
 	{
-		std::shared_ptr<Canvas> canvas{ new Canvas{ rootNode } };
-
-		// rootNodeは同一インスタンスになる想定
-		assert(canvas->rootNode().get() == rootNode.get());
-
-		rootNode->setCanvasRecursive(canvas); // コンストラクタ内ではshared_from_this()が使えないためここで設定
-
-		if (refreshesLayoutPre)
-		{
-			canvas->refreshLayout();
-		}
-		rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No);
-		if (refreshesLayoutPost)
-		{
-			canvas->refreshLayout();
-		}
-
-		return canvas;
+		return Create(SizeF{ width, height });
 	}
 
 	void Canvas::refreshLayout()
 	{
-		const auto& rootRegion = m_rootNode->region();
-		if (const auto pInlineRegion = std::get_if<InlineRegion>(&rootRegion))
+		const RectF canvasRect{ 0, 0, m_width, m_height };
+		
+		for (const auto& child : m_children)
 		{
-			m_rootNode->m_regionRect = pInlineRegion->applyRegion(Scene::Rect(), Vec2::Zero());
-		}
-		else if (const auto pAnchorRegion = std::get_if<AnchorRegion>(&rootRegion))
-		{
-			m_rootNode->m_regionRect = pAnchorRegion->applyRegion(Scene::Rect(), Vec2::Zero());
-		}
-		else
-		{
-			// TODO: 実行時例外ではなくコンパイルエラーにしたい
-			throw Error{ U"Unknown root node region" };
-		}
+			const auto& childRegion = child->region();
+			if (const auto pInlineRegion = std::get_if<InlineRegion>(&childRegion))
+			{
+				child->m_regionRect = pInlineRegion->applyRegion(canvasRect, Vec2::Zero());
+			}
+			else if (const auto pAnchorRegion = std::get_if<AnchorRegion>(&childRegion))
+			{
+				child->m_regionRect = pAnchorRegion->applyRegion(canvasRect, Vec2::Zero());
+			}
+			else
+			{
+				throw Error{ U"Unknown child node region" };
+			}
 
-		m_rootNode->refreshChildrenLayout();
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			child->refreshChildrenLayout();
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 	}
 
 	bool Canvas::containsNodeByName(const String& nodeName) const
 	{
-		if (m_rootNode->name() == nodeName)
+		for (const auto& child : m_children)
 		{
-			return true;
+			if (child->name() == nodeName)
+			{
+				return true;
+			}
+			if (child->containsChildByName(nodeName, RecursiveYN::Yes))
+			{
+				return true;
+			}
 		}
-		return m_rootNode->containsChildByName(nodeName, RecursiveYN::Yes);
+		return false;
 	}
 	
 	std::shared_ptr<Node> Canvas::getNodeByName(const String& nodeName) const
 	{
-		if (m_rootNode->name() == nodeName)
+		for (const auto& child : m_children)
 		{
-			return m_rootNode;
+			if (child->name() == nodeName)
+			{
+				return child;
+			}
+			if (auto found = child->getChildByNameOrNull(nodeName, RecursiveYN::Yes))
+			{
+				return found;
+			}
 		}
-		return m_rootNode->getChildByName(nodeName, RecursiveYN::Yes);
+		return nullptr;
 	}
 	
 	JSON Canvas::toJSON() const
@@ -174,8 +159,16 @@ namespace noco
 		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
-			{ U"rootNode", m_rootNode->toJSON() }
+			{ U"width", m_width },
+			{ U"height", m_height },
 		};
+
+		Array<JSON> childrenArray;
+		for (const auto& child : m_children)
+		{
+			childrenArray.push_back(child->toJSON());
+		}
+		json[U"children"] = childrenArray;
 
 		if (!m_params.empty())
 		{
@@ -195,8 +188,16 @@ namespace noco
 		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
-			{ U"rootNode", m_rootNode->toJSONImpl(includesInternalId) }
+			{ U"width", m_width },
+			{ U"height", m_height },
 		};
+
+		Array<JSON> childrenArray;
+		for (const auto& child : m_children)
+		{
+			childrenArray.push_back(child->toJSONImpl(includesInternalId));
+		}
+		json[U"children"] = childrenArray;
 
 		if (!m_params.empty())
 		{
@@ -213,46 +214,141 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!json.contains(U"rootNode"))
+		if (!json.contains(U"width") || !json.contains(U"height"))
 		{
-			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required fields 'width' or 'height'";
 			return nullptr;
 		}
-		return Create(Node::CreateFromJSON(json[U"rootNode"]), refreshesLayout);
+		
+		if (!json.contains(U"children"))
+		{
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'children'";
+			return nullptr;
+		}
+		
+		std::shared_ptr<Canvas> canvas{ new Canvas{} };
+		
+		canvas->m_width = json[U"width"].get<double>();
+		canvas->m_height = json[U"height"].get<double>();
+		
+		for (const auto& childJson : json[U"children"].arrayView())
+		{
+			if (auto child = Node::CreateFromJSON(childJson))
+			{
+				canvas->addChild(child, RefreshesLayoutYN::No);
+			}
+		}
+
+		if (json.contains(U"params"))
+		{
+			if (json[U"params"].isObject())
+			{
+				for (const auto& member : json[U"params"])
+				{
+					const String name = member.key;
+					const auto& paramJson = member.value;
+					if (auto value = ParamValueFromJSON(paramJson))
+					{
+						canvas->m_params[name] = *value;
+					}
+				}
+			}
+		}
+
+		if (refreshesLayout)
+		{
+			canvas->refreshLayout();
+		}
+
+		return canvas;
 	}
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout)
 	{
-		if (!json.contains(U"rootNode"))
+		if (!json.contains(U"width") || !json.contains(U"height"))
 		{
-			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required fields 'width' or 'height'";
 			return nullptr;
 		}
-		return Create(Node::CreateFromJSONImpl(json[U"rootNode"], includesInternalId), refreshesLayout);
+		
+		if (!json.contains(U"children"))
+		{
+			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required field 'children'";
+			return nullptr;
+		}
+		
+		std::shared_ptr<Canvas> canvas{ new Canvas{} };
+		
+		canvas->m_width = json[U"width"].get<double>();
+		canvas->m_height = json[U"height"].get<double>();
+		
+		for (const auto& childJson : json[U"children"].arrayView())
+		{
+			if (auto child = Node::CreateFromJSONImpl(childJson, includesInternalId))
+			{
+				canvas->addChild(child, RefreshesLayoutYN::No);
+			}
+		}
+
+		if (json.contains(U"params"))
+		{
+			if (json[U"params"].isObject())
+			{
+				for (const auto& member : json[U"params"])
+				{
+					const String name = member.key;
+					const auto& paramJson = member.value;
+					if (auto value = ParamValueFromJSON(paramJson))
+					{
+						canvas->m_params[name] = *value;
+					}
+				}
+			}
+		}
+
+		if (refreshesLayout)
+		{
+			canvas->refreshLayout();
+		}
+
+		return canvas;
 	}
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
-		if (!json.contains(U"rootNode"))
+		if (!json.contains(U"children"))
 		{
-			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'children'";
 			return false;
 		}
-		m_rootNode = Node::CreateFromJSON(json[U"rootNode"]);
-		if (!m_rootNode)
+		
+		if (json.contains(U"width") && json.contains(U"height"))
 		{
-			Logger << U"[NocoUI error] Failed to create root node from JSON";
-			return false;
+			m_width = json[U"width"].get<double>();
+			m_height = json[U"height"].get<double>();
 		}
-		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 
-		// パラメータの読み込み
+		for (const auto& child : m_children)
+		{
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->m_parent.reset();
+			child->refreshActiveInHierarchy();
+		}
+		m_children.clear();
+
+		for (const auto& childJson : json[U"children"].arrayView())
+		{
+			if (auto child = Node::CreateFromJSON(childJson))
+			{
+				addChild(child, RefreshesLayoutYN::No);
+			}
+		}
+
 		m_params.clear();
 		if (json.contains(U"params"))
 		{
 			if (json[U"params"].isObject())
 			{
-				// 新しい形式 (オブジェクト)
 				for (const auto& member : json[U"params"])
 				{
 					const String name = member.key;
@@ -263,28 +359,16 @@ namespace noco
 					}
 				}
 			}
-			else if (json[U"params"].isArray())
-			{
-				// 旧形式 (配列) の互換性維持
-				for (const auto& paramJson : json[U"params"].arrayView())
-				{
-					if (paramJson.contains(U"name") && paramJson.contains(U"type") && paramJson.contains(U"value"))
-					{
-						const String name = paramJson[U"name"].getString();
-						if (auto value = ParamValueFromJSON(paramJson))
-						{
-							m_params[name] = *value;
-						}
-					}
-				}
-			}
 		}
 
 		if (refreshesLayoutPre)
 		{
 			refreshLayout();
 		}
-		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		for (const auto& child : m_children)
+		{
+			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		}
 		if (refreshesLayoutPost)
 		{
 			refreshLayout();
@@ -294,26 +378,39 @@ namespace noco
 	
 	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
-		if (!json.contains(U"rootNode"))
+		if (!json.contains(U"children"))
 		{
-			Logger << U"[NocoUI error] JSON does not contain 'rootNode' field";
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSONImpl: Missing required field 'children'";
 			return false;
 		}
-		m_rootNode = Node::CreateFromJSONImpl(json[U"rootNode"], includesInternalId);
-		if (!m_rootNode)
+		
+		if (json.contains(U"width") && json.contains(U"height"))
 		{
-			Logger << U"[NocoUI error] Failed to create root node from JSON";
-			return false;
+			m_width = json[U"width"].get<double>();
+			m_height = json[U"height"].get<double>();
 		}
-		m_rootNode->setCanvasRecursive(shared_from_this()); // コンストラクタ内ではshared_from_this()が使えないためここで設定
 
-		// パラメータの読み込み
+		for (const auto& child : m_children)
+		{
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->m_parent.reset();
+			child->refreshActiveInHierarchy();
+		}
+		m_children.clear();
+
+		for (const auto& childJson : json[U"children"].arrayView())
+		{
+			if (auto child = Node::CreateFromJSONImpl(childJson, includesInternalId))
+			{
+				addChild(child, RefreshesLayoutYN::No);
+			}
+		}
+
 		m_params.clear();
 		if (json.contains(U"params"))
 		{
 			if (json[U"params"].isObject())
 			{
-				// 新しい形式 (オブジェクト)
 				for (const auto& member : json[U"params"])
 				{
 					const String name = member.key;
@@ -324,28 +421,16 @@ namespace noco
 					}
 				}
 			}
-			else if (json[U"params"].isArray())
-			{
-				// 旧形式 (配列) の互換性維持
-				for (const auto& paramJson : json[U"params"].arrayView())
-				{
-					if (paramJson.contains(U"name") && paramJson.contains(U"type") && paramJson.contains(U"value"))
-					{
-						const String name = paramJson[U"name"].getString();
-						if (auto value = ParamValueFromJSON(paramJson))
-						{
-							m_params[name] = *value;
-						}
-					}
-				}
-			}
 		}
 
 		if (refreshesLayoutPre)
 		{
 			refreshLayout();
 		}
-		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		for (const auto& child : m_children)
+		{
+			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		}
 		if (refreshesLayoutPost)
 		{
 			refreshLayout();
@@ -359,14 +444,24 @@ namespace noco
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
 
-		if (!m_rootNode)
+		if (m_children.empty())
 		{
 			return;
 		}
 		
-		// ホバー中ノード取得
-		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused; // TODO: 本来はウィンドウがアクティブでない場合もホバーさせたいが、重なった他ウィンドウクリック時に押下扱いになってしまうため除外している
-		const auto hoveredNode = canHover ? m_rootNode->hoveredNodeRecursive() : nullptr;
+		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused;
+		std::shared_ptr<Node> hoveredNode = nullptr;
+		if (canHover)
+		{
+			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+			{
+				if (auto node = (*it)->hoveredNodeRecursive())
+				{
+					hoveredNode = node;
+					break;
+				}
+			}
+		}
 		if (hoveredNode)
 		{
 			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
@@ -501,11 +596,25 @@ namespace noco
 		// ノード更新
 		const bool currentDragScrollingWithThreshold = dragScrollingNode && dragScrollingNode->m_dragThresholdExceeded;
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
-		m_rootNode->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
-		m_rootNode->updateKeyInput();
-		m_rootNode->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params, {});
-		m_rootNode->lateUpdate();
-		m_rootNode->postLateUpdate(Scene::DeltaTime(), m_params);
+		
+		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+		m_childrenTempBuffer.clear();
+		m_childrenTempBuffer.reserve(m_children.size());
+		for (const auto& child : m_children)
+		{
+			m_childrenTempBuffer.push_back(child);
+		}
+		
+		for (const auto& child : m_childrenTempBuffer)
+		{
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
+			child->updateKeyInput();
+			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params, {});
+			child->lateUpdate();
+			child->postLateUpdate(Scene::DeltaTime(), m_params);
+		}
+		
+		m_childrenTempBuffer.clear();
 
 		// ドラッグスクロール開始判定
 		// (ドラッグアンドドロップと競合しないよう、フレームの最後に実施)
@@ -519,63 +628,73 @@ namespace noco
 			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
 		}
 		
-		// 前フレームの状態を更新
 		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
+	}
+	
+	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point) const
+	{
+		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+		{
+			if (const auto hoveredNode = (*it)->hitTest(point))
+			{
+				return hoveredNode;
+			}
+		}
+		return nullptr;
 	}
 	
 	void Canvas::draw() const
 	{
-		if (m_rootNode)
+		for (const auto& child : m_children)
 		{
-			m_rootNode->draw();
+			child->draw();
 		}
 	}
 	
-	const std::shared_ptr<Node>& Canvas::rootNode() const
+	void Canvas::removeChildrenAll(RefreshesLayoutYN refreshesLayout)
 	{
-		return m_rootNode;
-	}
-	
-	void Canvas::removeChildrenAll()
-	{
-		m_rootNode->removeChildrenAll();
-	}
-
-	void Canvas::resetWithNewRootNode(
-		const RegionVariant& region,
-		const String& name,
-		RefreshesLayoutYN refreshesLayout)
-	{
-		auto newRootNode = Node::Create(
-			name,
-			region,
-			IsHitTargetYN::No);
-		
-		if (m_rootNode)
+		for (const auto& child : m_children)
 		{
-			m_rootNode->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->m_parent.reset();
+			child->refreshActiveInHierarchy();
 		}
-		
-		m_rootNode = newRootNode;
-		m_rootNode->setCanvasRecursive(shared_from_this());
-		
+		m_children.clear();
 		if (refreshesLayout)
 		{
 			refreshLayout();
 		}
 	}
 
+	void Canvas::clearAll()
+	{
+		for (const auto& child : m_children)
+		{
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->m_parent.reset();
+			child->refreshActiveInHierarchy();
+		}
+		m_children.clear();
+		m_params.clear();
+	}
+
 	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
 	{
 		m_position = position;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 		return shared_from_this();
 	}
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		m_scale = scale;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 		return shared_from_this();
 	}
 	
@@ -583,14 +702,20 @@ namespace noco
 	{
 		m_position = position;
 		m_scale = scale;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 		return shared_from_this();
 	}
 
 	std::shared_ptr<Canvas> Canvas::setRotation(double rotation)
 	{
 		m_rotation = rotation;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 		return shared_from_this();
 	}
 
@@ -599,13 +724,19 @@ namespace noco
 		m_position = position;
 		m_scale = scale;
 		m_rotation = rotation;
-		m_rootNode->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
 		return shared_from_this();
 	}
 	
 	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)
 	{
-		m_rootNode->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		for (const auto& child : m_children)
+		{
+			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+		}
 		if (refreshesLayout)
 		{
 			refreshLayout();
@@ -672,14 +803,8 @@ namespace noco
 
 	size_t Canvas::countParamRef(StringView paramName) const
 	{
-		if (!m_rootNode)
-		{
-			return 0;
-		}
-
 		size_t count = 0;
 		
-		// ルートノードから再帰的に全ノードを走査
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティをチェック
@@ -703,18 +828,15 @@ namespace noco
 			}
 		};
 
-		walkNode(m_rootNode);
+		for (const auto& child : m_children)
+		{
+			walkNode(child);
+		}
 		return count;
 	}
 
 	void Canvas::clearParamRef(StringView paramName)
 	{
-		if (!m_rootNode)
-		{
-			return;
-		}
-		
-		// ルートノードから再帰的に全ノードを走査
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティから参照を解除
@@ -738,19 +860,16 @@ namespace noco
 			}
 		};
 
-		walkNode(m_rootNode);
+		for (const auto& child : m_children)
+		{
+			walkNode(child);
+		}
 	}
 
 	Array<String> Canvas::clearInvalidParamRefs()
 	{
 		HashSet<String> clearedParamsSet;
 		
-		if (!m_rootNode)
-		{
-			return {};
-		}
-		
-		// ルートノードから再帰的に全ノードを走査
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformの無効な参照を解除
@@ -775,7 +894,269 @@ namespace noco
 			}
 		};
 
-		walkNode(m_rootNode);
+		for (const auto& child : m_children)
+		{
+			walkNode(child);
+		}
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
+	}
+
+	std::shared_ptr<Node> Canvas::childAt(size_t index) const
+	{
+		if (index >= m_children.size())
+		{
+			return nullptr;
+		}
+		return m_children[index];
+	}
+
+	const std::shared_ptr<Node>& Canvas::addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout)
+	{
+		if (!node)
+		{
+			throw Error{ U"Canvas::addChild: node is nullptr" };
+		}
+		if (node->parentNode() || node->isTopLevelNode())
+		{
+			throw Error{ U"Canvas::addChild: Child node '{}' already has a parent or is already a top-level node"_fmt(node->name()) };
+		}
+
+		node->setCanvasRecursive(shared_from_this());
+		node->m_parent.reset();
+		node->refreshActiveInHierarchy();
+		m_children.push_back(node);
+
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+
+		return m_children.back();
+	}
+
+	void Canvas::removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout)
+	{
+		if (!node)
+		{
+			return;
+		}
+
+		m_children.remove(node);
+		node->m_parent.reset();
+		node->setCanvasRecursive(std::weak_ptr<Canvas>{});
+		node->refreshActiveInHierarchy();
+
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+	}
+	
+	void Canvas::swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout)
+	{
+		if (index1 >= m_children.size() || index2 >= m_children.size())
+		{
+			return;
+		}
+
+		std::swap(m_children[index1], m_children[index2]);
+
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+	}
+	
+	const std::shared_ptr<Node>& Canvas::emplaceChild(
+		StringView name,
+		const RegionVariant& region,
+		IsHitTargetYN isHitTarget,
+		InheritChildrenStateFlags inheritChildrenStateFlags,
+		RefreshesLayoutYN refreshesLayout)
+	{
+		auto child = Node::Create(name, region, isHitTarget, inheritChildrenStateFlags);
+		child->setCanvasRecursive(shared_from_this());
+		child->m_parent.reset();
+		child->refreshActiveInHierarchy();
+		m_children.push_back(std::move(child));
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+		return m_children.back();
+	}
+
+	const std::shared_ptr<Node>& Canvas::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
+	{
+		auto child = Node::CreateFromJSON(json);
+		child->setCanvasRecursive(shared_from_this());
+		child->m_parent.reset();
+		child->refreshActiveInHierarchy();
+		m_children.push_back(std::move(child));
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+		return m_children.back();
+	}
+
+	const std::shared_ptr<Node>& Canvas::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
+	{
+		if (!child)
+		{
+			throw Error{ U"Canvas::addChildAtIndex: node is nullptr" };
+		}
+		if (child->parentNode() || child->isTopLevelNode())
+		{
+			throw Error{ U"Canvas::addChildAtIndex: Child node '{}' already has a parent or is already a top-level node"_fmt(child->name()) };
+		}
+
+		if (index > m_children.size())
+		{
+			index = m_children.size();
+		}
+
+		child->setCanvasRecursive(shared_from_this());
+		child->m_parent.reset();
+		child->refreshActiveInHierarchy();
+		m_children.insert(m_children.begin() + index, child);
+
+		if (refreshesLayout)
+		{
+			refreshLayout();
+		}
+
+		return m_children[index];
+	}
+
+	bool Canvas::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
+	{
+		if (m_children.contains(child))
+		{
+			return true;
+		}
+		if (recursive)
+		{
+			for (const auto& myChild : m_children)
+			{
+				if (myChild->containsChild(child, recursive))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	bool Canvas::containsChildByName(StringView name, RecursiveYN recursive) const
+	{
+		for (const auto& child : m_children)
+		{
+			if (child->name() == name)
+			{
+				return true;
+			}
+			if (recursive && child->containsChildByName(name, recursive))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	std::shared_ptr<Node> Canvas::getChildByNameOrNull(StringView name, RecursiveYN recursive)
+	{
+		for (const auto& child : m_children)
+		{
+			if (child->name() == name)
+			{
+				return child;
+			}
+			if (recursive)
+			{
+				if (auto found = child->getChildByNameOrNull(name, recursive))
+				{
+					return found;
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	Optional<size_t> Canvas::indexOfChildOpt(const std::shared_ptr<Node>& child) const
+	{
+		const auto it = std::find(m_children.begin(), m_children.end(), child);
+		if (it == m_children.end())
+		{
+			return none;
+		}
+		return static_cast<size_t>(std::distance(m_children.begin(), it));
+	}
+
+	void Canvas::replaceParamRefAll(const String& oldName, const String& newName)
+	{
+		for (const auto& child : m_children)
+		{
+			child->replaceParamRef(oldName, newName, RecursiveYN::Yes);
+		}
+	}
+
+	std::shared_ptr<Node> Canvas::findNodeByInternalId(uint64 internalId) const
+	{
+		for (const auto& child : m_children)
+		{
+			if (auto result = findNodeByInternalIdRecursive(child, internalId))
+			{
+				return result;
+			}
+		}
+		return nullptr;
+	}
+
+	std::shared_ptr<Node> Canvas::findNodeByInternalIdRecursive(const std::shared_ptr<Node>& node, uint64 internalId) const
+	{
+		if (!node)
+		{
+			return nullptr;
+		}
+		
+		if (node->internalId() == internalId)
+		{
+			return node;
+		}
+		
+		for (const auto& child : node->children())
+		{
+			if (auto result = findNodeByInternalIdRecursive(child, internalId))
+			{
+				return result;
+			}
+		}
+		
+		return nullptr;
+	}
+
+	Quad Canvas::quad() const
+	{
+		const RectF rect{ 0, 0, m_width, m_height };
+		const Mat3x2 transform = rootPosScaleMat();
+		
+		const Vec2 topLeft = transform.transformPoint(rect.tl());
+		const Vec2 topRight = transform.transformPoint(rect.tr());
+		const Vec2 bottomLeft = transform.transformPoint(rect.bl());
+		const Vec2 bottomRight = transform.transformPoint(rect.br());
+		
+		return Quad{ topLeft, topRight, bottomRight, bottomLeft };
+	}
+
+	std::shared_ptr<Canvas> Canvas::setCenter(const Vec2& center)
+	{
+		m_position = center - Vec2{ m_width / 2, m_height / 2 };
+		return shared_from_this();
+	}
+
+	Vec2 Canvas::center() const
+	{
+		return m_position + Vec2{ m_width / 2, m_height / 2 };
 	}
 }

@@ -159,7 +159,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 	{
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// パラメータを作成
 		canvas->setParamValue(U"labelText", U"Hello World");
@@ -184,7 +184,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 	{
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// Vec2パラメータを作成
 		canvas->setParamValue(U"translateParam", Vec2{100, 200});
@@ -208,7 +208,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 		// 同じフレームのdraw時点で反映されることを確認
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// パラメータを作成
 		canvas->setParamValue(U"dynamicText", U"Dynamic Value");
@@ -333,7 +333,7 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 	{
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// パラメータを作成してバインド
 		canvas->setParamValue(U"testParam", U"Initial");
@@ -398,7 +398,7 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 	{
 		auto canvas = Canvas::Create();
 		auto node = Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// プロパティに存在しないパラメータ参照を設定
 		auto label = node->emplaceComponent<Label>(U"Test");

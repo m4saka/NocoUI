@@ -59,7 +59,7 @@ namespace noco::editor
 	public:
 		explicit ContextMenu(const std::shared_ptr<Canvas>& editorOverlayCanvas, StringView name = U"ContextMenu")
 			: m_editorOverlayCanvas(editorOverlayCanvas)
-			, m_screenMaskNode(editorOverlayCanvas->rootNode()->emplaceChild(
+			, m_screenMaskNode(editorOverlayCanvas->emplaceChild(
 				U"{}_ScreenMask"_fmt(name),
 				AnchorRegion
 				{

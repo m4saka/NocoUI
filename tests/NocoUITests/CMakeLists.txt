@@ -42,6 +42,7 @@ add_executable(${TARGET_NAME}
     TestSerializationDetails.cpp
     TestStyleState.cpp
     TestParam.cpp
+    TestParent.cpp
 )
 
 find_package(Siv3D REQUIRED)

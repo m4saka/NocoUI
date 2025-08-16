@@ -48,7 +48,7 @@ namespace noco::editor
 	public:
 		explicit DialogFrame(const std::shared_ptr<Canvas>& dialogCanvas, double dialogWidth, const std::function<void(StringView)>& onResult, const Array<DialogButtonDesc>& buttonDescs)
 			: m_dialogCanvas(dialogCanvas)
-			, m_screenMaskNode(dialogCanvas->rootNode()->emplaceChild(
+			, m_screenMaskNode(dialogCanvas->emplaceChild(
 				U"Dialog_ScreenMask",
 				AnchorRegion
 				{

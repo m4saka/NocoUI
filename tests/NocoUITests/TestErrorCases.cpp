@@ -20,7 +20,7 @@ TEST_CASE("Error cases and edge cases", "[Error]")
 		// これはエラーになるべき
 		// 実装によってはassertやexceptionが発生する可能性
 		// ここではテスト構造のみ示す
-		REQUIRE(node2->parent() == node1);
+		REQUIRE(node2->parentNode() == node1);
 	}
 
 	SECTION("Invalid region values")

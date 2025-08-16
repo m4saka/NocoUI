@@ -26,11 +26,26 @@ using namespace noco;
 using namespace noco::editor;
 using noco::detail::IncludesInternalIdYN;
 
-constexpr Vec2 InitialCanvasScrollOffset{ 0, -(MenuBarHeight + Toolbar::ToolbarHeight) / 2 };
+Vec2 calculateCanvasCenterOffset(const Size& sceneSize, const std::shared_ptr<Canvas>& canvas)
+{
+	// Canvas表示エリア（メニューバーとツールバーを除く）の中央を計算
+	const double contentAreaTop = MenuBarHeight + Toolbar::ToolbarHeight;
+	const double contentAreaHeight = sceneSize.y - contentAreaTop;
+	const Vec2 contentAreaCenter{ 
+		sceneSize.x / 2.0, 
+		contentAreaTop + contentAreaHeight / 2.0 
+	};
+	
+	const Vec2 canvasSize{ canvas->width(), canvas->height() };
+	const Vec2 targetPosition = contentAreaCenter - canvasSize / 2.0;
+	return -targetPosition;
+}
 
 class Editor
 {
 private:
+	bool m_exitRequested = false;
+	
 	std::shared_ptr<Canvas> m_canvas;
 	std::shared_ptr<Canvas> m_editorCanvas;
 	std::shared_ptr<Canvas> m_editorOverlayCanvas;
@@ -48,7 +63,7 @@ private:
 	Size m_prevSceneSize;
 	Optional<String> m_filePath = none;
 	uint64 m_savedHash = 0;
-	Vec2 m_scrollOffset = InitialCanvasScrollOffset;
+	Vec2 m_scrollOffset{ 0, 0 };
 	double m_scrollScale = 1.0;
 	bool m_isAltScrolling = false;
 	HistorySystem m_historySystem;
@@ -92,11 +107,11 @@ private:
 public:
 	Editor()
 		: m_canvas(Canvas::Create())
-		, m_editorCanvas(Canvas::Create())
-		, m_editorOverlayCanvas(Canvas::Create())
+		, m_editorCanvas(Canvas::Create(Scene::Size()))
+		, m_editorOverlayCanvas(Canvas::Create(Scene::Size()))
 		, m_contextMenu(std::make_shared<ContextMenu>(m_editorOverlayCanvas, U"EditorContextMenu"))
-		, m_dialogCanvas(Canvas::Create())
-		, m_dialogOverlayCanvas(Canvas::Create())
+		, m_dialogCanvas(Canvas::Create(Scene::Size()))
+		, m_dialogOverlayCanvas(Canvas::Create(Scene::Size()))
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener)
@@ -181,13 +196,13 @@ public:
 		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); }, [this] { return m_hierarchy.hasSelection(); });
 		m_toolbar.addSeparator();
 
-		// 初期位置を反映
+		// Canvas初期位置をウィンドウ中央に設定
+		m_scrollOffset = calculateCanvasCenterOffset(Scene::Size(), m_canvas);
 		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 		
 		// ツールバーの初期状態を更新
 		m_toolbar.updateButtonStates();
 		
-		// リサイズハンドルの初期化
 		initializeResizeHandles();
 	}
 
@@ -216,7 +231,6 @@ public:
 		m_hierarchy.update();
 		m_inspector.update();
 		
-		// リサイズハンドルの更新
 		if (m_hierarchyResizeHandle)
 		{
 			m_hierarchyResizeHandle->update();
@@ -394,7 +408,7 @@ public:
 		// ウィンドウを閉じようとした場合
 		if (!m_isConfirmDialogShowing && (userActionFlags & UserAction::CloseButtonClicked))
 		{
-			showConfirmSaveIfDirty([] { System::Exit(); });
+			showConfirmSaveIfDirty([this] { requestExit(); });
 		}
 	}
 
@@ -402,7 +416,7 @@ public:
 	{
 		m_canvas->draw();
 		constexpr double Thickness = 2.0;
-		m_canvas->rootNode()->transformedQuad().drawFrame(0.0, Thickness, ColorF{ 1.0 });
+		m_canvas->quad().drawFrame(0.0, Thickness, ColorF{ 1.0 });
 		m_hierarchy.drawSelectedNodesGizmo();
 		m_editorCanvas->draw();
 		m_editorOverlayCanvas->draw();
@@ -418,11 +432,6 @@ public:
 	const Hierarchy& hierarchy() const
 	{
 		return m_hierarchy;
-	}
-
-	const std::shared_ptr<Node>& rootNode() const
-	{
-		return m_canvas->rootNode();
 	}
 
 	void initializeResizeHandles()
@@ -495,11 +504,15 @@ public:
 	void refreshLayout()
 	{
 		updateResizeHandlePositions();
-		m_editorCanvas->refreshLayout();
-		m_editorOverlayCanvas->refreshLayout();
-		m_canvas->refreshLayout();
-		m_dialogCanvas->refreshLayout();
-		m_dialogOverlayCanvas->refreshLayout();
+		const auto sceneSize = Scene::Size();
+		m_editorCanvas->setSize(sceneSize);  // RefreshesLayoutYN::Yesがデフォルトなので自動的にrefreshLayout()が呼ばれる
+		m_editorOverlayCanvas->setSize(sceneSize);
+		m_dialogCanvas->setSize(sceneSize);
+		m_dialogOverlayCanvas->setSize(sceneSize);
+		
+		// ウィンドウリサイズ時にCanvas中央位置を保持
+		m_scrollOffset = calculateCanvasCenterOffset(sceneSize, m_canvas);
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
 	void refresh()
@@ -508,35 +521,21 @@ public:
 		refreshLayout();
 	}
 
+	bool isExitRequested() const
+	{
+		return m_exitRequested;
+	}
+
+	void requestExit()
+	{
+		m_exitRequested = true;
+	}
+
 	// 選択中のノードのinternalIdを保存
 	Array<uint64> saveSelectedNodeIds() const
 	{
 		const auto selectedNodes = m_hierarchy.getSelectedNodesExcludingChildren();
 		return selectedNodes.map([](const auto& node) { return node->internalId(); });
-	}
-
-	// internalIdを使用してノードを検索（再帰的）
-	std::shared_ptr<Node> findNodeByInternalId(const std::shared_ptr<Node>& node, uint64 targetId) const
-	{
-		if (!node)
-		{
-			return nullptr;
-		}
-		
-		if (node->internalId() == targetId)
-		{
-			return node;
-		}
-		
-		for (const auto& child : node->children())
-		{
-			if (auto found = findNodeByInternalId(child, targetId))
-			{
-				return found;
-			}
-		}
-		
-		return nullptr;
 	}
 
 	// internalIdのリストから選択を復元
@@ -551,7 +550,7 @@ public:
 		nodesToSelect.reserve(selectedIds.size());
 		for (const auto& id : selectedIds)
 		{
-			if (auto node = findNodeByInternalId(m_canvas->rootNode(), id))
+			if (auto node = m_canvas->findNodeByInternalId(id))
 			{
 				nodesToSelect.push_back(std::move(node));
 			}
@@ -644,15 +643,7 @@ public:
 			{
 				m_filePath = none;
 				m_canvas->clearParams();
-				m_canvas->resetWithNewRootNode(
-					AnchorRegion
-					{
-						.anchorMin = Anchor::MiddleCenter,
-						.anchorMax = Anchor::MiddleCenter,
-						.posDelta = Vec2{ 0, 0 },
-						.sizeDelta = Vec2{ 800, 600 },
-					},
-					U"Root");
+				m_canvas->clearAll();
 				refresh();
 				createInitialNode();
 				m_historySystem.clear();
@@ -816,9 +807,9 @@ public:
 	void onClickMenuFileExit()
 	{
 		showConfirmSaveIfDirty(
-			[]
+			[this]
 			{
-				System::Exit();
+				requestExit();
 			});
 	}
 
@@ -890,7 +881,7 @@ public:
 
 	void onClickMenuViewResetPosition()
 	{
-		m_scrollOffset = InitialCanvasScrollOffset;
+		m_scrollOffset = calculateCanvasCenterOffset(Scene::Size(), m_canvas);
 		m_scrollScale = 1.0;
 		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
@@ -947,15 +938,7 @@ void Main()
 	// ファイルが読み込まれなかった場合は新規作成
 	if (!fileLoaded)
 	{
-		editor.rootNode()->setRegion(AnchorRegion
-		{
-			.anchorMin = Anchor::MiddleCenter,
-			.anchorMax = Anchor::MiddleCenter,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = Vec2{ 800, 600 },
-		});
-		editor.refresh();
-		editor.createInitialNode();
+			editor.createInitialNode();
 		editor.resetDirtyState();
 	}
 	
@@ -967,6 +950,10 @@ void Main()
 	while (System::Update())
 	{
 		editor.update();
+		if (editor.isExitRequested())
+		{
+			break;
+		}
 		editor.draw();
 	}
 }

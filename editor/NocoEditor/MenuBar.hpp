@@ -28,7 +28,7 @@ namespace noco::editor
 	public:
 		explicit MenuBar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu)
 			: m_editorCanvas(editorCanvas)
-			, m_menuBarRootNode(editorCanvas->rootNode()->emplaceChild(
+			, m_menuBarRootNode(editorCanvas->emplaceChild(
 				U"MenuBar",
 				AnchorRegion
 				{

@@ -14,7 +14,7 @@ TEST_CASE("Node creation and basic properties", "[Node]")
 		REQUIRE(node != nullptr);
 		REQUIRE(node->name() == U"Node");
 		REQUIRE(node->children().empty());
-		REQUIRE(node->parent() == nullptr);
+		REQUIRE(node->parentNode() == nullptr);
 	}
 
 	SECTION("Create node with name")
@@ -36,7 +36,7 @@ TEST_CASE("Node hierarchy", "[Node]")
 		
 		REQUIRE(parent->children().size() == 1);
 		REQUIRE(parent->children()[0] == child);
-		REQUIRE(child->parent() == parent);
+		REQUIRE(child->parentNode() == parent);
 	}
 
 	SECTION("Remove child")
@@ -48,7 +48,7 @@ TEST_CASE("Node hierarchy", "[Node]")
 		parent->removeChild(child);
 		
 		REQUIRE(parent->children().empty());
-		REQUIRE(child->parent() == nullptr);
+		REQUIRE(child->parentNode() == nullptr);
 	}
 
 	SECTION("Multiple children")
@@ -106,7 +106,7 @@ TEST_CASE("Node properties and state management", "[Node]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// 初期値の確認
 		auto& transform = node->transform();
@@ -261,7 +261,7 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		// RefreshesLayoutYN引数のみでemplaceChild
 		const auto& child1 = parent->emplaceChild(noco::RefreshesLayoutYN::Yes);
 		REQUIRE(child1 != nullptr);
-		REQUIRE(child1->parent() == parent);
+		REQUIRE(child1->parentNode() == parent);
 		REQUIRE(parent->children().size() == 1);
 		REQUIRE(parent->children()[0] == child1);
 		
@@ -274,7 +274,7 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		// RefreshesLayoutYN::Noで別の子を追加
 		const auto& child2 = parent->emplaceChild(noco::RefreshesLayoutYN::No);
 		REQUIRE(child2 != nullptr);
-		REQUIRE(child2->parent() == parent);
+		REQUIRE(child2->parentNode() == parent);
 		REQUIRE(parent->children().size() == 2);
 		REQUIRE(parent->children()[1] == child2);
 		
@@ -292,7 +292,7 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// 初期値の確認
@@ -316,7 +316,7 @@ TEST_CASE("Node coordinate transformations", "[Node]")
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		parent->addChild(child);
 		
 		// 初期値の確認
@@ -343,7 +343,7 @@ TEST_CASE("Node scrolling", "[Node]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// スクロールには子ノードが必要
 		auto child = noco::Node::Create();
@@ -410,7 +410,7 @@ TEST_CASE("Transform", "[Node][Transform]")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
-		canvas->rootNode()->addChild(node);
+		canvas->addChild(node);
 		
 		// 初期値の確認
 		auto& transform = node->transform();

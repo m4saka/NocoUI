@@ -26,7 +26,7 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 			parent->addChild(child);
 		}
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		canvas->update();
 		
 		// 3つずつ2行に配置されるはず（200幅に60×3 + spacing×2 = 200）
@@ -59,7 +59,7 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 		parent->addChild(flexChild1);
 		parent->addChild(flexChild2);
 		
-		canvas->rootNode()->addChild(parent);
+		canvas->addChild(parent);
 		canvas->update();
 		
 		// 残り幅250を1:2で分配するはず
@@ -91,7 +91,7 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 		}
 		
 		root->addChild(hContainer);
-		canvas->rootNode()->addChild(root);
+		canvas->addChild(root);
 		canvas->update();
 		
 		// ネストされたレイアウトが正しく動作するか

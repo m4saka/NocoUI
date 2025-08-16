@@ -34,7 +34,7 @@ namespace noco::editor
 		explicit Toolbar(const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas)
 			: m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
-			, m_toolbarRootNode(editorCanvas->rootNode()->emplaceChild(
+			, m_toolbarRootNode(editorCanvas->emplaceChild(
 				U"Toolbar",
 				AnchorRegion
 				{

@@ -257,25 +257,19 @@ namespace noco::editor
 					{
 						// targetの上に兄弟ノードとして移動
 						// X座標に基づいて、適切な親ノードを見つける
-						std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+						std::shared_ptr<Node> moveToParent = targetElement.node()->parentNode();
 						size_t actualNestLevel = targetElement.elementDetail().nestLevel;
 					
 						// マウスが左側にある場合、より上位の階層に移動
 						while (moveToParent && actualNestLevel > desiredNestLevel)
 						{
-							const auto grandParent = moveToParent->parent();
+							const auto grandParent = moveToParent->parentNode();
 							if (!grandParent)
 							{
 								break;
 							}
 							moveToParent = grandParent;
 							actualNestLevel--;
-						}
-					
-						if (!moveToParent)
-						{
-							// ルートレベルに移動
-							moveToParent = m_canvas->rootNode();
 						}
 					
 						for (const auto& sourceNode : sourceNodes)
@@ -297,22 +291,24 @@ namespace noco::editor
 								return;
 							}
 						
-							sourceElement.node()->removeFromParent();
+								sourceElement.node()->removeFromParent();
 						
 							// 移動先での挿入位置を計算
-							if (moveToParent == targetElement.node()->parent())
+							if (!moveToParent)
 							{
-								// 同じ親の場合は、targetの前に挿入
+									m_canvas->addChild(sourceElement.node());
+							}
+							else if (moveToParent == targetElement.node()->parentNode())
+							{
 								const size_t index = moveToParent->indexOfChild(targetElement.node());
 								moveToParent->addChildAtIndex(sourceElement.node(), index);
 							}
 							else
 							{
-								// 異なる親の場合は、適切な位置を見つける
 								std::shared_ptr<Node> insertBefore = targetElement.node();
-								while (insertBefore->parent() != moveToParent)
+								while (insertBefore->parentNode() != moveToParent)
 								{
-									insertBefore = insertBefore->parent();
+									insertBefore = insertBefore->parentNode();
 									if (!insertBefore)
 									{
 										// 最後に追加
@@ -335,25 +331,19 @@ namespace noco::editor
 					{
 						// targetの下に兄弟ノードとして移動
 						// X座標に基づいて、適切な親ノードを見つける
-						std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+						std::shared_ptr<Node> moveToParent = targetElement.node()->parentNode();
 						size_t actualNestLevel = targetElement.elementDetail().nestLevel;
 					
 						// マウスが左側にある場合、より上位の階層に移動
 						while (moveToParent && actualNestLevel > desiredNestLevel)
 						{
-							const auto grandParent = moveToParent->parent();
+							const auto grandParent = moveToParent->parentNode();
 							if (!grandParent)
 							{
 								break;
 							}
 							moveToParent = grandParent;
 							actualNestLevel--;
-						}
-					
-						if (!moveToParent)
-						{
-							// ルートレベルに移動
-							moveToParent = m_canvas->rootNode();
 						}
 					
 						for (const auto& sourceNode : sourceNodes)
@@ -379,22 +369,24 @@ namespace noco::editor
 								return;
 							}
 						
-							sourceElement.node()->removeFromParent();
+								sourceElement.node()->removeFromParent();
 						
 							// 移動先での挿入位置を計算
-							if (moveToParent == targetElement.node()->parent())
+							if (!moveToParent)
 							{
-								// 同じ親の場合は、targetの後に挿入
+									m_canvas->addChild(sourceElement.node());
+							}
+							else if (moveToParent == targetElement.node()->parentNode())
+							{
 								const size_t index = moveToParent->indexOfChild(targetElement.node()) + 1;
 								moveToParent->addChildAtIndex(sourceElement.node(), index);
 							}
 							else
 							{
-								// 異なる親の場合は、適切な位置を見つける
 								std::shared_ptr<Node> insertAfter = targetElement.node();
-								while (insertAfter->parent() != moveToParent)
+								while (insertAfter->parentNode() != moveToParent)
 								{
-									insertAfter = insertAfter->parent();
+									insertAfter = insertAfter->parentNode();
 									if (!insertAfter)
 									{
 										// 最後に追加
@@ -437,7 +429,7 @@ namespace noco::editor
 								// 子孫には移動不可
 								return;
 							}
-							if (sourceElement.node()->parent() == targetElement.node())
+							if (sourceElement.node()->parentNode() == targetElement.node())
 							{
 								// 親子関係が既にある場合は移動不可
 								return;
@@ -476,10 +468,10 @@ namespace noco::editor
 					size_t actualNestLevel = targetElement.elementDetail().nestLevel;
 				
 					// 実際の描画位置を計算
-					std::shared_ptr<Node> moveToParent = targetElement.node()->parent();
+					std::shared_ptr<Node> moveToParent = targetElement.node()->parentNode();
 					while (moveToParent && actualNestLevel > desiredNestLevel)
 					{
-						const auto grandParent = moveToParent->parent();
+						const auto grandParent = moveToParent->parentNode();
 						if (!grandParent)
 						{
 							break;
@@ -627,7 +619,7 @@ namespace noco::editor
 	public:
 		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener)
 			: m_canvas(canvas)
-			, m_hierarchyFrameNode(editorCanvas->rootNode()->emplaceChild(
+			, m_hierarchyFrameNode(editorCanvas->emplaceChild(
 				U"HierarchyFrame",
 				AnchorRegion
 				{
@@ -693,7 +685,10 @@ namespace noco::editor
 			clearSelection();
 			m_elements.clear();
 			m_hierarchyRootNode->removeChildrenAll();
-			addElementRecursive(m_canvas->rootNode(), 0, RefreshesLayoutYN::No);
+			for (const auto& child : m_canvas->children())
+			{
+				addElementRecursive(child, 0, RefreshesLayoutYN::No);
+			}
 
 			// 末尾に空のノードを追加してドロップ領域とする
 			m_hierarchyTailNode = m_hierarchyRootNode->emplaceChild(
@@ -731,7 +726,7 @@ namespace noco::editor
 						const auto& sourceElement = *pSourceElement;
 					
 						sourceElement.node()->removeFromParent();
-						m_canvas->rootNode()->addChild(sourceElement.node());
+						m_canvas->addChild(sourceElement.node());
 					
 						newSelection.push_back(sourceElement.node());
 					}
@@ -873,7 +868,7 @@ namespace noco::editor
 			if (auto pElement = getElementByNode(node))
 			{
 				pElement->setFolded(FoldedYN::No);
-				if (auto parentNode = node->parent())
+				if (auto parentNode = node->parentNode())
 				{
 					unfoldForNode(parentNode);
 				}
@@ -890,19 +885,28 @@ namespace noco::editor
 			// 最後に選択したノードの兄弟として新規ノードを作成
 			if (const auto lastEditorSelectedNode = m_lastEditorSelectedNode.lock())
 			{
-				if (const auto parentNode = lastEditorSelectedNode->parent())
+				if (const auto parentNode = lastEditorSelectedNode->parentNode())
 				{
 					onClickNewNode(parentNode);
 				}
 				else
 				{
-					onClickNewNode(m_canvas->rootNode());
+						onClickNewNodeToCanvas();
 				}
 			}
 			else
 			{
-				onClickNewNode(m_canvas->rootNode());
+				onClickNewNodeToCanvas();
 			}
+		}
+
+		void onClickNewNodeToCanvas()
+		{
+			std::shared_ptr<Node> newNode = m_canvas->emplaceChild(
+				U"Node",
+				m_defaults->defaultRegion());
+			refreshNodeList();
+			selectSingleNode(newNode);
 		}
 
 		void onClickNewNode(std::shared_ptr<Node> parentNode)
@@ -1010,7 +1014,7 @@ namespace noco::editor
 			newNodes.reserve(selectedNodes.size());
 			for (const auto& selectedNode : selectedNodes)
 			{
-				const auto parentNode = selectedNode->parent();
+				const auto parentNode = selectedNode->parentNode();
 				if (!parentNode)
 				{
 					continue;
@@ -1074,19 +1078,41 @@ namespace noco::editor
 			// 最後に選択したノードの兄弟として貼り付け
 			if (const auto lastEditorSelectedNode = m_lastEditorSelectedNode.lock())
 			{
-				if (lastEditorSelectedNode->parent())
+				if (lastEditorSelectedNode->parentNode())
 				{
-					onClickPaste(lastEditorSelectedNode->parent(), lastEditorSelectedNode->siblingIndex() + 1);
+					onClickPaste(lastEditorSelectedNode->parentNode(), lastEditorSelectedNode->siblingIndex() + 1);
 				}
 				else
 				{
-					onClickPaste(m_canvas->rootNode());
+					// Canvasの直接の子として貼り付け
+					onClickPasteToCanvas();
 				}
 			}
 			else
 			{
-				onClickPaste(m_canvas->rootNode());
+				// Canvasの直接の子として貼り付け
+				onClickPasteToCanvas();
 			}
+		}
+
+		void onClickPasteToCanvas()
+		{
+			if (m_copiedNodeJSONs.empty())
+			{
+				return;
+			}
+
+			Array<std::shared_ptr<Node>> newNodes;
+			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
+			{
+				newNodes.push_back(m_canvas->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
+			}
+			m_canvas->refreshLayout();
+			// 無効なパラメータ参照を解除
+			const auto clearedParams = m_canvas->clearInvalidParamRefs();
+			refreshNodeList();
+			selectNodes(newNodes);
+			showClearedParamRefsDialog(clearedParams);
 		}
 
 		void onClickPaste(std::shared_ptr<Node> parentNode, Optional<size_t> index = none)
@@ -1124,7 +1150,6 @@ namespace noco::editor
 			const auto clearedParams = m_canvas->clearInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
-			// 解除されたパラメータがあれば警告ダイアログを表示
 			showClearedParamRefsDialog(clearedParams);
 		}
 
@@ -1136,7 +1161,7 @@ namespace noco::editor
 				return;
 			}
 
-			auto oldParent = selectedNode->parent();
+			auto oldParent = selectedNode->parentNode();
 			if (!oldParent)
 			{
 				return;
@@ -1192,21 +1217,51 @@ namespace noco::editor
 				return;
 			}
 
-			// 親ノードごとに処理
 			HashTable<std::shared_ptr<Node>, Array<std::shared_ptr<Node>>> selectionByParent;
+			Array<std::shared_ptr<Node>> topLevelNodes;
+			
 			selectionByParent.reserve(selectedNodes.size());
 			for (const auto& child : selectedNodes)
 			{
-				if (auto parent = child->parent())
+				if (auto parent = child->parentNode())
 				{
 					selectionByParent[parent].push_back(child);
 				}
+				else if (child->isTopLevelNode())
+				{
+					topLevelNodes.push_back(child);
+				}
 			}
+			
+			if (!topLevelNodes.isEmpty())
+			{
+				const auto& siblings = m_canvas->children();
+				
+				Array<size_t> indices;
+				indices.reserve(topLevelNodes.size());
+				for (const auto& child : topLevelNodes)
+				{
+					const auto it = std::find(siblings.begin(), siblings.end(), child);
+					if (it != siblings.end())
+					{
+						indices.push_back(std::distance(siblings.begin(), it));
+					}
+				}
+				
+				std::sort(indices.begin(), indices.end());
+				for (auto index : indices)
+				{
+					if (index > 0)
+					{
+						m_canvas->swapChildren(index, index - 1);
+					}
+				}
+			}
+			
 			for (auto& [parent, childrenToMove] : selectionByParent)
 			{
 				const auto& siblings = parent->children();
 
-				// 選択中の子のインデックスを取得
 				Array<size_t> indices;
 				indices.reserve(childrenToMove.size());
 				for (const auto& child : childrenToMove)
@@ -1218,7 +1273,6 @@ namespace noco::editor
 					}
 				}
 
-				// インデックスが小さい順に上の要素と入れ替え
 				std::sort(indices.begin(), indices.end());
 				for (auto index : indices)
 				{
@@ -1249,21 +1303,51 @@ namespace noco::editor
 				return;
 			}
 
-			// 親ノードごとに処理
 			HashTable<std::shared_ptr<Node>, Array<std::shared_ptr<Node>>> selectionByParent;
+			Array<std::shared_ptr<Node>> topLevelNodes;
+			
 			selectionByParent.reserve(selectedNodes.size());
 			for (const auto& child : selectedNodes)
 			{
-				if (auto parent = child->parent())
+				if (auto parent = child->parentNode())
 				{
 					selectionByParent[parent].push_back(child);
 				}
+				else if (child->isTopLevelNode())
+				{
+					topLevelNodes.push_back(child);
+				}
 			}
+			
+			if (!topLevelNodes.isEmpty())
+			{
+				const auto& siblings = m_canvas->children();
+				
+				Array<size_t> indices;
+				indices.reserve(topLevelNodes.size());
+				for (const auto& child : topLevelNodes)
+				{
+					const auto it = std::find(siblings.begin(), siblings.end(), child);
+					if (it != siblings.end())
+					{
+						indices.push_back(std::distance(siblings.begin(), it));
+					}
+				}
+				
+				std::sort(indices.begin(), indices.end(), std::greater<size_t>());
+				for (auto index : indices)
+				{
+					if (index < siblings.size() - 1)
+					{
+						m_canvas->swapChildren(index, index + 1);
+					}
+				}
+			}
+			
 			for (auto& [parent, childrenToMove] : selectionByParent)
 			{
 				const auto& siblings = parent->children();
 
-				// 選択中の子のインデックスを取得
 				Array<size_t> indices;
 				indices.reserve(childrenToMove.size());
 				for (const auto& child : childrenToMove)
@@ -1275,7 +1359,6 @@ namespace noco::editor
 					}
 				}
 
-				// インデックスが大きい順に下の要素と入れ替え
 				std::sort(indices.begin(), indices.end(), std::greater<size_t>());
 				for (auto index : indices)
 				{
