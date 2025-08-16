@@ -589,10 +589,16 @@ namespace noco
 		
 		if (!m_parent.expired() || isTopLevelNode())
 		{
-			removeFromParent(refreshesLayout);
+			removeFromParent(RefreshesLayoutYN::No);
 		}
 		
-		parent->addChild(shared_from_this(), refreshesLayout);
+		parent->addChild(shared_from_this(), RefreshesLayoutYN::No);
+		
+		if (refreshesLayout)
+		{
+			refreshChildrenLayout();
+		}
+		
 		return shared_from_this();
 	}
 
