@@ -72,6 +72,7 @@ namespace noco::editor
 		IsFoldedYN m_isFoldedNodeSetting = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedLayout = IsFoldedYN::Yes;
 		IsFoldedYN m_isFoldedTransform = IsFoldedYN::Yes;
+		IsFoldedYN m_isFoldedCanvasSetting = IsFoldedYN::No;  // Canvas Settingセクションの折り畳み状態
 		IsFoldedYN m_isFoldedParams = IsFoldedYN::No;  // Paramsセクションの折り畳み状態
 		Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
 
@@ -447,6 +448,10 @@ namespace noco::editor
 					VerticalAlign::Middle);
 				canvasNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.2, 0.2 }, ColorF{ 0.4, 0.4 }, 0.0, 4.0);
 				m_inspectorRootNode->addChild(canvasNameNode);
+
+				// Canvas Settingセクションを追加
+				const auto canvasSettingNode = createCanvasSettingNode();
+				m_inspectorRootNode->addChild(canvasSettingNode);
 
 				// Paramsセクションを追加
 				const auto paramsNode = createParamsNode();
@@ -3461,6 +3466,44 @@ namespace noco::editor
 			}
 			
 			return propertyNode;
+		}
+
+		[[nodiscard]]
+		std::shared_ptr<Node> createCanvasSettingNode()
+		{
+			auto canvasSettingNode = Node::Create(
+				U"CanvasSetting",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.margin = LRTB{ 0, 0, 0, 8 },
+				});
+			canvasSettingNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedCanvasSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			canvasSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+
+			canvasSettingNode->addChild(CreateHeadingNode(U"Canvas Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedCanvasSetting,
+				[this](IsFoldedYN isFolded)
+				{
+					m_isFoldedCanvasSetting = isFolded;
+				}));
+
+			if (!m_isFoldedCanvasSetting.getBool())
+			{
+				// sizeプロパティを表示
+				const auto sizePropertyNode = CreateVec2PropertyNode(
+					U"size",
+					m_canvas->size(),
+					[this](const Vec2& value)
+					{
+						const Vec2 currentCenter = m_canvas->center();
+						m_canvas->setSize(value);
+						m_canvas->setCenter(currentCenter);
+					});
+				canvasSettingNode->addChild(sizePropertyNode);
+			}
+
+			canvasSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+			return canvasSettingNode;
 		}
 
 		[[nodiscard]]

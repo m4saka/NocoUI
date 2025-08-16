@@ -664,6 +664,13 @@ namespace noco::editor
 			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか",
 		};
 		
+		// Canvasのプロパティ
+		metadata[PropertyKey{ U"Canvas", U"size" }] = PropertyMetadata{
+			.tooltip = U"Canvasのサイズ",
+			.tooltipDetail = U"Canvasの幅と高さを設定します\nすべての子要素のレイアウト計算の基準となります",
+			.dragValueChangeStep = 1.0,
+		};
+		
 		return metadata;
 	}
 }
