@@ -3500,6 +3500,49 @@ namespace noco::editor
 						m_canvas->setCenter(currentCenter);
 					});
 				canvasSettingNode->addChild(sizePropertyNode);
+
+				// autoScaleModeプロパティを表示
+				const Array<String> autoScaleModeValues = {
+					U"None",
+					U"ShrinkToFit",
+					U"ExpandToFill",
+					U"FitHeight",
+					U"FitWidth",
+				};
+				const auto autoScaleModePropertyNode = createEnumPropertyNodeWithTooltip(
+					U"Canvas",
+					U"autoScaleMode",
+					EnumToString(m_canvas->autoScaleMode()),
+					[this](StringView value)
+					{
+						if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(String{ value }))
+						{
+							m_canvas->setAutoScaleMode(*modeOpt);
+						}
+					},
+					m_contextMenu,
+					autoScaleModeValues);
+				canvasSettingNode->addChild(autoScaleModePropertyNode);
+
+				// autoResizeModeプロパティを表示
+				const Array<String> autoResizeModeValues = {
+					U"None",
+					U"MatchSceneSize",
+				};
+				const auto autoResizeModePropertyNode = createEnumPropertyNodeWithTooltip(
+					U"Canvas",
+					U"autoResizeMode",
+					EnumToString(m_canvas->autoResizeMode()),
+					[this](StringView value)
+					{
+						if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(String{ value }))
+						{
+							m_canvas->setAutoResizeMode(*modeOpt);
+						}
+					},
+					m_contextMenu,
+					autoResizeModeValues);
+				canvasSettingNode->addChild(autoResizeModePropertyNode);
 			}
 
 			canvasSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);

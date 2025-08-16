@@ -69,13 +69,74 @@ namespace noco
 		return m_events;
 	}
 
+	void Canvas::updateAutoResizeIfNeeded()
+	{
+		if (m_autoResizeMode == AutoResizeMode::None || m_isEditorPreview)
+		{
+			m_lastSceneSize = none;
+			return;
+		}
+		
+		const SizeF currentSceneSize = Scene::Size();
+		
+		if (!m_lastSceneSize || *m_lastSceneSize != currentSceneSize)
+		{
+			m_lastSceneSize = currentSceneSize;
+			
+			if (m_autoResizeMode == AutoResizeMode::MatchSceneSize)
+			{
+				setSize(currentSceneSize, RefreshesLayoutYN::Yes);
+				m_position = Vec2::Zero();
+			}
+		}
+	}
+
+	Vec2 Canvas::calculateAutoScale() const
+	{
+		if (m_autoScaleMode == AutoScaleMode::None || m_isEditorPreview)
+		{
+			return Vec2::One();
+		}
+		
+		const SizeF sceneSize = Scene::Size();
+		const double scaleX = sceneSize.x / m_size.x;
+		const double scaleY = sceneSize.y / m_size.y;
+		
+		switch (m_autoScaleMode)
+		{
+			case AutoScaleMode::ShrinkToFit:
+			{
+				const double scale = Min(scaleX, scaleY);
+				return Vec2{ scale, scale };
+			}
+				
+			case AutoScaleMode::ExpandToFill:
+			{
+				const double scale = Max(scaleX, scaleY);
+				return Vec2{ scale, scale };
+			}
+				
+			case AutoScaleMode::FitHeight:
+				return Vec2{ scaleY, scaleY };
+				
+			case AutoScaleMode::FitWidth:
+				return Vec2{ scaleX, scaleX };
+				
+			default:
+				return Vec2::One();
+		}
+	}
+
 	Mat3x2 Canvas::rootPosScaleMat() const
 	{
-		if (m_scale == Vec2::One() && m_position == Vec2::Zero() && m_rotation == 0.0)
+		const Vec2 autoScale = calculateAutoScale();
+		const Vec2 finalScale = m_scale * autoScale;
+		
+		if (finalScale == Vec2::One() && m_position == Vec2::Zero() && m_rotation == 0.0)
 		{
 			return Mat3x2::Identity();
 		}
-		return Mat3x2::Scale(m_scale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
+		return Mat3x2::Scale(finalScale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
 	}
 
 	Canvas::Canvas()
@@ -159,6 +220,15 @@ namespace noco
 			{ U"size", ValueToString(m_size) },
 		};
 
+		if (m_autoScaleMode != AutoScaleMode::None)
+		{
+			json[U"autoScaleMode"] = ValueToString(m_autoScaleMode);
+		}
+		if (m_autoResizeMode != AutoResizeMode::None)
+		{
+			json[U"autoResizeMode"] = ValueToString(m_autoResizeMode);
+		}
+
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
 		{
@@ -186,6 +256,15 @@ namespace noco
 			{ U"version", NocoUIVersion },
 			{ U"size", ValueToString(m_size) },
 		};
+
+		if (m_autoScaleMode != AutoScaleMode::None)
+		{
+			json[U"autoScaleMode"] = ValueToString(m_autoScaleMode);
+		}
+		if (m_autoResizeMode != AutoResizeMode::None)
+		{
+			json[U"autoResizeMode"] = ValueToString(m_autoResizeMode);
+		}
 
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
@@ -256,6 +335,25 @@ namespace noco
 			}
 		}
 
+		if (json.contains(U"autoScaleMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			{
+				canvas->m_autoScaleMode = *modeOpt;
+			}
+		}
+		if (json.contains(U"autoResizeMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			{
+				canvas->m_autoResizeMode = *modeOpt;
+				if (canvas->m_autoResizeMode != AutoResizeMode::None)
+				{
+					canvas->m_lastSceneSize = Scene::Size();
+				}
+			}
+		}
+
 		if (refreshesLayout)
 		{
 			canvas->refreshLayout();
@@ -309,6 +407,25 @@ namespace noco
 					{
 						canvas->m_params[name] = *value;
 					}
+				}
+			}
+		}
+
+		if (json.contains(U"autoScaleMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			{
+				canvas->m_autoScaleMode = *modeOpt;
+			}
+		}
+		if (json.contains(U"autoResizeMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			{
+				canvas->m_autoResizeMode = *modeOpt;
+				if (canvas->m_autoResizeMode != AutoResizeMode::None)
+				{
+					canvas->m_lastSceneSize = Scene::Size();
 				}
 			}
 		}
@@ -373,6 +490,25 @@ namespace noco
 					{
 						m_params[name] = *value;
 					}
+				}
+			}
+		}
+
+		if (json.contains(U"autoScaleMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			{
+				m_autoScaleMode = *modeOpt;
+			}
+		}
+		if (json.contains(U"autoResizeMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			{
+				m_autoResizeMode = *modeOpt;
+				if (m_autoResizeMode != AutoResizeMode::None)
+				{
+					m_lastSceneSize = Scene::Size();
 				}
 			}
 		}
@@ -448,6 +584,25 @@ namespace noco
 			}
 		}
 
+		if (json.contains(U"autoScaleMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			{
+				m_autoScaleMode = *modeOpt;
+			}
+		}
+		if (json.contains(U"autoResizeMode"))
+		{
+			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			{
+				m_autoResizeMode = *modeOpt;
+				if (m_autoResizeMode != AutoResizeMode::None)
+				{
+					m_lastSceneSize = Scene::Size();
+				}
+			}
+		}
+
 		if (refreshesLayoutPre)
 		{
 			refreshLayout();
@@ -466,6 +621,8 @@ namespace noco
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
 		m_eventRegistry.clear();
+
+		updateAutoResizeIfNeeded();
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
 
@@ -1183,5 +1340,38 @@ namespace noco
 	Vec2 Canvas::center() const
 	{
 		return m_position + Vec2{ m_size.x / 2, m_size.y / 2 };
+	}
+
+	std::shared_ptr<Canvas> Canvas::setAutoScaleMode(AutoScaleMode mode)
+	{
+		m_autoScaleMode = mode;
+		if (mode != AutoScaleMode::None)
+		{
+			m_position = Vec2::Zero();
+		}
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Canvas> Canvas::setAutoResizeMode(AutoResizeMode mode)
+	{
+		m_autoResizeMode = mode;
+		
+		if (mode == AutoResizeMode::None)
+		{
+			m_lastSceneSize = none;
+		}
+		else
+		{
+			m_lastSceneSize = Scene::Size();
+			m_position = Vec2::Zero();
+		}
+		
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Canvas> Canvas::setEditorPreviewInternal(bool isEditorPreview)
+	{
+		m_isEditorPreview = isEditorPreview;
+		return shared_from_this();
 	}
 }

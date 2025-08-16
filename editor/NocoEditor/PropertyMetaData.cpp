@@ -670,6 +670,14 @@ namespace noco::editor
 			.tooltipDetail = U"Canvasの幅と高さを設定します\nすべての子要素のレイアウト計算の基準となります",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"Canvas", U"autoScaleMode" }] = PropertyMetadata{
+			.tooltip = U"自動スケールモード",
+			.tooltipDetail = U"シーンサイズに応じた自動スケール調整を設定します\n\nNone: スケールしない\nShrinkToFit: Canvas全体がシーン内に収まるよう縮小拡大\nExpandToFill: シーン全体をCanvasで埋めるよう縮小拡大\nFitHeight: シーンの高さに合わせる\nFitWidth: シーンの幅に合わせる\n\n※エディタ上のプレビューには反映されません",
+		};
+		metadata[PropertyKey{ U"Canvas", U"autoResizeMode" }] = PropertyMetadata{
+			.tooltip = U"自動リサイズモード",
+			.tooltipDetail = U"シーンサイズに応じた自動リサイズを設定します\n\nNone: リサイズしない\nMatchSceneSize: シーンサイズに合わせる\n\n※AutoScaleModeとは異なり、Canvasのサイズ自体が変更されます\n※エディタ上のプレビューには反映されません",
+		};
 		
 		return metadata;
 	}

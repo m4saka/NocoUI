@@ -106,12 +106,12 @@ private:
 
 public:
 	Editor()
-		: m_canvas(Canvas::Create())
-		, m_editorCanvas(Canvas::Create(Scene::Size()))
-		, m_editorOverlayCanvas(Canvas::Create(Scene::Size()))
+		: m_canvas(Canvas::Create()->setEditorPreviewInternal(true))
+		, m_editorCanvas(Canvas::Create(Scene::Size())->setAutoResizeMode(AutoResizeMode::MatchSceneSize))
+		, m_editorOverlayCanvas(Canvas::Create(Scene::Size())->setAutoResizeMode(AutoResizeMode::MatchSceneSize))
 		, m_contextMenu(std::make_shared<ContextMenu>(m_editorOverlayCanvas, U"EditorContextMenu"))
-		, m_dialogCanvas(Canvas::Create(Scene::Size()))
-		, m_dialogOverlayCanvas(Canvas::Create(Scene::Size()))
+		, m_dialogCanvas(Canvas::Create(Scene::Size())->setAutoResizeMode(AutoResizeMode::MatchSceneSize))
+		, m_dialogOverlayCanvas(Canvas::Create(Scene::Size())->setAutoResizeMode(AutoResizeMode::MatchSceneSize))
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener)
@@ -505,10 +505,6 @@ public:
 	{
 		updateResizeHandlePositions();
 		const auto sceneSize = Scene::Size();
-		m_editorCanvas->setSize(sceneSize);  // RefreshesLayoutYN::Yesがデフォルトなので自動的にrefreshLayout()が呼ばれる
-		m_editorOverlayCanvas->setSize(sceneSize);
-		m_dialogCanvas->setSize(sceneSize);
-		m_dialogOverlayCanvas->setSize(sceneSize);
 		
 		// ウィンドウリサイズ時にCanvas中央位置を保持
 		m_scrollOffset = calculateCanvasCenterOffset(sceneSize, m_canvas);

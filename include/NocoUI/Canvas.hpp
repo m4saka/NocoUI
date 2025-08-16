@@ -299,6 +299,21 @@ namespace noco
 		return PrevFrame::GetDraggingNode();
 	}
 
+	enum class AutoScaleMode : uint8
+	{
+		None,           // スケールしない
+		ShrinkToFit,    // Canvas全体がシーン内に収まるよう調整
+		ExpandToFill,   // シーン全体をCanvasで埋めるよう調整
+		FitHeight,      // シーンの高さに合わせる
+		FitWidth,       // シーンの幅に合わせる
+	};
+
+	enum class AutoResizeMode : uint8
+	{
+		None,           // リサイズしない
+		MatchSceneSize, // シーンサイズに合わせる
+	};
+
 	enum class EventTriggerType : uint8
 	{
 		None,
@@ -326,6 +341,8 @@ namespace noco
 	private:
 		Array<std::shared_ptr<Node>> m_children;
 		SizeF m_size = DefaultSize;
+		AutoScaleMode m_autoScaleMode = AutoScaleMode::None;
+		AutoResizeMode m_autoResizeMode = AutoResizeMode::None;
 
 		class EventRegistry
 		{
@@ -359,9 +376,16 @@ namespace noco
 		/* NonSerialized */ EventRegistry m_eventRegistry;
 		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
+		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
+		/* NonSerialized */ bool m_isEditorPreview = false;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
+
+		void updateAutoResizeIfNeeded();
+		
+		[[nodiscard]]
+		Vec2 calculateAutoScale() const;
 
 		Canvas();
 
@@ -418,6 +442,30 @@ namespace noco
 
 		[[nodiscard]]
 		Vec2 center() const;
+
+		[[nodiscard]]
+		AutoScaleMode autoScaleMode() const
+		{
+			return m_autoScaleMode;
+		}
+
+		std::shared_ptr<Canvas> setAutoScaleMode(AutoScaleMode mode);
+
+		[[nodiscard]]
+		AutoResizeMode autoResizeMode() const
+		{
+			return m_autoResizeMode;
+		}
+
+		std::shared_ptr<Canvas> setAutoResizeMode(AutoResizeMode mode);
+
+		std::shared_ptr<Canvas> setEditorPreviewInternal(bool isEditorPreview);
+
+		[[nodiscard]]
+		bool isEditorPreviewInternal() const
+		{
+			return m_isEditorPreview;
+		}
 
 		std::shared_ptr<Canvas> setScale(const Vec2& scale);
 
