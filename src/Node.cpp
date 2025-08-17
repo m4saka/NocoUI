@@ -315,15 +315,15 @@ namespace noco
 
 	JSON Node::toJSON() const
 	{
-		return toJSONImpl(detail::IncludesInstanceIdYN::No);
+		return toJSONImpl(detail::WithInstanceIdYN::No);
 	}
 
-	JSON Node::toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
+	JSON Node::toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
 	{
 		Array<JSON> childrenJSON;
 		for (const auto& child : m_children)
 		{
-			childrenJSON.push_back(child->toJSONImpl(includesInstanceId));
+			childrenJSON.push_back(child->toJSONImpl(withInstanceId));
 		}
 
 		JSON result
@@ -355,7 +355,7 @@ namespace noco
 			result[U"styleState"] = m_styleState;
 		}
 
-		if (includesInstanceId)
+		if (withInstanceId)
 		{
 			result[U"_instanceId"] = m_instanceId;
 		}
@@ -364,7 +364,7 @@ namespace noco
 		{
 			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				result[U"components"].push_back(serializableComponent->toJSONImpl(includesInstanceId));
+				result[U"components"].push_back(serializableComponent->toJSONImpl(withInstanceId));
 			}
 		}
 
@@ -373,10 +373,10 @@ namespace noco
 
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
 	{
-		return CreateFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
+		return CreateFromJSONImpl(json, detail::WithInstanceIdYN::No);
 	}
 
-	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
+	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -483,7 +483,7 @@ namespace noco
 		{
 			node->setStyleState(json[U"styleState"].getOr<String>(U""));
 		}
-		if (includesInstanceId && json.contains(U"_instanceId"))
+		if (withInstanceId && json.contains(U"_instanceId"))
 		{
 			node->m_instanceId = json[U"_instanceId"].get<uint64>();
 		}
@@ -492,7 +492,7 @@ namespace noco
 		{
 			for (const auto& componentJSON : json[U"components"].arrayView())
 			{
-				node->addComponentFromJSONImpl(componentJSON, includesInstanceId);
+				node->addComponentFromJSONImpl(componentJSON, withInstanceId);
 			}
 		}
 
@@ -500,7 +500,7 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				auto child = CreateFromJSONImpl(childJSON, includesInstanceId);
+				auto child = CreateFromJSONImpl(childJSON, withInstanceId);
 				node->addChild(child, RefreshesLayoutYN::No);
 			}
 		}
@@ -683,17 +683,17 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
 	{
-		return addComponentFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
+		return addComponentFromJSONImpl(json, detail::WithInstanceIdYN::No);
 	}
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
 	{
-		return addComponentAtIndexFromJSONImpl(json, index, detail::IncludesInstanceIdYN::No);
+		return addComponentAtIndexFromJSONImpl(json, index, detail::WithInstanceIdYN::No);
 	}
 
-	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, includesInstanceId);
+		auto component = CreateComponentFromJSONImpl(json, withInstanceId);
 		if (component)
 		{
 			addComponent(component);
@@ -701,9 +701,9 @@ namespace noco
 		return component;
 	}
 
-	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInstanceIdYN includesInstanceId)
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::WithInstanceIdYN withInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, includesInstanceId);
+		auto component = CreateComponentFromJSONImpl(json, withInstanceId);
 		if (component)
 		{
 			addComponentAtIndex(component, index);
@@ -1111,7 +1111,7 @@ namespace noco
 			return nullptr;
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
+		const bool hit = hitTestQuad(WithPaddingYN::Yes).contains(point);
 		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
@@ -1143,7 +1143,7 @@ namespace noco
 			return nullptr;
 		}
 		// hitTestPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitTestQuad(IncludingPaddingYN::Yes).contains(point);
+		const bool hit = hitTestQuad(WithPaddingYN::Yes).contains(point);
 		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
@@ -2017,9 +2017,9 @@ namespace noco
 		return m_transformedQuad;
 	}
 
-	Quad Node::hitTestQuad(IncludingPaddingYN includingPadding) const
+	Quad Node::hitTestQuad(WithPaddingYN withPadding) const
 	{
-		if (includingPadding == IncludingPaddingYN::Yes)
+		if (withPadding == WithPaddingYN::Yes)
 		{
 			// パディング有りの場合は事前計算済みのQuadを返す
 			return m_hitTestQuadWithPadding;

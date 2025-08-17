@@ -164,13 +164,13 @@ namespace noco
 		JSON toJSON() const;
 
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const;
+		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const;
 
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId);
+		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parentNode() const;
@@ -215,9 +215,9 @@ namespace noco
 
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index);
 
-		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId);
+		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId);
 
-		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInstanceIdYN includesInstanceId);
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::WithInstanceIdYN withInstanceId);
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
@@ -361,7 +361,7 @@ namespace noco
 		const Quad& transformedQuad() const;
 
 		[[nodiscard]]
-		Quad hitTestQuad(IncludingPaddingYN includingPadding = IncludingPaddingYN::No) const;
+		Quad hitTestQuad(WithPaddingYN withPadding = WithPaddingYN::No) const;
 
 		[[nodiscard]]
 		const RectF& regionRect() const;

@@ -26,10 +26,10 @@ namespace noco
 	using IncludingDisabledYN = YesNo<struct IncludingDisabledYN_tag>;
 	using IsScrollingYN = YesNo<struct IsScrollingYN_tag>;
 	using RubberBandScrollEnabledYN = YesNo<struct RubberBandScrollEnabledYN_tag>;
-	using IncludingPaddingYN = YesNo<struct IncludingPaddingYN_tag>;
+	using WithPaddingYN = YesNo<struct WithPaddingYN_tag>;
 
 	namespace detail
 	{
-		using IncludesInstanceIdYN = YesNo<struct IncludesInstanceIdYN_tag>;
+		using WithInstanceIdYN = YesNo<struct WithInstanceIdYN_tag>;
 	}
 }

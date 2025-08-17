@@ -249,7 +249,7 @@ namespace noco
 		return json;
 	}
 	
-	JSON Canvas::toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
+	JSON Canvas::toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
 	{
 		JSON json = JSON
 		{
@@ -269,7 +269,7 @@ namespace noco
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
 		{
-			childrenArray.push_back(child->toJSONImpl(includesInstanceId));
+			childrenArray.push_back(child->toJSONImpl(withInstanceId));
 		}
 		json[U"children"] = childrenArray;
 
@@ -362,7 +362,7 @@ namespace noco
 		return canvas;
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayout)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -389,7 +389,7 @@ namespace noco
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, includesInstanceId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, withInstanceId))
 			{
 				canvas->addChild(child, RefreshesLayoutYN::No);
 			}
@@ -528,7 +528,7 @@ namespace noco
 		return true;
 	}
 	
-	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -561,7 +561,7 @@ namespace noco
 
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, includesInstanceId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, withInstanceId))
 			{
 				addChild(child, RefreshesLayoutYN::No);
 			}

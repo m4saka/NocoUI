@@ -24,7 +24,7 @@
 
 using namespace noco;
 using namespace noco::editor;
-using noco::detail::IncludesInstanceIdYN;
+using noco::detail::WithInstanceIdYN;
 
 Vec2 calculateCanvasCenterOffset(const Size& sceneSize, const std::shared_ptr<Canvas>& canvas)
 {
@@ -401,7 +401,7 @@ public:
 		const bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
 		if (hasUserInput)
 		{
-			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes));
+			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(WithInstanceIdYN::Yes));
 			m_toolbar.updateButtonStates();
 		}
 		
@@ -841,12 +841,12 @@ public:
 	
 	void onClickMenuEditUndo()
 	{
-		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes)))
+		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(WithInstanceIdYN::Yes)))
 		{
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*undoState, IncludesInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSONImpl(*undoState, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -859,12 +859,12 @@ public:
 	
 	void onClickMenuEditRedo()
 	{
-		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes)))
+		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(WithInstanceIdYN::Yes)))
 		{
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*redoState, IncludesInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSONImpl(*redoState, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -898,7 +898,7 @@ public:
 	
 	void recordInitialHistoryState()
 	{
-		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes));
+		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(WithInstanceIdYN::Yes));
 	}
 };
 

@@ -104,11 +104,11 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const
 		{
-			return toJSONImpl(detail::IncludesInstanceIdYN::No);
+			return toJSONImpl(detail::WithInstanceIdYN::No);
 		}
 
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
+		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
 		{
 			JSON json;
 			json[U"type"] = m_type;
@@ -116,7 +116,7 @@ namespace noco
 			{
 				property->appendJSON(json);
 			}
-			if (includesInstanceId)
+			if (withInstanceId)
 			{
 				json[U"_instanceId"] = m_instanceId;
 			}
@@ -125,10 +125,10 @@ namespace noco
 
 		bool tryReadFromJSON(const JSON& json)
 		{
-			return tryReadFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
+			return tryReadFromJSONImpl(json, detail::WithInstanceIdYN::No);
 		}
 
-		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
+		bool tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 		{
 			if (!json.contains(U"type") || json[U"type"].getString() != m_type)
 			{
@@ -138,7 +138,7 @@ namespace noco
 			{
 				property->readFromJSON(json);
 			}
-			if (includesInstanceId && json.contains(U"_instanceId"))
+			if (withInstanceId && json.contains(U"_instanceId"))
 			{
 				m_instanceId = json[U"_instanceId"].get<uint64>();
 			}

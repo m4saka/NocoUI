@@ -409,17 +409,17 @@ namespace noco
 		JSON toJSON() const;
 		
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const;
+		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const;
 
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 		
-		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		bool tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 

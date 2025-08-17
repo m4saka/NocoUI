@@ -153,7 +153,7 @@ namespace noco
 	namespace detail
 	{
 		[[nodiscard]]
-		std::shared_ptr<ComponentBase> CreateComponentFromJSONImpl(const JSON& json, IncludesInstanceIdYN includesInstanceId);
+		std::shared_ptr<ComponentBase> CreateComponentFromJSONImpl(const JSON& json, WithInstanceIdYN withInstanceId);
 	}
 
 	[[nodiscard]]
