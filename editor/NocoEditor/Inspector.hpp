@@ -30,23 +30,6 @@ namespace noco::editor
 		std::weak_ptr<Node> m_targetNode;
 		std::function<void()> m_onChangeNodeName;
 		
-		[[nodiscard]]
-		bool hasAnyParamsForType(ParamType type) const
-		{
-			if (!m_canvas)
-			{
-				return false;
-			}
-			const auto& params = m_canvas->params();
-			for (const auto& [name, value] : params)
-			{
-				if (GetParamType(value) == type)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
 		
 		void renameParam(const String& oldName, const String& newName)
 		{
@@ -3069,10 +3052,9 @@ namespace noco::editor
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
 							{ 
-								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
-							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Vec2); }
-						},
+							},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3108,10 +3090,9 @@ namespace noco::editor
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
 							{ 
-								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
-							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Number); }
-						},
+							},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3160,10 +3141,9 @@ namespace noco::editor
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
 							{ 
-								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
-							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Bool); }
-						},
+							},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3195,10 +3175,9 @@ namespace noco::editor
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
 							{ 
-								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); })); 
+								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
-							.fnIsEnabled = [this] { return hasAnyParamsForType(ParamType::Color); }
-						},
+							},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3972,20 +3951,8 @@ namespace noco::editor
 						.mnemonicInput = KeyP, 
 						.onClick = [this, property] 
 						{ 
-							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); })); 
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 						},
-						.fnIsEnabled = [this, requiredParamTypes] 
-						{ 
-							// 必要なパラメータ型のいずれかが存在するかチェック
-							for (const auto& paramType : requiredParamTypes)
-							{
-								if (hasAnyParamsForType(paramType))
-								{
-									return true;
-								}
-							}
-							return false;
-						}
 					},
 				};
 				

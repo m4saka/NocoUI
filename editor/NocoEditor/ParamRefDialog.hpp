@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
-#include "EditorDialog.hpp"
+#include "AddParamDialog.hpp"
 #include "TabStop.hpp"
 
 namespace noco::editor
@@ -19,6 +19,9 @@ namespace noco::editor
 		
 		String m_selectedParamName;
 		Array<std::pair<String, ParamValue>> m_availableParams;
+		
+		// ダイアログ管理
+		std::shared_ptr<DialogOpener> m_dialogOpener;
 		
 		Optional<ParamType> getPropertyParamType() const
 		{
@@ -86,10 +89,11 @@ namespace noco::editor
 		}
 		
 	public:
-		explicit ParamRefDialog(IProperty* pProperty, const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete)
+		explicit ParamRefDialog(IProperty* pProperty, const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, const std::shared_ptr<DialogOpener>& dialogOpener)
 			: m_pProperty(pProperty)
 			, m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
+			, m_dialogOpener(dialogOpener)
 		{
 			filterAvailableParams();
 			
@@ -257,6 +261,32 @@ namespace noco::editor
 				}
 			});
 			
+			// 新規パラメータ作成ボタン
+			const auto newParamButton = comboRow->emplaceChild(
+				U"NewParamButton",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 90, 26 },
+				});
+			newParamButton->emplaceComponent<RectRenderer>(
+				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				1.0, 4.0);
+			newParamButton->emplaceComponent<Label>(
+				U"＋ 新規",
+				U"",
+				12,
+				Palette::White,
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			newParamButton->emplaceComponent<UpdaterComponent>([this](const std::shared_ptr<Node>& node)
+			{
+				if (node->isClicked())
+				{
+					onCreateNewParamButtonClick();
+				}
+			});
+			
 			// 値表示
 			const auto valueRow = contentRootNode->emplaceChild(
 				U"ValueRow",
@@ -382,6 +412,24 @@ namespace noco::editor
 				}
 			}
 			m_valueLabel->setText(valueText);
+		}
+		
+		void onCreateNewParamButtonClick()
+		{
+			const auto propertyType = getPropertyParamType();
+			if (!propertyType)
+			{
+				return;
+			}
+			
+			auto addParamDialog = std::make_shared<AddParamDialog>(
+				m_canvas,
+				[this]()
+				{
+					filterAvailableParams();
+				});
+			
+			m_dialogOpener->openDialog(addParamDialog);
 		}
 		
 		void onResult(StringView resultButtonText) override
