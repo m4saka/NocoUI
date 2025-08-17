@@ -37,7 +37,7 @@ namespace noco
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
-		LRTB m_hitTestPadding{ 0.0, 0.0, 0.0, 0.0 };
+		LRTB m_hitPadding{ 0.0, 0.0, 0.0, 0.0 };
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
 		InteractableYN m_interactable = InteractableYN::Yes;
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
@@ -52,8 +52,8 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_regionRect{ 0.0, 0.0, 0.0, 0.0 };
 		/* NonSerialized */ Quad m_transformedQuad;
-		/* NonSerialized */ Quad m_hitTestQuad;
-		/* NonSerialized */ Quad m_hitTestQuadWithPadding;
+		/* NonSerialized */ Quad m_hitQuad;
+		/* NonSerialized */ Quad m_hitQuadWithPadding;
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
@@ -82,7 +82,7 @@ namespace noco
 		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
 
 		[[nodiscard]]
-		Mat3x2 calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const;
+		Mat3x2 calculateHitTestMat(const Mat3x2& parentHitTestMat) const;
 
 		[[nodiscard]]
 		explicit Node(uint64 instanceId, StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -361,7 +361,7 @@ namespace noco
 		const Quad& transformedQuad() const;
 
 		[[nodiscard]]
-		Quad hitTestQuad(WithPaddingYN withPadding = WithPaddingYN::No) const;
+		Quad hitQuad(WithPaddingYN withPadding = WithPaddingYN::No) const;
 
 		[[nodiscard]]
 		const RectF& regionRect() const;
@@ -406,9 +406,9 @@ namespace noco
 		std::shared_ptr<Node> setIsHitTarget(bool isHitTarget);
 
 		[[nodiscard]]
-		const LRTB& hitTestPadding() const;
+		const LRTB& hitPadding() const;
 
-		std::shared_ptr<Node> setHitTestPadding(const LRTB& padding);
+		std::shared_ptr<Node> setHitPadding(const LRTB& padding);
 
 		[[nodiscard]]
 		InheritChildrenStateFlags inheritChildrenStateFlags() const;

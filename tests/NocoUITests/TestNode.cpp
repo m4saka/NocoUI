@@ -149,8 +149,8 @@ TEST_CASE("Node properties and state management", "[Node]")
 		REQUIRE(node->isHitTarget() == noco::IsHitTargetYN::No);
 		
 		// ヒットテストパディング
-		node->setHitTestPadding(noco::LRTB{ 10, 20, 30, 40 });
-		REQUIRE(node->hitTestPadding() == noco::LRTB{ 10, 20, 30, 40 });
+		node->setHitPadding(noco::LRTB{ 10, 20, 30, 40 });
+		REQUIRE(node->hitPadding() == noco::LRTB{ 10, 20, 30, 40 });
 	}
 }
 

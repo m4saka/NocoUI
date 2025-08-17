@@ -335,7 +335,7 @@ namespace noco
 			{ U"components", Array<JSON>{} },
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
-			{ U"hitTestPadding", m_hitTestPadding.toJSON() },
+			{ U"hitPadding", m_hitPadding.toJSON() },
 			{ U"inheritsChildrenHoveredState", inheritsChildrenHoveredState() },
 			{ U"inheritsChildrenPressedState", inheritsChildrenPressedState() },
 			{ U"interactable", m_interactable.getBool() },
@@ -431,9 +431,9 @@ namespace noco
 		{
 			node->m_isHitTarget = IsHitTargetYN{ json[U"isHitTarget"].getOr<bool>(true) };
 		}
-		if (json.contains(U"hitTestPadding"))
+		if (json.contains(U"hitPadding"))
 		{
-			node->m_hitTestPadding = LRTB::fromJSON(json[U"hitTestPadding"]);
+			node->m_hitPadding = LRTB::fromJSON(json[U"hitPadding"]);
 		}
 		if (json.contains(U"inheritsChildrenHoveredState"))
 		{
@@ -1110,8 +1110,8 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitTestPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitTestQuad(WithPaddingYN::Yes).contains(point);
+		// hitPaddingを考慮した当たり判定領域を計算
+		const bool hit = hitQuad(WithPaddingYN::Yes).contains(point);
 		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
@@ -1142,8 +1142,8 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitTestPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitTestQuad(WithPaddingYN::Yes).contains(point);
+		// hitPaddingを考慮した当たり判定領域を計算
+		const bool hit = hitQuad(WithPaddingYN::Yes).contains(point);
 		if (m_clippingEnabled && !m_transformedQuad.contains(point))
 		{
 			return nullptr;
@@ -1417,7 +1417,7 @@ namespace noco
 			}
 
 			// 子ノードのupdate実行
-			const Mat3x2 childHitTestMat = calculateHitTestMatrix(parentHitTestMat);
+			const Mat3x2 childHitTestMat = calculateHitTestMat(parentHitTestMat);
 			
 			for (const auto& child : m_childrenTempBuffer)
 			{
@@ -1558,7 +1558,7 @@ namespace noco
 		}
 		
 		// HitTest用の変換行列を計算
-		m_hitTestMatInHierarchy = calculateHitTestMatrix(parentHitTestMat);
+		m_hitTestMatInHierarchy = calculateHitTestMat(parentHitTestMat);
 		
 		// HitTest用のQuadを計算
 		const Vec2 hitTopLeft = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos);
@@ -1572,30 +1572,30 @@ namespace noco
 			if (scale.x < 0 && scale.y >= 0)
 			{
 				// X軸のみ反転
-				m_hitTestQuad = Quad{ hitTopRight, hitTopLeft, hitBottomLeft, hitBottomRight };
+				m_hitQuad = Quad{ hitTopRight, hitTopLeft, hitBottomLeft, hitBottomRight };
 			}
 			else if (scale.x >= 0 && scale.y < 0)
 			{
 				// Y軸のみ反転
-				m_hitTestQuad = Quad{ hitBottomLeft, hitBottomRight, hitTopRight, hitTopLeft };
+				m_hitQuad = Quad{ hitBottomLeft, hitBottomRight, hitTopRight, hitTopLeft };
 			}
 			else
 			{
 				// XY両軸反転
-				m_hitTestQuad = Quad{ hitBottomRight, hitBottomLeft, hitTopLeft, hitTopRight };
+				m_hitQuad = Quad{ hitBottomRight, hitBottomLeft, hitTopLeft, hitTopRight };
 			}
 		}
 		else
 		{
-			m_hitTestQuad = Quad{ hitTopLeft, hitTopRight, hitBottomRight, hitBottomLeft };
+			m_hitQuad = Quad{ hitTopLeft, hitTopRight, hitBottomRight, hitBottomLeft };
 		}
 		
 		// パディング有りのHitTestQuadを計算
 		const RectF paddedRect{
-			m_regionRect.x - m_hitTestPadding.left,
-			m_regionRect.y - m_hitTestPadding.top,
-			m_regionRect.w + m_hitTestPadding.totalWidth(),
-			m_regionRect.h + m_hitTestPadding.totalHeight()
+			m_regionRect.x - m_hitPadding.left,
+			m_regionRect.y - m_hitPadding.top,
+			m_regionRect.w + m_hitPadding.totalWidth(),
+			m_regionRect.h + m_hitPadding.totalHeight()
 		};
 		const Vec2 paddedTopLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos);
 		const Vec2 paddedTopRight = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{paddedRect.w, 0});
@@ -1608,22 +1608,22 @@ namespace noco
 			if (scale.x < 0 && scale.y >= 0)
 			{
 				// X軸のみ反転
-				m_hitTestQuadWithPadding = Quad{ paddedTopRight, paddedTopLeft, paddedBottomLeft, paddedBottomRight };
+				m_hitQuadWithPadding = Quad{ paddedTopRight, paddedTopLeft, paddedBottomLeft, paddedBottomRight };
 			}
 			else if (scale.x >= 0 && scale.y < 0)
 			{
 				// Y軸のみ反転
-				m_hitTestQuadWithPadding = Quad{ paddedBottomLeft, paddedBottomRight, paddedTopRight, paddedTopLeft };
+				m_hitQuadWithPadding = Quad{ paddedBottomLeft, paddedBottomRight, paddedTopRight, paddedTopLeft };
 			}
 			else
 			{
 				// XY両軸反転
-				m_hitTestQuadWithPadding = Quad{ paddedBottomRight, paddedBottomLeft, paddedTopLeft, paddedTopRight };
+				m_hitQuadWithPadding = Quad{ paddedBottomRight, paddedBottomLeft, paddedTopLeft, paddedTopRight };
 			}
 		}
 		else
 		{
-			m_hitTestQuadWithPadding = Quad{ paddedTopLeft, paddedTopRight, paddedBottomRight, paddedBottomLeft };
+			m_hitQuadWithPadding = Quad{ paddedTopLeft, paddedTopRight, paddedBottomRight, paddedBottomLeft };
 		}
 		
 		if (recursive)
@@ -1945,7 +1945,7 @@ namespace noco
 		return RectF{ Arg::center = center, width, height };
 	}
 
-	Mat3x2 Node::calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const
+	Mat3x2 Node::calculateHitTestMat(const Mat3x2& parentHitTestMat) const
 	{
 		if (m_transform.appliesToHitTest().value())
 		{
@@ -2017,17 +2017,15 @@ namespace noco
 		return m_transformedQuad;
 	}
 
-	Quad Node::hitTestQuad(WithPaddingYN withPadding) const
+	Quad Node::hitQuad(WithPaddingYN withPadding) const
 	{
 		if (withPadding == WithPaddingYN::Yes)
 		{
-			// パディング有りの場合は事前計算済みのQuadを返す
-			return m_hitTestQuadWithPadding;
+			return m_hitQuadWithPadding;
 		}
 		else
 		{
-			// パディングなしの場合は事前計算済みのQuadを返す
-			return m_hitTestQuad;
+			return m_hitQuad;
 		}
 	}
 
@@ -2137,14 +2135,14 @@ namespace noco
 		return setIsHitTarget(IsHitTargetYN{ isHitTarget });
 	}
 
-	const LRTB& Node::hitTestPadding() const
+	const LRTB& Node::hitPadding() const
 	{
-		return m_hitTestPadding;
+		return m_hitPadding;
 	}
 
-	std::shared_ptr<Node> Node::setHitTestPadding(const LRTB& padding)
+	std::shared_ptr<Node> Node::setHitPadding(const LRTB& padding)
 	{
-		m_hitTestPadding = padding;
+		m_hitPadding = padding;
 		return shared_from_this();
 	}
 

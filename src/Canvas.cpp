@@ -651,7 +651,7 @@ namespace noco
 
 		// スクロール可能なホバー中ノード取得
 		auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;
-		if (scrollableHoveredNode && !scrollableHoveredNode->hitTestQuad().mouseOver())
+		if (scrollableHoveredNode && !scrollableHoveredNode->hitQuad().mouseOver())
 		{
 			// 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
 			scrollableHoveredNode = nullptr;

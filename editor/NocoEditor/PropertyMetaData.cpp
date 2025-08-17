@@ -25,7 +25,7 @@ namespace noco::editor
 			.tooltip = U"ヒットテストの対象にするどうか",
 			.tooltipDetail = U"無効にすると、この要素はヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)の対象外となり、親要素のInteractionStateを受け継ぎます\n※無効の場合、ヒットテストでは要素の存在自体が無視されるため、背面にある要素にホバーが可能となります\n※無効の場合、TextBox等のマウス操作を利用するコンポーネントも入力を受け付けなくなります",
 		};
-		metadata[PropertyKey{ U"Node", U"hitTestPadding" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Node", U"hitPadding" }] = PropertyMetadata{
 			.tooltip = U"ヒットテスト領域の拡縮 (左、右、上、下)",
 			.tooltipDetail = U"ヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)に使用する領域を、指定されたピクセル数だけ拡大・縮小します\n正の値で領域を拡大、負の値で領域を縮小します\n実際の見た目よりもずれた位置にマウスカーソルがあっても反応させたい場合に使用できます",
 		};

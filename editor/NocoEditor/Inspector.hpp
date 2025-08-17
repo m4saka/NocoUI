@@ -2237,10 +2237,10 @@ namespace noco::editor
 				node->setIsHitTarget(value); 
 				refreshInspector();
 			});
-			// isHitTargetがtrueの場合のみhitTestPaddingを表示
+			// isHitTargetがtrueの場合のみhitPaddingを表示
 			if (node->isHitTarget())
 			{
-				fnAddLRTBChild(U"hitTestPadding", node->hitTestPadding(), [node](const LRTB& value) { node->setHitTestPadding(value); });
+				fnAddLRTBChild(U"hitPadding", node->hitPadding(), [node](const LRTB& value) { node->setHitPadding(value); });
 			}
 			fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
 			fnAddBoolChild(U"inheritsChildrenPressedState", node->inheritsChildrenPressedState(), [node](bool value) { node->setInheritsChildrenPressedState(value); });
