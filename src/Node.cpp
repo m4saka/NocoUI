@@ -1702,15 +1702,15 @@ namespace noco
 		}
 	}
 
-	void Node::replaceParamRef(const String& oldName, const String& newName, RecursiveYN recursive)
+	void Node::replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive)
 	{
-		m_transform.replaceParamRef(oldName, newName);
+		m_transform.replaceParamRefs(oldName, newName);
 		
 		for (const auto& component : m_components)
 		{
 			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				serializableComponent->replaceParamRef(oldName, newName);
+				serializableComponent->replaceParamRefs(oldName, newName);
 			}
 		}
 		
@@ -1718,7 +1718,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->replaceParamRef(oldName, newName, RecursiveYN::Yes);
+				child->replaceParamRefs(oldName, newName, RecursiveYN::Yes);
 			}
 		}
 	}

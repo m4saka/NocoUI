@@ -983,14 +983,14 @@ namespace noco
 		m_params.clear();
 	}
 
-	size_t Canvas::countParamRef(StringView paramName) const
+	size_t Canvas::countParamRefs(StringView paramName) const
 	{
 		size_t count = 0;
 		
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティをチェック
-			count += node->transform().countParamRef(paramName);
+			count += node->transform().countParamRefs(paramName);
 			
 			// コンポーネントのプロパティをチェック
 			for (const auto& component : node->components())
@@ -1017,12 +1017,12 @@ namespace noco
 		return count;
 	}
 
-	void Canvas::clearParamRef(StringView paramName)
+	void Canvas::clearParamRefs(StringView paramName)
 	{
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティから参照を解除
-			node->transform().clearParamRef(paramName);
+			node->transform().clearParamRefs(paramName);
 			
 			// コンポーネントのプロパティから参照を解除
 			for (const auto& component : node->components())
@@ -1048,14 +1048,14 @@ namespace noco
 		}
 	}
 
-	Array<String> Canvas::clearInvalidParamRefs()
+	Array<String> Canvas::removeInvalidParamRefs()
 	{
 		HashSet<String> clearedParamsSet;
 		
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformの無効な参照を解除
-			const auto clearedFromTransform = node->transform().clearInvalidParamRefs(m_params);
+			const auto clearedFromTransform = node->transform().removeInvalidParamRefs(m_params);
 			for (const auto& paramName : clearedFromTransform)
 			{
 				clearedParamsSet.insert(paramName);
@@ -1275,11 +1275,11 @@ namespace noco
 		return static_cast<size_t>(std::distance(m_children.begin(), it));
 	}
 
-	void Canvas::replaceParamRefAll(const String& oldName, const String& newName)
+	void Canvas::replaceParamRefs(const String& oldName, const String& newName)
 	{
 		for (const auto& child : m_children)
 		{
-			child->replaceParamRef(oldName, newName, RecursiveYN::Yes);
+			child->replaceParamRefs(oldName, newName, RecursiveYN::Yes);
 		}
 	}
 

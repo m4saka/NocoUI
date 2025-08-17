@@ -722,7 +722,7 @@ public:
 			}
 			return false;
 		}
-		const auto clearedParams = m_canvas->clearInvalidParamRefs();
+		const auto clearedParams = m_canvas->removeInvalidParamRefs();
 		refresh();
 		m_historySystem.clear();
 		m_toolbar.updateButtonStates();

@@ -82,12 +82,12 @@ namespace noco
 		void readFromJSON(const JSON& json);
 
 		[[nodiscard]]
-		size_t countParamRef(StringView paramName) const;
+		size_t countParamRefs(StringView paramName) const;
 
-		void clearParamRef(StringView paramName);
+		void clearParamRefs(StringView paramName);
 		
-		void replaceParamRef(StringView oldName, StringView newName);
+		void replaceParamRefs(StringView oldName, StringView newName);
 
-		Array<String> clearInvalidParamRefs(const HashTable<String, ParamValue>& validParams);
+		Array<String> removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams);
 	};
 }

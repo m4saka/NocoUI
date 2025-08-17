@@ -1109,7 +1109,7 @@ namespace noco::editor
 			}
 			m_canvas->refreshLayout();
 			// 無効なパラメータ参照を解除
-			const auto clearedParams = m_canvas->clearInvalidParamRefs();
+			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
 			showClearedParamRefsDialog(clearedParams);
@@ -1147,7 +1147,7 @@ namespace noco::editor
 			}
 			m_canvas->refreshLayout();
 			// 無効なパラメータ参照を解除
-			const auto clearedParams = m_canvas->clearInvalidParamRefs();
+			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
 			showClearedParamRefsDialog(clearedParams);

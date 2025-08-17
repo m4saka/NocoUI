@@ -63,7 +63,7 @@ namespace noco::editor
 			
 			m_canvas->setParamValue(newName, *paramValue);
 			
-			m_canvas->replaceParamRefAll(oldName, newName);
+			m_canvas->replaceParamRefs(oldName, newName);
 			
 			m_canvas->removeParam(oldName);
 		}
@@ -3331,7 +3331,7 @@ namespace noco::editor
 						.mnemonicInput = KeyR,
 						.onClick = [this, paramName, value]
 						{
-							const size_t refCount = m_canvas ? m_canvas->countParamRef(paramName) : 0;
+							const size_t refCount = m_canvas ? m_canvas->countParamRefs(paramName) : 0;
 							String dialogMessage = U"新しいパラメータ名を入力してください";
 							if (refCount > 0)
 							{
@@ -3428,7 +3428,7 @@ namespace noco::editor
 						.onClick = [this, paramName]
 						{
 							// 削除確認ダイアログを表示
-							const size_t refCount = m_canvas->countParamRef(paramName);
+							const size_t refCount = m_canvas->countParamRefs(paramName);
 							m_dialogOpener->openDialog(
 								std::make_shared<SimpleDialog>(
 									U"パラメータ '{}'を削除しますか？\n参照しているプロパティ数: {}\n※参照しているプロパティからは参照が解除されます"_fmt(paramName, refCount),
@@ -3436,7 +3436,7 @@ namespace noco::editor
 									{
 										if (resultButtonText == U"はい")
 										{
-											m_canvas->clearParamRef(paramName);
+											m_canvas->clearParamRefs(paramName);
 											m_canvas->removeParam(paramName);
 											refreshInspector();
 										}

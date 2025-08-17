@@ -151,7 +151,7 @@ namespace noco
 			return m_internalId;
 		}
 
-		void replaceParamRef(StringView oldName, StringView newName)
+		void replaceParamRefs(StringView oldName, StringView newName)
 		{
 			for (IProperty* property : properties())
 			{

@@ -576,11 +576,11 @@ namespace noco
 		void clearParams();
 
 		[[nodiscard]]
-		size_t countParamRef(StringView paramName) const;
+		size_t countParamRefs(StringView paramName) const;
 
-		void clearParamRef(StringView paramName);
+		void clearParamRefs(StringView paramName);
 
-		Array<String> clearInvalidParamRefs();
+		Array<String> removeInvalidParamRefs();
 
 		void setSize(double width, double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
 		{
@@ -709,7 +709,7 @@ namespace noco
 	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 	// 全ノードのパラメータ参照を一括更新
-	void replaceParamRefAll(const String& oldName, const String& newName);
+	void replaceParamRefs(const String& oldName, const String& newName);
 
 	// internalIdによるノード検索
 	[[nodiscard]]

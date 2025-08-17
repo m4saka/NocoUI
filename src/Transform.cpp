@@ -139,7 +139,7 @@ namespace noco
 		m_color.readFromJSON(json);
 	}
 
-	size_t Transform::countParamRef(StringView paramName) const
+	size_t Transform::countParamRefs(StringView paramName) const
 	{
 		size_t count = 0;
 		
@@ -171,7 +171,7 @@ namespace noco
 		return count;
 	}
 
-	void Transform::clearParamRef(StringView paramName)
+	void Transform::clearParamRefs(StringView paramName)
 	{
 		if (m_translate.paramRef() == paramName)
 		{
@@ -199,7 +199,7 @@ namespace noco
 		}
 	}
 
-	void Transform::replaceParamRef(StringView oldName, StringView newName)
+	void Transform::replaceParamRefs(StringView oldName, StringView newName)
 	{
 		if (m_translate.paramRef() == oldName)
 		{
@@ -227,7 +227,7 @@ namespace noco
 		}
 	}
 
-	Array<String> Transform::clearInvalidParamRefs(const HashTable<String, ParamValue>& validParams)
+	Array<String> Transform::removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams)
 	{
 		HashSet<String> clearedParamsSet;
 		

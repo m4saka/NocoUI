@@ -325,7 +325,7 @@ namespace noco
 		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		// パラメータ参照を置換
-		void replaceParamRef(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);
+		void replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);
 
 		void draw() const;
 
