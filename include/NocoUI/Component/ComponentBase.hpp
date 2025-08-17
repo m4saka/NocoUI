@@ -80,16 +80,16 @@ namespace noco
 	{
 	private:
 		String m_type;
-		uint64 m_internalId;
+		uint64 m_instanceId;
 
 		// ライブラリレベルでのマルチスレッド対応はしないが、atomicにはしておく
-		static inline std::atomic<uint64> s_nextInternalId = 1;
+		static inline std::atomic<uint64> s_nextInstanceId = 1;
 
 	public:
 		explicit SerializableComponentBase(StringView type, const Array<IProperty*>& properties)
 			: ComponentBase{ properties }
 			, m_type{ type }
-			, m_internalId{ s_nextInternalId++ }
+			, m_instanceId{ s_nextInstanceId++ }
 		{
 		}
 
@@ -104,11 +104,11 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const
 		{
-			return toJSONImpl(detail::IncludesInternalIdYN::No);
+			return toJSONImpl(detail::IncludesInstanceIdYN::No);
 		}
 
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
 		{
 			JSON json;
 			json[U"type"] = m_type;
@@ -116,19 +116,19 @@ namespace noco
 			{
 				property->appendJSON(json);
 			}
-			if (includesInternalId)
+			if (includesInstanceId)
 			{
-				json[U"_internalId"] = m_internalId;
+				json[U"_instanceId"] = m_instanceId;
 			}
 			return json;
 		}
 
 		bool tryReadFromJSON(const JSON& json)
 		{
-			return tryReadFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+			return tryReadFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
 		}
 
-		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
+		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
 		{
 			if (!json.contains(U"type") || json[U"type"].getString() != m_type)
 			{
@@ -138,17 +138,17 @@ namespace noco
 			{
 				property->readFromJSON(json);
 			}
-			if (includesInternalId && json.contains(U"_internalId"))
+			if (includesInstanceId && json.contains(U"_instanceId"))
 			{
-				m_internalId = json[U"_internalId"].get<uint64>();
+				m_instanceId = json[U"_instanceId"].get<uint64>();
 			}
 			return true;
 		}
 
 		[[nodiscard]]
-		uint64 internalId() const
+		uint64 instanceId() const
 		{
-			return m_internalId;
+			return m_instanceId;
 		}
 
 		void replaceParamRefs(StringView oldName, StringView newName)

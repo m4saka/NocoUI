@@ -249,7 +249,7 @@ namespace noco
 		return json;
 	}
 	
-	JSON Canvas::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+	JSON Canvas::toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
 	{
 		JSON json = JSON
 		{
@@ -269,7 +269,7 @@ namespace noco
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
 		{
-			childrenArray.push_back(child->toJSONImpl(includesInternalId));
+			childrenArray.push_back(child->toJSONImpl(includesInstanceId));
 		}
 		json[U"children"] = childrenArray;
 
@@ -362,7 +362,7 @@ namespace noco
 		return canvas;
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayout)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -389,7 +389,7 @@ namespace noco
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, includesInternalId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, includesInstanceId))
 			{
 				canvas->addChild(child, RefreshesLayoutYN::No);
 			}
@@ -528,7 +528,7 @@ namespace noco
 		return true;
 	}
 	
-	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -561,7 +561,7 @@ namespace noco
 
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, includesInternalId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, includesInstanceId))
 			{
 				addChild(child, RefreshesLayoutYN::No);
 			}
@@ -1283,11 +1283,11 @@ namespace noco
 		}
 	}
 
-	std::shared_ptr<Node> Canvas::findNodeByInternalId(uint64 internalId) const
+	std::shared_ptr<Node> Canvas::findNodeByInstanceId(uint64 instanceId) const
 	{
 		for (const auto& child : m_children)
 		{
-			if (auto result = findNodeByInternalIdRecursive(child, internalId))
+			if (auto result = findNodeByInstanceIdRecursive(child, instanceId))
 			{
 				return result;
 			}
@@ -1295,21 +1295,21 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<Node> Canvas::findNodeByInternalIdRecursive(const std::shared_ptr<Node>& node, uint64 internalId) const
+	std::shared_ptr<Node> Canvas::findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const
 	{
 		if (!node)
 		{
 			return nullptr;
 		}
 		
-		if (node->internalId() == internalId)
+		if (node->instanceId() == instanceId)
 		{
 			return node;
 		}
 		
 		for (const auto& child : node->children())
 		{
-			if (auto result = findNodeByInternalIdRecursive(child, internalId))
+			if (auto result = findNodeByInstanceIdRecursive(child, instanceId))
 			{
 				return result;
 			}

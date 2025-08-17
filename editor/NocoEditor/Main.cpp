@@ -24,7 +24,7 @@
 
 using namespace noco;
 using namespace noco::editor;
-using noco::detail::IncludesInternalIdYN;
+using noco::detail::IncludesInstanceIdYN;
 
 Vec2 calculateCanvasCenterOffset(const Size& sceneSize, const std::shared_ptr<Canvas>& canvas)
 {
@@ -401,7 +401,7 @@ public:
 		const bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
 		if (hasUserInput)
 		{
-			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
+			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes));
 			m_toolbar.updateButtonStates();
 		}
 		
@@ -527,14 +527,14 @@ public:
 		m_exitRequested = true;
 	}
 
-	// 選択中のノードのinternalIdを保存
+	// 選択中のノードのinstanceIdを保存
 	Array<uint64> saveSelectedNodeIds() const
 	{
 		const auto selectedNodes = m_hierarchy.getSelectedNodesExcludingChildren();
-		return selectedNodes.map([](const auto& node) { return node->internalId(); });
+		return selectedNodes.map([](const auto& node) { return node->instanceId(); });
 	}
 
-	// internalIdのリストから選択を復元
+	// instanceIdのリストから選択を復元
 	void restoreSelectedNodeIds(const Array<uint64>& selectedIds)
 	{
 		if (selectedIds.empty())
@@ -546,7 +546,7 @@ public:
 		nodesToSelect.reserve(selectedIds.size());
 		for (const auto& id : selectedIds)
 		{
-			if (auto node = m_canvas->findNodeByInternalId(id))
+			if (auto node = m_canvas->findNodeByInstanceId(id))
 			{
 				nodesToSelect.push_back(std::move(node));
 			}
@@ -841,12 +841,12 @@ public:
 	
 	void onClickMenuEditUndo()
 	{
-		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes)))
+		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes)))
 		{
-			// 現在選択中のノードのinternalIdを保存
+			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*undoState, IncludesInternalIdYN::Yes);
+			m_canvas->tryReadFromJSONImpl(*undoState, IncludesInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -859,12 +859,12 @@ public:
 	
 	void onClickMenuEditRedo()
 	{
-		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes)))
+		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes)))
 		{
-			// 現在選択中のノードのinternalIdを保存
+			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*redoState, IncludesInternalIdYN::Yes);
+			m_canvas->tryReadFromJSONImpl(*redoState, IncludesInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -898,7 +898,7 @@ public:
 	
 	void recordInitialHistoryState()
 	{
-		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInternalIdYN::Yes));
+		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(IncludesInstanceIdYN::Yes));
 	}
 };
 

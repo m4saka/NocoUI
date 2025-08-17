@@ -409,17 +409,17 @@ namespace noco
 		JSON toJSON() const;
 		
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const;
+		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const;
 
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 		
-		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		bool tryReadFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
@@ -711,14 +711,14 @@ namespace noco
 	// 全ノードのパラメータ参照を一括更新
 	void replaceParamRefs(const String& oldName, const String& newName);
 
-	// internalIdによるノード検索
+	// instanceIdによるノード検索
 	[[nodiscard]]
-	std::shared_ptr<Node> findNodeByInternalId(uint64 internalId) const;
+	std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;
 
 private:
-	// ノードツリー内でinternalIdによるノード検索（再帰）
+	// ノードツリー内でinstanceIdによるノード検索（再帰）
 	[[nodiscard]]
-	std::shared_ptr<Node> findNodeByInternalIdRecursive(const std::shared_ptr<Node>& node, uint64 internalId) const;
+	std::shared_ptr<Node> findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const;
 	};
 
 	template <class Fty>

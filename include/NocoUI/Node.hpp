@@ -28,8 +28,8 @@ namespace noco
 		friend class Canvas;
 
 	private:
-		static inline uint64_t s_nextInternalId = 1;
-		uint64 m_internalId;
+		static inline uint64_t s_nextInstanceId = 1;
+		uint64 m_instanceId;
 		String m_name;
 		RegionVariant m_region;
 		Transform m_transform;
@@ -85,8 +85,8 @@ namespace noco
 		Mat3x2 calculateHitTestMatrix(const Mat3x2& parentHitTestMat) const;
 
 		[[nodiscard]]
-		explicit Node(uint64 internalId, StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
-			: m_internalId{ internalId }
+		explicit Node(uint64 instanceId, StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
+			: m_instanceId{ instanceId }
 			, m_name{ name }
 			, m_region{ region }
 			, m_isHitTarget{ isHitTarget }
@@ -164,13 +164,13 @@ namespace noco
 		JSON toJSON() const;
 
 		[[nodiscard]]
-		JSON toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const;
+		JSON toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const;
 
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
+		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parentNode() const;
@@ -215,9 +215,9 @@ namespace noco
 
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index);
 
-		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId);
+		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId);
 
-		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInternalIdYN includesInternalId);
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInstanceIdYN includesInstanceId);
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 
@@ -587,9 +587,9 @@ namespace noco
 		[[nodiscard]]	
 		TData getStoredDataOr(const TData& defaultValue) const;
 
-		uint64 internalId() const
+		uint64 instanceId() const
 		{
-			return m_internalId;
+			return m_instanceId;
 		}
 
 		// INodeContainer interface implementation

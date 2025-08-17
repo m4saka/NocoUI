@@ -30,6 +30,6 @@ namespace noco
 
 	namespace detail
 	{
-		using IncludesInternalIdYN = YesNo<struct IncludesInternalIdYN_tag>;
+		using IncludesInstanceIdYN = YesNo<struct IncludesInstanceIdYN_tag>;
 	}
 }

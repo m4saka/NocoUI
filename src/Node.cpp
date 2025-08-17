@@ -219,7 +219,7 @@ namespace noco
 
 	std::shared_ptr<Node> Node::Create(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
-		return std::shared_ptr<Node>{ new Node{ s_nextInternalId++, name, region, isHitTarget, inheritChildrenStateFlags } };
+		return std::shared_ptr<Node>{ new Node{ s_nextInstanceId++, name, region, isHitTarget, inheritChildrenStateFlags } };
 	}
 
 	const RegionVariant& Node::region() const
@@ -315,15 +315,15 @@ namespace noco
 
 	JSON Node::toJSON() const
 	{
-		return toJSONImpl(detail::IncludesInternalIdYN::No);
+		return toJSONImpl(detail::IncludesInstanceIdYN::No);
 	}
 
-	JSON Node::toJSONImpl(detail::IncludesInternalIdYN includesInternalId) const
+	JSON Node::toJSONImpl(detail::IncludesInstanceIdYN includesInstanceId) const
 	{
 		Array<JSON> childrenJSON;
 		for (const auto& child : m_children)
 		{
-			childrenJSON.push_back(child->toJSONImpl(includesInternalId));
+			childrenJSON.push_back(child->toJSONImpl(includesInstanceId));
 		}
 
 		JSON result
@@ -355,16 +355,16 @@ namespace noco
 			result[U"styleState"] = m_styleState;
 		}
 
-		if (includesInternalId)
+		if (includesInstanceId)
 		{
-			result[U"_internalId"] = m_internalId;
+			result[U"_instanceId"] = m_instanceId;
 		}
 
 		for (const std::shared_ptr<ComponentBase>& component : m_components)
 		{
 			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				result[U"components"].push_back(serializableComponent->toJSONImpl(includesInternalId));
+				result[U"components"].push_back(serializableComponent->toJSONImpl(includesInstanceId));
 			}
 		}
 
@@ -373,10 +373,10 @@ namespace noco
 
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
 	{
-		return CreateFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+		return CreateFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
 	}
 
-	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
+	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -483,16 +483,16 @@ namespace noco
 		{
 			node->setStyleState(json[U"styleState"].getOr<String>(U""));
 		}
-		if (includesInternalId && json.contains(U"_internalId"))
+		if (includesInstanceId && json.contains(U"_instanceId"))
 		{
-			node->m_internalId = json[U"_internalId"].get<uint64>();
+			node->m_instanceId = json[U"_instanceId"].get<uint64>();
 		}
 
 		if (json.contains(U"components") && json[U"components"].isArray())
 		{
 			for (const auto& componentJSON : json[U"components"].arrayView())
 			{
-				node->addComponentFromJSONImpl(componentJSON, includesInternalId);
+				node->addComponentFromJSONImpl(componentJSON, includesInstanceId);
 			}
 		}
 
@@ -500,7 +500,7 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				auto child = CreateFromJSONImpl(childJSON, includesInternalId);
+				auto child = CreateFromJSONImpl(childJSON, includesInstanceId);
 				node->addChild(child, RefreshesLayoutYN::No);
 			}
 		}
@@ -683,17 +683,17 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
 	{
-		return addComponentFromJSONImpl(json, detail::IncludesInternalIdYN::No);
+		return addComponentFromJSONImpl(json, detail::IncludesInstanceIdYN::No);
 	}
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
 	{
-		return addComponentAtIndexFromJSONImpl(json, index, detail::IncludesInternalIdYN::No);
+		return addComponentAtIndexFromJSONImpl(json, index, detail::IncludesInstanceIdYN::No);
 	}
 
-	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::IncludesInternalIdYN includesInternalId)
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::IncludesInstanceIdYN includesInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, includesInternalId);
+		auto component = CreateComponentFromJSONImpl(json, includesInstanceId);
 		if (component)
 		{
 			addComponent(component);
@@ -701,9 +701,9 @@ namespace noco
 		return component;
 	}
 
-	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInternalIdYN includesInternalId)
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::IncludesInstanceIdYN includesInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, includesInternalId);
+		auto component = CreateComponentFromJSONImpl(json, includesInstanceId);
 		if (component)
 		{
 			addComponentAtIndex(component, index);
