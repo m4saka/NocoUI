@@ -35,7 +35,6 @@ namespace noco
 		/* NonSerialized */ Stopwatch m_deletePressStopwatch;
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
 		/* NonSerialized */ size_t m_scrollOffset = 0;
-		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
 		/* NonSerialized */ bool m_prevEditingTextExists = false;
 		/* NonSerialized */ bool m_isChanged = false;
 
@@ -106,7 +105,6 @@ namespace noco
 
 		void handleClipboardShortcut();
 
-		void onDeactivated(const std::shared_ptr<Node>& node);
 
 		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;
@@ -146,6 +144,10 @@ namespace noco
 		void updateScrollOffset(const RectF& rect);
 
 		void draw(const Node& node) const override;
+
+		void onActivated(const std::shared_ptr<Node>& node) override;
+
+		void onDeactivated(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]
 		StringView text() const override

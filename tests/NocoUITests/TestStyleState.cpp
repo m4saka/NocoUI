@@ -16,8 +16,8 @@ TEST_CASE("StyleState Basic Functionality", "[Node][StyleState]")
 		REQUIRE(node->styleState() == U"");
 		
 		// styleStateの設定
-		node->setStyleState(U"selected");
-		REQUIRE(node->styleState() == U"selected");
+		node->setStyleState(U"focused");
+		REQUIRE(node->styleState() == U"focused");
 		
 		// 別のstyleStateに変更
 		node->setStyleState(U"expanded");
@@ -88,7 +88,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"Node");
 		canvas->addChild(node);
-		node->setStyleState(U"selected");
+		node->setStyleState(U"focused");
 		
 		auto testComponent = std::make_shared<TestComponent>();
 		node->addComponent(testComponent);
@@ -98,7 +98,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		// activeStyleStatesには自身のstyleStateのみ
 		REQUIRE(testComponent->lastActiveStyleStates.size() == 1);
-		REQUIRE(testComponent->lastActiveStyleStates[0] == U"selected");
+		REQUIRE(testComponent->lastActiveStyleStates[0] == U"focused");
 	}
 	
 	SECTION("Empty styleState is not included")
@@ -126,7 +126,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		parent->addChild(child);
 		
 		parent->setStyleState(U"tab1");
-		child->setStyleState(U"selected");
+		child->setStyleState(U"focused");
 		
 		auto childComponent = std::make_shared<TestComponent>();
 		child->addComponent(childComponent);
@@ -136,7 +136,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		// 子のactiveStyleStatesには親のstyleStateも含まれる
 		REQUIRE(childComponent->lastActiveStyleStates.size() == 2);
 		REQUIRE(childComponent->lastActiveStyleStates[0] == U"tab1");
-		REQUIRE(childComponent->lastActiveStyleStates[1] == U"selected");
+		REQUIRE(childComponent->lastActiveStyleStates[1] == U"focused");
 	}
 	
 	SECTION("Multiple ancestors")
@@ -154,7 +154,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		nodeA->setStyleState(U"tab1");
 		nodeB->setStyleState(U"");        // 空
-		nodeC->setStyleState(U"selected");
+		nodeC->setStyleState(U"focused");
 		nodeD->setStyleState(U"");        // 空
 		
 		auto componentD = std::make_shared<TestComponent>();
@@ -165,7 +165,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		// NodeDのactiveStyleStatesには祖先のstyleStateが含まれる
 		REQUIRE(componentD->lastActiveStyleStates.size() == 2);
 		REQUIRE(componentD->lastActiveStyleStates[0] == U"tab1");
-		REQUIRE(componentD->lastActiveStyleStates[1] == U"selected");
+		REQUIRE(componentD->lastActiveStyleStates[1] == U"focused");
 	}
 	
 	SECTION("Direct parent priority")
@@ -230,7 +230,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		// styleStateを設定
 		tabA->setStyleState(U"tab-active");
 		tabB->setStyleState(U"tab-inactive");
-		itemA1->setStyleState(U"selected");
+		itemA1->setStyleState(U"focused");
 		itemA2->setStyleState(U"");  // 空
 		itemB1->setStyleState(U"expanded");
 		subA1->setStyleState(U"highlighted");
@@ -250,10 +250,10 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		canvas->update();
 		
-		// subA1: root -> tabA(tab-active) -> itemA1(selected) -> subA1(highlighted)
+		// subA1: root -> tabA(tab-active) -> itemA1(focused) -> subA1(highlighted)
 		REQUIRE(componentSubA1->lastActiveStyleStates.size() == 3);
 		REQUIRE(componentSubA1->lastActiveStyleStates[0] == U"tab-active");
-		REQUIRE(componentSubA1->lastActiveStyleStates[1] == U"selected");
+		REQUIRE(componentSubA1->lastActiveStyleStates[1] == U"focused");
 		REQUIRE(componentSubA1->lastActiveStyleStates[2] == U"highlighted");
 		
 		// subB1a: root -> tabB(tab-inactive) -> itemB1(expanded) -> subB1a(checked)
@@ -412,29 +412,29 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 	SECTION("Basic styleState value resolution")
 	{
 		auto prop = noco::PropertyValue<ColorF>{ ColorF{1, 0, 0} }  // 赤がデフォルト
-			.withStyleState(U"selected", ColorF{0, 0, 1});    // 青がselected時
+			.withStyleState(U"focused", ColorF{0, 0, 1});    // 青がfocused時
 		
 		// styleStateなしの場合はデフォルト値
 		Array<String> emptyStates;
 		REQUIRE(prop.value(noco::InteractionState::Default, emptyStates) == ColorF{1, 0, 0});
 		
-		// selectedがactiveStyleStatesに含まれる場合
-		Array<String> selectedStates = { U"selected" };
-		REQUIRE(prop.value(noco::InteractionState::Default, selectedStates) == ColorF{0, 0, 1});
+		// focusedがactiveStyleStatesに含まれる場合
+		Array<String> focusedStates = { U"focused" };
+		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == ColorF{0, 0, 1});
 	}
 	
 	SECTION("StyleState priority (closer state wins)")
 	{
 		auto prop = noco::PropertyValue<double>{ 1.0 }
 			.withStyleState(U"tab1", 2.0)
-			.withStyleState(U"selected", 3.0);
+			.withStyleState(U"focused", 3.0);
 		
 		// 複数のstyleStateがある場合、後の方（自身に近い）が優先
-		Array<String> activeStates = { U"tab1", U"selected" };
+		Array<String> activeStates = { U"tab1", U"focused" };
 		REQUIRE(prop.value(noco::InteractionState::Default, activeStates) == 3.0);
 		
 		// 順序を逆にすると結果も変わる
-		Array<String> reversedStates = { U"selected", U"tab1" };
+		Array<String> reversedStates = { U"focused", U"tab1" };
 		REQUIRE(prop.value(noco::InteractionState::Default, reversedStates) == 2.0);
 	}
 	
@@ -443,20 +443,20 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 		auto prop = noco::PropertyValue<ColorF>{ ColorF{0.5, 0.5, 0.5} }
 			// 通常時のホバー色
 			.withHovered(ColorF{0.6, 0.6, 0.6})
-			// selected時のデフォルト色とホバー色
-			.withStyleStateInteraction(U"selected", noco::InteractionState::Default, ColorF{0, 0, 1})
-			.withStyleStateInteraction(U"selected", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1});
+			// focused時のデフォルト色とホバー色
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, ColorF{0, 0, 1})
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1});
 		
-		Array<String> selectedStates = { U"selected" };
+		Array<String> focusedStates = { U"focused" };
 		
-		// selected + Default
-		REQUIRE(prop.value(noco::InteractionState::Default, selectedStates) == ColorF{0, 0, 1});
+		// focused + Default
+		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == ColorF{0, 0, 1});
 		
-		// selected + Hovered
-		REQUIRE(prop.value(noco::InteractionState::Hovered, selectedStates) == ColorF{0.2, 0.2, 1});
+		// focused + Hovered
+		REQUIRE(prop.value(noco::InteractionState::Hovered, focusedStates) == ColorF{0.2, 0.2, 1});
 		
-		// selected + Pressed（定義なし → selected時のHoveredにフォールバック）
-		REQUIRE(prop.value(noco::InteractionState::Pressed, selectedStates) == ColorF{0.2, 0.2, 1});
+		// focused + Pressed（定義なし → focused時のHoveredにフォールバック）
+		REQUIRE(prop.value(noco::InteractionState::Pressed, focusedStates) == ColorF{0.2, 0.2, 1});
 	}
 	
 	SECTION("Complex priority resolution")
@@ -467,25 +467,25 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 			.withPressed(20)
 			// styleState値
 			.withStyleState(U"tab1", 100)
-			.withStyleState(U"selected", 200)
+			.withStyleState(U"focused", 200)
 			// styleState + InteractionStateの組み合わせ
 			.withStyleStateInteraction(U"tab1", noco::InteractionState::Hovered, 110)
-			.withStyleStateInteraction(U"selected", noco::InteractionState::Pressed, 220);
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Pressed, 220);
 		
 		// テストケース1: tab1 + Hovered
 		Array<String> tab1States = { U"tab1" };
 		REQUIRE(prop.value(noco::InteractionState::Hovered, tab1States) == 110);  // 組み合わせが優先
 		
-		// テストケース2: selected + Pressed
-		Array<String> selectedStates = { U"selected" };
-		REQUIRE(prop.value(noco::InteractionState::Pressed, selectedStates) == 220);  // 組み合わせが優先
+		// テストケース2: focused + Pressed
+		Array<String> focusedStates = { U"focused" };
+		REQUIRE(prop.value(noco::InteractionState::Pressed, focusedStates) == 220);  // 組み合わせが優先
 		
 		// テストケース3: tab1 + Pressed（組み合わせなし → tab1のHoveredにフォールバック）
 		REQUIRE(prop.value(noco::InteractionState::Pressed, tab1States) == 110);  // tab1のHovered値
 		
 		// テストケース4: 複数styleState + Hovered
-		Array<String> multiStates = { U"tab1", U"selected" };
-		REQUIRE(prop.value(noco::InteractionState::Hovered, multiStates) == 200);  // selectedが優先され、selectedのHoveredがないためselectedのデフォルト値
+		Array<String> multiStates = { U"tab1", U"focused" };
+		REQUIRE(prop.value(noco::InteractionState::Hovered, multiStates) == 200);  // focusedが優先され、focusedのHoveredがないためfocusedのデフォルト値
 	}
 }
 
@@ -494,7 +494,7 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 	SECTION("Simple styleState serialization")
 	{
 		auto prop = noco::PropertyValue<double>{ 1.0 }
-			.withStyleState(U"selected", 2.0)
+			.withStyleState(U"focused", 2.0)
 			.withStyleState(U"checked", 3.0);
 		
 		JSON json = prop.toJSON();
@@ -505,16 +505,16 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		// styleStatesオブジェクト
 		REQUIRE(json.hasElement(U"styleStates"));
 		const JSON& styleStates = json[U"styleStates"];
-		REQUIRE(styleStates[U"selected"].get<double>() == 2.0);
+		REQUIRE(styleStates[U"focused"].get<double>() == 2.0);
 		REQUIRE(styleStates[U"checked"].get<double>() == 3.0);
 	}
 	
 	SECTION("StyleState with InteractionState serialization")
 	{
 		auto prop = noco::PropertyValue<ColorF>{ ColorF{0.5, 0.5, 0.5} }
-			// selectedの複数InteractionState値
-			.withStyleStateInteraction(U"selected", noco::InteractionState::Default, ColorF{0, 0, 1})
-			.withStyleStateInteraction(U"selected", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1})
+			// focusedの複数InteractionState値
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, ColorF{0, 0, 1})
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1})
 			// checkedのdefaultのみ
 			.withStyleState(U"checked", ColorF{0, 1, 0});
 		
@@ -522,10 +522,10 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		
 		const JSON& styleStates = json[U"styleStates"];
 		
-		// selectedは複数値があるのでオブジェクト形式
-		REQUIRE(styleStates[U"selected"].isObject());
-		REQUIRE(styleStates[U"selected"][U"Default"].getString() == U"(0, 0, 1, 1)");
-		REQUIRE(styleStates[U"selected"][U"Hovered"].getString() == U"(0.2, 0.2, 1, 1)");
+		// focusedは複数値があるのでオブジェクト形式
+		REQUIRE(styleStates[U"focused"].isObject());
+		REQUIRE(styleStates[U"focused"][U"Default"].getString() == U"(0, 0, 1, 1)");
+		REQUIRE(styleStates[U"focused"][U"Hovered"].getString() == U"(0.2, 0.2, 1, 1)");
 		
 		// checkedはdefaultのみなので省略記法（文字列）
 		REQUIRE(styleStates[U"checked"].isString());
@@ -537,7 +537,7 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		// JSONシリアライゼーションの形式確認
 		auto prop = noco::PropertyValue<double>{ 10.0 }
 			.withHovered(20.0)
-			.withStyleState(U"selected", 100.0)
+			.withStyleState(U"focused", 100.0)
 			.withStyleStateInteraction(U"expanded", noco::InteractionState::Default, 200.0)
 			.withStyleStateInteraction(U"expanded", noco::InteractionState::Hovered, 210.0);
 		
@@ -551,9 +551,9 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		REQUIRE(json.hasElement(U"styleStates"));
 		const JSON& styleStates = json[U"styleStates"];
 		
-		// selected（省略記法：defaultのみ）
-		REQUIRE(styleStates[U"selected"].isNumber());
-		REQUIRE(styleStates[U"selected"].get<double>() == 100.0);
+		// focused（省略記法：defaultのみ）
+		REQUIRE(styleStates[U"focused"].isNumber());
+		REQUIRE(styleStates[U"focused"].get<double>() == 100.0);
 		
 		// expanded（完全記法：複数のInteractionState）
 		REQUIRE(styleStates[U"expanded"].isObject());
@@ -612,7 +612,7 @@ TEST_CASE("Node JSON Serialization with StyleState", "[Node][StyleState][JSON]")
 		auto child2 = noco::Node::Create(U"Child2");
 		
 		root->setStyleState(U"tab1");
-		child1->setStyleState(U"selected");
+		child1->setStyleState(U"focused");
 		// child2は空のまま
 		
 		root->addChild(child1);
@@ -620,7 +620,7 @@ TEST_CASE("Node JSON Serialization with StyleState", "[Node][StyleState][JSON]")
 		
 		// 各ノードのstyleStateが独立して管理される
 		REQUIRE(root->styleState() == U"tab1");
-		REQUIRE(child1->styleState() == U"selected");
+		REQUIRE(child1->styleState() == U"focused");
 		REQUIRE(child2->styleState() == U"");
 		REQUIRE(root->children().size() == 2);
 	}
@@ -635,10 +635,10 @@ TEST_CASE("Component Integration with StyleState", "[Component][StyleState]")
 		node->addComponent(textBox);
 		
 		// 選択状態を設定
-		node->setStyleState(U"selected");
-		REQUIRE(node->styleState() == U"selected");
+		node->setStyleState(U"focused");
+		REQUIRE(node->styleState() == U"focused");
 		
-		// コンポーネントの実装では、activeStyleStatesに"selected"が
+		// コンポーネントの実装では、activeStyleStatesに"focused"が
 		// 含まれているかで選択状態を判定することになる
 	}
 	

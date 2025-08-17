@@ -94,13 +94,38 @@ namespace noco
 
 	void Node::refreshActiveInHierarchy()
 	{
+		const bool prevActiveInHierarchy = m_activeInHierarchy.getBool();
+		
 		if (const auto parent = m_parent.lock())
 		{
 			m_activeInHierarchy = ActiveYN{ m_activeSelf && parent->m_activeInHierarchy };
 		}
+		else if (!m_canvas.expired())
+		{
+			// Canvas配下の直接の子の場合はactiveSelfに依存
+			m_activeInHierarchy = m_activeSelf;
+		}
 		else
 		{
-			m_activeInHierarchy = m_activeSelf;
+			// Canvas配下にない場合はactiveInHierarchyはfalse
+			m_activeInHierarchy = ActiveYN::No;
+		}
+		
+		// activeInHierarchyがfalseからtrueに変わった時にonActivatedを呼び出し
+		if (m_activeInHierarchy && !prevActiveInHierarchy)
+		{
+			for (const auto& component : m_components)
+			{
+				component->onActivated(shared_from_this());
+			}
+		}
+		// activeInHierarchyがtrueからfalseに変わった時にonDeactivatedを呼び出し
+		else if (!m_activeInHierarchy && prevActiveInHierarchy)
+		{
+			for (const auto& component : m_components)
+			{
+				component->onDeactivated(shared_from_this());
+			}
 		}
 		
 		for (const auto& child : m_children)
@@ -713,6 +738,11 @@ namespace noco
 
 	void Node::removeComponent(const std::shared_ptr<ComponentBase>& component)
 	{
+		// activeInHierarchyがtrueの場合、onDeactivatedを呼び出し
+		if (m_activeInHierarchy)
+		{
+			component->onDeactivated(shared_from_this());
+		}
 		m_components.remove(component);
 	}
 

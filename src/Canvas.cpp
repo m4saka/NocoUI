@@ -143,6 +143,15 @@ namespace noco
 	{
 	}
 
+	Canvas::~Canvas()
+	{
+		for (const auto& child : m_children)
+		{
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->refreshActiveInHierarchy();
+		}
+	}
+
 	std::shared_ptr<Canvas> Canvas::Create(const SizeF& size)
 	{
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
@@ -1125,6 +1134,7 @@ namespace noco
 
 		m_children.remove(node);
 		node->m_parent.reset();
+		
 		node->setCanvasRecursive(std::weak_ptr<Canvas>{});
 		node->refreshActiveInHierarchy();
 

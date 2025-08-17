@@ -88,13 +88,33 @@ TEST_CASE("Node properties and state management", "[Node]")
 		REQUIRE(node->activeSelf() == noco::ActiveYN::Yes);
 	}
 
-	SECTION("Active in hierarchy")
+	SECTION("Active in hierarchy - Canvas配下にない場合")
 	{
+		auto node = noco::Node::Create();
+		
+		// Canvas配下にないノードはactiveInHierarchyがfalse
+		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::No);
+		
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		parent->addChild(child);
 		
-		// デフォルトでは両方アクティブ
+		// Canvas配下にない階層でもactiveInHierarchyはfalse
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+	}
+
+	SECTION("Active in hierarchy - Canvas配下の場合")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto parent = noco::Node::Create();
+		auto child = noco::Node::Create();
+		
+		parent->addChild(child);
+		canvas->addChild(parent);
+		
+		// Canvas配下ではactiveInHierarchyがtrue
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
 		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
 		
 		// 親を非アクティブに設定
@@ -133,8 +153,8 @@ TEST_CASE("Node properties and state management", "[Node]")
 		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
 		
 		// styleStateの設定
-		node->setStyleState(U"selected");
-		REQUIRE(node->styleState() == U"selected");
+		node->setStyleState(U"focused");
+		REQUIRE(node->styleState() == U"focused");
 	}
 
 	SECTION("Hit test properties")

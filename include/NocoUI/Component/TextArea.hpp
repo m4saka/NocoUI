@@ -40,7 +40,6 @@ namespace noco
 		/* NonSerialized */ Stopwatch m_dragScrollStopwatch;
 		/* NonSerialized */ size_t m_scrollOffsetX = 0;
 		/* NonSerialized */ size_t m_scrollOffsetY = 0;
-		/* NonSerialized */ bool m_prevActiveInHierarchy = false;
 		/* NonSerialized */ bool m_isChanged = false;
 		/* NonSerialized */ bool m_prevEditingTextExists = false;
 
@@ -114,7 +113,6 @@ namespace noco
 
 		std::tuple<bool, size_t, size_t> handleShortcut();
 
-		void onDeactivated(const std::shared_ptr<Node>& node);
 
 		void updateScrollOffset(const RectF& rect);
 
@@ -154,6 +152,10 @@ namespace noco
 		void updateKeyInputInactive(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
+
+		void onActivated(const std::shared_ptr<Node>& node) override;
+
+		void onDeactivated(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]
 		StringView text() const override

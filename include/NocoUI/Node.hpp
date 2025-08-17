@@ -58,7 +58,7 @@ namespace noco
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
-		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::Yes;
+		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::No;
 		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
 		/* NonSerialized */ String m_styleState = U"";
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
@@ -492,6 +492,12 @@ namespace noco
 			return shared_from_this();
 		}
 
+		std::shared_ptr<Node> clearStyleState()
+		{
+			m_styleState.clear();
+			return shared_from_this();
+		}
+
 		[[nodiscard]]
 		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
@@ -626,6 +632,12 @@ namespace noco
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		m_components.push_back(component);
+		
+		if (m_activeInHierarchy)
+		{
+			component->onActivated(shared_from_this());
+		}
+		
 		return component;
 	}
 
@@ -638,6 +650,12 @@ namespace noco
 			index = m_components.size();
 		}
 		m_components.insert(m_components.begin() + index, component);
+		
+		if (m_activeInHierarchy)
+		{
+			component->onActivated(shared_from_this());
+		}
+		
 		return component;
 	}
 

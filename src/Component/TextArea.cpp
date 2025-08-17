@@ -315,10 +315,6 @@ namespace noco
 		return { false, 0, 0 };
 	}
 
-	void TextArea::onDeactivated(const std::shared_ptr<Node>& node)
-	{
-		CurrentFrame::UnfocusNodeIfFocused(node);
-	}
 
 	void TextArea::updateScrollOffset(const RectF& rect)
 	{
@@ -395,7 +391,7 @@ namespace noco
 		{
 			m_isEditing = true;
 			m_cursorBlinkTime = 0.0;
-			node->setStyleState(U"selected");
+			node->setStyleState(U"focused");
 			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
 			CurrentFrame::SetFocusedNode(node);
 		}
@@ -405,7 +401,7 @@ namespace noco
 	{
 		m_isEditing = false;
 		m_isDragging = false;
-		node->setStyleState(U"");
+		node->setStyleState(U"unfocused");
 		m_selectionAnchorLine = m_cursorLine;
 		m_selectionAnchorColumn = m_cursorColumn;
 		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
@@ -414,9 +410,23 @@ namespace noco
 		}
 	}
 
+	void TextArea::onActivated(const std::shared_ptr<Node>& node)
+	{
+		node->setStyleState(U"unfocused");
+	}
+
+	void TextArea::onDeactivated(const std::shared_ptr<Node>& node)
+	{
+		CurrentFrame::UnfocusNodeIfFocused(node);
+		const String currentStyleState = node->styleState();
+		if (currentStyleState == U"focused" || currentStyleState == U"unfocused")
+		{
+			node->clearStyleState();
+		}
+	}
+
 	void TextArea::updateKeyInput(const std::shared_ptr<Node>& node)
 	{
-		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
 
 		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != static_cast<ITextBox*>(this)))
@@ -552,7 +562,6 @@ namespace noco
 			{
 				// 領域内で左クリックし始めた場合
 				m_cursorBlinkTime = 0.0;
-				node->setStyleState(U"selected");
 				if (!m_isEditing)
 				{
 					// 初回クリック時
@@ -915,11 +924,6 @@ namespace noco
 
 	void TextArea::updateKeyInputInactive(const std::shared_ptr<Node>& node)
 	{
-		if (m_prevActiveInHierarchy)
-		{
-			onDeactivated(node);
-			m_prevActiveInHierarchy = false;
-		}
 		m_prevEditingTextExists = false;
 	}
 

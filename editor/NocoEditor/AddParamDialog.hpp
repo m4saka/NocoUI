@@ -108,7 +108,7 @@ namespace noco::editor
 				});
 			nameTextBoxNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
 				1.0, 4.0);
 			m_nameTextBox = nameTextBoxNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, 

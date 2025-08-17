@@ -390,6 +390,8 @@ namespace noco
 		Canvas();
 
 	public:
+		~Canvas();
+
 		static constexpr SizeF DefaultSize{ 800, 600 };
 		
 		[[nodiscard]]

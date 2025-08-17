@@ -230,3 +230,161 @@ TEST_CASE("Canvas center methods", "[Canvas]")
 		REQUIRE(canvas->center().y == Approx(50.0));
 	}
 }
+
+// activeInHierarchy管理のテスト
+TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
+{
+	SECTION("addChild makes node activeInHierarchy")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = noco::Node::Create(U"TestNode");
+		
+		// Canvas配下にない場合はactiveInHierarchyはfalse
+		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::No);
+		
+		// Canvas::addChild後にactiveInHierarchyがtrueになる
+		canvas->addChild(node);
+		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::Yes);
+	}
+	
+	SECTION("emplaceChild creates node with activeInHierarchy")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// Canvas::emplaceChildで作成されたノードは直接activeInHierarchyがtrue
+		auto& node = canvas->emplaceChild(U"EmplacedNode");
+		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::Yes);
+	}
+	
+	SECTION("Hierarchical activeInHierarchy propagation")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto parent = noco::Node::Create(U"Parent");
+		auto child = noco::Node::Create(U"Child");
+		auto grandchild = noco::Node::Create(U"Grandchild");
+		
+		// 階層構造を作成（まだCanvas配下にない）
+		parent->addChild(child);
+		child->addChild(grandchild);
+		
+		// Canvas配下にない場合は全てfalse
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(grandchild->activeInHierarchy() == noco::ActiveYN::No);
+		
+		// 親をCanvas配下に追加すると、子孫も含めてactiveInHierarchyがtrueになる
+		canvas->addChild(parent);
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(grandchild->activeInHierarchy() == noco::ActiveYN::Yes);
+	}
+	
+	SECTION("removeChild makes node activeInHierarchy false")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto parent = noco::Node::Create(U"Parent");
+		auto child = noco::Node::Create(U"Child");
+		
+		parent->addChild(child);
+		canvas->addChild(parent);
+		
+		// Canvas配下でactiveInHierarchyがtrue
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		
+		// Canvas::removeChild後にactiveInHierarchyがfalseになる
+		canvas->removeChild(parent);
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+	}
+	
+	SECTION("Node activeSelf affects activeInHierarchy under Canvas")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto parent = noco::Node::Create(U"Parent");
+		auto child = noco::Node::Create(U"Child");
+		
+		parent->addChild(child);
+		canvas->addChild(parent);
+		
+		// 初期状態：両方ともactiveInHierarchyがtrue
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		
+		// 親を非アクティブにすると子のactiveInHierarchyもfalseになる
+		parent->setActive(noco::ActiveYN::No);
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		
+		// 親を再アクティブにすると子のactiveInHierarchyもtrueになる
+		parent->setActive(noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+	}
+	
+	SECTION("removeChildrenAll makes all nodes activeInHierarchy false")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node1 = noco::Node::Create(U"Node1");
+		auto node2 = noco::Node::Create(U"Node2");
+		auto child = noco::Node::Create(U"Child");
+		
+		// 階層構造を作成
+		node1->addChild(child);
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		
+		// Canvas配下でactiveInHierarchyがtrue
+		REQUIRE(node1->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(node2->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(canvas->children().size() == 2);
+		
+		// removeChildrenAll後にactiveInHierarchyがfalseになる
+		canvas->removeChildrenAll();
+		REQUIRE(node1->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(node2->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(canvas->children().size() == 0);
+	}
+}
+
+TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
+{
+	SECTION("emplaceChild with TextBox sets unfocused")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = canvas->emplaceChild(U"TextBoxNode");
+		auto textBox = node->emplaceComponent<noco::TextBox>();
+		
+		// emplaceChildで作成したノードにTextBoxを追加すると自動的にunfocused
+		REQUIRE(node->styleState() == U"unfocused");
+	}
+	
+	SECTION("emplaceChild with TextArea sets unfocused")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = canvas->emplaceChild(U"TextAreaNode");
+		auto textArea = node->emplaceComponent<noco::TextArea>();
+		
+		// emplaceChildで作成したノードにTextAreaを追加すると自動的にunfocused
+		REQUIRE(node->styleState() == U"unfocused");
+	}
+	
+	SECTION("Complex hierarchy with text components styleState")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto form = canvas->emplaceChild(U"Form");
+		auto nameField = form->emplaceChild(U"NameField");
+		auto descField = form->emplaceChild(U"DescField");
+		
+		// テキストコンポーネントを追加
+		auto nameTextBox = nameField->emplaceComponent<noco::TextBox>();
+		auto descTextArea = descField->emplaceComponent<noco::TextArea>();
+		
+		// 階層構造でもそれぞれ正しくunfocusedになる
+		REQUIRE(form->styleState() == U"");  // テキストコンポーネントなし
+		REQUIRE(nameField->styleState() == U"unfocused");  // TextBox
+		REQUIRE(descField->styleState() == U"unfocused");  // TextArea
+	}
+}

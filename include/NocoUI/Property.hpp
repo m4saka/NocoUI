@@ -346,92 +346,9 @@ namespace noco
 				}
 			}
 			
-			
 			return result;
 		}
 	};
-
-	// InteractiveValue: 8つの状態（通常4状態 + selected4状態）を持つ値の構造体
-	template <typename T>
-	struct InteractiveValue
-	{
-		T defaultValue{};
-		T hoveredValue{};
-		T pressedValue{};
-		T disabledValue{};
-		T selectedDefaultValue{};
-		T selectedHoveredValue{};
-		T selectedPressedValue{};
-		T selectedDisabledValue{};
-		
-		T& get(InteractionState state, const Array<String>& activeStyleStates)
-		{
-			if (activeStyleStates.contains(U"selected"))
-			{
-				switch (state)
-				{
-				case InteractionState::Default:
-					return selectedDefaultValue;
-				case InteractionState::Hovered:
-					return selectedHoveredValue;
-				case InteractionState::Pressed:
-					return selectedPressedValue;
-				case InteractionState::Disabled:
-					return selectedDisabledValue;
-				}
-			}
-			else
-			{
-				switch (state)
-				{
-				case InteractionState::Default:
-					return defaultValue;
-				case InteractionState::Hovered:
-					return hoveredValue;
-				case InteractionState::Pressed:
-					return pressedValue;
-				case InteractionState::Disabled:
-					return disabledValue;
-				}
-			}
-			return defaultValue;
-		}
-		
-		const T& get(InteractionState state, const Array<String>& activeStyleStates) const
-		{
-			if (activeStyleStates.contains(U"selected"))
-			{
-				switch (state)
-				{
-				case InteractionState::Default:
-					return selectedDefaultValue;
-				case InteractionState::Hovered:
-					return selectedHoveredValue;
-				case InteractionState::Pressed:
-					return selectedPressedValue;
-				case InteractionState::Disabled:
-					return selectedDisabledValue;
-				}
-			}
-			else
-			{
-				switch (state)
-				{
-				case InteractionState::Default:
-					return defaultValue;
-				case InteractionState::Hovered:
-					return hoveredValue;
-				case InteractionState::Pressed:
-					return pressedValue;
-				case InteractionState::Disabled:
-					return disabledValue;
-				}
-			}
-			return defaultValue;
-		}
-		
-	};
-
 
 	template <class T>
 	class SmoothProperty : public IProperty
@@ -699,7 +616,6 @@ namespace noco
 					}
 				}
 			}
-			
 			
 			return result;
 		}

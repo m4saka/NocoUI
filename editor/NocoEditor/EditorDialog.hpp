@@ -312,7 +312,7 @@ namespace noco::editor
 				});
 			m_textBoxNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"selected", Palette::Orange).withSmoothTime(0.05),
+				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
 				1.0,
 				4.0);
 			const auto textBox = m_textBoxNode->emplaceComponent<TextBox>(

@@ -70,7 +70,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Node", U"styleState" }] = PropertyMetadata{
 			.tooltip = U"styleState(スタイルステート)",
-			.tooltipDetail = U"styleStateとは、要素の状態を識別するために設定する文字列です(例: \"selected\")\n各プロパティの値はstyleState毎に異なる値を設定でき、状態に応じて見た目を変えることができます\nstyleStateはノード毎に1つのみ設定できます\n\n親要素のstyleStateがあればそれを受け継ぎます\n適用の優先度は自身の要素のstyleStateが最も高く、遠い親になるにつれて優先度は下がります",
+			.tooltipDetail = U"styleStateとは、要素の状態を識別するために設定する文字列です(例: \"focused\")\n各プロパティの値はstyleState毎に異なる値を設定でき、状態に応じて見た目を変えることができます\nstyleStateはノード毎に1つのみ設定できます\n\n親要素のstyleStateがあればそれを受け継ぎます\n適用の優先度は自身の要素のstyleStateが最も高く、遠い親になるにつれて優先度は下がります",
 		};
 		
 		// Region関連 - AnchorRegion

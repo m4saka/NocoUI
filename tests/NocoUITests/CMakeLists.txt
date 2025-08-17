@@ -43,6 +43,8 @@ add_executable(${TARGET_NAME}
     TestStyleState.cpp
     TestParam.cpp
     TestParent.cpp
+    TestTextBox.cpp
+    TestTextArea.cpp
 )
 
 find_package(Siv3D REQUIRED)

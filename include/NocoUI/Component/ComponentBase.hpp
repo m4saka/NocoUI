@@ -51,6 +51,14 @@ namespace noco
 		{
 		}
 
+		virtual void onActivated(const std::shared_ptr<Node>&)
+		{
+		}
+
+		virtual void onDeactivated(const std::shared_ptr<Node>&)
+		{
+		}
+
 		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params);
 
 		[[nodiscard]]

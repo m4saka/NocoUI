@@ -294,10 +294,6 @@ namespace noco
 		}
 	}
 
-	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
-	{
-		CurrentFrame::UnfocusNodeIfFocused(node);
-	}
 
 	void TextBox::focus(const std::shared_ptr<Node>& node)
 	{
@@ -309,7 +305,7 @@ namespace noco
 			// 全選択状態にする
 			m_selectionAnchor = 0;
 			m_cursorIndex = m_text.value().size();
-			node->setStyleState(U"selected");
+			node->setStyleState(U"focused");
 			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
 		}
 	}
@@ -318,7 +314,7 @@ namespace noco
 	{
 		m_isEditing = false;
 		m_isDragging = false;
-		node->setStyleState(U"");
+		node->setStyleState(U"unfocused");
 		m_selectionAnchor = m_cursorIndex;
 		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 		{
@@ -326,9 +322,23 @@ namespace noco
 		}
 	}
 
+	void TextBox::onActivated(const std::shared_ptr<Node>& node)
+	{
+		node->setStyleState(U"unfocused");
+	}
+
+	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
+	{
+		CurrentFrame::UnfocusNodeIfFocused(node);
+		const String currentStyleState = node->styleState();
+		if (currentStyleState == U"focused" || currentStyleState == U"unfocused")
+		{
+			node->clearStyleState();
+		}
+	}
+
 	void TextBox::updateKeyInput(const std::shared_ptr<Node>& node)
 	{
-		m_prevActiveInHierarchy = true;
 		m_isChanged = false;
 
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
@@ -416,7 +426,6 @@ namespace noco
 			{
 				// 領域内で左クリックし始めた場合
 				m_cursorBlinkTime = 0.0;
-				node->setStyleState(U"selected");
 				if (!m_isEditing)
 				{
 					// 初回クリック時の処理
@@ -650,12 +659,6 @@ namespace noco
 
 	void TextBox::updateKeyInputInactive(const std::shared_ptr<Node>& node)
 	{
-		if (m_prevActiveInHierarchy)
-		{
-			// 前回はアクティブだったが今回は非アクティブになった場合
-			onDeactivated(node);
-			m_prevActiveInHierarchy = false;
-		}
 		m_prevEditingTextExists = false;
 	}
 
