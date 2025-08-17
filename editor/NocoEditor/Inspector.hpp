@@ -12,6 +12,7 @@
 #include "PropertyTextBox.hpp"
 #include "AddParamDialog.hpp"
 #include "ParamRefDialog.hpp"
+#include "ParamReferencesDialog.hpp"
 
 namespace noco::editor
 {
@@ -3397,6 +3398,16 @@ namespace noco::editor
 											.isCancelButton = IsCancelButtonYN::Yes,
 										},
 									}));
+						}
+					},
+					MenuItem
+					{
+						.text = U"参照の一覧を表示...",
+						.mnemonicInput = KeyL,
+						.onClick = [this, paramName]
+						{
+							m_dialogOpener->openDialog(
+								std::make_shared<ParamReferencesDialog>(paramName, m_canvas));
 						}
 					},
 					MenuSeparator{},

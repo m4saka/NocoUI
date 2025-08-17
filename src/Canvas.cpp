@@ -1026,6 +1026,7 @@ namespace noco
 		return count;
 	}
 
+
 	void Canvas::clearParamRefs(StringView paramName)
 	{
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
