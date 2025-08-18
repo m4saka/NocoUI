@@ -30,6 +30,18 @@ namespace noco
 				LRTB margin;
 			};
 			Array<MeasuredChild> measuredChildren;
+
+			void clear()
+			{
+				lines.clear();
+				measuredChildren.clear();
+			}
+
+			void reserve(size_t size)
+			{
+				lines.reserve(size);
+				measuredChildren.reserve(size);
+			}
 		};
 
 		LRTB padding = LRTB::Zero();
@@ -40,13 +52,14 @@ namespace noco
 
 		VerticalAlign verticalAlign = VerticalAlign::Top;
 
+	public:
 		[[nodiscard]]
 		JSON toJSON() const;
 
 		[[nodiscard]]
 		static FlowLayout FromJSON(const JSON& json);
 
-		MeasureInfo measure(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const;
+		void measure(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, MeasureInfo* pMeasureInfo) const;
 
 		template <class Fty>
 		void execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const

@@ -26,12 +26,12 @@ namespace noco
 		};
 	}
 
-	FlowLayout::MeasureInfo FlowLayout::measure(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
+	void FlowLayout::measure(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, MeasureInfo* pMeasureInfo) const
 	{
-		// TODO: 都度生成しないよう外部に持ちたい
-		MeasureInfo measureInfo;
+		auto& measureInfo = *pMeasureInfo;
+		measureInfo.clear();
+		measureInfo.reserve(children.size());
 		measureInfo.lines.emplace_back(); // 最初の行
-		measureInfo.measuredChildren.reserve(children.size());
 
 		// 事前計測
 		double currentX = 0.0;
@@ -156,12 +156,13 @@ namespace noco
 			line.totalWidth = availableWidth;
 		}
 
-		return measureInfo;
 	}
 
 	SizeF FlowLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
-		const auto measureInfo = measure(parentRect, children);
+		static thread_local MeasureInfo t_measureInfoBuffer;
+		measure(parentRect, children, &t_measureInfoBuffer);
+		const auto& measureInfo = t_measureInfoBuffer;
 
 		double maxWidth = 0.0;
 		double totalHeight = padding.top + padding.bottom;

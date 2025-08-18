@@ -3,6 +3,9 @@
 
 namespace noco
 {
+	thread_local Array<SizeF> VerticalLayout::t_tempSizes;
+	thread_local Array<LRTB> VerticalLayout::t_tempMargins;
+
 	JSON VerticalLayout::toJSON() const
 	{
 		return JSON

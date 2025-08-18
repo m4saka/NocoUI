@@ -20,6 +20,11 @@ namespace noco
 
 		VerticalAlign verticalAlign = VerticalAlign::Middle;
 
+	private:
+		static thread_local Array<SizeF> t_tempSizes;
+		static thread_local Array<LRTB> t_tempMargins;
+
+	public:
 		[[nodiscard]]
 		JSON toJSON() const;
 

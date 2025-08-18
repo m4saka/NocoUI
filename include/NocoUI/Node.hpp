@@ -871,11 +871,13 @@ namespace noco
 	void HorizontalLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
-		// TODO: 都度生成しないよう外部に持ちたい
-		Array<SizeF> sizes;
-		sizes.reserve(children.size());
-		Array<LRTB> margins;
-		margins.reserve(children.size());
+		t_tempSizes.clear();
+		t_tempMargins.clear();
+		t_tempSizes.reserve(children.size());
+		t_tempMargins.reserve(children.size());
+		
+		auto& sizes = t_tempSizes;
+		auto& margins = t_tempMargins;
 
 		double totalWidth = 0.0;
 		double maxHeight = 0.0;
@@ -1027,11 +1029,13 @@ namespace noco
 	void VerticalLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
-		// TODO: 都度生成しないよう外部に持ちたい
-		Array<SizeF> sizes;
-		sizes.reserve(children.size());
-		Array<LRTB> margins;
-		margins.reserve(children.size());
+		t_tempSizes.clear();
+		t_tempMargins.clear();
+		t_tempSizes.reserve(children.size());
+		t_tempMargins.reserve(children.size());
+		
+		auto& sizes = t_tempSizes;
+		auto& margins = t_tempMargins;
 
 		double totalHeight = 0.0;
 		double maxWidth = 0.0;
@@ -1183,7 +1187,9 @@ namespace noco
 	void FlowLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
-		const auto measureInfo = measure(parentRect, children);
+		static thread_local FlowLayout::MeasureInfo t_measureInfoBuffer;
+		measure(parentRect, children, &t_measureInfoBuffer);
+		const auto& measureInfo = t_measureInfoBuffer;
 		const double availableWidth = parentRect.w - (padding.left + padding.right);
 
 		// 実際に配置していく
