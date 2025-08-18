@@ -3674,6 +3674,7 @@ namespace noco::editor
 				std::shared_ptr<Node> propertyNode;
 				switch (editType)
 				{
+				case PropertyEditType::Number:
 				case PropertyEditType::Text:
 					{
 						std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };
@@ -3895,50 +3896,7 @@ namespace noco::editor
 					}
 				}
 				
-				// プロパティに対応するパラメータ型を取得する関数
-				auto getRequiredParamTypes = [](IProperty* prop) -> Array<ParamType>
-				{
-					// 型を直接チェックして適切なParamTypeを返す
-					if (dynamic_cast<Property<bool>*>(prop))
-					{
-						return { ParamType::Bool };
-					}
-					else if (dynamic_cast<Property<double>*>(prop) ||
-							 dynamic_cast<SmoothProperty<double>*>(prop) ||
-							 dynamic_cast<Property<int32>*>(prop) ||
-							 dynamic_cast<Property<uint32>*>(prop))
-					{
-						return { ParamType::Number };
-					}
-					else if (dynamic_cast<Property<String>*>(prop) ||
-							 dynamic_cast<PropertyNonInteractive<String>*>(prop))
-					{
-						return { ParamType::String };
-					}
-					else if (dynamic_cast<Property<ColorF>*>(prop) ||
-							 dynamic_cast<SmoothProperty<ColorF>*>(prop))
-					{
-						return { ParamType::Color };
-					}
-					else if (dynamic_cast<Property<Vec2>*>(prop) ||
-							 dynamic_cast<SmoothProperty<Vec2>*>(prop))
-					{
-						return { ParamType::Vec2 };
-					}
-					else if (dynamic_cast<Property<LRTB>*>(prop) ||
-							 dynamic_cast<SmoothProperty<LRTB>*>(prop))
-					{
-						return { ParamType::LRTB };
-					}
-					else
-					{
-						return { ParamType::String };
-					}
-				};
-				
-				const Array<ParamType> requiredParamTypes = getRequiredParamTypes(property);
-				
-				// インタラクティブプロパティか否かに関わらず右クリックメニューを追加
+				const Array<ParamType> requiredParamTypes = { GetRequiredParamType(property) };
 				const bool isInteractive = property->isInteractiveProperty();
 				
 				Array<MenuElement> menuElements

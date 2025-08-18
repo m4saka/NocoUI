@@ -181,6 +181,7 @@
     <ClInclude Include="include\NocoUI\MouseTracker.hpp" />
     <ClInclude Include="include\NocoUI\Node.hpp" />
     <ClInclude Include="include\NocoUI\Property.hpp" />
+    <ClInclude Include="include\NocoUI\PropertyUtils.hpp" />
     <ClInclude Include="include\NocoUI\PropertyValue.hpp" />
     <ClInclude Include="include\NocoUI\ScrollableAxisFlags.hpp" />
     <ClInclude Include="include\NocoUI\Serialization.hpp" />

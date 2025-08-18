@@ -25,41 +25,11 @@ namespace noco::editor
 		
 		Optional<ParamType> getPropertyParamType() const
 		{
-			const String propName = String(m_pProperty->name());
-			
-			if (dynamic_cast<Property<bool>*>(m_pProperty))
+			if (!m_pProperty)
 			{
-				return ParamType::Bool;
+				return none;
 			}
-			else if (dynamic_cast<Property<double>*>(m_pProperty) ||
-					 dynamic_cast<SmoothProperty<double>*>(m_pProperty) ||
-					 dynamic_cast<Property<int32>*>(m_pProperty) ||
-					 dynamic_cast<Property<uint32>*>(m_pProperty))
-			{
-				return ParamType::Number;
-			}
-			else if (dynamic_cast<Property<String>*>(m_pProperty) ||
-					 dynamic_cast<PropertyNonInteractive<String>*>(m_pProperty))
-			{
-				return ParamType::String;
-			}
-			else if (dynamic_cast<Property<ColorF>*>(m_pProperty) ||
-					 dynamic_cast<SmoothProperty<ColorF>*>(m_pProperty))
-			{
-				return ParamType::Color;
-			}
-			else if (dynamic_cast<Property<Vec2>*>(m_pProperty) ||
-					 dynamic_cast<SmoothProperty<Vec2>*>(m_pProperty))
-			{
-				return ParamType::Vec2;
-			}
-			else if (dynamic_cast<Property<LRTB>*>(m_pProperty) ||
-					 dynamic_cast<SmoothProperty<LRTB>*>(m_pProperty))
-			{
-				return ParamType::LRTB;
-			}
-			
-			return none;
+			return GetRequiredParamType(m_pProperty);
 		}
 		
 		void filterAvailableParams()
@@ -93,55 +63,10 @@ namespace noco::editor
 			: m_pProperty(pProperty)
 			, m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
+			, m_selectedParamName(m_pProperty->paramRef())
 			, m_dialogOpener(dialogOpener)
 		{
 			filterAvailableParams();
-			
-			// 現在のparamRefを取得
-			if (auto* pProp = dynamic_cast<Property<bool>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<Property<double>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<SmoothProperty<double>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<Property<String>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<PropertyNonInteractive<String>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<Property<ColorF>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<SmoothProperty<ColorF>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<Property<Vec2>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<SmoothProperty<Vec2>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<Property<LRTB>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
-			else if (auto* pProp = dynamic_cast<SmoothProperty<LRTB>*>(m_pProperty))
-			{
-				m_selectedParamName = pProp->paramRef();
-			}
 		}
 		
 		double dialogWidth() const override
@@ -436,51 +361,7 @@ namespace noco::editor
 		{
 			if (resultButtonText == U"OK")
 			{
-				// プロパティにparamRefを設定
-				if (auto* pProp = dynamic_cast<Property<bool>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<Property<double>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<SmoothProperty<double>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<Property<String>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<PropertyNonInteractive<String>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<Property<ColorF>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<SmoothProperty<ColorF>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<Property<Vec2>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<SmoothProperty<Vec2>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<Property<LRTB>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
-				else if (auto* pProp = dynamic_cast<SmoothProperty<LRTB>*>(m_pProperty))
-				{
-					pProp->setParamRef(m_selectedParamName);
-				}
+				SetPropertyParamRef(m_pProperty, m_selectedParamName);
 				
 				if (m_onComplete)
 				{

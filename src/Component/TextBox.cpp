@@ -657,7 +657,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateKeyInputInactive(const std::shared_ptr<Node>& node)
+	void TextBox::updateKeyInputInactive(const std::shared_ptr<Node>&)
 	{
 		m_prevEditingTextExists = false;
 	}

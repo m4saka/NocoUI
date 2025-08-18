@@ -12,10 +12,11 @@ namespace noco
 	// UI表示用の型列挙
 	enum class ParamType : uint8
 	{
+		Unknown,
 		Bool,
-		Number,  // double値（すべての算術型を内部的にdoubleで保持）
+		Number,  // 数値は全てdouble型で保持
 		String,
-		Color,   // ColorF型として保持
+		Color,   // 色は全てColorF型で保持
 		Vec2,
 		LRTB,
 	};
@@ -37,6 +38,7 @@ namespace noco
 			return U"Vec2";
 		case ParamType::LRTB:
 			return U"LRTB";
+		case ParamType::Unknown:
 		default:
 			return U"Unknown";
 		}
@@ -46,21 +48,38 @@ namespace noco
 	[[nodiscard]]
 	inline ParamType GetParamType(const ParamValue& value)
 	{
-		return std::visit([](const auto& v) -> ParamType {
-			using T = std::decay_t<decltype(v)>;
-			if constexpr (std::is_same_v<T, bool>)
-				return ParamType::Bool;
-			else if constexpr (std::is_same_v<T, double>)
-				return ParamType::Number;
-			else if constexpr (std::is_same_v<T, String>)
-				return ParamType::String;
-			else if constexpr (std::is_same_v<T, ColorF>)
-				return ParamType::Color;
-			else if constexpr (std::is_same_v<T, Vec2>)
-				return ParamType::Vec2;
-			else if constexpr (std::is_same_v<T, LRTB>)
-				return ParamType::LRTB;
-		}, value);
+		return std::visit([](const auto& v) -> ParamType
+			{
+				using T = std::decay_t<decltype(v)>;
+				if constexpr (std::is_same_v<T, bool>)
+				{
+					return ParamType::Bool;
+				}
+				else if constexpr (std::is_arithmetic_v<T>)
+				{
+					return ParamType::Number;
+				}
+				else if constexpr (std::is_same_v<T, String>)
+				{
+					return ParamType::String;
+				}
+				else if constexpr (std::is_same_v<T, ColorF>)
+				{
+					return ParamType::Color;
+				}
+				else if constexpr (std::is_same_v<T, Vec2>)
+				{
+					return ParamType::Vec2;
+				}
+				else if constexpr (std::is_same_v<T, LRTB>)
+				{
+					return ParamType::LRTB;
+				}
+				else
+				{
+					return ParamType::Unknown;
+				}
+			}, value);
 	}
 	
 	// 型からParamTypeを取得
@@ -68,19 +87,46 @@ namespace noco
 	constexpr ParamType GetParamTypeOf()
 	{
 		if constexpr (std::is_same_v<T, bool>)
+		{
 			return ParamType::Bool;
+		}
 		else if constexpr (std::is_arithmetic_v<T>)
+		{
 			return ParamType::Number;
+		}
 		else if constexpr (std::is_same_v<T, String>)
+		{
 			return ParamType::String;
+		}
 		else if constexpr (std::is_same_v<T, Color> || std::is_same_v<T, ColorF>)
+		{
 			return ParamType::Color;
+		}
 		else if constexpr (std::is_same_v<T, Vec2>)
+		{
 			return ParamType::Vec2;
+		}
 		else if constexpr (std::is_same_v<T, LRTB>)
+		{
 			return ParamType::LRTB;
+		}
 		else
+		{
 			static_assert(!std::is_same_v<T, T>, "Unsupported parameter type");
+		}
+	}
+	
+	// 型がParamValueでサポートされているか判定
+	template<typename T>
+	constexpr bool IsParamValueType()
+	{
+		return std::is_same_v<T, bool> || 
+		       std::is_same_v<T, String> || 
+		       std::is_same_v<T, ColorF> || 
+		       std::is_same_v<T, Vec2> || 
+		       std::is_same_v<T, LRTB> ||
+		       std::is_same_v<T, Color> || 
+		       std::is_arithmetic_v<T>;
 	}
 	
 	// 値をParamValue用の型に変換
@@ -178,6 +224,9 @@ namespace noco
 			if (auto opt = StringToValueOpt<LRTB>(str))
 				return ParamValue{ *opt };
 			break;
+		case ParamType::Unknown:
+		default:
+			break;
 		}
 		return none;
 	}
@@ -186,10 +235,11 @@ namespace noco
 	[[nodiscard]]
 	inline JSON ParamValueToJSON(const ParamValue& value)
 	{
-		JSON json;
-		json[U"type"] = ParamTypeToString(GetParamType(value));
-		json[U"value"] = ParamValueToString(value);
-		return json;
+		return JSON
+		{
+			{ U"type", ParamTypeToString(GetParamType(value)) },
+			{ U"value", ParamValueToString(value) },
+		};
 	}
 	
 	// JSONからParamValueを作成

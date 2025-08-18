@@ -13,6 +13,7 @@ namespace noco
 	{
 		Text,
 		Bool,
+		Number,
 		Enum,
 		Vec2,
 		Color,
@@ -58,7 +59,7 @@ namespace noco
 	};
 
 	template <typename T>
-	PropertyEditType PropertyEditTypeOf()
+	constexpr PropertyEditType PropertyEditTypeOf()
 	{
 		if constexpr (std::same_as<T, bool>)
 		{
@@ -80,8 +81,14 @@ namespace noco
 		{
 			return PropertyEditType::LRTB;
 		}
+		else if constexpr (std::is_arithmetic_v<T> && !std::same_as<T, bool>)
+		{
+			// int32, uint32, double等の数値型
+			return PropertyEditType::Number;
+		}
 		else
 		{
+			// String等のテキスト型
 			return PropertyEditType::Text;
 		}
 	}
@@ -202,10 +209,7 @@ namespace noco
 			if (!m_paramRef.isEmpty())
 			{
 				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
-				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
-				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
-				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
+				if constexpr (IsParamValueType<T>())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
@@ -445,10 +449,7 @@ namespace noco
 			if (!m_paramRef.isEmpty())
 			{
 				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
-				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
-				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
-				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
+				if constexpr (IsParamValueType<T>())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
@@ -547,22 +548,7 @@ namespace noco
 		[[nodiscard]]
 		PropertyEditType editType() const override
 		{
-			if constexpr (std::same_as<T, Vec2>)
-			{
-				return PropertyEditType::Vec2;
-			}
-			else if constexpr (std::same_as<T, ColorF>)
-			{
-				return PropertyEditType::Color;
-			}
-			else if constexpr (std::same_as<T, LRTB>)
-			{
-				return PropertyEditType::LRTB;
-			}
-			else
-			{
-				return PropertyEditType::Text;
-			}
+			return PropertyEditTypeOf<T>();
 		}
 
 		[[nodiscard]]
@@ -725,10 +711,7 @@ namespace noco
 			if (!m_paramRef.isEmpty())
 			{
 				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, double> || 
-				              std::is_same_v<T, String> || std::is_same_v<T, ColorF> || 
-				              std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB> ||
-				              std::is_same_v<T, Color> || (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>))
+				if constexpr (IsParamValueType<T>())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
@@ -849,30 +832,7 @@ namespace noco
 		[[nodiscard]]
 		PropertyEditType editType() const override
 		{
-			if constexpr (std::same_as<T, bool>)
-			{
-				return PropertyEditType::Bool;
-			}
-			else if constexpr (std::is_enum_v<T>)
-			{
-				return PropertyEditType::Enum;
-			}
-			else if constexpr (std::same_as<T, Vec2>)
-			{
-				return PropertyEditType::Vec2;
-			}
-			else if constexpr (std::same_as<T, ColorF>)
-			{
-				return PropertyEditType::Color;
-			}
-			else if constexpr (std::same_as<T, LRTB>)
-			{
-				return PropertyEditType::LRTB;
-			}
-			else
-			{
-				return PropertyEditType::Text;
-			}
+			return PropertyEditTypeOf<T>();
 		}
 
 		[[nodiscard]]
