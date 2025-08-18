@@ -347,11 +347,20 @@ namespace noco::editor
 				return;
 			}
 			
+			const String currentValueString = m_pProperty ? m_pProperty->propertyValueStringOfDefault() : U"";
+			
 			auto addParamDialog = std::make_shared<AddParamDialog>(
 				m_canvas,
 				[this]()
 				{
 					filterAvailableParams();
+				},
+				*propertyType,
+				currentValueString,
+				[this](const String& createdParamName)
+				{
+					// 作成されたパラメータを自動選択
+					selectParam(createdParamName);
 				});
 			
 			m_dialogOpener->openDialog(addParamDialog);

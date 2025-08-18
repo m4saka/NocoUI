@@ -16,6 +16,7 @@ namespace noco::editor
 	private:
 		std::shared_ptr<Canvas> m_canvas;
 		std::function<void()> m_onComplete;
+		std::function<void(const String&)> m_onParamCreated;
 		
 		// ダイアログ内のコントロール
 		std::shared_ptr<TextBox> m_nameTextBox;
@@ -25,11 +26,23 @@ namespace noco::editor
 		String m_selectedType = U"Number";
 		std::variant<bool, double, String, ColorF, Vec2, LRTB> m_value = 0.0;
 		
+		Optional<ParamType> m_fixedType;
+		
 	public:
 		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete)
 			: m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
 		{
+		}
+		
+		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated = nullptr)
+			: m_canvas(canvas)
+			, m_onComplete(std::move(onComplete))
+			, m_onParamCreated(std::move(onParamCreated))
+			, m_fixedType(fixedType)
+		{
+			m_selectedType = ParamTypeToString(fixedType);
+			m_value = StringToParamValue(currentValueString, fixedType);
 		}
 		
 		double dialogWidth() const override
@@ -148,6 +161,12 @@ namespace noco::editor
 				{
 					.sizeDelta = Vec2{ 120, 26 },
 				});
+			
+			if (m_fixedType.has_value())
+			{
+				m_typeComboBox->setInteractable(false);
+			}
+			
 			m_typeComboBox->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
@@ -156,30 +175,31 @@ namespace noco::editor
 				m_selectedType,
 				U"",
 				14,
-				Palette::White,
+				PropertyValue<ColorF>{ ColorF{ Palette::White } }.withDisabled(ColorF{ 0.6, 0.6, 0.6 }),
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				LRTB{ 8, 25, 0, 0 });
 			
-			// 下三角アイコンを追加
-			m_typeComboBox->emplaceComponent<Label>(
-				U"▼",
-				U"",
-				10,
-				Palette::White,
-				HorizontalAlign::Right,
-				VerticalAlign::Middle,
-				LRTB{ 5, 7, 5, 5 });
-			
-			m_typeComboBox->emplaceComponent<UpdaterComponent>([this, dialogContextMenu](const std::shared_ptr<Node>& node) 
-				{
-					if (node->isClicked())
+			if (!m_fixedType.has_value())
+			{
+				m_typeComboBox->emplaceComponent<Label>(
+					U"▼",
+					U"",
+					10,
+					Palette::White,
+					HorizontalAlign::Right,
+					VerticalAlign::Middle,
+					LRTB{ 5, 7, 5, 5 });
+				
+				m_typeComboBox->emplaceComponent<UpdaterComponent>([this, dialogContextMenu](const std::shared_ptr<Node>& node) 
 					{
-						onTypeComboBoxClick(dialogContextMenu);
-					}
-				});
+						if (node->isClicked())
+						{
+							onTypeComboBoxClick(dialogContextMenu);
+						}
+					});
+			}
 			
-			// フォーカスを名前入力欄に設定
 			CurrentFrame::SetFocusedNode(nameTextBoxNode);
 		}
 		
@@ -283,6 +303,11 @@ namespace noco::editor
 				
 				if (m_selectedType != U"")
 				{
+					if (m_onParamCreated)
+					{
+						m_onParamCreated(name);
+					}
+					
 					if (m_onComplete)
 					{
 						m_onComplete();

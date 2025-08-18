@@ -215,6 +215,12 @@
     <ClInclude Include="include\NocoUI\Node.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\Param.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\ParamUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\Property.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

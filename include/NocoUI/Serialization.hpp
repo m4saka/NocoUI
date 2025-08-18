@@ -120,6 +120,17 @@ namespace noco
 
 	template <typename T>
 	[[nodiscard]]
+	T StringToValueOr(StringView value, const T& defaultValue)
+	{
+		if (auto opt = StringToValueOpt<T>(value))
+		{
+			return *opt;
+		}
+		return defaultValue;
+	}
+
+	template <typename T>
+	[[nodiscard]]
 	String ValueToString(const T& value)
 	{
 		if constexpr (std::is_enum_v<T>)

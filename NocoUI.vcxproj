@@ -180,6 +180,8 @@
     <ClInclude Include="include\NocoUI\magic_enum.hpp" />
     <ClInclude Include="include\NocoUI\MouseTracker.hpp" />
     <ClInclude Include="include\NocoUI\Node.hpp" />
+    <ClInclude Include="include\NocoUI\Param.hpp" />
+    <ClInclude Include="include\NocoUI\ParamUtils.hpp" />
     <ClInclude Include="include\NocoUI\Property.hpp" />
     <ClInclude Include="include\NocoUI\PropertyUtils.hpp" />
     <ClInclude Include="include\NocoUI\PropertyValue.hpp" />

@@ -6,5 +6,6 @@
 #include "NocoUI/Component/Component.hpp"
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/PropertyUtils.hpp"
+#include "NocoUI/ParamUtils.hpp"
 #include "NocoUI/Utility.hpp"
 #include "NocoUI/Version.hpp"
