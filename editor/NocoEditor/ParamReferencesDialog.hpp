@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <NocoUI.hpp>
 #include "EditorDialog.hpp"
 

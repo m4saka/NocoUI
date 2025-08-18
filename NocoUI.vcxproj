@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="src\Asset.cpp" />
     <ClCompile Include="src\Canvas.cpp" />
+    <ClCompile Include="src\Component\ComponentBase.cpp" />
     <ClCompile Include="src\Component\UISound.cpp" />
     <ClCompile Include="src\Component\CursorChanger.cpp" />
     <ClCompile Include="src\Component\DragDropSource.cpp" />
