@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Node.hpp"
+#include "NocoUI/ComponentFactory.hpp"
 #include "NocoUI/Serialization.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Component/Component.hpp"
@@ -338,17 +339,12 @@ namespace noco
 		return std::holds_alternative<AnchorRegion>(m_region);
 	}
 
-	JSON Node::toJSON() const
-	{
-		return toJSONImpl(detail::WithInstanceIdYN::No);
-	}
-
-	JSON Node::toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
+	JSON Node::toJSON(detail::WithInstanceIdYN withInstanceId) const
 	{
 		Array<JSON> childrenJSON;
 		for (const auto& child : m_children)
 		{
-			childrenJSON.push_back(child->toJSONImpl(withInstanceId));
+			childrenJSON.push_back(child->toJSON(withInstanceId));
 		}
 
 		JSON result
@@ -389,19 +385,19 @@ namespace noco
 		{
 			if (const auto serializableComponent = std::dynamic_pointer_cast<SerializableComponentBase>(component))
 			{
-				result[U"components"].push_back(serializableComponent->toJSONImpl(withInstanceId));
+				result[U"components"].push_back(serializableComponent->toJSON(withInstanceId));
 			}
 		}
 
 		return result;
 	}
 
-	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json)
+	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return CreateFromJSONImpl(json, detail::WithInstanceIdYN::No);
+		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
 	}
-
-	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
+	
+	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -517,7 +513,7 @@ namespace noco
 		{
 			for (const auto& componentJSON : json[U"components"].arrayView())
 			{
-				node->addComponentFromJSONImpl(componentJSON, withInstanceId);
+				node->addComponentFromJSONImpl(componentJSON, componentFactory, withInstanceId);
 			}
 		}
 
@@ -525,7 +521,7 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				auto child = CreateFromJSONImpl(childJSON, withInstanceId);
+				auto child = CreateFromJSON(childJSON, componentFactory, withInstanceId);
 				node->addChild(child, RefreshesLayoutYN::No);
 			}
 		}
@@ -708,17 +704,32 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
 	{
-		return addComponentFromJSONImpl(json, detail::WithInstanceIdYN::No);
+		return addComponentFromJSON(json, ComponentFactory::GetBuiltinFactory());
+	}
+	
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json, const ComponentFactory& componentFactory)
+	{
+		return addComponentFromJSONImpl(json, componentFactory, detail::WithInstanceIdYN::No);
 	}
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
 	{
-		return addComponentAtIndexFromJSONImpl(json, index, detail::WithInstanceIdYN::No);
+		return addComponentAtIndexFromJSON(json, index, ComponentFactory::GetBuiltinFactory());
+	}
+	
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& componentFactory)
+	{
+		return addComponentAtIndexFromJSONImpl(json, index, componentFactory, detail::WithInstanceIdYN::No);
 	}
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, withInstanceId);
+		return addComponentFromJSONImpl(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+	}
+	
+	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	{
+		auto component = componentFactory.createComponentFromJSON(json, withInstanceId);
 		if (component)
 		{
 			addComponent(component);
@@ -728,7 +739,12 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::WithInstanceIdYN withInstanceId)
 	{
-		auto component = CreateComponentFromJSONImpl(json, withInstanceId);
+		return addComponentAtIndexFromJSONImpl(json, index, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+	}
+	
+	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	{
+		auto component = componentFactory.createComponentFromJSON(json, withInstanceId);
 		if (component)
 		{
 			addComponentAtIndex(component, index);

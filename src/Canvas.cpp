@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Canvas.hpp"
+#include "NocoUI/ComponentFactory.hpp"
 #include "NocoUI/Version.hpp"
 #include <cassert>
 
@@ -221,7 +222,7 @@ namespace noco
 		return nullptr;
 	}
 	
-	JSON Canvas::toJSON() const
+	JSON Canvas::toJSON(detail::WithInstanceIdYN withInstanceId) const
 	{
 		JSON json = JSON
 		{
@@ -241,7 +242,7 @@ namespace noco
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
 		{
-			childrenArray.push_back(child->toJSON());
+			childrenArray.push_back(child->toJSON(withInstanceId));
 		}
 		json[U"children"] = childrenArray;
 
@@ -258,44 +259,12 @@ namespace noco
 		return json;
 	}
 	
-	JSON Canvas::toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
+	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout, detail::WithInstanceIdYN withInstanceId)
 	{
-		JSON json = JSON
-		{
-			{ U"version", NocoUIVersion },
-			{ U"size", ValueToString(m_size) },
-		};
-
-		if (m_autoScaleMode != AutoScaleMode::None)
-		{
-			json[U"autoScaleMode"] = ValueToString(m_autoScaleMode);
-		}
-		if (m_autoResizeMode != AutoResizeMode::None)
-		{
-			json[U"autoResizeMode"] = ValueToString(m_autoResizeMode);
-		}
-
-		Array<JSON> childrenArray;
-		for (const auto& child : m_children)
-		{
-			childrenArray.push_back(child->toJSONImpl(withInstanceId));
-		}
-		json[U"children"] = childrenArray;
-
-		if (!m_params.empty())
-		{
-			JSON paramsObj = JSON{};
-			for (const auto& [name, value] : m_params)
-			{
-				paramsObj[name] = ParamValueToJSON(value);
-			}
-			json[U"params"] = paramsObj;
-		}
-
-		return json;
+		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), refreshesLayout, withInstanceId);
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, RefreshesLayoutYN refreshesLayout, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -322,7 +291,7 @@ namespace noco
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSON(childJson))
+			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
 			{
 				canvas->addChild(child, RefreshesLayoutYN::No);
 			}
@@ -371,83 +340,12 @@ namespace noco
 		return canvas;
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayout)
+	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId)
 	{
-		if (!json.contains(U"size"))
-		{
-			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required field 'size'";
-			return nullptr;
-		}
-		
-		if (!json.contains(U"children"))
-		{
-			Logger << U"[NocoUI error] Canvas::CreateFromJSONImpl: Missing required field 'children'";
-			return nullptr;
-		}
-		
-		std::shared_ptr<Canvas> canvas{ new Canvas{} };
-		
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
-		{
-			canvas->m_size = *sizeOpt;
-		}
-		else
-		{
-			Logger << U"[NocoUI warning] Canvas::CreateFromJSONImpl: Failed to parse size, using default";
-		}
-		
-		for (const auto& childJson : json[U"children"].arrayView())
-		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, withInstanceId))
-			{
-				canvas->addChild(child, RefreshesLayoutYN::No);
-			}
-		}
-
-		if (json.contains(U"params"))
-		{
-			if (json[U"params"].isObject())
-			{
-				for (const auto& member : json[U"params"])
-				{
-					const String name = member.key;
-					const auto& paramJson = member.value;
-					if (auto value = ParamValueFromJSON(paramJson))
-					{
-						canvas->m_params[name] = *value;
-					}
-				}
-			}
-		}
-
-		if (json.contains(U"autoScaleMode"))
-		{
-			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
-			{
-				canvas->m_autoScaleMode = *modeOpt;
-			}
-		}
-		if (json.contains(U"autoResizeMode"))
-		{
-			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
-			{
-				canvas->m_autoResizeMode = *modeOpt;
-				if (canvas->m_autoResizeMode != AutoResizeMode::None)
-				{
-					canvas->m_lastSceneSize = Scene::Size();
-				}
-			}
-		}
-
-		if (refreshesLayout)
-		{
-			canvas->refreshLayout();
-		}
-
-		return canvas;
+		return tryReadFromJSON(json, ComponentFactory::GetBuiltinFactory(), refreshesLayoutPre, refreshesLayoutPost, withInstanceId);
 	}
 	
-	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -480,97 +378,7 @@ namespace noco
 
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSON(childJson))
-			{
-				addChild(child, RefreshesLayoutYN::No);
-			}
-		}
-
-		m_params.clear();
-		if (json.contains(U"params"))
-		{
-			if (json[U"params"].isObject())
-			{
-				for (const auto& member : json[U"params"])
-				{
-					const String name = member.key;
-					const auto& paramJson = member.value;
-					if (auto value = ParamValueFromJSON(paramJson))
-					{
-						m_params[name] = *value;
-					}
-				}
-			}
-		}
-
-		if (json.contains(U"autoScaleMode"))
-		{
-			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
-			{
-				m_autoScaleMode = *modeOpt;
-			}
-		}
-		if (json.contains(U"autoResizeMode"))
-		{
-			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
-			{
-				m_autoResizeMode = *modeOpt;
-				if (m_autoResizeMode != AutoResizeMode::None)
-				{
-					m_lastSceneSize = Scene::Size();
-				}
-			}
-		}
-
-		if (refreshesLayoutPre)
-		{
-			refreshLayout();
-		}
-		for (const auto& child : m_children)
-		{
-			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
-		}
-		if (refreshesLayoutPost)
-		{
-			refreshLayout();
-		}
-		return true;
-	}
-	
-	bool Canvas::tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
-	{
-		if (!json.contains(U"size"))
-		{
-			Logger << U"[NocoUI error] Canvas::tryReadFromJSONImpl: Missing required field 'size'";
-			return false;
-		}
-		
-		if (!json.contains(U"children"))
-		{
-			Logger << U"[NocoUI error] Canvas::tryReadFromJSONImpl: Missing required field 'children'";
-			return false;
-		}
-		
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
-		{
-			m_size = *sizeOpt;
-		}
-		else
-		{
-			Logger << U"[NocoUI warning] Canvas::tryReadFromJSONImpl: Failed to parse size";
-		}
-
-		for (const auto& child : m_children)
-		{
-			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
-			child->m_parent.reset();
-			child->refreshActiveInHierarchy();
-		}
-		m_children.clear();
-
-		for (const auto& childJson : json[U"children"].arrayView())
-		{
-			if (auto child = Node::CreateFromJSONImpl(childJson, withInstanceId))
+			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
 			{
 				addChild(child, RefreshesLayoutYN::No);
 			}

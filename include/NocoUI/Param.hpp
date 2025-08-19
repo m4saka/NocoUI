@@ -275,7 +275,7 @@ namespace noco
 		{
 			if (auto opt = StringToValueOpt<double>(valueStr))
 			{
-				return ParamValue{ *opt }
+				return ParamValue{ *opt };
 			}
 		}
 		else if (typeStr == U"String")

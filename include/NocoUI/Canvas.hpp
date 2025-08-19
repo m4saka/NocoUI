@@ -9,6 +9,7 @@ namespace noco
 {
 	class ITextBox;
 	class IFocusable;
+	class ComponentFactory;
 
 	struct CanvasUpdateContext
 	{
@@ -408,20 +409,17 @@ namespace noco
 		std::shared_ptr<Node> getNodeByName(const String& nodeName) const;
 
 		[[nodiscard]]
-		JSON toJSON() const;
-		
-		[[nodiscard]]
-		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const;
+		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
 
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, const ComponentFactory& factory, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
-		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 		
-		bool tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 

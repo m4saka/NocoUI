@@ -21,6 +21,8 @@
 #include "Hierarchy.hpp"
 #include "PropertyMetaData.hpp"
 #include "Inspector.hpp"
+#include "ComponentSchemaLoader.hpp"
+#include <NocoUI/ComponentFactory.hpp>
 
 using namespace noco;
 using namespace noco::editor;
@@ -55,6 +57,7 @@ private:
 	std::shared_ptr<ContextMenu> m_dialogContextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
 	std::shared_ptr<Defaults> m_defaults = std::make_shared<Defaults>();
+	std::shared_ptr<ComponentFactory> m_componentFactory;
 	bool m_isConfirmDialogShowing = false;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
@@ -114,12 +117,20 @@ public:
 		, m_dialogOverlayCanvas(Canvas::Create(Scene::Size())->setAutoResizeMode(AutoResizeMode::MatchSceneSize))
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
+		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener)
-		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); })
+		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
 	{
+		m_componentFactory->setUnknownComponentBehavior(UnknownComponentBehavior::CreatePlaceholder);
+		
+		const FilePath customDir = FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"custom");
+		if (FileSystem::Exists(customDir))
+		{
+			ComponentSchemaLoader::LoadFromDirectory(customDir);
+		}
 		m_menuBar.addMenuCategory(
 			U"File",
 			U"ファイル",
@@ -401,7 +412,7 @@ public:
 		const bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
 		if (hasUserInput)
 		{
-			m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(WithInstanceIdYN::Yes));
+			m_historySystem.recordStateIfNeeded(m_canvas->toJSON(WithInstanceIdYN::Yes));
 			m_toolbar.updateButtonStates();
 		}
 		
@@ -714,7 +725,7 @@ public:
 			return false;
 		}
 		m_filePath = filePath;
-		if (!m_canvas->tryReadFromJSON(json))
+		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::No))
 		{
 			if (showMessageBoxOnError)
 			{
@@ -841,12 +852,12 @@ public:
 	
 	void onClickMenuEditUndo()
 	{
-		if (const auto undoState = m_historySystem.undo(m_canvas->toJSONImpl(WithInstanceIdYN::Yes)))
+		if (const auto undoState = m_historySystem.undo(m_canvas->toJSON(WithInstanceIdYN::Yes)))
 		{
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*undoState, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*undoState, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -859,12 +870,12 @@ public:
 	
 	void onClickMenuEditRedo()
 	{
-		if (const auto redoState = m_historySystem.redo(m_canvas->toJSONImpl(WithInstanceIdYN::Yes)))
+		if (const auto redoState = m_historySystem.redo(m_canvas->toJSON(WithInstanceIdYN::Yes)))
 		{
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSONImpl(*redoState, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*redoState, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -898,7 +909,7 @@ public:
 	
 	void recordInitialHistoryState()
 	{
-		m_historySystem.recordStateIfNeeded(m_canvas->toJSONImpl(WithInstanceIdYN::Yes));
+		m_historySystem.recordStateIfNeeded(m_canvas->toJSON(WithInstanceIdYN::Yes));
 	}
 };
 

@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Utility.hpp"
+#include "NocoUI/ComponentFactory.hpp"
 
 namespace noco
 {
@@ -18,12 +19,21 @@ namespace noco
 
 	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, AllowExceptions allowExceptions)
 	{
-		// JSONファイルを直接読み込んでCanvasとして解釈
 		const JSON json = JSON::Load(path, allowExceptions);
 		if (!json)
 		{
 			return nullptr;
 		}
 		return Canvas::CreateFromJSON(json);
+	}
+	
+	std::shared_ptr<Canvas> LoadCanvas(FilePathView path, const ComponentFactory& componentFactory, AllowExceptions allowExceptions)
+	{
+		const JSON json = JSON::Load(path, allowExceptions);
+		if (!json)
+		{
+			return nullptr;
+		}
+		return Canvas::CreateFromJSON(json, componentFactory);
 	}
 }

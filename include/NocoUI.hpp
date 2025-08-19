@@ -4,6 +4,7 @@
 #include "NocoUI/Region/Region.hpp"
 #include "NocoUI/Layout/Layout.hpp"
 #include "NocoUI/Component/Component.hpp"
+#include "NocoUI/ComponentFactory.hpp"
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/PropertyUtils.hpp"
 #include "NocoUI/ParamUtils.hpp"

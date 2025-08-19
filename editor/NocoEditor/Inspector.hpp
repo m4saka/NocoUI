@@ -13,6 +13,8 @@
 #include "AddParamDialog.hpp"
 #include "ParamRefDialog.hpp"
 #include "ParamReferencesDialog.hpp"
+#include "ComponentSchema.hpp"
+#include "ComponentSchemaLoader.hpp"
 
 namespace noco::editor
 {
@@ -30,7 +32,7 @@ namespace noco::editor
 		HashTable<PropertyKey, PropertyMetadata> m_propertyMetadata;
 		std::weak_ptr<Node> m_targetNode;
 		std::function<void()> m_onChangeNodeName;
-		
+		std::shared_ptr<ComponentFactory> m_componentFactory;
 		
 		void renameParam(const String& oldName, const String& newName)
 		{
@@ -78,6 +80,34 @@ namespace noco::editor
 			refreshInspector();
 		}
 		
+		void onClickAddCustomComponent(const String& typeName)
+		{
+			const auto node = m_targetNode.lock();
+			if (!node)
+			{
+				return;
+			}
+			
+			// スキーマに書かれた初期値を含むJSONを作成
+			JSON componentJson;
+			componentJson[U"type"] = typeName;
+			if (const ComponentSchema* schema = ComponentSchemaLoader::GetSchema(typeName))
+			{
+				for (const auto& prop : schema->properties)
+				{
+					if (!prop.defaultValue.isEmpty())
+					{
+						componentJson[prop.name] = prop.defaultValue;
+					}
+				}
+			}
+			
+			// PlaceholderComponentを作成して追加
+			auto placeholder = PlaceholderComponent::Create(typeName, componentJson);
+			node->addComponent(placeholder);
+			refreshInspector();
+		}
+		
 		void onClickCopyComponent(const std::shared_ptr<SerializableComponentBase>& component)
 		{
 			if (!component)
@@ -114,15 +144,16 @@ namespace noco::editor
 				return;
 			}
 			
-			// JSONからコンポーネントを作成
+			// クリップボードのJSONからコンポーネントを作成
 			auto componentJSON = *m_copiedComponentJSON;
 			componentJSON[U"type"] = *m_copiedComponentType;
-			
-			// CreateComponentFromJSONを使用してコンポーネントを作成
-			if (const auto component = CreateComponentFromJSON(componentJSON))
+			if (m_componentFactory)
 			{
-				node->addComponent(component);
-				refreshInspector();
+				if (const auto component = m_componentFactory->createComponentFromJSON(componentJSON))
+				{
+					node->addComponent(component);
+					refreshInspector();
+				}
 			}
 		}
 		
@@ -165,7 +196,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName)
+		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName)
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
@@ -206,6 +237,7 @@ namespace noco::editor
 			, m_defaults(defaults)
 			, m_dialogOpener(dialogOpener)
 			, m_onChangeNodeName(std::move(onChangeNodeName))
+			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
 			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
@@ -387,6 +419,22 @@ namespace noco::editor
 					MenuItem{ U"UISound を追加", U"", KeyU, [this] { onClickAddComponent<UISound>(); } },
 					MenuItem{ U"Tween を追加", U"", KeyW, [this] { onClickAddComponent<Tween>(); } },
 				};
+				
+				// カスタムコンポーネントをメニューに追加
+				const auto& schemas = ComponentSchemaLoader::GetAllSchemas();
+				if (!schemas.empty())
+				{
+					menuElements.push_back(MenuSeparator{});
+					for (const auto& [typeName, schema] : schemas)
+					{
+						menuElements.push_back(MenuItem{ 
+							U"{} を追加"_fmt(typeName), 
+							U"", 
+							Input{}, 
+							[this, typeName] { onClickAddCustomComponent(typeName); } 
+						});
+					}
+				}
 				
 				// コピーされたコンポーネントがある場合は貼り付けメニューを追加
 				if (m_copiedComponentType)
@@ -3618,6 +3666,15 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<SerializableComponentBase>& component, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold)
 		{
+			String displayName = component->type();
+			String menuName = component->type();
+			if (const auto placeholderComponent = std::dynamic_pointer_cast<PlaceholderComponent>(component))
+			{
+				// PlaceholderComponentの場合は項目名をカスタムコンポーネント名で上書き
+				displayName = placeholderComponent->originalType() + U" (Custom)";
+				menuName = placeholderComponent->originalType();
+			}
+			
 			auto componentNode = Node::Create(
 				component->type(),
 				InlineRegion
@@ -3628,22 +3685,221 @@ namespace noco::editor
 			componentNode->setChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			const auto headingNode = componentNode->addChild(CreateHeadingNode(component->type(), ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
+			const auto headingNode = componentNode->addChild(CreateHeadingNode(displayName, ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
 			Array<MenuElement> menuElements;
-			menuElements.push_back(MenuItem{ U"{} を削除"_fmt(component->type()), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を削除"_fmt(menuName), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } });
 			menuElements.push_back(MenuSeparator{});
-			menuElements.push_back(MenuItem{ U"{} を上へ移動"_fmt(component->type()), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } });
-			menuElements.push_back(MenuItem{ U"{} を下へ移動"_fmt(component->type()), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を上へ移動"_fmt(menuName), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を下へ移動"_fmt(menuName), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } });
 			menuElements.push_back(MenuSeparator{});
-			menuElements.push_back(MenuItem{ U"{} の内容をコピー"_fmt(component->type()), U"", KeyC, [this, component] { onClickCopyComponent(component); } });
+			menuElements.push_back(MenuItem{ U"{} の内容をコピー"_fmt(menuName), U"", KeyC, [this, component] { onClickCopyComponent(component); } });
 			
 			// 同じタイプのコンポーネントがコピーされている場合のみ貼り付けメニューを表示
 			if (m_copiedComponentType.has_value() && *m_copiedComponentType == component->type())
 			{
-				menuElements.push_back(MenuItem{ U"{} の内容を貼り付け"_fmt(component->type()), U"", KeyV, [this, component] { onClickPasteComponentTo(component); } });
+				menuElements.push_back(MenuItem{ U"{} の内容を貼り付け"_fmt(menuName), U"", KeyV, [this, component] { onClickPasteComponentTo(component); } });
 			}
 			
 			headingNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements);
+
+			// PlaceholderComponentの場合はスキーマをもとにプロパティ表示
+			if (const auto placeholderComponent = std::dynamic_pointer_cast<PlaceholderComponent>(component))
+			{
+				const ComponentSchema* schema = ComponentSchemaLoader::GetSchema(placeholderComponent->originalType());
+				if (!schema)
+				{
+					const auto warningNode = componentNode->emplaceChild(
+						U"NoSchema",
+						InlineRegion
+						{
+							.sizeRatio = { 1, 0 },
+							.sizeDelta = { 0, 24 },
+							.margin = { .top = 4 },
+						});
+					warningNode->emplaceComponent<Label>(
+						U"({} のスキーマ定義が存在しません)"_fmt(placeholderComponent->originalType()),
+						U"",
+						14,
+						Palette::Gray,
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+					if (isFolded)
+					{
+						warningNode->setActive(false);
+					}
+				}
+				else
+				{
+					placeholderComponent->setSchema(schema);
+					
+					if (!isFolded)
+					{
+						for (const auto& propSchema : schema->properties)
+						{
+							String currentValue = placeholderComponent->getPropertyValueString(propSchema.name);
+							if (currentValue.isEmpty() && !propSchema.defaultValue.isEmpty())
+							{
+								currentValue = propSchema.defaultValue;
+								placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+							}
+							
+							std::shared_ptr<Node> propertyNode;
+							switch (propSchema.editType)
+							{
+							case PropertyEditType::Text:
+								{
+									auto onChange = [placeholderComponent, propName = propSchema.name](StringView value)
+									{
+										placeholderComponent->setPropertyValueString(propName, String{ value });
+									};
+									
+									if (propSchema.numTextAreaLines.has_value())
+									{
+										propertyNode = CreatePropertyNodeWithTextArea(
+											propSchema.name,
+											currentValue,
+											onChange,
+											HasInteractivePropertyValueYN::No,
+											*propSchema.numTextAreaLines);
+									}
+									else
+									{
+										propertyNode = CreatePropertyNode(
+											propSchema.name,
+											currentValue,
+											onChange,
+											HasInteractivePropertyValueYN::No,
+											HasParameterRefYN::No,
+											nullptr,
+											propSchema.dragValueChangeStep);
+									}
+								}
+								break;
+								
+							case PropertyEditType::Number:
+								{
+									auto onChange = [placeholderComponent, propName = propSchema.name](StringView value)
+									{
+										placeholderComponent->setPropertyValueString(propName, String{ value });
+									};
+									
+									propertyNode = CreatePropertyNode(
+										propSchema.name,
+										currentValue,
+										onChange,
+										HasInteractivePropertyValueYN::No,
+										HasParameterRefYN::No,
+										nullptr,
+										propSchema.dragValueChangeStep);
+								}
+								break;
+								
+							case PropertyEditType::Bool:
+								{
+									bool value = StringToValueOr<bool>(currentValue, false);
+									auto onChange = [placeholderComponent, propName = propSchema.name](bool value)
+									{
+										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
+									};
+									
+									propertyNode = CreateBoolPropertyNode(
+										propSchema.name,
+										value,
+										onChange,
+										HasInteractivePropertyValueYN::No,
+										HasParameterRefYN::No);
+								}
+								break;
+								
+							case PropertyEditType::Vec2:
+								{
+									Vec2 value = StringToValueOr<Vec2>(currentValue, Vec2{0, 0});
+									auto onChange = [placeholderComponent, propName = propSchema.name](const Vec2& value)
+									{
+										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
+									};
+									
+									propertyNode = CreateVec2PropertyNode(
+										propSchema.name,
+										value,
+										onChange,
+										HasInteractivePropertyValueYN::No,
+										HasParameterRefYN::No);
+								}
+								break;
+								
+							case PropertyEditType::Color:
+								{
+									ColorF value = StringToValueOr<ColorF>(currentValue, Palette::White);
+									auto onChange = [placeholderComponent, propName = propSchema.name](const ColorF& value)
+									{
+										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
+									};
+									
+									propertyNode = CreateColorPropertyNode(
+										propSchema.name,
+										value,
+										onChange,
+										HasInteractivePropertyValueYN::No,
+										HasParameterRefYN::No);
+								}
+								break;
+								
+							case PropertyEditType::LRTB:
+								{
+									LRTB value = StringToValueOr<LRTB>(currentValue, LRTB{0, 0, 0, 0});
+									auto onChange = [placeholderComponent, propName = propSchema.name](const LRTB& value)
+									{
+										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
+									};
+									
+									propertyNode = CreateLRTBPropertyNode(
+										propSchema.name,
+										value,
+										onChange,
+										HasInteractivePropertyValueYN::No,
+										HasParameterRefYN::No);
+								}
+								break;
+								
+							case PropertyEditType::Enum:
+								{
+									auto onChange = [placeholderComponent, propName = propSchema.name](StringView value)
+									{
+										placeholderComponent->setPropertyValueString(propName, String{ value });
+									};
+									
+									propertyNode = CreateEnumPropertyNode(
+										propSchema.name,
+										currentValue,
+										onChange,
+										m_contextMenu,
+										propSchema.enumCandidates,
+										HasInteractivePropertyValueYN::No);
+								}
+								break;
+							}
+							
+							if (propertyNode)
+							{
+								if (!propSchema.tooltip.isEmpty())
+								{
+									if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+									{
+										labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, propSchema.tooltip, propSchema.tooltipDetail);
+									}
+								}
+								
+								componentNode->addChild(propertyNode);
+							}
+						}
+					}
+				}
+				
+				componentNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+				
+				return componentNode;
+			}
 
 			if (component->properties().empty())
 			{

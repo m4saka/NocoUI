@@ -45,6 +45,7 @@ add_executable(${TARGET_NAME}
     TestParent.cpp
     TestTextBox.cpp
     TestTextArea.cpp
+    TestComponentFactory.cpp
 )
 
 find_package(Siv3D REQUIRED)

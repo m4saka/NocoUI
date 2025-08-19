@@ -213,17 +213,16 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 		// パラメータを作成
 		canvas->setParamValue(U"dynamicText", U"Dynamic Value");
 		
-		// カスタムコンポーネントでupdate内でsetParamRefを呼ぶ
-		class TestComponent : public ComponentBase
+		class TestComponent : public noco::ComponentBase
 		{
 		public:
-			TestComponent() : ComponentBase({})
+			TestComponent() : noco::ComponentBase{ {} }
 			{
 			}
 			bool firstUpdate = true;
-			Property<String>* textProperty = nullptr;
+			noco::Property<String>* textProperty = nullptr;
 			
-			void update(const std::shared_ptr<Node>& node) override
+			void update(const std::shared_ptr<noco::Node>& node) override
 			{
 				if (firstUpdate && textProperty)
 				{
@@ -232,7 +231,7 @@ TEST_CASE("Parameter binding to properties", "[Param]")
 				}
 			}
 			
-			void draw(const Node&) const override {}
+			void draw(const noco::Node&) const override {}
 		};
 		
 		// テストコンポーネントとラベルを追加

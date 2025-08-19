@@ -115,6 +115,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ComponentSchemaLoader.cpp" />
     <ClCompile Include="EditorButton.cpp" />
     <ClCompile Include="EditorDialog.cpp" />
     <ClCompile Include="PropertyLabelDragger.cpp" />
@@ -235,10 +236,12 @@
     <None Include="App\engine\soundfont\GMGSx.sf2.zstdcmp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EditorButton.hpp" />
     <ClInclude Include="CheckboxToggler.hpp" />
     <ClInclude Include="ColorPropertyTextBox.hpp" />
+    <ClInclude Include="ComponentSchema.hpp" />
+    <ClInclude Include="ComponentSchemaLoader.hpp" />
     <ClInclude Include="ContextMenu.hpp" />
+    <ClInclude Include="EditorButton.hpp" />
     <ClInclude Include="EditorDialog.hpp" />
     <ClInclude Include="EditorEnums.hpp" />
     <ClInclude Include="EditorYN.hpp" />

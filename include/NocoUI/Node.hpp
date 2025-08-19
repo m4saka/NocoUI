@@ -19,6 +19,7 @@
 namespace noco
 {
 	class Canvas;
+	class ComponentFactory;
 
 	struct CanvasUpdateContext;
 
@@ -160,16 +161,13 @@ namespace noco
 		bool hasAnchorRegion() const;
 
 		[[nodiscard]]
-		JSON toJSON() const;
+		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
 
 		[[nodiscard]]
-		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const;
+		static std::shared_ptr<Node> CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreateFromJSON(const JSON& json);
-
-		[[nodiscard]]
-		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId);
+		static std::shared_ptr<Node> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> parentNode() const;
@@ -211,12 +209,20 @@ namespace noco
 			requires std::derived_from<TComponent, ComponentBase>;
 
 		std::shared_ptr<ComponentBase> addComponentFromJSON(const JSON& json);
+		
+		std::shared_ptr<ComponentBase> addComponentFromJSON(const JSON& json, const ComponentFactory& factory);
 
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index);
+		
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& factory);
 
 		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId);
+		
+		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
 
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::WithInstanceIdYN withInstanceId);
+		
+		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
 
 		void removeComponent(const std::shared_ptr<ComponentBase>& component);
 

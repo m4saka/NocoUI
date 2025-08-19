@@ -81,9 +81,6 @@
     <ClCompile Include="src\Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Serialization.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,6 +92,9 @@
     </ClCompile>
     <ClCompile Include="src\Component\ComponentBase.cpp">
       <Filter>Source Files\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ComponentFactory.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -116,6 +116,9 @@
     <ClInclude Include="include\NocoUI\Component\ComponentBase.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\ComponentFactory.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\Component\DragDropSource.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
@@ -135,6 +138,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\Label.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\Component\PlaceholderComponent.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\RectRenderer.hpp">

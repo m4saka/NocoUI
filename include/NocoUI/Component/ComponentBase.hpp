@@ -10,6 +10,11 @@ namespace noco
 
 	struct CanvasUpdateContext;
 
+	namespace detail
+	{
+		using WithInstanceIdYN = YesNo<struct WithInstanceIdYN_tag>;
+	}
+
 	class ComponentBase
 	{
 	private:
@@ -67,7 +72,6 @@ namespace noco
 			return m_properties;
 		}
 
-
 		[[nodiscard]]
 		IProperty* getPropertyByName(StringView name) const
 		{
@@ -93,6 +97,53 @@ namespace noco
 		// ライブラリレベルでのマルチスレッド対応はしないが、atomicにはしておく
 		static inline std::atomic<uint64> s_nextInstanceId = 1;
 
+	protected:
+		// オーバーライド可能な仮想関数
+		[[nodiscard]]
+		virtual String typeOverrideInternal() const
+		{
+			return m_type;
+		}
+
+		[[nodiscard]]
+		virtual JSON toJSONOverrideInternal(detail::WithInstanceIdYN withInstanceId) const
+		{
+			JSON json;
+			json[U"type"] = typeOverrideInternal();
+			
+			for (const IProperty* property : properties())
+			{
+				property->appendJSON(json);
+			}
+			
+			if (withInstanceId)
+			{
+				json[U"_instanceId"] = instanceId();
+			}
+			
+			return json;
+		}
+
+		virtual bool tryReadFromJSONOverrideInternal(const JSON& json, detail::WithInstanceIdYN withInstanceId)
+		{
+			if (!json.contains(U"type") || json[U"type"].getString() != typeOverrideInternal())
+			{
+				return false;
+			}
+			
+			for (IProperty* property : properties())
+			{
+				property->readFromJSON(json);
+			}
+			
+			if (withInstanceId && json.contains(U"_instanceId"))
+			{
+				setInstanceId(json[U"_instanceId"].get<uint64>());
+			}
+			
+			return true;
+		}
+
 	public:
 		explicit SerializableComponentBase(StringView type, const Array<IProperty*>& properties)
 			: ComponentBase{ properties }
@@ -104,59 +155,31 @@ namespace noco
 		virtual ~SerializableComponentBase() = 0;
 
 		[[nodiscard]]
-		const String& type() const
+		String type() const
 		{
-			return m_type;
-		}
-
-		[[nodiscard]]
-		JSON toJSON() const
-		{
-			return toJSONImpl(detail::WithInstanceIdYN::No);
-		}
-
-		[[nodiscard]]
-		JSON toJSONImpl(detail::WithInstanceIdYN withInstanceId) const
-		{
-			JSON json;
-			json[U"type"] = m_type;
-			for (const IProperty* property : properties())
-			{
-				property->appendJSON(json);
-			}
-			if (withInstanceId)
-			{
-				json[U"_instanceId"] = m_instanceId;
-			}
-			return json;
-		}
-
-		bool tryReadFromJSON(const JSON& json)
-		{
-			return tryReadFromJSONImpl(json, detail::WithInstanceIdYN::No);
-		}
-
-		bool tryReadFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
-		{
-			if (!json.contains(U"type") || json[U"type"].getString() != m_type)
-			{
-				return false;
-			}
-			for (IProperty* property : properties())
-			{
-				property->readFromJSON(json);
-			}
-			if (withInstanceId && json.contains(U"_instanceId"))
-			{
-				m_instanceId = json[U"_instanceId"].get<uint64>();
-			}
-			return true;
+			return typeOverrideInternal();
 		}
 
 		[[nodiscard]]
 		uint64 instanceId() const
 		{
 			return m_instanceId;
+		}
+
+		void setInstanceId(uint64 id)
+		{
+			m_instanceId = id;
+		}
+
+		[[nodiscard]]
+		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const
+		{
+			return toJSONOverrideInternal(withInstanceId);
+		}
+
+		bool tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No)
+		{
+			return tryReadFromJSONOverrideInternal(json, withInstanceId);
 		}
 
 		void replaceParamRefs(StringView oldName, StringView newName)

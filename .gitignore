@@ -31,3 +31,6 @@ Makefile
 *.tmp
 *.temp
 *~
+
+editor/NocoEditor/custom
+editor/NocoEditor/App/custom

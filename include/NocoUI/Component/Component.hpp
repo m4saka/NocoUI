@@ -17,3 +17,4 @@
 #include "CursorChanger.hpp"
 #include "UISound.hpp"
 #include "Tween.hpp"
+#include "PlaceholderComponent.hpp"
