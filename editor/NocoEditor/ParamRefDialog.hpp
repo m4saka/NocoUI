@@ -76,9 +76,21 @@ namespace noco::editor
 		
 		Array<DialogButtonDesc> buttonDescs() const override
 		{
-			return {
-				DialogButtonDesc{ .text = U"OK", .mnemonicInput = KeyO, .appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No, .isDefaultButton = IsDefaultButtonYN::Yes },
-				DialogButtonDesc{ .text = U"キャンセル", .mnemonicInput = KeyC, .isCancelButton = IsCancelButtonYN::Yes }
+			return
+			{
+				DialogButtonDesc
+				{
+					.text = U"OK",
+					.mnemonicInput = KeyO,
+					.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No,
+					.isDefaultButton = IsDefaultButtonYN::Yes,
+				},
+				DialogButtonDesc
+				{
+					.text = U"キャンセル",
+					.mnemonicInput = KeyC,
+					.isCancelButton = IsCancelButtonYN::Yes,
+				},
 			};
 		}
 		

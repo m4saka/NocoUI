@@ -120,13 +120,13 @@ namespace noco
 	template<typename T>
 	constexpr bool IsParamValueType()
 	{
-		return std::is_same_v<T, bool> || 
-		       std::is_same_v<T, String> || 
-		       std::is_same_v<T, ColorF> || 
-		       std::is_same_v<T, Vec2> || 
-		       std::is_same_v<T, LRTB> ||
-		       std::is_same_v<T, Color> || 
-		       std::is_arithmetic_v<T>;
+		return std::is_same_v<T, bool> ||
+			std::is_same_v<T, String> ||
+			std::is_same_v<T, ColorF> ||
+			std::is_same_v<T, Vec2> ||
+			std::is_same_v<T, LRTB> ||
+			std::is_same_v<T, Color> ||
+			std::is_arithmetic_v<T>;
 	}
 	
 	// 値をParamValue用の型に変換
@@ -135,15 +135,15 @@ namespace noco
 	{
 		if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 		{
-			return static_cast<double>(value);  // 全ての数値型はdoubleとして保持
+			return static_cast<double>(value); // 全ての数値型はdoubleとして保持
 		}
 		else if constexpr (std::is_same_v<T, Color>)
 		{
-			return ColorF(value);  // ColorはColorFとして保持
+			return ColorF{ value }; // ColorはColorFとして保持
 		}
 		else if constexpr (std::is_same_v<T, const char32_t*>)
 		{
-			return String(value);  // 文字列リテラル
+			return String{ value }; // 文字列リテラル
 		}
 		else
 		{
@@ -166,7 +166,7 @@ namespace noco
 					if (*ptr < 0)
 					{
 						// unsignedの場合、負の値は0に丸める
-						return static_cast<T>(0);
+						return T{ 0 };
 					}
 				}
 				return static_cast<T>(*ptr);
@@ -204,25 +204,35 @@ namespace noco
 		{
 		case ParamType::Bool:
 			if (auto opt = StringToValueOpt<bool>(str))
+			{
 				return ParamValue{ *opt };
+			}
 			break;
 		case ParamType::Number:
 			if (auto opt = StringToValueOpt<double>(str))
+			{
 				return ParamValue{ *opt };
+			}
 			break;
 		case ParamType::String:
 			return ParamValue{ str };
 		case ParamType::Color:
 			if (auto opt = StringToValueOpt<ColorF>(str))
+			{
 				return ParamValue{ *opt };
+			}
 			break;
 		case ParamType::Vec2:
 			if (auto opt = StringToValueOpt<Vec2>(str))
+			{
 				return ParamValue{ *opt };
+			}
 			break;
 		case ParamType::LRTB:
 			if (auto opt = StringToValueOpt<LRTB>(str))
+			{
 				return ParamValue{ *opt };
+			}
 			break;
 		case ParamType::Unknown:
 		default:
@@ -257,12 +267,16 @@ namespace noco
 		if (typeStr == U"Bool")
 		{
 			if (auto opt = StringToValueOpt<bool>(valueStr))
+			{
 				return ParamValue{ *opt };
+			}
 		}
 		else if (typeStr == U"Number")
 		{
 			if (auto opt = StringToValueOpt<double>(valueStr))
-				return ParamValue{ *opt };
+			{
+				return ParamValue{ *opt }
+			}
 		}
 		else if (typeStr == U"String")
 		{
@@ -271,19 +285,24 @@ namespace noco
 		else if (typeStr == U"Color")
 		{
 			if (auto opt = StringToValueOpt<ColorF>(valueStr))
+			{
 				return ParamValue{ *opt };
+			}
 		}
 		else if (typeStr == U"Vec2")
 		{
 			if (auto opt = StringToValueOpt<Vec2>(valueStr))
+			{
 				return ParamValue{ *opt };
+			}
 		}
 		else if (typeStr == U"LRTB")
 		{
 			if (auto opt = StringToValueOpt<LRTB>(valueStr))
+			{
 				return ParamValue{ *opt };
+			}
 		}
-		
 		return none;
 	}
 }
