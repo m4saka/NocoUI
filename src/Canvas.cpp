@@ -796,10 +796,21 @@ namespace noco
 			m_childrenTempBuffer.push_back(child);
 		}
 		
+		// updateInteractionStateは通常順で実行
 		for (const auto& child : m_childrenTempBuffer)
 		{
 			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
-			child->updateKeyInput();
+		}
+		
+		// updateKeyInputは前面のノードから処理する必要があるため逆順で実行
+		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
+		{
+			(*it)->updateKeyInput();
+		}
+		
+		// その他の更新処理は通常順で実行
+		for (const auto& child : m_childrenTempBuffer)
+		{
 			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params, {});
 			child->lateUpdate();
 			child->postLateUpdate(Scene::DeltaTime(), m_params);
