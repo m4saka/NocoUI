@@ -539,17 +539,6 @@ namespace noco::editor
 			.tooltip = U"InteractionStateがDisabledの要素へのホバーでもカーソルを変更するかどうか",
 		};
 		
-		// Placeholder
-		metadata[PropertyKey{ U"Placeholder", U"tag" }] = PropertyMetadata{
-			.tooltip = U"プログラムから参照する際のタグ名",
-			.tooltipDetail = U"Placeholderはプログラム上からコンポーネント追加や編集等の操作を行う目印として使用するコンポーネントです\nプログラム上ではwalkPlaceholders関数を使用して、タグ名をもとにPlaceholderを巡回できます\n例えば、tagに独自に作成したコンポーネントの種類名を入力し、プログラム上からそのコンポーネントを追加する用途で利用できます",
-		};
-		metadata[PropertyKey{ U"Placeholder", U"data" }] = PropertyMetadata{
-			.tooltip = U"プレースホルダーのデータ (任意)",
-			.tooltipDetail = U"自由なデータを文字列で指定できます\nプログラム上ではwalkPlaceholders関数でPlaceholderを巡回し、dataを参照できます",
-			.numTextAreaLines = 3,
-		};
-
 		// UISound
 		metadata[PropertyKey{ U"UISound", U"audioFilePath" }] = PropertyMetadata{
 			.tooltip = U"音声ファイルのパス",

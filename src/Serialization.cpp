@@ -68,16 +68,6 @@ namespace noco
 				}
 				return component;
 			}
-			else if (type == U"Placeholder")
-			{
-				auto component = std::make_shared<Placeholder>();
-				if (!component->tryReadFromJSONImpl(json, withInstanceId))
-				{
-					Logger << U"[NocoUI warning] Failed to read Placeholder component from JSON";
-					return nullptr;
-				}
-				return component;
-			}
 			else if (type == U"CursorChanger")
 			{
 				auto component = std::make_shared<CursorChanger>();

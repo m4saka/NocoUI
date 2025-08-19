@@ -383,7 +383,6 @@ namespace noco::editor
 					MenuItem{ U"TextArea を追加", U"", KeyA, [this] { onClickAddComponent<TextArea>(); } },
 					MenuItem{ U"Label を追加", U"", KeyL, [this] { onClickAddComponent<Label>(); } },
 					MenuItem{ U"EventTrigger を追加", U"", KeyE, [this] { onClickAddComponent<EventTrigger>(); } },
-					MenuItem{ U"Placeholder を追加", U"", KeyP, [this] { onClickAddComponent<Placeholder>(); } },
 					MenuItem{ U"CursorChanger を追加", U"", KeyC, [this] { onClickAddComponent<CursorChanger>(); } },
 					MenuItem{ U"UISound を追加", U"", KeyU, [this] { onClickAddComponent<UISound>(); } },
 					MenuItem{ U"Tween を追加", U"", KeyW, [this] { onClickAddComponent<Tween>(); } },

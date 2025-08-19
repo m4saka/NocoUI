@@ -157,7 +157,6 @@
     <ClInclude Include="include\NocoUI\Component\KeyInputUpdaterComponent.hpp" />
     <ClInclude Include="include\NocoUI\Component\ITextBox.hpp" />
     <ClInclude Include="include\NocoUI\Component\Label.hpp" />
-    <ClInclude Include="include\NocoUI\Component\Placeholder.hpp" />
     <ClInclude Include="include\NocoUI\Component\RectRenderer.hpp" />
     <ClInclude Include="include\NocoUI\Component\Sprite.hpp" />
     <ClInclude Include="include\NocoUI\Component\TextArea.hpp" />

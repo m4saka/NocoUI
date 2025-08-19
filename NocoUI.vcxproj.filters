@@ -137,9 +137,6 @@
     <ClInclude Include="include\NocoUI\Component\Label.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Component\Placeholder.hpp">
-      <Filter>Header Files\Component</Filter>
-    </ClInclude>
     <ClInclude Include="include\NocoUI\Component\RectRenderer.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>

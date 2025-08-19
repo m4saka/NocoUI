@@ -11,7 +11,6 @@
 #include "Region/Region.hpp"
 #include "Layout/Layout.hpp"
 #include "Component/ComponentBase.hpp"
-#include "Component/Placeholder.hpp"
 #include "Component/DataStore.hpp"
 #include "Enums.hpp"
 #include "Param.hpp"
@@ -570,13 +569,6 @@ namespace noco
 
 		void refreshContainedCanvasLayout();
 
-		template <class Fty>
-		void walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive = RecursiveYN::Yes) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
-
-		template <class Fty>
-		void walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive = RecursiveYN::Yes) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		template <typename TData>
 		void storeData(const TData& value);
@@ -747,53 +739,6 @@ namespace noco
 			}
 		}
 		return nullptr;
-	}
-
-
-	template <class Fty>
-	void Node::walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&>
-	{
-		for (const auto& child : m_children)
-		{
-			for (const auto& component : child->m_components)
-			{
-				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
-				{
-					if (placeholder->tag() == tag)
-					{
-						func(child);
-					}
-				}
-			}
-			if (recursive)
-			{
-				child->walkPlaceholders(tag, func, RecursiveYN::Yes);
-			}
-		}
-	}
-
-	template <class Fty>
-	void Node::walkPlaceholders(StringView tag, Fty&& func, RecursiveYN recursive) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
-	{
-		for (const auto& child : m_children)
-		{
-			for (const auto& component : child->m_components)
-			{
-				if (const auto placeholder = std::dynamic_pointer_cast<Placeholder>(component))
-				{
-					if (placeholder->tag() == tag)
-					{
-						func(child, placeholder->data());
-					}
-				}
-			}
-			if (recursive)
-			{
-				child->walkPlaceholders(tag, func, RecursiveYN::Yes);
-			}
-		}
 	}
 
 	template<typename TData>

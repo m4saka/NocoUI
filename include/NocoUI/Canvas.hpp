@@ -505,13 +505,6 @@ namespace noco
 		[[nodiscard]]
 		const Array<Event>& getFiredEventsAll() const;
 
-		template <class Fty>
-		void walkPlaceholders(StringView tag, Fty&& func) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
-
-		template <class Fty>
-		void walkPlaceholders(StringView tag, Fty&& func) const
-			requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>;
 
 		[[nodiscard]]
 		const HashTable<String, ParamValue>& params() const
@@ -722,24 +715,4 @@ private:
 	[[nodiscard]]
 	std::shared_ptr<Node> findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const;
 	};
-
-	template <class Fty>
-	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&>
-	{
-		for (const auto& child : m_children)
-		{
-			child->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
-		}
-	}
-
-	template <class Fty>
-	void Canvas::walkPlaceholders(StringView tag, Fty&& func) const
-		requires std::invocable<Fty, const std::shared_ptr<Node>&, const String&>
-	{
-		for (const auto& child : m_children)
-		{
-			child->walkPlaceholders(tag, std::move(func), RecursiveYN::Yes);
-		}
-	}
 }
