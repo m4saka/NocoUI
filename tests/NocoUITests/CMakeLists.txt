@@ -36,6 +36,7 @@ add_executable(${TARGET_NAME}
     TestLayout.cpp
     TestSerialization.cpp
     TestProperty.cpp
+    TestPropertyValue.cpp
     TestEventHandling.cpp
     TestComplexLayout.cpp
     TestErrorCases.cpp

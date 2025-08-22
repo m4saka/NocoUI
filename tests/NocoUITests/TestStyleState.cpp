@@ -524,8 +524,8 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		
 		// focusedは複数値があるのでオブジェクト形式
 		REQUIRE(styleStates[U"focused"].isObject());
-		REQUIRE(styleStates[U"focused"][U"Default"].getString() == U"(0, 0, 1, 1)");
-		REQUIRE(styleStates[U"focused"][U"Hovered"].getString() == U"(0.2, 0.2, 1, 1)");
+		REQUIRE(styleStates[U"focused"][U"default"].getString() == U"(0, 0, 1, 1)");
+		REQUIRE(styleStates[U"focused"][U"hovered"].getString() == U"(0.2, 0.2, 1, 1)");
 		
 		// checkedはdefaultのみなので省略記法（文字列）
 		REQUIRE(styleStates[U"checked"].isString());
@@ -555,10 +555,10 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		REQUIRE(styleStates[U"focused"].isNumber());
 		REQUIRE(styleStates[U"focused"].get<double>() == 100.0);
 		
-		// expanded（完全記法：複数のInteractionState）
+		// expanded（非省略記法：複数のInteractionState）
 		REQUIRE(styleStates[U"expanded"].isObject());
-		REQUIRE(styleStates[U"expanded"][U"Default"].get<double>() == 200.0);
-		REQUIRE(styleStates[U"expanded"][U"Hovered"].get<double>() == 210.0);
+		REQUIRE(styleStates[U"expanded"][U"default"].get<double>() == 200.0);
+		REQUIRE(styleStates[U"expanded"][U"hovered"].get<double>() == 210.0);
 	}
 }
 

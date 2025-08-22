@@ -242,18 +242,18 @@ namespace noco
 						{
 							// interactionState毎の値がある場合はオブジェクトで保存
 							JSON stateJson;
-							stateJson[U"Default"] = EnumToString(values.defaultValue);
+							stateJson[U"default"] = EnumToString(values.defaultValue);
 							if (values.hoveredValue)
 							{
-								stateJson[U"Hovered"] = EnumToString(*values.hoveredValue);
+								stateJson[U"hovered"] = EnumToString(*values.hoveredValue);
 							}
 							if (values.pressedValue)
 							{
-								stateJson[U"Pressed"] = EnumToString(*values.pressedValue);
+								stateJson[U"pressed"] = EnumToString(*values.pressedValue);
 							}
 							if (values.disabledValue)
 							{
-								stateJson[U"Disabled"] = EnumToString(*values.disabledValue);
+								stateJson[U"disabled"] = EnumToString(*values.disabledValue);
 							}
 							styleStatesJson[state] = stateJson;
 						}
@@ -307,18 +307,18 @@ namespace noco
 						{
 							// interactionState毎の値がある場合はオブジェクトで保存
 							JSON stateJson;
-							stateJson[U"Default"] = values.defaultValue.toJSON();
+							stateJson[U"default"] = values.defaultValue.toJSON();
 							if (values.hoveredValue)
 							{
-								stateJson[U"Hovered"] = values.hoveredValue->toJSON();
+								stateJson[U"hovered"] = values.hoveredValue->toJSON();
 							}
 							if (values.pressedValue)
 							{
-								stateJson[U"Pressed"] = values.pressedValue->toJSON();
+								stateJson[U"pressed"] = values.pressedValue->toJSON();
 							}
 							if (values.disabledValue)
 							{
-								stateJson[U"Disabled"] = values.disabledValue->toJSON();
+								stateJson[U"disabled"] = values.disabledValue->toJSON();
 							}
 							styleStatesJson[state] = stateJson;
 						}
@@ -372,18 +372,18 @@ namespace noco
 						{
 							// interactionState毎の値がある場合はオブジェクトで保存
 							JSON stateJson;
-							stateJson[U"Default"] = values.defaultValue;
+							stateJson[U"default"] = values.defaultValue;
 							if (values.hoveredValue)
 							{
-								stateJson[U"Hovered"] = *values.hoveredValue;
+								stateJson[U"hovered"] = *values.hoveredValue;
 							}
 							if (values.pressedValue)
 							{
-								stateJson[U"Pressed"] = *values.pressedValue;
+								stateJson[U"pressed"] = *values.pressedValue;
 							}
 							if (values.disabledValue)
 							{
-								stateJson[U"Disabled"] = *values.disabledValue;
+								stateJson[U"disabled"] = *values.disabledValue;
 							}
 							styleStatesJson[state] = stateJson;
 						}
@@ -436,21 +436,21 @@ namespace noco
 									// オブジェクトの場合はInteractionStateごとの値がある
 									InteractionValues<T> values{ defaultValue };
 									
-									if (valueJson.contains(U"Default"))
+									if (valueJson.contains(U"default"))
 									{
-										values.defaultValue = StringToEnum<T>(valueJson[U"Default"].getString(), defaultValue);
+										values.defaultValue = StringToEnum<T>(valueJson[U"default"].getString(), defaultValue);
 									}
-									if (valueJson.contains(U"Hovered"))
+									if (valueJson.contains(U"hovered"))
 									{
-										values.hoveredValue = StringToEnum<T>(valueJson[U"Hovered"].getString(), defaultValue);
+										values.hoveredValue = StringToEnum<T>(valueJson[U"hovered"].getString(), defaultValue);
 									}
-									if (valueJson.contains(U"Pressed"))
+									if (valueJson.contains(U"pressed"))
 									{
-										values.pressedValue = StringToEnum<T>(valueJson[U"Pressed"].getString(), defaultValue);
+										values.pressedValue = StringToEnum<T>(valueJson[U"pressed"].getString(), defaultValue);
 									}
-									if (valueJson.contains(U"Disabled"))
+									if (valueJson.contains(U"disabled"))
 									{
-										values.disabledValue = StringToEnum<T>(valueJson[U"Disabled"].getString(), defaultValue);
+										values.disabledValue = StringToEnum<T>(valueJson[U"disabled"].getString(), defaultValue);
 									}
 									
 									(*propertyValue.styleStateValues)[state] = values;
@@ -488,22 +488,22 @@ namespace noco
 							
 							for (const auto& [state, valueJson] : styleStatesJson)
 							{
-								if (valueJson.isObject() && valueJson.contains(U"Default"))
+								if (valueJson.isObject() && valueJson.contains(U"default"))
 								{
 									// オブジェクトの場合はInteractionStateごとの値がある
-									InteractionValues<T> interactionValues{ T::fromJSON(valueJson[U"Default"], defaultValue) };
+									InteractionValues<T> interactionValues{ T::fromJSON(valueJson[U"default"], defaultValue) };
 									
-									if (valueJson.contains(U"Hovered"))
+									if (valueJson.contains(U"hovered"))
 									{
-										interactionValues.hoveredValue = T::fromJSON(valueJson[U"Hovered"], defaultValue);
+										interactionValues.hoveredValue = T::fromJSON(valueJson[U"hovered"], defaultValue);
 									}
-									if (valueJson.contains(U"Pressed"))
+									if (valueJson.contains(U"pressed"))
 									{
-										interactionValues.pressedValue = T::fromJSON(valueJson[U"Pressed"], defaultValue);
+										interactionValues.pressedValue = T::fromJSON(valueJson[U"pressed"], defaultValue);
 									}
-									if (valueJson.contains(U"Disabled"))
+									if (valueJson.contains(U"disabled"))
 									{
-										interactionValues.disabledValue = T::fromJSON(valueJson[U"Disabled"], defaultValue);
+										interactionValues.disabledValue = T::fromJSON(valueJson[U"disabled"], defaultValue);
 									}
 									
 									(*propertyValue.styleStateValues)[state] = interactionValues;
@@ -546,22 +546,22 @@ namespace noco
 							
 							for (const auto& [state, valueJson] : styleStatesJson)
 							{
-								if (valueJson.isObject() && valueJson.contains(U"Default"))
+								if (valueJson.isObject() && valueJson.contains(U"default"))
 								{
 									// オブジェクトの場合はInteractionStateごとの値がある
-									InteractionValues<T> interactionValues{ valueJson[U"Default"].get<T>() };
+									InteractionValues<T> interactionValues{ valueJson[U"default"].get<T>() };
 									
-									if (valueJson.contains(U"Hovered"))
+									if (valueJson.contains(U"hovered"))
 									{
-										interactionValues.hoveredValue = valueJson[U"Hovered"].get<T>();
+										interactionValues.hoveredValue = valueJson[U"hovered"].get<T>();
 									}
-									if (valueJson.contains(U"Pressed"))
+									if (valueJson.contains(U"pressed"))
 									{
-										interactionValues.pressedValue = valueJson[U"Pressed"].get<T>();
+										interactionValues.pressedValue = valueJson[U"pressed"].get<T>();
 									}
-									if (valueJson.contains(U"Disabled"))
+									if (valueJson.contains(U"disabled"))
 									{
-										interactionValues.disabledValue = valueJson[U"Disabled"].get<T>();
+										interactionValues.disabledValue = valueJson[U"disabled"].get<T>();
 									}
 									
 									(*propertyValue.styleStateValues)[state] = interactionValues;
