@@ -251,6 +251,7 @@
     <ClInclude Include="KeyInputBlocker.hpp" />
     <ClInclude Include="LRTBPropertyTextBox.hpp" />
     <ClInclude Include="MenuBar.hpp" />
+    <ClInclude Include="PlaceholderComponent.hpp" />
     <ClInclude Include="PropertyLabelDragger.hpp" />
     <ClInclude Include="PropertyMetaData.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />

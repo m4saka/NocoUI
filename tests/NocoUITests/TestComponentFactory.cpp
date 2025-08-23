@@ -63,10 +63,10 @@ TEST_CASE("ComponentFactory component creation", "[ComponentFactory]")
 		}
 	}
 	
-	SECTION("Unknown component handling - Skip behavior")
+	SECTION("Unknown component handling - No handler")
 	{
 		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::Skip);
+		// デフォルトではハンドラーが設定されていない
 		
 		JSON unknownJson;
 		unknownJson[U"type"] = U"UnknownType";
@@ -76,10 +76,20 @@ TEST_CASE("ComponentFactory component creation", "[ComponentFactory]")
 		REQUIRE(component == nullptr);
 	}
 	
-	SECTION("Unknown component handling - Placeholder behavior")
+	SECTION("Unknown component handling - With handler")
 	{
 		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::CreatePlaceholder);
+		
+		// カスタムコールバックを設定
+		bool handlerCalled = false;
+		String capturedType;
+		factory.setUnknownComponentHandler(
+			[&handlerCalled, &capturedType](const String& type, const JSON&, noco::detail::WithInstanceIdYN) -> std::shared_ptr<noco::ComponentBase>
+			{
+				handlerCalled = true;
+				capturedType = type;
+				return std::make_shared<noco::Label>(U"Unknown: " + type);
+			});
 		
 		JSON unknownJson;
 		unknownJson[U"type"] = U"UnknownType";
@@ -87,22 +97,14 @@ TEST_CASE("ComponentFactory component creation", "[ComponentFactory]")
 		
 		auto component = factory.createComponentFromJSON(unknownJson);
 		REQUIRE(component != nullptr);
+		REQUIRE(handlerCalled);
+		REQUIRE(capturedType == U"UnknownType");
 		
-		auto placeholder = std::dynamic_pointer_cast<noco::PlaceholderComponent>(component);
-		REQUIRE(placeholder != nullptr);
-		REQUIRE(placeholder->originalType() == U"UnknownType");
+		auto label = std::dynamic_pointer_cast<noco::Label>(component);
+		REQUIRE(label != nullptr);
+		REQUIRE(label->text().defaultValue == U"Unknown: UnknownType");
 	}
 	
-	SECTION("Unknown component handling - Error behavior")
-	{
-		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::ThrowError);
-		
-		JSON unknownJson;
-		unknownJson[U"type"] = U"UnknownType";
-		
-		REQUIRE_THROWS_AS(factory.createComponentFromJSON(unknownJson), s3d::Error);
-	}
 }
 
 TEST_CASE("ComponentFactory custom component factory", "[ComponentFactory]")
@@ -127,157 +129,36 @@ TEST_CASE("ComponentFactory custom component factory", "[ComponentFactory]")
 	}
 }
 
-TEST_CASE("ComponentFactory JSON serialization with unknown components", "[ComponentFactory]")
+TEST_CASE("ComponentFactory handler configuration", "[ComponentFactory]")
 {
-	SECTION("Placeholder component creation and JSON output")
-	{
-		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::CreatePlaceholder);
-		
-		// 未知コンポーネントのJSONデータ
-		JSON unknownComponentJson;
-		unknownComponentJson[U"type"] = U"CustomButton";
-		unknownComponentJson[U"buttonText"] = U"Click Me";
-		unknownComponentJson[U"color"] = U"#FF0000FF";
-		
-		auto unknownComponent = factory.createComponentFromJSON(unknownComponentJson);
-		REQUIRE(unknownComponent != nullptr);
-		
-		auto placeholder = std::dynamic_pointer_cast<noco::PlaceholderComponent>(unknownComponent);
-		REQUIRE(placeholder != nullptr);
-		REQUIRE(placeholder->originalType() == U"CustomButton");
-	}
-}
-
-TEST_CASE("PlaceholderComponent behavior", "[PlaceholderComponent]")
-{
-	SECTION("Create placeholder component")
-	{
-		JSON originalData;
-		originalData[U"type"] = U"CustomWidget";
-		originalData[U"width"] = U"100";
-		originalData[U"height"] = U"50";
-		originalData[U"_instanceId"] = 12345;
-		
-		auto placeholder = noco::PlaceholderComponent::Create(U"CustomWidget", originalData, noco::detail::WithInstanceIdYN::Yes);
-		REQUIRE(placeholder != nullptr);
-		REQUIRE(placeholder->originalType() == U"CustomWidget");
-		REQUIRE(placeholder->instanceId() == 12345);
-		
-		JSON outputJson = placeholder->toJSON(noco::detail::WithInstanceIdYN::Yes);
-		REQUIRE(outputJson[U"type"].getString() == U"CustomWidget");
-		REQUIRE(outputJson[U"width"].getString() == U"100");
-		REQUIRE(outputJson[U"height"].getString() == U"50");
-		REQUIRE(outputJson[U"_instanceId"].get<uint64>() == 12345);
-	}
-	
-	SECTION("getPropertyValueString returns empty for non-strings")
-	{
-		JSON originalData;
-		originalData[U"type"] = U"CustomWidget";
-		originalData[U"text"] = U"Hello";
-		originalData[U"width"] = 100;
-		originalData[U"height"] = 50.5;
-		originalData[U"enabled"] = true;
-		originalData[U"items"] = Array<JSON>{};
-		originalData[U"config"] = JSON{};
-		
-		auto placeholder = noco::PlaceholderComponent::Create(U"CustomWidget", originalData);
-		
-		// 文字列型のみ値を返す
-		REQUIRE(placeholder->getPropertyValueString(U"text") == U"Hello");
-		
-		// 文字列以外の型は受け付けないため空文字列を返す（仕様）
-		REQUIRE(placeholder->getPropertyValueString(U"width") == U"");
-		REQUIRE(placeholder->getPropertyValueString(U"height") == U"");
-		REQUIRE(placeholder->getPropertyValueString(U"enabled") == U"");
-		REQUIRE(placeholder->getPropertyValueString(U"items") == U"");
-		REQUIRE(placeholder->getPropertyValueString(U"config") == U"");
-		
-		REQUIRE(placeholder->getPropertyValueString(U"nonexistent") == U"");
-	}
-}
-
-TEST_CASE("ComponentFactory behavior configuration", "[ComponentFactory]")
-{
-	SECTION("Default behavior is Skip")
-	{
-		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
-		REQUIRE(factory.unknownComponentBehavior() == noco::UnknownComponentBehavior::Skip);
-	}
-	
-	SECTION("Behavior can be changed")
+	SECTION("Handler can be set and cleared with nullptr")
 	{
 		auto factory = noco::ComponentFactory::CreateWithBuiltinComponents();
 		
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::CreatePlaceholder);
-		REQUIRE(factory.unknownComponentBehavior() == noco::UnknownComponentBehavior::CreatePlaceholder);
+		// デフォルトでコールバックは設定されていない（警告メッセージのみ）
+		JSON unknownJson;
+		unknownJson[U"type"] = U"UnknownType";
+		auto component = factory.createComponentFromJSON(unknownJson);
+		REQUIRE(component == nullptr);
 		
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::ThrowError);
-		REQUIRE(factory.unknownComponentBehavior() == noco::UnknownComponentBehavior::ThrowError);
+		// コールバックを設定
+		bool handlerCalled = false;
+		factory.setUnknownComponentHandler(
+			[&handlerCalled](const String&, const JSON&, noco::detail::WithInstanceIdYN) -> std::shared_ptr<noco::ComponentBase>
+			{
+				handlerCalled = true;
+				return std::make_shared<noco::Label>(U"Mock");
+			});
 		
-		factory.setUnknownComponentBehavior(noco::UnknownComponentBehavior::Skip);
-		REQUIRE(factory.unknownComponentBehavior() == noco::UnknownComponentBehavior::Skip);
-	}
-}
-
-TEST_CASE("PlaceholderComponent roundtrip serialization", "[PlaceholderComponent]")
-{
-	SECTION("Save and load with original types preserved")
-	{
-		JSON originalData;
-		originalData[U"type"] = U"CustomWidget";
-		originalData[U"width"] = 100;
-		originalData[U"height"] = 50.5;
-		originalData[U"enabled"] = true;
-		originalData[U"name"] = U"MyWidget";
+		component = factory.createComponentFromJSON(unknownJson);
+		REQUIRE(handlerCalled);
+		REQUIRE(component != nullptr);
 		
-		auto placeholder = noco::PlaceholderComponent::Create(U"CustomWidget", originalData);
-		REQUIRE(placeholder != nullptr);
-		REQUIRE(placeholder->originalType() == U"CustomWidget");
-		
-		JSON savedJson = placeholder->toJSON();
-		REQUIRE(savedJson[U"type"].getString() == U"CustomWidget");
-		// 文字列以外は空文字列として保存される
-		REQUIRE(savedJson[U"width"].getString() == U"");
-		REQUIRE(savedJson[U"height"].getString() == U"");
-		REQUIRE(savedJson[U"enabled"].getString() == U"");
-		REQUIRE(savedJson[U"name"].getString() == U"MyWidget");
-		
-		auto loaded = std::make_shared<noco::PlaceholderComponent>(U"", JSON{});
-		
-		bool loadSuccess = loaded->tryReadFromJSON(savedJson);
-		REQUIRE(loadSuccess);
-		
-		REQUIRE(loaded->originalType() == U"CustomWidget");
-		// 空文字列として読み込まれる
-		REQUIRE(loaded->originalData()[U"width"].getString() == U"");
-		REQUIRE(loaded->originalData()[U"height"].getString() == U"");
-		REQUIRE(loaded->originalData()[U"enabled"].getString() == U"");
-		REQUIRE(loaded->originalData()[U"name"].getString() == U"MyWidget");
-	}
-	
-	SECTION("Editor property modification stores as strings")
-	{
-		JSON originalData;
-		originalData[U"type"] = U"CustomButton";
-		originalData[U"x"] = 10;
-		originalData[U"y"] = 20;
-		originalData[U"visible"] = true;
-		
-		auto placeholder = noco::PlaceholderComponent::Create(U"CustomButton", originalData);
-		
-		placeholder->setPropertyValueString(U"x", U"30");
-		placeholder->setPropertyValueString(U"visible", U"false");
-		
-		JSON savedJson = placeholder->toJSON();
-		
-		// 全プロパティの値が文字列で保存される
-		REQUIRE(savedJson[U"x"].isString());
-		REQUIRE(savedJson[U"x"].getString() == U"30");
-		REQUIRE(savedJson[U"y"].isString());
-		REQUIRE(savedJson[U"y"].getString() == U"");  // 未編集の場合も文字列以外は空文字列で保存される
-		REQUIRE(savedJson[U"visible"].isString());
-		REQUIRE(savedJson[U"visible"].getString() == U"false");
+		// nullptrを設定してコールバックをクリア
+		factory.setUnknownComponentHandler(nullptr);
+		handlerCalled = false;
+		component = factory.createComponentFromJSON(unknownJson);
+		REQUIRE_FALSE(handlerCalled);
+		REQUIRE(component == nullptr);
 	}
 }

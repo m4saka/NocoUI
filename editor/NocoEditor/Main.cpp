@@ -22,6 +22,7 @@
 #include "PropertyMetaData.hpp"
 #include "Inspector.hpp"
 #include "ComponentSchemaLoader.hpp"
+#include "PlaceholderComponent.hpp"
 #include <NocoUI/ComponentFactory.hpp>
 
 using namespace noco;
@@ -124,7 +125,11 @@ public:
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
 	{
-		m_componentFactory->setUnknownComponentBehavior(UnknownComponentBehavior::CreatePlaceholder);
+		m_componentFactory->setUnknownComponentHandler(
+			[](const String& type, const JSON& json, noco::detail::WithInstanceIdYN withInstanceId) -> std::shared_ptr<ComponentBase>
+			{
+				return PlaceholderComponent::Create(type, json, withInstanceId);
+			});
 		
 		const FilePath customDir = FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"custom");
 		if (FileSystem::Exists(customDir))

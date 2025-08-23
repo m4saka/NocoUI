@@ -446,6 +446,9 @@
     <ClInclude Include="MenuBar.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PlaceholderComponent.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="EditorButton.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

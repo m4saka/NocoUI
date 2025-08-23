@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
+#include "PlaceholderComponent.hpp"
 #include "Defaults.hpp"
 #include "Tooltip.hpp"
 #include "Toolbar.hpp"

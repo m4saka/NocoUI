@@ -1,37 +1,26 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "Component/ComponentBase.hpp"
-#include "Component/PlaceholderComponent.hpp"
 
 namespace noco
 {
-	enum class UnknownComponentBehavior : uint8
-	{
-		Skip,
-		CreatePlaceholder,
-		ThrowError,
-	};
-
 	class ComponentFactory
 	{
+	public:
+		using UnknownComponentHandler = std::function<std::shared_ptr<ComponentBase>(const String& type, const JSON& json, detail::WithInstanceIdYN withInstanceId)>;
+		
 	private:
 		using ComponentFactoryFunc = std::function<std::shared_ptr<SerializableComponentBase>()>;
 		
 		HashTable<String, ComponentFactoryFunc> m_factories;
-		UnknownComponentBehavior m_unknownBehavior = UnknownComponentBehavior::Skip;
+		UnknownComponentHandler m_unknownComponentHandler;
 		
 	public:
 		ComponentFactory() = default;
 		
-		void setUnknownComponentBehavior(UnknownComponentBehavior behavior)
+		void setUnknownComponentHandler(const UnknownComponentHandler& handler)
 		{
-			m_unknownBehavior = behavior;
-		}
-		
-		[[nodiscard]]
-		UnknownComponentBehavior unknownComponentBehavior() const
-		{
-			return m_unknownBehavior;
+			m_unknownComponentHandler = handler;
 		}
 		
 		template <typename TComponent>
@@ -77,18 +66,12 @@ namespace noco
 				return nullptr;
 			}
 			
-			switch (m_unknownBehavior)
+			if (m_unknownComponentHandler)
 			{
-			case UnknownComponentBehavior::Skip:
-				return nullptr;
-				
-			case UnknownComponentBehavior::CreatePlaceholder:
-				return PlaceholderComponent::Create(type, json, withInstanceId);
-				
-			case UnknownComponentBehavior::ThrowError:
-				throw Error{ U"Unknown component type: {}"_fmt(type) };
+				return m_unknownComponentHandler(type, json, withInstanceId);
 			}
 			
+			Logger << U"[NocoUI warning] Unknown component type: {}"_fmt(type);
 			return nullptr;
 		}
 		

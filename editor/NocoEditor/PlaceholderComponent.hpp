@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
-#include "ComponentBase.hpp"
-#include "../Node.hpp"
-#include "../Property.hpp"
+#include <NocoUI/Component/ComponentBase.hpp>
+#include <NocoUI/Node.hpp>
+#include <NocoUI/Property.hpp>
 
 namespace noco
 {
