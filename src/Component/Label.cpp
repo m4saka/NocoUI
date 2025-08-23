@@ -275,7 +275,7 @@ namespace noco
 			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [this, &rect, &lineCache, horizontalAlign]()
+				const double startX = [&rect, &lineCache, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{
@@ -309,7 +309,7 @@ namespace noco
 		{
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [this, &rect, &lineCache, horizontalAlign]()
+				const double startX = [&rect, &lineCache, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{

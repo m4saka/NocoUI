@@ -245,25 +245,25 @@ namespace noco
 
 		const std::shared_ptr<Node>& addChild(std::shared_ptr<Node>&& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
-		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 		const std::shared_ptr<Node>& emplaceChild(RefreshesLayoutYN refreshesLayout);
 
-		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, RefreshesLayoutYN refreshesLayout);
 
-		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
-		void removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
-
-		[[nodiscard]]
-		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const;
+		void removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 		[[nodiscard]]
-		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const;
+		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const override;
+
+		[[nodiscard]]
+		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const override;
 
 		template <class Fty>
 		[[nodiscard]]
@@ -286,7 +286,7 @@ namespace noco
 		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No);
+		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No) override;
 
 		void refreshChildrenLayout();
 
@@ -536,17 +536,17 @@ namespace noco
 		[[nodiscard]]
 		bool isRightClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
-		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 		void swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
-		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 		[[nodiscard]]
 		size_t indexOfChild(const std::shared_ptr<Node>& child) const;
 
 		[[nodiscard]]
-		Optional<size_t> indexOfChildOpt(const std::shared_ptr<Node>& child) const;
+		Optional<size_t> indexOfChildOpt(const std::shared_ptr<Node>& child) const override;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> clone() const;

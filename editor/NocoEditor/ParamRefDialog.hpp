@@ -319,11 +319,13 @@ namespace noco::editor
 					const String valueStr = getParamValueString(value);
 					const String displayText = U"{} = {}"_fmt(paramName, valueStr);
 					
+					// 構造化束縛の変数を明示的にコピー
+					const String paramNameCopy = paramName;
 					menuElements.push_back(MenuItem{
 						.text = displayText,
 						.hotKeyText = U"",
 						.mnemonicInput = none,
-						.onClick = [this, paramName]() { selectParam(paramName); }
+						.onClick = [this, paramNameCopy]() { selectParam(paramNameCopy); }
 					});
 				}
 			}

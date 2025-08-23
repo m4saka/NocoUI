@@ -660,46 +660,46 @@ namespace noco
 			return true;
 		}
 
-		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
-		void removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 		
-		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 		
 		const std::shared_ptr<Node>& addChildAtIndex(
 			const std::shared_ptr<Node>& child,
 			size_t index,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 		
-		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 		
 		[[nodiscard]]
 		bool containsChild(
 			const std::shared_ptr<Node>& child,
-			RecursiveYN recursive = RecursiveYN::No) const;
+			RecursiveYN recursive = RecursiveYN::No) const override;
 		
 		[[nodiscard]]
 		bool containsChildByName(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) const;
+			RecursiveYN recursive = RecursiveYN::No) const override;
 		
 		[[nodiscard]]
 		std::shared_ptr<Node> getChildByNameOrNull(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::No);
+			RecursiveYN recursive = RecursiveYN::No) override;
 		
 		[[nodiscard]]
 		Optional<size_t> indexOfChildOpt(
-			const std::shared_ptr<Node>& child) const;
+			const std::shared_ptr<Node>& child) const override;
 		
 		const std::shared_ptr<Node>& emplaceChild(
 			StringView name = U"Node",
 			const RegionVariant& region = InlineRegion{},
 			IsHitTargetYN isHitTarget = IsHitTargetYN::Yes,
 			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 	// JSONから子ノードを追加
-	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
 
 	// 全ノードのパラメータ参照を一括更新
 	void replaceParamRefs(const String& oldName, const String& newName);

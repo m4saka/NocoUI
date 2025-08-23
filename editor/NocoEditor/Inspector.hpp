@@ -427,11 +427,13 @@ namespace noco::editor
 					menuElements.push_back(MenuSeparator{});
 					for (const auto& [typeName, schema] : schemas)
 					{
+						// 構造化束縛の変数を明示的にコピー
+						const String typeNameCopy = typeName;
 						menuElements.push_back(MenuItem{ 
 							U"{} を追加"_fmt(typeName), 
 							U"", 
 							Input{}, 
-							[this, typeName] { onClickAddCustomComponent(typeName); } 
+							[this, typeNameCopy] { onClickAddCustomComponent(typeNameCopy); } 
 						});
 					}
 				}
