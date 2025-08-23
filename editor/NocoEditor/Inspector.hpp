@@ -3731,7 +3731,13 @@ namespace noco::editor
 				else
 				{
 					placeholderComponent->setSchema(schema);
-					
+
+					// サムネイル画像が存在する場合は設定
+					if (schema->thumbnailTexture)
+					{
+						placeholderComponent->setThumbnailTexture(schema->thumbnailTexture);
+					}
+
 					if (!isFolded)
 					{
 						for (const auto& propSchema : schema->properties)

@@ -65,7 +65,19 @@ namespace noco::editor
 				}
 			}
 		}
-		
+
+		// .component.pngファイルが存在する場合は読み込む
+		const FilePath thumbnailPath = path + U".png";
+		if (FileSystem::Exists(thumbnailPath))
+		{
+			schema.thumbnailTexture = Texture{ thumbnailPath };
+			if (schema.thumbnailTexture->isEmpty())
+			{
+				Logger << U"[NocoUI warning] Failed to load thumbnail image: {}"_fmt(thumbnailPath);
+				schema.thumbnailTexture = none;
+			}
+		}
+
 		return schema;
 	}
 	

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "../Node.hpp"
 
 namespace noco
 {
@@ -9,8 +10,9 @@ namespace noco
 	private:
 		String m_originalType;
 		JSON m_originalData;
-		
+
 		/* NonSerialized */ const void* m_schema = nullptr;
+		/* NonSerialized */ Optional<Texture> m_thumbnailTexture;
 
 	public:
 		PlaceholderComponent(const String& originalType, const JSON& originalData, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No)
@@ -99,20 +101,31 @@ namespace noco
 
 		void draw(const Node& node) const override
 		{
-#ifdef _DEBUG
-			const auto transform = node.finalTransform();
-			const auto region = node.region();
-			const RectF rect = region.calculateRect(transform);
-			
-			rect.drawFrame(2, ColorF{ 1, 0, 0, 0.5 });
-			const String text = U"[Unknown: " + m_originalType + U"]";
-			SimpleText::Draw(text, rect.pos + Vec2{ 5, 5 }, 12, ColorF{ 1, 0, 0 });
-#endif
+			if (m_thumbnailTexture)
+			{
+				const RectF rect = node.regionRect();
+
+				// サムネイル画像を描画
+				const Vec2 textureSize{ m_thumbnailTexture->size() };
+				const Vec2 rectSize = rect.size;
+
+				// アスペクト比を保持しながら矩形に収まるようにスケール計算
+				const double scaleX = rectSize.x / textureSize.x;
+				const double scaleY = rectSize.y / textureSize.y;
+				const double scale = Min(Min(scaleX, scaleY), 1.0); // 最大で原寸サイズ
+
+				const Vec2 drawSize = textureSize * scale;
+				const Vec2 drawPos = rect.center() - drawSize / 2;
+
+				m_thumbnailTexture->resized(drawSize).draw(drawPos);
+			}
 		}
 		
 		void setSchema(const void* schema) { m_schema = schema; }
 		const void* schema() const { return m_schema; }
-		
+		void setThumbnailTexture(const Optional<Texture>& texture) { m_thumbnailTexture = texture; }
+		const Optional<Texture>& thumbnailTexture() const { return m_thumbnailTexture; }
+
 		[[nodiscard]]
 		String getPropertyValueString(const String& propertyName) const
 		{

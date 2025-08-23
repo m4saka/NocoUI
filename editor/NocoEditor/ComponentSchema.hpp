@@ -16,12 +16,13 @@ namespace noco::editor
 		Optional<double> dragValueChangeStep;
 		bool refreshInspectorOnChange = false;
 	};
-	
+
 	struct ComponentSchema
 	{
 		String type;
 		Array<PropertySchema> properties;
-		
+		/* NonSerialized */ Optional<Texture> thumbnailTexture;
+
 		[[nodiscard]]
 		Optional<PropertySchema> findProperty(const String& name) const
 		{
