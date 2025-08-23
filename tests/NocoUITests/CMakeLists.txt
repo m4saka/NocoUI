@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(OpenSiv3D_Linux_App CXX)
+project(NocoUITests CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# FetchContentを使用してCatch2 v2.13.6を取得
 include(FetchContent)
 FetchContent_Declare(
   Catch2
@@ -14,14 +13,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-find_package(PkgConfig)
-
-pkg_check_modules(LIBGLES2 glesv2)
-pkg_check_modules(LIBX11 x11)
-pkg_check_modules(LIBXI xi)
-pkg_check_modules(LIBXCURSOR xcursor)
-pkg_check_modules(LIBXRANDR xrandr)
-pkg_check_modules(LIBXXF86VM xxf86vm)
+if(NOT APPLE AND NOT WIN32)
+    find_package(PkgConfig)
+    pkg_check_modules(LIBGLES2 glesv2)
+    pkg_check_modules(LIBX11 x11)
+    pkg_check_modules(LIBXI xi)
+    pkg_check_modules(LIBXCURSOR xcursor)
+    pkg_check_modules(LIBXRANDR xrandr)
+    pkg_check_modules(LIBXXF86VM xxf86vm)
+endif()
 
 set(TARGET_NAME NocoUITest)
 
@@ -50,11 +50,28 @@ add_executable(${TARGET_NAME}
     TestPlaceholderComponent.cpp
 )
 
-find_package(Siv3D REQUIRED)
-target_link_libraries(${TARGET_NAME} PRIVATE NocoUI Siv3D::Siv3D)
+if(APPLE)
+    set_target_properties(${TARGET_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "NocoUITest"
+        MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+    )
+    
+    set(APP_BUNDLE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_NAME}.app)
+    
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resources/engine")
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/resources/engine
+            ${APP_BUNDLE_PATH}/Contents/Resources/engine
+        )
+    endif()
+endif()
+
+target_link_libraries(${TARGET_NAME} PRIVATE NocoUI)
 
 target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
-# target_precompile_headers(${TARGET_NAME} PRIVATE <Siv3D.hpp>)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(${TARGET_NAME} PRIVATE -fpie)

@@ -2,7 +2,10 @@
 # include <catch2/catch.hpp>
 # include <Siv3D.hpp>
 
+// Linux環境でのみヘッドレスモードを使用
+#ifdef __linux__
 SIV3D_SET(EngineOption::Renderer::Headless)
+#endif
 
 void Main()
 {

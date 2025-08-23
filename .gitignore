@@ -32,5 +32,7 @@ Makefile
 *.temp
 *~
 
+**/.DS_Store
+
 editor/NocoEditor/custom
 editor/NocoEditor/App/custom
