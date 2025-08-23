@@ -19,17 +19,15 @@ namespace noco::editor
 	
 	void ComponentSchemaLoader::LoadFromDirectoryRecursive(const FilePath& directory)
 	{
-		for (const auto& entry : FileSystem::DirectoryContents(directory))
+		for (const auto& path : FileSystem::DirectoryContents(directory))
 		{
-			const FilePath fullPath = FileSystem::PathAppend(directory, entry);
-			
-			if (FileSystem::IsDirectory(fullPath))
+			if (FileSystem::IsDirectory(path))
 			{
-				LoadFromDirectoryRecursive(fullPath);
+				LoadFromDirectoryRecursive(path);
 			}
-			else if (entry.ends_with(U".component"))
+			else if (path.ends_with(U".component"))
 			{
-				if (auto schema = LoadSchemaFile(fullPath))
+				if (auto schema = LoadSchemaFile(path))
 				{
 					s_schemas[schema->type] = *schema;
 				}
