@@ -20,6 +20,12 @@ namespace noco
 	private:
 		Array<IProperty*> m_properties;
 
+	protected:
+		void setProperties(const Array<IProperty*>& properties)
+		{
+			m_properties = properties;
+		}
+
 	public:
 		explicit ComponentBase(const Array<IProperty*>& properties)
 			: m_properties{ properties }
@@ -98,7 +104,6 @@ namespace noco
 		static inline std::atomic<uint64> s_nextInstanceId = 1;
 
 	protected:
-		// オーバーライド可能な仮想関数
 		[[nodiscard]]
 		virtual String typeOverrideInternal() const
 		{
