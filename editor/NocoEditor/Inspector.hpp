@@ -915,7 +915,7 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		static std::shared_ptr<Node> CreatePropertyNodeWithTextArea(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, int32 numLines = 3, std::function<String()> fnGetValue = nullptr)
+		static std::shared_ptr<Node> CreatePropertyNodeWithTextArea(StringView name, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, int32 numLines = 3, std::function<String()> fnGetValue = nullptr, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			const double textAreaHeight = numLines * 20.0 + 14.0;
 			const double nodeHeight = textAreaHeight + 6.0;
@@ -949,8 +949,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -1056,8 +1056,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -1191,7 +1191,8 @@ namespace noco::editor
 			StringView name,
 			const Vec4& currentValue,
 			std::function<void(const Vec4&)> fnSetValue,
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No)
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			const auto propertyNode = Node::Create(
 				name,
@@ -1226,8 +1227,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -1369,8 +1370,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -1686,8 +1687,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -2013,8 +2014,8 @@ namespace noco::editor
 				HorizontalOverflow::Wrap,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -2132,8 +2133,8 @@ namespace noco::editor
 				HorizontalOverflow::Overflow,
 				VerticalOverflow::Clip,
 				Vec2::Zero(),
-				hasInteractivePropertyValue ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
-				ColorF{ Palette::Yellow, 0.5 },
+				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
+				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
 				LabelSizingMode::ShrinkToFit,
 				8.0);
@@ -4160,7 +4161,7 @@ namespace noco::editor
 				const Array<ParamType> requiredParamTypes = { GetRequiredParamType(property) };
 				const bool isInteractive = property->isInteractiveProperty();
 				
-				Array<MenuElement> menuElements
+				Array<MenuElement> stateMenuElements
 				{
 					MenuItem
 					{ 
@@ -4188,7 +4189,7 @@ namespace noco::editor
 				
 				propertyNode->emplaceComponent<ContextMenuOpener>(
 					m_contextMenu,
-					menuElements,
+					stateMenuElements,
 					nullptr,
 					RecursiveYN::Yes);
 			}
