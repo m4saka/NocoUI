@@ -7,6 +7,7 @@ namespace noco::editor
 	struct PropertySchema
 	{
 		String name;
+		String displayName;
 		PropertyEditType editType;
 		String defaultValue;
 		String tooltip;

@@ -62,16 +62,16 @@ namespace noco
 		PropertyNonInteractive<TweenTarget> m_target;
 		
 		// Vec2用（Translate/Scale）
-		PropertyNonInteractive<Vec2> m_value1Vec2;
-		PropertyNonInteractive<Vec2> m_value2Vec2;
+		PropertyNonInteractive<Vec2> m_fromVec2;
+		PropertyNonInteractive<Vec2> m_toVec2;
 		
 		// double用（Rotation）
-		PropertyNonInteractive<double> m_value1Double;
-		PropertyNonInteractive<double> m_value2Double;
+		PropertyNonInteractive<double> m_fromDouble;
+		PropertyNonInteractive<double> m_toDouble;
 		
 		// ColorF用
-		PropertyNonInteractive<ColorF> m_value1Color;
-		PropertyNonInteractive<ColorF> m_value2_color;
+		PropertyNonInteractive<ColorF> m_fromColor;
+		PropertyNonInteractive<ColorF> m_toColor;
 		
 		PropertyNonInteractive<TweenEasing> m_easing;
 		PropertyNonInteractive<double> m_duration;
@@ -96,12 +96,12 @@ namespace noco
 		explicit Tween(
 			const PropertyValue<bool>& active = true,
 			TweenTarget target = TweenTarget::None,
-			const Vec2& value1Vec2 = Vec2::Zero(),
-			const Vec2& value2Vec2 = Vec2::One(),
-			double value1Double = 0.0,
-			double value2Double = 0.0,
-			const ColorF& value1Color = ColorF{ 1.0, 1.0, 1.0, 1.0 },
-			const ColorF& value2_color = ColorF{ 1.0, 1.0, 1.0, 0.0 },
+			const Vec2& fromVec2 = Vec2::Zero(),
+			const Vec2& toVec2 = Vec2::One(),
+			double fromDouble = 0.0,
+			double toDouble = 0.0,
+			const ColorF& fromColor = ColorF{ 1.0, 1.0, 1.0, 1.0 },
+			const ColorF& toColor = ColorF{ 1.0, 1.0, 1.0, 0.0 },
 			TweenEasing easing = TweenEasing::EaseOutQuad,
 			double duration = 1.0,
 			double delay = 0.0,
@@ -109,19 +109,19 @@ namespace noco
 			ActiveYN restartsOnActive = ActiveYN::Yes)
 			: SerializableComponentBase{ U"Tween", { 
 				&m_active, &m_target, 
-				&m_value1Vec2, &m_value2Vec2, 
-				&m_value1Double, &m_value2Double,
-				&m_value1Color, &m_value2_color,
+				&m_fromVec2, &m_toVec2, 
+				&m_fromDouble, &m_toDouble,
+				&m_fromColor, &m_toColor,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartsOnActive 
 			} }
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
-			, m_value1Vec2{ U"value1Vec2", value1Vec2 }
-			, m_value2Vec2{ U"value2Vec2", value2Vec2 }
-			, m_value1Double{ U"value1Double", value1Double }
-			, m_value2Double{ U"value2Double", value2Double }
-			, m_value1Color{ U"value1Color", value1Color }
-			, m_value2_color{ U"value2_color", value2_color }
+			, m_fromVec2{ U"fromVec2", fromVec2 }
+			, m_toVec2{ U"toVec2", toVec2 }
+			, m_fromDouble{ U"fromDouble", fromDouble }
+			, m_toDouble{ U"toDouble", toDouble }
+			, m_fromColor{ U"fromColor", fromColor }
+			, m_toColor{ U"toColor", toColor }
 			, m_easing{ U"easing", easing }
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", delay }
@@ -158,74 +158,74 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const Vec2& value1Vec2() const
+		const Vec2& fromVec2() const
 		{
-			return m_value1Vec2.value();
+			return m_fromVec2.value();
 		}
 
-		std::shared_ptr<Tween> setValue1Vec2(const Vec2& value)
+		std::shared_ptr<Tween> setFromVec2(const Vec2& value)
 		{
-			m_value1Vec2.setValue(value);
+			m_fromVec2.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const Vec2& value2Vec2() const
+		const Vec2& toVec2() const
 		{
-			return m_value2Vec2.value();
+			return m_toVec2.value();
 		}
 
-		std::shared_ptr<Tween> setValue2Vec2(const Vec2& value)
+		std::shared_ptr<Tween> setToVec2(const Vec2& value)
 		{
-			m_value2Vec2.setValue(value);
+			m_toVec2.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		double value1Double() const
+		double fromDouble() const
 		{
-			return m_value1Double.value();
+			return m_fromDouble.value();
 		}
 
-		std::shared_ptr<Tween> setValue1Double(double value)
+		std::shared_ptr<Tween> setFromDouble(double value)
 		{
-			m_value1Double.setValue(value);
+			m_fromDouble.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		double value2Double() const
+		double toDouble() const
 		{
-			return m_value2Double.value();
+			return m_toDouble.value();
 		}
 
-		std::shared_ptr<Tween> setValue2Double(double value)
+		std::shared_ptr<Tween> setToDouble(double value)
 		{
-			m_value2Double.setValue(value);
+			m_toDouble.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const ColorF& value1Color() const
+		const ColorF& fromColor() const
 		{
-			return m_value1Color.value();
+			return m_fromColor.value();
 		}
 
-		std::shared_ptr<Tween> setValue1Color(const ColorF& value)
+		std::shared_ptr<Tween> setFromColor(const ColorF& value)
 		{
-			m_value1Color.setValue(value);
+			m_fromColor.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const ColorF& value2_color() const
+		const ColorF& toColor() const
 		{
-			return m_value2_color.value();
+			return m_toColor.value();
 		}
 
-		std::shared_ptr<Tween> setValue2Color(const ColorF& value)
+		std::shared_ptr<Tween> setToColor(const ColorF& value)
 		{
-			m_value2_color.setValue(value);
+			m_toColor.setValue(value);
 			return shared_from_this();
 		}
 

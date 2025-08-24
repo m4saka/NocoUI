@@ -24,6 +24,7 @@ namespace noco::editor
 
 	struct PropertyMetadata
 	{
+		Optional<String> displayName;  // Inspector上での表示名（未設定の場合はプロパティ名をそのまま使用）
 		Optional<String> tooltip;
 		Optional<String> tooltipDetail;
 		std::function<bool(const ComponentBase&)> visibilityCondition;  // 表示条件

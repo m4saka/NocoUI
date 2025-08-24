@@ -632,20 +632,28 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, std::function<String()> fnGetValue = nullptr)
 		{
-			// メタデータをチェックしてTextAreaを使うかどうか判断
 			std::shared_ptr<Node> propertyNode;
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 			{
 				const auto& metadata = it->second;
+				
+				// 表示名が設定されていれば使用
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+				
 				if (metadata.numTextAreaLines.has_value())
 				{
 					// TextAreaを使用
-					propertyNode = CreatePropertyNodeWithTextArea(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines, std::move(fnGetValue));
+					propertyNode = CreatePropertyNodeWithTextArea(displayName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines, std::move(fnGetValue));
 				}
 				else
 				{
 					// 通常のTextBoxを使用
-					propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), metadata.dragValueChangeStep);
+					propertyNode = CreatePropertyNode(displayName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), metadata.dragValueChangeStep);
 				}
 				
 				// ツールチップを追加
@@ -660,7 +668,7 @@ namespace noco::editor
 			else
 			{
 				// メタデータがない場合は通常のTextBoxを使用
-				propertyNode = CreatePropertyNode(propertyName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), none);
+				propertyNode = CreatePropertyNode(displayName, value, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue), none);
 			}
 			
 			return propertyNode;
@@ -670,7 +678,19 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateVec2PropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
+			// メタデータをチェックして表示名を取得
+			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+			}
+			
+			const auto propertyNode = CreateVec2PropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -691,7 +711,19 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createEnumPropertyNodeWithTooltip(StringView componentName, StringView propertyName, StringView value, std::function<void(StringView)> fnSetValue, const std::shared_ptr<ContextMenu>& contextMenu, const Array<String>& enumValues, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateEnumPropertyNode(propertyName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue, hasParameterRef);
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
+			// メタデータをチェックして表示名を取得
+			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+			}
+			
+			const auto propertyNode = CreateEnumPropertyNode(displayName, value, std::move(fnSetValue), contextMenu, enumValues, hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -712,7 +744,19 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createLRTBPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const LRTB& currentValue, std::function<void(const LRTB&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateLRTBPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
+			// メタデータをチェックして表示名を取得
+			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+			}
+			
+			const auto propertyNode = CreateLRTBPropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -744,7 +788,19 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateBoolPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
+			// メタデータをチェックして表示名を取得
+			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+			}
+			
+			const auto propertyNode = CreateBoolPropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -763,7 +819,19 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createColorPropertyNodeWithTooltip(StringView componentName, StringView propertyName, const ColorF& currentValue, std::function<void(const ColorF&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
-			const auto propertyNode = CreateColorPropertyNode(propertyName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
+			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			
+			// メタデータをチェックして表示名を取得
+			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
+			{
+				const auto& metadata = it->second;
+				if (metadata.displayName)
+				{
+					displayName = *metadata.displayName;
+				}
+			}
+			
+			const auto propertyNode = CreateColorPropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -3753,6 +3821,7 @@ namespace noco::editor
 								placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
 							}
 							
+							const String displayName = propSchema.displayName.isEmpty() ? propSchema.name : propSchema.displayName;
 							std::shared_ptr<Node> propertyNode;
 							switch (propSchema.editType)
 							{
@@ -3766,7 +3835,7 @@ namespace noco::editor
 									if (propSchema.numTextAreaLines.has_value())
 									{
 										propertyNode = CreatePropertyNodeWithTextArea(
-											propSchema.name,
+											displayName,
 											currentValue,
 											onChange,
 											HasInteractivePropertyValueYN::No,
@@ -3775,7 +3844,7 @@ namespace noco::editor
 									else
 									{
 										propertyNode = CreatePropertyNode(
-											propSchema.name,
+											displayName,
 											currentValue,
 											onChange,
 											HasInteractivePropertyValueYN::No,
@@ -3794,7 +3863,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreatePropertyNode(
-										propSchema.name,
+										displayName,
 										currentValue,
 										onChange,
 										HasInteractivePropertyValueYN::No,
@@ -3813,7 +3882,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreateBoolPropertyNode(
-										propSchema.name,
+										displayName,
 										value,
 										onChange,
 										HasInteractivePropertyValueYN::No,
@@ -3830,7 +3899,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreateVec2PropertyNode(
-										propSchema.name,
+										displayName,
 										value,
 										onChange,
 										HasInteractivePropertyValueYN::No,
@@ -3847,7 +3916,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreateColorPropertyNode(
-										propSchema.name,
+										displayName,
 										value,
 										onChange,
 										HasInteractivePropertyValueYN::No,
@@ -3864,7 +3933,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreateLRTBPropertyNode(
-										propSchema.name,
+										displayName,
 										value,
 										onChange,
 										HasInteractivePropertyValueYN::No,
@@ -3880,7 +3949,7 @@ namespace noco::editor
 									};
 									
 									propertyNode = CreateEnumPropertyNode(
-										propSchema.name,
+										displayName,
 										currentValue,
 										onChange,
 										m_contextMenu,

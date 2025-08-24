@@ -583,11 +583,13 @@ namespace noco::editor
 			return false;
 		};
 		
-		metadata[PropertyKey{ U"Tween", U"value1Vec2" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"fromVec2" }] = PropertyMetadata{
+			.displayName = U"from",
 			.tooltip = U"開始値",
 			.visibilityCondition = tweenVec2VisibilityCondition,
 		};
-		metadata[PropertyKey{ U"Tween", U"value2Vec2" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"toVec2" }] = PropertyMetadata{
+			.displayName = U"to",
 			.tooltip = U"終了値",
 			.visibilityCondition = tweenVec2VisibilityCondition,
 		};
@@ -602,12 +604,14 @@ namespace noco::editor
 			return false;
 		};
 		
-		metadata[PropertyKey{ U"Tween", U"value1Double" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"fromDouble" }] = PropertyMetadata{
+			.displayName = U"from",
 			.tooltip = U"開始角度（度）",
 			.visibilityCondition = tweenDoubleVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"Tween", U"value2Double" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"toDouble" }] = PropertyMetadata{
+			.displayName = U"to",
 			.tooltip = U"終了角度（度）",
 			.visibilityCondition = tweenDoubleVisibilityCondition,
 			.dragValueChangeStep = 1.0,
@@ -623,11 +627,13 @@ namespace noco::editor
 			return false;
 		};
 		
-		metadata[PropertyKey{ U"Tween", U"value1Color" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"fromColor" }] = PropertyMetadata{
+			.displayName = U"from",
 			.tooltip = U"開始値",
 			.visibilityCondition = tweenColorVisibilityCondition,
 		};
-		metadata[PropertyKey{ U"Tween", U"value2_color" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"toColor" }] = PropertyMetadata{
+			.displayName = U"to",
 			.tooltip = U"終了値",
 			.visibilityCondition = tweenColorVisibilityCondition,
 		};

@@ -108,6 +108,11 @@ namespace noco::editor
 		PropertySchema prop;
 		prop.name = json[U"name"].getString();
 		
+		if (json.contains(U"displayName"))
+		{
+			prop.displayName = json[U"displayName"].getString();
+		}
+		
 		if (json.contains(U"editType"))
 		{
 			prop.editType = StringToEnum<PropertyEditType>(json[U"editType"].getString(), PropertyEditType::Text);

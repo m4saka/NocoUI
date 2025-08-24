@@ -77,9 +77,9 @@ namespace noco
 
 	void Tween::updateTranslate(const std::shared_ptr<Node>& node, double progress)
 	{
-		const Vec2& value1 = m_value1Vec2.value();
-		const Vec2& value2 = m_value2Vec2.value();
-		const Vec2 interpolated = Math::Lerp(value1, value2, progress);
+		const Vec2& from = m_fromVec2.value();
+		const Vec2& to = m_toVec2.value();
+		const Vec2 interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
 		transform.translate().setCurrentFrameOverride(interpolated);
@@ -87,9 +87,9 @@ namespace noco
 
 	void Tween::updateScale(const std::shared_ptr<Node>& node, double progress)
 	{
-		const Vec2& value1 = m_value1Vec2.value();
-		const Vec2& value2 = m_value2Vec2.value();
-		const Vec2 interpolated = Math::Lerp(value1, value2, progress);
+		const Vec2& from = m_fromVec2.value();
+		const Vec2& to = m_toVec2.value();
+		const Vec2 interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
 		transform.scale().setCurrentFrameOverride(interpolated);
@@ -97,9 +97,9 @@ namespace noco
 
 	void Tween::updateRotation(const std::shared_ptr<Node>& node, double progress)
 	{
-		const double value1 = m_value1Double.value();
-		const double value2 = m_value2Double.value();
-		const double interpolated = Math::Lerp(value1, value2, progress);
+		const double from = m_fromDouble.value();
+		const double to = m_toDouble.value();
+		const double interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
 		transform.rotation().setCurrentFrameOverride(interpolated);
@@ -107,9 +107,9 @@ namespace noco
 
 	void Tween::updateColor(const std::shared_ptr<Node>& node, double progress)
 	{
-		const ColorF& value1 = m_value1Color.value();
-		const ColorF& value2 = m_value2_color.value();
-		const ColorF interpolated = value1.lerp(value2, progress);
+		const ColorF& from = m_fromColor.value();
+		const ColorF& to = m_toColor.value();
+		const ColorF interpolated = from.lerp(to, progress);
 
 		auto& transform = node->transform();
 		transform.color().setCurrentFrameOverride(interpolated);
