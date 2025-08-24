@@ -281,7 +281,7 @@ namespace noco::editor
 			setTargetNode(m_targetNode.lock());
 			if (preserveScroll)
 			{
-				m_inspectorRootNode->resetScrollOffset(RecursiveYN::No, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+				m_inspectorRootNode->resetScrollOffset(RecursiveYN::No, RefreshesLayoutYN::No, RefreshesLayoutYN::Yes);
 				m_inspectorRootNode->scroll(Vec2{ 0, scrollY }, RefreshesLayoutYN::No);
 			}
 			m_editorCanvas->refreshLayout();
