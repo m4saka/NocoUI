@@ -3964,7 +3964,12 @@ namespace noco::editor
 							{
 								if (!propSchema.tooltip.isEmpty())
 								{
-									if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+									// boolプロパティの場合はpropertyNode全体にツールチップを追加
+									if (propSchema.editType == PropertyEditType::Bool)
+									{
+										propertyNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, propSchema.tooltip, propSchema.tooltipDetail);
+									}
+									else if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
 									{
 										labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, propSchema.tooltip, propSchema.tooltipDetail);
 									}
