@@ -462,7 +462,7 @@ namespace noco::editor
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				LRTB{ 3, 18, 3, 3 })
-				->setSizingMode(LabelSizingMode::ShrinkToFit);
+				->setSizingMode(LabelSizingMode::AutoShrink);
 		
 			// ▼アイコン
 			m_styleStateComboBox->emplaceComponent<Label>(

@@ -9,8 +9,8 @@ namespace noco
 	enum class TextureFontLabelSizingMode : uint8
 	{
 		Fixed,
-		ShrinkToFit,
-		ShrinkWidthToFit,
+		AutoShrink,
+		AutoShrinkWidth,
 	};
 
 	class TextureFontLabel : public SerializableComponentBase, public std::enable_shared_from_this<TextureFontLabel>
@@ -56,7 +56,7 @@ namespace noco
 			Array<LineCache> lineCaches;
 			SizeF contentSize = SizeF::Zero();
 			
-			// ShrinkToFit用キャッシュ
+			// AutoShrink用キャッシュ
 			Vec2 effectiveCharacterSize = Vec2::Zero();
 			SizeF availableSize = SizeF::Zero();
 			Vec2 originalCharacterSize = Vec2::Zero();

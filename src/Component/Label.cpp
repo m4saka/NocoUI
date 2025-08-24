@@ -137,14 +137,14 @@ namespace noco
 			rect.size,
 			m_sizingMode.value());
 
-		if (m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
+		if (m_sizingMode.value() == LabelSizingMode::AutoShrink)
 		{
 			const SizeF availableSize = rect.size;
 			
 			// フォントサイズはSmoothPropertyなので許容誤差を大きめに取る
 			constexpr double Epsilon = 1e-2;
 			const bool cacheValid = !wasUpdated &&
-			                       (m_cache.sizingMode == LabelSizingMode::ShrinkToFit) &&
+			                       (m_cache.sizingMode == LabelSizingMode::AutoShrink) &&
 			                       (Abs(m_cache.availableSize.x - availableSize.x) < Epsilon) &&
 			                       (Abs(m_cache.availableSize.y - availableSize.y) < Epsilon) &&
 			                       (Abs(m_cache.originalFontSize - m_fontSize.value()) < Epsilon) &&
@@ -152,7 +152,7 @@ namespace noco
 			
 			if (!cacheValid)
 			{
-				m_cache.sizingMode = LabelSizingMode::ShrinkToFit;
+				m_cache.sizingMode = LabelSizingMode::AutoShrink;
 				m_cache.availableSize = availableSize;
 				m_cache.originalFontSize = m_fontSize.value();
 				m_cache.minFontSize = m_minFontSize.value();
@@ -171,7 +171,7 @@ namespace noco
 						effectiveFontSize,
 						characterSpacing,
 						m_horizontalOverflow.value(),
-						VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
+						VerticalOverflow::Overflow,  // AutoShrinkでは常にOverflowとして計算
 						availableSize,
 						m_sizingMode.value());
 					
@@ -198,7 +198,7 @@ namespace noco
 							effectiveFontSize,
 							characterSpacing,
 							m_horizontalOverflow.value(),
-							VerticalOverflow::Overflow,  // ShrinkToFitでは常にOverflowとして計算
+							VerticalOverflow::Overflow,  // AutoShrinkでは常にOverflowとして計算
 							availableSize,
 							m_sizingMode.value());
 						break;
@@ -207,7 +207,7 @@ namespace noco
 				
 				m_cache.effectiveFontSize = effectiveFontSize;
 				
-				// ShrinkToFitの探索ではVerticalOverflow::Overflowで計算したため、
+				// AutoShrinkの探索ではVerticalOverflow::Overflowで計算したため、
 				// 実際のverticalOverflowプロパティ値で再計算する必要がある
 				if (m_verticalOverflow.value() == VerticalOverflow::Clip)
 				{
@@ -236,19 +236,19 @@ namespace noco
 		else
 		{
 			// Fixedモードに切り替わった場合、スケールを元に戻す
-			if (m_cache.sizingMode == LabelSizingMode::ShrinkToFit && m_cache.baseFontSize != 0)
+			if (m_cache.sizingMode == LabelSizingMode::AutoShrink && m_cache.baseFontSize != 0)
 			{
 				m_cache.scale = m_fontSize.value() / m_cache.baseFontSize;
 			}
 			m_cache.sizingMode = LabelSizingMode::Fixed;
 		}
 
-		// ShrinkToFitモードでは、フォントサイズ探索時にrefreshIfDirtyを呼ぶため、
+		// AutoShrinkモードでは、フォントサイズ探索時にrefreshIfDirtyを呼ぶため、
 		// prevParams->fontSizeが縮小後のフォントサイズで保存される。
 		// 次フレームで元のフォントサイズと比較されると常に変更ありと判定され、
 		// 毎フレーム再計算が発生してしまう。
 		// これを防ぐため、prevParams->fontSizeを元のフォントサイズに戻す。
-		if (m_cache.prevParams.has_value() && m_sizingMode.value() == LabelSizingMode::ShrinkToFit)
+		if (m_cache.prevParams.has_value() && m_sizingMode.value() == LabelSizingMode::AutoShrink)
 		{
 			m_cache.prevParams->fontSize = m_fontSize.value();
 		}

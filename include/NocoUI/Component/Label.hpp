@@ -14,7 +14,7 @@ namespace noco
 	enum class LabelSizingMode : uint8
 	{
 		Fixed,
-		ShrinkToFit,
+		AutoShrink,
 		// 将来的にテキストに応じてノード側を自動リサイズするモードが追加されることを想定
 	};
 
@@ -96,7 +96,7 @@ namespace noco
 			Font currentFont;  // 現在使用中のフォント
 			int32 baseFontSize = 0;  // ベースフォントサイズ
 			
-			// ShrinkToFit用キャッシュ
+			// AutoShrink用キャッシュ
 			double effectiveFontSize = 0.0;
 			SizeF availableSize = SizeF::Zero();
 			double originalFontSize = 0.0;

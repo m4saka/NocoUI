@@ -220,13 +220,13 @@ namespace noco
 
 		Vec2 effectiveCharacterSize = m_characterSize.value();
 		
-		if (m_sizingMode.value() == TextureFontLabelSizingMode::ShrinkToFit)
+		if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrink)
 		{
 			const SizeF availableSize = rect.size;
 			
 			constexpr double Epsilon = 1e-2;
 			const bool cacheValid = !wasUpdated &&
-			                       (m_cache.sizingMode == TextureFontLabelSizingMode::ShrinkToFit) &&
+			                       (m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrink) &&
 			                       (Abs(m_cache.availableSize.x - availableSize.x) < Epsilon) &&
 			                       (Abs(m_cache.availableSize.y - availableSize.y) < Epsilon) &&
 			                       (Abs(m_cache.originalCharacterSize.x - m_characterSize.value().x) < Epsilon) &&
@@ -234,7 +234,7 @@ namespace noco
 			
 			if (!cacheValid)
 			{
-				m_cache.sizingMode = TextureFontLabelSizingMode::ShrinkToFit;
+				m_cache.sizingMode = TextureFontLabelSizingMode::AutoShrink;
 				m_cache.availableSize = availableSize;
 				m_cache.originalCharacterSize = m_characterSize.value();
 				
@@ -339,13 +339,13 @@ namespace noco
 				effectiveCharacterSize = m_cache.effectiveCharacterSize;
 			}
 		}
-		else if (m_sizingMode.value() == TextureFontLabelSizingMode::ShrinkWidthToFit)
+		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth)
 		{
 			const SizeF availableSize = rect.size;
 			
 			constexpr double Epsilon = 1e-2;
 			const bool cacheValid = !wasUpdated &&
-			                       (m_cache.sizingMode == TextureFontLabelSizingMode::ShrinkWidthToFit) &&
+			                       (m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth) &&
 			                       (Abs(m_cache.availableSize.x - availableSize.x) < Epsilon) &&
 			                       (Abs(m_cache.availableSize.y - availableSize.y) < Epsilon) &&
 			                       (Abs(m_cache.originalCharacterSize.x - m_characterSize.value().x) < Epsilon) &&
@@ -353,7 +353,7 @@ namespace noco
 			
 			if (!cacheValid)
 			{
-				m_cache.sizingMode = TextureFontLabelSizingMode::ShrinkWidthToFit;
+				m_cache.sizingMode = TextureFontLabelSizingMode::AutoShrinkWidth;
 				m_cache.availableSize = availableSize;
 				m_cache.originalCharacterSize = m_characterSize.value();
 				
@@ -385,7 +385,7 @@ namespace noco
 					}
 					
 					effectiveCharacterSize.x *= ShrinkScaleFactor;
-					// ShrinkWidthToFitでは高さは固定のまま、幅のみ縮小
+					// AutoShrinkWidthでは高さは固定のまま、幅のみ縮小
 					
 					if (effectiveCharacterSize.x < minCharWidth)
 					{
@@ -437,8 +437,8 @@ namespace noco
 		}
 		else
 		{
-			if (m_cache.sizingMode == TextureFontLabelSizingMode::ShrinkToFit || 
-			    m_cache.sizingMode == TextureFontLabelSizingMode::ShrinkWidthToFit)
+			if (m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrink || 
+			    m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
 			{
 				effectiveCharacterSize = m_characterSize.value();
 			}
@@ -446,8 +446,8 @@ namespace noco
 		}
 		
 		if (m_cache.prevParams.has_value() && 
-		    (m_sizingMode.value() == TextureFontLabelSizingMode::ShrinkToFit || 
-		     m_sizingMode.value() == TextureFontLabelSizingMode::ShrinkWidthToFit))
+		    (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrink || 
+		     m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth))
 		{
 			m_cache.prevParams->characterSize = m_characterSize.value();
 		}

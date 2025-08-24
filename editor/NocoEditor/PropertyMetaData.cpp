@@ -330,17 +330,17 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",
-			.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nShrinkToFit: ノードサイズに収まるようフォントサイズを自動縮小します\n※ShrinkToFitはテキストやその他の値に変化が発生した時のフォントサイズの再計算にかかる負荷が高いため、自動縮小が不要な場合はなるべくFixedを指定することを推奨します",
+			.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nAutoShrink: ノードサイズに収まるようフォントサイズを自動縮小します\n※AutoShrinkはテキストやその他の値に変化が発生した時のフォントサイズの再計算にかかる負荷が高いため、自動縮小が不要な場合はなるべくFixedを指定することを推奨します",
 			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"Label", U"minFontSize" }] = PropertyMetadata{
 			.tooltip = U"最小フォントサイズ",
-			.tooltipDetail = U"ShrinkToFit時の最小フォントサイズ",
+			.tooltipDetail = U"AutoShrink時の最小フォントサイズ",
 			.visibilityCondition = [](const ComponentBase& component)
 			{
 				if (auto label = dynamic_cast<const Label*>(&component))
 				{
-					return label->sizingMode().defaultValue == LabelSizingMode::ShrinkToFit;
+					return label->sizingMode().defaultValue == LabelSizingMode::AutoShrink;
 				}
 				return false;
 			},
@@ -420,7 +420,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",
-			.tooltipDetail = U"Fixed: 固定文字サイズで描画します\nShrinkToFit: ノードサイズに収まるよう文字サイズを自動縮小します\nShrinkWidthToFit: 幅のみに収まるよう文字サイズを自動縮小します",
+			.tooltipDetail = U"Fixed: 固定文字サイズで描画します\nAutoShrink: ノードサイズに収まるよう文字サイズを自動縮小します\nAutoShrinkWidth: 幅のみに収まるよう文字サイズを自動縮小します",
 			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"characterSize" }] = PropertyMetadata{

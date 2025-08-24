@@ -27,7 +27,7 @@ namespace noco::editor
 			HorizontalAlign::Center,
 			VerticalAlign::Middle,
 			LRTB{ -2, -2, -2, -2 })
-			->setSizingMode(LabelSizingMode::ShrinkToFit);
+			->setSizingMode(LabelSizingMode::AutoShrink);
 		return buttonNode;
 	}
 }

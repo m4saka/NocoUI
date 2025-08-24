@@ -889,7 +889,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 			
 			const auto textBoxNode = propertyNode->emplaceChild(
@@ -1024,7 +1024,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 			const auto textAreaNode = propertyNode->emplaceChild(
 				U"TextArea",
@@ -1131,7 +1131,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
@@ -1302,7 +1302,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
@@ -1445,7 +1445,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto line1TextBoxParentNode = line1->emplaceChild(
@@ -1554,7 +1554,7 @@ namespace noco::editor
 				LabelUnderlineStyle::None,
 				ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto line2TextBoxParentNode = line2->emplaceChild(
@@ -1762,7 +1762,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto rowNode = propertyNode->emplaceChild(
@@ -2089,7 +2089,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto comboBoxNode = propertyNode->emplaceChild(
@@ -2109,7 +2109,7 @@ namespace noco::editor
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				LRTB{ 3, 18, 3, 3 })
-				->setSizingMode(LabelSizingMode::ShrinkToFit);
+				->setSizingMode(LabelSizingMode::AutoShrink);
 
 			comboBoxNode->addComponent(std::make_shared<EnumPropertyComboBox>(
 				currentValue,
@@ -2208,7 +2208,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::ShrinkToFit,
+				LabelSizingMode::AutoShrink,
 				8.0);
 
 			const auto checkboxParentNode = propertyNode->emplaceChild(
@@ -2625,7 +2625,7 @@ namespace noco::editor
 						LRTB{ 18 + 4, 5, 5, 5 },
 						HorizontalOverflow::Wrap,
 						VerticalOverflow::Clip)
-						->setSizingMode(LabelSizingMode::ShrinkToFit);
+						->setSizingMode(LabelSizingMode::AutoShrink);
 					
 					// メタデータに基づいてツールチップを追加
 					if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ regionTypeName }, String{ name } }); it != m_propertyMetadata.end())
