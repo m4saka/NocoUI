@@ -12,7 +12,7 @@ set(Siv3D_SEARCH_PATHS
     /usr/local/opt/siv3d
     /usr/local
     /opt/siv3d
-    ${SIV3D_ROOT}
+    ${Siv3D_ROOT}
 )
 
 find_path(Siv3D_INCLUDE_DIR

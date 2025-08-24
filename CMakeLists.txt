@@ -24,8 +24,8 @@ if(APPLE)
     message(STATUS "Building for x86_64 architecture (Rosetta 2 will be used on Apple Silicon)")
 endif()
 
-if(NOT DEFINED ENV{SIV3D_ROOT})
-    set(ENV{SIV3D_ROOT} "$ENV{HOME}/Library/Siv3D")
+if(NOT DEFINED Siv3D_ROOT)
+    set(Siv3D_ROOT "$ENV{HOME}/Library/Siv3D" CACHE PATH "Path to Siv3D installation")
 endif()
 
 file(GLOB_RECURSE NOCOUI_SOURCES src/*.cpp)
