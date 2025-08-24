@@ -668,7 +668,7 @@ public:
 			});
 	}
 
-	void showClearedParamRefsDialog(const Array<String>& clearedParams)
+	void appendClearedParamRefsWarning(Array<String>& warningMessages, const Array<String>& clearedParams)
 	{
 		if (clearedParams.empty())
 		{
@@ -694,24 +694,10 @@ public:
 		// 10件を超える場合は合計数を表示
 		if (sortedParams.size() > 10)
 		{
-			paramList += U"\n... (全" + Format(sortedParams.size()) + U"件)";
+			paramList += U"\n... (全{}件)"_fmt(sortedParams.size());
 		}
 		
-		// ダイアログを表示
-		m_dialogOpener->openDialog(
-			std::make_shared<SimpleDialog>(
-				U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList,
-				[](StringView) {},
-				Array<DialogButtonDesc>
-				{ 
-					DialogButtonDesc
-					{ 
-						.text = U"OK", 
-						.mnemonicInput = KeyO, 
-						.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No, 
-						.isDefaultButton = IsDefaultButtonYN::Yes,
-					}, 
-				}));
+		warningMessages.push_back(U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList);
 	}
 
 	bool loadFromFile(const FilePath& filePath, bool showMessageBoxOnError = true)
@@ -729,6 +715,17 @@ public:
 			}
 			return false;
 		}
+		
+		Array<String> warningMessages;
+		
+		// serializedVersionのチェック
+		const int32 fileSerializedVersion = json.contains(U"serializedVersion") ? json[U"serializedVersion"].get<int32>() : 0;
+		if (fileSerializedVersion > noco::CurrentSerializedVersion)
+		{
+			const String fileVersion = json.contains(U"version") ? json[U"version"].get<String>() : U"unknown";
+			warningMessages.push_back(U"新しいバージョンのNocoEditor({})で作成されたファイルを開きました。\n上書き保存すると、ファイル内容が一部欠損する可能性があります。"_fmt(fileVersion));
+		}
+		
 		m_filePath = filePath;
 		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::No))
 		{
@@ -748,10 +745,16 @@ public:
 		noco::Asset::SetBaseDirectoryPath(folderPath);
 
 		resetDirtyState();
-		if (showMessageBoxOnError)
+		
+		// パラメータ参照解除の警告を追加
+		appendClearedParamRefsWarning(warningMessages, clearedParams);
+		
+		// 警告ダイアログを順番に表示
+		if (showMessageBoxOnError && !warningMessages.empty())
 		{
-			showClearedParamRefsDialog(clearedParams);
+			m_dialogOpener->openDialogOKMultiple(warningMessages);
 		}
+		
 		return true;
 	}
 

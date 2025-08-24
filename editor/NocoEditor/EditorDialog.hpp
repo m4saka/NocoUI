@@ -201,6 +201,15 @@ namespace noco::editor
 		{
 			return !m_openedDialogFrames.empty();
 		}
+
+		void openDialogOK(const String& text, const std::function<void()>& onComplete = nullptr);
+
+		void openDialogOKMultiple(const Array<String>& messages, const std::function<void()>& onComplete = nullptr);
+
+	private:
+		void openDialogOKMultipleRecursive(const Array<String>& messages, size_t index, const std::function<void()>& onComplete);
+
+	public:
 	};
 
 	class SimpleDialog : public IDialog
@@ -812,4 +821,52 @@ namespace noco::editor
 			}
 		}
 	};
+
+	inline void DialogOpener::openDialogOK(const String& text, const std::function<void()>& onComplete)
+	{
+		openDialog(std::make_shared<SimpleDialog>(
+			text,
+			[onComplete](StringView) { if (onComplete) onComplete(); },
+			Array<DialogButtonDesc>
+			{
+				DialogButtonDesc
+				{
+					.text = U"OK",
+					.mnemonicInput = KeyO,
+					.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No,
+					.isDefaultButton = IsDefaultButtonYN::Yes,
+				},
+			}));
+	}
+
+	inline void DialogOpener::openDialogOKMultiple(const Array<String>& messages, const std::function<void()>& onComplete)
+	{
+		if (messages.empty())
+		{
+			if (onComplete)
+			{
+				onComplete();
+			}
+			return;
+		}
+
+		openDialogOKMultipleRecursive(messages, 0, onComplete);
+	}
+
+	inline void DialogOpener::openDialogOKMultipleRecursive(const Array<String>& messages, size_t index, const std::function<void()>& onComplete)
+	{
+		if (index >= messages.size())
+		{
+			if (onComplete)
+			{
+				onComplete();
+			}
+			return;
+		}
+
+		openDialogOK(messages[index], [this, messages, index, onComplete]()
+		{
+			openDialogOKMultipleRecursive(messages, index + 1, onComplete);
+		});
+	}
 }

@@ -5,6 +5,8 @@
 
 namespace noco
 {
+	constexpr int32 CurrentSerializedVersion = 1;
+
 	template <typename T>
 	[[nodiscard]]
 	T StringToEnum(StringView value, T defaultValue) requires std::is_enum_v<T>

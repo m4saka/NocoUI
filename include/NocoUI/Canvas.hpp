@@ -379,6 +379,7 @@ namespace noco
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
 		/* NonSerialized */ bool m_isEditorPreview = false;
+		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
@@ -631,6 +632,12 @@ namespace noco
 
 		[[nodiscard]]
 		Quad quad() const;
+
+		[[nodiscard]]
+		int32 serializedVersion() const
+		{
+			return m_serializedVersion;
+		}
 
 		// INodeContainer interface implementation
 		[[nodiscard]]

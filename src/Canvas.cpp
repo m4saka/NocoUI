@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Canvas.hpp"
 #include "NocoUI/ComponentFactory.hpp"
+#include "NocoUI/Serialization.hpp"
 #include "NocoUI/Version.hpp"
 #include <cassert>
 
@@ -227,6 +228,7 @@ namespace noco
 		JSON json = JSON
 		{
 			{ U"version", NocoUIVersion },
+			{ U"serializedVersion", CurrentSerializedVersion },
 			{ U"size", ValueToString(m_size) },
 		};
 
@@ -266,6 +268,18 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, RefreshesLayoutYN refreshesLayout, detail::WithInstanceIdYN withInstanceId)
 	{
+		if (!json.contains(U"version"))
+		{
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'version'";
+			return nullptr;
+		}
+		
+		if (!json.contains(U"serializedVersion"))
+		{
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'serializedVersion'";
+			return nullptr;
+		}
+		
 		if (!json.contains(U"size"))
 		{
 			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'size'";
@@ -279,6 +293,15 @@ namespace noco
 		}
 		
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
+		
+		// serializedVersionが将来のバージョンの場合は警告を出す
+		canvas->m_serializedVersion = json[U"serializedVersion"].get<int32>();
+		if (canvas->m_serializedVersion > CurrentSerializedVersion)
+		{
+			const String version = json[U"version"].get<String>();
+			Logger << U"[NocoUI warning] Opening file created with newer NocoUI version (version: {}, serializedVersion: {}). Current serializedVersion: {}"_fmt(
+				version, canvas->m_serializedVersion, CurrentSerializedVersion);
+		}
 		
 		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
 		{
