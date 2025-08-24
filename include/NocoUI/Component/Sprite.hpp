@@ -24,14 +24,18 @@ namespace noco
 		Property<bool> m_nineSliceTopTiled;
 		Property<bool> m_nineSliceBottomTiled;
 		Property<bool> m_nineSliceFallback;
+		Property<bool> m_useTextureRegion;
+		Property<Vec2> m_textureOffset;
+		Property<Vec2> m_textureSize;
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
 		void drawNineSlice(const Texture& texture, const RectF& rect, const ColorF& color) const;
+		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const ColorF& color) const;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_useTextureRegion, &m_textureOffset, &m_textureSize } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -47,6 +51,9 @@ namespace noco
 			, m_nineSliceTopTiled{ U"nineSliceTopTiled", false }
 			, m_nineSliceBottomTiled{ U"nineSliceBottomTiled", false }
 			, m_nineSliceFallback{ U"nineSliceFallback", true }
+			, m_useTextureRegion{ U"useTextureRegion", false }
+			, m_textureOffset{ U"textureOffset", Vec2::Zero() }
+			, m_textureSize{ U"textureSize", Vec2{ 100, 100 } }
 		{
 		}
 
@@ -229,6 +236,42 @@ namespace noco
 		std::shared_ptr<Sprite> setNineSliceFallback(const PropertyValue<bool>& nineSliceFallback)
 		{
 			m_nineSliceFallback.setPropertyValue(nineSliceFallback);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<bool>& useTextureRegion() const
+		{
+			return m_useTextureRegion.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setUseTextureRegion(const PropertyValue<bool>& useTextureRegion)
+		{
+			m_useTextureRegion.setPropertyValue(useTextureRegion);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<Vec2>& textureOffset() const
+		{
+			return m_textureOffset.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureOffset(const PropertyValue<Vec2>& textureOffset)
+		{
+			m_textureOffset.setPropertyValue(textureOffset);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<Vec2>& textureSize() const
+		{
+			return m_textureSize.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureSize(const PropertyValue<Vec2>& textureSize)
+		{
+			m_textureSize.setPropertyValue(textureSize);
 			return shared_from_this();
 		}
 		

@@ -443,6 +443,32 @@ namespace noco::editor
 			.tooltip = U"要素が9スライスのマージンより小さい場合に通常描画にフォールバックするかどうか",
 			.visibilityCondition = nineSliceVisibilityCondition,
 		};
+		metadata[PropertyKey{ U"Sprite", U"useTextureRegion" }] = PropertyMetadata{
+			.tooltip = U"テクスチャの一部領域を使用",
+			.tooltipDetail = U"有効にすると、textureOffset/textureSizeで指定した領域を使用します",
+			.refreshInspectorOnChange = true,
+		};
+		
+		// useTextureRegionがtrueの時のみ表示するプロパティの条件
+		const auto textureRegionVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return HasAnyTrueState(sprite->useTextureRegion());
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Sprite", U"textureOffset" }] = PropertyMetadata{
+			.tooltip = U"テクスチャ内の切り出し開始位置 (ピクセル)",
+			.tooltipDetail = U"テクスチャの左上を原点とした切り出し開始位置を指定します",
+			.visibilityCondition = textureRegionVisibilityCondition,
+		};
+		metadata[PropertyKey{ U"Sprite", U"textureSize" }] = PropertyMetadata{
+			.tooltip = U"テクスチャから切り出すサイズ (ピクセル)",
+			.tooltipDetail = U"切り出す領域のサイズを指定します",
+			.visibilityCondition = textureRegionVisibilityCondition,
+		};
 		
 		// TextBox
 		metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
