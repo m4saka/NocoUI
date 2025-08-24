@@ -324,8 +324,6 @@ namespace noco
 			m_fontSize.value(),
 			rect.size);
 
-		const Vec2 cursorPos = m_cache.getCursorPos(m_cursorLine, m_cursorColumn, m_scrollOffsetX, m_scrollOffsetY);
-
 		// 現状は水平スクロールは行わない
 		// (将来的に折返し無効オプションを追加した場合に必要になる)
 		m_scrollOffsetX = 0;

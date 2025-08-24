@@ -1,4 +1,4 @@
-﻿#include <Catch2/catch.hpp>
+﻿#include <catch2/catch.hpp>
 #include <NocoUI/ComponentFactory.hpp>
 #include <NocoUI/Component/Component.hpp>
 

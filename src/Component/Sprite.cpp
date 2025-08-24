@@ -7,11 +7,6 @@ namespace noco
 {
 	namespace
 	{
-		String FormatTextureAssetName(const String& textureFilePath)
-		{
-			return U"noco::{}"_fmt(textureFilePath);
-		}
-
 		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
 		{
 #ifdef NOCO_EDITOR
