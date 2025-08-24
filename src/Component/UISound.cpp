@@ -8,19 +8,26 @@ namespace noco
 	{
 		Audio GetAudio(const String& audioFilePath, const String& audioAssetName)
 		{
-#ifdef NOCO_EDITOR
-			// エディタでは除外
-			(void)audioAssetName;
-#else
-			// 気付かないうちにファイルパスが使われるのを避けるため、AudioAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
-			if (!audioAssetName.empty())
+			if (detail::IsEditorMode())
 			{
-				return AudioAsset(audioAssetName);
+				// エディタモードではアセット名は無視してファイル名のみを使用
+				if (!audioFilePath.empty())
+				{
+					return noco::Asset::GetOrLoadAudio(audioFilePath);
+				}
 			}
-#endif // NOCO_EDITOR
-			if (!audioFilePath.empty())
+			else
 			{
-				return noco::Asset::GetOrLoadAudio(audioFilePath);
+				// 通常モードではアセット名を優先
+				// 気付かないうちにファイルパスが使われるのを避けるため、AudioAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
+				if (!audioAssetName.empty())
+				{
+					return AudioAsset(audioAssetName);
+				}
+				if (!audioFilePath.empty())
+				{
+					return noco::Asset::GetOrLoadAudio(audioFilePath);
+				}
 			}
 			return Audio{};
 		}

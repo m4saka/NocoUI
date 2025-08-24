@@ -923,6 +923,8 @@ public:
 
 void Main()
 {
+	noco::detail::SetEditorMode(true);
+
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
 

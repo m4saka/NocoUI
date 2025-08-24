@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Component/Sprite.hpp"
 #include "NocoUI/Node.hpp"
+#include "NocoUI/Canvas.hpp"
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/Enums.hpp"
 
@@ -9,19 +10,26 @@ namespace noco
 	{
 		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
 		{
-#ifdef NOCO_EDITOR
-			// エディタでは除外
-			(void)textureAssetName;
-#else
-			// 気付かないうちにファイルパスが使われるのを避けるため、TextureAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
-			if (!textureAssetName.empty())
+			if (detail::IsEditorMode())
 			{
-				return TextureAsset(textureAssetName);
+				// エディタモードではアセット名は無視してファイル名のみを使用
+				if (!textureFilePath.empty())
+				{
+					return noco::Asset::GetOrLoadTexture(textureFilePath);
+				}
 			}
-#endif // NOCO_EDITOR
-			if (!textureFilePath.empty())
+			else
 			{
-				return noco::Asset::GetOrLoadTexture(textureFilePath);
+				// 通常モードではアセット名を優先
+				// 気付かないうちにファイルパスが使われるのを避けるため、TextureAssetに指定されたキーが存在しない時もファイルパスへのフォールバックはしない仕様とする
+				if (!textureAssetName.empty())
+				{
+					return TextureAsset(textureAssetName);
+				}
+				if (!textureFilePath.empty())
+				{
+					return noco::Asset::GetOrLoadTexture(textureFilePath);
+				}
 			}
 			return Texture{};
 		}

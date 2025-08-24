@@ -42,6 +42,7 @@ namespace noco
 		inline int32 s_lastUpdateFrameCount = -1;
 		inline CanvasUpdateContext s_canvasUpdateContext;
 		inline CanvasUpdateContext s_prevCanvasUpdateContext;
+		inline bool s_isEditorMode = false;
 
 		inline void ClearCanvasUpdateContextIfNeeded()
 		{
@@ -298,6 +299,20 @@ namespace noco
 			return node;
 		}
 		return PrevFrame::GetDraggingNode();
+	}
+
+	namespace detail
+	{
+		inline void SetEditorMode(bool isEditorMode)
+		{
+			s_isEditorMode = isEditorMode;
+		}
+
+		[[nodiscard]]
+		inline bool IsEditorMode()
+		{
+			return s_isEditorMode;
+		}
 	}
 
 	enum class AutoScaleMode : uint8
