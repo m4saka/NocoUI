@@ -37,6 +37,96 @@ namespace noco
 		Property<int32> m_textureGridColumns;
 		Property<int32> m_textureGridRows;
 
+		struct TextureFontCache
+		{
+			struct CacheParams
+			{
+				String characterSet;
+				Vec2 textureCellSize;
+				Vec2 textureOffset;
+				int32 textureGridColumns;
+				int32 textureGridRows;
+
+				[[nodiscard]]
+				bool isDirty(
+					StringView newCharacterSet,
+					const Vec2& newTextureCellSize,
+					const Vec2& newTextureOffset,
+					int32 newTextureGridColumns,
+					int32 newTextureGridRows) const
+				{
+					return characterSet != newCharacterSet
+						|| textureCellSize != newTextureCellSize
+						|| textureOffset != newTextureOffset
+						|| textureGridColumns != newTextureGridColumns
+						|| textureGridRows != newTextureGridRows;
+				}
+			};
+
+			HashTable<char32, RectF> uvMap;
+			Optional<CacheParams> prevParams;
+
+			bool refreshIfDirty(
+				StringView characterSet,
+				const Vec2& textureCellSize,
+				const Vec2& textureOffset,
+				int32 textureGridColumns,
+				int32 textureGridRows)
+			{
+				if (prevParams.has_value() && !prevParams->isDirty(
+					characterSet, textureCellSize, textureOffset,
+					textureGridColumns, textureGridRows))
+				{
+					return false;
+				}
+
+				uvMap.clear();
+
+				const int32 safeGridColumns = Max(textureGridColumns, 1);
+				size_t normalizedIndex = 0;
+
+				for (char32 ch : characterSet)
+				{
+					if (ch == U'\n' || ch == U'\r')
+					{
+						continue;
+					}
+
+					const double gridX = static_cast<double>(normalizedIndex % safeGridColumns);
+					const double gridY = static_cast<double>(normalizedIndex / safeGridColumns);
+
+					uvMap[ch] = RectF{
+						textureOffset.x + gridX * textureCellSize.x,
+						textureOffset.y + gridY * textureCellSize.y,
+						textureCellSize.x,
+						textureCellSize.y
+					};
+
+					++normalizedIndex;
+				}
+
+				prevParams = CacheParams{
+					.characterSet = String{ characterSet },
+					.textureCellSize = textureCellSize,
+					.textureOffset = textureOffset,
+					.textureGridColumns = textureGridColumns,
+					.textureGridRows = textureGridRows,
+				};
+
+				return true;
+			}
+
+			[[nodiscard]]
+			Optional<RectF> getUV(char32 character) const
+			{
+				if (auto it = uvMap.find(character); it != uvMap.end())
+				{
+					return it->second;
+				}
+				return none;
+			}
+		};
+
 		struct CharacterCache
 		{
 			struct CharInfo
@@ -125,13 +215,12 @@ namespace noco
 				const Vec2& textureOffset,
 				int32 textureGridColumns,
 				int32 textureGridRows,
-				bool preserveAspect);
+				bool preserveAspect,
+				const TextureFontCache& textureFontCache);
 		};
 
+		/* NonSerialized */ mutable TextureFontCache m_textureFontCache;
 		/* NonSerialized */ mutable CharacterCache m_cache;
-
-		[[nodiscard]]
-		Optional<RectF> getCharacterUV(char32 character) const;
 
 	public:
 		explicit TextureFontLabel(

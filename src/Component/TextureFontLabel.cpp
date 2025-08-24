@@ -33,30 +33,6 @@ namespace noco
 		}
 	}
 
-	Optional<RectF> TextureFontLabel::getCharacterUV(char32 character) const
-	{
-		const String& characterSet = m_characterSet.value();
-		const auto charIndex = characterSet.indexOf(character);
-
-		if (charIndex == String::npos)
-		{
-			return none;
-		}
-
-		const int32 gridColumns = Max(m_textureGridColumns.value(), 1);
-		const Vec2& cellSize = m_textureCellSize.value();
-		const Vec2& offset = m_textureOffset.value();
-
-		const double gridX = static_cast<double>(charIndex % gridColumns);
-		const double gridY = static_cast<double>(charIndex / gridColumns);
-
-		return RectF{
-			offset.x + gridX * cellSize.x,
-			offset.y + gridY * cellSize.y,
-			cellSize.x,
-			cellSize.y
-		};
-	}
 
 	bool TextureFontLabel::CharacterCache::refreshIfDirty(
 		StringView text,
@@ -71,7 +47,8 @@ namespace noco
 		const Vec2& textureOffset,
 		int32 textureGridColumns,
 		int32 textureGridRows,
-		bool preserveAspect)
+		bool preserveAspect,
+		const TextureFontCache& textureFontCache)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(
 			text, characterSet, characterSize, characterSpacing, sizingMode,
@@ -147,20 +124,14 @@ namespace noco
 				}
 			}
 
-			const int32 safeGridColumns = Max(textureGridColumns, 1);
-			const double gridX = static_cast<double>(static_cast<int32>(characterSet.indexOf(ch)) % safeGridColumns);
-			const double gridY = static_cast<double>(static_cast<int32>(characterSet.indexOf(ch)) / safeGridColumns);
-
-			lineChars.push_back({
-				ch,
-				RectF{
-					textureOffset.x + gridX * textureCellSize.x,
-					textureOffset.y + gridY * textureCellSize.y,
-					textureCellSize.x,
-					textureCellSize.y
-				},
-				Vec2{ offset.x, 0 }
-			});
+			if (auto uvRect = textureFontCache.getUV(ch))
+			{
+				lineChars.push_back(CharInfo{
+					ch,
+					*uvRect,
+					Vec2{ offset.x, 0 },
+				});
+			}
 
 			offset.x += charWidth;
 		}
@@ -202,6 +173,14 @@ namespace noco
 			-padding.left
 		);
 
+		m_textureFontCache.refreshIfDirty(
+			m_characterSet.value(),
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value()
+		);
+
 		const bool wasUpdated = m_cache.refreshIfDirty(
 			text,
 			m_characterSet.value(),
@@ -215,8 +194,8 @@ namespace noco
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
 			m_textureGridRows.value(),
-			m_preserveAspect.value()
-		);
+			m_preserveAspect.value(),
+			m_textureFontCache);
 
 		Vec2 effectiveCharacterSize = m_characterSize.value();
 		
@@ -258,7 +237,8 @@ namespace noco
 						m_textureOffset.value(),
 						m_textureGridColumns.value(),
 						m_textureGridRows.value(),
-						m_preserveAspect.value());
+						m_preserveAspect.value(),
+						m_textureFontCache);
 					
 					if (m_cache.contentSize.x <= availableSize.x && 
 					    m_cache.contentSize.y <= availableSize.y)
@@ -287,7 +267,8 @@ namespace noco
 							m_textureOffset.value(),
 							m_textureGridColumns.value(),
 							m_textureGridRows.value(),
-							m_preserveAspect.value());
+							m_preserveAspect.value(),
+							m_textureFontCache);
 						break;
 					}
 					else if (effectiveCharacterSize.y < minSize)
@@ -308,7 +289,8 @@ namespace noco
 							m_textureOffset.value(),
 							m_textureGridColumns.value(),
 							m_textureGridRows.value(),
-							m_preserveAspect.value());
+							m_preserveAspect.value(),
+							m_textureFontCache);
 						break;
 					}
 				}
@@ -331,7 +313,8 @@ namespace noco
 						m_textureOffset.value(),
 						m_textureGridColumns.value(),
 						m_textureGridRows.value(),
-						m_preserveAspect.value());
+						m_preserveAspect.value(),
+						m_textureFontCache);
 				}
 			}
 			else
@@ -376,7 +359,8 @@ namespace noco
 						m_textureOffset.value(),
 						m_textureGridColumns.value(),
 						m_textureGridRows.value(),
-						m_preserveAspect.value());
+						m_preserveAspect.value(),
+						m_textureFontCache);
 					
 					if (m_cache.contentSize.x <= availableSize.x && 
 					    m_cache.contentSize.y <= availableSize.y)
@@ -404,7 +388,8 @@ namespace noco
 							m_textureOffset.value(),
 							m_textureGridColumns.value(),
 							m_textureGridRows.value(),
-							m_preserveAspect.value());
+							m_preserveAspect.value(),
+							m_textureFontCache);
 						break;
 					}
 				}
@@ -427,7 +412,8 @@ namespace noco
 						m_textureOffset.value(),
 						m_textureGridColumns.value(),
 						m_textureGridRows.value(),
-						m_preserveAspect.value());
+						m_preserveAspect.value(),
+						m_textureFontCache);
 				}
 			}
 			else
@@ -445,6 +431,11 @@ namespace noco
 			m_cache.sizingMode = TextureFontLabelSizingMode::Fixed;
 		}
 		
+		// AutoShrink/AutoShrinkWidthモードでは、サイズ探索時にrefreshIfDirtyを呼ぶため、
+		// prevParams->characterSizeが縮小後のサイズで保存される。
+		// 次フレームで元のcharacterSizeと比較されると常に変更ありと判定され、
+		// 毎フレーム再計算が発生してしまう。
+		// これを防ぐため、prevParams->characterSizeを元のサイズに戻す。
 		if (m_cache.prevParams.has_value() && 
 		    (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrink || 
 		     m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth))
@@ -516,12 +507,6 @@ namespace noco
 
 			for (const auto& charInfo : line.characters)
 			{
-				const Optional<RectF> uvRect = getCharacterUV(charInfo.character);
-				if (!uvRect)
-				{
-					continue;
-				}
-
 				const Vec2 drawPos = rect.pos + Vec2{
 					lineOffsetX + charInfo.position.x,
 					contentOffsetY + line.offsetY
@@ -543,11 +528,11 @@ namespace noco
 					}
 					
 					const Vec2 centerOffset = (characterSize - adjustedSize) * 0.5;
-					texture(*uvRect).resized(adjustedSize).draw(drawPos + centerOffset, color);
+					texture(charInfo.sourceRect).resized(adjustedSize).draw(drawPos + centerOffset, color);
 				}
 				else
 				{
-					texture(*uvRect).resized(characterSize).draw(drawPos, color);
+					texture(charInfo.sourceRect).resized(characterSize).draw(drawPos, color);
 				}
 			}
 		}

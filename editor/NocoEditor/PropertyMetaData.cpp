@@ -391,7 +391,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"characterSet" }] = PropertyMetadata{
 			.tooltip = U"文字セット",
-			.tooltipDetail = U"テクスチャに含まれる文字を左上から右下への順番で指定します",
+			.tooltipDetail = U"テクスチャに含まれる文字を左上から右下への順番で指定します\n※改行は無視されるため、見やすさのために自由に改行を入れることができます",
 			.numTextAreaLines = 3,
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellSize" }] = PropertyMetadata{
