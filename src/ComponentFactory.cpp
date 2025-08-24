@@ -8,6 +8,7 @@ namespace noco
 		ComponentFactory factory;
 		
 		factory.registerComponentType<Label>(U"Label");
+		factory.registerComponentType<TextureFontLabel>(U"TextureFontLabel");
 		factory.registerComponentType<Sprite>(U"Sprite");
 		factory.registerComponentType<RectRenderer>(U"RectRenderer");
 		factory.registerComponentType<TextBox>(U"TextBox");

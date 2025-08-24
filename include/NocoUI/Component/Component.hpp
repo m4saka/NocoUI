@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ComponentBase.hpp"
 #include "Label.hpp"
+#include "TextureFontLabel.hpp"
 #include "Sprite.hpp"
 #include "RectRenderer.hpp"
 #include "ITextBox.hpp"

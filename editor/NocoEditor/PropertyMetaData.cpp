@@ -380,6 +380,92 @@ namespace noco::editor
 			.dragValueChangeStep = 1.0,
 		};
 		
+		// TextureFontLabel
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureFilePath" }] = PropertyMetadata{
+			.tooltip = U"テクスチャファイルのパス",
+			.tooltipDetail = U"textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureAssetName" }] = PropertyMetadata{
+			.tooltip = U"TextureAssetのキー名 (任意)",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"characterSet" }] = PropertyMetadata{
+			.tooltip = U"文字セット",
+			.tooltipDetail = U"テクスチャに含まれる文字を左上から右下への順番で指定します",
+			.numTextAreaLines = 3,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellSize" }] = PropertyMetadata{
+			.tooltip = U"1文字分のセルサイズ (幅, 高さ)",
+			.tooltipDetail = U"テクスチャ上の1文字分のピクセルサイズ",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureOffset" }] = PropertyMetadata{
+			.tooltip = U"テクスチャのオフセット (X, Y)",
+			.tooltipDetail = U"文字グリッドの開始位置のオフセット",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureGridColumns" }] = PropertyMetadata{
+			.tooltip = U"グリッドの列数",
+			.tooltipDetail = U"テクスチャグリッドの横方向の文字数",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureGridRows" }] = PropertyMetadata{
+			.tooltip = U"グリッドの行数",
+			.tooltipDetail = U"テクスチャグリッドの縦方向の文字数",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"text" }] = PropertyMetadata{
+			.tooltip = U"表示するテキスト",
+			.numTextAreaLines = 3,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"sizingMode" }] = PropertyMetadata{
+			.tooltip = U"サイズに関するモード",
+			.tooltipDetail = U"Fixed: 固定文字サイズで描画します\nShrinkToFit: ノードサイズに収まるよう文字サイズを自動縮小します\nShrinkWidthToFit: 幅のみに収まるよう文字サイズを自動縮小します",
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"characterSize" }] = PropertyMetadata{
+			.tooltip = U"文字の描画サイズ (幅, 高さ)",
+			.tooltipDetail = U"描画時の1文字分のサイズ",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"characterSpacing" }] = PropertyMetadata{
+			.tooltip = U"文字間隔 (横間隔, 行間隔)",
+			.tooltipDetail = U"X: 文字同士の横間隔\nY: 行同士の間隔",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"horizontalAlign" }] = PropertyMetadata{
+			.tooltip = U"水平方向の配置",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"verticalAlign" }] = PropertyMetadata{
+			.tooltip = U"垂直方向の配置",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"padding" }] = PropertyMetadata{
+			.tooltip = U"内側の余白 (左、右、上、下)",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"horizontalOverflow" }] = PropertyMetadata{
+			.tooltip = U"水平方向にはみ出す場合の処理",
+			.tooltipDetail = U"Wrap: 自動的に折り返します\nOverflow: 右へはみ出して描画します",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"verticalOverflow" }] = PropertyMetadata{
+			.tooltip = U"垂直方向にはみ出す場合の処理",
+			.tooltipDetail = U"Clip: 領域をはみ出した文字は描画しません\nOverflow: 下へはみ出して描画します",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"preserveAspect" }] = PropertyMetadata{
+			.tooltip = U"アスペクト比を保持",
+			.tooltipDetail = U"テクスチャの文字のアスペクト比を保持して描画します",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"color" }] = PropertyMetadata{
+			.tooltip = U"文字の色",
+			.tooltipDetail = U"テクスチャの色に乗算されます",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"addColor" }] = PropertyMetadata{
+			.tooltip = U"加算カラー",
+			.tooltipDetail = U"テクスチャの色に加算されます",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"blendMode" }] = PropertyMetadata{
+			.tooltip = U"ブレンドモード",
+			.tooltipDetail = U"Normal: 通常\nAdditive: 加算\nSubtractive: 減算\nMultiply: 乗算",
+		};
+		
 		// Sprite
 		metadata[PropertyKey{ U"Sprite", U"textureFilePath" }] = PropertyMetadata{
 			.tooltip = U"テクスチャファイルのパス",
