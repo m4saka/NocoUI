@@ -482,7 +482,7 @@ namespace noco
 			{
 				properties.push_back(property.get());
 			}
-			setProperties(properties);
+			ComponentBase::setProperties(properties);
 		}
 	};
 }
