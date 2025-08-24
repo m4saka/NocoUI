@@ -27,7 +27,7 @@ namespace noco
 		}
 		const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 		const String key = AssetNamePrefix + filePath;
-		if (!AudioAsset::IsRegistered(key))
+		if (!TextureAsset::IsRegistered(key))
 		{
 			if (!FileSystem::IsFile(combinedPath))
 			{
