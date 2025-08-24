@@ -16,6 +16,19 @@ namespace noco
 	class TextureFontLabel : public SerializableComponentBase, public std::enable_shared_from_this<TextureFontLabel>
 	{
 	private:
+		Property<String> m_text;
+		SmoothProperty<Vec2> m_characterSize;
+		Property<TextureFontLabelSizingMode> m_sizingMode;
+		SmoothProperty<ColorF> m_color;
+		Property<HorizontalAlign> m_horizontalAlign;
+		Property<VerticalAlign> m_verticalAlign;
+		SmoothProperty<Vec2> m_characterSpacing;
+		SmoothProperty<LRTB> m_padding;
+		Property<HorizontalOverflow> m_horizontalOverflow;
+		Property<VerticalOverflow> m_verticalOverflow;
+		SmoothProperty<ColorF> m_addColor;
+		Property<BlendMode> m_blendMode;
+		Property<bool> m_preserveAspect;
 		Property<String> m_textureFilePath;
 		Property<String> m_textureAssetName;
 		Property<String> m_characterSet;
@@ -23,19 +36,6 @@ namespace noco
 		Property<Vec2> m_textureOffset;
 		Property<int32> m_textureGridColumns;
 		Property<int32> m_textureGridRows;
-		Property<String> m_text;
-		Property<TextureFontLabelSizingMode> m_sizingMode;
-		SmoothProperty<Vec2> m_characterSize;
-		SmoothProperty<Vec2> m_characterSpacing;
-		Property<HorizontalAlign> m_horizontalAlign;
-		Property<VerticalAlign> m_verticalAlign;
-		SmoothProperty<LRTB> m_padding;
-		Property<HorizontalOverflow> m_horizontalOverflow;
-		Property<VerticalOverflow> m_verticalOverflow;
-		Property<bool> m_preserveAspect;
-		SmoothProperty<ColorF> m_color;
-		SmoothProperty<ColorF> m_addColor;
-		Property<BlendMode> m_blendMode;
 
 		struct CharacterCache
 		{
@@ -135,6 +135,8 @@ namespace noco
 
 	public:
 		explicit TextureFontLabel(
+			const PropertyValue<String>& text = U"",
+			const PropertyValue<Vec2>& characterSize = Vec2{ 24, 24 },
 			const PropertyValue<String>& textureFilePath = String{},
 			const PropertyValue<String>& textureAssetName = String{},
 			const PropertyValue<String>& characterSet = U"0123456789",
@@ -142,20 +144,27 @@ namespace noco
 			const PropertyValue<Vec2>& textureOffset = Vec2::Zero(),
 			const PropertyValue<int32>& textureGridColumns = 1,
 			const PropertyValue<int32>& textureGridRows = 10,
-			const PropertyValue<String>& text = U"",
 			const PropertyValue<TextureFontLabelSizingMode>& sizingMode = TextureFontLabelSizingMode::Fixed,
-			const PropertyValue<Vec2>& characterSize = Vec2{ 24, 24 },
-			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Left,
 			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Top,
+			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
-			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
-			const PropertyValue<bool>& preserveAspect = true,
-			const PropertyValue<ColorF>& color = Palette::White,
-			const PropertyValue<ColorF>& addColor = ColorF{ 0.0, 0.0, 0.0, 0.0 },
-			const PropertyValue<BlendMode>& blendMode = BlendMode::Normal)
-			: SerializableComponentBase{ U"TextureFontLabel", { &m_textureFilePath, &m_textureAssetName, &m_characterSet, &m_textureCellSize, &m_textureOffset, &m_textureGridColumns, &m_textureGridRows, &m_text, &m_sizingMode, &m_characterSize, &m_characterSpacing, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_preserveAspect, &m_color, &m_addColor, &m_blendMode } }
+			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow)
+			: SerializableComponentBase{ U"TextureFontLabel", { &m_text, &m_characterSize, &m_sizingMode, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_characterSpacing, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_addColor, &m_blendMode, &m_preserveAspect, &m_textureFilePath, &m_textureAssetName, &m_characterSet, &m_textureCellSize, &m_textureOffset, &m_textureGridColumns, &m_textureGridRows } }
+			, m_text{ U"text", text }
+			, m_characterSize{ U"characterSize", characterSize }
+			, m_sizingMode{ U"sizingMode", sizingMode }
+			, m_color{ U"color", Palette::White }
+			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
+			, m_verticalAlign{ U"verticalAlign", verticalAlign }
+			, m_characterSpacing{ U"characterSpacing", characterSpacing }
+			, m_padding{ U"padding", padding }
+			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
+			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
+			, m_addColor{ U"addColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_blendMode{ U"blendMode", BlendMode::Normal }
+			, m_preserveAspect{ U"preserveAspect", true }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_characterSet{ U"characterSet", characterSet }
@@ -163,19 +172,6 @@ namespace noco
 			, m_textureOffset{ U"textureOffset", textureOffset }
 			, m_textureGridColumns{ U"textureGridColumns", textureGridColumns }
 			, m_textureGridRows{ U"textureGridRows", textureGridRows }
-			, m_text{ U"text", text }
-			, m_sizingMode{ U"sizingMode", sizingMode }
-			, m_characterSize{ U"characterSize", characterSize }
-			, m_characterSpacing{ U"characterSpacing", characterSpacing }
-			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
-			, m_verticalAlign{ U"verticalAlign", verticalAlign }
-			, m_padding{ U"padding", padding }
-			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
-			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
-			, m_preserveAspect{ U"preserveAspect", preserveAspect }
-			, m_color{ U"color", color }
-			, m_addColor{ U"addColor", addColor }
-			, m_blendMode{ U"blendMode", blendMode }
 		{
 		}
 
