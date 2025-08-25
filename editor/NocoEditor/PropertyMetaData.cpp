@@ -219,11 +219,11 @@ namespace noco::editor
 		// Transform関連
 		metadata[PropertyKey{ U"Transform", U"translate" }] = PropertyMetadata{
 			.tooltip = U"平行移動",
-			.tooltipDetail = U"要素を平行移動させます\nこの値による平行移動はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素を高速に平行移動できます。そのため、アニメーション等の用途で利用できます\n※appliesToHitTestがtrueの場合、マウスカーソルのホバー判定にも平行移動を適用します",
+			.tooltipDetail = U"要素を平行移動させます\nこの値による平行移動はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素を高速に平行移動できます。そのため、アニメーション等の用途で利用できます\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも平行移動を適用します",
 		};
 		metadata[PropertyKey{ U"Transform", U"scale" }] = PropertyMetadata{
 			.tooltip = U"スケール",
-			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※appliesToHitTestがtrueの場合、マウスカーソルのホバー判定にも拡大縮小を適用します",
+			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも拡大縮小を適用します",
 		};
 		metadata[PropertyKey{ U"Transform", U"pivot" }] = PropertyMetadata{
 			.tooltip = U"基準点 (X、Y)",
@@ -231,10 +231,10 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Transform", U"rotation" }] = PropertyMetadata{
 			.tooltip = U"回転角度",
-			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません\n※appliesToHitTestがtrueの場合、マウスカーソルのホバー判定にも回転を適用します",
+			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも回転を適用します",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"Transform", U"appliesToHitTest" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"affectsHitTest" }] = PropertyMetadata{
 			.tooltip = U"ヒットテスト領域へ適用するか",
 			.tooltipDetail = U"Transformの平行移動・スケール・回転をマウスのホバー判定に適用するかどうかを指定します\ntrueの場合：translate, scale, rotationの変換がホバー判定に反映されます\nfalseの場合：変換は描画のみに適用され、ホバー判定は元の位置で行われます",
 		};

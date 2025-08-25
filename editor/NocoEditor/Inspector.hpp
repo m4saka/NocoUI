@@ -3269,7 +3269,7 @@ namespace noco::editor
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
-			fnAddBoolChild(U"appliesToHitTest", &pTransform->appliesToHitTest(), [this, pTransform](bool value) { pTransform->setAppliesToHitTest(value); });
+			fnAddBoolChild(U"affectsHitTest", &pTransform->affectsHitTest(), [this, pTransform](bool value) { pTransform->setAffectsHitTest(value); });
 
 			const auto fnAddColorChild =
 				[this, &transformNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)

@@ -12,7 +12,7 @@ namespace noco
 		, m_scale{ U"scale", scale }
 		, m_pivot{ U"pivot", pivot }
 		, m_rotation{ U"rotation", rotation }
-		, m_appliesToHitTest{ U"appliesToHitTest", false }
+		, m_affectsHitTest{ U"affectsHitTest", false }
 		, m_color{ U"color", color }
 	{
 	}
@@ -77,19 +77,19 @@ namespace noco
 		m_rotation.setPropertyValue(rotation);
 	}
 
-	const Property<bool>& Transform::appliesToHitTest() const
+	const Property<bool>& Transform::affectsHitTest() const
 	{
-		return m_appliesToHitTest;
+		return m_affectsHitTest;
 	}
 
-	Property<bool>& Transform::appliesToHitTest()
+	Property<bool>& Transform::affectsHitTest()
 	{
-		return m_appliesToHitTest;
+		return m_affectsHitTest;
 	}
 
-	void Transform::setAppliesToHitTest(const PropertyValue<bool>& value)
+	void Transform::setAffectsHitTest(const PropertyValue<bool>& value)
 	{
-		m_appliesToHitTest.setPropertyValue(value);
+		m_affectsHitTest.setPropertyValue(value);
 	}
 
 	const SmoothProperty<ColorF>& Transform::color() const
@@ -113,7 +113,7 @@ namespace noco
 		m_scale.update(interactionState, activeStyleStates, deltaTime, params);
 		m_pivot.update(interactionState, activeStyleStates, deltaTime, params);
 		m_rotation.update(interactionState, activeStyleStates, deltaTime, params);
-		m_appliesToHitTest.update(interactionState, activeStyleStates, deltaTime, params);
+		m_affectsHitTest.update(interactionState, activeStyleStates, deltaTime, params);
 		m_color.update(interactionState, activeStyleStates, deltaTime, params);
 	}
 
@@ -124,7 +124,7 @@ namespace noco
 		m_scale.appendJSON(json);
 		m_pivot.appendJSON(json);
 		m_rotation.appendJSON(json);
-		m_appliesToHitTest.appendJSON(json);
+		m_affectsHitTest.appendJSON(json);
 		m_color.appendJSON(json);
 		return json;
 	}
@@ -135,7 +135,7 @@ namespace noco
 		m_scale.readFromJSON(json);
 		m_pivot.readFromJSON(json);
 		m_rotation.readFromJSON(json);
-		m_appliesToHitTest.readFromJSON(json);
+		m_affectsHitTest.readFromJSON(json);
 		m_color.readFromJSON(json);
 	}
 
@@ -159,7 +159,7 @@ namespace noco
 		{
 			count++;
 		}
-		if (m_appliesToHitTest.paramRef() == paramName)
+		if (m_affectsHitTest.paramRef() == paramName)
 		{
 			count++;
 		}
@@ -190,9 +190,9 @@ namespace noco
 		{
 			m_rotation.setParamRef(U"");
 		}
-		if (m_appliesToHitTest.paramRef() == paramName)
+		if (m_affectsHitTest.paramRef() == paramName)
 		{
-			m_appliesToHitTest.setParamRef(U"");
+			m_affectsHitTest.setParamRef(U"");
 		}
 		if (m_color.paramRef() == paramName)
 		{
@@ -218,9 +218,9 @@ namespace noco
 		{
 			m_rotation.setParamRef(String{ newName });
 		}
-		if (m_appliesToHitTest.paramRef() == oldName)
+		if (m_affectsHitTest.paramRef() == oldName)
 		{
-			m_appliesToHitTest.setParamRef(String{ newName });
+			m_affectsHitTest.setParamRef(String{ newName });
 		}
 		if (m_color.paramRef() == oldName)
 		{
@@ -260,11 +260,11 @@ namespace noco
 			m_rotation.setParamRef(U"");
 		}
 		
-		// appliesToHitTestの参照をチェック
-		if (!m_appliesToHitTest.paramRef().isEmpty() && !validParams.contains(m_appliesToHitTest.paramRef()))
+		// affectsHitTestの参照をチェック
+		if (!m_affectsHitTest.paramRef().isEmpty() && !validParams.contains(m_affectsHitTest.paramRef()))
 		{
-			clearedParamsSet.insert(m_appliesToHitTest.paramRef());
-			m_appliesToHitTest.setParamRef(U"");
+			clearedParamsSet.insert(m_affectsHitTest.paramRef());
+			m_affectsHitTest.setParamRef(U"");
 		}
 		
 		// colorの参照をチェック

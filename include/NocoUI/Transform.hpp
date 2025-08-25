@@ -15,7 +15,7 @@ namespace noco
 		SmoothProperty<Vec2> m_scale;
 		SmoothProperty<Vec2> m_pivot;
 		SmoothProperty<double> m_rotation;
-		Property<bool> m_appliesToHitTest;
+		Property<bool> m_affectsHitTest;
 		SmoothProperty<ColorF> m_color;
 
 	public:
@@ -59,12 +59,12 @@ namespace noco
 		void setRotation(const PropertyValue<double>& rotation);
 
 		[[nodiscard]]
-		const Property<bool>& appliesToHitTest() const;
+		const Property<bool>& affectsHitTest() const;
 
 		[[nodiscard]]
-		Property<bool>& appliesToHitTest();
+		Property<bool>& affectsHitTest();
 
-		void setAppliesToHitTest(const PropertyValue<bool>& value);
+		void setAffectsHitTest(const PropertyValue<bool>& value);
 
 		[[nodiscard]]
 		const SmoothProperty<ColorF>& color() const;

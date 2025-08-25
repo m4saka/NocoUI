@@ -33,7 +33,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
-		node->transform().setAppliesToHitTest(true);
+		node->transform().setAffectsHitTest(true);
 		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -48,13 +48,13 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNode == nullptr);
 	}
 
-	SECTION("Hit test with appliesToHitTest = false")
+	SECTION("Hit test with affectsHitTest = false")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
-		node->transform().setAppliesToHitTest(false); // 明示的にfalseに設定
+		node->transform().setAffectsHitTest(false); // 明示的にfalseに設定
 		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -69,13 +69,13 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNode == nullptr);
 	}
 
-	SECTION("Hit test with appliesToHitTest = true")
+	SECTION("Hit test with affectsHitTest = true")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
-		node->transform().setAppliesToHitTest(true);
+		node->transform().setAffectsHitTest(true);
 		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -90,7 +90,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNode == nullptr);
 	}
 
-	SECTION("Hit test with scale and appliesToHitTest")
+	SECTION("Hit test with scale and affectsHitTest")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
@@ -101,8 +101,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
 		
-		// appliesToHitTest = false（デフォルト）
-		node->transform().setAppliesToHitTest(false);
+		// affectsHitTest = false（デフォルト）
+		node->transform().setAffectsHitTest(false);
 		canvas->update();
 		
 		// 元のサイズの範囲内でヒット
@@ -113,8 +113,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto missScaled = node->hitTest(Vec2{ 150, 150 });
 		REQUIRE(missScaled == nullptr);
 		
-		// appliesToHitTest = true
-		node->transform().setAppliesToHitTest(true);
+		// affectsHitTest = true
+		node->transform().setAffectsHitTest(true);
 		canvas->update();
 		
 		// スケール後の範囲でヒット（中心から拡大されるので-50～150の範囲）

@@ -1613,7 +1613,7 @@ namespace noco
 		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{0, m_regionRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transform.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.affectsHitTest().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -1649,7 +1649,7 @@ namespace noco
 		const Vec2 paddedBottomLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{0, paddedRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transform.appliesToHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.affectsHitTest().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -1993,7 +1993,7 @@ namespace noco
 
 	Mat3x2 Node::calculateHitTestMat(const Mat3x2& parentHitTestMat) const
 	{
-		if (m_transform.appliesToHitTest().value())
+		if (m_transform.affectsHitTest().value())
 		{
 			// TransformをHitTestに適用
 			const Vec2& scale = m_transform.scale().value();
