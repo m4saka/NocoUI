@@ -321,8 +321,8 @@ namespace noco::editor
 			.numTextAreaLines = 3,
 		};
 		metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
-			.tooltip = U"フォントアセット名",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
+			.tooltip = U"FontAssetのキー名 (任意)",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
@@ -559,7 +559,7 @@ namespace noco::editor
 		// TextBox
 		metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"TextBox", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
@@ -597,7 +597,7 @@ namespace noco::editor
 		// TextArea
 		metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※プレビューには反映されません",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"TextArea", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",

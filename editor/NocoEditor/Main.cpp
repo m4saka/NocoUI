@@ -136,6 +136,12 @@ public:
 		{
 			ComponentSchemaLoader::LoadFromDirectory(customComponentsDir);
 		}
+		
+		const FilePath customFontAssetsDir = FileSystem::PathAppend(FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"Custom"), U"FontAssets");
+		if (FileSystem::Exists(customFontAssetsDir))
+		{
+			loadFontAssetsFromDirectory(customFontAssetsDir);
+		}
 		m_menuBar.addMenuCategory(
 			U"File",
 			U"ファイル",
@@ -646,6 +652,168 @@ public:
 						.mnemonicInput = KeyC,
 						.isCancelButton = IsCancelButtonYN::Yes,
 					}}));
+	}
+	
+	void loadFontAssetsFromDirectory(const FilePath& directory)
+	{
+		for (const FilePath& path : FileSystem::DirectoryContents(directory, Recursive::Yes))
+		{
+			if (FileSystem::Extension(path) == U"json")
+			{
+				loadFontAssetFromFile(path);
+			}
+		}
+	}
+	
+	enum class FontSourceType : uint8
+	{
+		File,
+		Typeface,
+	};
+	
+	// Siv3DのTypefaceは列挙子にエイリアスを含みmagic_enumで使用できないため別途定義
+	enum class TypefaceType : uint8
+	{
+		CJK_Regular_JP,
+		CJK_Regular_KR,
+		CJK_Regular_SC,
+		CJK_Regular_TC,
+		CJK_Regular_HK,
+		MonochromeEmoji,
+		ColorEmoji,
+		Mplus_Thin,
+		Mplus_Light,
+		Mplus_Regular,
+		Mplus_Medium,
+		Mplus_Bold,
+		Mplus_Heavy,
+		Mplus_Black,
+		Icon_Awesome_Solid,
+		Icon_Awesome_Brand,
+		Icon_MaterialDesign,
+		Thin,
+		Light,
+		Regular,
+		Medium,
+		Bold,
+		Heavy,
+		Black,
+	};
+	
+	[[nodiscard]]
+	Typeface ConvertToS3dTypeface(TypefaceType type)
+	{
+		switch (type)
+		{
+		case TypefaceType::CJK_Regular_JP:
+			return Typeface::CJK_Regular_JP;
+		case TypefaceType::CJK_Regular_KR:
+			return Typeface::CJK_Regular_KR;
+		case TypefaceType::CJK_Regular_SC:
+			return Typeface::CJK_Regular_SC;
+		case TypefaceType::CJK_Regular_TC:
+			return Typeface::CJK_Regular_TC;
+		case TypefaceType::CJK_Regular_HK:
+			return Typeface::CJK_Regular_HK;
+		case TypefaceType::MonochromeEmoji:
+			return Typeface::MonochromeEmoji;
+		case TypefaceType::ColorEmoji:
+			return Typeface::ColorEmoji;
+		case TypefaceType::Mplus_Thin:
+			return Typeface::Mplus_Thin;
+		case TypefaceType::Mplus_Light:
+			return Typeface::Mplus_Light;
+		case TypefaceType::Mplus_Regular:
+			return Typeface::Mplus_Regular;
+		case TypefaceType::Mplus_Medium:
+			return Typeface::Mplus_Medium;
+		case TypefaceType::Mplus_Bold:
+			return Typeface::Mplus_Bold;
+		case TypefaceType::Mplus_Heavy:
+			return Typeface::Mplus_Heavy;
+		case TypefaceType::Mplus_Black:
+			return Typeface::Mplus_Black;
+		case TypefaceType::Icon_Awesome_Solid:
+			return Typeface::Icon_Awesome_Solid;
+		case TypefaceType::Icon_Awesome_Brand:
+			return Typeface::Icon_Awesome_Brand;
+		case TypefaceType::Icon_MaterialDesign:
+			return Typeface::Icon_MaterialDesign;
+		case TypefaceType::Thin:
+			return Typeface::Thin;
+		case TypefaceType::Light:
+			return Typeface::Light;
+		case TypefaceType::Regular:
+			return Typeface::Regular;
+		case TypefaceType::Medium:
+			return Typeface::Medium;
+		case TypefaceType::Bold:
+			return Typeface::Bold;
+		case TypefaceType::Heavy:
+			return Typeface::Heavy;
+		case TypefaceType::Black:
+			return Typeface::Black;
+		default:
+			return Typeface::Mplus_Regular;
+		}
+	}
+	
+	void loadFontAssetFromFile(const FilePath& path)
+	{
+		const JSON json = JSON::Load(path);
+		if (not json)
+		{
+			Logger << U"[NocoEditor warning] Failed to load font asset JSON: " << path;
+			return;
+		}
+		
+		const String fontAssetName = json[U"fontAssetName"].getString();
+		if (fontAssetName.isEmpty())
+		{
+			Logger << U"[NocoEditor warning] fontAssetName is empty in: " << path;
+			return;
+		}
+		
+		const int32 fontSize = json[U"fontSize"].get<int32>();
+		
+		const FontMethod method = json.contains(U"method")
+			? StringToEnumOpt<FontMethod>(json[U"method"].getString()).value_or(FontMethod::Bitmap)
+			: FontMethod::Bitmap;
+		
+		const FontStyle style = json.contains(U"style")
+			? StringToEnumOpt<FontStyle>(json[U"style"].getString()).value_or(FontStyle::Default)
+			: FontStyle::Default;
+		
+		const JSON sourceJson = json[U"source"];
+		const auto sourceType = StringToEnumOpt<FontSourceType>(sourceJson[U"type"].getString());
+		if (not sourceType)
+		{
+			Logger << U"[NocoEditor warning] Invalid source type in: " << path;
+			return;
+		}
+		
+		if (*sourceType == FontSourceType::File)
+		{
+			// JSONファイルと同じディレクトリからの相対パスとして扱う
+			const String fontPath = FileSystem::PathAppend(FileSystem::ParentPath(path), sourceJson[U"path"].getString());
+			
+			if (sourceJson.contains(U"faceIndex"))
+			{
+				const size_t faceIndex = sourceJson[U"faceIndex"].get<size_t>();
+				FontAsset::Register(fontAssetName, method, fontSize, fontPath, faceIndex, style);
+			}
+			else
+			{
+				FontAsset::Register(fontAssetName, method, fontSize, fontPath, style);
+			}
+		}
+		else if (*sourceType == FontSourceType::Typeface)
+		{
+			const String typefaceStr = sourceJson[U"typeface"].getString();
+			const TypefaceType typefaceType = StringToEnumOpt<TypefaceType>(typefaceStr).value_or(TypefaceType::Regular);
+			const Typeface typeface = ConvertToS3dTypeface(typefaceType);
+			FontAsset::Register(fontAssetName, method, fontSize, typeface, style);
+		}
 	}
 
 	void onClickMenuFileNew()
