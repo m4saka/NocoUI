@@ -3450,51 +3450,15 @@ namespace noco::editor
 											
 											if (newName.isEmpty())
 											{
-												m_dialogOpener->openDialog(
-													std::make_shared<SimpleDialog>(
-														U"パラメータ名を空にすることはできません",
-														[](StringView) {},
-														Array<DialogButtonDesc>
-														{
-															DialogButtonDesc
-															{
-																.text = U"OK",
-																.mnemonicInput = KeyO,
-																.isDefaultButton = IsDefaultButtonYN::Yes,
-															},
-														}));
+												m_dialogOpener->openDialogOK(U"パラメータ名を空にすることはできません");
 											}
 											else if (newName == paramName)
 											{
-												m_dialogOpener->openDialog(
-													std::make_shared<SimpleDialog>(
-														U"パラメータ名が変更されていません",
-														[](StringView) {},
-														Array<DialogButtonDesc>
-														{
-															DialogButtonDesc
-															{
-																.text = U"OK",
-																.mnemonicInput = KeyO,
-																.isDefaultButton = IsDefaultButtonYN::Yes,
-															},
-														}));
+												m_dialogOpener->openDialogOK(U"パラメータ名が変更されていません");
 											}
 											else if (m_canvas->hasParam(newName))
 											{
-												m_dialogOpener->openDialog(
-													std::make_shared<SimpleDialog>(
-														U"パラメータ '{}' は既に存在します"_fmt(newName),
-														[](StringView) {},
-														Array<DialogButtonDesc>
-														{
-															DialogButtonDesc
-															{
-																.text = U"OK",
-																.mnemonicInput = KeyO,
-																.isDefaultButton = IsDefaultButtonYN::Yes,
-															},
-														}));
+												m_dialogOpener->openDialogOK(U"パラメータ '{}' は既に存在します"_fmt(newName));
 											}
 											else
 											{

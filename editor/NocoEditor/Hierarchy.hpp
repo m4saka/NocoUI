@@ -1057,20 +1057,7 @@ namespace noco::editor
 			}
 			
 			// ダイアログを表示
-			m_dialogOpener->openDialog(
-				std::make_shared<SimpleDialog>(
-					U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList,
-					[](StringView) {},
-					Array<DialogButtonDesc>
-					{
-						DialogButtonDesc
-						{
-							.text = U"OK",
-							.mnemonicInput = KeyO,
-							.appendsMnemonicKeyText = AppendsMnemonicKeyTextYN::No,
-							.isDefaultButton = IsDefaultButtonYN::Yes,
-						},
-					}));
+			m_dialogOpener->openDialogOK(U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList);
 		}
 
 		void onClickPaste()
