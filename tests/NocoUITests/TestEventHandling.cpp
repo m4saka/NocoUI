@@ -1,9 +1,9 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// イベント処理テスト
+// イベント処理のテスト
 // ========================================
 
 TEST_CASE("Event handling", "[Events]")
@@ -87,7 +87,7 @@ TEST_CASE("Event handling", "[Events]")
 		node2->requestClick();
 		canvas->update();
 		
-		// 前のフレームのイベントはクリアされているはず
+		// 前のフレームのイベントはクリアされている
 		REQUIRE_FALSE(canvas->isEventFiredWithTag(U"button1"));
 		REQUIRE(canvas->isEventFiredWithTag(U"button2"));
 	}

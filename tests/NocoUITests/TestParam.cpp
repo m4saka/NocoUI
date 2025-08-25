@@ -3,6 +3,10 @@
 
 using namespace noco;
 
+// ========================================
+// Paramのテスト
+// ========================================
+
 TEST_CASE("Parameter values", "[Param]")
 {
 	SECTION("Create and get parameter values")
@@ -108,7 +112,6 @@ TEST_CASE("Canvas parameter management", "[Param]")
 	{
 		auto canvas = Canvas::Create();
 		
-		// 初期化リスト版で簡潔に記述
 		canvas->setParamValues({
 			{U"param1", 100},
 			{U"param2", U"test"},

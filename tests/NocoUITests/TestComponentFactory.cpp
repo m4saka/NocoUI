@@ -2,6 +2,10 @@
 #include <NocoUI/ComponentFactory.hpp>
 #include <NocoUI/Component/Component.hpp>
 
+// ========================================
+// ComponentFactoryのテスト
+// ========================================
+
 TEST_CASE("ComponentFactory basic functionality", "[ComponentFactory]")
 {
 	SECTION("Get builtin factory")

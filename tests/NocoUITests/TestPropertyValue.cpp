@@ -3,7 +3,7 @@
 #include <NocoUI.hpp>
 
 // ========================================
-// PropertyValueのシリアライズに関するテスト
+// PropertyValueのシリアライズのテスト
 // ========================================
 
 TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")

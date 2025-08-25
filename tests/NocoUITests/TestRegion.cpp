@@ -1,6 +1,6 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
 // Regionのテスト
@@ -712,5 +712,65 @@ TEST_CASE("Min/Max size regions with Transform", "[Region][AnchorRegion][InlineR
 		// maxWidth(500), maxHeight(400)で制限される
 		REQUIRE(childRect.w == 500.0);
 		REQUIRE(childRect.h == 400.0);
+	}
+	
+	SECTION("Invalid region values handling")
+	{
+		auto node = noco::Node::Create();
+		
+		// 負のサイズを持つInlineRegion
+		{
+			node->setRegion(noco::InlineRegion
+			{
+				.sizeDelta = Vec2{ -100, -50 },
+			});
+			
+			// 負のサイズでも設定はされる（クラッシュしない）
+			auto* inlineRegion = node->inlineRegion();
+			REQUIRE(inlineRegion != nullptr);
+			REQUIRE(inlineRegion->sizeDelta == Vec2{ -100, -50 });
+		}
+		
+		// 範囲外のアンカー値を持つAnchorRegion
+		{
+			node->setRegion(noco::AnchorRegion
+			{
+				.anchorMin = Vec2{ -0.5, 1.5 },
+				.anchorMax = Vec2{ 2.0, -1.0 },
+			});
+			
+			// 範囲外のアンカー値でも設定はされる（クラッシュしない）
+			auto* anchorRegion = std::get_if<noco::AnchorRegion>(&node->region());
+			REQUIRE(anchorRegion != nullptr);
+			REQUIRE(anchorRegion->anchorMin == Vec2{ -0.5, 1.5 });
+			REQUIRE(anchorRegion->anchorMax == Vec2{ 2.0, -1.0 });
+		}
+		
+		// 負のフレキシブルウェイト
+		{
+			node->setRegion(noco::InlineRegion
+			{
+				.flexibleWeight = -5.0,
+			});
+			
+			auto* inlineRegion = node->inlineRegion();
+			REQUIRE(inlineRegion != nullptr);
+			REQUIRE(inlineRegion->flexibleWeight == -5.0);
+		}
+		
+		// 負のマージン
+		{
+			node->setRegion(noco::InlineRegion
+			{
+				.margin = noco::LRTB{ -10, -20, -30, -40 },
+			});
+			
+			auto* inlineRegion = node->inlineRegion();
+			REQUIRE(inlineRegion != nullptr);
+			REQUIRE(inlineRegion->margin.left == -10);
+			REQUIRE(inlineRegion->margin.right == -20);
+			REQUIRE(inlineRegion->margin.top == -30);
+			REQUIRE(inlineRegion->margin.bottom == -40);
+		}
 	}
 }

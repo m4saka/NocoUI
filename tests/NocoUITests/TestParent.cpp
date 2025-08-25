@@ -17,7 +17,6 @@ TEST_CASE("Parent-child relationships", "[Parent]")
 		canvas->addChild(nodeA);
 		canvas->addChild(nodeB);
 		
-		// 初期状態の確認
 		REQUIRE(canvas->children().size() == 2);
 		REQUIRE(nodeA->isTopLevelNode());
 		REQUIRE(nodeB->isTopLevelNode());
@@ -25,7 +24,6 @@ TEST_CASE("Parent-child relationships", "[Parent]")
 		// 同じCanvas内でトップレベルノードAをノードBの子に移動
 		nodeA->setParent(nodeB);
 		
-		// 移動後の確認
 		REQUIRE(canvas->children().size() == 1);  // nodeAがCanvas直下から削除
 		REQUIRE(canvas->children()[0] == nodeB);
 		REQUIRE(nodeB->children().size() == 1);
@@ -167,14 +165,12 @@ TEST_CASE("Parent-child relationships", "[Parent]")
 		canvas->addChild(parent);
 		parent->addChild(child);
 		
-		// 初期状態の確認
 		REQUIRE(child->parentNode() == parent);
 		REQUIRE(!child->isTopLevelNode());
 		
 		// 親から削除
 		parent->removeChild(child);
 		
-		// 削除後の確認
 		REQUIRE(parent->children().size() == 0);
 		REQUIRE(child->parentNode() == nullptr);
 		REQUIRE(child->containedCanvas() == nullptr);  // Canvasからも切り離される

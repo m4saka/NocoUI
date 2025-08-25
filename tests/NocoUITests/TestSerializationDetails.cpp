@@ -3,7 +3,7 @@
 #include <NocoUI.hpp>
 
 // ========================================
-// シリアライゼーション詳細テスト
+// シリアライズの詳細テスト
 // ========================================
 
 TEST_CASE("Serialization details", "[Serialization]")
@@ -108,103 +108,70 @@ TEST_CASE("Serialization details", "[Serialization]")
 
 	SECTION("Error handling for missing required fields")
 	{
-		SECTION("Missing version")
+		// 必須フィールドのテスト用構造体
+		struct RequiredFieldTest
 		{
-			JSON invalidJson = JSON{};
-			invalidJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
-			invalidJson[U"size"] = U"(800, 600)";
-			invalidJson[U"children"] = Array<JSON>{};
-			
-			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
-			REQUIRE(canvas == nullptr);
-		}
+			String fieldName;
+			std::function<void(JSON&)> removeField;
+		};
 		
-		SECTION("Missing serializedVersion")
+		Array<RequiredFieldTest> requiredFields =
 		{
-			JSON invalidJson = JSON{};
-			invalidJson[U"version"] = noco::NocoUIVersion;
-			invalidJson[U"size"] = U"(800, 600)";
-			invalidJson[U"children"] = Array<JSON>{};
-			
-			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
-			REQUIRE(canvas == nullptr);
-		}
+			{ U"version", [](JSON& j) { j.erase(U"version"); } },
+			{ U"serializedVersion", [](JSON& j) { j.erase(U"serializedVersion"); } },
+			{ U"size", [](JSON& j) { j.erase(U"size"); } },
+			{ U"children", [](JSON& j) { j.erase(U"children"); } },
+		};
 		
-		SECTION("Missing size")
-		{
-			JSON invalidJson = JSON{};
-			invalidJson[U"version"] = noco::NocoUIVersion;
-			invalidJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
-			invalidJson[U"children"] = Array<JSON>{};
-			
-			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
-			REQUIRE(canvas == nullptr);
-		}
-		
-		SECTION("Missing children")
+		// 各必須フィールドの欠落をテスト
+		for (const auto& test : requiredFields)
 		{
 			JSON invalidJson = JSON{};
 			invalidJson[U"version"] = noco::NocoUIVersion;
 			invalidJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
 			invalidJson[U"size"] = U"(800, 600)";
+			invalidJson[U"children"] = Array<JSON>{};
+			
+			// フィールドを削除
+			test.removeField(invalidJson);
 			
 			auto canvas = noco::Canvas::CreateFromJSON(invalidJson);
 			REQUIRE(canvas == nullptr);
 		}
 		
-		SECTION("Valid JSON with empty children")
-		{
-			JSON validJson = JSON{};
-			validJson[U"version"] = noco::NocoUIVersion;
-			validJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
-			validJson[U"size"] = U"(800, 600)";
-			validJson[U"children"] = Array<JSON>{};
-			
-			auto canvas = noco::Canvas::CreateFromJSON(validJson);
-			REQUIRE(canvas != nullptr);
-			REQUIRE(canvas->children().size() == 0);
-		}
+		// 有効なJSON（空のchildren配列）
+		JSON validJson = JSON{};
+		validJson[U"version"] = noco::NocoUIVersion;
+		validJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
+		validJson[U"size"] = U"(800, 600)";
+		validJson[U"children"] = Array<JSON>{};
+		
+		auto canvas = noco::Canvas::CreateFromJSON(validJson);
+		REQUIRE(canvas != nullptr);
+		REQUIRE(canvas->children().size() == 0);
 	}
 
 
-	SECTION("Version field is correctly written and read")
+	SECTION("Version fields handling")
 	{
-		auto canvas = noco::Canvas::Create();
-		JSON json = canvas->toJSON();
-		
-		// versionフィールドが存在し、正しい値を持つことを確認
-		REQUIRE(json.hasElement(U"version"));
-		REQUIRE(json[U"version"].isString());
-		REQUIRE(json[U"version"].get<String>() == noco::NocoUIVersion);
-	}
-	
-	SECTION("Serialized version field is correctly written and read")
-	{
-		// Canvasを作成したときの初期値がCurrentSerializedVersionであることを確認
 		auto canvas = noco::Canvas::Create();
 		REQUIRE(canvas->serializedVersion() == noco::CurrentSerializedVersion);
 		
 		JSON json = canvas->toJSON();
 		
-		// serializedVersionフィールドが存在し、正しい値を持つことを確認
-		REQUIRE(json.hasElement(U"serializedVersion"));
-		REQUIRE(json[U"serializedVersion"].isNumber());
+		// versionとserializedVersionが正しく保存される
+		REQUIRE(json[U"version"].get<String>() == noco::NocoUIVersion);
 		REQUIRE(json[U"serializedVersion"].get<int32>() == noco::CurrentSerializedVersion);
 		
-		// JSONのserializedVersionを変更してテスト用の値にする
+		// カスタムserializedVersionでの読み込み
 		json[U"serializedVersion"] = 1234567;
-		
-		// 読み込み時にserializedVersionが正しく設定されることを確認
 		auto loadedCanvas = noco::Canvas::CreateFromJSON(json);
 		REQUIRE(loadedCanvas != nullptr);
 		REQUIRE(loadedCanvas->serializedVersion() == 1234567);
 		
-		// toJSONで出力すると、CurrentSerializedVersionで保存されることを確認
+		// 再保存時は常にCurrentSerializedVersionを使用
 		JSON savedJson = loadedCanvas->toJSON();
-		REQUIRE(savedJson.hasElement(U"serializedVersion"));
 		REQUIRE(savedJson[U"serializedVersion"].get<int32>() == noco::CurrentSerializedVersion);
-		
-		// toJSON後もloadedCanvasのserializedVersionは変わらないことを確認
 		REQUIRE(loadedCanvas->serializedVersion() == 1234567);
 	}
 }

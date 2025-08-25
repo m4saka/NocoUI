@@ -1,24 +1,58 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// シリアライゼーションのテスト
+// シリアライズのテスト
 // ========================================
 
 TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 {
-	SECTION("Node to JSON")
+	SECTION("Node to JSON and back")
 	{
 		auto node = noco::Node::Create(U"TestNode");
 		node->transform().setTranslate(Vec2{ 100, 200 });
 		node->transform().setScale(Vec2{ 2, 2 });
+		node->transform().setRotation(45);
+		node->setRegion(noco::InlineRegion
+		{
+			.sizeDelta = Vec2{ 300, 150 },
+			.flexibleWeight = 1.5,
+		});
+		
+		// コンポーネントを追加
+		auto label = node->emplaceComponent<noco::Label>();
+		label->setText(U"Test Label");
 		
 		// JSONに変換
 		JSON json = node->toJSON();
 		
 		// JSON内容の確認
 		REQUIRE(json[U"name"].getString() == U"TestNode");
+		REQUIRE(json.contains(U"transform"));
+		REQUIRE(json.contains(U"region"));
+		REQUIRE(json.contains(U"components"));
+		REQUIRE(json[U"components"].isArray());
+		REQUIRE(json[U"components"].size() == 1);
+		
+		// JSONからノードを再構築
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		REQUIRE(restoredNode != nullptr);
+		REQUIRE(restoredNode->name() == U"TestNode");
+		REQUIRE(restoredNode->transform().translate().value() == Vec2{ 100, 200 });
+		REQUIRE(restoredNode->transform().scale().value() == Vec2{ 2, 2 });
+		REQUIRE(restoredNode->transform().rotation().value() == Approx(45));
+		
+		// Regionの確認
+		auto* inlineRegion = restoredNode->inlineRegion();
+		REQUIRE(inlineRegion != nullptr);
+		REQUIRE(inlineRegion->sizeDelta == Vec2{ 300, 150 });
+		REQUIRE(inlineRegion->flexibleWeight == Approx(1.5));
+		
+		// コンポーネントの確認
+		auto restoredLabel = restoredNode->getComponentOrNull<noco::Label>();
+		REQUIRE(restoredLabel != nullptr);
+		REQUIRE(restoredLabel->text().defaultValue == U"Test Label");
 	}
 }
 
@@ -257,161 +291,62 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 {
 	SECTION("Basic LRTB serialization and deserialization")
 	{
-		// 基本的なLRTBの値
+		// 通常の値
 		noco::LRTB original{ 10.5, 20.5, 30.5, 40.5 };
-		
-		// JSONにシリアライズ
 		JSON json = original.toJSON();
-		
-		// JSONの内容確認（文字列として保存される）
-		REQUIRE(json.isString());
 		REQUIRE(json.getString() == U"(10.5, 20.5, 30.5, 40.5)");
-		
-		// JSONからデシリアライズ
 		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
-		
-		// デシリアライズ結果の確認
-		REQUIRE(deserialized.left == 10.5);
-		REQUIRE(deserialized.right == 20.5);
-		REQUIRE(deserialized.top == 30.5);
-		REQUIRE(deserialized.bottom == 40.5);
 		REQUIRE(deserialized == original);
+		
+		// ゼロ値
+		noco::LRTB zero = noco::LRTB::Zero();
+		JSON zeroJson = zero.toJSON();
+		REQUIRE(zeroJson.getString() == U"(0, 0, 0, 0)");
+		REQUIRE(noco::LRTB::fromJSON(zeroJson) == zero);
+		
+		// 負の値
+		noco::LRTB negative{ -10, -20, -30, -40 };
+		JSON negJson = negative.toJSON();
+		REQUIRE(negJson.getString() == U"(-10, -20, -30, -40)");
+		REQUIRE(noco::LRTB::fromJSON(negJson) == negative);
 	}
 	
-	SECTION("LRTB Zero values")
+	SECTION("LRTB error handling with default values")
 	{
-		// ゼロ値のLRTB
-		noco::LRTB original = noco::LRTB::Zero();
-		
-		// JSONにシリアライズ
-		JSON json = original.toJSON();
-		
-		// JSONの内容確認（文字列として保存される）
-		REQUIRE(json.isString());
-		REQUIRE(json.getString() == U"(0, 0, 0, 0)");
-		
-		// JSONからデシリアライズ
-		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
-		
-		// デシリアライズ結果の確認
-		REQUIRE(deserialized == noco::LRTB::Zero());
-	}
-	
-	SECTION("LRTB with negative values")
-	{
-		// 負の値を含むLRTB
-		noco::LRTB original{ -10, -20, -30, -40 };
-		
-		// JSONにシリアライズ
-		JSON json = original.toJSON();
-		
-		// JSONの内容確認（文字列として保存される）
-		REQUIRE(json.isString());
-		REQUIRE(json.getString() == U"(-10, -20, -30, -40)");
-		
-		// JSONからデシリアライズ
-		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
-		
-		// デシリアライズ結果の確認
-		REQUIRE(deserialized.left == -10);
-		REQUIRE(deserialized.right == -20);
-		REQUIRE(deserialized.top == -30);
-		REQUIRE(deserialized.bottom == -40);
-	}
-	
-	SECTION("LRTB with invalid JSON uses default values")
-	{
-		// 文字列形式でないJSONからのデシリアライゼーション
+		// 不正なJSON形式
 		JSON invalidJson;
 		invalidJson[U"someField"] = 42;
-		
-		// デフォルト値を指定してデシリアライズ
 		noco::LRTB defaultValue{ 1, 2, 3, 4 };
-		noco::LRTB deserialized = noco::LRTB::fromJSON(invalidJson, defaultValue);
+		noco::LRTB result = noco::LRTB::fromJSON(invalidJson, defaultValue);
+		REQUIRE(result == defaultValue);
 		
-		// 文字列でないJSONの場合、デフォルト値が使用される
-		REQUIRE(deserialized == defaultValue);
-		REQUIRE(deserialized.left == 1.0);
-		REQUIRE(deserialized.right == 2.0);
-		REQUIRE(deserialized.top == 3.0);
-		REQUIRE(deserialized.bottom == 4.0);
-	}
-	
-	SECTION("LRTB with malformed string format uses default values")
-	{
-		// 不正な文字列形式のJSON
+		// 不正な文字列形式
 		JSON malformedJson = JSON(U"not a valid LRTB format");
-		
-		// デフォルト値を指定してデシリアライズ
-		noco::LRTB defaultValue{ 10, 20, 30, 40 };
-		noco::LRTB deserialized = noco::LRTB::fromJSON(malformedJson, defaultValue);
-		
-		// パースできない文字列の場合、デフォルト値が使用される
-		REQUIRE(deserialized == defaultValue);
-		REQUIRE(deserialized.left == 10.0);
-		REQUIRE(deserialized.right == 20.0);
-		REQUIRE(deserialized.top == 30.0);
-		REQUIRE(deserialized.bottom == 40.0);
+		result = noco::LRTB::fromJSON(malformedJson, defaultValue);
+		REQUIRE(result == defaultValue);
 	}
 	
-	SECTION("LRTB in InlineRegion with GetFromJSONOr")
+	SECTION("LRTB in InlineRegion")
 	{
-		// InlineRegionのJSONでLRTBのテスト
 		JSON regionJson;
 		regionJson[U"type"] = U"InlineRegion";
 		regionJson[U"sizeRatio"] = Vec2{ 1.0, 1.0 };
 		regionJson[U"sizeDelta"] = Vec2{ 100, 100 };
 		regionJson[U"flexibleWeight"] = 0.0;
 		
-		// marginフィールドが文字列として存在する場合
+		// marginあり
 		regionJson[U"margin"] = U"(5, 10, 15, 20)";
+		noco::InlineRegion withMargin = noco::InlineRegion::FromJSON(regionJson);
+		REQUIRE(withMargin.margin == noco::LRTB{ 5, 10, 15, 20 });
 		
-		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
-		REQUIRE(region.margin.left == 5.0);
-		REQUIRE(region.margin.right == 10.0);
-		REQUIRE(region.margin.top == 15.0);
-		REQUIRE(region.margin.bottom == 20.0);
-	}
-	
-	SECTION("LRTB in InlineRegion with missing margin field")
-	{
-		// marginフィールドが欠落している場合
-		JSON regionJson;
-		regionJson[U"type"] = U"InlineRegion";
-		regionJson[U"sizeRatio"] = Vec2{ 0.5, 0.5 };
-		regionJson[U"sizeDelta"] = Vec2{ 50, 50 };
-		regionJson[U"flexibleWeight"] = 1.0;
-		// marginフィールドなし
+		// marginなし
+		regionJson.erase(U"margin");
+		noco::InlineRegion noMargin = noco::InlineRegion::FromJSON(regionJson);
+		REQUIRE(noMargin.margin == noco::LRTB::Zero());
 		
-		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
-		
-		// デフォルト値(Zero)が使用される
-		REQUIRE(region.margin == noco::LRTB::Zero());
-		REQUIRE(region.margin.left == 0.0);
-		REQUIRE(region.margin.right == 0.0);
-		REQUIRE(region.margin.top == 0.0);
-		REQUIRE(region.margin.bottom == 0.0);
-	}
-	
-	SECTION("LRTB in InlineRegion with invalid margin format")
-	{
-		// marginフィールドに不正な文字列が含まれる場合
-		JSON regionJson;
-		regionJson[U"type"] = U"InlineRegion";
-		regionJson[U"sizeRatio"] = Vec2{ 0.8, 0.8 };
-		regionJson[U"sizeDelta"] = Vec2{ 80, 80 };
-		regionJson[U"flexibleWeight"] = 0.5;
-		
-		// 不正な形式の文字列
-		regionJson[U"margin"] = U"invalid margin format";
-		
-		noco::InlineRegion region = noco::InlineRegion::FromJSON(regionJson);
-		
-		// パースできない文字列の場合、デフォルト値(Zero)が使用される
-		REQUIRE(region.margin == noco::LRTB::Zero());
-		REQUIRE(region.margin.left == 0.0);
-		REQUIRE(region.margin.right == 0.0);
-		REQUIRE(region.margin.top == 0.0);
-		REQUIRE(region.margin.bottom == 0.0);
+		// 不正なmargin
+		regionJson[U"margin"] = U"invalid";
+		noco::InlineRegion invalidMargin = noco::InlineRegion::FromJSON(regionJson);
+		REQUIRE(invalidMargin.margin == noco::LRTB::Zero());
 	}
 }

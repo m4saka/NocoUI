@@ -1,9 +1,9 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// ヒットテスト
+// ヒットテストのテスト
 // ========================================
 
 TEST_CASE("Hit Testing", "[Node][HitTest]")
@@ -27,54 +27,13 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNode == nullptr);
 	}
 
-	SECTION("Hit test with transform")
+	SECTION("Hit test with transform and affectsHitTest")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
-		node->transform().setAffectsHitTest(true);
-		canvas->addChild(node);
-		
-		// Canvasをupdateしてレイアウトを適用
-		canvas->update();
-		
-		// 変換後の位置でヒットテスト
-		auto hitNode = node->hitTest(Vec2{ 150, 150 });
-		REQUIRE(hitNode == node);
-		
-		// 元の位置ではヒットしない
-		auto missNode = node->hitTest(Vec2{ 50, 50 });
-		REQUIRE(missNode == nullptr);
-	}
-
-	SECTION("Hit test with affectsHitTest = false")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto node = noco::Node::Create();
-		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transform().setTranslate(Vec2{ 100, 100 });
-		node->transform().setAffectsHitTest(false); // 明示的にfalseに設定
-		canvas->addChild(node);
-		
-		// Canvasをupdateしてレイアウトを適用
-		canvas->update();
-		
-		// 元の位置でヒットする（Transformが適用されない）
-		auto hitNode = node->hitTest(Vec2{ 50, 50 });
-		REQUIRE(hitNode == node);
-		
-		// 変換後の位置ではヒットしない
-		auto missNode = node->hitTest(Vec2{ 150, 150 });
-		REQUIRE(missNode == nullptr);
-	}
-
-	SECTION("Hit test with affectsHitTest = true")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto node = noco::Node::Create();
-		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->transform().setTranslate(Vec2{ 100, 100 });
+		// affectsHitTest = trueの場合
 		node->transform().setAffectsHitTest(true);
 		canvas->addChild(node);
 		
@@ -82,12 +41,24 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		canvas->update();
 		
 		// 変換後の位置でヒットする
-		auto hitNode = node->hitTest(Vec2{ 150, 150 });
-		REQUIRE(hitNode == node);
+		auto hitNodeTransformed = node->hitTest(Vec2{ 150, 150 });
+		REQUIRE(hitNodeTransformed == node);
 		
 		// 元の位置ではヒットしない
-		auto missNode = node->hitTest(Vec2{ 50, 50 });
-		REQUIRE(missNode == nullptr);
+		auto missNodeOriginal = node->hitTest(Vec2{ 50, 50 });
+		REQUIRE(missNodeOriginal == nullptr);
+		
+		// affectsHitTest = falseに変更
+		node->transform().setAffectsHitTest(false);
+		canvas->update();
+		
+		// 元の位置でヒットする（Transformが適用されない）
+		auto hitNodeOriginal = node->hitTest(Vec2{ 50, 50 });
+		REQUIRE(hitNodeOriginal == node);
+		
+		// 変換後の位置ではヒットしない
+		auto missNodeTransformed = node->hitTest(Vec2{ 150, 150 });
+		REQUIRE(missNodeTransformed == nullptr);
 	}
 
 	SECTION("Hit test with scale and affectsHitTest")

@@ -1,22 +1,13 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// Nodeの基本的なテスト
+// Nodeのテスト
 // ========================================
 
 TEST_CASE("Node creation and basic properties", "[Node]")
 {
-	SECTION("Create empty node")
-	{
-		auto node = noco::Node::Create();
-		REQUIRE(node != nullptr);
-		REQUIRE(node->name() == U"Node");
-		REQUIRE(node->children().empty());
-		REQUIRE(node->parentNode() == nullptr);
-	}
-
 	SECTION("Create node with name")
 	{
 		auto node = noco::Node::Create(U"TestNode");
@@ -128,7 +119,6 @@ TEST_CASE("Node properties and state management", "[Node]")
 		auto node = noco::Node::Create();
 		canvas->addChild(node);
 		
-		// 初期値の確認
 		auto& transform = node->transform();
 		REQUIRE(transform.translate().value() == Vec2{ 0, 0 });
 		REQUIRE(transform.scale().value() == Vec2{ 1, 1 });
@@ -140,7 +130,6 @@ TEST_CASE("Node properties and state management", "[Node]")
 		// updateを呼んで値を更新
 		canvas->update();
 		
-		// 更新後の値の確認
 		REQUIRE(transform.translate().value() == Vec2{ 100, 200 });
 		REQUIRE(transform.scale().value() == Vec2{ 2.0, 3.0 });
 	}
@@ -267,7 +256,6 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		auto found = root->getChildByName(U"Level3", noco::RecursiveYN::Yes);
 		REQUIRE(found == level3);
 		
-		// hasChildrenの確認
 		REQUIRE(root->hasChildren());
 		REQUIRE(level1->hasChildren());
 		REQUIRE(level2->hasChildren());
@@ -381,7 +369,7 @@ TEST_CASE("Node scrolling", "[Node]")
 		// スクロール
 		node->scroll(Vec2{ 100, 200 });
 		
-		// scrollメソッドは即座に反映されるはず
+		// scrollメソッドは即座に反映される
 		REQUIRE(node->scrollOffset() == Vec2{ 100, 200 });
 		
 		// スクロールオフセットをリセット

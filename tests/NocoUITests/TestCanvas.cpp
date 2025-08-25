@@ -1,31 +1,13 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// Canvasの基本的なテスト
+// Canvasのテスト
 // ========================================
 
 TEST_CASE("Canvas system", "[Canvas]")
 {
-	SECTION("Create canvas")
-	{
-		auto canvas = noco::Canvas::Create();
-		REQUIRE(canvas != nullptr);
-		REQUIRE(canvas->children().size() == 0);
-	}
-
-	SECTION("Add node to canvas")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto node = noco::Node::Create(U"TestNode");
-		
-		canvas->addChild(node);
-		
-		REQUIRE(canvas->children().size() == 1);
-		REQUIRE(canvas->children()[0] == node);
-	}
-
 	SECTION("Strict parent checking for addChild")
 	{
 		auto canvas1 = noco::Canvas::Create();
@@ -37,7 +19,6 @@ TEST_CASE("Canvas system", "[Canvas]")
 		canvas1->addChild(nodeA);
 		canvas1->addChild(nodeB);
 		
-		// 初期状態の確認
 		REQUIRE(canvas1->children().size() == 2);
 		REQUIRE(nodeA->isTopLevelNode());
 		REQUIRE(nodeB->isTopLevelNode());
@@ -75,14 +56,12 @@ TEST_CASE("Canvas system", "[Canvas]")
 		auto parent2 = noco::Node::Create(U"Parent2");
 		canvas2->addChild(parent2);
 		
-		// 初期状態の確認
 		REQUIRE(child1->containedCanvas() == canvas1);
 		REQUIRE(parent2->containedCanvas() == canvas2);
 		
-		// setParentによる移動は正常に動作する（内部的に適切な処理が行われる）
+		// setParentによる移動は正常に動作する（既存の親から切り離される）
 		child1->setParent(parent2);
 		
-		// 移動後の確認
 		REQUIRE(parent1->children().size() == 0);
 		REQUIRE(parent2->children().size() == 1);
 		REQUIRE(parent2->children()[0] == child1);

@@ -572,7 +572,7 @@ TEST_CASE("Node JSON Serialization with StyleState", "[Node][StyleState][JSON]")
 		// styleStateが正しく設定されている
 		REQUIRE(node->styleState() == U"checked");
 		
-		// JSON出力の確認は実装に依存するので、基本的な動作のみテスト
+		// JSON出力の基本的な動作をテスト
 		JSON json = node->toJSON();
 		REQUIRE(json.hasElement(U"name"));
 		REQUIRE(json[U"name"].getString() == U"TestNode");

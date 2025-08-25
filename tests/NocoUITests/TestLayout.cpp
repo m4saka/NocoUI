@@ -1,6 +1,6 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
 // Layoutのテスト
@@ -26,6 +26,21 @@ TEST_CASE("Layout system", "[Layout]")
 		auto* hLayout = std::get_if<noco::HorizontalLayout>(&parent->childrenLayout());
 		REQUIRE(hLayout != nullptr);
 		REQUIRE(hLayout->spacing == 10.0f);
+		
+		// Canvasに追加してレイアウトを計算
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 300, 100 } });
+		child1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 80 } });
+		child2->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 60, 80 } });
+		
+		auto canvas = noco::Canvas::Create();
+		canvas->addChild(parent);
+		canvas->update();
+		
+		// 子ノードの位置が正しく計算されているか確認
+		REQUIRE(child1->regionRect().pos.x == Approx(0));
+		REQUIRE(child1->regionRect().pos.y == Approx(10));  // (100 - 80) / 2 = 10 (Middle alignment)
+		REQUIRE(child2->regionRect().pos.x == Approx(60));  // 50 + spacing(10)
+		REQUIRE(child2->regionRect().pos.y == Approx(10));
 	}
 
 	SECTION("VerticalLayout")
@@ -40,6 +55,26 @@ TEST_CASE("Layout system", "[Layout]")
 		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->childrenLayout());
 		REQUIRE(vLayout != nullptr);
 		REQUIRE(vLayout->spacing == 5.0f);
+		
+		// 子ノードを追加してレイアウトを計算
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 200, 300 } });
+		
+		auto child1 = noco::Node::Create();
+		child1->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 150, 40 } });
+		auto child2 = noco::Node::Create();
+		child2->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 150, 50 } });
+		parent->addChild(child1);
+		parent->addChild(child2);
+		
+		auto canvas = noco::Canvas::Create();
+		canvas->addChild(parent);
+		canvas->update();
+		
+		// 子ノードの位置が正しく計算されているか確認
+		REQUIRE(child1->regionRect().pos.x == Approx(25));  // (200 - 150) / 2 = 25 (Center alignment)
+		REQUIRE(child1->regionRect().pos.y == Approx(0));
+		REQUIRE(child2->regionRect().pos.x == Approx(25));
+		REQUIRE(child2->regionRect().pos.y == Approx(45));  // 40 + spacing(5)
 	}
 }
 
@@ -79,48 +114,46 @@ TEST_CASE("HorizontalLayout detailed", "[Layout][HorizontalLayout]")
 		REQUIRE(hLayout->verticalAlign == noco::VerticalAlign::Middle);
 	}
 
-}
-
-TEST_CASE("VerticalLayout detailed", "[Layout][VerticalLayout]")
-{
-	SECTION("Basic properties")
+	SECTION("Flexible weight distribution")
 	{
+		auto canvas = noco::Canvas::Create();
 		auto parent = noco::Node::Create();
-		noco::VerticalLayout layout;
+		parent->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 300, 100 } });
 		
-		// スペーシングの設定
+		noco::HorizontalLayout layout;
 		layout.spacing = 10.0f;
-		
-		// パディングの設定
-		layout.padding = noco::LRTB{ 5, 5, 10, 10 };
-		
 		parent->setChildrenLayout(layout);
 		
-		auto* vLayout = std::get_if<noco::VerticalLayout>(&parent->childrenLayout());
-		REQUIRE(vLayout != nullptr);
-		REQUIRE(vLayout->spacing == 10.0f);
-		REQUIRE(vLayout->padding.left == 5);
-	}
-}
-
-TEST_CASE("FlowLayout detailed", "[Layout][FlowLayout]")
-{
-	SECTION("Basic properties")
-	{
-		auto parent = noco::Node::Create();
-		noco::FlowLayout layout;
+		// 固定サイズの子
+		auto fixed = noco::Node::Create();
+		fixed->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
 		
-		// スペーシングの設定
-		layout.spacing = Vec2{ 10.0f, 5.0f };
+		// フレキシブルな子（重み1）
+		auto flex1 = noco::Node::Create();
+		flex1->setRegion(noco::InlineRegion{ .flexibleWeight = 1.0 });
 		
-		// パディングの設定
-		layout.padding = noco::LRTB{ 5, 5, 10, 10 };
+		// フレキシブルな子（重み2）
+		auto flex2 = noco::Node::Create();
+		flex2->setRegion(noco::InlineRegion{ .flexibleWeight = 2.0 });
 		
-		parent->setChildrenLayout(layout);
+		parent->addChild(fixed);
+		parent->addChild(flex1);
+		parent->addChild(flex2);
 		
-		auto* flowLayout = std::get_if<noco::FlowLayout>(&parent->childrenLayout());
-		REQUIRE(flowLayout != nullptr);
-		REQUIRE(flowLayout->spacing == Vec2{ 10.0f, 5.0f });
-		REQUIRE(flowLayout->padding.left == 5);
+		canvas->addChild(parent);
+		canvas->update();
+		
+		// サイズ計算の検証
+		// 利用可能幅: 300 - 50(固定) - 20(spacing*2) = 230
+		// flex1: 230 * (1/3) = 76.67
+		// flex2: 230 * (2/3) = 153.33
+		REQUIRE(fixed->regionRect().size.x == Approx(50));
+		REQUIRE(flex1->regionRect().size.x == Approx(230.0 / 3.0));
+		REQUIRE(flex2->regionRect().size.x == Approx(230.0 * 2.0 / 3.0));
+		
+		// 位置の検証
+		REQUIRE(fixed->regionRect().pos.x == Approx(0));
+		REQUIRE(flex1->regionRect().pos.x == Approx(60));  // 50 + spacing
+		REQUIRE(flex2->regionRect().pos.x == Approx(60 + 230.0 / 3.0 + 10));  // flex1の後
 	}
 }

@@ -33,13 +33,13 @@ add_executable(${TARGET_NAME}
     TestComponent.cpp
     TestCanvas.cpp
     TestRegion.cpp
+    TestRegionConstraints.cpp
     TestLayout.cpp
     TestSerialization.cpp
     TestProperty.cpp
     TestPropertyValue.cpp
     TestEventHandling.cpp
     TestComplexLayout.cpp
-    TestErrorCases.cpp
     TestSerializationDetails.cpp
     TestStyleState.cpp
     TestParam.cpp

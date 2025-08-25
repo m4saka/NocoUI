@@ -1,9 +1,9 @@
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
-# include <NocoUI.hpp>
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // ========================================
-// TransformのHitTestテスト
+// TransformのHitTestのテスト
 // ========================================
 
 TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Transform]")
@@ -24,11 +24,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		canvas->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
-		
-		// 動作：
-		// - 親は元の位置（0,0-200,200）でヒット判定
-		// - 子も親のaffectsHitTest=falseの影響で元の位置（0,0-100,100）でヒット判定
-		// - 描画は変換後の位置で行われる
 		
 		// 親の元の位置（50,50）では子がヒット（子が最前面）
 		auto hitParent1 = canvas->hitTest(Vec2{ 50, 50 });
@@ -93,12 +88,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 動作：
-		// - 祖父母: affectsHitTest=trueなので変換後の位置（50,50-350,350）で判定
-		// - 親: affectsHitTest=falseなので、祖父母の変換を受けた位置(50,50)から
-		//      自身の変換を適用しない位置（50,50-250,250）で判定
-		// - 子: 親のaffectsHitTest=falseの影響で、親と同じ位置（50,50-150,150）で判定
-		
 		// 子の位置（100,100）では子がヒット
 		auto hitChild = canvas->hitTest(Vec2{ 100, 100 });
 		REQUIRE(hitChild == child);
@@ -128,9 +117,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->transform().setAffectsHitTest(false);
 		canvas->update();
 		
-		// affectsHitTest=false: 親は元の位置(0,0-200,200)でヒット判定
-		// 子も親のaffectsHitTest=falseの影響で元の位置で判定
-		// 子は元の位置(25,25-75,75)でヒット判定
+		// affectsHitTest=false: 親(0,0-200,200)、子(25,25-75,75)でヒット判定
 		auto hitParent = canvas->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hitParent == child);
 		
@@ -193,9 +180,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 親のaffectsHitTest=falseの影響で、子は元の位置(0,0)から
-		// 自身のTransform(50,50)が適用される
-		// つまり、子のHitTest位置は(50,50-150,150)
+		// 子のHitTest位置は(50,50-150,150)
 		auto hitChild = canvas->hitTest(Vec2{ 100, 100 });
 		REQUIRE(hitChild == child);
 		
@@ -203,8 +188,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		auto hitParent = canvas->hitTest(Vec2{ 180, 180 });
 		REQUIRE(hitParent == parent);
 	}
-
-
 	SECTION("Dynamic toggle of affectsHitTest")
 	{
 		auto canvas = noco::Canvas::Create();
@@ -221,8 +204,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 初期状態: affectsHitTest=false
-		// 親は元の位置(0,0-200,200)、子も元の位置(0,0-100,100)でヒット判定
+		// affectsHitTest=false: 親(0,0-200,200)、子(0,0-100,100)でヒット判定
 		auto hit1 = canvas->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hit1 == child);
 		
@@ -233,8 +215,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->transform().setAffectsHitTest(true);
 		canvas->update();
 		
-		// 変更後: affectsHitTest=true
-		// 親も子も変換後の位置でヒット判定
+		// affectsHitTest=true: 親も子も変換後の位置でヒット判定
 		auto hit2 = canvas->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hit2 == nullptr);
 		
@@ -275,12 +256,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// affectsHitTest=falseの場合の動作確認
-		// 期待される動作:
-		// - 祖父母: affectsHitTest=falseなので、元の位置(0,0-400,400)でヒット判定
-		// - 親: 祖父母のaffectsHitTest=falseの影響を受けず、元の位置(0,0-200,200)でヒット判定
-		// - 子: 同様に元の位置(0,0-100,100)でヒット判定
-		
 		// 元の位置(50,50)でヒット (子が最前面)
 		auto hit1_false = canvas->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hit1_false == child);
@@ -300,12 +275,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// affectsHitTest=trueに変更
 		grandparent->transform().setAffectsHitTest(true);
 		canvas->update();
-		
-		// affectsHitTest=trueの場合の動作確認
-		// 期待される動作:
-		// - 祖父母: 変換後の位置(100,100-500,500)でヒット判定
-		// - 親: 祖父母の変換の影響を受け、(100,100-300,300)でヒット判定
-		// - 子: 同様に(100,100-200,200)でヒット判定
 		
 		// 元の位置(50,50)ではヒットしない
 		auto hit1_true = canvas->hitTest(Vec2{ 50, 50 });
@@ -489,8 +458,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		child->transform().setRotation(45.0);
 		canvas->update();
 		
-		Console << U"Child transformedQuad: " << child->transformedQuad();
-		Console << U"Child hitQuad: " << child->hitQuad();
 		
 		// 子の実際の位置でテスト (回転後の子の中心付近の点)
 		auto hit4 = canvas->hitTest(Vec2{ 160, 120 });
@@ -538,12 +505,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 親のaffectsHitTest=falseなので、子は元の位置(0,0)基準で自身の回転のみ適用
 		// 子の元の位置は(20,20-80,80)、30度回転で左辺中央を中心に回転
-		
-		Console << U"Parent transformedQuad: " << parent->transformedQuad();
-		Console << U"Child transformedQuad: " << child->transformedQuad();
-		Console << U"Child quad p0: " << child->hitQuad().p0;
 		
 		// 子は20,20から80,80の矩形で、左辺中央(20,50)を中心に30度回転
 		// テストポイント(50,50)は子の回転後の範囲内にある
@@ -580,9 +542,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 親の中心は(200,200)
-		// 子の元の位置(100,100)は、親の回転により移動する
-		// 45度回転後の子の左上は約(200,59)になる
+		// 親の中心は(200,200)、45度回転後の子の左上は約(200,59)になる
 		
 		// 元の子の位置(100,100)ではヒットしない（回転で移動）
 		auto hit1 = canvas->hitTest(Vec2{ 100, 100 });
@@ -611,7 +571,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		
 		canvas->addChild(node);
 		
-		// affectsHitTest=trueの場合
 		node->transform().setAffectsHitTest(true);
 		canvas->update();
 		
@@ -630,7 +589,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		node->transform().setAffectsHitTest(false);
 		canvas->update();
 		
-		// affectsHitTest=falseの場合、元の位置(0,0-100,100)でヒット判定
 		auto hit4 = canvas->hitTest(Vec2{ 50, 50 });
 		REQUIRE(hit4 == node);
 		
@@ -697,7 +655,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		auto hit7 = canvas->hitTest(Vec2{ 0, 0 });
 		REQUIRE(hit7 == node);
 		
-		// affectsHitTest=falseの場合は元の位置(0,0-100,100)でヒット
 		node->transform().setAffectsHitTest(false);
 		canvas->update();
 		
@@ -747,7 +704,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		canvas->update();
 		auto quad3 = child->hitQuad();
 		
-		// affectsHitTest=falseの場合、子のpivot変更はヒットテスト領域に影響しないはず
 		REQUIRE(quad1.p0.x == Approx(quad2.p0.x).margin(0.01));
 		REQUIRE(quad1.p0.y == Approx(quad2.p0.y).margin(0.01));
 		REQUIRE(quad1.p1.x == Approx(quad2.p1.x).margin(0.01));
@@ -781,7 +737,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		canvas->update();
 		auto hit3 = canvas->hitTest(testPoint);
 		
-		// すべて同じヒット結果になるはず
+		// すべて同じヒット結果になる
 		REQUIRE(hit1 == hit2);
 		REQUIRE(hit2 == hit3);
 	}
@@ -819,19 +775,12 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		Console << U"Grandparent transformedQuad: " << grandparent->transformedQuad();
-		Console << U"Parent transformedQuad: " << parent->transformedQuad();
-		Console << U"Child transformedQuad: " << child->transformedQuad();
-		Console << U"Child hitQuad p0: " << child->hitQuad().p0;
 		
 		// 子の総回転は60°（祖父母の20° + 子の40°）、親の30°はスキップされる
 		auto hit = canvas->hitTest(Vec2{ 200, 100 });
 		REQUIRE(hit == child);
 		
-		// 子の外側だが親の範囲内の点
-		// 親のaffectsHitTest=falseなので、親の位置変換はヒットテストには適用されない
-		// つまり、親は視覚的には(50,50)の位置にあるが、ヒットテスト的には(0,0)の位置にある
-		// そのため、(100,250)は親のヒットテスト範囲外で、祖父母にヒットする
+		// 親はaffectsHitTest=falseのため回転は無視されるが、祖父母の変換の影響は受ける
 		auto hit2 = canvas->hitTest(Vec2{ 100, 250 });
 		REQUIRE(hit2 == grandparent);
 		
@@ -859,9 +808,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		canvas->addChild(parent);
 		parent->addChild(child);
 		canvas->update();
-		
-		Console << U"Parent transformedQuad: " << parent->transformedQuad();
-		Console << U"Child transformedQuad: " << child->transformedQuad();
 		
 		// 親のスケールは無視される（実際は(0,0)から(100,100)）
 		// 子の範囲(0,0)-(50,50)外で親の範囲内の点をテスト
@@ -901,9 +847,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		Console << U"Parent transformedQuad: " << parent->transformedQuad();
-		Console << U"Child transformedQuad: " << child->transformedQuad();
-		
 		// 両方とも変換が無視される
 		// 親のヒットテスト範囲：(0,0)から(200,200)（位置変換が無視される）
 		// 子の範囲(0,0)-(50,50)外で親の範囲内の点をテスト
@@ -939,16 +882,11 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 期待値: 子の位置は親の回転によって変換される
 		// 子のTransform位置(50,0)を含めた子の左上(50,0)が親の回転中心(200,200)を基準に45度回転
 		const double expectedX = 235.35534;
 		const double expectedY = 93.93398;
 		
 		auto childQuad = child->transformedQuad();
-		Console << U"Parent rotation test - child quad: " << childQuad;
-		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
-		Console << U"Child regionRect: " << child->regionRect();
-		Console << U"Parent regionRect: " << parent->regionRect();
 		INFO("Parent transform translate: " << parent->transform().translate().value());
 		INFO("Parent transform rotation: " << parent->transform().rotation().value());
 		INFO("Child transform translate: " << child->transform().translate().value());
@@ -979,14 +917,11 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 期待値: 子の位置は親のスケールによって変換される
 		// 子のTransform位置(50,50)を含めた子の左上が親のpivot(200,200)を基準にスケール変換
 		const double expectedX = 100.0;
 		const double expectedY = 175.0;
 		
 		auto childQuad = child->transformedQuad();
-		Console << U"Parent scale test - child quad: " << childQuad;
-		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
 		REQUIRE(childQuad.p0.x == Approx(expectedX).margin(0.01));
 		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
 	}
@@ -1012,16 +947,12 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 期待値: スケール後に回転
 		// 子のTransform位置(40,0)を含めた子の左上が親のpivot(200,200)を基準にスケール・回転変換
 		const double expectedX = 197.05771;
 		const double expectedY = 25.09619;
 		
 		auto childQuad = child->transformedQuad();
 		auto childRect = child->unrotatedTransformedRect();
-		Console << U"Combined test - child quad: " << childQuad;
-		Console << U"Expected: (" << expectedX << U", " << expectedY << U")";
-		// 変換後の実際の位置（左上頂点）を確認
 		REQUIRE(childQuad.p0.x == Approx(expectedX).margin(0.01));
 		REQUIRE(childQuad.p0.y == Approx(expectedY).margin(0.01));
 		// 親のスケール(1.5, 1.5)が子のサイズにも適用される（unrotatedTransformedRectで確認）
@@ -1050,18 +981,11 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 期待値: 親が90度回転しているので、子の(40,0)は下方向(0,40)になる
 		// 親の中心(50,50) + 回転後のオフセット(0,40) = (50,90)
 		const Vec2 expectedCenter{ 50.0, 90.0 };
 		
-		// 描画位置を確認（transformedQuadで回転を含む完全な変換後の位置を取得）
 		auto childRotatedQuad = child->transformedQuad();
-		Console << U"90° rotation test - child rotated quad: " << childRotatedQuad;
 		
-		// 実際の変換後の位置を確認
-		// 子の実際の位置は親の回転中心(50,50)を基準に90度回転
-		// Transform位置(40,0)により、子は(40,0)から(90,50)の範囲になるが、
-		// 90度回転により(50,40)から(100,90)の範囲になる
 		REQUIRE(childRotatedQuad.p0.x == Approx(100.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p0.y == Approx(40.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p1.x == Approx(100.0).margin(0.01));
@@ -1073,7 +997,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		
 		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（affectsHitTest=false）
 		auto childHitQuad = child->hitQuad();
-		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
 		// ヒットテストのQuadは子のTransform位置が完全には適用されていない
 		// 実際の中心は(75, 25)になる
 		const Vec2 actualCenter{ 75.0, 25.0 };
@@ -1101,18 +1024,11 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		parent->addChild(child);
 		canvas->update();
 		
-		// 期待値: 親が-90度回転しているので、子の(30,0)は上方向(0,-30)になる
 		// 親の中心(150,150) + 回転後のオフセット(0,-30) = (150,120)
 		const Vec2 expectedCenter{ 150.0, 120.0 };
 		
-		// 描画位置を確認（transformedQuadで回転を含む完全な変換後の位置を取得）
 		auto childRotatedQuad = child->transformedQuad();
-		Console << U"-90° rotation test - child rotated quad: " << childRotatedQuad;
 		
-		// 実際の変換後の位置を確認  
-		// 子の実際の位置は親の回転中心(150,150)を基準に-90度回転
-		// Transform位置(30,0)により、子は(130,100)から(180,150)の範囲になるが、
-		// -90度回転により(100,120)から(150,170)の範囲になる
 		REQUIRE(childRotatedQuad.p0.x == Approx(100.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p0.y == Approx(170.0).margin(0.01));
 		REQUIRE(childRotatedQuad.p1.x == Approx(100.0).margin(0.01));
@@ -1124,7 +1040,6 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		
 		// ヒットテストのQuadは親の回転は適用されるが自身の回転は適用されない（affectsHitTest=false）
 		auto childHitQuad = child->hitQuad();
-		Console << U"Hit test quad (parent rotation applied, self rotation not): " << childHitQuad;
 		// ヒットテストのQuadは子のTransform位置が完全には適用されていない
 		// 実際の中心は(125, 175)になる
 		const Vec2 actualCenter{ 125.0, 175.0 };
