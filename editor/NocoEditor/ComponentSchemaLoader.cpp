@@ -25,7 +25,7 @@ namespace noco::editor
 			{
 				LoadFromDirectoryRecursive(path);
 			}
-			else if (path.ends_with(U".component"))
+			else if (path.ends_with(U".json"))
 			{
 				if (auto schema = LoadSchemaFile(path))
 				{
@@ -64,8 +64,10 @@ namespace noco::editor
 			}
 		}
 
-		// .component.pngファイルが存在する場合は読み込む
-		const FilePath thumbnailPath = path + U".png";
+		// 同じファイル名で.png拡張子のファイルが存在する場合は読み込む
+		const FilePath baseName = FileSystem::BaseName(path);
+		const FilePath directory = FileSystem::ParentPath(path);
+		const FilePath thumbnailPath = FileSystem::PathAppend(directory, baseName + U".png");
 		if (FileSystem::Exists(thumbnailPath))
 		{
 			schema.thumbnailTexture = Texture{ thumbnailPath };

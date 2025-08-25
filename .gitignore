@@ -34,5 +34,5 @@ Makefile
 
 **/.DS_Store
 
-editor/NocoEditor/custom
-editor/NocoEditor/App/custom
+editor/NocoEditor/Custom
+editor/NocoEditor/App/Custom

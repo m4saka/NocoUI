@@ -131,10 +131,10 @@ public:
 				return PlaceholderComponent::Create(type, json, withInstanceId);
 			});
 		
-		const FilePath customDir = FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"custom");
-		if (FileSystem::Exists(customDir))
+		const FilePath customComponentsDir = FileSystem::PathAppend(FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"Custom"), U"Components");
+		if (FileSystem::Exists(customComponentsDir))
 		{
-			ComponentSchemaLoader::LoadFromDirectory(customDir);
+			ComponentSchemaLoader::LoadFromDirectory(customComponentsDir);
 		}
 		m_menuBar.addMenuCategory(
 			U"File",
