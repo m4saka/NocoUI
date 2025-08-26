@@ -24,7 +24,7 @@ namespace noco
 		Property<bool> m_nineSliceTopTiled;
 		Property<bool> m_nineSliceBottomTiled;
 		Property<bool> m_nineSliceFallback;
-		Property<bool> m_useTextureRegion;
+		Property<TextureRegionMode> m_textureRegionMode;
 		Property<Vec2> m_textureOffset;
 		Property<Vec2> m_textureSize;
 		
@@ -35,7 +35,7 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_useTextureRegion, &m_textureOffset, &m_textureSize } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -51,7 +51,7 @@ namespace noco
 			, m_nineSliceTopTiled{ U"nineSliceTopTiled", false }
 			, m_nineSliceBottomTiled{ U"nineSliceBottomTiled", false }
 			, m_nineSliceFallback{ U"nineSliceFallback", true }
-			, m_useTextureRegion{ U"useTextureRegion", false }
+			, m_textureRegionMode{ U"textureRegionMode", TextureRegionMode::Full }
 			, m_textureOffset{ U"textureOffset", Vec2::Zero() }
 			, m_textureSize{ U"textureSize", Vec2{ 100, 100 } }
 		{
@@ -240,14 +240,14 @@ namespace noco
 		}
 		
 		[[nodiscard]]
-		const PropertyValue<bool>& useTextureRegion() const
+		const PropertyValue<TextureRegionMode>& textureRegionMode() const
 		{
-			return m_useTextureRegion.propertyValue();
+			return m_textureRegionMode.propertyValue();
 		}
 		
-		std::shared_ptr<Sprite> setUseTextureRegion(const PropertyValue<bool>& useTextureRegion)
+		std::shared_ptr<Sprite> setTextureRegionMode(const PropertyValue<TextureRegionMode>& textureRegionMode)
 		{
-			m_useTextureRegion.setPropertyValue(useTextureRegion);
+			m_textureRegionMode.setPropertyValue(textureRegionMode);
 			return shared_from_this();
 		}
 		

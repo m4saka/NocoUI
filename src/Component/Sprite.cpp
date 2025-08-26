@@ -252,7 +252,7 @@ namespace noco
 		const ColorF& color = m_color.value();
 		const ColorF& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
-		const bool useTextureRegionValue = m_useTextureRegion.value();
+		const TextureRegionMode textureRegionModeValue = m_textureRegionMode.value();
 		
 		Optional<ScopedRenderStates2D> blendState;
 		switch (blendModeValue)
@@ -298,7 +298,7 @@ namespace noco
 		}
 		
 		// テクスチャ領域の指定がある場合
-		if (useTextureRegionValue)
+		if (textureRegionModeValue == TextureRegionMode::OffsetSize)
 		{
 			const Vec2& offset = m_textureOffset.value();
 			const Vec2& size = m_textureSize.value();

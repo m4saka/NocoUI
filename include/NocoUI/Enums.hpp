@@ -44,4 +44,10 @@ namespace noco
 		Subtractive,
 		Multiply,
 	};
+
+	enum class TextureRegionMode : uint8
+	{
+		Full,
+		OffsetSize,
+	};
 }

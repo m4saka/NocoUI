@@ -529,18 +529,18 @@ namespace noco::editor
 			.tooltip = U"要素が9スライスのマージンより小さい場合に通常描画にフォールバックするかどうか",
 			.visibilityCondition = nineSliceVisibilityCondition,
 		};
-		metadata[PropertyKey{ U"Sprite", U"useTextureRegion" }] = PropertyMetadata{
-			.tooltip = U"テクスチャの一部領域を使用",
-			.tooltipDetail = U"有効にすると、textureOffset/textureSizeで指定した領域を使用します",
+		metadata[PropertyKey{ U"Sprite", U"textureRegionMode" }] = PropertyMetadata{
+			.tooltip = U"TextureRegionのモード",
+			.tooltipDetail = U"テクスチャのどの領域を使うかを決めるモード\n\nFull: テクスチャ全体を使用\nOffsetSize: textureOffset/textureSizeで指定した領域を使用",
 			.refreshInspectorOnChange = true,
 		};
 		
-		// useTextureRegionがtrueの時のみ表示するプロパティの条件
-		const auto textureRegionVisibilityCondition = [](const ComponentBase& component) -> bool
+		// textureRegionModeがOffsetSizeの時のみ表示するプロパティの条件
+		const auto offsetSizeRegionVisibilityCondition = [](const ComponentBase& component) -> bool
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return HasAnyTrueState(sprite->useTextureRegion());
+				return sprite->textureRegionMode().defaultValue == TextureRegionMode::OffsetSize;
 			}
 			return false;
 		};
@@ -548,12 +548,12 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Sprite", U"textureOffset" }] = PropertyMetadata{
 			.tooltip = U"テクスチャ内の切り出し開始位置 (ピクセル)",
 			.tooltipDetail = U"テクスチャの左上を原点とした切り出し開始位置を指定します",
-			.visibilityCondition = textureRegionVisibilityCondition,
+			.visibilityCondition = offsetSizeRegionVisibilityCondition,
 		};
 		metadata[PropertyKey{ U"Sprite", U"textureSize" }] = PropertyMetadata{
 			.tooltip = U"テクスチャから切り出すサイズ (ピクセル)",
 			.tooltipDetail = U"切り出す領域のサイズを指定します",
-			.visibilityCondition = textureRegionVisibilityCondition,
+			.visibilityCondition = offsetSizeRegionVisibilityCondition,
 		};
 		
 		// TextBox
