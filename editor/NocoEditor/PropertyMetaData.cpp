@@ -530,8 +530,8 @@ namespace noco::editor
 			.visibilityCondition = nineSliceVisibilityCondition,
 		};
 		metadata[PropertyKey{ U"Sprite", U"textureRegionMode" }] = PropertyMetadata{
-			.tooltip = U"TextureRegionのモード",
-			.tooltipDetail = U"テクスチャのどの領域を使うかを決めるモード\n\nFull: テクスチャ全体を使用\nOffsetSize: textureOffset/textureSizeで指定した領域を使用",
+			.tooltip = U"テクスチャ領域の指定モード",
+			.tooltipDetail = U"Full: テクスチャ全体を使用\nOffsetSize: textureOffset/textureSizeで指定した領域を使用\nGrid: グリッド配置の中からtextureGridIndexで指定したセルを使用",
 			.refreshInspectorOnChange = true,
 		};
 		
@@ -545,15 +545,59 @@ namespace noco::editor
 			return false;
 		};
 		
+		// textureRegionModeがGridの時のみ表示するプロパティの条件
+		const auto gridRegionVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return sprite->textureRegionMode().defaultValue == TextureRegionMode::Grid;
+			}
+			return false;
+		};
+		
+		// OffsetSizeまたはGridの時に表示するプロパティの条件
+		const auto offsetOrGridRegionVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				const auto mode = sprite->textureRegionMode().defaultValue;
+				return mode == TextureRegionMode::OffsetSize || mode == TextureRegionMode::Grid;
+			}
+			return false;
+		};
+		
 		metadata[PropertyKey{ U"Sprite", U"textureOffset" }] = PropertyMetadata{
-			.tooltip = U"テクスチャ内の切り出し開始位置 (ピクセル)",
-			.tooltipDetail = U"テクスチャの左上を原点とした切り出し開始位置を指定します",
-			.visibilityCondition = offsetSizeRegionVisibilityCondition,
+			.tooltip = U"切り出し開始位置 (ピクセル)",
+			.tooltipDetail = U"OffsetSize: テクスチャの切り出し開始位置\nGrid: グリッド全体の開始位置",
+			.visibilityCondition = offsetOrGridRegionVisibilityCondition,
 		};
 		metadata[PropertyKey{ U"Sprite", U"textureSize" }] = PropertyMetadata{
-			.tooltip = U"テクスチャから切り出すサイズ (ピクセル)",
+			.tooltip = U"切り出しサイズ (ピクセル)",
 			.tooltipDetail = U"切り出す領域のサイズを指定します",
 			.visibilityCondition = offsetSizeRegionVisibilityCondition,
+		};
+		metadata[PropertyKey{ U"Sprite", U"textureGridCellSize" }] = PropertyMetadata{
+			.tooltip = U"グリッドの1セルのサイズ (ピクセル)",
+			.tooltipDetail = U"テクスチャの各セルのサイズを指定します",
+			.visibilityCondition = gridRegionVisibilityCondition,
+		};
+		metadata[PropertyKey{ U"Sprite", U"textureGridColumns" }] = PropertyMetadata{
+			.tooltip = U"グリッドの列数",
+			.tooltipDetail = U"テクスチャの横方向のセル数を指定します",
+			.visibilityCondition = gridRegionVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Sprite", U"textureGridRows" }] = PropertyMetadata{
+			.tooltip = U"グリッドの行数",
+			.tooltipDetail = U"テクスチャの縦方向のセル数を指定します",
+			.visibilityCondition = gridRegionVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Sprite", U"textureGridIndex" }] = PropertyMetadata{
+			.tooltip = U"表示するセル番号",
+			.tooltipDetail = U"0から始まるインデックス\n左上から横方向に数えます",
+			.visibilityCondition = gridRegionVisibilityCondition,
+			.dragValueChangeStep = 1.0,
 		};
 		
 		// TextBox

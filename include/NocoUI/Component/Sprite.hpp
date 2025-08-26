@@ -27,6 +27,10 @@ namespace noco
 		Property<TextureRegionMode> m_textureRegionMode;
 		Property<Vec2> m_textureOffset;
 		Property<Vec2> m_textureSize;
+		Property<Vec2> m_textureGridCellSize;
+		Property<int32> m_textureGridColumns;
+		Property<int32> m_textureGridRows;
+		Property<int32> m_textureGridIndex;
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 
@@ -35,7 +39,7 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, bool preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -54,6 +58,10 @@ namespace noco
 			, m_textureRegionMode{ U"textureRegionMode", TextureRegionMode::Full }
 			, m_textureOffset{ U"textureOffset", Vec2::Zero() }
 			, m_textureSize{ U"textureSize", Vec2{ 100, 100 } }
+			, m_textureGridCellSize{ U"textureGridCellSize", Vec2{ 32, 32 } }
+			, m_textureGridColumns{ U"textureGridColumns", 1 }
+			, m_textureGridRows{ U"textureGridRows", 1 }
+			, m_textureGridIndex{ U"textureGridIndex", 0 }
 		{
 		}
 
@@ -272,6 +280,54 @@ namespace noco
 		std::shared_ptr<Sprite> setTextureSize(const PropertyValue<Vec2>& textureSize)
 		{
 			m_textureSize.setPropertyValue(textureSize);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<Vec2>& textureGridCellSize() const
+		{
+			return m_textureGridCellSize.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureGridCellSize(const PropertyValue<Vec2>& textureGridCellSize)
+		{
+			m_textureGridCellSize.setPropertyValue(textureGridCellSize);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<int32>& textureGridColumns() const
+		{
+			return m_textureGridColumns.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureGridColumns(const PropertyValue<int32>& textureGridColumns)
+		{
+			m_textureGridColumns.setPropertyValue(textureGridColumns);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<int32>& textureGridRows() const
+		{
+			return m_textureGridRows.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureGridRows(const PropertyValue<int32>& textureGridRows)
+		{
+			m_textureGridRows.setPropertyValue(textureGridRows);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<int32>& textureGridIndex() const
+		{
+			return m_textureGridIndex.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setTextureGridIndex(const PropertyValue<int32>& textureGridIndex)
+		{
+			m_textureGridIndex.setPropertyValue(textureGridIndex);
 			return shared_from_this();
 		}
 		

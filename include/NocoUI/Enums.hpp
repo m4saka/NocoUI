@@ -49,5 +49,6 @@ namespace noco
 	{
 		Full,
 		OffsetSize,
+		Grid,
 	};
 }

@@ -322,6 +322,54 @@ namespace noco
 				region.resized(rect.size).draw(rect.pos, color);
 			}
 		}
+		else if (textureRegionModeValue == TextureRegionMode::Grid)
+		{
+			const int32 index = m_textureGridIndex.value();
+			const int32 columns = m_textureGridColumns.value();
+			const int32 rows = m_textureGridRows.value();
+			
+			// columnsまたはrowsが0以下の場合は描画しない
+			if (columns <= 0 || rows <= 0)
+			{
+				return;
+			}
+			
+			// 範囲チェック
+			const int32 maxIndex = columns * rows;
+			if (index < 0 || index >= maxIndex)
+			{
+				// インデックスが範囲外の場合は描画しない
+				return;
+			}
+			
+			const int32 gridX = index % columns;
+			const int32 gridY = index / columns;
+			
+			const Vec2& offset = m_textureOffset.value();
+			const Vec2& cellSize = m_textureGridCellSize.value();
+			
+			const RectF textureRect{
+				offset.x + gridX * cellSize.x,
+				offset.y + gridY * cellSize.y,
+				cellSize.x,
+				cellSize.y
+			};
+			
+			TextureRegion region = texture(textureRect);
+			
+			if (m_nineSliceEnabled.value())
+			{
+				drawNineSliceFromRegion(texture, textureRect, rect, color);
+			}
+			else if (m_preserveAspect.value())
+			{
+				region.fitted(rect.size).drawAt(rect.center(), color);
+			}
+			else
+			{
+				region.resized(rect.size).draw(rect.pos, color);
+			}
+		}
 		else
 		{
 			if (m_nineSliceEnabled.value())

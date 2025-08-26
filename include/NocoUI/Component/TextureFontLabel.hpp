@@ -82,7 +82,20 @@ namespace noco
 
 				uvMap.clear();
 
-				const int32 safeGridColumns = Max(textureGridColumns, 1);
+				// columnsまたはrowsが0以下の場合は空のuvMapを返す（描画されない）
+				if (textureGridColumns <= 0 || textureGridRows <= 0)
+				{
+					prevParams = CacheParams{
+						.characterSet = String{ characterSet },
+						.textureCellSize = textureCellSize,
+						.textureOffset = textureOffset,
+						.textureGridColumns = textureGridColumns,
+						.textureGridRows = textureGridRows,
+					};
+					return true;
+				}
+
+				const int32 maxIndex = textureGridColumns * textureGridRows;
 				size_t normalizedIndex = 0;
 
 				for (char32 ch : characterSet)
@@ -92,8 +105,14 @@ namespace noco
 						continue;
 					}
 
-					const double gridX = static_cast<double>(normalizedIndex % safeGridColumns);
-					const double gridY = static_cast<double>(normalizedIndex / safeGridColumns);
+					// インデックスが範囲外の場合はスキップ
+					if (static_cast<int32>(normalizedIndex) >= maxIndex)
+					{
+						break;
+					}
+
+					const double gridX = static_cast<double>(normalizedIndex % textureGridColumns);
+					const double gridY = static_cast<double>(normalizedIndex / textureGridColumns);
 
 					uvMap[ch] = RectF{
 						textureOffset.x + gridX * textureCellSize.x,
