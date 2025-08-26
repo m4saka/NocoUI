@@ -2248,10 +2248,10 @@ namespace noco::editor
 			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6 });
 			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			// Activeチェックボックスを追加
-			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelf().getBool(), [node](bool value) { node->setActive(value); });
-			// Activeチェックボックスにツールチップを追加
+			// activeSelfのチェックボックスを追加
+			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [node](bool value) { node->setActive(value); });
 			{
+				// ツールチップ
 				const PropertyKey key{ U"Node", U"activeSelf" };
 				if (const auto it = m_propertyMetadata.find(key); it != m_propertyMetadata.end())
 				{
@@ -2261,6 +2261,56 @@ namespace noco::editor
 						activeCheckboxNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
 				}
+			}
+			{
+				// コンテキストメニュー
+				Array<MenuElement> menuElements
+				{
+					MenuItem
+					{
+						.text = U"参照パラメータを選択...",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyP,
+						.onClick = [this, node]
+						{
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
+								&node->activeSelfProperty(),
+								m_canvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							));
+						},
+					},
+					MenuItem
+					{
+						.text = U"参照パラメータをクリア",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyC,
+						.onClick = [node, this]
+						{
+							node->setActiveSelfParamRef(U"");
+							refreshInspector();
+						},
+						.fnIsEnabled = [node] { return !node->activeSelfParamRef().isEmpty(); },
+					},
+				};
+				
+				activeCheckboxNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+			}
+			// パラメータ参照がある場合は下線を表示
+			if (!node->activeSelfParamRef().isEmpty())
+			{
+				activeCheckboxNode->emplaceChild(
+					U"ParamRefUnderline",
+					AnchorRegion
+					{
+						.anchorMin = Anchor::BottomCenter,
+						.anchorMax = Anchor::BottomCenter,
+						.posDelta = Vec2{ 0, 4 },
+						.sizeDelta = Vec2{ 18, 2 },
+					},
+					IsHitTargetYN::No)
+					->emplaceComponent<RectRenderer>(ColorF{ Palette::Aqua, 0.5 });
 			}
 			nodeNameNode->addChild(activeCheckboxNode);
 			
@@ -2348,7 +2398,43 @@ namespace noco::editor
 			}
 			fnAddBoolChild(U"inheritsChildrenHover", node->inheritsChildrenHover(), [node](bool value) { node->setInheritsChildrenHover(value); });
 			fnAddBoolChild(U"inheritsChildrenPress", node->inheritsChildrenPress(), [node](bool value) { node->setInheritsChildrenPress(value); });
-			fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });
+			{
+				const auto propertyNode = nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->interactableParamRef().isEmpty() }));
+				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
+				
+				Array<MenuElement> menuElements
+				{
+					MenuItem
+					{
+						.text = U"参照パラメータを選択...",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyP,
+						.onClick = [this, node]
+						{
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
+								&node->interactableProperty(),
+								m_canvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							));
+						},
+					},
+					MenuItem
+					{
+						.text = U"参照パラメータをクリア",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyC,
+						.onClick = [node, this]
+						{
+							node->setInteractableParamRef(U"");
+							refreshInspector();
+						},
+						.fnIsEnabled = [node] { return !node->interactableParamRef().isEmpty(); },
+					},
+				};
+				
+				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+			}
 			fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
 			fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
 			fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [this, node](bool value) { 
@@ -2376,13 +2462,42 @@ namespace noco::editor
 			}
 			fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
 			
-			// styleState入力欄を追加
-			const auto fnAddTextChild =
-				[this, &nodeSettingNode](StringView name, const String& currentValue, auto fnSetValue)
+			{
+				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"styleState", node->styleState(), [node](StringView value) { node->setStyleState(String(value)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->styleStateParamRef().isEmpty() }));
+				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
+				Array<MenuElement> menuElements
 				{
-					nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
+					MenuItem
+					{ 
+						.text = U"参照パラメータを選択...", 
+						.hotKeyText = U"", 
+						.mnemonicInput = KeyP, 
+						.onClick = [this, node] 
+						{ 
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
+								&node->styleStateProperty(), // 参照戻り値のポインタを使っているので注意
+								m_canvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							)); 
+						},
+					},
+					MenuItem
+					{
+						.text = U"参照パラメータをクリア",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyC,
+						.onClick = [node, this]
+						{
+							node->setStyleStateParamRef(U"");
+							refreshInspector();
+						},
+						.fnIsEnabled = [node] { return !node->styleStateParamRef().isEmpty(); },
+					},
 				};
-			fnAddTextChild(U"styleState", node->styleState(), [node](StringView value) { node->setStyleState(String(value)); });
+				
+				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+			}
 
 			nodeSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 

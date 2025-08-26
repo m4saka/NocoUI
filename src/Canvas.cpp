@@ -627,10 +627,23 @@ namespace noco
 			m_childrenTempBuffer.push_back(child);
 		}
 		
+		// updateNodeParamsは通常順で実行（updateInteractionStateより前）
+		for (const auto& child : m_childrenTempBuffer)
+		{
+			child->updateNodeParams(m_params);
+		}
+		if (m_isLayoutDirtyByParams)
+		{
+			// パラメータ変更によるレイアウト更新
+			// (パラメータ起因のレイアウト更新は同一フレームで大量のノードから呼ばれるシナリオが発生しやすいため、同一フレーム内でのレイアウト更新はまとめて1回の遅延実行としている)
+			refreshLayout();
+			m_isLayoutDirtyByParams = false;
+		}
+		
 		// updateInteractionStateは通常順で実行
 		for (const auto& child : m_childrenTempBuffer)
 		{
-			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling);
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling, m_params);
 		}
 		
 		// updateKeyInputは前面のノードから処理する必要があるため逆順で実行
@@ -836,12 +849,31 @@ namespace noco
 
 	size_t Canvas::countParamRefs(StringView paramName) const
 	{
+		if (paramName.isEmpty())
+		{
+			return 0;
+		}
+		
 		size_t count = 0;
 		
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティをチェック
 			count += node->transform().countParamRefs(paramName);
+			
+			// Node自体のプロパティをチェック
+			if (node->activeSelfParamRef() == paramName)
+			{
+				count++;
+			}
+			if (node->interactableParamRef() == paramName)
+			{
+				count++;
+			}
+			if (node->styleStateParamRef() == paramName)
+			{
+				count++;
+			}
 			
 			// コンポーネントのプロパティをチェック
 			for (const auto& component : node->components())
@@ -871,10 +903,29 @@ namespace noco
 
 	void Canvas::clearParamRefs(StringView paramName)
 	{
+		if (paramName.isEmpty())
+		{
+			return;
+		}
+		
 		std::function<void(std::shared_ptr<Node>)> walkNode = [&](std::shared_ptr<Node> node)
 		{
 			// Transformコンポーネントのプロパティから参照を解除
 			node->transform().clearParamRefs(paramName);
+			
+			// Node自体のプロパティから参照を解除
+			if (node->activeSelfParamRef() == paramName)
+			{
+				node->setActiveSelfParamRef(U"");
+			}
+			if (node->interactableParamRef() == paramName)
+			{
+				node->setInteractableParamRef(U"");
+			}
+			if (node->styleStateParamRef() == paramName)
+			{
+				node->setStyleStateParamRef(U"");
+			}
 			
 			// コンポーネントのプロパティから参照を解除
 			for (const auto& component : node->components())
@@ -912,6 +963,11 @@ namespace noco
 			{
 				clearedParamsSet.insert(paramName);
 			}
+			
+			// Node自体のプロパティの無効な参照を解除
+			node->activeSelfProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
+			node->interactableProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
+			node->styleStateProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			
 			// コンポーネントのプロパティの無効な参照を解除
 			for (const auto& component : node->components())

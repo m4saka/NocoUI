@@ -355,11 +355,6 @@ namespace noco
 		friend class Node;
 
 	private:
-		Array<std::shared_ptr<Node>> m_children;
-		SizeF m_size = DefaultSize;
-		AutoScaleMode m_autoScaleMode = AutoScaleMode::None;
-		AutoResizeMode m_autoResizeMode = AutoResizeMode::None;
-
 		class EventRegistry
 		{
 		private:
@@ -385,6 +380,10 @@ namespace noco
 			const Array<Event>& getFiredEventsAll() const;
 		};
 
+		Array<std::shared_ptr<Node>> m_children;
+		SizeF m_size = DefaultSize;
+		AutoScaleMode m_autoScaleMode = AutoScaleMode::None;
+		AutoResizeMode m_autoResizeMode = AutoResizeMode::None;
 		HashTable<String, ParamValue> m_params;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
@@ -394,7 +393,8 @@ namespace noco
 		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
 		/* NonSerialized */ bool m_isEditorPreview = false;
-		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion;
+		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
+		/* NonSerialized */ bool m_isLayoutDirtyByParams = false; // パラメータ変更によるレイアウト更新が必要かどうか
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;

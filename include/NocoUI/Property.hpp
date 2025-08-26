@@ -160,6 +160,7 @@ namespace noco
 			m_paramRef = paramRef;
 		}
 		
+		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
@@ -182,6 +183,11 @@ namespace noco
 				return *m_currentFrameOverride;
 			}
 			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
+		}
+
+		const Optional<T>& currentFrameOverride() const
+		{
+			return m_currentFrameOverride;
 		}
 		
 		void setCurrentFrameOverride(const T& value)
@@ -420,6 +426,7 @@ namespace noco
 			m_paramRef = paramRef;
 		}
 		
+		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
@@ -463,6 +470,11 @@ namespace noco
 			}
 			
 			m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime, deltaTime);
+		}
+
+		const Optional<T>& currentFrameOverride() const
+		{
+			return m_currentFrameOverride;
 		}
 
 		void setCurrentFrameOverride(const T& value)
@@ -662,6 +674,7 @@ namespace noco
 			m_paramRef = paramRef;
 		}
 		
+		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
@@ -684,6 +697,17 @@ namespace noco
 				return *m_currentFrameOverride;
 			}
 			return m_value;
+		}
+
+		[[nodiscard]]
+		const T& propertyValue() const
+		{
+			return m_value;
+		}
+
+		const Optional<T>& currentFrameOverride() const
+		{
+			return m_currentFrameOverride;
 		}
 
 		void setCurrentFrameOverride(const T& value)

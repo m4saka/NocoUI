@@ -233,6 +233,20 @@ namespace noco::editor
 					references.emplace_back(nodeName, U"Transform", U"color");
 				}
 				
+				// Node自体のプロパティをチェック
+				if (node->activeSelfParamRef() == paramName)
+				{
+					references.emplace_back(nodeName, U"Node", U"activeSelf");
+				}
+				if (node->interactableParamRef() == paramName)
+				{
+					references.emplace_back(nodeName, U"Node", U"interactable");
+				}
+				if (node->styleStateParamRef() == paramName)
+				{
+					references.emplace_back(nodeName, U"Node", U"styleState");
+				}
+				
 				// コンポーネントのプロパティをチェック
 				for (const auto& component : node->components())
 				{

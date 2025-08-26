@@ -141,6 +141,11 @@ namespace noco
 
 	size_t Transform::countParamRefs(StringView paramName) const
 	{
+		if (paramName.isEmpty())
+		{
+			return 0;
+		}
+		
 		size_t count = 0;
 		
 		if (m_translate.paramRef() == paramName)
@@ -174,6 +179,11 @@ namespace noco
 
 	void Transform::clearParamRefs(StringView paramName)
 	{
+		if (paramName.isEmpty())
+		{
+			return;
+		}
+		
 		if (m_translate.paramRef() == paramName)
 		{
 			m_translate.setParamRef(U"");
@@ -202,6 +212,12 @@ namespace noco
 
 	void Transform::replaceParamRefs(StringView oldName, StringView newName)
 	{
+		if (oldName.isEmpty())
+		{
+			Logger << U"[NocoUI warning] Transform::replaceParamRefs called with empty oldName";
+			return;
+		}
+		
 		if (m_translate.paramRef() == oldName)
 		{
 			m_translate.setParamRef(String{ newName });

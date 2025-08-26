@@ -39,14 +39,13 @@ namespace noco
 		IsHitTargetYN m_isHitTarget;
 		LRTB m_hitPadding{ 0.0, 0.0, 0.0, 0.0 };
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
-		InteractableYN m_interactable = InteractableYN::Yes;
+		/* NonSerialized */ PropertyNonInteractive<bool> m_interactable{ U"interactable", true };
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
-		
-		ActiveYN m_activeSelf = ActiveYN::Yes;
+		PropertyNonInteractive<bool> m_activeSelf{ U"activeSelf", true };
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
@@ -60,7 +59,7 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::No;
 		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
-		/* NonSerialized */ String m_styleState = U"";
+		/* NonSerialized */ PropertyNonInteractive<String> m_styleState{ U"styleState", U"" };
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
@@ -80,6 +79,8 @@ namespace noco
 		/* NonSerialized */ bool m_preventDragScroll = false; // ドラッグスクロールを阻止するか
 		/* NonSerialized */ Mat3x2 m_transformMatInHierarchy = Mat3x2::Identity(); // 階層内での変換行列
 		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
+		/* NonSerialized */ Optional<bool> m_prevActiveSelfAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelf
+		/* NonSerialized */ Optional<bool> m_prevActiveSelfParamOverrideAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelfの上書き値
 
 		[[nodiscard]]
 		Mat3x2 calculateHitTestMat(const Mat3x2& parentHitTestMat) const;
@@ -91,16 +92,16 @@ namespace noco
 			, m_region{ region }
 			, m_isHitTarget{ isHitTarget }
 			, m_inheritChildrenStateFlags{ inheritChildrenStateFlags }
-			, m_mouseLTracker{ MouseL, m_interactable }
-			, m_mouseRTracker{ MouseR, m_interactable }
+			, m_mouseLTracker{ MouseL, InteractableYN{ m_interactable.value() } }
+			, m_mouseRTracker{ MouseR, InteractableYN{ m_interactable.value() } }
 		{
 		}
 
 		[[nodiscard]]
-		InteractionState updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling);
+		InteractionState updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
 
 		[[nodiscard]]
-		InteractionState updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling);
+		InteractionState updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
 
 		void refreshActiveInHierarchy();
 
@@ -311,7 +312,9 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
 
-		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling = IsScrollingYN::No);
+		void updateNodeParams(const HashTable<String, ParamValue>& params);
+
+		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
 
 		void updateKeyInput();
 
@@ -389,6 +392,21 @@ namespace noco
 		std::shared_ptr<Node> setInteractable(InteractableYN interactable);
 
 		std::shared_ptr<Node> setInteractable(bool interactable);
+		
+		[[nodiscard]]
+		const String& interactableParamRef() const { return m_interactable.paramRef(); }
+		
+		std::shared_ptr<Node> setInteractableParamRef(const String& paramRef)
+		{
+			m_interactable.setParamRef(paramRef);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		PropertyNonInteractive<bool>& interactableProperty() { return m_interactable; }
+		
+		[[nodiscard]]
+		const PropertyNonInteractive<bool>& interactableProperty() const { return m_interactable; }
 
 		[[nodiscard]]
 		bool interactableInHierarchy() const;
@@ -399,6 +417,21 @@ namespace noco
 		std::shared_ptr<Node> setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
 
 		std::shared_ptr<Node> setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		
+		[[nodiscard]]
+		const String& activeSelfParamRef() const { return m_activeSelf.paramRef(); }
+		
+		std::shared_ptr<Node> setActiveSelfParamRef(const String& paramRef)
+		{
+			m_activeSelf.setParamRef(paramRef);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		PropertyNonInteractive<bool>& activeSelfProperty() { return m_activeSelf; }
+		
+		[[nodiscard]]
+		const PropertyNonInteractive<bool>& activeSelfProperty() const { return m_activeSelf; }
 
 		[[nodiscard]]
 		ActiveYN activeInHierarchy() const;
@@ -489,19 +522,34 @@ namespace noco
 		InteractionState currentInteractionState() const;
 
 		[[nodiscard]]
-		const String& styleState() const { return m_styleState; }
+		const String& styleState() const { return m_styleState.value(); }
 
 		std::shared_ptr<Node> setStyleState(const String& state)
 		{
-			m_styleState = state;
+			m_styleState.setValue(state);
 			return shared_from_this();
 		}
 
 		std::shared_ptr<Node> clearStyleState()
 		{
-			m_styleState.clear();
+			m_styleState.setValue(U"");
 			return shared_from_this();
 		}
+		
+		[[nodiscard]]
+		const String& styleStateParamRef() const { return m_styleState.paramRef(); }
+		
+		std::shared_ptr<Node> setStyleStateParamRef(const String& paramRef)
+		{
+			m_styleState.setParamRef(paramRef);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		PropertyNonInteractive<String>& styleStateProperty() { return m_styleState; }
+		
+		[[nodiscard]]
+		const PropertyNonInteractive<String>& styleStateProperty() const { return m_styleState; }
 
 		[[nodiscard]]
 		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;

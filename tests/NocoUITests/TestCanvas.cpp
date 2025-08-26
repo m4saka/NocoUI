@@ -366,4 +366,199 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		REQUIRE(nameField->styleState() == U"unfocused");  // TextBox
 		REQUIRE(descField->styleState() == U"unfocused");  // TextArea
 	}
+	
+	SECTION("styleState parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// パラメータを設定
+		canvas->setParamValue(U"currentStyle", U"hover");
+		
+		// ノードを作成
+		auto node = canvas->emplaceChild(U"TestNode");
+		node->setStyleState(U"default");
+		
+		// パラメータ参照を設定
+		node->setStyleStateParamRef(U"currentStyle");
+		REQUIRE(node->styleStateParamRef() == U"currentStyle");
+		
+		// update前はまだパラメータ値が適用されない
+		REQUIRE(node->styleState() == U"default");
+		
+		// updateするとパラメータ値が適用される
+		canvas->update();
+		REQUIRE(node->styleState() == U"hover");
+		
+		// パラメータを変更
+		canvas->setParamValue(U"currentStyle", U"pressed");
+		canvas->update();
+		REQUIRE(node->styleState() == U"pressed");
+		
+		// パラメータ参照をクリア
+		node->setStyleStateParamRef(U"");
+		node->setStyleState(U"manual");
+		System::Update();  // フレームを進める
+		canvas->update();
+		REQUIRE(node->styleState() == U"manual");
+	}
+	
+	SECTION("styleState serialization with parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		canvas->setParamValue(U"testStyle", U"active");
+		
+		// 元のノードを作成
+		auto node = canvas->emplaceChild(U"Original");
+		node->setStyleState(U"inactive");
+		node->setStyleStateParamRef(U"testStyle");
+		
+		// JSONにシリアライズ
+		const JSON json = node->toJSON();
+		
+		// JSONから新しいノードを作成
+		auto loadedNode = noco::Node::CreateFromJSON(json);
+		canvas->addChild(loadedNode);
+		
+		// 値とパラメータ参照が保持されているか確認
+		REQUIRE(loadedNode->styleState() == U"inactive");  // 保存された値
+		REQUIRE(loadedNode->styleStateParamRef() == U"testStyle");  // パラメータ参照
+		
+		// updateでパラメータ値が適用される
+		canvas->update();
+		REQUIRE(loadedNode->styleState() == U"active");
+	}
+	
+	SECTION("activeSelf parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// パラメータを設定
+		canvas->setParamValue(U"nodeActive", true);
+		
+		// ノードを作成
+		auto node = canvas->emplaceChild(U"TestNode");
+		node->setActive(false);
+		
+		// パラメータ参照を設定
+		node->setActiveSelfParamRef(U"nodeActive");
+		REQUIRE(node->activeSelfParamRef() == U"nodeActive");
+		
+		// update前はまだパラメータ値が適用されない
+		REQUIRE(node->activeSelf().getBool() == false);
+		
+		// updateするとパラメータ値が適用される
+		canvas->update();
+		REQUIRE(node->activeSelf().getBool() == true);
+		
+		// パラメータを変更
+		canvas->setParamValue(U"nodeActive", false);
+		canvas->update();
+		REQUIRE(node->activeSelf().getBool() == false);
+		
+		// パラメータ参照をクリア
+		node->setActiveSelfParamRef(U"");
+		node->setActive(true);
+		System::Update();  // フレームを進める
+		canvas->update();
+		REQUIRE(node->activeSelf().getBool() == true);
+	}
+	
+	SECTION("interactable parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// パラメータを設定
+		canvas->setParamValue(U"allowInteraction", false);
+		
+		// ノードを作成
+		auto node = canvas->emplaceChild(U"TestNode");
+		node->setInteractable(true);
+		
+		// パラメータ参照を設定
+		node->setInteractableParamRef(U"allowInteraction");
+		REQUIRE(node->interactableParamRef() == U"allowInteraction");
+		
+		// update前はまだパラメータ値が適用されない
+		REQUIRE(node->interactable().getBool() == true);
+		
+		// updateするとパラメータ値が適用される
+		canvas->update();
+		REQUIRE(node->interactable().getBool() == false);
+		
+		// パラメータを変更
+		canvas->setParamValue(U"allowInteraction", true);
+		canvas->update();
+		REQUIRE(node->interactable().getBool() == true);
+		
+		// パラメータ参照をクリア
+		node->setInteractableParamRef(U"");
+		node->setInteractable(false);
+		System::Update();  // フレームを進める
+		canvas->update();
+		REQUIRE(node->interactable().getBool() == false);
+	}
+	
+	SECTION("activeSelf and interactable serialization with parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		canvas->setParamValue(U"isActive", false);
+		canvas->setParamValue(U"canInteract", true);
+		
+		// 元のノードを作成
+		auto node = canvas->emplaceChild(U"Original");
+		node->setActive(true);
+		node->setInteractable(false);
+		node->setActiveSelfParamRef(U"isActive");
+		node->setInteractableParamRef(U"canInteract");
+		
+		// JSONにシリアライズ
+		const JSON json = node->toJSON();
+		
+		// JSONから新しいノードを作成
+		auto loadedNode = noco::Node::CreateFromJSON(json);
+		canvas->addChild(loadedNode);
+		
+		// 値とパラメータ参照が保持されているか確認
+		REQUIRE(loadedNode->activeSelf().getBool() == true);  // 保存された値
+		REQUIRE(loadedNode->interactable().getBool() == false);  // 保存された値
+		REQUIRE(loadedNode->activeSelfParamRef() == U"isActive");  // パラメータ参照
+		REQUIRE(loadedNode->interactableParamRef() == U"canInteract");  // パラメータ参照
+		
+		// updateでパラメータ値が適用される
+		canvas->update();
+		REQUIRE(loadedNode->activeSelf().getBool() == false);
+		REQUIRE(loadedNode->interactable().getBool() == true);
+	}
+	
+	SECTION("Properties without parameter reference should reflect values immediately")
+	{
+		// 単純に値をセットして確認するだけのテストに見えるが、
+		// 内部実装がPropertyNonInteractiveのため即時反映されることを検証している
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = canvas->emplaceChild(U"TestNode");
+		
+		// activeSelfのテスト（パラメータ参照なし）
+		node->setActive(true);
+		REQUIRE(node->activeSelf().getBool() == true); // 即座に反映される
+		
+		node->setActive(false);
+		REQUIRE(node->activeSelf().getBool() == false); // 即座に反映される
+		
+		// interactableのテスト（パラメータ参照なし）
+		node->setInteractable(false);
+		REQUIRE(node->interactable().getBool() == false); // 即座に反映される
+		
+		node->setInteractable(true);
+		REQUIRE(node->interactable().getBool() == true); // 即座に反映される
+		
+		// styleStateのテスト（パラメータ参照なし）
+		node->setStyleState(U"hover");
+		REQUIRE(node->styleState() == U"hover"); // 即座に反映される
+		
+		node->setStyleState(U"pressed");
+		REQUIRE(node->styleState() == U"pressed"); // 即座に反映される
+		
+		node->setStyleState(U"");
+		REQUIRE(node->styleState() == U""); // 即座に反映される
+	}
 }

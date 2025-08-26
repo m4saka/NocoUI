@@ -7,16 +7,16 @@
 
 namespace noco
 {
-	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
+	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
-		const InteractableYN interactable{ m_interactable && parentInteractable };
+		const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 		InteractionState inheritedInteractionState = InteractionState::Default;
 		bool inheritedIsClicked = false;
 		if (m_inheritChildrenStateFlags != InheritChildrenStateFlags::None)
 		{
 			for (const auto& child : m_children)
 			{
-				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable, isAncestorScrolling);
+				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable, isAncestorScrolling, params);
 				if (interactable)
 				{
 					if (!inheritsChildrenPress() && childInteractionState == InteractionState::Pressed)
@@ -50,16 +50,16 @@ namespace noco
 		}
 	}
 
-	InteractionState Node::updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling)
+	InteractionState Node::updateForCurrentInteractionStateRight(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
-		const InteractableYN interactable{ m_interactable && parentInteractable };
+		const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 		InteractionState inheritedInteractionState = InteractionState::Default;
 		bool inheritedIsRightClicked = false;
 		if (m_inheritChildrenStateFlags != InheritChildrenStateFlags::None)
 		{
 			for (const auto& child : m_children)
 			{
-				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable, isAncestorScrolling);
+				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable, isAncestorScrolling, params);
 				if (interactable)
 				{
 					if (!inheritsChildrenPress() && childInteractionState == InteractionState::Pressed)
@@ -99,12 +99,12 @@ namespace noco
 		
 		if (const auto parent = m_parent.lock())
 		{
-			m_activeInHierarchy = ActiveYN{ m_activeSelf && parent->m_activeInHierarchy };
+			m_activeInHierarchy = ActiveYN{ m_activeSelf.value() && parent->m_activeInHierarchy };
 		}
 		else if (!m_canvas.expired())
 		{
 			// Canvas配下の直接の子の場合はactiveSelfに依存
-			m_activeInHierarchy = m_activeSelf;
+			m_activeInHierarchy = ActiveYN{ m_activeSelf.value() };
 		}
 		else
 		{
@@ -359,7 +359,6 @@ namespace noco
 			{ U"hitPadding", m_hitPadding.toJSON() },
 			{ U"inheritsChildrenHover", inheritsChildrenHover() },
 			{ U"inheritsChildrenPress", inheritsChildrenPress() },
-			{ U"interactable", m_interactable.getBool() },
 			{ U"horizontalScrollable", horizontalScrollable() },
 			{ U"verticalScrollable", verticalScrollable() },
 			{ U"wheelScrollEnabled", wheelScrollEnabled() },
@@ -367,14 +366,11 @@ namespace noco
 			{ U"decelerationRate", m_decelerationRate },
 			{ U"rubberBandScrollEnabled", m_rubberBandScrollEnabled.getBool() },
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
-			{ U"activeSelf", m_activeSelf.getBool() },
 		};
 		
-		// styleStateをシリアライズ（空でない場合のみ）
-		if (!m_styleState.empty())
-		{
-			result[U"styleState"] = m_styleState;
-		}
+		m_activeSelf.appendJSON(result);
+		m_interactable.appendJSON(result);
+		m_styleState.appendJSON(result);
 
 		if (withInstanceId)
 		{
@@ -464,10 +460,7 @@ namespace noco
 		{
 			node->setInheritsChildrenPress(json[U"inheritsChildrenPress"].getOr<bool>(false));
 		}
-		if (json.contains(U"interactable"))
-		{
-			node->setInteractable(InteractableYN{ json[U"interactable"].getOr<bool>(true) });
-		}
+		node->m_interactable.readFromJSON(json);
 		if (json.contains(U"horizontalScrollable"))
 		{
 			node->setHorizontalScrollable(json[U"horizontalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
@@ -496,14 +489,8 @@ namespace noco
 		{
 			node->setClippingEnabled(ClippingEnabledYN{ json[U"clippingEnabled"].getOr<bool>(false) });
 		}
-		if (json.contains(U"activeSelf"))
-		{
-			node->setActive(ActiveYN{ json[U"activeSelf"].getOr<bool>(true) }, RefreshesLayoutYN::No);
-		}
-		if (json.contains(U"styleState"))
-		{
-			node->setStyleState(json[U"styleState"].getOr<String>(U""));
-		}
+		node->m_activeSelf.readFromJSON(json);
+		node->m_styleState.readFromJSON(json);
 		if (withInstanceId && json.contains(U"_instanceId"))
 		{
 			node->m_instanceId = json[U"_instanceId"].get<uint64>();
@@ -1152,7 +1139,7 @@ namespace noco
 	std::shared_ptr<Node> Node::hitTest(const Vec2& point)
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
-		if (!m_activeSelf)
+		if (!m_activeSelf.value())
 		{
 			return nullptr;
 		}
@@ -1184,7 +1171,7 @@ namespace noco
 	std::shared_ptr<const Node> Node::hitTest(const Vec2& point) const
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
-		if (!m_activeSelf)
+		if (!m_activeSelf.value())
 		{
 			return nullptr;
 		}
@@ -1229,7 +1216,38 @@ namespace noco
 		return nullptr;
 	}
 
-	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling)
+	void Node::updateNodeParams(const HashTable<String, ParamValue>& params)
+	{
+		// パラメータ参照をもとに値を更新
+		m_activeSelf.update(InteractionState::Default, {}, 0.0, params);
+		m_interactable.update(InteractionState::Default, {}, 0.0, params);
+		m_styleState.update(InteractionState::Default, {}, 0.0, params);
+		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() &&
+			m_prevActiveSelfParamOverrideAfterUpdateNodeParams != m_activeSelf.currentFrameOverride())
+		{
+			// パラメータ起因でactiveSelfが変化した場合はレイアウト更新
+			refreshActiveInHierarchy();
+			if (const auto canvas = m_canvas.lock())
+			{
+				canvas->m_isLayoutDirtyByParams = true;
+			}
+		}
+		m_prevActiveSelfAfterUpdateNodeParams = m_activeSelf.value();
+		m_prevActiveSelfParamOverrideAfterUpdateNodeParams = m_activeSelf.currentFrameOverride();
+		
+		// MouseTrackerのinteractableを更新
+		const InteractableYN interactable{ m_interactable.value() };
+		m_mouseLTracker.setInteractable(interactable);
+		m_mouseRTracker.setInteractable(interactable);
+		
+		// 子ノードのパラメータ更新
+		for (const auto& child : m_children)
+		{
+			child->updateNodeParams(params);
+		}
+	}
+
+	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
 		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
@@ -1240,8 +1258,8 @@ namespace noco
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
-		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling);
-		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling);
+		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
+		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
 		if (!m_isHitTarget)
 		{
 			// HitTargetでない場合は親のinteractionStateを引き継ぐ
@@ -1252,10 +1270,10 @@ namespace noco
 		if (!m_children.empty())
 		{
 			// 子ノードのupdateInteractionState実行
-			const InteractableYN interactable{ m_interactable && parentInteractable };
+			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling);
+				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params);
 			}
 		}
 	}
@@ -1428,9 +1446,9 @@ namespace noco
 		m_activeStyleStates = parentActiveStyleStates;
 		
 		// 自身のstyleStateを追加
-		if (!m_styleState.empty())
+		if (!m_styleState.value().empty())
 		{
-			m_activeStyleStates.push_back(m_styleState);
+			m_activeStyleStates.push_back(m_styleState.value());
 		}
 		
 		if (m_activeInHierarchy)
@@ -1750,7 +1768,27 @@ namespace noco
 
 	void Node::replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive)
 	{
+		if (oldName.isEmpty())
+		{
+			Logger << U"[NocoUI warning] Node::replaceParamRefs called with empty oldName";
+			return;
+		}
+		
 		m_transform.replaceParamRefs(oldName, newName);
+		
+		// Node自体のプロパティのパラメータ参照を置き換え
+		if (m_activeSelf.paramRef() == oldName)
+		{
+			m_activeSelf.setParamRef(newName);
+		}
+		if (m_interactable.paramRef() == oldName)
+		{
+			m_interactable.setParamRef(newName);
+		}
+		if (m_styleState.paramRef() == oldName)
+		{
+			m_styleState.setParamRef(newName);
+		}
 		
 		for (const auto& component : m_components)
 		{
@@ -1771,7 +1809,7 @@ namespace noco
 
 	void Node::draw() const
 	{
-		if (!m_activeSelf || !m_activeInHierarchy)
+		if (!m_activeSelf.value() || !m_activeInHierarchy)
 		{
 			return;
 		}
@@ -2117,12 +2155,12 @@ namespace noco
 
 	InteractableYN Node::interactable() const
 	{
-		return m_interactable;
+		return InteractableYN{ m_interactable.value() };
 	}
 
 	std::shared_ptr<Node> Node::setInteractable(InteractableYN interactable)
 	{
-		m_interactable = interactable;
+		m_interactable.setValue(interactable.getBool());
 		m_mouseLTracker.setInteractable(interactable);
 		m_mouseRTracker.setInteractable(interactable);
 		return shared_from_this();
@@ -2141,12 +2179,12 @@ namespace noco
 	// TODO: boolで返す方が良さそう
 	ActiveYN Node::activeSelf() const
 	{
-		return m_activeSelf;
+		return ActiveYN{ m_activeSelf.value() };
 	}
 
 	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout)
 	{
-		m_activeSelf = activeSelf;
+		m_activeSelf.setValue(activeSelf.getBool());
 		refreshActiveInHierarchy();
 		if (refreshesLayout)
 		{
