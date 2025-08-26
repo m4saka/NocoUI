@@ -29,11 +29,11 @@ namespace noco::editor
 			.tooltip = U"ヒットテスト領域の拡縮 (左、右、上、下)",
 			.tooltipDetail = U"ヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)に使用する領域を、指定されたピクセル数だけ拡大・縮小します\n正の値で領域を拡大、負の値で領域を縮小します\n実際の見た目よりもずれた位置にマウスカーソルがあっても反応させたい場合に使用できます",
 		};
-		metadata[PropertyKey{ U"Node", U"inheritsChildrenHoveredState" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Node", U"inheritsChildrenHover" }] = PropertyMetadata{
 			.tooltip = U"子要素のホバー状態(Hovered)を継承するかどうか",
 			.tooltipDetail = U"有効にすると、子要素のInteractionStateがHoveredの場合に、このNodeのInteractionStateがHoveredになります\n※このNodeのInteractionStateがPressed・Disabledの場合は影響を受けません",
 		};
-		metadata[PropertyKey{ U"Node", U"inheritsChildrenPressedState" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Node", U"inheritsChildrenPress" }] = PropertyMetadata{
 			.tooltip = U"子要素の押下状態(Pressed)を継承するかどうか",
 			.tooltipDetail = U"有効にすると、子要素のInteractionStateがPressedの場合に、このNodeのInteractionStateがPressedになります\n※このNodeのInteractionStateがDisabledの場合は影響を受けません",
 		};

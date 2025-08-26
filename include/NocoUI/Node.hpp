@@ -421,14 +421,14 @@ namespace noco
 		std::shared_ptr<Node> setInheritChildrenStateFlags(InheritChildrenStateFlags flags);
 
 		[[nodiscard]]
-		bool inheritsChildrenHoveredState() const;
+		bool inheritsChildrenHover() const;
 
-		std::shared_ptr<Node> setInheritsChildrenHoveredState(bool value);
+		std::shared_ptr<Node> setInheritsChildrenHover(bool value);
 
 		[[nodiscard]]
-		bool inheritsChildrenPressedState() const;
+		bool inheritsChildrenPress() const;
 
-		std::shared_ptr<Node> setInheritsChildrenPressedState(bool value);
+		std::shared_ptr<Node> setInheritsChildrenPress(bool value);
 
 		[[nodiscard]]
 		ScrollableAxisFlags scrollableAxisFlags() const;

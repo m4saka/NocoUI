@@ -2346,8 +2346,8 @@ namespace noco::editor
 			{
 				fnAddLRTBChild(U"hitPadding", node->hitPadding(), [node](const LRTB& value) { node->setHitPadding(value); });
 			}
-			fnAddBoolChild(U"inheritsChildrenHoveredState", node->inheritsChildrenHoveredState(), [node](bool value) { node->setInheritsChildrenHoveredState(value); });
-			fnAddBoolChild(U"inheritsChildrenPressedState", node->inheritsChildrenPressedState(), [node](bool value) { node->setInheritsChildrenPressedState(value); });
+			fnAddBoolChild(U"inheritsChildrenHover", node->inheritsChildrenHover(), [node](bool value) { node->setInheritsChildrenHover(value); });
+			fnAddBoolChild(U"inheritsChildrenPress", node->inheritsChildrenPress(), [node](bool value) { node->setInheritsChildrenPress(value); });
 			fnAddBoolChild(U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); });
 			fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
 			fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
