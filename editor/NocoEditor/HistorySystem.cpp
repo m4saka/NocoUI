@@ -59,6 +59,13 @@ namespace noco::editor
 		m_lastRecordTime.restart();
 	}
 
+	void HistorySystem::recordInitialState(const JSON& initialState)
+	{
+		clear();
+		m_lastRecordedState = initialState;
+		m_lastRecordTime.restart();
+	}
+
 	// 元に戻す
 	Optional<JSON> HistorySystem::undo(const JSON& currentState)
 	{

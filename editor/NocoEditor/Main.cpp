@@ -825,8 +825,9 @@ public:
 				m_canvas->clearParams();
 				m_canvas->clearAll();
 				refresh();
+				m_inspector.refreshInspector(PreserveScrollYN::No);
 				createInitialNode();
-				m_historySystem.clear();
+				recordInitialHistoryState();
 				m_toolbar.updateButtonStates();
 
 				// アセットのルートディレクトリを初期化
@@ -905,6 +906,7 @@ public:
 		}
 		const auto clearedParams = m_canvas->removeInvalidParamRefs();
 		refresh();
+		m_inspector.refreshInspector(PreserveScrollYN::No);
 		m_historySystem.clear();
 		m_toolbar.updateButtonStates();
 
@@ -1039,6 +1041,12 @@ public:
 			// 選択を復元
 			restoreSelectedNodeIds(selectedNodeIds);
 			
+			// ノード未選択時は選択復元によるInspector再構築が走らないので再構築を呼ぶ
+			if (selectedNodeIds.empty())
+			{
+				m_inspector.refreshInspector();
+			}
+			
 			m_historySystem.endRestore();
 			m_toolbar.updateButtonStates();
 		}
@@ -1056,6 +1064,12 @@ public:
 			
 			// 選択を復元
 			restoreSelectedNodeIds(selectedNodeIds);
+			
+			// ノード未選択時は選択復元によるInspector再構築が走らないためここで再構築を呼ぶ
+			if (selectedNodeIds.empty())
+			{
+				m_inspector.refreshInspector();
+			}
 			
 			m_historySystem.endRestore();
 			m_toolbar.updateButtonStates();
@@ -1085,7 +1099,7 @@ public:
 	
 	void recordInitialHistoryState()
 	{
-		m_historySystem.recordStateIfNeeded(m_canvas->toJSON(WithInstanceIdYN::Yes));
+		m_historySystem.recordInitialState(m_canvas->toJSON(WithInstanceIdYN::Yes));
 	}
 };
 
@@ -1123,11 +1137,10 @@ void Main()
 	// ファイルが読み込まれなかった場合は新規作成
 	if (!fileLoaded)
 	{
-			editor.createInitialNode();
+		editor.createInitialNode();
 		editor.resetDirtyState();
 	}
 	
-	// 初期状態を記録
 	editor.recordInitialHistoryState();
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });

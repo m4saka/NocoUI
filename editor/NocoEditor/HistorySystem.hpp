@@ -25,6 +25,8 @@ namespace noco::editor
 		// 現在の状態を記録するかチェックし、必要なら記録
 		void recordStateIfNeeded(const JSON& currentState);
 
+		void recordInitialState(const JSON& initialState);
+
 		// 元に戻す
 		[[nodiscard]]
 		Optional<JSON> undo(const JSON& currentState);
