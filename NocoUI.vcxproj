@@ -119,6 +119,7 @@
     <ClCompile Include="src\Canvas.cpp" />
     <ClCompile Include="src\Component\ComponentBase.cpp" />
     <ClCompile Include="src\ComponentFactory.cpp" />
+    <ClCompile Include="src\Component\TextureFontLabel.cpp" />
     <ClCompile Include="src\Component\UISound.cpp" />
     <ClCompile Include="src\Component\CursorChanger.cpp" />
     <ClCompile Include="src\Component\DragDropSource.cpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="include\NocoUI\Anchor.hpp" />
     <ClInclude Include="include\NocoUI\Asset.hpp" />
     <ClInclude Include="include\NocoUI\Canvas.hpp" />
+    <ClInclude Include="include\NocoUI\Component\TextureFontLabel.hpp" />
     <ClInclude Include="include\NocoUI\Component\UISound.hpp" />
     <ClInclude Include="include\NocoUI\Component\Component.hpp" />
     <ClInclude Include="include\NocoUI\Component\ComponentBase.hpp" />
