@@ -264,7 +264,6 @@ TEST_CASE("Canvas parameter serialization", "[Param]")
 		canvas1->setParamValue(U"vec2", Vec2{10, 20});
 		canvas1->setParamValue(U"color", ColorF{1.0, 0.5, 0.25, 1.0});
 		
-		// JSONに保存
 		JSON json = canvas1->toJSON();
 		
 		// 新しいCanvasに読み込み
@@ -357,20 +356,19 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		REQUIRE(canvas->param(U"testParam").has_value() == false);
 	}
 	
-	SECTION("Empty parameter name handling")
+	SECTION("Empty parameter name is rejected")
 	{
 		auto canvas = Canvas::Create();
 		
-		// 空文字列の名前でパラメータ設定
+		// 空文字列の名前でパラメータ設定は拒否される
 		canvas->setParamValue(U"", 100);
 		
-		// 空文字列でも取得可能
-		REQUIRE(canvas->param(U"").has_value() == true);
-		REQUIRE(canvas->paramValueOpt<int>(U"").value_or(0) == 100);
-		
-		// 空文字列の削除も可能
-		canvas->removeParam(U"");
+		// 空文字列のパラメータは追加されない
 		REQUIRE(canvas->param(U"").has_value() == false);
+		REQUIRE(canvas->paramValueOpt<int>(U"").value_or(0) == 0);
+		
+		// パラメータが追加されていないことを確認
+		REQUIRE(canvas->params().size() == 0);
 	}
 	
 	SECTION("Large number of parameters")
@@ -415,5 +413,179 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		canvas->setParamValue(U"nonExistent", U"NewValue");
 		canvas->update();
 		REQUIRE(textProperty->value() == U"NewValue");
+	}
+}
+
+TEST_CASE("Parameter name validation", "[Param]")
+{
+	SECTION("IsValidParameterName function")
+	{
+		REQUIRE(IsValidParameterName(U"validName") == true);
+		REQUIRE(IsValidParameterName(U"ValidName") == true);
+		REQUIRE(IsValidParameterName(U"VALID_NAME") == true);
+		REQUIRE(IsValidParameterName(U"valid_name_123") == true);
+		REQUIRE(IsValidParameterName(U"v") == true); // 1文字
+		REQUIRE(IsValidParameterName(U"V") == true); // 1文字大文字
+		REQUIRE(IsValidParameterName(U"myParam123") == true);
+		REQUIRE(IsValidParameterName(U"param_with_underscores") == true);
+		REQUIRE(IsValidParameterName(U"CONSTANT_VALUE") == true);
+		REQUIRE(IsValidParameterName(U"m_memberVariable") == true);
+		REQUIRE(IsValidParameterName(U"value123456789") == true);
+		REQUIRE(IsValidParameterName(U"abcdefghijklmnopqrstuvwxyz") == true);
+		REQUIRE(IsValidParameterName(U"ABCDEFGHIJKLMNOPQRSTUVWXYZ") == true);
+		REQUIRE(IsValidParameterName(U"a0123456789_") == true);
+		REQUIRE(IsValidParameterName(U"_validName") == true); // アンダースコアで始まる
+		REQUIRE(IsValidParameterName(U"_") == true); // アンダースコアのみ
+		REQUIRE(IsValidParameterName(U"__double") == true); // 連続アンダースコアで始まる
+		REQUIRE(IsValidParameterName(U"_test_value") == true);
+		REQUIRE(IsValidParameterName(U"_123") == true); // アンダースコア＋数字
+		
+		REQUIRE(IsValidParameterName(U"") == false); // 空文字列
+		REQUIRE(IsValidParameterName(U"123invalid") == false); // 数字で始まる
+		REQUIRE(IsValidParameterName(U"9param") == false); // 数字で始まる
+		REQUIRE(IsValidParameterName(U"invalid-name") == false);
+		REQUIRE(IsValidParameterName(U"invalid.name") == false);
+		REQUIRE(IsValidParameterName(U"invalid name") == false);
+		REQUIRE(IsValidParameterName(U"invalid!name") == false);
+		REQUIRE(IsValidParameterName(U"invalid@name") == false);
+		REQUIRE(IsValidParameterName(U"invalid#name") == false);
+		REQUIRE(IsValidParameterName(U"invalid$name") == false);
+		REQUIRE(IsValidParameterName(U"invalid%name") == false);
+		REQUIRE(IsValidParameterName(U"invalid^name") == false);
+		REQUIRE(IsValidParameterName(U"invalid&name") == false);
+		REQUIRE(IsValidParameterName(U"invalid*name") == false);
+		REQUIRE(IsValidParameterName(U"invalid(name") == false);
+		REQUIRE(IsValidParameterName(U"invalid)name") == false);
+		REQUIRE(IsValidParameterName(U"invalid[name") == false);
+		REQUIRE(IsValidParameterName(U"invalid]name") == false);
+		REQUIRE(IsValidParameterName(U"invalid{name") == false);
+		REQUIRE(IsValidParameterName(U"invalid}name") == false);
+		REQUIRE(IsValidParameterName(U"invalid/name") == false);
+		REQUIRE(IsValidParameterName(U"invalid\\name") == false);
+		REQUIRE(IsValidParameterName(U"invalid|name") == false);
+		REQUIRE(IsValidParameterName(U"invalid+name") == false);
+		REQUIRE(IsValidParameterName(U"invalid=name") == false);
+		REQUIRE(IsValidParameterName(U"日本語") == false); // 日本語
+		REQUIRE(IsValidParameterName(U"パラメータ") == false); // カタカナ
+		REQUIRE(IsValidParameterName(U"param日本語") == false);
+		REQUIRE(IsValidParameterName(U"😀emoji") == false);
+		REQUIRE(IsValidParameterName(U"param😀") == false);
+	}
+	
+	SECTION("Valid parameter names are accepted")
+	{
+		auto canvas = Canvas::Create();
+		
+		canvas->setParamValue(U"validName", 1);
+		canvas->setParamValue(U"validName2", 2);
+		canvas->setParamValue(U"valid_name_3", 3);
+		canvas->setParamValue(U"VALID_NAME", 4);
+		canvas->setParamValue(U"v", 5); // 1文字でも有効
+		canvas->setParamValue(U"ValidName123_456", 6);
+		
+		REQUIRE(canvas->hasParam(U"validName"));
+		REQUIRE(canvas->hasParam(U"validName2"));
+		REQUIRE(canvas->hasParam(U"valid_name_3"));
+		REQUIRE(canvas->hasParam(U"VALID_NAME"));
+		REQUIRE(canvas->hasParam(U"v"));
+		REQUIRE(canvas->hasParam(U"ValidName123_456"));
+		
+		REQUIRE(canvas->params().size() == 6);
+	}
+	
+	SECTION("Invalid parameter names are rejected in JSON loading")
+	{
+		JSON json;
+		json[U"size"] = Vec2{800, 600}; // Canvas作成に必要
+		json[U"children"] = Array<JSON>{}; // Canvas作成に必要
+		json[U"params"] = JSON{};
+		json[U"params"][U"validParam"] = JSON{};
+		json[U"params"][U"validParam"][U"type"] = U"Number";
+		json[U"params"][U"validParam"][U"value"] = U"100";
+		
+		json[U"params"][U"123invalid"] = JSON{}; // 数字で始まる
+		json[U"params"][U"123invalid"][U"type"] = U"Number";
+		json[U"params"][U"123invalid"][U"value"] = U"200";
+		
+		json[U"params"][U"invalid-name"] = JSON{};
+		json[U"params"][U"invalid-name"][U"type"] = U"Number";
+		json[U"params"][U"invalid-name"][U"value"] = U"300";
+		
+		json[U"params"][U"日本語"] = JSON{}; // 日本語
+		json[U"params"][U"日本語"][U"type"] = U"Number";
+		json[U"params"][U"日本語"][U"value"] = U"400";
+		
+		json[U"params"][U"_validParam"] = JSON{};
+		json[U"params"][U"_validParam"][U"type"] = U"Number";
+		json[U"params"][U"_validParam"][U"value"] = U"500";
+		
+		auto canvas = Canvas::Create();
+		REQUIRE(canvas != nullptr); // まずキャンバス作成確認
+		REQUIRE(canvas->tryReadFromJSON(json));
+		
+		REQUIRE(canvas->hasParam(U"validParam"));
+		REQUIRE(canvas->paramValueOpt<double>(U"validParam").value_or(0) == 100);
+		REQUIRE(canvas->hasParam(U"_validParam"));
+		REQUIRE(canvas->paramValueOpt<double>(U"_validParam").value_or(0) == 500);
+		
+		REQUIRE(!canvas->hasParam(U"123invalid"));
+		REQUIRE(!canvas->hasParam(U"invalid-name"));
+		REQUIRE(!canvas->hasParam(U"日本語"));
+		
+		REQUIRE(canvas->params().size() == 2);
+	}
+	
+	SECTION("Invalid parameter names are not saved to JSON")
+	{
+		auto canvas = Canvas::Create();
+		
+		canvas->setParamValue(U"validParam", 100);
+		canvas->setParamValue(U"_validParam", 150); // アンダースコアで始まる（有効）
+		
+		auto& mutableParams = const_cast<HashTable<String, ParamValue>&>(canvas->params());
+		mutableParams[U"123invalid"] = MakeParamValue(200);
+		mutableParams[U"invalid-name"] = MakeParamValue(300);
+		mutableParams[U"日本語"] = MakeParamValue(400);
+		
+		JSON json = canvas->toJSON();
+		
+		REQUIRE(json.contains(U"params"));
+		REQUIRE(json[U"params"].isObject());
+		
+		REQUIRE(json[U"params"].contains(U"validParam"));
+		REQUIRE(json[U"params"].contains(U"_validParam"));
+		
+		REQUIRE(!json[U"params"].contains(U"123invalid"));
+		REQUIRE(!json[U"params"].contains(U"invalid-name"));
+		REQUIRE(!json[U"params"].contains(U"日本語"));
+		
+		REQUIRE(json[U"params"].size() == 2);
+	}
+	
+	SECTION("Invalid parameter names are rejected when adding through API")
+	{
+		auto canvas = Canvas::Create();
+		
+		canvas->setParamValue(U"123invalid", 100); // 数字で始まる
+		canvas->setParamValue(U"invalid-name", 200);
+		canvas->setParamValue(U"invalid name", 300);
+		canvas->setParamValue(U"日本語", 400); // 日本語
+		canvas->setParamValue(U"", 500); // 空文字列
+		
+		canvas->setParamValue(U"validParam", 600);
+		canvas->setParamValue(U"_validName", 700); // アンダースコアで始まる（有効）
+		
+		REQUIRE(!canvas->hasParam(U"123invalid"));
+		REQUIRE(!canvas->hasParam(U"invalid-name"));
+		REQUIRE(!canvas->hasParam(U"invalid name"));
+		REQUIRE(!canvas->hasParam(U"日本語"));
+		REQUIRE(!canvas->hasParam(U""));
+		
+		REQUIRE(canvas->hasParam(U"validParam"));
+		REQUIRE(canvas->paramValueOpt<double>(U"validParam").value_or(0) == 600);
+		REQUIRE(canvas->hasParam(U"_validName"));
+		REQUIRE(canvas->paramValueOpt<double>(U"_validName").value_or(0) == 700);
+		
+		REQUIRE(canvas->params().size() == 2);
 	}
 }

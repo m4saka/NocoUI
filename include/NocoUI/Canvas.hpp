@@ -4,6 +4,7 @@
 #include "Node.hpp"
 #include "Component/IFocusable.hpp"
 #include "Param.hpp"
+#include "ParamUtils.hpp"
 
 namespace noco
 {
@@ -532,21 +533,23 @@ namespace noco
 			return m_params;
 		}
 
-		// 新しいAPI
 		template<typename T>
 		void setParamValue(const String& name, const T& value)
 		{
+			if (!IsValidParameterName(name))
+			{
+				Logger << U"[NocoUI warning] Invalid parameter name '{}' rejected. Parameter names must start with a letter or underscore and contain only letters, digits, and underscores."_fmt(name);
+				return;
+			}
 			m_params[name] = MakeParamValue(value);
 		}
 
-		// 複数パラメータの一括設定
 		template<typename... Args>
 		void setParamValues(const std::pair<String, Args>&... params)
 		{
 			(setParamValue(params.first, params.second), ...);
 		}
 		
-		// 初期化リスト版（より簡潔な記述用）
 		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int, double, const char32_t*, String, ColorF, Vec2, LRTB>>> params)
 		{
 			for (const auto& [name, value] : params)

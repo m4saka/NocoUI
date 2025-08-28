@@ -17,6 +17,7 @@ namespace noco::editor
 		std::shared_ptr<Canvas> m_canvas;
 		std::function<void()> m_onComplete;
 		std::function<void(const String&)> m_onParamCreated;
+		std::shared_ptr<DialogOpener> m_dialogOpener;
 		
 		// ダイアログ内のコントロール
 		std::shared_ptr<TextBox> m_nameTextBox;
@@ -35,10 +36,18 @@ namespace noco::editor
 		{
 		}
 		
-		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated = nullptr)
+		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, const std::shared_ptr<DialogOpener>& dialogOpener)
+			: m_canvas(canvas)
+			, m_onComplete(std::move(onComplete))
+			, m_dialogOpener(dialogOpener)
+		{
+		}
+		
+		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated, const std::shared_ptr<DialogOpener>& dialogOpener)
 			: m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
 			, m_onParamCreated(std::move(onParamCreated))
+			, m_dialogOpener(dialogOpener)
 			, m_fixedType(fixedType)
 		{
 			m_selectedType = ParamTypeToString(fixedType);
@@ -268,6 +277,15 @@ namespace noco::editor
 				const String name = String(m_nameTextBox->text());
 				if (name.isEmpty())
 				{
+					return;
+				}
+				
+				if (!IsValidParameterName(name))
+				{
+					if (m_dialogOpener)
+					{
+						m_dialogOpener->openDialogOK(U"パラメータ名のルールに合致していません。\nパラメータ名は半角アルファベットまたは_で始まり、半角英数字と_で構成される名前である必要があります。");
+					}
 					return;
 				}
 				

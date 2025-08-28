@@ -3571,6 +3571,10 @@ namespace noco::editor
 											{
 												m_dialogOpener->openDialogOK(U"パラメータ名が変更されていません");
 											}
+											else if (!IsValidParameterName(newName))
+											{
+												m_dialogOpener->openDialogOK(U"パラメータ名のルールに合致していません。パラメータ名は半角アルファベットまたは_で始まり、半角英数字と_で構成される名前である必要があります。");
+											}
 											else if (m_canvas->hasParam(newName))
 											{
 												m_dialogOpener->openDialogOK(U"パラメータ '{}' は既に存在します"_fmt(newName));
@@ -3805,7 +3809,7 @@ namespace noco::editor
 					[this](const std::shared_ptr<Node>&) 
 					{ 
 						// 新規パラメータ追加ダイアログを開く
-						m_dialogOpener->openDialog(std::make_shared<AddParamDialog>(m_canvas, [this] { refreshInspector(); }));
+						m_dialogOpener->openDialog(std::make_shared<AddParamDialog>(m_canvas, [this] { refreshInspector(); }, m_dialogOpener));
 					}));
 				addButton->setActive(!m_isFoldedParams.getBool());
 			}

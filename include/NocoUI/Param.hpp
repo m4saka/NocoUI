@@ -261,8 +261,55 @@ namespace noco
 			return none;
 		}
 		
+		// typeが文字列でない場合のチェック
+		if (!json[U"type"].isString())
+		{
+			Logger << U"[NocoUI warning] Parameter type is not a string. Skipping.";
+			return none;
+		}
+		
 		const String typeStr = json[U"type"].getString();
-		const String valueStr = json[U"value"].getString();
+		
+		// valueが文字列でない場合はデフォルト値を使用
+		String valueStr;
+		if (json[U"value"].isString())
+		{
+			valueStr = json[U"value"].getString();
+		}
+		else
+		{
+			Logger << U"[NocoUI warning] Parameter value is not a string. Using default value for type '{}'."_fmt(typeStr);
+			// 型に応じたデフォルト値を設定
+			if (typeStr == U"Bool")
+			{
+				return ParamValue{ false };
+			}
+			else if (typeStr == U"Number")
+			{
+				return ParamValue{ 0.0 };
+			}
+			else if (typeStr == U"String")
+			{
+				return ParamValue{ String{} };
+			}
+			else if (typeStr == U"Color")
+			{
+				return ParamValue{ ColorF{} };
+			}
+			else if (typeStr == U"Vec2")
+			{
+				return ParamValue{ Vec2{} };
+			}
+			else if (typeStr == U"LRTB")
+			{
+				return ParamValue{ LRTB{} };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Unknown parameter type '{}'. Skipping."_fmt(typeStr);
+				return none;
+			}
+		}
 		
 		if (typeStr == U"Bool")
 		{

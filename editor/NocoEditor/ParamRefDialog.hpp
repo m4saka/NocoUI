@@ -375,7 +375,8 @@ namespace noco::editor
 				{
 					// 作成されたパラメータを自動選択
 					selectParam(createdParamName);
-				});
+				},
+				m_dialogOpener);
 			
 			m_dialogOpener->openDialog(addParamDialog);
 		}

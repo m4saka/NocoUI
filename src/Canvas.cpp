@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Canvas.hpp"
 #include "NocoUI/ComponentFactory.hpp"
+#include "NocoUI/ParamUtils.hpp"
 #include "NocoUI/Serialization.hpp"
 #include "NocoUI/Version.hpp"
 #include <cassert>
@@ -253,6 +254,11 @@ namespace noco
 			JSON paramsObj = JSON{};
 			for (const auto& [name, value] : m_params)
 			{
+				if (!IsValidParameterName(name))
+				{
+					Logger << U"[NocoUI warning] Invalid parameter name '{}' found during save. Skipping."_fmt(name);
+					continue;
+				}
 				paramsObj[name] = ParamValueToJSON(value);
 			}
 			json[U"params"] = paramsObj;
@@ -327,6 +333,11 @@ namespace noco
 				for (const auto& member : json[U"params"])
 				{
 					const String name = member.key;
+					if (!IsValidParameterName(name))
+					{
+						Logger << U"[NocoUI warning] Invalid parameter name '{}' found in JSON. Skipping."_fmt(name);
+						continue;
+					}
 					const auto& paramJson = member.value;
 					if (auto value = ParamValueFromJSON(paramJson))
 					{
@@ -415,6 +426,11 @@ namespace noco
 				for (const auto& member : json[U"params"])
 				{
 					const String name = member.key;
+					if (!IsValidParameterName(name))
+					{
+						Logger << U"[NocoUI warning] Invalid parameter name '{}' found in JSON. Skipping."_fmt(name);
+						continue;
+					}
 					const auto& paramJson = member.value;
 					if (auto value = ParamValueFromJSON(paramJson))
 					{
