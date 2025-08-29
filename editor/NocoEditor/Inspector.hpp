@@ -2700,6 +2700,11 @@ namespace noco::editor
 				{
 					regionNode->addChild(createVec2PropertyNodeWithTooltip(regionTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedRegion.getBool());
 				};
+			const auto fnAddLRTBChild =
+				[this, &regionNode, &regionTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
+				{
+					regionNode->addChild(createLRTBPropertyNodeWithTooltip(regionTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedRegion.getBool());
+				};
 			const auto fnAddOptionalDoubleChild =
 				[this, &regionNode, &regionTypeName](StringView name, const Optional<double>& currentValue, auto fnSetValue)
 				{
@@ -2839,8 +2844,7 @@ namespace noco::editor
 				fnAddVec2Child(U"sizeRatio", pInlineRegion->sizeRatio, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeRatio = value; node->setRegion(newRegion); });
 				fnAddVec2Child(U"sizeDelta", pInlineRegion->sizeDelta, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeDelta = value; node->setRegion(newRegion); });
 				fnAddDoubleChild(U"flexibleWeight", pInlineRegion->flexibleWeight, [this, node](double value) { auto newRegion = *node->inlineRegion(); newRegion.flexibleWeight = value; node->setRegion(newRegion); });
-				fnAddVec2Child(U"margin (L, R)", Vec2{ pInlineRegion->margin.left, pInlineRegion->margin.right }, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.margin.left = value.x; newRegion.margin.right = value.y; node->setRegion(newRegion); });
-				fnAddVec2Child(U"margin (T, B)", Vec2{ pInlineRegion->margin.top, pInlineRegion->margin.bottom }, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.margin.top = value.x; newRegion.margin.bottom = value.y; node->setRegion(newRegion); });
+				fnAddLRTBChild(U"margin", pInlineRegion->margin, [this, node](const LRTB& value) { auto newRegion = *node->inlineRegion(); newRegion.margin = value; node->setRegion(newRegion); });
 				
 				fnAddOptionalDoubleChild(U"minWidth", pInlineRegion->minWidth,
 					[this, node](const Optional<double>& value) { auto newRegion = *node->inlineRegion(); newRegion.minWidth = value; node->setRegion(newRegion); });
