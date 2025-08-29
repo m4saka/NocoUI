@@ -281,10 +281,10 @@ namespace noco::editor
 			setTargetNode(m_targetNode.lock());
 			if (preserveScroll)
 			{
-				m_inspectorRootNode->resetScrollOffset(RecursiveYN::No, RefreshesLayoutYN::No, RefreshesLayoutYN::Yes);
-				m_inspectorRootNode->scroll(Vec2{ 0, scrollY }, RefreshesLayoutYN::No);
+				m_inspectorRootNode->resetScrollOffset(RecursiveYN::No);
+				m_inspectorRootNode->scroll(Vec2{ 0, scrollY });
 			}
-			m_editorCanvas->refreshLayout();
+			m_editorCanvas->refreshLayoutImmediately();
 			
 			// TabStopを持つすべてのノードを収集してリンクを設定
 			setupTabStopLinks();
@@ -361,7 +361,7 @@ namespace noco::editor
 
 			m_targetNode = targetNode;
 
-			m_inspectorRootNode->removeChildrenAll(RefreshesLayoutYN::No);
+			m_inspectorRootNode->removeChildrenAll();
 
 			if (targetNode)
 			{
@@ -582,10 +582,10 @@ namespace noco::editor
 						{
 							pVerticalLayout->padding = inactiveNodeExists ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 };
 						}
-						parent->setChildrenLayout(layout, RefreshesLayoutYN::No);
+						parent->setChildrenLayout(layout);
 
 						// 高さをフィットさせる
-						parent->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::Yes);
+						parent->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 						// トグル時処理があれば実行
 						if (onToggleFold)
@@ -2870,7 +2870,7 @@ namespace noco::editor
 										auto copy = *ac;
 										setter(copy, *optVal);
 										node->setRegion(copy);
-										m_canvas->refreshLayout();
+										m_canvas->refreshLayoutImmediately();
 									}
 								}
 							};
@@ -2886,7 +2886,7 @@ namespace noco::editor
 									auto copy = *ac;
 									setter(copy, val);
 									node->setRegion(copy);
-									m_canvas->refreshLayout();
+									m_canvas->refreshLayoutImmediately();
 								}
 							};
 					};
@@ -2975,7 +2975,7 @@ namespace noco::editor
 								}
 
 								node->setRegion(copy);
-								m_canvas->refreshLayout();
+								m_canvas->refreshLayoutImmediately();
 								refreshInspector(); // 項目に変更があるため更新
 							}
 						}
@@ -3300,9 +3300,9 @@ namespace noco::editor
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
 			// Note: アクセサからポインタを取得しているので注意が必要
-			fnAddVec2Child(U"translate", &pTransform->translate(), [this, pTransform](const Vec2& value) { pTransform->setTranslate(value); m_canvas->refreshLayout(); });
-			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayout(); });
-			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayout(); });
+			fnAddVec2Child(U"translate", &pTransform->translate(), [this, pTransform](const Vec2& value) { pTransform->setTranslate(value); m_canvas->refreshLayoutImmediately(); });
+			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayoutImmediately(); });
+			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayoutImmediately(); });
 			
 			// rotation プロパティを追加
 			const auto fnAddDoubleChild =
@@ -3353,7 +3353,7 @@ namespace noco::editor
 						while (normalizedValue < -180.0) normalizedValue += 360.0;
 					}
 					pTransform->setRotation(normalizedValue); 
-					m_canvas->refreshLayout(); 
+					m_canvas->refreshLayoutImmediately(); 
 				}
 			});
 			

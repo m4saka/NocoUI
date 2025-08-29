@@ -197,7 +197,7 @@ namespace noco
 		return { maxWidth, totalHeight };
 	}
 
-	void FlowLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget, RefreshesLayoutYN refreshesLayout) const
+	void FlowLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget) const
 	{
 		const auto [maxWidth, totalHeight] = getFittingSizeToChildren(parentRect, children);
 		const bool fitsWidth = fitTarget == FitTarget::WidthOnly || fitTarget == FitTarget::Both;
@@ -225,10 +225,7 @@ namespace noco
 				});
 		}
 
-		if (refreshesLayout)
-		{
-			node.refreshContainedCanvasLayout();
-		}
+		node.requestLayoutRefresh();
 	}
 
 	RectF FlowLayout::executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const

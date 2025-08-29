@@ -119,7 +119,7 @@ namespace noco
 		[[nodiscard]]
 		const RegionVariant& region() const;
 
-		std::shared_ptr<Node> setRegion(const RegionVariant& region, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setRegion(const RegionVariant& region);
 
 		[[nodiscard]]
 		const InlineRegion* inlineRegion() const;
@@ -136,7 +136,7 @@ namespace noco
 		[[nodiscard]]
 		const LayoutVariant& childrenLayout() const;
 
-		std::shared_ptr<Node> setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setChildrenLayout(const LayoutVariant& layout);
 
 		[[nodiscard]]
 		const FlowLayout* childrenFlowLayout() const;
@@ -150,7 +150,7 @@ namespace noco
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren() const;
 
-		std::shared_ptr<Node> setInlineRegionToFitToChildren(FitTarget fitTarget = FitTarget::Both, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setInlineRegionToFitToChildren(FitTarget fitTarget = FitTarget::Both);
 
 		[[nodiscard]]
 		const LRTB& childrenLayoutPadding() const;
@@ -188,9 +188,9 @@ namespace noco
 		[[nodiscard]]
 		bool isAncestorOf(const std::shared_ptr<Node>& node) const;
 
-		std::shared_ptr<Node> setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setParent(const std::shared_ptr<Node>& parent);
 
-		bool removeFromParent(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		bool removeFromParent();
 
 		[[nodiscard]]
 		size_t siblingIndex() const;
@@ -244,21 +244,19 @@ namespace noco
 
 		bool moveComponentDown(const std::shared_ptr<ComponentBase>& component);
 
-		const std::shared_ptr<Node>& addChild(std::shared_ptr<Node>&& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		const std::shared_ptr<Node>& addChild(std::shared_ptr<Node>&& child);
 
-		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& child) override;
 
-		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None) override;
 
-		const std::shared_ptr<Node>& emplaceChild(RefreshesLayoutYN refreshesLayout);
+		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
 
-		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index);
 
-		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, RefreshesLayoutYN refreshesLayout);
+		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index) override;
 
-		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
-
-		void removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void removeChild(const std::shared_ptr<Node>& child) override;
 
 		[[nodiscard]]
 		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const override;
@@ -326,11 +324,11 @@ namespace noco
 
 		void refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params);
 
-		void scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void scroll(const Vec2& offsetDelta);
 
 		Vec2 scrollOffset() const;
 
-		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes);
+		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No);
 
 		// パラメータ参照を置換
 		void replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);
@@ -414,9 +412,9 @@ namespace noco
 		[[nodiscard]]
 		ActiveYN activeSelf() const;
 
-		std::shared_ptr<Node> setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setActive(ActiveYN activeSelf);
 
-		std::shared_ptr<Node> setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setActive(bool activeSelf);
 		
 		[[nodiscard]]
 		const String& activeSelfParamRef() const { return m_activeSelf.paramRef(); }
@@ -466,17 +464,17 @@ namespace noco
 		[[nodiscard]]
 		ScrollableAxisFlags scrollableAxisFlags() const;
 
-		std::shared_ptr<Node> setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setScrollableAxisFlags(ScrollableAxisFlags flags);
 
 		[[nodiscard]]
 		bool horizontalScrollable() const;
 
-		std::shared_ptr<Node> setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setHorizontalScrollable(bool scrollable);
 
 		[[nodiscard]]
 		bool verticalScrollable() const;
 
-		std::shared_ptr<Node> setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		std::shared_ptr<Node> setVerticalScrollable(bool scrollable);
 		
 		[[nodiscard]]
 		ScrollMethodFlags scrollMethodFlags() const;
@@ -584,11 +582,11 @@ namespace noco
 		[[nodiscard]]
 		bool isRightClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
 
-		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void removeChildrenAll() override;
 
-		void swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2);
 
-		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void swapChildren(size_t index1, size_t index2) override;
 
 		[[nodiscard]]
 		size_t indexOfChild(const std::shared_ptr<Node>& child) const;
@@ -621,8 +619,9 @@ namespace noco
 
 		std::shared_ptr<Node> addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
 
-		void refreshContainedCanvasLayout();
-
+		void refreshContainedCanvasLayoutImmediately(OnlyIfDirtyYN onlyIfDirty = OnlyIfDirtyYN::Yes);
+		
+		void requestLayoutRefresh();
 
 		template <typename TData>
 		void storeData(const TData& value);

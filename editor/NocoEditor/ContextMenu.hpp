@@ -81,19 +81,19 @@ namespace noco::editor
 					}))
 		{
 			m_screenMaskNode->emplaceComponent<KeyInputBlocker>();
-			m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
+			m_screenMaskNode->setActive(ActiveYN::No);
 
-			m_rootNode->setChildrenLayout(VerticalLayout{}, RefreshesLayoutYN::No);
-			m_rootNode->setVerticalScrollable(true, RefreshesLayoutYN::No);
+			m_rootNode->setChildrenLayout(VerticalLayout{});
+			m_rootNode->setVerticalScrollable(true);
 			m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
-			m_editorOverlayCanvas->refreshLayout();
+			m_editorOverlayCanvas->refreshLayoutImmediately();
 		}
 
 		void show(const Vec2& pos, const Array<MenuElement>& elements, int32 menuItemWidth = DefaultMenuItemWidth, ScreenMaskEnabledYN screenMaskEnabled = ScreenMaskEnabledYN::Yes, std::function<void()> fnOnHide = nullptr)
 		{
 			// 前回開いていたメニューを閉じてから表示
-			hide(RefreshesLayoutYN::No);
+			hide();
 			m_elements = elements;
 			m_elementNodes.reserve(m_elements.size());
 			m_fnOnHide = std::move(fnOnHide);
@@ -102,7 +102,7 @@ namespace noco::editor
 			{
 				AnchorRegion newRegion = *pAnchorRegion;
 				newRegion.sizeDelta.x = menuItemWidth;
-				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
+				m_rootNode->setRegion(newRegion);
 			}
 
 			for (size_t i = 0; i < m_elements.size(); ++i)
@@ -118,8 +118,7 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, MenuItemHeight },
 						},
 						IsHitTargetYN::Yes,
-						InheritChildrenStateFlags::None,
-						RefreshesLayoutYN::No);
+						InheritChildrenStateFlags::None);
 					itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 					const auto label = itemNode->emplaceComponent<Label>(pItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 					if (!pItem->hotKeyText.empty())
@@ -154,8 +153,7 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, MenuItemHeight },
 						},
 						IsHitTargetYN::Yes,
-						InheritChildrenStateFlags::None,
-						RefreshesLayoutYN::No);
+						InheritChildrenStateFlags::None);
 					itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 					const auto label = itemNode->emplaceComponent<Label>(pCheckableItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 					if (!pCheckableItem->hotKeyText.empty())
@@ -198,8 +196,7 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, 8 },
 						},
 						IsHitTargetYN::No,
-						InheritChildrenStateFlags::None,
-						RefreshesLayoutYN::No);
+						InheritChildrenStateFlags::None);
 					separatorNode->emplaceChild(
 						U"SeparatorLine",
 						AnchorRegion
@@ -226,6 +223,7 @@ namespace noco::editor
 			}
 
 			// メニューの高さを計算
+			m_editorOverlayCanvas->refreshLayoutImmediately();
 			const double contentHeight = m_rootNode->getFittingSizeToChildren().y;
 			const double maxMenuHeight = Scene::Height();
 			const double menuHeight = std::min(contentHeight, maxMenuHeight);
@@ -234,7 +232,7 @@ namespace noco::editor
 			{
 				auto newRegion = *pAnchorRegion;
 				newRegion.sizeDelta.y = menuHeight;
-				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
+				m_rootNode->setRegion(newRegion);
 			}
 
 			// 下端にはみ出す場合は上に寄せる
@@ -253,16 +251,16 @@ namespace noco::editor
 			{
 				auto newRegion = *pAnchorRegion;
 				newRegion.posDelta = Vec2{ x, y };
-				m_rootNode->setRegion(newRegion, RefreshesLayoutYN::No);
+				m_rootNode->setRegion(newRegion);
 			}
 
 			m_screenMaskNode->setIsHitTarget(screenMaskEnabled.getBool());
-			m_screenMaskNode->setActive(ActiveYN::Yes, RefreshesLayoutYN::Yes);
+			m_screenMaskNode->setActive(ActiveYN::Yes);
 
 			m_isFirstUpdateSinceShown = true;
 		}
 
-		void hide(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		void hide()
 		{
 			if (m_fnOnHide)
 			{
@@ -271,13 +269,10 @@ namespace noco::editor
 			}
 			m_elements.clear();
 			m_elementNodes.clear();
-			m_screenMaskNode->setActive(ActiveYN::No, RefreshesLayoutYN::No);
-			m_rootNode->removeChildrenAll(RefreshesLayoutYN::No);
+			m_screenMaskNode->setActive(ActiveYN::No);
+			m_rootNode->removeChildrenAll();
 			m_isFirstUpdateSinceShown = false;
-			if (refreshesLayout)
-			{
-				m_editorOverlayCanvas->refreshLayout();
-			}
+			m_editorOverlayCanvas->refreshLayoutImmediately();
 		}
 
 		void update()

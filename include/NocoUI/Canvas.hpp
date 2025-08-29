@@ -395,7 +395,7 @@ namespace noco
 		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
 		/* NonSerialized */ bool m_isEditorPreview = false;
 		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
-		/* NonSerialized */ bool m_isLayoutDirtyByParams = false; // パラメータ変更によるレイアウト更新が必要かどうか
+		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
@@ -418,7 +418,9 @@ namespace noco
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> Create(double width, double height);
 
-		void refreshLayout();
+		void refreshLayoutImmediately(OnlyIfDirtyYN onlyIfDirty = OnlyIfDirtyYN::Yes);
+		
+		void setLayoutDirty() { m_isLayoutDirty = true; }
 
 		bool containsNodeByName(const String& nodeName) const;
 
@@ -429,14 +431,14 @@ namespace noco
 		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
 
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
+		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, const ComponentFactory& factory, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
+		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
-		bool tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre = RefreshesLayoutYN::Yes, RefreshesLayoutYN refreshesLayoutPost = RefreshesLayoutYN::Yes, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
+		bool tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 		
-		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId);
+		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
@@ -504,7 +506,7 @@ namespace noco
 
 		std::shared_ptr<Canvas> setTransform(const Vec2& position, const Vec2& scale, double rotation);
 
-		void resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes);
+		void resetScrollOffsetRecursive();
 
 		void fireEvent(const Event& event);
 
@@ -594,40 +596,28 @@ namespace noco
 
 		Array<String> removeInvalidParamRefs();
 
-		void setSize(double width, double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		void setSize(double width, double height)
 		{
 			m_size = SizeF{ width, height };
-			if (refreshesLayout)
-			{
-				refreshLayout();
-			}
+			setLayoutDirty();
 		}
 		
-		void setSize(const SizeF& size, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		void setSize(const SizeF& size)
 		{
 			m_size = size;
-			if (refreshesLayout)
-			{
-				refreshLayout();
-			}
+			setLayoutDirty();
 		}
 		
-		void setWidth(double width, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		void setWidth(double width)
 		{
 			m_size.x = width;
-			if (refreshesLayout)
-			{
-				refreshLayout();
-			}
+			setLayoutDirty();
 		}
 		
-		void setHeight(double height, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes)
+		void setHeight(double height)
 		{
 			m_size.y = height;
-			if (refreshesLayout)
-			{
-				refreshLayout();
-			}
+			setLayoutDirty();
 		}
 
 		[[nodiscard]]
@@ -685,17 +675,16 @@ namespace noco
 			return true;
 		}
 
-		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
-		void removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node) override;
+		void removeChild(const std::shared_ptr<Node>& node) override;
 		
-		void removeChildrenAll(RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void removeChildrenAll() override;
 		
 		const std::shared_ptr<Node>& addChildAtIndex(
 			const std::shared_ptr<Node>& child,
-			size_t index,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+			size_t index) override;
 		
-		void swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+		void swapChildren(size_t index1, size_t index2) override;
 		
 		[[nodiscard]]
 		bool containsChild(
@@ -720,11 +709,10 @@ namespace noco
 			StringView name = U"Node",
 			const RegionVariant& region = InlineRegion{},
 			IsHitTargetYN isHitTarget = IsHitTargetYN::Yes,
-			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None) override;
 
 	// JSONから子ノードを追加
-	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) override;
+	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
 
 	// 全ノードのパラメータ参照を一括更新
 	void replaceParamRefs(const String& oldName, const String& newName);

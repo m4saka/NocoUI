@@ -16,7 +16,6 @@ namespace noco
 	public:
 		virtual ~INodeContainer() = default;
 
-		// 基本アクセス
 		[[nodiscard]]
 		virtual const Array<std::shared_ptr<Node>>& children() const = 0;
 
@@ -26,30 +25,22 @@ namespace noco
 		[[nodiscard]]
 		virtual std::shared_ptr<Node> childAt(size_t index) const = 0;
 
-		// 統一された子ノード操作
 		virtual const std::shared_ptr<Node>& addChild(
-			const std::shared_ptr<Node>& child,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			const std::shared_ptr<Node>& child) = 0;
 
 		virtual void removeChild(
-			const std::shared_ptr<Node>& child,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			const std::shared_ptr<Node>& child) = 0;
 
-		virtual void removeChildrenAll(
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+		virtual void removeChildrenAll() = 0;
 
-		// インデックス指定操作
 		virtual const std::shared_ptr<Node>& addChildAtIndex(
 			const std::shared_ptr<Node>& child,
-			size_t index,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			size_t index) = 0;
 
 		virtual void swapChildren(
 			size_t index1,
-			size_t index2,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			size_t index2) = 0;
 
-		// 検索・包含チェック
 		[[nodiscard]]
 		virtual bool containsChild(
 			const std::shared_ptr<Node>& child,
@@ -69,20 +60,15 @@ namespace noco
 		virtual Optional<size_t> indexOfChildOpt(
 			const std::shared_ptr<Node>& child) const = 0;
 
-		// 子ノード作成
 		virtual const std::shared_ptr<Node>& emplaceChild(
 			StringView name = U"Node",
 			const RegionVariant& region = InlineRegion{},
 			IsHitTargetYN isHitTarget = IsHitTargetYN::Yes,
-			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None) = 0;
 
-		// JSON操作
 		virtual const std::shared_ptr<Node>& addChildFromJSON(
-			const JSON& json,
-			RefreshesLayoutYN refreshesLayout = RefreshesLayoutYN::Yes) = 0;
+			const JSON& json) = 0;
 
-		// 型判定
 		[[nodiscard]]
 		virtual bool isNode() const = 0;
 

@@ -88,7 +88,7 @@ namespace noco::editor
 	{
 		if (m_tooltipNode)
 		{
-			m_overlayCanvas->removeChild(m_tooltipNode, RefreshesLayoutYN::No);
+			m_overlayCanvas->removeChild(m_tooltipNode);
 			m_tooltipNode = nullptr;
 		}
 	}
@@ -110,10 +110,11 @@ namespace noco::editor
 				{
 					auto newRegion = *pInlineRegion;
 					newRegion.sizeDelta = contentSize;
-					child->setRegion(newRegion, RefreshesLayoutYN::No);
+					child->setRegion(newRegion);
 				}
 			}
 		}
+		m_overlayCanvas->refreshLayoutImmediately();
 
 		// ツールチップ全体のサイズを更新
 		if (const auto pRegion = m_tooltipNode->anchorRegion())

@@ -141,7 +141,7 @@ namespace noco::editor
 		};
 		Array<Element> m_elements;
 
-		void addElementRecursive(const std::shared_ptr<Node>& node, size_t nestLevel, RefreshesLayoutYN refreshesLayout)
+		void addElementRecursive(const std::shared_ptr<Node>& node, size_t nestLevel)
 		{
 			if (node == nullptr)
 			{
@@ -149,16 +149,11 @@ namespace noco::editor
 			}
 
 			m_elements.push_back(createElement(node, nestLevel));
-			m_hierarchyRootNode->addChild(m_elements.back().elementDetail().hierarchyNode, RefreshesLayoutYN::No);
+			m_hierarchyRootNode->addChild(m_elements.back().elementDetail().hierarchyNode);
 
 			for (const auto& child : node->children())
 			{
-				addElementRecursive(child, nestLevel + 1, RefreshesLayoutYN::No);
-			}
-
-			if (refreshesLayout)
-			{
-				m_canvas->refreshLayout();
+				addElementRecursive(child, nestLevel + 1);
 			}
 		}
 
@@ -687,7 +682,7 @@ namespace noco::editor
 			m_hierarchyRootNode->removeChildrenAll();
 			for (const auto& child : m_canvas->children())
 			{
-				addElementRecursive(child, 0, RefreshesLayoutYN::No);
+				addElementRecursive(child, 0);
 			}
 
 			// 末尾に空のノードを追加してドロップ領域とする
@@ -799,7 +794,7 @@ namespace noco::editor
 
 			if (const auto editorCanvas = m_editorCanvas.lock())
 			{
-				editorCanvas->refreshLayout();
+				editorCanvas->refreshLayoutImmediately();
 			}
 		}
 
@@ -1019,10 +1014,10 @@ namespace noco::editor
 				{
 					continue;
 				}
-				const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON(), RefreshesLayoutYN::No);
+				const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON());
 				newNodes.push_back(newNode);
 			}
-			m_canvas->refreshLayout();
+			m_canvas->refreshLayoutImmediately();
 			refreshNodeList();
 			selectNodes(newNodes);
 		}
@@ -1092,9 +1087,9 @@ namespace noco::editor
 			Array<std::shared_ptr<Node>> newNodes;
 			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 			{
-				newNodes.push_back(m_canvas->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
+				newNodes.push_back(m_canvas->addChildFromJSON(copiedNodeJSON));
 			}
-			m_canvas->refreshLayout();
+			m_canvas->refreshLayoutImmediately();
 			// 無効なパラメータ参照を解除
 			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
@@ -1121,7 +1116,7 @@ namespace noco::editor
 				size_t indexValue = Min(index.value(), parentNode->children().size());
 				for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 				{
-					newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue, RefreshesLayoutYN::No));
+					newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue));
 					++indexValue;
 				}
 			}
@@ -1129,10 +1124,10 @@ namespace noco::editor
 			{
 				for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 				{
-					newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON, RefreshesLayoutYN::No));
+					newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON));
 				}
 			}
-			m_canvas->refreshLayout();
+			m_canvas->refreshLayoutImmediately();
 			// 無効なパラメータ参照を解除
 			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
@@ -1269,7 +1264,7 @@ namespace noco::editor
 					}
 				}
 			}
-			m_canvas->refreshLayout();
+			m_canvas->refreshLayoutImmediately();
 			refreshNodeList();
 			selectNodes(selectedNodes);
 		}
@@ -1355,7 +1350,7 @@ namespace noco::editor
 					}
 				}
 			}
-			m_canvas->refreshLayout();
+			m_canvas->refreshLayoutImmediately();
 			refreshNodeList();
 			selectNodes(selectedNodes);
 		}

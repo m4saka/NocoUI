@@ -253,13 +253,10 @@ namespace noco
 		return m_region;
 	}
 
-	std::shared_ptr<Node> Node::setRegion(const RegionVariant& region, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setRegion(const RegionVariant& region)
 	{
 		m_region = region;
-		if (refreshesLayout)
-		{
-			refreshContainedCanvasLayout();
-		}
+		requestLayoutRefresh();
 		return shared_from_this();
 	}
 
@@ -288,13 +285,10 @@ namespace noco
 		return m_childrenLayout;
 	}
 
-	std::shared_ptr<Node> Node::setChildrenLayout(const LayoutVariant& layout, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setChildrenLayout(const LayoutVariant& layout)
 	{
 		m_childrenLayout = layout;
-		if (refreshesLayout)
-		{
-			refreshContainedCanvasLayout();
-		}
+		requestLayoutRefresh();
 		return shared_from_this();
 	}
 
@@ -318,9 +312,10 @@ namespace noco
 		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_regionRect, m_children); }, m_childrenLayout);
 	}
 
-	std::shared_ptr<Node> Node::setInlineRegionToFitToChildren(FitTarget fitTarget, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setInlineRegionToFitToChildren(FitTarget fitTarget)
 	{
-		std::visit([this, fitTarget, refreshesLayout](auto& layout) { layout.setInlineRegionToFitToChildren(m_regionRect, m_children, *this, fitTarget, refreshesLayout); }, m_childrenLayout);
+		refreshContainedCanvasLayoutImmediately();
+		std::visit([this, fitTarget](auto& layout) { layout.setInlineRegionToFitToChildren(m_regionRect, m_children, *this, fitTarget); }, m_childrenLayout);
 		return shared_from_this();
 	}
 
@@ -463,11 +458,11 @@ namespace noco
 		node->m_interactable.readFromJSON(json);
 		if (json.contains(U"horizontalScrollable"))
 		{
-			node->setHorizontalScrollable(json[U"horizontalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
+			node->setHorizontalScrollable(json[U"horizontalScrollable"].getOr<bool>(false));
 		}
 		if (json.contains(U"verticalScrollable"))
 		{
-			node->setVerticalScrollable(json[U"verticalScrollable"].getOr<bool>(false), RefreshesLayoutYN::No);
+			node->setVerticalScrollable(json[U"verticalScrollable"].getOr<bool>(false));
 		}
 		if (json.contains(U"wheelScrollEnabled"))
 		{
@@ -509,7 +504,7 @@ namespace noco
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
 				auto child = CreateFromJSON(childJSON, componentFactory, withInstanceId);
-				node->addChild(child, RefreshesLayoutYN::No);
+				node->addChild(child);
 			}
 		}
 		return node;
@@ -578,7 +573,7 @@ namespace noco
 		return isAncestorOf(nodeParent);
 	}
 
-	std::shared_ptr<Node> Node::setParent(const std::shared_ptr<Node>& parent, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setParent(const std::shared_ptr<Node>& parent)
 	{
 		// 既に同じ親の場合は何もしない
 		if (m_parent.lock() == parent)
@@ -597,12 +592,11 @@ namespace noco
 		
 		if (!m_parent.expired() || isTopLevelNode())
 		{
-			removeFromParent(RefreshesLayoutYN::No);
+			removeFromParent();
 		}
 		
-		parent->addChild(shared_from_this(), RefreshesLayoutYN::No);
+		parent->addChild(shared_from_this());
 		
-		if (refreshesLayout)
 		{
 			refreshChildrenLayout();
 		}
@@ -610,11 +604,11 @@ namespace noco
 		return shared_from_this();
 	}
 
-	bool Node::removeFromParent(RefreshesLayoutYN refreshesLayout)
+	bool Node::removeFromParent()
 	{
 		if (const auto parent = m_parent.lock())
 		{
-			parent->removeChild(shared_from_this(), refreshesLayout);
+			parent->removeChild(shared_from_this());
 			return true;
 		}
 		// Canvasの直下にある場合
@@ -623,7 +617,7 @@ namespace noco
 			// isTopLevelNode()でトップレベルかチェック
 			if (isTopLevelNode())
 			{
-				canvas->removeChild(shared_from_this(), refreshesLayout);
+				canvas->removeChild(shared_from_this());
 				return true;
 			}
 		}
@@ -783,7 +777,7 @@ namespace noco
 		return true;
 	}
 
-	const std::shared_ptr<Node>& Node::addChild(std::shared_ptr<Node>&& child, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::addChild(std::shared_ptr<Node>&& child)
 	{
 		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
@@ -801,14 +795,13 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Node::addChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::addChild(const std::shared_ptr<Node>& child)
 	{
 		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
@@ -826,56 +819,40 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Node::emplaceChild(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::emplaceChild(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
 		auto child = Node::Create(name, region, isHitTarget, inheritChildrenStateFlags);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Node::emplaceChild(RefreshesLayoutYN refreshesLayout)
-	{
-		auto child = Node::Create();
-		child->setCanvasRecursive(m_canvas);
-		child->m_parent = shared_from_this();
-		child->refreshActiveInHierarchy();
-		m_children.push_back(std::move(child));
-		if (refreshesLayout)
-		{
-			refreshContainedCanvasLayout();
-		}
-		return m_children.back();
-	}
 
-	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json)
 	{
 		auto child = CreateFromJSON(json);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Node::addChildAtIndexFromJSON(const JSON& json, size_t index, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::addChildAtIndexFromJSON(const JSON& json, size_t index)
 	{
 		if (index > m_children.size())
 		{
@@ -887,14 +864,13 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, std::move(child));
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return *it;
 	}
 
-	const std::shared_ptr<Node>& Node::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Node::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index)
 	{
 		if (!child->m_parent.expired() || child->isTopLevelNode())
 		{
@@ -919,15 +895,14 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
 
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 
 		return m_children[index];
 	}
 
-	void Node::removeChild(const std::shared_ptr<Node>& child, RefreshesLayoutYN refreshesLayout)
+	void Node::removeChild(const std::shared_ptr<Node>& child)
 	{
 		if (!m_children.contains(child))
 		{
@@ -937,9 +912,8 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.remove(child);
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 	}
 
@@ -1229,7 +1203,7 @@ namespace noco
 			refreshActiveInHierarchy();
 			if (const auto canvas = m_canvas.lock())
 			{
-				canvas->m_isLayoutDirtyByParams = true;
+				canvas->m_isLayoutDirty = true;
 			}
 		}
 		m_prevActiveSelfAfterUpdateNodeParams = m_activeSelf.value();
@@ -1415,7 +1389,7 @@ namespace noco
 				}
 				
 				// レイアウトを更新
-				refreshContainedCanvasLayout();
+				requestLayoutRefresh();
 			}
 		}
 		
@@ -1700,7 +1674,7 @@ namespace noco
 		}
 	}
 
-	void Node::scroll(const Vec2& offsetDelta, RefreshesLayoutYN refreshesLayout)
+	void Node::scroll(const Vec2& offsetDelta)
 	{
 		if (m_preventDragScroll)
 		{
@@ -1721,11 +1695,10 @@ namespace noco
 		}
 		if (scrolledH || scrolledV)
 		{
+			// clampScrollOffsetの前にレイアウトを即座に更新
+			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
-			if (refreshesLayout)
-			{
-				refreshContainedCanvasLayout();
-			}
+			requestLayoutRefresh();
 		}
 	}
 
@@ -1734,12 +1707,8 @@ namespace noco
 		return m_scrollOffset;
 	}
 
-	void Node::resetScrollOffset(RecursiveYN recursive, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost)
+	void Node::resetScrollOffset(RecursiveYN recursive)
 	{
-		if (refreshesLayoutPre)
-		{
-			refreshContainedCanvasLayout();
-		}
 
 		if (m_children.empty())
 		{
@@ -1749,20 +1718,18 @@ namespace noco
 		{
 			// 最小値を設定してからClamp
 			m_scrollOffset = Vec2::All(std::numeric_limits<double>::lowest());
+			// clampScrollOffsetの前にレイアウトを即座に更新
+			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
 		}
+		requestLayoutRefresh();
 
 		if (recursive)
 		{
 			for (const auto& child : m_children)
 			{
-				child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+				child->resetScrollOffset(RecursiveYN::Yes);
 			}
-		}
-
-		if (refreshesLayoutPost)
-		{
-			refreshContainedCanvasLayout();
 		}
 	}
 
@@ -2006,7 +1973,7 @@ namespace noco
 	}
 	
 	RectF Node::unrotatedTransformedRect() const
-	{	
+	{
 		// 変換行列から回転成分を抽出
 		const double rotation = Math::Atan2(m_transformMatInHierarchy._21, m_transformMatInHierarchy._11);
 		
@@ -2182,20 +2149,17 @@ namespace noco
 		return ActiveYN{ m_activeSelf.value() };
 	}
 
-	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf)
 	{
 		m_activeSelf.setValue(activeSelf.getBool());
 		refreshActiveInHierarchy();
-		if (refreshesLayout)
-		{
-			refreshContainedCanvasLayout();
-		}
+		requestLayoutRefresh();
 		return shared_from_this();
 	}
 
-	std::shared_ptr<Node> Node::setActive(bool activeSelf, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setActive(bool activeSelf)
 	{
-		return setActive(ActiveYN{ activeSelf }, refreshesLayout);
+		return setActive(ActiveYN{ activeSelf });
 	}
 
 	ActiveYN Node::activeInHierarchy() const
@@ -2282,7 +2246,7 @@ namespace noco
 		return m_scrollableAxisFlags;
 	}
 
-	std::shared_ptr<Node> Node::setScrollableAxisFlags(ScrollableAxisFlags flags, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setScrollableAxisFlags(ScrollableAxisFlags flags)
 	{
 		m_scrollableAxisFlags = flags;
 		if (!horizontalScrollable())
@@ -2293,9 +2257,8 @@ namespace noco
 		{
 			m_scrollOffset.y = 0.0;
 		}
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2305,7 +2268,7 @@ namespace noco
 		return HasFlag(m_scrollableAxisFlags, ScrollableAxisFlags::Horizontal);
 	}
 
-	std::shared_ptr<Node> Node::setHorizontalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setHorizontalScrollable(bool scrollable)
 	{
 		if (scrollable)
 		{
@@ -2316,9 +2279,8 @@ namespace noco
 			m_scrollableAxisFlags &= ~ScrollableAxisFlags::Horizontal;
 			m_scrollOffset.x = 0.0;
 		}
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2328,7 +2290,7 @@ namespace noco
 		return HasFlag(m_scrollableAxisFlags, ScrollableAxisFlags::Vertical);
 	}
 
-	std::shared_ptr<Node> Node::setVerticalScrollable(bool scrollable, RefreshesLayoutYN refreshesLayout)
+	std::shared_ptr<Node> Node::setVerticalScrollable(bool scrollable)
 	{
 		if (scrollable)
 		{
@@ -2339,9 +2301,8 @@ namespace noco
 			m_scrollableAxisFlags &= ~ScrollableAxisFlags::Vertical;
 			m_scrollOffset.y = 0.0;
 		}
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2650,7 +2611,7 @@ namespace noco
 		return false;
 	}
 
-	void Node::removeChildrenAll(RefreshesLayoutYN refreshesLayout)
+	void Node::removeChildrenAll()
 	{
 		for (const auto& child : m_children)
 		{
@@ -2659,13 +2620,12 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 	}
 
-	void Node::swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2, RefreshesLayoutYN refreshesLayout)
+	void Node::swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2)
 	{
 		const auto it1 = std::find(m_children.begin(), m_children.end(), child1);
 		const auto it2 = std::find(m_children.begin(), m_children.end(), child2);
@@ -2674,22 +2634,20 @@ namespace noco
 			throw Error{ U"swapChildren: Child node not found in node '{}'"_fmt(m_name) };
 		}
 		std::iter_swap(it1, it2);
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 	}
 
-	void Node::swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout)
+	void Node::swapChildren(size_t index1, size_t index2)
 	{
 		if (index1 >= m_children.size() || index2 >= m_children.size())
 		{
 			throw Error{ U"swapChildren: Index out of range" };
 		}
 		std::iter_swap(m_children.begin() + index1, m_children.begin() + index2);
-		if (refreshesLayout)
 		{
-			refreshContainedCanvasLayout();
+			requestLayoutRefresh();
 		}
 	}
 
@@ -2817,11 +2775,19 @@ namespace noco
 		return shared_from_this();
 	}
 
-	void Node::refreshContainedCanvasLayout()
+	void Node::refreshContainedCanvasLayoutImmediately(OnlyIfDirtyYN onlyIfDirty)
 	{
 		if (const auto canvas = m_canvas.lock())
 		{
-			canvas->refreshLayout();
+			canvas->refreshLayoutImmediately(onlyIfDirty);
+		}
+	}
+	
+	void Node::requestLayoutRefresh()
+	{
+		if (const auto canvas = m_canvas.lock())
+		{
+			canvas->setLayoutDirty();
 		}
 	}
 }

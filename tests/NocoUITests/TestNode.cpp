@@ -261,34 +261,6 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		REQUIRE(level2->hasChildren());
 		REQUIRE_FALSE(level3->hasChildren());
 	}
-
-	SECTION("emplaceChild with RefreshesLayoutYN only")
-	{
-		auto parent = noco::Node::Create(U"Parent");
-		
-		// RefreshesLayoutYN引数のみでemplaceChild
-		const auto& child1 = parent->emplaceChild(noco::RefreshesLayoutYN::Yes);
-		REQUIRE(child1 != nullptr);
-		REQUIRE(child1->parentNode() == parent);
-		REQUIRE(parent->children().size() == 1);
-		REQUIRE(parent->children()[0] == child1);
-		
-		// デフォルト値の確認
-		REQUIRE(child1->name() == U"Node");
-		REQUIRE(child1->hasInlineRegion());
-		REQUIRE(child1->isHitTarget() == noco::IsHitTargetYN::Yes);
-		REQUIRE(child1->inheritChildrenStateFlags() == noco::InheritChildrenStateFlags::None);
-		
-		// RefreshesLayoutYN::Noで別の子を追加
-		const auto& child2 = parent->emplaceChild(noco::RefreshesLayoutYN::No);
-		REQUIRE(child2 != nullptr);
-		REQUIRE(child2->parentNode() == parent);
-		REQUIRE(parent->children().size() == 2);
-		REQUIRE(parent->children()[1] == child2);
-		
-		// 異なるインスタンスであることを確認
-		REQUIRE(child1 != child2);
-	}
 }
 
 // Nodeの座標変換
@@ -362,7 +334,9 @@ TEST_CASE("Node scrolling", "[Node]")
 		node->setScrollableAxisFlags(noco::ScrollableAxisFlags::Horizontal | noco::ScrollableAxisFlags::Vertical);
 		REQUIRE(node->horizontalScrollable());
 		REQUIRE(node->verticalScrollable());
-		
+
+		canvas->update();
+
 		// 初期値の確認
 		REQUIRE(node->scrollOffset() == Vec2{ 0, 0 });
 		

@@ -239,14 +239,6 @@ public:
 		// (m_canvas->update()より手前で取得する必要がある点に注意)
 		const bool editorCanvasHovered = CurrentFrame::AnyNodeHovered();
 
-		m_canvas->update();
-
-		// エディタ系Canvasやスクロール可能ノードにカーソルがなければズーム操作を更新
-		if (!editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
-		{
-			updateZoom();
-		}
-
 		m_dialogContextMenu->update();
 		m_contextMenu->update();
 		m_menuBar.update();
@@ -432,6 +424,18 @@ public:
 		{
 			showConfirmSaveIfDirty([this] { requestExit(); });
 		}
+
+		m_canvas->update();
+
+		// エディタ系Canvasやスクロール可能ノードにカーソルがなければズーム操作を更新
+		if (!editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
+		{
+			updateZoom();
+		}
+
+		// Hierarchy/Inspector/ContextMenuなどのノード追加・削除はCanvas::update()後に実行するため、1フレーム遅れないようここでレイアウト更新
+		m_editorCanvas->refreshLayoutImmediately();
+		m_editorOverlayCanvas->refreshLayoutImmediately();
 	}
 
 	void draw() const
@@ -896,7 +900,7 @@ public:
 		}
 		
 		m_filePath = filePath;
-		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::No))
+		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, WithInstanceIdYN::No))
 		{
 			if (showMessageBoxOnError)
 			{
@@ -1035,7 +1039,7 @@ public:
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSON(*undoState, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*undoState, *m_componentFactory, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -1059,7 +1063,7 @@ public:
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSON(*redoState, *m_componentFactory, RefreshesLayoutYN::Yes, RefreshesLayoutYN::Yes, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*redoState, *m_componentFactory, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元

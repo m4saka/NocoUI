@@ -88,8 +88,14 @@ namespace noco
 			
 			if (m_autoResizeMode == AutoResizeMode::MatchSceneSize)
 			{
-				setSize(currentSceneSize, RefreshesLayoutYN::Yes);
+				setSize(currentSceneSize);
 				m_position = Vec2::Zero();
+
+				if (m_isLayoutDirty)
+				{
+					refreshLayoutImmediately();
+					m_isLayoutDirty = false;
+				}
 			}
 		}
 	}
@@ -167,8 +173,14 @@ namespace noco
 		return Create(SizeF{ width, height });
 	}
 
-	void Canvas::refreshLayout()
+	void Canvas::refreshLayoutImmediately(OnlyIfDirtyYN onlyIfDirty)
 	{
+		if (onlyIfDirty && !m_isLayoutDirty)
+		{
+			return;
+		}
+		m_isLayoutDirty = false;
+
 		const RectF canvasRect{ 0, 0, m_size.x, m_size.y };
 		
 		for (const auto& child : m_children)
@@ -267,12 +279,12 @@ namespace noco
 		return json;
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout, detail::WithInstanceIdYN withInstanceId)
+	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), refreshesLayout, withInstanceId);
+		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
 	}
 	
-	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, RefreshesLayoutYN refreshesLayout, detail::WithInstanceIdYN withInstanceId)
+	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"version"))
 		{
@@ -322,7 +334,7 @@ namespace noco
 		{
 			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
 			{
-				canvas->addChild(child, RefreshesLayoutYN::No);
+				canvas->addChild(child);
 			}
 		}
 
@@ -366,20 +378,17 @@ namespace noco
 			}
 		}
 
-		if (refreshesLayout)
-		{
-			canvas->refreshLayout();
-		}
+		canvas->setLayoutDirty();
 
 		return canvas;
 	}
 	
-	bool Canvas::tryReadFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId)
+	bool Canvas::tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return tryReadFromJSON(json, ComponentFactory::GetBuiltinFactory(), refreshesLayoutPre, refreshesLayoutPost, withInstanceId);
+		return tryReadFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
 	}
 	
-	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, RefreshesLayoutYN refreshesLayoutPre, RefreshesLayoutYN refreshesLayoutPost, detail::WithInstanceIdYN withInstanceId)
+	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"size"))
 		{
@@ -414,7 +423,7 @@ namespace noco
 		{
 			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
 			{
-				addChild(child, RefreshesLayoutYN::No);
+				addChild(child);
 			}
 		}
 
@@ -459,17 +468,11 @@ namespace noco
 			}
 		}
 
-		if (refreshesLayoutPre)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
+		
 		for (const auto& child : m_children)
 		{
-			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
-		}
-		if (refreshesLayoutPost)
-		{
-			refreshLayout();
+			child->resetScrollOffset(RecursiveYN::Yes);
 		}
 		return true;
 	}
@@ -626,9 +629,9 @@ namespace noco
 		{
 			dragScrollingNode->m_dragStartPos.reset();
 			dragScrollingNode->m_dragVelocityStopwatch.reset();
-			dragScrollingNode->m_dragThresholdExceeded = false; // 閾値フラグをリセット
+			dragScrollingNode->m_dragThresholdExceeded = false;
 			detail::s_canvasUpdateContext.dragScrollingNode.reset();
-			// 慣性スクロールは各ノードがupdateで処理される
+			// 慣性スクロールは各ノードのupdateで処理される
 		}
 
 		// ノード更新
@@ -643,18 +646,13 @@ namespace noco
 			m_childrenTempBuffer.push_back(child);
 		}
 		
-		// updateNodeParamsは通常順で実行（updateInteractionStateより前）
+		// updateNodeParamsは通常順で実行
 		for (const auto& child : m_childrenTempBuffer)
 		{
 			child->updateNodeParams(m_params);
 		}
-		if (m_isLayoutDirtyByParams)
-		{
-			// パラメータ変更によるレイアウト更新
-			// (パラメータ起因のレイアウト更新は同一フレームで大量のノードから呼ばれるシナリオが発生しやすいため、同一フレーム内でのレイアウト更新はまとめて1回の遅延実行としている)
-			refreshLayout();
-			m_isLayoutDirtyByParams = false;
-		}
+		// パラメータによるactiveSelf変更でレイアウトが変わる場合のためにここでも更新
+		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
 		// updateInteractionStateは通常順で実行
 		for (const auto& child : m_childrenTempBuffer)
@@ -675,6 +673,9 @@ namespace noco
 			child->lateUpdate();
 			child->postLateUpdate(Scene::DeltaTime(), m_params);
 		}
+
+		// 同一フレーム内でのレイアウト更新はまとめて1回遅延実行
+		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
 		m_childrenTempBuffer.clear();
 
@@ -713,7 +714,7 @@ namespace noco
 		}
 	}
 	
-	void Canvas::removeChildrenAll(RefreshesLayoutYN refreshesLayout)
+	void Canvas::removeChildrenAll()
 	{
 		for (const auto& child : m_children)
 		{
@@ -722,10 +723,7 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 	}
 
 	void Canvas::clearAll()
@@ -793,16 +791,13 @@ namespace noco
 		return shared_from_this();
 	}
 	
-	void Canvas::resetScrollOffsetRecursive(RefreshesLayoutYN refreshesLayout)
+	void Canvas::resetScrollOffsetRecursive()
 	{
 		for (const auto& child : m_children)
 		{
-			child->resetScrollOffset(RecursiveYN::Yes, RefreshesLayoutYN::No, RefreshesLayoutYN::No);
+			child->resetScrollOffset(RecursiveYN::Yes);
 		}
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 	}
 	
 	void Canvas::fireEvent(const Event& event)
@@ -1016,7 +1011,7 @@ namespace noco
 		return m_children[index];
 	}
 
-	const std::shared_ptr<Node>& Canvas::addChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Canvas::addChild(const std::shared_ptr<Node>& node)
 	{
 		if (!node)
 		{
@@ -1032,15 +1027,12 @@ namespace noco
 		node->refreshActiveInHierarchy();
 		m_children.push_back(node);
 
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 
 		return m_children.back();
 	}
 
-	void Canvas::removeChild(const std::shared_ptr<Node>& node, RefreshesLayoutYN refreshesLayout)
+	void Canvas::removeChild(const std::shared_ptr<Node>& node)
 	{
 		if (!node)
 		{
@@ -1053,13 +1045,10 @@ namespace noco
 		node->setCanvasRecursive(std::weak_ptr<Canvas>{});
 		node->refreshActiveInHierarchy();
 
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 	}
 	
-	void Canvas::swapChildren(size_t index1, size_t index2, RefreshesLayoutYN refreshesLayout)
+	void Canvas::swapChildren(size_t index1, size_t index2)
 	{
 		if (index1 >= m_children.size() || index2 >= m_children.size())
 		{
@@ -1068,46 +1057,36 @@ namespace noco
 
 		std::swap(m_children[index1], m_children[index2]);
 
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 	}
 	
 	const std::shared_ptr<Node>& Canvas::emplaceChild(
 		StringView name,
 		const RegionVariant& region,
 		IsHitTargetYN isHitTarget,
-		InheritChildrenStateFlags inheritChildrenStateFlags,
-		RefreshesLayoutYN refreshesLayout)
+		InheritChildrenStateFlags inheritChildrenStateFlags)
 	{
 		auto child = Node::Create(name, region, isHitTarget, inheritChildrenStateFlags);
 		child->setCanvasRecursive(shared_from_this());
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Canvas::addChildFromJSON(const JSON& json, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Canvas::addChildFromJSON(const JSON& json)
 	{
 		auto child = Node::CreateFromJSON(json);
 		child->setCanvasRecursive(shared_from_this());
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 		return m_children.back();
 	}
 
-	const std::shared_ptr<Node>& Canvas::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index, RefreshesLayoutYN refreshesLayout)
+	const std::shared_ptr<Node>& Canvas::addChildAtIndex(const std::shared_ptr<Node>& child, size_t index)
 	{
 		if (!child)
 		{
@@ -1128,10 +1107,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
 
-		if (refreshesLayout)
-		{
-			refreshLayout();
-		}
+		setLayoutDirty();
 
 		return m_children[index];
 	}

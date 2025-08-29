@@ -46,7 +46,7 @@ namespace noco::editor
 					.sizeDelta = SizeF{ -20, 0 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 8, 0, 0, 0 } }, RefreshesLayoutYN::No);
+			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 8, 0, 0, 0 } });
 			const auto currentValueString = std::make_shared<String>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates));
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
@@ -74,8 +74,7 @@ namespace noco::editor
 									m_onChange();
 								}
 							}
-						}),
-					RefreshesLayoutYN::No);
+						}));
 				break;
 			case PropertyEditType::Bool:
 				propertyValueNode = propertyNode->addChild(
@@ -100,8 +99,7 @@ namespace noco::editor
 									m_onChange();
 								}
 							}
-						}),
-					RefreshesLayoutYN::No);
+						}));
 				break;
 			case PropertyEditType::Vec2:
 				propertyValueNode = propertyNode->addChild(
@@ -126,8 +124,7 @@ namespace noco::editor
 									m_onChange();
 								}
 							}
-						}),
-					RefreshesLayoutYN::No);
+						}));
 				break;
 			case PropertyEditType::Color:
 				propertyValueNode = propertyNode->addChild(
@@ -152,8 +149,7 @@ namespace noco::editor
 									m_onChange();
 								}
 							}
-						}),
-					RefreshesLayoutYN::No);
+						}));
 				break;
 			case PropertyEditType::LRTB:
 				propertyValueNode = propertyNode->addChild(
@@ -178,8 +174,7 @@ namespace noco::editor
 									m_onChange();
 								}
 							}
-						}),
-					RefreshesLayoutYN::No);
+						}));
 				break;
 			case PropertyEditType::Enum:
 				propertyValueNode = propertyNode->addChild(
@@ -205,8 +200,7 @@ namespace noco::editor
 							}
 						},
 						dialogContextMenu,
-						m_pProperty->enumCandidates()),
-					RefreshesLayoutYN::No);
+						m_pProperty->enumCandidates()));
 				break;
 			}
 			if (!propertyValueNode)
@@ -248,12 +242,11 @@ namespace noco::editor
 						}
 					}
 				}),
-				0,
-				RefreshesLayoutYN::No);
+				0);
 			// Defaultは常に値が存在するのでチェックボックスは無効
 			checkboxNode->setInteractable(interactionState != InteractionState::Default);
 			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
-			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			// PropertyValueNodeInfoを保存
 			m_propertyValueNodes[interactionState] = PropertyValueNodeInfo{
@@ -289,14 +282,11 @@ namespace noco::editor
 				Inspector::CreatePropertyNode(
 					U"smoothTime [sec]",
 					Format(m_pProperty->smoothTime()),
-					[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }),
-				RefreshesLayoutYN::No);
-			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+					[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }));
+			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 		}
 
 		// 初期表示時に正しい値を反映
 		refreshPropertyValues();
-
-		contentRootNode->refreshContainedCanvasLayout();
 	}
 }

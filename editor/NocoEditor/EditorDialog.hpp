@@ -87,9 +87,9 @@ namespace noco::editor
 
 			// ダイアログ背面を暗くする
 			m_screenMaskNode->emplaceComponent<RectRenderer>(ColorF{ 0.0, 0.25 });
-			m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle }, RefreshesLayoutYN::No);
+			m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
 
-			m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } }, RefreshesLayoutYN::No);
+			m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } });
 			m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 			const auto buttonParentNode = m_dialogNode->emplaceChild(
@@ -99,7 +99,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 1, 0 },
 					.margin = LRTB{ 0, 0, 8, 0 },
 				});
-			buttonParentNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center }, RefreshesLayoutYN::No);
+			buttonParentNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 0, 0, 0, 0 }, .horizontalAlign = HorizontalAlign::Center });
 			for (const DialogButtonDesc& buttonDesc : buttonDescs)
 			{
 				const String buttonText = [](const DialogButtonDesc& buttonDesc) -> String
@@ -130,8 +130,7 @@ namespace noco::editor
 								m_onResult(buttonDesc.text);
 							}
 						},
-						buttonDesc.isDefaultButton),
-					RefreshesLayoutYN::No);
+						buttonDesc.isDefaultButton));
 
 				if (buttonDesc.mnemonicInput.has_value())
 				{
@@ -148,14 +147,14 @@ namespace noco::editor
 					buttonNode->addClickHotKey(KeyEscape, EnabledWhileTextEditingYN::Yes);
 				}
 			}
-			buttonParentNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
+			buttonParentNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			// ダイアログの中身が大きすぎる場合用にスクロール可能にする
 			m_contentRootNode->setVerticalScrollable(true);
 			m_contentRootNode->setClippingEnabled(true);
 
-			m_dialogCanvas->refreshLayout();
+			m_dialogCanvas->refreshLayoutImmediately();
 		}
 
 		virtual ~DialogFrame() = default;
@@ -167,9 +166,9 @@ namespace noco::editor
 
 		void refreshLayoutForContent()
 		{
-			m_contentRootNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly, RefreshesLayoutYN::No);
-			m_dialogCanvas->refreshLayout();
+			m_contentRootNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+			m_dialogNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+			m_dialogCanvas->refreshLayoutImmediately();
 		}
 	};
 
