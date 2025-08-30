@@ -42,7 +42,7 @@ namespace noco
 			m_propertyValue = value;
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipsSmoothingYN) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;

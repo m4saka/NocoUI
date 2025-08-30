@@ -28,6 +28,7 @@ namespace noco
 	using RubberBandScrollEnabledYN = YesNo<struct RubberBandScrollEnabledYN_tag>;
 	using WithPaddingYN = YesNo<struct WithPaddingYN_tag>;
 	using OnlyIfDirtyYN = YesNo<struct OnlyIfDirtyYN_tag>;
+	using SkipsSmoothingYN = YesNo<struct SkipsSmoothingYN_tag>;
 
 	namespace detail
 	{

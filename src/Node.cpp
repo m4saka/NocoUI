@@ -135,6 +135,75 @@ namespace noco
 		}
 	}
 
+	void Node::refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipsSmoothingYN skipsSmoothing)
+	{
+		const auto canvas = m_canvas.lock();
+		if (!canvas)
+		{
+			return;
+		}
+
+		// Canvasからパラメータの参照を取得
+		const auto& params = canvas->params();
+
+		// InteractionStateを再計算
+		if (!effectiveInteractable.getBool())
+		{
+			// interactableがfalseならDisabled
+			m_currentInteractionState = InteractionState::Disabled;
+		}
+		else if (m_currentInteractionState == InteractionState::Disabled)
+		{
+			// Disabledから復帰する場合はDefault
+			m_currentInteractionState = InteractionState::Default;
+		}
+
+		// deltaTime=0でプロパティを即座に更新
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipsSmoothing);
+		for (const auto& component : m_components)
+		{
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipsSmoothing);
+		}
+
+		// 自身がDisabledなら子もDisabledにする必要がある
+		refreshChildrenPropertiesForInteractableRecursive(InteractableYN{ interactableInHierarchy() }, params, skipsSmoothing);
+	}
+
+	void Node::refreshChildrenPropertiesForInteractableRecursive(InteractableYN parentInteractable, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing)
+	{
+		// 子ノードのInteractionStateとプロパティを更新
+		for (const auto& child : m_children)
+		{
+			// 実効的なinteractable値を計算
+			const bool childInteractableValue = child->m_interactable.value();
+			const InteractableYN effectiveInteractable{ parentInteractable.getBool() && childInteractableValue };
+
+			// MouseTrackerのinteractableも更新
+			child->m_mouseLTracker.setInteractable(effectiveInteractable);
+			child->m_mouseRTracker.setInteractable(effectiveInteractable);
+
+			// InteractionStateを更新
+			if (!effectiveInteractable.getBool())
+			{
+				child->m_currentInteractionState = InteractionState::Disabled;
+			}
+			else if (child->m_currentInteractionState == InteractionState::Disabled)
+			{
+				child->m_currentInteractionState = InteractionState::Default;
+			}
+
+			// 子ノードのプロパティを更新
+			child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipsSmoothing);
+			for (const auto& component : child->m_components)
+			{
+				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipsSmoothing);
+			}
+
+			// 再帰的に子ノードの子も更新
+			child->refreshChildrenPropertiesForInteractableRecursive(effectiveInteractable, params, skipsSmoothing);
+		}
+	}
+
 	void Node::setCanvasRecursive(const std::weak_ptr<Canvas>& canvas)
 	{
 		m_canvas = canvas;
@@ -794,10 +863,9 @@ namespace noco
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
-		m_children.push_back(std::move(child));
-		{
-			requestLayoutRefresh();
-		}
+		m_children.push_back(child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return m_children.back();
 	}
 
@@ -819,9 +887,8 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		{
-			requestLayoutRefresh();
-		}
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return m_children.back();
 	}
 
@@ -831,10 +898,9 @@ namespace noco
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
-		m_children.push_back(std::move(child));
-		{
-			requestLayoutRefresh();
-		}
+		m_children.push_back(child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return m_children.back();
 	}
 
@@ -845,10 +911,9 @@ namespace noco
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
-		m_children.push_back(std::move(child));
-		{
-			requestLayoutRefresh();
-		}
+		m_children.push_back(child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return m_children.back();
 	}
 
@@ -863,10 +928,9 @@ namespace noco
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
-		const auto it = m_children.insert(m_children.begin() + index, std::move(child));
-		{
-			requestLayoutRefresh();
-		}
+		const auto it = m_children.insert(m_children.begin() + index, child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return *it;
 	}
 
@@ -894,11 +958,8 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
-
-		{
-			requestLayoutRefresh();
-		}
-
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		requestLayoutRefresh();
 		return m_children[index];
 	}
 
@@ -912,9 +973,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.remove(child);
-		{
-			requestLayoutRefresh();
-		}
+		requestLayoutRefresh();
 	}
 
 	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
@@ -1193,9 +1252,9 @@ namespace noco
 	void Node::updateNodeParams(const HashTable<String, ParamValue>& params)
 	{
 		// パラメータ参照をもとに値を更新
-		m_activeSelf.update(InteractionState::Default, {}, 0.0, params);
-		m_interactable.update(InteractionState::Default, {}, 0.0, params);
-		m_styleState.update(InteractionState::Default, {}, 0.0, params);
+		m_activeSelf.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
+		m_interactable.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
+		m_styleState.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
 		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() &&
 			m_prevActiveSelfParamOverrideAfterUpdateNodeParams != m_activeSelf.currentFrameOverride())
 		{
@@ -1218,41 +1277,6 @@ namespace noco
 		for (const auto& child : m_children)
 		{
 			child->updateNodeParams(params);
-		}
-	}
-
-	void Node::updateChildrenPropertiesOnInteractableChange(InteractableYN parentInteractable, const HashTable<String, ParamValue>& params)
-	{
-		// 子ノードのInteractionStateとプロパティを更新
-		for (const auto& child : m_children)
-		{
-			// 実効的なinteractable値を計算
-			const bool childInteractableValue = child->m_interactable.value();
-			const InteractableYN effectiveInteractable{ parentInteractable.getBool() && childInteractableValue };
-			
-			// MouseTrackerのinteractableも更新
-			child->m_mouseLTracker.setInteractable(effectiveInteractable);
-			child->m_mouseRTracker.setInteractable(effectiveInteractable);
-			
-			// InteractionStateを更新
-			if (!effectiveInteractable.getBool())
-			{
-				child->m_currentInteractionState = InteractionState::Disabled;
-			}
-			else if (child->m_currentInteractionState == InteractionState::Disabled)
-			{
-				child->m_currentInteractionState = InteractionState::Default;
-			}
-			// else: Hovered/Pressed状態は維持
-			
-			// 子ノードのコンポーネントのプロパティを更新
-			for (const auto& component : child->m_components)
-			{
-				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params);
-			}
-			
-			// 再帰的に子ノードの子も更新
-			child->updateChildrenPropertiesOnInteractableChange(effectiveInteractable, params);
 		}
 	}
 
@@ -1557,13 +1581,13 @@ namespace noco
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
 		// Transformのプロパティ値更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
 
 		// コンポーネントのプロパティ値更新
 		for (const auto& component : m_components)
 		{
 			// m_activeStyleStatesはupdateで構築済み
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -1577,7 +1601,7 @@ namespace noco
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		
 		const Vec2& scale = m_transform.scale().value();
 		const Vec2& pivot = m_transform.pivot().value();
@@ -2174,8 +2198,8 @@ namespace noco
 		
 		const bool prevPropertyValue = m_interactable.propertyValue();
 		m_interactable.setValue(interactable.getBool());
-		
-		// 親のinteractable状態を確認（親がない場合はCanvasのinteractable状態を確認）
+
+		// 親のinteractable状態を確認
 		bool parentInteractable = true;
 		if (const auto parent = m_parent.lock())
 		{
@@ -2186,40 +2210,17 @@ namespace noco
 			// トップレベルノードの場合、Canvasのinteractable状態を確認
 			parentInteractable = canvas->interactable();
 		}
-		
+
 		// 実効的なinteractable値を計算して、MouseTrackerに設定
 		const InteractableYN effectiveInteractable{ interactable.getBool() && parentInteractable };
 		m_mouseLTracker.setInteractable(effectiveInteractable);
 		m_mouseRTracker.setInteractable(effectiveInteractable);
-		
+
 		// interactableが変更された場合、かつパラメータ上書きがない場合のみ即座にプロパティを更新
 		// パラメータ上書きがある場合は実効値に変化がないため更新不要
 		if (prevPropertyValue != interactable.getBool() && !m_interactable.hasCurrentFrameOverride())
 		{
-			// Canvasからパラメータを参照で取得
-			const HashTable<String, ParamValue>& params = canvas->params();
-			
-			// InteractionStateを再計算
-			if (!effectiveInteractable.getBool())
-			{
-				// interactableがfalseならDisabled
-				m_currentInteractionState = InteractionState::Disabled;
-			}
-			else if (m_currentInteractionState == InteractionState::Disabled)
-			{
-				// Disabledから復帰する場合はDefault
-				m_currentInteractionState = InteractionState::Default;
-			}
-			
-			// deltaTime=0でプロパティを即座に更新
-			m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params);
-			for (const auto& component : m_components)
-			{
-				component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params);
-			}
-			
-			// 自身がDisabledなら子もDisabledにする必要がある
-			updateChildrenPropertiesOnInteractableChange(InteractableYN{ interactableInHierarchy() }, params);
+			refreshPropertiesForInteractable(effectiveInteractable, SkipsSmoothingYN::No);
 		}
 		
 		return shared_from_this();

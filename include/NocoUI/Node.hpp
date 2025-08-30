@@ -105,6 +105,10 @@ namespace noco
 
 		void refreshActiveInHierarchy();
 
+		void refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipsSmoothingYN skipsSmoothing);
+
+		void refreshChildrenPropertiesForInteractableRecursive(InteractableYN interactable, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing);
+
 		void setCanvasRecursive(const std::weak_ptr<Canvas>& canvas);
 
 		void clampScrollOffset();
@@ -313,8 +317,6 @@ namespace noco
 		void updateNodeParams(const HashTable<String, ParamValue>& params);
 
 		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
-
-		void updateChildrenPropertiesOnInteractableChange(InteractableYN interactable, const HashTable<String, ParamValue>& params);
 
 		void updateKeyInput();
 
