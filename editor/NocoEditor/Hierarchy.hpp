@@ -291,7 +291,20 @@ namespace noco::editor
 							// 移動先での挿入位置を計算
 							if (!moveToParent)
 							{
+								// トップレベルに移動する場合、targetElementのトップレベル祖先の位置に挿入
+								std::shared_ptr<Node> topAncestor = targetElement.node();
+								while (topAncestor->parentNode())
+								{
+									topAncestor = topAncestor->parentNode();
+								}
+								if (const auto indexOpt = m_canvas->indexOfChildOpt(topAncestor))
+								{
+									m_canvas->addChildAtIndex(sourceElement.node(), *indexOpt);
+								}
+								else
+								{
 									m_canvas->addChild(sourceElement.node());
+								}
 							}
 							else if (moveToParent == targetElement.node()->parentNode())
 							{
@@ -369,7 +382,20 @@ namespace noco::editor
 							// 移動先での挿入位置を計算
 							if (!moveToParent)
 							{
+								// トップレベルに移動する場合、targetElementのトップレベル祖先の位置+1に挿入
+								std::shared_ptr<Node> topAncestor = targetElement.node();
+								while (topAncestor->parentNode())
+								{
+									topAncestor = topAncestor->parentNode();
+								}
+								if (const auto indexOpt = m_canvas->indexOfChildOpt(topAncestor))
+								{
+									m_canvas->addChildAtIndex(sourceElement.node(), *indexOpt + 1);
+								}
+								else
+								{
 									m_canvas->addChild(sourceElement.node());
+								}
 							}
 							else if (moveToParent == targetElement.node()->parentNode())
 							{
