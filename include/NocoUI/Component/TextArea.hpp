@@ -153,8 +153,6 @@ namespace noco
 
 		void draw(const Node& node) const override;
 
-		void onActivated(const std::shared_ptr<Node>& node) override;
-
 		void onDeactivated(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]

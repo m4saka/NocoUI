@@ -389,7 +389,6 @@ namespace noco
 		{
 			m_isEditing = true;
 			m_cursorBlinkTime = 0.0;
-			node->setStyleState(U"focused");
 			detail::s_canvasUpdateContext.editingTextBox = shared_from_this();
 			CurrentFrame::SetFocusedNode(node);
 		}
@@ -399,7 +398,6 @@ namespace noco
 	{
 		m_isEditing = false;
 		m_isDragging = false;
-		node->setStyleState(U"unfocused");
 		m_selectionAnchorLine = m_cursorLine;
 		m_selectionAnchorColumn = m_cursorColumn;
 		if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
@@ -408,19 +406,9 @@ namespace noco
 		}
 	}
 
-	void TextArea::onActivated(const std::shared_ptr<Node>& node)
-	{
-		node->setStyleState(U"unfocused");
-	}
-
 	void TextArea::onDeactivated(const std::shared_ptr<Node>& node)
 	{
 		CurrentFrame::UnfocusNodeIfFocused(node);
-		const String currentStyleState = node->styleState();
-		if (currentStyleState == U"focused" || currentStyleState == U"unfocused")
-		{
-			node->clearStyleState();
-		}
 	}
 
 	void TextArea::updateKeyInput(const std::shared_ptr<Node>& node)
@@ -431,6 +419,16 @@ namespace noco
 		{
 			CurrentFrame::UnfocusNodeIfFocused(node);
 			return;
+		}
+
+		// 編集状態に応じてstyleStateをオーバーライド
+		if (m_isEditing)
+		{
+			node->styleStateProperty().setCurrentFrameOverride(U"focused");
+		}
+		else
+		{
+			node->styleStateProperty().setCurrentFrameOverride(U"unfocused");
 		}
 
 		const Vec2 horizontalPadding = m_horizontalPadding.value();

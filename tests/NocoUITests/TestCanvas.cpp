@@ -479,6 +479,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		auto node = canvas->emplaceChild(U"TextBoxNode");
 		auto textBox = node->emplaceComponent<noco::TextBox>();
 		
+		// updateを呼ぶことでstyleStateがオーバーライドされる
+		System::Update();
+		canvas->update();
+		
 		// emplaceChildで作成したノードにTextBoxを追加すると自動的にunfocused
 		REQUIRE(node->styleState() == U"unfocused");
 	}
@@ -488,6 +492,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
 		auto node = canvas->emplaceChild(U"TextAreaNode");
 		auto textArea = node->emplaceComponent<noco::TextArea>();
+		
+		// updateを呼ぶことでstyleStateがオーバーライドされる
+		System::Update();
+		canvas->update();
 		
 		// emplaceChildで作成したノードにTextAreaを追加すると自動的にunfocused
 		REQUIRE(node->styleState() == U"unfocused");
@@ -503,6 +511,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		// テキストコンポーネントを追加
 		auto nameTextBox = nameField->emplaceComponent<noco::TextBox>();
 		auto descTextArea = descField->emplaceComponent<noco::TextArea>();
+		
+		// updateを呼ぶことでstyleStateがオーバーライドされる
+		System::Update();
+		canvas->update();
 		
 		// 階層構造でもそれぞれ正しくunfocusedになる
 		REQUIRE(form->styleState() == U"");  // テキストコンポーネントなし
