@@ -402,6 +402,26 @@ namespace noco
 
 		return canvas;
 	}
+
+	std::shared_ptr<Canvas> Canvas::LoadFromFile(FilePathView path, AllowExceptions allowExceptions)
+	{
+		const JSON json = JSON::Load(path, allowExceptions);
+		if (!json)
+		{
+			return nullptr;
+		}
+		return Canvas::CreateFromJSON(json);
+	}
+
+	std::shared_ptr<Canvas> Canvas::LoadFromFile(FilePathView path, const ComponentFactory& componentFactory, AllowExceptions allowExceptions)
+	{
+		const JSON json = JSON::Load(path, allowExceptions);
+		if (!json)
+		{
+			return nullptr;
+		}
+		return Canvas::CreateFromJSON(json, componentFactory);
+	}
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{

@@ -438,6 +438,12 @@ namespace noco
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
+		[[nodiscard]]
+		static std::shared_ptr<Canvas> LoadFromFile(FilePathView path, AllowExceptions allowExceptions = AllowExceptions::No);
+
+		[[nodiscard]]
+		static std::shared_ptr<Canvas> LoadFromFile(FilePathView path, const ComponentFactory& factory, AllowExceptions allowExceptions = AllowExceptions::No);
+
 		bool tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 		
 		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
