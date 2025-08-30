@@ -295,7 +295,7 @@ namespace noco
 	}
 
 
-	void TextBox::focus(const std::shared_ptr<Node>& node)
+	void TextBox::focus(const std::shared_ptr<Node>&)
 	{
 		// readOnly時もフォーカスは受け取るが、編集状態にはしない
 		if (!m_readOnly.value())
@@ -309,7 +309,7 @@ namespace noco
 		}
 	}
 
-	void TextBox::blur(const std::shared_ptr<Node>& node)
+	void TextBox::blur(const std::shared_ptr<Node>&)
 	{
 		m_isEditing = false;
 		m_isDragging = false;

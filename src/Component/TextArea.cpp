@@ -394,7 +394,7 @@ namespace noco
 		}
 	}
 
-	void TextArea::blur(const std::shared_ptr<Node>& node)
+	void TextArea::blur(const std::shared_ptr<Node>&)
 	{
 		m_isEditing = false;
 		m_isDragging = false;

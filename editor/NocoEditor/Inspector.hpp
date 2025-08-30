@@ -3978,13 +3978,13 @@ namespace noco::editor
 		[[nodiscard]]
 		std::shared_ptr<Node> createComponentNode(const std::shared_ptr<Node>& node, const std::shared_ptr<SerializableComponentBase>& component, IsFoldedYN isFolded, std::function<void(IsFoldedYN)> onToggleFold)
 		{
-			String displayName = component->type();
-			String menuName = component->type();
+			String componentDisplayName = component->type();
+			String componentMenuName = component->type();
 			if (const auto placeholderComponent = std::dynamic_pointer_cast<PlaceholderComponent>(component))
 			{
 				// PlaceholderComponentの場合は項目名をカスタムコンポーネント名で上書き
-				displayName = placeholderComponent->originalType() + U" (Custom)";
-				menuName = placeholderComponent->originalType();
+				componentDisplayName = placeholderComponent->originalType() + U" (Custom)";
+				componentMenuName = placeholderComponent->originalType();
 			}
 			
 			auto componentNode = Node::Create(
@@ -3997,19 +3997,19 @@ namespace noco::editor
 			componentNode->setChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
 			componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			const auto headingNode = componentNode->addChild(CreateHeadingNode(displayName, ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
+			const auto headingNode = componentNode->addChild(CreateHeadingNode(componentDisplayName, ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
 			Array<MenuElement> menuElements;
-			menuElements.push_back(MenuItem{ U"{} を削除"_fmt(menuName), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を削除"_fmt(componentMenuName), U"", KeyR, [this, node, component] { node->removeComponent(component); refreshInspector(); } });
 			menuElements.push_back(MenuSeparator{});
-			menuElements.push_back(MenuItem{ U"{} を上へ移動"_fmt(menuName), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } });
-			menuElements.push_back(MenuItem{ U"{} を下へ移動"_fmt(menuName), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を上へ移動"_fmt(componentMenuName), U"", KeyU, [this, node, component] { node->moveComponentUp(component); refreshInspector(); } });
+			menuElements.push_back(MenuItem{ U"{} を下へ移動"_fmt(componentMenuName), U"", KeyD, [this, node, component] { node->moveComponentDown(component); refreshInspector(); } });
 			menuElements.push_back(MenuSeparator{});
-			menuElements.push_back(MenuItem{ U"{} の内容をコピー"_fmt(menuName), U"", KeyC, [this, component] { onClickCopyComponent(component); } });
+			menuElements.push_back(MenuItem{ U"{} の内容をコピー"_fmt(componentMenuName), U"", KeyC, [this, component] { onClickCopyComponent(component); } });
 			
 			// 同じタイプのコンポーネントがコピーされている場合のみ貼り付けメニューを表示
 			if (m_copiedComponentType.has_value() && *m_copiedComponentType == component->type())
 			{
-				menuElements.push_back(MenuItem{ U"{} の内容を貼り付け"_fmt(menuName), U"", KeyV, [this, component] { onClickPasteComponentTo(component); } });
+				menuElements.push_back(MenuItem{ U"{} の内容を貼り付け"_fmt(componentMenuName), U"", KeyV, [this, component] { onClickPasteComponentTo(component); } });
 			}
 			
 			headingNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements);

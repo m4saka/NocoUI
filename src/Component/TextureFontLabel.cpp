@@ -39,7 +39,7 @@ namespace noco
 		StringView characterSet,
 		const Vec2& characterSize,
 		const Vec2& characterSpacing,
-		TextureFontLabelSizingMode sizingMode,
+		TextureFontLabelSizingMode textureFontSizingMode,
 		HorizontalOverflow horizontalOverflow,
 		VerticalOverflow verticalOverflow,
 		const SizeF& rectSize,
@@ -51,7 +51,7 @@ namespace noco
 		const TextureFontCache& textureFontCache)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(
-			text, characterSet, characterSize, characterSpacing, sizingMode,
+			text, characterSet, characterSize, characterSpacing, textureFontSizingMode,
 			horizontalOverflow, verticalOverflow, rectSize,
 			textureCellSize, textureOffset, textureGridColumns, textureGridRows, preserveAspect))
 		{
