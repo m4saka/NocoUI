@@ -1012,10 +1012,15 @@ namespace noco::editor
 				const auto parentNode = selectedNode->parentNode();
 				if (!parentNode)
 				{
-					continue;
+					// トップレベルノードの場合はCanvasに直接追加
+					const auto newNode = m_canvas->addChildFromJSON(selectedNode->toJSON());
+					newNodes.push_back(newNode);
 				}
-				const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON());
-				newNodes.push_back(newNode);
+				else
+				{
+					const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON());
+					newNodes.push_back(newNode);
+				}
 			}
 			m_canvas->refreshLayoutImmediately();
 			refreshNodeList();
