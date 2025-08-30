@@ -325,7 +325,7 @@ namespace noco
 	std::shared_ptr<Node> Node::setRegion(const RegionVariant& region)
 	{
 		m_region = region;
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return shared_from_this();
 	}
 
@@ -357,7 +357,7 @@ namespace noco
 	std::shared_ptr<Node> Node::setChildrenLayout(const LayoutVariant& layout)
 	{
 		m_childrenLayout = layout;
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return shared_from_this();
 	}
 
@@ -865,7 +865,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return m_children.back();
 	}
 
@@ -888,7 +888,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return m_children.back();
 	}
 
@@ -900,7 +900,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return m_children.back();
 	}
 
@@ -913,7 +913,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return m_children.back();
 	}
 
@@ -930,7 +930,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return *it;
 	}
 
@@ -959,7 +959,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return m_children[index];
 	}
 
@@ -973,7 +973,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.remove(child);
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 	}
 
 	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
@@ -1448,7 +1448,7 @@ namespace noco
 				}
 				
 				// レイアウトを更新
-				requestLayoutRefresh();
+				markLayoutForRefresh();
 			}
 		}
 		
@@ -1757,7 +1757,7 @@ namespace noco
 			// clampScrollOffsetの前にレイアウトを即座に更新
 			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 	}
 
@@ -1781,7 +1781,7 @@ namespace noco
 			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
 		}
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 
 		if (recursive)
 		{
@@ -2245,7 +2245,7 @@ namespace noco
 	{
 		m_activeSelf.setValue(activeSelf.getBool());
 		refreshActiveInHierarchy();
-		requestLayoutRefresh();
+		markLayoutForRefresh();
 		return shared_from_this();
 	}
 
@@ -2350,7 +2350,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2372,7 +2372,7 @@ namespace noco
 			m_scrollOffset.x = 0.0;
 		}
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2394,7 +2394,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 		return shared_from_this();
 	}
@@ -2713,7 +2713,7 @@ namespace noco
 		}
 		m_children.clear();
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 	}
 
@@ -2727,7 +2727,7 @@ namespace noco
 		}
 		std::iter_swap(it1, it2);
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 	}
 
@@ -2739,7 +2739,7 @@ namespace noco
 		}
 		std::iter_swap(m_children.begin() + index1, m_children.begin() + index2);
 		{
-			requestLayoutRefresh();
+			markLayoutForRefresh();
 		}
 	}
 
@@ -2875,7 +2875,7 @@ namespace noco
 		}
 	}
 	
-	void Node::requestLayoutRefresh()
+	void Node::markLayoutForRefresh()
 	{
 		if (const auto canvas = m_canvas.lock())
 		{
