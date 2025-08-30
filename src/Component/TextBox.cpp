@@ -294,7 +294,6 @@ namespace noco
 		}
 	}
 
-
 	void TextBox::focus(const std::shared_ptr<Node>&)
 	{
 		// readOnly時もフォーカスは受け取るが、編集状態にはしない
