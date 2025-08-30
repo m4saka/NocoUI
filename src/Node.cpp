@@ -2235,10 +2235,9 @@ namespace noco
 		return m_currentInteractionState != InteractionState::Disabled;
 	}
 
-	// TODO: boolで返す方が良さそう
-	ActiveYN Node::activeSelf() const
+	bool Node::activeSelf() const
 	{
-		return ActiveYN{ m_activeSelf.value() };
+		return m_activeSelf.value();
 	}
 
 	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf)
@@ -2254,14 +2253,14 @@ namespace noco
 		return setActive(ActiveYN{ activeSelf });
 	}
 
-	ActiveYN Node::activeInHierarchy() const
+	bool Node::activeInHierarchy() const
 	{
-		return m_activeInHierarchy;
+		return m_activeInHierarchy.getBool();
 	}
 
-	IsHitTargetYN Node::isHitTarget() const
+	bool Node::isHitTarget() const
 	{
-		return m_isHitTarget;
+		return m_isHitTarget.getBool();
 	}
 
 	std::shared_ptr<Node> Node::setIsHitTarget(IsHitTargetYN isHitTarget)
@@ -2399,9 +2398,9 @@ namespace noco
 		return shared_from_this();
 	}
 
-	ClippingEnabledYN Node::clippingEnabled() const
+	bool Node::clippingEnabled() const
 	{
-		return m_clippingEnabled;
+		return m_clippingEnabled.getBool();
 	}
 
 	std::shared_ptr<Node> Node::setClippingEnabled(ClippingEnabledYN clippingEnabled)
@@ -2473,9 +2472,9 @@ namespace noco
 		return shared_from_this();
 	}
 
-	RubberBandScrollEnabledYN Node::rubberBandScrollEnabled() const
+	bool Node::rubberBandScrollEnabled() const
 	{
-		return m_rubberBandScrollEnabled;
+		return m_rubberBandScrollEnabled.getBool();
 	}
 
 	std::shared_ptr<Node> Node::setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled)

@@ -362,11 +362,11 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		auto node = noco::Node::Create(U"TestNode");
 		
 		// Canvas配下にない場合はactiveInHierarchyはfalse
-		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(node->activeInHierarchy() == false);
 		
 		// Canvas::addChild後にactiveInHierarchyがtrueになる
 		canvas->addChild(node);
-		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(node->activeInHierarchy() == true);
 	}
 	
 	SECTION("emplaceChild creates node with activeInHierarchy")
@@ -375,7 +375,7 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		
 		// Canvas::emplaceChildで作成されたノードは直接activeInHierarchyがtrue
 		auto& node = canvas->emplaceChild(U"EmplacedNode");
-		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(node->activeInHierarchy() == true);
 	}
 	
 	SECTION("Hierarchical activeInHierarchy propagation")
@@ -390,15 +390,15 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		child->addChild(grandchild);
 		
 		// Canvas配下にない場合は全てfalse
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(grandchild->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(parent->activeInHierarchy() == false);
+		REQUIRE(child->activeInHierarchy() == false);
+		REQUIRE(grandchild->activeInHierarchy() == false);
 		
 		// 親をCanvas配下に追加すると、子孫も含めてactiveInHierarchyがtrueになる
 		canvas->addChild(parent);
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(grandchild->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
+		REQUIRE(grandchild->activeInHierarchy() == true);
 	}
 	
 	SECTION("removeChild makes node activeInHierarchy false")
@@ -411,13 +411,13 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		canvas->addChild(parent);
 		
 		// Canvas配下でactiveInHierarchyがtrue
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
 		
 		// Canvas::removeChild後にactiveInHierarchyがfalseになる
 		canvas->removeChild(parent);
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(parent->activeInHierarchy() == false);
+		REQUIRE(child->activeInHierarchy() == false);
 	}
 	
 	SECTION("Node activeSelf affects activeInHierarchy under Canvas")
@@ -430,18 +430,18 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		canvas->addChild(parent);
 		
 		// 初期状態：両方ともactiveInHierarchyがtrue
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
 		
 		// 親を非アクティブにすると子のactiveInHierarchyもfalseになる
 		parent->setActive(noco::ActiveYN::No);
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(parent->activeInHierarchy() == false);
+		REQUIRE(child->activeInHierarchy() == false);
 		
 		// 親を再アクティブにすると子のactiveInHierarchyもtrueになる
 		parent->setActive(noco::ActiveYN::Yes);
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
 	}
 	
 	SECTION("removeChildrenAll makes all nodes activeInHierarchy false")
@@ -457,16 +457,16 @@ TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 		canvas->addChild(node2);
 		
 		// Canvas配下でactiveInHierarchyがtrue
-		REQUIRE(node1->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(node2->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(node1->activeInHierarchy() == true);
+		REQUIRE(node2->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
 		REQUIRE(canvas->children().size() == 2);
 		
 		// removeChildrenAll後にactiveInHierarchyがfalseになる
 		canvas->removeChildrenAll();
-		REQUIRE(node1->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(node2->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(node1->activeInHierarchy() == false);
+		REQUIRE(node2->activeInHierarchy() == false);
+		REQUIRE(child->activeInHierarchy() == false);
 		REQUIRE(canvas->children().size() == 0);
 	}
 }
@@ -587,23 +587,23 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		REQUIRE(node->activeSelfParamRef() == U"nodeActive");
 		
 		// update前はまだパラメータ値が適用されない
-		REQUIRE(node->activeSelf().getBool() == false);
+		REQUIRE(node->activeSelf() == false);
 		
 		// updateするとパラメータ値が適用される
 		canvas->update();
-		REQUIRE(node->activeSelf().getBool() == true);
+		REQUIRE(node->activeSelf() == true);
 		
 		// パラメータを変更
 		canvas->setParamValue(U"nodeActive", false);
 		canvas->update();
-		REQUIRE(node->activeSelf().getBool() == false);
+		REQUIRE(node->activeSelf() == false);
 		
 		// パラメータ参照をクリア
 		node->setActiveSelfParamRef(U"");
 		node->setActive(true);
 		System::Update();  // フレームを進める
 		canvas->update();
-		REQUIRE(node->activeSelf().getBool() == true);
+		REQUIRE(node->activeSelf() == true);
 	}
 	
 	SECTION("interactable parameter reference")
@@ -662,14 +662,14 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		canvas->addChild(loadedNode);
 		
 		// 値とパラメータ参照が保持されているか確認
-		REQUIRE(loadedNode->activeSelf().getBool() == true);  // 保存された値
+		REQUIRE(loadedNode->activeSelf() == true);  // 保存された値
 		REQUIRE(loadedNode->interactable() == false);  // 保存された値
 		REQUIRE(loadedNode->activeSelfParamRef() == U"isActive");  // パラメータ参照
 		REQUIRE(loadedNode->interactableParamRef() == U"canInteract");  // パラメータ参照
 		
 		// updateでパラメータ値が適用される
 		canvas->update();
-		REQUIRE(loadedNode->activeSelf().getBool() == false);
+		REQUIRE(loadedNode->activeSelf() == false);
 		REQUIRE(loadedNode->interactable() == true);
 	}
 	
@@ -682,10 +682,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		
 		// activeSelfのテスト（パラメータ参照なし）
 		node->setActive(true);
-		REQUIRE(node->activeSelf().getBool() == true); // 即座に反映される
+		REQUIRE(node->activeSelf() == true); // 即座に反映される
 		
 		node->setActive(false);
-		REQUIRE(node->activeSelf().getBool() == false); // 即座に反映される
+		REQUIRE(node->activeSelf() == false); // 即座に反映される
 		
 		// interactableのテスト（パラメータ参照なし）
 		node->setInteractable(false);

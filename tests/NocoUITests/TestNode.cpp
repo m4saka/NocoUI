@@ -68,15 +68,15 @@ TEST_CASE("Node properties and state management", "[Node]")
 		auto node = noco::Node::Create();
 		
 		// デフォルトではアクティブ
-		REQUIRE(node->activeSelf() == noco::ActiveYN::Yes);
+		REQUIRE(node->activeSelf() == true);
 		
 		// 非アクティブに設定
 		node->setActive(noco::ActiveYN::No);
-		REQUIRE(node->activeSelf() == noco::ActiveYN::No);
+		REQUIRE(node->activeSelf() == false);
 		
 		// 再度アクティブに設定
 		node->setActive(noco::ActiveYN::Yes);
-		REQUIRE(node->activeSelf() == noco::ActiveYN::Yes);
+		REQUIRE(node->activeSelf() == true);
 	}
 
 	SECTION("Active in hierarchy - Canvas配下にない場合")
@@ -84,15 +84,15 @@ TEST_CASE("Node properties and state management", "[Node]")
 		auto node = noco::Node::Create();
 		
 		// Canvas配下にないノードはactiveInHierarchyがfalse
-		REQUIRE(node->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(node->activeInHierarchy() == false);
 		
 		auto parent = noco::Node::Create();
 		auto child = noco::Node::Create();
 		parent->addChild(child);
 		
 		// Canvas配下にない階層でもactiveInHierarchyはfalse
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(parent->activeInHierarchy() == false);
+		REQUIRE(child->activeInHierarchy() == false);
 	}
 
 	SECTION("Active in hierarchy - Canvas配下の場合")
@@ -105,12 +105,12 @@ TEST_CASE("Node properties and state management", "[Node]")
 		canvas->addChild(parent);
 		
 		// Canvas配下ではactiveInHierarchyがtrue
-		REQUIRE(parent->activeInHierarchy() == noco::ActiveYN::Yes);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::Yes);
+		REQUIRE(parent->activeInHierarchy() == true);
+		REQUIRE(child->activeInHierarchy() == true);
 		
 		// 親を非アクティブに設定
 		parent->setActive(noco::ActiveYN::No);
-		REQUIRE(child->activeInHierarchy() == noco::ActiveYN::No);
+		REQUIRE(child->activeInHierarchy() == false);
 	}
 
 	SECTION("Transform properties")
@@ -151,11 +151,11 @@ TEST_CASE("Node properties and state management", "[Node]")
 		auto node = noco::Node::Create();
 		
 		// デフォルトではヒット対象
-		REQUIRE(node->isHitTarget() == noco::IsHitTargetYN::Yes);
+		REQUIRE(node->isHitTarget() == true);
 		
 		// ヒット対象から除外
 		node->setIsHitTarget(noco::IsHitTargetYN::No);
-		REQUIRE(node->isHitTarget() == noco::IsHitTargetYN::No);
+		REQUIRE(node->isHitTarget() == false);
 		
 		// ヒットテストパディング
 		node->setHitPadding(noco::LRTB{ 10, 20, 30, 40 });

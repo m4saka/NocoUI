@@ -2391,7 +2391,7 @@ namespace noco::editor
 				{
 					nodeSettingNode->addChild(createLRTBPropertyNodeWithTooltip(U"Node", name, currentValue, fnSetValue))->setActive(!m_isFoldedNodeSetting.getBool());
 				};
-			fnAddBoolChild(U"isHitTarget", node->isHitTarget().getBool(), [this, node](bool value) { 
+			fnAddBoolChild(U"isHitTarget", node->isHitTarget(), [this, node](bool value) { 
 				node->setIsHitTarget(value); 
 				refreshInspector();
 			});
@@ -2462,9 +2462,9 @@ namespace noco::editor
 			// wheelScrollEnabledまたはdragScrollEnabledが有効な場合のみ表示
 			if (node->wheelScrollEnabled() || node->dragScrollEnabled())
 			{
-				fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled().getBool(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
+				fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
 			}
-			fnAddBoolChild(U"clippingEnabled", node->clippingEnabled().getBool(), [node](bool value) { node->setClippingEnabled(value); });
+			fnAddBoolChild(U"clippingEnabled", node->clippingEnabled(), [node](bool value) { node->setClippingEnabled(value); });
 			
 			{
 				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"styleState", node->styleState(), [node](StringView value) { node->setStyleState(String(value)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->styleStateParamRef().isEmpty() }));

@@ -751,7 +751,7 @@ namespace noco::editor
 					for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it)
 					{
 						// アクティブでない（折りたたまれた親の中にある）要素はスキップ
-						if (it->hierarchyNode()->activeInHierarchy() == ActiveYN::No)
+						if (!it->hierarchyNode()->activeInHierarchy())
 						{
 							continue;
 						}

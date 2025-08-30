@@ -412,7 +412,7 @@ namespace noco
 		bool interactableInHierarchy() const;
 
 		[[nodiscard]]
-		ActiveYN activeSelf() const;
+		bool activeSelf() const;
 
 		std::shared_ptr<Node> setActive(ActiveYN activeSelf);
 
@@ -434,10 +434,10 @@ namespace noco
 		const PropertyNonInteractive<bool>& activeSelfProperty() const { return m_activeSelf; }
 
 		[[nodiscard]]
-		ActiveYN activeInHierarchy() const;
+		bool activeInHierarchy() const;
 
 		[[nodiscard]]
-		IsHitTargetYN isHitTarget() const;
+		bool isHitTarget() const;
 
 		std::shared_ptr<Node> setIsHitTarget(IsHitTargetYN isHitTarget);
 
@@ -499,7 +499,7 @@ namespace noco
 		std::shared_ptr<Node> setDecelerationRate(double rate);
 
 		[[nodiscard]]
-		RubberBandScrollEnabledYN rubberBandScrollEnabled() const;
+		bool rubberBandScrollEnabled() const;
 
 		std::shared_ptr<Node> setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled);
 
@@ -509,7 +509,7 @@ namespace noco
 		void preventDragScroll();
 
 		[[nodiscard]]
-		ClippingEnabledYN clippingEnabled() const;
+		bool clippingEnabled() const;
 
 		std::shared_ptr<Node> setClippingEnabled(ClippingEnabledYN clippingEnabled);
 

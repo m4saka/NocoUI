@@ -34,7 +34,7 @@ namespace noco
 				m_originalIsHitTargets.reserve(m_draggingNodeList.size());
 				for (const auto& draggingNode : m_draggingNodeList)
 				{
-					m_originalIsHitTargets.push_back(draggingNode->isHitTarget());
+					m_originalIsHitTargets.push_back(IsHitTargetYN{ draggingNode->isHitTarget() });
 				}
 
 				m_isDragging = true;

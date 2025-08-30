@@ -16,7 +16,7 @@ namespace noco::editor
 		}
 		
 		// 非アクティブなノードはフォーカス不可
-		if (node->activeInHierarchy() != noco::ActiveYN::Yes)
+		if (!node->activeInHierarchy())
 		{
 			return false;
 		}
