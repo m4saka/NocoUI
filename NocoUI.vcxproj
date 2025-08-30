@@ -136,7 +136,6 @@
     <ClCompile Include="src\Layout\VerticalLayout.cpp" />
     <ClCompile Include="src\Node.cpp" />
     <ClCompile Include="src\Transform.cpp" />
-    <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -191,7 +190,6 @@
     <ClInclude Include="include\NocoUI\Serialization.hpp" />
     <ClInclude Include="include\NocoUI\Smoothing.hpp" />
     <ClInclude Include="include\NocoUI\Transform.hpp" />
-    <ClInclude Include="include\NocoUI\Utility.hpp" />
     <ClInclude Include="include\NocoUI\YN.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

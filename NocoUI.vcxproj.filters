@@ -84,9 +84,6 @@
     <ClCompile Include="src\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Utility.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Component\Tween.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
@@ -94,6 +91,9 @@
       <Filter>Source Files\Component</Filter>
     </ClCompile>
     <ClCompile Include="src\ComponentFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Component\TextureFontLabel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -242,14 +242,14 @@
     <ClInclude Include="include\NocoUI\Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NocoUI\Utility.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\NocoUI\YN.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\Tween.hpp">
       <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\Component\TextureFontLabel.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
