@@ -901,6 +901,34 @@ namespace noco::editor
 			return !m_copiedNodeJSONs.empty();
 		}
 
+		[[nodiscard]]
+		String generateUniqueNodeName(const String& baseName, const std::shared_ptr<Node>& parentNode) const
+		{
+			// 親ノードの全ての子ノード名を収集
+			HashSet<String> existingNames;
+			const auto& children = parentNode ? parentNode->children() : m_canvas->children();
+			for (const auto& child : children)
+			{
+				existingNames.insert(child->name());
+			}
+
+			// ベース名が存在しない場合はそのまま使用
+			if (!existingNames.contains(baseName))
+			{
+				return baseName;
+			}
+
+			// Node2, Node3, ... と番号を増やしながら空いている名前を探す
+			for (int32 i = 2; ; ++i)
+			{
+				const String candidateName = baseName + Format(i);
+				if (!existingNames.contains(candidateName))
+				{
+					return candidateName;
+				}
+			}
+		}
+
 		void onClickNewNode()
 		{
 			// 最後に選択したノードの兄弟として新規ノードを作成
@@ -923,8 +951,9 @@ namespace noco::editor
 
 		void onClickNewNodeToCanvas()
 		{
+			const String uniqueName = generateUniqueNodeName(U"Node", nullptr);
 			std::shared_ptr<Node> newNode = m_canvas->emplaceChild(
-				U"Node",
+				uniqueName,
 				m_defaults->defaultRegion());
 			refreshNodeList();
 			selectSingleNode(newNode);
@@ -938,8 +967,9 @@ namespace noco::editor
 			}
 
 			// 記憶された種類のRegionを使用してノードを作成
+			const String uniqueName = generateUniqueNodeName(U"Node", parentNode);
 			std::shared_ptr<Node> newNode = parentNode->emplaceChild(
-				U"Node",
+				uniqueName,
 				m_defaults->defaultRegion());
 			refreshNodeList();
 			selectSingleNode(newNode);
