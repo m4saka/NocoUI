@@ -33,8 +33,7 @@ namespace noco
 
 		void update(const std::shared_ptr<Node>& sourceNode) override;
 
-		// TODO: 本来は破棄時にも実行すべき内容なので、onDeactivatedを実装可能にする
-		void updateInactive(const std::shared_ptr<Node>& sourceNode) override;
+		void onDeactivated(const std::shared_ptr<Node>& sourceNode) override;
 
 		[[nodiscard]]
 		const Array<std::shared_ptr<Node>>& draggingNodeList() const

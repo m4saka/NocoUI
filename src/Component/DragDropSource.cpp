@@ -93,7 +93,7 @@ namespace noco
 		m_prevIsDragging = m_isDragging;
 	}
 
-	void DragDropSource::updateInactive(const std::shared_ptr<Node>& sourceNode)
+	void DragDropSource::onDeactivated(const std::shared_ptr<Node>& sourceNode)
 	{
 		if (m_isDragging)
 		{
