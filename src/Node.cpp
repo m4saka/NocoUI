@@ -1221,6 +1221,41 @@ namespace noco
 		}
 	}
 
+	void Node::updateChildrenPropertiesOnInteractableChange(InteractableYN parentInteractable, const HashTable<String, ParamValue>& params)
+	{
+		// 子ノードのInteractionStateとプロパティを更新
+		for (const auto& child : m_children)
+		{
+			// 実効的なinteractable値を計算
+			const bool childInteractableValue = child->m_interactable.value();
+			const InteractableYN effectiveInteractable{ parentInteractable.getBool() && childInteractableValue };
+			
+			// MouseTrackerのinteractableも更新
+			child->m_mouseLTracker.setInteractable(effectiveInteractable);
+			child->m_mouseRTracker.setInteractable(effectiveInteractable);
+			
+			// InteractionStateを更新
+			if (!effectiveInteractable.getBool())
+			{
+				child->m_currentInteractionState = InteractionState::Disabled;
+			}
+			else if (child->m_currentInteractionState == InteractionState::Disabled)
+			{
+				child->m_currentInteractionState = InteractionState::Default;
+			}
+			// else: Hovered/Pressed状態は維持
+			
+			// 子ノードのコンポーネントのプロパティを更新
+			for (const auto& component : child->m_components)
+			{
+				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params);
+			}
+			
+			// 再帰的に子ノードの子も更新
+			child->updateChildrenPropertiesOnInteractableChange(effectiveInteractable, params);
+		}
+	}
+
 	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
 		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
@@ -2120,16 +2155,73 @@ namespace noco
 		return m_components;
 	}
 
-	InteractableYN Node::interactable() const
+	bool Node::interactable() const
 	{
-		return InteractableYN{ m_interactable.value() };
+		return m_interactable.value();
 	}
 
 	std::shared_ptr<Node> Node::setInteractable(InteractableYN interactable)
 	{
+		// Canvas配下でない場合は通常の値設定のみ
+		const auto canvas = m_canvas.lock();
+		if (!canvas)
+		{
+			m_interactable.setValue(interactable.getBool());
+			m_mouseLTracker.setInteractable(interactable);
+			m_mouseRTracker.setInteractable(interactable);
+			return shared_from_this();
+		}
+		
+		const bool prevPropertyValue = m_interactable.propertyValue();
 		m_interactable.setValue(interactable.getBool());
-		m_mouseLTracker.setInteractable(interactable);
-		m_mouseRTracker.setInteractable(interactable);
+		
+		// 親のinteractable状態を確認（親がない場合はCanvasのinteractable状態を確認）
+		bool parentInteractable = true;
+		if (const auto parent = m_parent.lock())
+		{
+			parentInteractable = parent->interactableInHierarchy();
+		}
+		else
+		{
+			// トップレベルノードの場合、Canvasのinteractable状態を確認
+			parentInteractable = canvas->interactable();
+		}
+		
+		// 実効的なinteractable値を計算して、MouseTrackerに設定
+		const InteractableYN effectiveInteractable{ interactable.getBool() && parentInteractable };
+		m_mouseLTracker.setInteractable(effectiveInteractable);
+		m_mouseRTracker.setInteractable(effectiveInteractable);
+		
+		// interactableが変更された場合、かつパラメータ上書きがない場合のみ即座にプロパティを更新
+		// パラメータ上書きがある場合は実効値に変化がないため更新不要
+		if (prevPropertyValue != interactable.getBool() && !m_interactable.hasCurrentFrameOverride())
+		{
+			// Canvasからパラメータを参照で取得
+			const HashTable<String, ParamValue>& params = canvas->params();
+			
+			// InteractionStateを再計算
+			if (!effectiveInteractable.getBool())
+			{
+				// interactableがfalseならDisabled
+				m_currentInteractionState = InteractionState::Disabled;
+			}
+			else if (m_currentInteractionState == InteractionState::Disabled)
+			{
+				// Disabledから復帰する場合はDefault
+				m_currentInteractionState = InteractionState::Default;
+			}
+			
+			// deltaTime=0でプロパティを即座に更新
+			m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params);
+			for (const auto& component : m_components)
+			{
+				component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params);
+			}
+			
+			// 自身がDisabledなら子もDisabledにする必要がある
+			updateChildrenPropertiesOnInteractableChange(InteractableYN{ interactableInHierarchy() }, params);
+		}
+		
 		return shared_from_this();
 	}
 

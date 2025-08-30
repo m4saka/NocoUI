@@ -69,9 +69,9 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		InteractableYN interactable() const
+		bool interactable() const
 		{
-			return m_interactable;
+			return m_interactable.getBool();
 		}
 
 		void setInteractable(InteractableYN interactable)

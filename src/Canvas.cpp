@@ -183,22 +183,17 @@ namespace noco
 
 		const RectF canvasRect{ 0, 0, m_size.x, m_size.y };
 		
+		// Canvasのm_childrenLayoutを適用
+		std::visit([this, &canvasRect](const auto& layout)
+			{
+				layout.execute(canvasRect, m_children, [](const std::shared_ptr<Node>& child, const RectF& rect)
+					{
+						child->m_regionRect = rect;
+					});
+			}, m_childrenLayout);
+		
 		for (const auto& child : m_children)
 		{
-			const auto& childRegion = child->region();
-			if (const auto pInlineRegion = std::get_if<InlineRegion>(&childRegion))
-			{
-				child->m_regionRect = pInlineRegion->applyRegion(canvasRect, Vec2::Zero());
-			}
-			else if (const auto pAnchorRegion = std::get_if<AnchorRegion>(&childRegion))
-			{
-				child->m_regionRect = pAnchorRegion->applyRegion(canvasRect, Vec2::Zero());
-			}
-			else
-			{
-				throw Error{ U"Unknown child node region" };
-			}
-
 			child->refreshChildrenLayout();
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		}
@@ -253,6 +248,9 @@ namespace noco
 		{
 			json[U"autoResizeMode"] = ValueToString(m_autoResizeMode);
 		}
+
+		// childrenLayoutの保存
+		json[U"childrenLayout"] = std::visit([](const auto& childrenLayout) { return childrenLayout.toJSON(); }, m_childrenLayout);
 
 		Array<JSON> childrenArray;
 		for (const auto& child : m_children)
@@ -328,6 +326,28 @@ namespace noco
 		else
 		{
 			Logger << U"[NocoUI warning] Canvas::CreateFromJSON: Failed to parse size, using default";
+		}
+		
+		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
+		{
+			const auto type = json[U"childrenLayout"][U"type"].getString();
+			if (type == U"FlowLayout")
+			{
+				canvas->m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else if (type == U"HorizontalLayout")
+			{
+				canvas->m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else if (type == U"VerticalLayout")
+			{
+				canvas->m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Unknown childrenLayout type: {}, using default FlowLayout"_fmt(type);
+				canvas->m_childrenLayout = FlowLayout{};
+			}
 		}
 		
 		for (const auto& childJson : json[U"children"].arrayView())
@@ -465,6 +485,30 @@ namespace noco
 				{
 					m_lastSceneSize = Scene::Size();
 				}
+			}
+		}
+
+		// childrenLayoutの読み込み
+		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
+		{
+			const auto type = json[U"childrenLayout"][U"type"].getString();
+			if (type == U"FlowLayout")
+			{
+				m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else if (type == U"HorizontalLayout")
+			{
+				m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else if (type == U"VerticalLayout")
+			{
+				m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
+			}
+			else
+			{
+				// 不明な場合はFlowLayout扱いにする
+				Logger << U"[NocoUI warning] Unknown children layout type: '{}'"_fmt(type);
+				m_childrenLayout = FlowLayout{};
 			}
 		}
 
@@ -657,7 +701,7 @@ namespace noco
 		// updateInteractionStateは通常順で実行
 		for (const auto& child : m_childrenTempBuffer)
 		{
-			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), InteractableYN::Yes, InteractionState::Default, InteractionState::Default, isScrolling, m_params);
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params);
 		}
 		
 		// updateKeyInputは前面のノードから処理する必要があるため逆順で実行
@@ -1252,6 +1296,58 @@ namespace noco
 		}
 		return shared_from_this();
 	}
+
+	std::shared_ptr<Canvas> Canvas::setChildrenLayout(const LayoutVariant& layout)
+	{
+		m_childrenLayout = layout;
+		setLayoutDirty();
+		return shared_from_this();
+	}
+
+	std::shared_ptr<Canvas> Canvas::setInteractable(InteractableYN interactable)
+	{
+		const bool prevValue = m_interactable.getBool();
+		m_interactable = interactable;
+		
+		// interactableが変更された場合、即座に全ての子ノードのプロパティを更新
+		if (prevValue != interactable.getBool())
+		{
+			// 全ての子ノードのInteractionStateとプロパティを更新
+			for (const auto& child : m_children)
+			{
+				// 実効的なinteractable値を計算
+				const bool childInteractableValue = child->m_interactable.value();
+				const InteractableYN effectiveInteractable{ interactable.getBool() && childInteractableValue };
+				
+				// MouseTrackerの実効的なinteractableを更新
+				child->m_mouseLTracker.setInteractable(effectiveInteractable);
+				child->m_mouseRTracker.setInteractable(effectiveInteractable);
+				
+				// InteractionStateを更新
+				if (!effectiveInteractable.getBool())
+				{
+					child->m_currentInteractionState = InteractionState::Disabled;
+				}
+				else if (child->m_currentInteractionState == InteractionState::Disabled)
+				{
+					child->m_currentInteractionState = InteractionState::Default;
+				}
+				
+				// 子ノードのプロパティを更新
+				child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params);
+				for (const auto& component : child->m_components)
+				{
+					component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params);
+				}
+				
+				// 子ノードの子孫も更新
+				child->updateChildrenPropertiesOnInteractableChange(effectiveInteractable, m_params);
+			}
+		}
+		
+		return shared_from_this();
+	}
+	
 
 	std::shared_ptr<Canvas> Canvas::setAutoResizeMode(AutoResizeMode mode)
 	{

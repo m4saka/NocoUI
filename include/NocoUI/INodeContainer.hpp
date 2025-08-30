@@ -6,6 +6,7 @@
 #include "InheritChildrenStateFlags.hpp"
 #include "Anchor.hpp"
 #include "Region/Region.hpp"
+#include "Layout/Layout.hpp"
 
 namespace noco
 {
@@ -74,5 +75,17 @@ namespace noco
 
 		[[nodiscard]]
 		virtual bool isCanvas() const = 0;
+
+		[[nodiscard]]
+		virtual const LayoutVariant& childrenLayout() const = 0;
+
+		[[nodiscard]]
+		virtual const FlowLayout* childrenFlowLayout() const = 0;
+
+		[[nodiscard]]
+		virtual const HorizontalLayout* childrenHorizontalLayout() const = 0;
+
+		[[nodiscard]]
+		virtual const VerticalLayout* childrenVerticalLayout() const = 0;
 	};
 }

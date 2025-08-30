@@ -33,7 +33,7 @@ namespace noco
 		String m_name;
 		RegionVariant m_region;
 		Transform m_transform;
-		LayoutVariant m_childrenLayout;
+		LayoutVariant m_childrenLayout = FlowLayout{};
 		Array<std::shared_ptr<Node>> m_children;
 		Array<std::shared_ptr<ComponentBase>> m_components;
 		IsHitTargetYN m_isHitTarget;
@@ -134,18 +134,18 @@ namespace noco
 		const Transform& transform() const;
 
 		[[nodiscard]]
-		const LayoutVariant& childrenLayout() const;
+		const LayoutVariant& childrenLayout() const override;
 
 		std::shared_ptr<Node> setChildrenLayout(const LayoutVariant& layout);
 
 		[[nodiscard]]
-		const FlowLayout* childrenFlowLayout() const;
+		const FlowLayout* childrenFlowLayout() const override;
 
 		[[nodiscard]]
-		const HorizontalLayout* childrenHorizontalLayout() const;
+		const HorizontalLayout* childrenHorizontalLayout() const override;
 
 		[[nodiscard]]
-		const VerticalLayout* childrenVerticalLayout() const;
+		const VerticalLayout* childrenVerticalLayout() const override;
 
 		[[nodiscard]]
 		SizeF getFittingSizeToChildren() const;
@@ -314,6 +314,8 @@ namespace noco
 
 		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
 
+		void updateChildrenPropertiesOnInteractableChange(InteractableYN interactable, const HashTable<String, ParamValue>& params);
+
 		void updateKeyInput();
 
 		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates = {});
@@ -385,7 +387,7 @@ namespace noco
 		const Array<std::shared_ptr<ComponentBase>>& components() const;
 
 		[[nodiscard]]
-		InteractableYN interactable() const;
+		bool interactable() const;
 
 		std::shared_ptr<Node> setInteractable(InteractableYN interactable);
 

@@ -210,6 +210,149 @@ TEST_CASE("Canvas center methods", "[Canvas]")
 	}
 }
 
+// Canvasのレイアウトテスト
+TEST_CASE("Canvas children layout", "[Canvas][Layout]")
+{
+	SECTION("Default layout is FlowLayout")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		
+		// デフォルトはFlowLayout
+		REQUIRE(canvas->childrenFlowLayout() != nullptr);
+		REQUIRE(canvas->childrenHorizontalLayout() == nullptr);
+		REQUIRE(canvas->childrenVerticalLayout() == nullptr);
+	}
+	
+	SECTION("FlowLayout arranges top-level nodes")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setChildrenLayout(noco::FlowLayout{
+			.padding = noco::LRTB{ 10, 10, 10, 10 },
+			.spacing = Vec2{ 10, 10 },
+		});
+		
+		// トップレベルノードを追加
+		auto node1 = noco::Node::Create(U"Node1", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		auto node2 = noco::Node::Create(U"Node2", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		auto node3 = noco::Node::Create(U"Node3", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
+		
+		// レイアウトを更新
+		canvas->refreshLayoutImmediately();
+		
+		// FlowLayoutにより横に並ぶ（padding考慮）
+		REQUIRE(node1->regionRect().x == Approx(10.0));
+		REQUIRE(node1->regionRect().y == Approx(10.0));
+		REQUIRE(node2->regionRect().x == Approx(120.0)); // 10 + 100 + 10(spacing)
+		REQUIRE(node2->regionRect().y == Approx(10.0));
+		REQUIRE(node3->regionRect().x == Approx(230.0)); // 120 + 100 + 10(spacing)
+		REQUIRE(node3->regionRect().y == Approx(10.0));
+	}
+	
+	SECTION("HorizontalLayout arranges top-level nodes")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setChildrenLayout(noco::HorizontalLayout{
+			.padding = noco::LRTB{ 20, 20, 20, 20 },
+			.spacing = 15,
+			.horizontalAlign = noco::HorizontalAlign::Left,
+			.verticalAlign = noco::VerticalAlign::Middle,
+		});
+		
+		// トップレベルノードを追加
+		auto node1 = noco::Node::Create(U"Node1", noco::InlineRegion{ .sizeDelta = Vec2{ 80, 60 } });
+		auto node2 = noco::Node::Create(U"Node2", noco::InlineRegion{ .sizeDelta = Vec2{ 80, 40 } });
+		auto node3 = noco::Node::Create(U"Node3", noco::InlineRegion{ .sizeDelta = Vec2{ 80, 80 } });
+		
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
+		
+		// レイアウトを更新
+		canvas->refreshLayoutImmediately();
+		
+		// HorizontalLayoutにより横一列に並ぶ
+		REQUIRE(node1->regionRect().x == Approx(20.0));
+		REQUIRE(node2->regionRect().x == Approx(115.0)); // 20 + 80 + 15(spacing)
+		REQUIRE(node3->regionRect().x == Approx(210.0)); // 115 + 80 + 15(spacing)
+		
+		// 垂直方向は中央揃え（キャンバス高さ300、padding上下40、利用可能高さ260）
+		double availableHeight = 260.0;
+		REQUIRE(node1->regionRect().y == Approx(20.0 + (availableHeight - 60) / 2));
+		REQUIRE(node2->regionRect().y == Approx(20.0 + (availableHeight - 40) / 2));
+		REQUIRE(node3->regionRect().y == Approx(20.0 + (availableHeight - 80) / 2));
+	}
+	
+	SECTION("VerticalLayout arranges top-level nodes")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setChildrenLayout(noco::VerticalLayout{
+			.padding = noco::LRTB{ 15, 15, 15, 15 },
+			.spacing = 20,
+			.horizontalAlign = noco::HorizontalAlign::Center,
+			.verticalAlign = noco::VerticalAlign::Top,
+		});
+		
+		// トップレベルノードを追加
+		auto node1 = noco::Node::Create(U"Node1", noco::InlineRegion{ .sizeDelta = Vec2{ 120, 50 } });
+		auto node2 = noco::Node::Create(U"Node2", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		auto node3 = noco::Node::Create(U"Node3", noco::InlineRegion{ .sizeDelta = Vec2{ 140, 50 } });
+		
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
+		
+		// レイアウトを更新
+		canvas->refreshLayoutImmediately();
+		
+		// VerticalLayoutにより縦一列に並ぶ
+		REQUIRE(node1->regionRect().y == Approx(15.0));
+		REQUIRE(node2->regionRect().y == Approx(85.0)); // 15 + 50 + 20(spacing)
+		REQUIRE(node3->regionRect().y == Approx(155.0)); // 85 + 50 + 20(spacing)
+		
+		// 水平方向は中央揃え（キャンバス幅400、padding左右30、利用可能幅370）
+		double availableWidth = 370.0;
+		REQUIRE(node1->regionRect().x == Approx(15.0 + (availableWidth - 120) / 2));
+		REQUIRE(node2->regionRect().x == Approx(15.0 + (availableWidth - 100) / 2));
+		REQUIRE(node3->regionRect().x == Approx(15.0 + (availableWidth - 140) / 2));
+	}
+	
+	SECTION("Layout change updates node positions")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		
+		// 初期はFlowLayout
+		auto node1 = noco::Node::Create(U"Node1", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		auto node2 = noco::Node::Create(U"Node2", noco::InlineRegion{ .sizeDelta = Vec2{ 100, 50 } });
+		
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->refreshLayoutImmediately();
+		
+		// FlowLayoutでの位置を記録
+		double flowX1 = node1->regionRect().x;
+		double flowX2 = node2->regionRect().x;
+		double flowY1 = node1->regionRect().y;
+		double flowY2 = node2->regionRect().y;
+		
+		// FlowLayoutでは横に並ぶのでy座標は同じ
+		REQUIRE(flowY1 == flowY2);
+		REQUIRE(flowX1 < flowX2);
+		
+		// VerticalLayoutに変更
+		canvas->setChildrenLayout(noco::VerticalLayout{});
+		canvas->refreshLayoutImmediately();
+		
+		// 位置が変わることを確認
+		REQUIRE(node1->regionRect().x != flowX1);
+		REQUIRE(node2->regionRect().x != flowX2);
+		REQUIRE(node1->regionRect().y < node2->regionRect().y); // 縦に並ぶ
+	}
+}
+
 // activeInHierarchy管理のテスト
 TEST_CASE("Canvas activeInHierarchy management", "[Canvas][ActiveInHierarchy]")
 {
@@ -479,23 +622,23 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		REQUIRE(node->interactableParamRef() == U"allowInteraction");
 		
 		// update前はまだパラメータ値が適用されない
-		REQUIRE(node->interactable().getBool() == true);
+		REQUIRE(node->interactable() == true);
 		
 		// updateするとパラメータ値が適用される
 		canvas->update();
-		REQUIRE(node->interactable().getBool() == false);
+		REQUIRE(node->interactable() == false);
 		
 		// パラメータを変更
 		canvas->setParamValue(U"allowInteraction", true);
 		canvas->update();
-		REQUIRE(node->interactable().getBool() == true);
+		REQUIRE(node->interactable() == true);
 		
 		// パラメータ参照をクリア
 		node->setInteractableParamRef(U"");
 		node->setInteractable(false);
 		System::Update();  // フレームを進める
 		canvas->update();
-		REQUIRE(node->interactable().getBool() == false);
+		REQUIRE(node->interactable() == false);
 	}
 	
 	SECTION("activeSelf and interactable serialization with parameter reference")
@@ -520,14 +663,14 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		
 		// 値とパラメータ参照が保持されているか確認
 		REQUIRE(loadedNode->activeSelf().getBool() == true);  // 保存された値
-		REQUIRE(loadedNode->interactable().getBool() == false);  // 保存された値
+		REQUIRE(loadedNode->interactable() == false);  // 保存された値
 		REQUIRE(loadedNode->activeSelfParamRef() == U"isActive");  // パラメータ参照
 		REQUIRE(loadedNode->interactableParamRef() == U"canInteract");  // パラメータ参照
 		
 		// updateでパラメータ値が適用される
 		canvas->update();
 		REQUIRE(loadedNode->activeSelf().getBool() == false);
-		REQUIRE(loadedNode->interactable().getBool() == true);
+		REQUIRE(loadedNode->interactable() == true);
 	}
 	
 	SECTION("Properties without parameter reference should reflect values immediately")
@@ -546,10 +689,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		
 		// interactableのテスト（パラメータ参照なし）
 		node->setInteractable(false);
-		REQUIRE(node->interactable().getBool() == false); // 即座に反映される
+		REQUIRE(node->interactable() == false); // 即座に反映される
 		
 		node->setInteractable(true);
-		REQUIRE(node->interactable().getBool() == true); // 即座に反映される
+		REQUIRE(node->interactable() == true); // 即座に反映される
 		
 		// styleStateのテスト（パラメータ参照なし）
 		node->setStyleState(U"hover");
@@ -560,5 +703,103 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		
 		node->setStyleState(U"");
 		REQUIRE(node->styleState() == U""); // 即座に反映される
+	}
+}
+
+TEST_CASE("Canvas interactable property", "[Canvas]")
+{
+	SECTION("Canvas interactable affects child nodes immediately")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		auto rectRenderer = std::make_shared<noco::RectRenderer>()
+			->setFillColor(noco::PropertyValue<ColorF>{ Palette::White }
+				.withDisabled(Palette::Gray));
+		node->addComponent(rectRenderer);
+		canvas->addChild(node);
+		
+		// デフォルトはinteractable=true
+		REQUIRE(canvas->interactable() == true);
+		REQUIRE(node->currentInteractionState() != noco::InteractionState::Disabled);
+		
+		// Canvasをdisableすると子ノードも即座にdisabledになる
+		canvas->setInteractable(false);
+		REQUIRE(canvas->interactable() == false);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		
+		// プロパティ値も即座に更新される（deltaTime=0で適用）
+		auto* fillColorProp = dynamic_cast<noco::SmoothProperty<ColorF>*>(rectRenderer->getPropertyByName(U"fillColor"));
+		REQUIRE(fillColorProp != nullptr);
+		REQUIRE(fillColorProp->value() == ColorF{ Palette::Gray });
+		
+		// Canvasを再度enableすると子ノードもenabledになる
+		canvas->setInteractable(true);
+		REQUIRE(canvas->interactable() == true);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(fillColorProp->value() == ColorF{ Palette::White });
+	}
+	
+	SECTION("Canvas interactable with node hierarchy")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"Parent");
+		auto child = noco::Node::Create(U"Child");
+		auto grandchild = noco::Node::Create(U"Grandchild");
+		
+		canvas->addChild(parent);
+		parent->addChild(child);
+		child->addChild(grandchild);
+		
+		// 全てenabledな状態
+		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(child->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Default);
+		
+		// Canvasをdisableすると全ての子孫がdisabledになる
+		canvas->setInteractable(false);
+		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		
+		// 中間ノードをdisableしてからCanvasをenableしても、中間ノード以下はdisabledのまま
+		child->setInteractable(false);
+		canvas->setInteractable(true);
+		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+	}
+	
+	SECTION("Canvas interactable preserves hover/pressed state")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		canvas->addChild(node);
+		
+		canvas->setInteractable(false);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		
+		canvas->setInteractable(true);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+	}
+	
+	SECTION("Node setInteractable considers Canvas state")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		canvas->addChild(node);
+		
+		// Canvasがdisabledの状態でノードをenableしても、ノードはdisabledのまま
+		canvas->setInteractable(false);
+		node->setInteractable(true);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		
+		canvas->setInteractable(true);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		
+		// ノードをdisableしてからCanvasをdisable→enableしても、ノードはdisabledのまま
+		node->setInteractable(false);
+		canvas->setInteractable(false);
+		canvas->setInteractable(true);
+		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
 	}
 }

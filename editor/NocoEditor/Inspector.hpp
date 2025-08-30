@@ -491,6 +491,10 @@ namespace noco::editor
 				// Paramsセクションを追加
 				const auto paramsNode = createParamsNode();
 				m_inspectorRootNode->addChild(paramsNode);
+
+				// Children Layoutセクションを追加
+				const auto canvasLayoutNode = createCanvasChildrenLayoutNode();
+				m_inspectorRootNode->addChild(canvasLayoutNode);
 			}
 			
 			// TabStopを持つすべてのノードを収集してリンクを設定
@@ -2399,7 +2403,7 @@ namespace noco::editor
 			fnAddBoolChild(U"inheritsChildrenHover", node->inheritsChildrenHover(), [node](bool value) { node->setInheritsChildrenHover(value); });
 			fnAddBoolChild(U"inheritsChildrenPress", node->inheritsChildrenPress(), [node](bool value) { node->setInheritsChildrenPress(value); });
 			{
-				const auto propertyNode = nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", U"interactable", node->interactable().getBool(), [node](bool value) { node->setInteractable(value); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->interactableParamRef().isEmpty() }));
+				const auto propertyNode = nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", U"interactable", node->interactable(), [node](bool value) { node->setInteractable(value); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->interactableParamRef().isEmpty() }));
 				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
 				
 				Array<MenuElement> menuElements
@@ -2510,6 +2514,154 @@ namespace noco::editor
 			HorizontalLayout,
 			VerticalLayout,
 		};
+
+		[[nodiscard]]
+		std::shared_ptr<Node> createCanvasChildrenLayoutNode()
+		{
+			auto layoutNode = Node::Create(
+				U"CanvasChildrenLayout",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.margin = LRTB{ 0, 0, 0, 8 },
+				});
+			layoutNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
+			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			layoutNode->addChild(CreateHeadingNode(U"Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
+				[this](IsFoldedYN isFolded)
+				{
+					m_isFoldedLayout = isFolded;
+				}));
+			
+			// 現在のLayoutタイプを取得
+			String layoutTypeName;
+			if (m_canvas->childrenFlowLayout())
+			{
+				layoutTypeName = U"FlowLayout";
+			}
+			else if (m_canvas->childrenHorizontalLayout())
+			{
+				layoutTypeName = U"HorizontalLayout";
+			}
+			else if (m_canvas->childrenVerticalLayout())
+			{
+				layoutTypeName = U"VerticalLayout";
+			}
+			
+			const auto fnAddChild =
+				[this, &layoutNode, &layoutTypeName](StringView name, const auto& value, auto fnSetValue)
+				{
+					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				};
+			const auto fnAddVec2Child =
+				[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
+				{
+					layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				};
+			const auto fnAddDoubleChild =
+				[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
+				{
+					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(currentValue), [fnSetValue = std::move(fnSetValue)](StringView value) { fnSetValue(ParseOpt<double>(value).value_or(0.0)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, nullptr))->setActive(!m_isFoldedLayout.getBool());
+				};
+			const auto fnAddLRTBChild =
+				[this, &layoutNode, &layoutTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
+				{
+					layoutNode->addChild(createLRTBPropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+				};
+			const auto fnAddEnumChild =
+				[this, &layoutNode, &layoutTypeName]<typename EnumType>(const String & name, EnumType currentValue, auto fnSetValue)
+				{
+					auto fnSetEnumValue = [fnSetValue = std::move(fnSetValue), currentValue](StringView value) { fnSetValue(StringToEnum<EnumType>(value, currentValue)); };
+					layoutNode->addChild(createEnumPropertyNodeWithTooltip(layoutTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedLayout.getBool());
+				};
+			
+			if (const auto pFlowLayout = m_canvas->childrenFlowLayout())
+			{
+				fnAddEnumChild(
+					U"type",
+					LayoutType::FlowLayout,
+					[this](LayoutType type)
+					{
+						switch (type)
+						{
+						case LayoutType::FlowLayout:
+							break;
+						case LayoutType::HorizontalLayout:
+							m_canvas->setChildrenLayout(HorizontalLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						case LayoutType::VerticalLayout:
+							m_canvas->setChildrenLayout(VerticalLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						}
+					});
+				fnAddLRTBChild(U"padding", pFlowLayout->padding, [this](const LRTB& value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.padding = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this](const Vec2& value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.spacing = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this](HorizontalAlign value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.horizontalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this](VerticalAlign value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.verticalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+			}
+			else if (const auto pHorizontalLayout = m_canvas->childrenHorizontalLayout())
+			{
+				fnAddEnumChild(
+					U"type",
+					LayoutType::HorizontalLayout,
+					[this](LayoutType type)
+					{
+						switch (type)
+						{
+						case LayoutType::FlowLayout:
+							m_canvas->setChildrenLayout(FlowLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						case LayoutType::HorizontalLayout:
+							break;
+						case LayoutType::VerticalLayout:
+							m_canvas->setChildrenLayout(VerticalLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						}
+					});
+				fnAddLRTBChild(U"padding", pHorizontalLayout->padding, [this](const LRTB& value) { auto newLayout = *m_canvas->childrenHorizontalLayout(); newLayout.padding = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddDoubleChild(U"spacing", pHorizontalLayout->spacing, [this](double value) { auto newLayout = *m_canvas->childrenHorizontalLayout(); newLayout.spacing = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pHorizontalLayout->horizontalAlign, [this](HorizontalAlign value) { auto newLayout = *m_canvas->childrenHorizontalLayout(); newLayout.horizontalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pHorizontalLayout->verticalAlign, [this](VerticalAlign value) { auto newLayout = *m_canvas->childrenHorizontalLayout(); newLayout.verticalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+			}
+			else if (const auto pVerticalLayout = m_canvas->childrenVerticalLayout())
+			{
+				fnAddEnumChild(
+					U"type",
+					LayoutType::VerticalLayout,
+					[this](LayoutType type)
+					{
+						switch (type)
+						{
+						case LayoutType::FlowLayout:
+							m_canvas->setChildrenLayout(FlowLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						case LayoutType::HorizontalLayout:
+							m_canvas->setChildrenLayout(HorizontalLayout{});
+							refreshInspector(); // 項目に変更があるため更新
+							break;
+						case LayoutType::VerticalLayout:
+							break;
+						}
+					});
+				fnAddLRTBChild(U"padding", pVerticalLayout->padding, [this](const LRTB& value) { auto newLayout = *m_canvas->childrenVerticalLayout(); newLayout.padding = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddDoubleChild(U"spacing", pVerticalLayout->spacing, [this](double value) { auto newLayout = *m_canvas->childrenVerticalLayout(); newLayout.spacing = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"horizontalAlign", pVerticalLayout->horizontalAlign, [this](HorizontalAlign value) { auto newLayout = *m_canvas->childrenVerticalLayout(); newLayout.horizontalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddEnumChild(U"verticalAlign", pVerticalLayout->verticalAlign, [this](VerticalAlign value) { auto newLayout = *m_canvas->childrenVerticalLayout(); newLayout.verticalAlign = value; m_canvas->setChildrenLayout(newLayout); });
+			}
+			else
+			{
+				throw Error{ U"Unknown layout type" };
+			}
+
+			layoutNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+
+			return layoutNode;
+		}
 
 		[[nodiscard]]
 		std::shared_ptr<Node> createChildrenLayoutNode(const std::shared_ptr<Node>& node)

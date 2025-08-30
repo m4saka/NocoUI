@@ -381,8 +381,9 @@ namespace noco
 			const Array<Event>& getFiredEventsAll() const;
 		};
 
-		Array<std::shared_ptr<Node>> m_children;
 		SizeF m_size = DefaultSize;
+		LayoutVariant m_childrenLayout = FlowLayout{};
+		Array<std::shared_ptr<Node>> m_children;
 		AutoScaleMode m_autoScaleMode = AutoScaleMode::None;
 		AutoResizeMode m_autoResizeMode = AutoResizeMode::None;
 		HashTable<String, ParamValue> m_params;
@@ -396,6 +397,7 @@ namespace noco
 		/* NonSerialized */ bool m_isEditorPreview = false;
 		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
+		/* NonSerialized */ InteractableYN m_interactable = InteractableYN::Yes;
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
@@ -647,7 +649,45 @@ namespace noco
 			return m_serializedVersion;
 		}
 
-		// INodeContainer interface implementation
+		[[nodiscard]]
+		const LayoutVariant& childrenLayout() const override
+		{
+			return m_childrenLayout;
+		}
+
+		std::shared_ptr<Canvas> setChildrenLayout(const LayoutVariant& layout);
+
+		[[nodiscard]]
+		bool interactable() const
+		{
+			return m_interactable.getBool();
+		}
+
+		std::shared_ptr<Canvas> setInteractable(InteractableYN interactable);
+
+		std::shared_ptr<Canvas> setInteractable(bool interactable)
+		{
+			return setInteractable(InteractableYN{ interactable });
+		}
+
+		[[nodiscard]]
+		const FlowLayout* childrenFlowLayout() const override
+		{
+			return std::get_if<FlowLayout>(&m_childrenLayout);
+		}
+
+		[[nodiscard]]
+		const HorizontalLayout* childrenHorizontalLayout() const override
+		{
+			return std::get_if<HorizontalLayout>(&m_childrenLayout);
+		}
+
+		[[nodiscard]]
+		const VerticalLayout* childrenVerticalLayout() const override
+		{
+			return std::get_if<VerticalLayout>(&m_childrenLayout);
+		}
+
 		[[nodiscard]]
 		const Array<std::shared_ptr<Node>>& children() const override
 		{
