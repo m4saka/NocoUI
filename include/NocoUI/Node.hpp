@@ -286,7 +286,7 @@ namespace noco
 		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No);
+		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) override;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No) override;

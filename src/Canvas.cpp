@@ -1211,6 +1211,25 @@ namespace noco
 		return false;
 	}
 
+	std::shared_ptr<Node> Canvas::getChildByName(StringView name, RecursiveYN recursive)
+	{
+		for (const auto& child : m_children)
+		{
+			if (child->name() == name)
+			{
+				return child;
+			}
+			if (recursive)
+			{
+				if (auto found = child->getChildByNameOrNull(name, recursive))
+				{
+					return found;
+				}
+			}
+		}
+		throw Error{ U"Child node '{}' not found in canvas"_fmt(name) };
+	}
+
 	std::shared_ptr<Node> Canvas::getChildByNameOrNull(StringView name, RecursiveYN recursive)
 	{
 		for (const auto& child : m_children)

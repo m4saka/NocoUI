@@ -53,6 +53,11 @@ namespace noco
 			RecursiveYN recursive = RecursiveYN::No) const = 0;
 
 		[[nodiscard]]
+		virtual std::shared_ptr<Node> getChildByName(
+			StringView name,
+			RecursiveYN recursive = RecursiveYN::No) = 0;
+
+		[[nodiscard]]
 		virtual std::shared_ptr<Node> getChildByNameOrNull(
 			StringView name,
 			RecursiveYN recursive = RecursiveYN::No) = 0;
