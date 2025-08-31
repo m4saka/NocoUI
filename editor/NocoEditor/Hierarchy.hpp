@@ -1570,12 +1570,13 @@ namespace noco::editor
 
 		void applyFolding()
 		{
-			if (m_elements.empty())
+			for (auto& element : m_elements)
 			{
-				return;
+				if (!element.node()->parentNode())
+				{
+					applyFoldingRecursive(element, FoldedYN::No);
+				}
 			}
-			auto& rootElement = m_elements.front();
-			applyFoldingRecursive(rootElement, FoldedYN::No);
 		}
 
 		[[nodiscard]]
