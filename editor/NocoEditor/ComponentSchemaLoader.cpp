@@ -126,7 +126,107 @@ namespace noco::editor
 		
 		if (json.contains(U"defaultValue"))
 		{
-			prop.defaultValue = json[U"defaultValue"].getString();
+			const JSON& defaultJson = json[U"defaultValue"];
+			
+			switch (prop.editType)
+			{
+			case PropertyEditType::Bool:
+				if (defaultJson.isBool())
+				{
+					prop.defaultValue = defaultJson.get<bool>();
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Bool type must be boolean, using default: false";
+					prop.defaultValue = false;
+				}
+				break;
+				
+			case PropertyEditType::Number:
+				if (defaultJson.isNumber())
+				{
+					prop.defaultValue = defaultJson.get<double>();
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Number type must be number, using default: 0.0";
+					prop.defaultValue = 0.0;
+				}
+				break;
+				
+			case PropertyEditType::Text:
+			case PropertyEditType::Enum:
+				if (defaultJson.isString())
+				{
+					prop.defaultValue = defaultJson.getString();
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Text/Enum type must be string, using default: \"\"";
+					prop.defaultValue = String{};
+				}
+				break;
+				
+			case PropertyEditType::Color:
+				if (defaultJson.isString())
+				{
+					if (auto opt = StringToValueOpt<ColorF>(defaultJson.getString()))
+					{
+						prop.defaultValue = *opt;
+					}
+					else
+					{
+						Logger << U"[NocoUI warning] Invalid color value: {}, using default: (0, 0, 0, 0)"_fmt(defaultJson.getString());
+						prop.defaultValue = ColorF{};
+					}
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Color type must be string, using default: (0, 0, 0, 0)";
+					prop.defaultValue = ColorF{};
+				}
+				break;
+				
+			case PropertyEditType::Vec2:
+				if (defaultJson.isString())
+				{
+					if (auto opt = StringToValueOpt<Vec2>(defaultJson.getString()))
+					{
+						prop.defaultValue = *opt;
+					}
+					else
+					{
+						Logger << U"[NocoUI warning] Invalid Vec2 value: {}, using default: (0, 0)"_fmt(defaultJson.getString());
+						prop.defaultValue = Vec2::Zero();
+					}
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Vec2 type must be string, using default: (0, 0)";
+					prop.defaultValue = Vec2::Zero();
+				}
+				break;
+				
+			case PropertyEditType::LRTB:
+				if (defaultJson.isString())
+				{
+					if (auto opt = StringToValueOpt<LRTB>(defaultJson.getString()))
+					{
+						prop.defaultValue = *opt;
+					}
+					else
+					{
+						Logger << U"[NocoUI warning] Invalid LRTB value: {}, using default: (0, 0, 0, 0)"_fmt(defaultJson.getString());
+						prop.defaultValue = LRTB::Zero();
+					}
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for LRTB type must be string, using default: (0, 0, 0, 0)";
+					prop.defaultValue = LRTB::Zero();
+				}
+				break;
+			}
 		}
 		
 		if (json.contains(U"tooltip"))

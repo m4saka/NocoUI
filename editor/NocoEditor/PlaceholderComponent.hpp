@@ -3,25 +3,54 @@
 #include <NocoUI/Component/ComponentBase.hpp>
 #include <NocoUI/Node.hpp>
 #include <NocoUI/Property.hpp>
+#include <NocoUI/LRTB.hpp>
+#include "ComponentSchema.hpp"
+#include "ComponentSchemaLoader.hpp"
+#include <variant>
 
 namespace noco
 {
-	// PlaceholderComponentの動的プロパティ管理用。型情報なしでも任意のプロパティを扱えるよう全てString型として保持
+	// JSON値の型に対応するPropertyEditTypeを取得
+	[[nodiscard]]
+	inline PropertyEditType GetEditTypeFromJSONType(const JSON& value)
+	{
+		if (value.isBool())
+		{
+			return PropertyEditType::Bool;
+		}
+		else if (value.isNumber())
+		{
+			return PropertyEditType::Number;
+		}
+		else
+		{
+			// ほかにVec2、ColorF、LRTBも文字列だが、スキーマがなく型不明の場合は一律でText扱いとする
+			return PropertyEditType::Text;
+		}
+	}
+	
 	class PlaceholderProperty : public IProperty
 	{
 	private:
+		using PropertyVariant = std::variant<
+			PropertyValue<bool>,
+			PropertyValue<double>,
+			PropertyValue<String>,
+			PropertyValue<ColorF>,
+			PropertyValue<Vec2>,
+			PropertyValue<LRTB>
+		>;
+		
 		String m_name;
-		PropertyValue<String> m_propertyValue;
+		PropertyEditType m_editType;
+		PropertyVariant m_propertyValue;
 		String m_paramRef;
-		/* NonSerialized */ InteractionState m_interactionState = InteractionState::Default;
-		/* NonSerialized */ Array<String> m_activeStyleStates{};
-		/* NonSerialized */ Optional<String> m_currentFrameOverride;
-		/* NonSerialized */ int32 m_currentFrameOverrideFrameCount = 0;
 
 	public:
-		PlaceholderProperty(const String& name, const PropertyValue<String>& propertyValue = U"")
+		PlaceholderProperty(const String& name, PropertyEditType editType = PropertyEditType::Text)
 			: m_name{ name }
-			, m_propertyValue{ propertyValue }
+			, m_editType{ editType }
+			, m_propertyValue{ MakePropertyValueOfEditType(editType) }
 		{
 		}
 
@@ -31,46 +60,50 @@ namespace noco
 			return m_name;
 		}
 		
-		[[nodiscard]]
-		const PropertyValue<String>& propertyValue() const
-		{
-			return m_propertyValue;
-		}
-		
-		void setPropertyValue(const PropertyValue<String>& value)
-		{
-			m_propertyValue = value;
-		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipsSmoothingYN) override
+		void update(InteractionState, const Array<String>&, double, const HashTable<String, ParamValue>&, SkipsSmoothingYN) override
 		{
-			m_interactionState = interactionState;
-			m_activeStyleStates = activeStyleStates;
-			
-			if (!m_paramRef.isEmpty())
-			{
-				if (auto it = params.find(m_paramRef); it != params.end())
-				{
-					if (auto val = GetParamValueAs<String>(it->second))
-					{
-						setCurrentFrameOverride(*val);
-					}
-				}
-			}
-			
-			if (m_currentFrameOverrideFrameCount > 0)
-			{
-				--m_currentFrameOverrideFrameCount;
-				if (m_currentFrameOverrideFrameCount == 0)
-				{
-					m_currentFrameOverride = none;
-				}
-			}
+			// エディタ専用型なのでupdate処理は不要
 		}
 
 		void appendJSON(JSON& json) const override
 		{
-			json[m_name] = m_propertyValue.toJSON();
+			std::visit([&](const auto& propValue) {
+				using T = std::decay_t<decltype(propValue)>;
+				JSON propJson = propValue.toJSON();
+				
+				// PropertyValueがシンプルな値の場合は適切なJSON型として保存
+				if constexpr (std::is_same_v<T, PropertyValue<bool>>)
+				{
+					if (propJson.isBool())
+					{
+						json[m_name] = propJson.get<bool>();
+					}
+					else
+					{
+						json[m_name] = propJson;  // InteractionState等の情報を含む場合
+					}
+				}
+				else if constexpr (std::is_same_v<T, PropertyValue<double>>)
+				{
+					if (propJson.isNumber())
+					{
+						json[m_name] = propJson.get<double>();
+					}
+					else
+					{
+						json[m_name] = propJson;  // InteractionState等の情報を含む場合
+					}
+				}
+				else
+				{
+					// String, ColorF, Vec2, LRTBの場合
+					// PropertyValueがシンプルな値の場合は文字列として保存される
+					// InteractionState情報がある場合はオブジェクト形式（{default: "...", hovered: "..."}）
+					json[m_name] = propJson;
+				}
+			}, m_propertyValue);
+			
 			if (!m_paramRef.isEmpty())
 			{
 				json[U"{}_paramRef"_fmt(m_name)] = m_paramRef;
@@ -83,7 +116,37 @@ namespace noco
 			{
 				return;
 			}
-			m_propertyValue = PropertyValue<String>::fromJSON(json[m_name]);
+			
+			const JSON& valueJson = json[m_name];
+			
+			// PropertyValueをJSONから読み込み
+			switch (m_editType)
+			{
+			case PropertyEditType::Bool:
+				m_propertyValue = PropertyValue<bool>::fromJSON(valueJson, false);
+				break;
+				
+			case PropertyEditType::Number:
+				m_propertyValue = PropertyValue<double>::fromJSON(valueJson, 0.0);
+				break;
+				
+			case PropertyEditType::Text:
+			case PropertyEditType::Enum:
+				m_propertyValue = PropertyValue<String>::fromJSON(valueJson, String{});
+				break;
+				
+			case PropertyEditType::Vec2:
+				m_propertyValue = PropertyValue<Vec2>::fromJSON(valueJson, Vec2::Zero());
+				break;
+				
+			case PropertyEditType::Color:
+				m_propertyValue = PropertyValue<ColorF>::fromJSON(valueJson, ColorF{});
+				break;
+				
+			case PropertyEditType::LRTB:
+				m_propertyValue = PropertyValue<LRTB>::fromJSON(valueJson, LRTB::Zero());
+				break;
+			}
 			
 			const String paramRefKey = U"{}_paramRef"_fmt(m_name);
 			if (json.contains(paramRefKey))
@@ -95,57 +158,60 @@ namespace noco
 		[[nodiscard]]
 		String propertyValueStringOfDefault() const override
 		{
-			return m_propertyValue.defaultValue;
+			return std::visit([](const auto& propValue) {
+				return propValue.getValueStringOfDefault();
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
 		Optional<String> propertyValueStringOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
 		{
-			if (m_currentFrameOverride)
-			{
-				return *m_currentFrameOverride;
-			}
-			
-			return m_propertyValue.getValueStringOf(interactionState, activeStyleStates);
+			return std::visit([&](const auto& propValue) {
+				return propValue.getValueStringOf(interactionState, activeStyleStates);
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
 		String propertyValueStringOfFallback(InteractionState interactionState, const Array<String>& activeStyleStates) const override
 		{
-			if (m_currentFrameOverride)
-			{
-				return *m_currentFrameOverride;
-			}
-			
-			return m_propertyValue.getValueStringOfFallback(interactionState, activeStyleStates);
+			return std::visit([&](const auto& propValue) {
+				return propValue.getValueStringOfFallback(interactionState, activeStyleStates);
+			}, m_propertyValue);
 		}
 
-		bool trySetPropertyValueString(StringView value) override
+		bool trySetPropertyValueString(StringView valueStr) override
 		{
-			m_propertyValue.defaultValue = String{ value };
-			return true;
+			return std::visit([&](auto& propValue) -> bool {
+				return propValue.trySetValueString(valueStr);
+			}, m_propertyValue);
 		}
 		
 		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) override
 		{
-			return m_propertyValue.trySetValueStringOf(String{ value }, interactionState, activeStyleStates);
+			return std::visit([&](auto& propValue) -> bool {
+				return propValue.trySetValueStringOf(value, interactionState, activeStyleStates);
+			}, m_propertyValue);
 		}
 		
 		bool tryUnsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
 		{
-			return m_propertyValue.tryUnsetValueOf(interactionState, activeStyleStates);
+			return std::visit([&](auto& propValue) -> bool {
+				return propValue.tryUnsetValueOf(interactionState, activeStyleStates);
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
 		bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
 		{
-			return m_propertyValue.hasValueOf(interactionState, activeStyleStates);
+			return std::visit([&](const auto& propValue) -> bool {
+				return propValue.hasValueOf(interactionState, activeStyleStates);
+			}, m_propertyValue);
 		}
 
 		[[nodiscard]]
 		PropertyEditType editType() const override
 		{
-			return PropertyEditType::Text;
+			return m_editType;
 		}
 		
 		[[nodiscard]]
@@ -157,33 +223,50 @@ namespace noco
 		[[nodiscard]]
 		bool hasInteractivePropertyValue() const override
 		{
-			return m_propertyValue.hoveredValue.has_value() ||
-			       m_propertyValue.pressedValue.has_value() ||
-			       m_propertyValue.disabledValue.has_value();
+			return std::visit([](const auto& propValue) -> bool {
+				return propValue.hasInteractiveValue();
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
 		bool isSmoothProperty() const override
 		{
-			return m_propertyValue.smoothTime > 0.0;
+			return std::visit([](const auto& propValue) -> bool {
+				return propValue.smoothTime > 0.0;
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
 		double smoothTime() const override
 		{
-			return m_propertyValue.smoothTime;
+			return std::visit([](const auto& propValue) -> double {
+				return propValue.smoothTime;
+			}, m_propertyValue);
 		}
 		
 		bool trySetSmoothTime(double smoothTime) override
 		{
-			m_propertyValue.smoothTime = smoothTime;
+			std::visit([&](auto& propValue) {
+				propValue.smoothTime = smoothTime;
+			}, m_propertyValue);
 			return true;
 		}
 		
 		[[nodiscard]]
 		Array<String> styleStateKeys() const override
 		{
-			return {};
+			return std::visit([](const auto& propValue) -> Array<String> {
+				if (propValue.styleStateValues)
+				{
+					Array<String> keys;
+					for (const auto& [key, value] : *propValue.styleStateValues)
+					{
+						keys.push_back(key);
+					}
+					return keys;
+				}
+				return {};
+			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
@@ -212,20 +295,27 @@ namespace noco
 			}
 		}
 		
-		void setCurrentFrameOverride(const String& value)
-		{
-			m_currentFrameOverride = value;
-			m_currentFrameOverrideFrameCount = Scene::FrameCount();
-		}
-		
+	private:
 		[[nodiscard]]
-		const String& value() const
+		static PropertyVariant MakePropertyValueOfEditType(PropertyEditType editType)
 		{
-			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			switch (editType)
 			{
-				return *m_currentFrameOverride;
+			case PropertyEditType::Bool:
+				return PropertyValue<bool>{ false };
+			case PropertyEditType::Number:
+				return PropertyValue<double>{ 0.0 };
+			case PropertyEditType::Text:
+			case PropertyEditType::Enum:
+				return PropertyValue<String>{ String{} };
+			case PropertyEditType::Vec2:
+				return PropertyValue<Vec2>{ Vec2::Zero() };
+			case PropertyEditType::Color:
+				return PropertyValue<ColorF>{ ColorF{} };
+			case PropertyEditType::LRTB:
+				return PropertyValue<LRTB>{ LRTB::Zero() };
 			}
-			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
+			return PropertyValue<String>{ String{} };  // デフォルト
 		}
 	};
 
@@ -243,6 +333,9 @@ namespace noco
 			: SerializableComponentBase{ U"Placeholder", {} }  // 空の配列で初期化、後でupdatePropertyListInternalを呼ぶ
 			, m_originalType{ originalType }
 		{
+			// スキーマから型情報を取得
+			const editor::ComponentSchema* schema = editor::ComponentSchemaLoader::GetSchema(originalType);
+			
 			if (originalData.isObject())
 			{
 				HashSet<String> processedKeys;
@@ -268,7 +361,29 @@ namespace noco
 						continue;
 					}
 					
-					auto property = std::make_unique<PlaceholderProperty>(keyStr);
+					// 型情報を決定
+					PropertyEditType editType = PropertyEditType::Text;  // デフォルト
+					
+					if (schema)
+					{
+						// スキーマがある場合はスキーマから型情報を取得
+						if (auto propSchema = schema->findProperty(keyStr))
+						{
+							editType = propSchema->editType;
+						}
+						else
+						{
+							// スキーマにないプロパティの場合はJSON値から型を取得
+							editType = GetEditTypeFromJSONType(value);
+						}
+					}
+					else
+					{
+						// スキーマがない場合はJSON値から型を取得
+						editType = GetEditTypeFromJSONType(value);
+					}
+					
+					auto property = std::make_unique<PlaceholderProperty>(keyStr, editType);
 					property->readFromJSON(originalData);
 					m_properties[keyStr] = std::move(property);
 					processedKeys.insert(keyStr);
@@ -341,6 +456,9 @@ namespace noco
 			
 			m_originalType = json[U"type"].getString();
 			
+			// スキーマから型情報を取得
+			const editor::ComponentSchema* schema = editor::ComponentSchemaLoader::GetSchema(m_originalType);
+			
 			m_properties.clear();
 			
 			if (json.isObject())
@@ -368,7 +486,29 @@ namespace noco
 						continue;
 					}
 					
-					auto property = std::make_unique<PlaceholderProperty>(keyStr);
+					// 型情報を決定
+					PropertyEditType editType = PropertyEditType::Text;  // デフォルト
+					
+					if (schema)
+					{
+						// スキーマがある場合はスキーマから型情報を取得
+						if (auto propSchema = schema->findProperty(keyStr))
+						{
+							editType = propSchema->editType;
+						}
+						else
+						{
+							// スキーマにないプロパティの場合はJSON値から型を取得
+							editType = GetEditTypeFromJSONType(value);
+						}
+					}
+					else
+					{
+						// スキーマがない場合はJSON値から型を取得
+						editType = GetEditTypeFromJSONType(value);
+					}
+					
+					auto property = std::make_unique<PlaceholderProperty>(keyStr, editType);
 					property->readFromJSON(json);
 					m_properties[keyStr] = std::move(property);
 					processedKeys.insert(keyStr);
@@ -415,7 +555,7 @@ namespace noco
 		{
 			if (auto it = m_properties.find(propertyName); it != m_properties.end())
 			{
-				return it->second->value();
+				return it->second->propertyValueStringOfDefault();
 			}
 			return U"";
 		}
@@ -429,13 +569,9 @@ namespace noco
 			}
 			else
 			{
-				// 新規プロパティの場合は作成してプロパティリストを更新
-				auto property = std::make_unique<PlaceholderProperty>(propertyName, PropertyValue<String>{ value });
-				m_properties[propertyName] = std::move(property);
-				updatePropertyListInternal();
+				Logger << U"[NocoEditor warning] Property '{}' not found in PlaceholderComponent. Ignored."_fmt(propertyName);
 			}
 		}
-		
 		
 		[[nodiscard]]
 		bool hasProperty(const String& propertyName) const

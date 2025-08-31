@@ -649,7 +649,7 @@ namespace noco::editor
 			case PropertyEditType::Color:
 				if (const auto colorPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<ColorPropertyTextBox>(RecursiveYN::Yes))
 				{
-					colorPropertyTextBox->setValue(StringToValueOpt<ColorF>(value).value_or(ColorF{ Palette::White }));
+					colorPropertyTextBox->setValue(StringToValueOpt<ColorF>(value).value_or(ColorF{}));
 				}
 				else
 				{

@@ -96,9 +96,41 @@ namespace noco::editor
 			{
 				for (const auto& prop : schema->properties)
 				{
-					if (!prop.defaultValue.isEmpty())
+					// variantからJSON値を設定
+					if (!std::holds_alternative<std::monostate>(prop.defaultValue))
 					{
-						componentJson[prop.name] = prop.defaultValue;
+						std::visit([&componentJson, &prop](auto&& value)
+						{
+							using T = std::decay_t<decltype(value)>;
+							if constexpr (std::is_same_v<T, std::monostate>)
+							{
+								// 値なし
+							}
+							else if constexpr (std::is_same_v<T, bool>)
+							{
+								componentJson[prop.name] = value;
+							}
+							else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+							{
+								componentJson[prop.name] = static_cast<double>(value);
+							}
+							else if constexpr (std::is_same_v<T, String>)
+							{
+								componentJson[prop.name] = value;
+							}
+							else if constexpr (std::is_same_v<T, ColorF>)
+							{
+								componentJson[prop.name] = ValueToString(value);
+							}
+							else if constexpr (std::is_same_v<T, Vec2>)
+							{
+								componentJson[prop.name] = ValueToString(value);
+							}
+							else if constexpr (std::is_same_v<T, LRTB>)
+							{
+								componentJson[prop.name] = ValueToString(value);
+							}
+						}, prop.defaultValue);
 					}
 				}
 			}
@@ -4064,10 +4096,37 @@ namespace noco::editor
 						for (const auto& propSchema : schema->properties)
 						{
 							String currentValue = placeholderComponent->getPropertyValueString(propSchema.name);
-							if (currentValue.isEmpty() && !propSchema.defaultValue.isEmpty())
+							if (currentValue.isEmpty() && !std::holds_alternative<std::monostate>(propSchema.defaultValue))
 							{
-								currentValue = propSchema.defaultValue;
-								placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+								// variantからStringに変換
+								std::visit([&currentValue, &placeholderComponent, &propSchema](auto&& value)
+								{
+									using T = std::decay_t<decltype(value)>;
+									if constexpr (std::is_same_v<T, std::monostate>)
+									{
+										// 値なし
+									}
+									else if constexpr (std::is_same_v<T, bool>)
+									{
+										currentValue = value ? U"true" : U"false";
+										placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+									}
+									else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+									{
+										currentValue = Format(static_cast<double>(value));
+										placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+									}
+									else if constexpr (std::is_same_v<T, String>)
+									{
+										currentValue = value;
+										placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+									}
+									else if constexpr (std::is_same_v<T, ColorF> || std::is_same_v<T, Vec2> || std::is_same_v<T, LRTB>)
+									{
+										currentValue = ValueToString(value);
+										placeholderComponent->setPropertyValueString(propSchema.name, currentValue);
+									}
+								}, propSchema.defaultValue);
 							}
 							
 							const String displayName = propSchema.displayName.isEmpty() ? propSchema.name : propSchema.displayName;
@@ -4158,7 +4217,7 @@ namespace noco::editor
 								
 							case PropertyEditType::Color:
 								{
-									ColorF value = StringToValueOr<ColorF>(currentValue, Palette::White);
+									ColorF value = StringToValueOr<ColorF>(currentValue, ColorF{});
 									auto onChange = [placeholderComponent, propName = propSchema.name](const ColorF& value)
 									{
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
@@ -4295,7 +4354,7 @@ namespace noco::editor
 								property->propertyValueStringOfDefault(),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No,
+								HasParameterRefYN{ !property->paramRef().isEmpty() },
 								fnGetValue));
 					}
 					break;
@@ -4325,7 +4384,7 @@ namespace noco::editor
 								ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No));
+								HasParameterRefYN{ !property->paramRef().isEmpty() }));
 					}
 					break;
 				case PropertyEditType::Vec2:
@@ -4354,7 +4413,7 @@ namespace noco::editor
 								ParseOr<Vec2>(property->propertyValueStringOfDefault(), Vec2{ 0, 0 }),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No));
+								HasParameterRefYN{ !property->paramRef().isEmpty() }));
 					}
 					break;
 				case PropertyEditType::Color:
@@ -4380,10 +4439,10 @@ namespace noco::editor
 							createColorPropertyNodeWithTooltip(
 								component->type(),
 								property->name(),
-								ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{ 0, 0, 0, 1 }),
+								ParseOr<ColorF>(property->propertyValueStringOfDefault(), ColorF{}),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No));
+								HasParameterRefYN{ !property->paramRef().isEmpty() }));
 					}
 					break;
 				case PropertyEditType::LRTB:
@@ -4412,7 +4471,7 @@ namespace noco::editor
 								ParseOr<LRTB>(property->propertyValueStringOfDefault(), LRTB{ 0, 0, 0, 0 }),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No));
+								HasParameterRefYN{ !property->paramRef().isEmpty() }));
 					}
 					break;
 				case PropertyEditType::Enum:
@@ -4443,7 +4502,7 @@ namespace noco::editor
 								m_contextMenu,
 								property->enumCandidates(),
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN::No));
+								HasParameterRefYN{ !property->paramRef().isEmpty() }));
 					}
 					break;
 				}

@@ -130,7 +130,7 @@ namespace noco::editor
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateColorPropertyNode(
 						headingText,
-						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{ 0, 0, 0, 1 }),
+						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{}),
 						[this, interactionState, currentValueString](const ColorF& value)
 						{
 							// 現在のactiveStyleStatesを動的に構築

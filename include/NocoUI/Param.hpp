@@ -55,7 +55,7 @@ namespace noco
 				{
 					return ParamType::Bool;
 				}
-				else if constexpr (std::is_arithmetic_v<T>)
+				else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 				{
 					return ParamType::Number;
 				}
@@ -245,11 +245,42 @@ namespace noco
 	[[nodiscard]]
 	inline JSON ParamValueToJSON(const ParamValue& value)
 	{
-		return JSON
-		{
-			{ U"type", ParamTypeToString(GetParamType(value)) },
-			{ U"value", ParamValueToString(value) },
-		};
+		return std::visit([](const auto& v) -> JSON {
+			using T = std::decay_t<decltype(v)>;
+			
+			JSON json;
+			json[U"type"] = ParamTypeToString(GetParamType(ParamValue{v}));
+			
+			if constexpr (std::is_same_v<T, bool>)
+			{
+				json[U"value"] = v;
+			}
+			else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+			{
+				json[U"value"] = static_cast<double>(v);
+			}
+			else if constexpr (std::is_same_v<T, String>)
+			{
+				json[U"value"] = v;
+			}
+			else if constexpr (std::is_same_v<T, ColorF>)
+			{
+				// ColorFは文字列形式で保存（PropertyValueと同様）
+				json[U"value"] = ValueToString(v);
+			}
+			else if constexpr (std::is_same_v<T, Vec2>)
+			{
+				// Vec2は文字列形式で保存（PropertyValueと同様）
+				json[U"value"] = ValueToString(v);
+			}
+			else if constexpr (std::is_same_v<T, LRTB>)
+			{
+				// LRTBは文字列形式で保存（PropertyValueと同様）
+				json[U"value"] = ValueToString(v);
+			}
+			
+			return json;
+		}, value);
 	}
 	
 	// JSONからParamValueを作成
@@ -269,87 +300,88 @@ namespace noco
 		}
 		
 		const String typeStr = json[U"type"].getString();
-		
-		// valueが文字列でない場合はデフォルト値を使用
-		String valueStr;
-		if (json[U"value"].isString())
-		{
-			valueStr = json[U"value"].getString();
-		}
-		else
-		{
-			Logger << U"[NocoUI warning] Parameter value is not a string. Using default value for type '{}'."_fmt(typeStr);
-			// 型に応じたデフォルト値を設定
-			if (typeStr == U"Bool")
-			{
-				return ParamValue{ false };
-			}
-			else if (typeStr == U"Number")
-			{
-				return ParamValue{ 0.0 };
-			}
-			else if (typeStr == U"String")
-			{
-				return ParamValue{ String{} };
-			}
-			else if (typeStr == U"Color")
-			{
-				return ParamValue{ ColorF{} };
-			}
-			else if (typeStr == U"Vec2")
-			{
-				return ParamValue{ Vec2{} };
-			}
-			else if (typeStr == U"LRTB")
-			{
-				return ParamValue{ LRTB{} };
-			}
-			else
-			{
-				Logger << U"[NocoUI warning] Unknown parameter type '{}'. Skipping."_fmt(typeStr);
-				return none;
-			}
-		}
+		const JSON& valueJson = json[U"value"];
 		
 		if (typeStr == U"Bool")
 		{
-			if (auto opt = StringToValueOpt<bool>(valueStr))
+			if (valueJson.isBool())
 			{
-				return ParamValue{ *opt };
+				return ParamValue{ valueJson.get<bool>() };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Parameter value for Bool type is not a boolean. Skipping.";
+				return none;
 			}
 		}
 		else if (typeStr == U"Number")
 		{
-			if (auto opt = StringToValueOpt<double>(valueStr))
+			if (valueJson.isNumber())
 			{
-				return ParamValue{ *opt };
+				return ParamValue{ valueJson.get<double>() };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Parameter value for Number type is not a number. Skipping.";
+				return none;
 			}
 		}
 		else if (typeStr == U"String")
 		{
-			return ParamValue{ valueStr };
+			if (valueJson.isString())
+			{
+				return ParamValue{ valueJson.getString() };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Parameter value for String type is not a string. Skipping.";
+				return none;
+			}
 		}
 		else if (typeStr == U"Color")
 		{
-			if (auto opt = StringToValueOpt<ColorF>(valueStr))
+			// ColorFは文字列形式で保存されている
+			// カラーコード文字列はSiv3D側で実装されているためデシリアライズされる
+			if (valueJson.isString())
 			{
-				return ParamValue{ *opt };
+				if (auto opt = StringToValueOpt<ColorF>(valueJson.getString()))
+				{
+					return ParamValue{ *opt };
+				}
 			}
+			Logger << U"[NocoUI warning] Failed to parse Color parameter. Skipping.";
+			return none;
 		}
 		else if (typeStr == U"Vec2")
 		{
-			if (auto opt = StringToValueOpt<Vec2>(valueStr))
+			// Vec2は文字列形式で保存されている
+			if (valueJson.isString())
 			{
-				return ParamValue{ *opt };
+				if (auto opt = StringToValueOpt<Vec2>(valueJson.getString()))
+				{
+					return ParamValue{ *opt };
+				}
 			}
+			Logger << U"[NocoUI warning] Failed to parse Vec2 parameter. Skipping.";
+			return none;
 		}
 		else if (typeStr == U"LRTB")
 		{
-			if (auto opt = StringToValueOpt<LRTB>(valueStr))
+			// LRTBは文字列形式で保存されている
+			if (valueJson.isString())
 			{
-				return ParamValue{ *opt };
+				if (auto opt = StringToValueOpt<LRTB>(valueJson.getString()))
+				{
+					return ParamValue{ *opt };
+				}
 			}
+			Logger << U"[NocoUI warning] Failed to parse LRTB parameter. Skipping.";
+			return none;
 		}
-		return none;
+		else
+		{
+			Logger << U"[NocoUI warning] Unknown parameter type '{}'. Skipping."_fmt(typeStr);
+			return none;
+		}
 	}
 }

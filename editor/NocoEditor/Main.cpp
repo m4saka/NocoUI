@@ -132,13 +132,13 @@ public:
 			});
 		
 		const FilePath customComponentsDir = FileSystem::PathAppend(FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"Custom"), U"Components");
-		if (FileSystem::Exists(customComponentsDir))
+		if (FileSystem::IsDirectory(customComponentsDir))
 		{
 			ComponentSchemaLoader::LoadFromDirectory(customComponentsDir);
 		}
 		
 		const FilePath customFontAssetsDir = FileSystem::PathAppend(FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"Custom"), U"FontAssets");
-		if (FileSystem::Exists(customFontAssetsDir))
+		if (FileSystem::IsDirectory(customFontAssetsDir))
 		{
 			loadFontAssetsFromDirectory(customFontAssetsDir);
 		}

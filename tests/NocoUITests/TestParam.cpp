@@ -501,23 +501,23 @@ TEST_CASE("Parameter name validation", "[Param]")
 		json[U"params"] = JSON{};
 		json[U"params"][U"validParam"] = JSON{};
 		json[U"params"][U"validParam"][U"type"] = U"Number";
-		json[U"params"][U"validParam"][U"value"] = U"100";
+		json[U"params"][U"validParam"][U"value"] = 100;
 		
 		json[U"params"][U"123invalid"] = JSON{}; // 数字で始まる
 		json[U"params"][U"123invalid"][U"type"] = U"Number";
-		json[U"params"][U"123invalid"][U"value"] = U"200";
+		json[U"params"][U"123invalid"][U"value"] = 200;
 		
 		json[U"params"][U"invalid-name"] = JSON{};
 		json[U"params"][U"invalid-name"][U"type"] = U"Number";
-		json[U"params"][U"invalid-name"][U"value"] = U"300";
+		json[U"params"][U"invalid-name"][U"value"] = 300;
 		
 		json[U"params"][U"日本語"] = JSON{}; // 日本語
 		json[U"params"][U"日本語"][U"type"] = U"Number";
-		json[U"params"][U"日本語"][U"value"] = U"400";
+		json[U"params"][U"日本語"][U"value"] = 400;
 		
 		json[U"params"][U"_validParam"] = JSON{};
 		json[U"params"][U"_validParam"][U"type"] = U"Number";
-		json[U"params"][U"_validParam"][U"value"] = U"500";
+		json[U"params"][U"_validParam"][U"value"] = 500;
 		
 		auto canvas = Canvas::Create();
 		REQUIRE(canvas != nullptr); // まずキャンバス作成確認
@@ -587,5 +587,146 @@ TEST_CASE("Parameter name validation", "[Param]")
 		REQUIRE(canvas->paramValueOpt<double>(U"_validName").value_or(0) == 700);
 		
 		REQUIRE(canvas->params().size() == 2);
+	}
+}
+
+TEST_CASE("ParamValueFromJSON type checking", "[Param]")
+{
+	SECTION("Bool type rejects string values")
+	{
+		JSON json;
+		json[U"type"] = U"Bool";
+		json[U"value"] = U"true";  // 文字列
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
+	}
+	
+	SECTION("Bool type accepts boolean values")
+	{
+		JSON json;
+		json[U"type"] = U"Bool";
+		json[U"value"] = true;  // 正しいbool型
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Bool);
+		REQUIRE(GetParamValueAs<bool>(*result).value_or(false) == true);
+	}
+	
+	SECTION("Number type rejects string values")
+	{
+		JSON json;
+		json[U"type"] = U"Number";
+		json[U"value"] = U"42";  // 文字列
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
+	}
+	
+	SECTION("Number type accepts numeric values")
+	{
+		JSON json;
+		json[U"type"] = U"Number";
+		json[U"value"] = 42.5;  // 正しい数値型
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Number);
+		REQUIRE(GetParamValueAs<double>(*result).value_or(0.0) == 42.5);
+	}
+	
+	SECTION("String type rejects non-string values")
+	{
+		JSON json;
+		json[U"type"] = U"String";
+		json[U"value"] = 123;  // 数値
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
+	}
+	
+	SECTION("String type accepts string values")
+	{
+		JSON json;
+		json[U"type"] = U"String";
+		json[U"value"] = U"test";  // 正しい文字列型
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::String);
+		REQUIRE(GetParamValueAs<String>(*result).value_or(U"") == U"test");
+	}
+	
+	SECTION("Color type requires string format")
+	{
+		JSON json;
+		json[U"type"] = U"Color";
+		json[U"value"] = U"#FF0000FF";  // 文字列形式
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Color);
+		
+		auto color = GetParamValueAs<ColorF>(*result);
+		REQUIRE(color.has_value());
+		REQUIRE(color->r == Approx(1.0));
+		REQUIRE(color->g == Approx(0.0));
+		REQUIRE(color->b == Approx(0.0));
+		REQUIRE(color->a == Approx(1.0));
+	}
+	
+	SECTION("Vec2 type requires string format")
+	{
+		JSON json;
+		json[U"type"] = U"Vec2";
+		json[U"value"] = U"(100, 200)";  // 文字列形式
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Vec2);
+		
+		auto vec = GetParamValueAs<Vec2>(*result);
+		REQUIRE(vec.has_value());
+		REQUIRE(vec->x == Approx(100));
+		REQUIRE(vec->y == Approx(200));
+	}
+	
+	SECTION("LRTB type requires string format")
+	{
+		JSON json;
+		json[U"type"] = U"LRTB";
+		json[U"value"] = U"(10, 20, 30, 40)";  // 文字列形式
+		
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::LRTB);
+		
+		auto lrtb = GetParamValueAs<LRTB>(*result);
+		REQUIRE(lrtb.has_value());
+		REQUIRE(lrtb->left == Approx(10));
+		REQUIRE(lrtb->right == Approx(20));
+		REQUIRE(lrtb->top == Approx(30));
+		REQUIRE(lrtb->bottom == Approx(40));
+	}
+	
+	SECTION("Missing required fields")
+	{
+		// typeフィールドがない場合
+		JSON noType;
+		noType[U"value"] = 42;
+		auto resultNoType = ParamValueFromJSON(noType);
+		REQUIRE(!resultNoType.has_value());
+		
+		// valueフィールドがない場合
+		JSON noValue;
+		noValue[U"type"] = U"Number";
+		auto resultNoValue = ParamValueFromJSON(noValue);
+		REQUIRE(!resultNoValue.has_value());
+		
+		// 両方のフィールドがない場合
+		JSON empty;
+		auto resultEmpty = ParamValueFromJSON(empty);
+		REQUIRE(!resultEmpty.has_value());
 	}
 }

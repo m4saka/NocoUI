@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include <NocoUI/Property.hpp>
+#include <NocoUI/LRTB.hpp>
+#include <variant>
 
 namespace noco::editor
 {
@@ -9,7 +11,18 @@ namespace noco::editor
 		String name;
 		String displayName;
 		PropertyEditType editType;
-		String defaultValue;
+		
+		using PropertyDefaultValue = std::variant<
+			std::monostate,  // 値なし
+			bool,
+			double,
+			String,
+			ColorF,
+			Vec2,
+			LRTB
+		>;
+		PropertyDefaultValue defaultValue;
+		
 		String tooltip;
 		String tooltipDetail;
 		Array<String> enumCandidates;
