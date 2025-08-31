@@ -1577,6 +1577,11 @@ namespace noco::editor
 					applyFoldingRecursive(element, FoldedYN::No);
 				}
 			}
+
+			if (const auto editorCanvas = m_editorCanvas.lock())
+			{
+				editorCanvas->refreshLayoutImmediately();
+			}
 		}
 
 		[[nodiscard]]
