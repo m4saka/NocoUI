@@ -1207,6 +1207,39 @@ namespace noco::editor
 			auto oldParent = selectedNode->parentNode();
 			if (!oldParent)
 			{
+				// トップレベルノードの場合
+				// selectedNodeがトップレベルノードの中で何番目の要素かを調べる
+				auto& siblings = m_canvas->children();
+				auto it = std::find(siblings.begin(), siblings.end(), selectedNode);
+				if (it == siblings.end())
+				{
+					return;
+				}
+				const size_t idx = std::distance(siblings.begin(), it);
+
+				// Canvasから切り離す
+				selectedNode->removeFromParent();
+
+				// 元ノードと同じインデックスに同じレイアウト設定で空の親ノードを生成
+				const auto newParent = Node::Create(U"Node", selectedNode->region());
+				m_canvas->addChildAtIndex(newParent, idx);
+
+				// 新しい親のもとへ子として追加
+				newParent->addChild(selectedNode);
+
+				// 元オブジェクトはアンカーがMiddleCenterのAnchorRegionに変更する
+				const RectF originalCalculatedRect = selectedNode->regionRect();
+				selectedNode->setRegion(AnchorRegion
+				{
+					.anchorMin = Anchor::MiddleCenter,
+					.anchorMax = Anchor::MiddleCenter,
+					.posDelta = Vec2{ 0, 0 },
+					.sizeDelta = originalCalculatedRect.size,
+					.sizeDeltaPivot = Anchor::MiddleCenter,
+				});
+
+				refreshNodeList();
+				selectSingleNode(newParent);
 				return;
 			}
 
