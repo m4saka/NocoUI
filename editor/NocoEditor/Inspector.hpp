@@ -3943,10 +3943,19 @@ namespace noco::editor
 				}
 				else
 				{
-					// 各パラメータを表示
-					for (auto& [name, value] : params)
+					// パラメータ名を取得してソート
+					Array<String> paramNames;
+					paramNames.reserve(params.size());
+					for (const auto& [name, value] : params)
 					{
-						const auto paramNode = createSingleParamNode(name, value);
+						paramNames.push_back(name);
+					}
+					paramNames.sort();
+					
+					// パラメータ一覧の項目を追加
+					for (const auto& name : paramNames)
+					{
+						const auto paramNode = createSingleParamNode(name, params.at(name));
 						paramNode->setActive(!m_isFoldedParams.getBool());
 						paramsNode->addChild(paramNode);
 					}
