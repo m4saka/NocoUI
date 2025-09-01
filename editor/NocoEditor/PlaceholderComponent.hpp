@@ -430,6 +430,12 @@ namespace noco
 			return result;
 		}
 
+		[[nodiscard]]
+		String typeOverrideInternal() const override
+		{
+			return m_originalType;
+		}
+
 		JSON toJSONOverrideInternal(detail::WithInstanceIdYN withInstanceId) const override
 		{
 			JSON result;
