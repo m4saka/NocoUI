@@ -119,7 +119,7 @@ public:
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener)
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory)
 		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)

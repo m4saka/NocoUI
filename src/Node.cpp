@@ -916,6 +916,18 @@ namespace noco
 		markLayoutForRefresh();
 		return m_children.back();
 	}
+	
+	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, const ComponentFactory& factory)
+	{
+		auto child = CreateFromJSON(json, factory);
+		child->setCanvasRecursive(m_canvas);
+		child->m_parent = shared_from_this();
+		child->refreshActiveInHierarchy();
+		m_children.push_back(child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		markLayoutForRefresh();
+		return m_children.back();
+	}
 
 	const std::shared_ptr<Node>& Node::addChildAtIndexFromJSON(const JSON& json, size_t index)
 	{
@@ -925,6 +937,23 @@ namespace noco
 		}
 
 		auto child = CreateFromJSON(json);
+		child->setCanvasRecursive(m_canvas);
+		child->m_parent = shared_from_this();
+		child->refreshActiveInHierarchy();
+		const auto it = m_children.insert(m_children.begin() + index, child);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		markLayoutForRefresh();
+		return *it;
+	}
+	
+	const std::shared_ptr<Node>& Node::addChildAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& factory)
+	{
+		if (index > m_children.size())
+		{
+			index = m_children.size();
+		}
+
+		auto child = CreateFromJSON(json, factory);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();

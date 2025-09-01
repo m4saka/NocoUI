@@ -26,6 +26,7 @@ namespace noco::editor
 		bool m_prevClipboardHasContent = false;
 		std::shared_ptr<Defaults> m_defaults;
 		std::shared_ptr<DialogOpener> m_dialogOpener;
+		std::shared_ptr<ComponentFactory> m_componentFactory;
 
 		struct ElementDetail
 		{
@@ -638,7 +639,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener)
+		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory)
 			: m_canvas(canvas)
 			, m_hierarchyFrameNode(editorCanvas->emplaceChild(
 				U"HierarchyFrame",
@@ -676,6 +677,7 @@ namespace noco::editor
 			, m_contextMenu(contextMenu)
 			, m_defaults(defaults)
 			, m_dialogOpener(dialogOpener)
+			, m_componentFactory(componentFactory)
 		{
 			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
 			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
@@ -1069,12 +1071,12 @@ namespace noco::editor
 				if (!parentNode)
 				{
 					// トップレベルノードの場合はCanvasに直接追加
-					const auto newNode = m_canvas->addChildFromJSON(selectedNode->toJSON());
+					const auto newNode = m_canvas->addChildFromJSON(selectedNode->toJSON(), *m_componentFactory);
 					newNodes.push_back(newNode);
 				}
 				else
 				{
-					const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON());
+					const auto newNode = parentNode->addChildFromJSON(selectedNode->toJSON(), *m_componentFactory);
 					newNodes.push_back(newNode);
 				}
 			}
@@ -1148,7 +1150,7 @@ namespace noco::editor
 			Array<std::shared_ptr<Node>> newNodes;
 			for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 			{
-				newNodes.push_back(m_canvas->addChildFromJSON(copiedNodeJSON));
+				newNodes.push_back(m_canvas->addChildFromJSON(copiedNodeJSON, *m_componentFactory));
 			}
 			m_canvas->refreshLayoutImmediately();
 			// 無効なパラメータ参照を解除
@@ -1177,7 +1179,7 @@ namespace noco::editor
 				size_t indexValue = Min(index.value(), parentNode->children().size());
 				for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 				{
-					newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue));
+					newNodes.push_back(parentNode->addChildAtIndexFromJSON(copiedNodeJSON, indexValue, *m_componentFactory));
 					++indexValue;
 				}
 			}
@@ -1185,7 +1187,7 @@ namespace noco::editor
 			{
 				for (const auto& copiedNodeJSON : m_copiedNodeJSONs)
 				{
-					newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON));
+					newNodes.push_back(parentNode->addChildFromJSON(copiedNodeJSON, *m_componentFactory));
 				}
 			}
 			m_canvas->refreshLayoutImmediately();

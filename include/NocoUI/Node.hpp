@@ -255,8 +255,12 @@ namespace noco
 		const std::shared_ptr<Node>& emplaceChild(StringView name = U"Node", const RegionVariant& region = InlineRegion{}, IsHitTargetYN isHitTarget = IsHitTargetYN::Yes, InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None) override;
 
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
+		
+		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
 		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index);
+		
+		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& factory);
 
 		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index) override;
 

@@ -11,6 +11,7 @@
 namespace noco
 {
 	class Node;
+	class ComponentFactory;
 
 	class INodeContainer
 	{
@@ -74,6 +75,9 @@ namespace noco
 
 		virtual const std::shared_ptr<Node>& addChildFromJSON(
 			const JSON& json) = 0;
+		
+		virtual const std::shared_ptr<Node>& addChildFromJSON(
+			const JSON& json, const ComponentFactory& factory) = 0;
 
 		[[nodiscard]]
 		virtual bool isNode() const = 0;

@@ -764,6 +764,8 @@ namespace noco
 
 	// JSONから子ノードを追加
 	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
+	
+	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
 	// 全ノードのパラメータ参照を一括更新
 	void replaceParamRefs(const String& oldName, const String& newName);
