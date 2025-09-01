@@ -189,7 +189,7 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 	{
 		auto parent = noco::Node::Create();
 		
-		for (int i = 0; i < 5; ++i)
+		for (int32 i = 0; i < 5; ++i)
 		{
 			parent->addChild(noco::Node::Create());
 		}
@@ -501,7 +501,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		auto root = noco::Node::Create();
 		
 		// 3階層のノード構造を作成
-		for (int i = 0; i < 3; ++i)
+		for (int32 i = 0; i < 3; ++i)
 		{
 			auto level1 = noco::Node::Create();
 			root->addChild(level1);
@@ -510,7 +510,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 			level1->emplaceComponent<noco::Label>();
 			level1->emplaceComponent<noco::RectRenderer>();
 			
-			for (int j = 0; j < 2; ++j)
+			for (int32 j = 0; j < 2; ++j)
 			{
 				auto level2 = noco::Node::Create();
 				level1->addChild(level2);
@@ -540,7 +540,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		checkNode(root);
 		
 		// RectRendererは残っていることを確認
-		int rectRendererCount = 0;
+		int32 rectRendererCount = 0;
 		std::function<void(const std::shared_ptr<noco::Node>&)> countRectRenderers;
 		countRectRenderers = [&rectRendererCount, &countRectRenderers](const std::shared_ptr<noco::Node>& node)
 		{

@@ -28,12 +28,12 @@ void Main()
 		argv.push_back(const_cast<char*>(argString.c_str()));
 	}
 	
-	int argc = static_cast<int>(argv.size());
+	int32 argc = static_cast<int32>(argv.size());
 
 	// Catchにコマンドライン引数を渡す
 	session.applyCommandLine(argc, argv.data());
 
-	int numFailed = session.run();
+	int32 numFailed = session.run();
 	if (numFailed == 0)
 	{
 		Console << U"All tests passed!";

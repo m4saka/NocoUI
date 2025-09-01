@@ -330,7 +330,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		std::vector<std::shared_ptr<noco::Node>> nodes;
 		std::shared_ptr<noco::Node> parent = nullptr;
 		
-		for (int i = 0; i < 10; ++i)
+		for (int32 i = 0; i < 10; ++i)
 		{
 			auto node = noco::Node::Create(Format(U"Level{}", i));
 			node->setStyleState(Format(U"state{}", i));
@@ -354,7 +354,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		// すべての祖先のstyleStateが収集される
 		REQUIRE(deepComponent->lastActiveStyleStates.size() == 10);
-		for (int i = 0; i < 10; ++i)
+		for (int32 i = 0; i < 10; ++i)
 		{
 			REQUIRE(deepComponent->lastActiveStyleStates[i] == Format(U"state{}", i));
 		}
@@ -369,7 +369,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		
 		// 5つの兄弟ノードを作成
 		std::vector<std::shared_ptr<TestComponent>> components;
-		for (int i = 0; i < 5; ++i)
+		for (int32 i = 0; i < 5; ++i)
 		{
 			auto child = noco::Node::Create(Format(U"Child{}", i));
 			
@@ -389,7 +389,7 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 		canvas->update();
 		
 		// 各兄弟ノードのactiveStyleStatesを確認
-		for (int i = 0; i < 5; ++i)
+		for (int32 i = 0; i < 5; ++i)
 		{
 			if (i % 2 == 0)
 			{
@@ -462,7 +462,7 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 	
 	SECTION("Complex priority resolution")
 	{
-		auto prop = noco::PropertyValue<int>{ 0 }
+		auto prop = noco::PropertyValue<int32>{ 0 }
 			// 基本のInteractionState値
 			.withHovered(10)
 			.withPressed(20)
@@ -711,7 +711,7 @@ TEST_CASE("StyleState Edge Cases", "[Node][StyleState]")
 		auto node = noco::Node::Create(U"Node");
 		
 		// 高速に状態を切り替える
-		for (int i = 0; i < 100; ++i)
+		for (int32 i = 0; i < 100; ++i)
 		{
 			const String state = Format(U"state", i);
 			node->setStyleState(state);

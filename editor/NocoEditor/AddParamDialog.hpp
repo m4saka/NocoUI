@@ -71,7 +71,7 @@ namespace noco::editor
 		{
 			// 既存のパラメータ名から重複しない初期名を生成
 			constexpr StringView DefaultName = U"param";
-			int suffixNum = 1;
+			int32 suffixNum = 1;
 			String initialName = U"{}{}"_fmt(DefaultName, suffixNum);
 			while (m_canvas->param(initialName).has_value())
 			{

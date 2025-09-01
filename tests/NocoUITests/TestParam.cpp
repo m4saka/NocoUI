@@ -19,7 +19,7 @@ TEST_CASE("Parameter values", "[Param]")
 		// number型
 		ParamValue numberParam = MakeParamValue(42);
 		REQUIRE(GetParamType(numberParam) == ParamType::Number);
-		REQUIRE(GetParamValueAs<int>(numberParam).value_or(0) == 42);
+		REQUIRE(GetParamValueAs<int32>(numberParam).value_or(0) == 42);
 		
 		// string型
 		ParamValue stringParam = MakeParamValue(U"test");
@@ -99,7 +99,7 @@ TEST_CASE("Canvas parameter management", "[Param]")
 		REQUIRE(retrievedInt.has_value());
 		REQUIRE(GetParamType(*retrievedInt) == ParamType::Number);
 		
-		auto intValue = canvas->paramValueOpt<int>(U"testInt");
+		auto intValue = canvas->paramValueOpt<int32>(U"testInt");
 		REQUIRE(intValue.has_value());
 		REQUIRE(*intValue == 42);
 		
@@ -120,7 +120,7 @@ TEST_CASE("Canvas parameter management", "[Param]")
 			{U"param5", ColorF{0.5, 0.5, 0.5}}
 		});
 		
-		REQUIRE(canvas->paramValueOpt<int>(U"param1").value_or(0) == 100);
+		REQUIRE(canvas->paramValueOpt<int32>(U"param1").value_or(0) == 100);
 		REQUIRE(canvas->paramValueOpt<String>(U"param2").value_or(U"") == U"test");
 		auto vec = canvas->paramValueOpt<Vec2>(U"param3");
 		REQUIRE(vec.has_value());
@@ -304,15 +304,15 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		
 		// 初期値を設定
 		canvas->setParamValue(U"counter", 10);
-		REQUIRE(canvas->paramValueOpt<int>(U"counter").value_or(0) == 10);
+		REQUIRE(canvas->paramValueOpt<int32>(U"counter").value_or(0) == 10);
 		
 		// 同じ名前で値を上書き
 		canvas->setParamValue(U"counter", 20);
-		REQUIRE(canvas->paramValueOpt<int>(U"counter").value_or(0) == 20);
+		REQUIRE(canvas->paramValueOpt<int32>(U"counter").value_or(0) == 20);
 		
 		// 型を変更して上書き
 		canvas->setParamValue(U"counter", U"text");
-		REQUIRE(canvas->paramValueOpt<int>(U"counter").has_value() == false);
+		REQUIRE(canvas->paramValueOpt<int32>(U"counter").has_value() == false);
 		REQUIRE(canvas->paramValueOpt<String>(U"counter").value_or(U"") == U"text");
 	}
 	
@@ -322,7 +322,7 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		canvas->setParamValue(U"number", 42);
 		
 		// 正しい型でのアクセス
-		REQUIRE(canvas->paramValueOpt<int>(U"number").value_or(0) == 42);
+		REQUIRE(canvas->paramValueOpt<int32>(U"number").value_or(0) == 42);
 		
 		// 間違った型でのアクセス
 		REQUIRE(canvas->paramValueOpt<String>(U"number").has_value() == false);
@@ -365,7 +365,7 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		
 		// 空文字列のパラメータは追加されない
 		REQUIRE(canvas->param(U"").has_value() == false);
-		REQUIRE(canvas->paramValueOpt<int>(U"").value_or(0) == 0);
+		REQUIRE(canvas->paramValueOpt<int32>(U"").value_or(0) == 0);
 		
 		// パラメータが追加されていないことを確認
 		REQUIRE(canvas->params().size() == 0);
@@ -376,7 +376,7 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		auto canvas = Canvas::Create();
 		
 		// 1000個のパラメータを設定
-		for (int i = 0; i < 1000; ++i)
+		for (int32 i = 0; i < 1000; ++i)
 		{
 			canvas->setParamValue(U"param_{}"_fmt(i), i);
 		}
@@ -385,9 +385,9 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		REQUIRE(canvas->params().size() == 1000);
 		
 		// ランダムアクセステスト
-		REQUIRE(canvas->paramValueOpt<int>(U"param_500").value_or(-1) == 500);
-		REQUIRE(canvas->paramValueOpt<int>(U"param_999").value_or(-1) == 999);
-		REQUIRE(canvas->paramValueOpt<int>(U"param_0").value_or(-1) == 0);
+		REQUIRE(canvas->paramValueOpt<int32>(U"param_500").value_or(-1) == 500);
+		REQUIRE(canvas->paramValueOpt<int32>(U"param_999").value_or(-1) == 999);
+		REQUIRE(canvas->paramValueOpt<int32>(U"param_0").value_or(-1) == 0);
 		
 		// 全削除
 		canvas->clearParams();

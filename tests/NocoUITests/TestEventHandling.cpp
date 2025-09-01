@@ -257,8 +257,8 @@ TEST_CASE("Event handling", "[Events]")
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		
-		int clickCount = 0;
-		int rightClickCount = 0;
+		int32 clickCount = 0;
+		int32 rightClickCount = 0;
 		
 		// メソッドチェインでハンドラを追加
 		node->addOnClick([&clickCount]() { clickCount++; })

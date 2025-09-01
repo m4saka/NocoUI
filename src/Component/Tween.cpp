@@ -199,12 +199,12 @@ namespace noco
 			{
 				// 通常ループ
 				rawProgress = Math::Fmod(rawProgress, 1.0);
-				m_loopCount = static_cast<int>(animationTime / duration);
+				m_loopCount = static_cast<int32>(animationTime / duration);
 			}
 			else if (loopType == TweenLoopType::PingPong)
 			{
 				// PingPongループ
-				const int cycle = static_cast<int>(rawProgress);
+				const int32 cycle = static_cast<int32>(rawProgress);
 				rawProgress = Math::Fmod(rawProgress, 1.0);
 				
 				// 偶数サイクルは順方向、奇数サイクルは逆方向

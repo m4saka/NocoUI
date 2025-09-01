@@ -212,21 +212,21 @@ TEST_CASE("PropertyValue fromJSON type checking", "[PropertyValue]")
 		REQUIRE(numberProp.defaultValue == false);  // デフォルト値
 	}
 	
-	SECTION("PropertyValue<int> requires JSON number")
+	SECTION("PropertyValue<int32> requires JSON number")
 	{
 		// 正しい数値
 		JSON validJson = 42;
-		auto validProp = noco::PropertyValue<int>::fromJSON(validJson);
+		auto validProp = noco::PropertyValue<int32>::fromJSON(validJson);
 		REQUIRE(validProp.defaultValue == 42);
 		
 		// 文字列は受け付けない（デフォルト値になる）
 		JSON stringJson = U"42";
-		auto stringProp = noco::PropertyValue<int>::fromJSON(stringJson);
+		auto stringProp = noco::PropertyValue<int32>::fromJSON(stringJson);
 		REQUIRE(stringProp.defaultValue == 0);  // デフォルト値
 		
 		// boolも受け付けない
 		JSON boolJson = true;
-		auto boolProp = noco::PropertyValue<int>::fromJSON(boolJson);
+		auto boolProp = noco::PropertyValue<int32>::fromJSON(boolJson);
 		REQUIRE(boolProp.defaultValue == 0);  // デフォルト値
 	}
 	
@@ -268,7 +268,7 @@ TEST_CASE("PropertyValue fromJSON type checking", "[PropertyValue]")
 		objJson[U"default"] = U"42";  // 文字列
 		objJson[U"hovered"] = 50;  // 数値（正しい）
 		
-		auto prop = noco::PropertyValue<int>::fromJSON(objJson);
+		auto prop = noco::PropertyValue<int32>::fromJSON(objJson);
 		REQUIRE(prop.defaultValue == 0);  // 文字列は受け付けない
 		REQUIRE(prop.hoveredValue.has_value());
 		REQUIRE(*prop.hoveredValue == 50);  // 数値は正しく読み込まれる

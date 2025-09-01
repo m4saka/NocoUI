@@ -19,7 +19,7 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 		parent->setChildrenLayout(flow);
 		
 		// 複数の子ノードを追加（幅を超えて折り返すように）
-		for (int i = 0; i < 6; ++i)
+		for (int32 i = 0; i < 6; ++i)
 		{
 			auto child = noco::Node::Create();
 			child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 60, 40 } });
@@ -160,7 +160,7 @@ TEST_CASE("Complex layout scenarios", "[Layout]")
 		hContainer->setChildrenLayout(hLayout);
 		
 		// 孫ノード
-		for (int i = 0; i < 3; ++i)
+		for (int32 i = 0; i < 3; ++i)
 		{
 			auto grandchild = noco::Node::Create();
 			grandchild->setRegion(noco::InlineRegion{ .flexibleWeight = 1.0 });

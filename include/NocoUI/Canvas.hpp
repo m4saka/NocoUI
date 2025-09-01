@@ -560,7 +560,7 @@ namespace noco
 			(setParamValue(params.first, params.second), ...);
 		}
 		
-		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int, double, const char32_t*, String, ColorF, Vec2, LRTB>>> params)
+		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int32, double, const char32_t*, String, ColorF, Vec2, LRTB>>> params)
 		{
 			for (const auto& [name, value] : params)
 			{
