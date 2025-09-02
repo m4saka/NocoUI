@@ -119,7 +119,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 		{
 			{ U"version", [](JSON& j) { j.erase(U"version"); } },
 			{ U"serializedVersion", [](JSON& j) { j.erase(U"serializedVersion"); } },
-			{ U"size", [](JSON& j) { j.erase(U"size"); } },
+			{ U"referenceSize", [](JSON& j) { j.erase(U"referenceSize"); } },
 			{ U"children", [](JSON& j) { j.erase(U"children"); } },
 		};
 		
@@ -129,7 +129,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 			JSON invalidJson = JSON{};
 			invalidJson[U"version"] = noco::NocoUIVersion;
 			invalidJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
-			invalidJson[U"size"] = U"(800, 600)";
+			invalidJson[U"referenceSize"] = U"(800, 600)";
 			invalidJson[U"children"] = Array<JSON>{};
 			
 			// フィールドを削除
@@ -143,7 +143,7 @@ TEST_CASE("Serialization details", "[Serialization]")
 		JSON validJson = JSON{};
 		validJson[U"version"] = noco::NocoUIVersion;
 		validJson[U"serializedVersion"] = noco::CurrentSerializedVersion;
-		validJson[U"size"] = U"(800, 600)";
+		validJson[U"referenceSize"] = U"(800, 600)";
 		validJson[U"children"] = Array<JSON>{};
 		
 		auto canvas = noco::Canvas::CreateFromJSON(validJson);

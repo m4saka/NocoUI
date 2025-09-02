@@ -316,19 +316,16 @@ namespace noco
 		}
 	}
 
-	enum class AutoScaleMode : uint8
+	enum class AutoFitMode : uint8
 	{
-		None,           // スケールしない
-		ShrinkToFit,    // Canvas全体がシーン内に収まるよう調整
-		ExpandToFill,   // シーン全体をCanvasで埋めるよう調整
-		FitHeight,      // シーンの高さに合わせる
-		FitWidth,       // シーンの幅に合わせる
-	};
-
-	enum class AutoResizeMode : uint8
-	{
-		None,           // リサイズしない
-		MatchSceneSize, // シーンサイズに合わせる
+		None,                 // 自動調整なし
+		Contain,              // アスペクト比維持で全体が見える
+		Cover,                // アスペクト比維持で画面を埋める
+		FitWidth,             // 幅に合わせてスケール（アスペクト比維持）
+		FitHeight,            // 高さに合わせてスケール（アスペクト比維持）
+		FitWidthMatchHeight,  // 幅はスケール、高さはサイズ変更
+		FitHeightMatchWidth,  // 高さはスケール、幅はサイズ変更
+		MatchSize,            // Canvasサイズをシーンサイズに変更
 	};
 
 	enum class EventTriggerType : uint8
@@ -381,12 +378,12 @@ namespace noco
 			const Array<Event>& getFiredEventsAll() const;
 		};
 
-		SizeF m_size = DefaultSize;
+		SizeF m_referenceSize = DefaultSize;
 		LayoutVariant m_childrenLayout = FlowLayout{};
 		Array<std::shared_ptr<Node>> m_children;
-		AutoScaleMode m_autoScaleMode = AutoScaleMode::None;
-		AutoResizeMode m_autoResizeMode = AutoResizeMode::None;
+		AutoFitMode m_autoFitMode = AutoFitMode::None;
 		HashTable<String, ParamValue> m_params;
+		/* NonSerialized */ SizeF m_size = DefaultSize;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
 		/* NonSerialized */ double m_rotation = 0.0;
@@ -402,10 +399,7 @@ namespace noco
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
 
-		void updateAutoResizeIfNeeded();
-		
-		[[nodiscard]]
-		Vec2 calculateAutoScale() const;
+		void updateAutoFitIfNeeded();
 
 		Canvas();
 
@@ -415,7 +409,7 @@ namespace noco
 		static constexpr SizeF DefaultSize{ 800, 600 };
 		
 		[[nodiscard]]
-		static std::shared_ptr<Canvas> Create(const SizeF& size = DefaultSize);
+		static std::shared_ptr<Canvas> Create(const SizeF& referenceSize = DefaultSize);
 		
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> Create(double width, double height);
@@ -471,20 +465,20 @@ namespace noco
 		Vec2 center() const;
 
 		[[nodiscard]]
-		AutoScaleMode autoScaleMode() const
+		const SizeF& referenceSize() const
 		{
-			return m_autoScaleMode;
+			return m_referenceSize;
 		}
-
-		std::shared_ptr<Canvas> setAutoScaleMode(AutoScaleMode mode);
+		
+		std::shared_ptr<Canvas> setReferenceSize(const SizeF& size);
 
 		[[nodiscard]]
-		AutoResizeMode autoResizeMode() const
+		AutoFitMode autoFitMode() const
 		{
-			return m_autoResizeMode;
+			return m_autoFitMode;
 		}
 
-		std::shared_ptr<Canvas> setAutoResizeMode(AutoResizeMode mode);
+		std::shared_ptr<Canvas> setAutoFitMode(AutoFitMode mode);
 
 		std::shared_ptr<Canvas> setEditorPreviewInternal(bool isEditorPreview);
 

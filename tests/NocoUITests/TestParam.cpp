@@ -496,7 +496,9 @@ TEST_CASE("Parameter name validation", "[Param]")
 	SECTION("Invalid parameter names are rejected in JSON loading")
 	{
 		JSON json;
-		json[U"size"] = Vec2{800, 600}; // Canvas作成に必要
+		json[U"referenceSize"] = U"(800, 600)"; // Canvas作成に必要
+		json[U"version"] = noco::NocoUIVersion;
+		json[U"serializedVersion"] = noco::CurrentSerializedVersion;
 		json[U"children"] = Array<JSON>{}; // Canvas作成に必要
 		json[U"params"] = JSON{};
 		json[U"params"][U"validParam"] = JSON{};

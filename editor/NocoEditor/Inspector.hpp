@@ -3870,60 +3870,29 @@ namespace noco::editor
 
 			if (!m_isFoldedCanvasSetting.getBool())
 			{
-				// sizeプロパティを表示
-				const auto sizePropertyNode = CreateVec2PropertyNode(
-					U"size",
-					m_canvas->size(),
+				const auto referenceSizePropertyNode = CreateVec2PropertyNode(
+					U"referenceSize",
+					m_canvas->referenceSize(),
 					[this](const Vec2& value)
 					{
-						const Vec2 currentCenter = m_canvas->center();
-						m_canvas->setSize(value);
-						m_canvas->setCenter(currentCenter);
+						m_canvas->setReferenceSize(SizeF{ value });
 					});
-				canvasSettingNode->addChild(sizePropertyNode);
+				canvasSettingNode->addChild(referenceSizePropertyNode);
 
-				// autoScaleModeプロパティを表示
-				const Array<String> autoScaleModeValues = {
-					U"None",
-					U"ShrinkToFit",
-					U"ExpandToFill",
-					U"FitHeight",
-					U"FitWidth",
-				};
-				const auto autoScaleModePropertyNode = createEnumPropertyNodeWithTooltip(
+				const auto autoFitModePropertyNode = createEnumPropertyNodeWithTooltip(
 					U"Canvas",
-					U"autoScaleMode",
-					EnumToString(m_canvas->autoScaleMode()),
+					U"autoFitMode",
+					EnumToString(m_canvas->autoFitMode()),
 					[this](StringView value)
 					{
-						if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(String{ value }))
+						if (const auto modeOpt = StringToValueOpt<AutoFitMode>(String{ value }))
 						{
-							m_canvas->setAutoScaleMode(*modeOpt);
+							m_canvas->setAutoFitMode(*modeOpt);
 						}
 					},
 					m_contextMenu,
-					autoScaleModeValues);
-				canvasSettingNode->addChild(autoScaleModePropertyNode);
-
-				// autoResizeModeプロパティを表示
-				const Array<String> autoResizeModeValues = {
-					U"None",
-					U"MatchSceneSize",
-				};
-				const auto autoResizeModePropertyNode = createEnumPropertyNodeWithTooltip(
-					U"Canvas",
-					U"autoResizeMode",
-					EnumToString(m_canvas->autoResizeMode()),
-					[this](StringView value)
-					{
-						if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(String{ value }))
-						{
-							m_canvas->setAutoResizeMode(*modeOpt);
-						}
-					},
-					m_contextMenu,
-					autoResizeModeValues);
-				canvasSettingNode->addChild(autoResizeModePropertyNode);
+					EnumNames<AutoFitMode>());
+				canvasSettingNode->addChild(autoFitModePropertyNode);
 			}
 
 			canvasSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);

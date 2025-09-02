@@ -72,80 +72,109 @@ namespace noco
 		return m_events;
 	}
 
-	void Canvas::updateAutoResizeIfNeeded()
+	void Canvas::updateAutoFitIfNeeded()
 	{
-		if (m_autoResizeMode == AutoResizeMode::None || m_isEditorPreview)
+		if (m_autoFitMode == AutoFitMode::None || m_isEditorPreview)
 		{
-			m_lastSceneSize = none;
 			return;
 		}
 		
-		const SizeF currentSceneSize = Scene::Size();
-		
-		if (!m_lastSceneSize || *m_lastSceneSize != currentSceneSize)
-		{
-			m_lastSceneSize = currentSceneSize;
-			
-			if (m_autoResizeMode == AutoResizeMode::MatchSceneSize)
-			{
-				setSize(currentSceneSize);
-				m_position = Vec2::Zero();
-
-				if (m_isLayoutDirty)
-				{
-					refreshLayoutImmediately();
-					m_isLayoutDirty = false;
-				}
-			}
-		}
-	}
-
-	Vec2 Canvas::calculateAutoScale() const
-	{
-		if (m_autoScaleMode == AutoScaleMode::None || m_isEditorPreview)
-		{
-			return Vec2::One();
-		}
-		
 		const SizeF sceneSize = Scene::Size();
-		const double scaleX = sceneSize.x / m_size.x;
-		const double scaleY = sceneSize.y / m_size.y;
 		
-		switch (m_autoScaleMode)
+		if (m_lastSceneSize && *m_lastSceneSize == sceneSize)
 		{
-			case AutoScaleMode::ShrinkToFit:
+			return;
+		}
+		
+		m_lastSceneSize = sceneSize;
+		
+		// ゼロ除算を防ぐ
+		if (m_referenceSize.x <= 0 || m_referenceSize.y <= 0)
+		{
+			return;
+		}
+		
+		const double scaleX = sceneSize.x / m_referenceSize.x;
+		const double scaleY = sceneSize.y / m_referenceSize.y;
+		
+		switch (m_autoFitMode)
+		{
+			case AutoFitMode::Contain:
 			{
 				const double scale = Min(scaleX, scaleY);
-				return Vec2{ scale, scale };
+				m_scale = Vec2{ scale, scale };
+				m_size = m_referenceSize;
+				break;
 			}
-				
-			case AutoScaleMode::ExpandToFill:
+			
+			case AutoFitMode::Cover:
 			{
 				const double scale = Max(scaleX, scaleY);
-				return Vec2{ scale, scale };
+				m_scale = Vec2{ scale, scale };
+				m_size = m_referenceSize;
+				break;
 			}
-				
-			case AutoScaleMode::FitHeight:
-				return Vec2{ scaleY, scaleY };
-				
-			case AutoScaleMode::FitWidth:
-				return Vec2{ scaleX, scaleX };
-				
+			
+			case AutoFitMode::FitWidth:
+			{
+				m_scale = Vec2{ scaleX, scaleX };
+				m_size = m_referenceSize;
+				break;
+			}
+			
+			case AutoFitMode::FitHeight:
+			{
+				m_scale = Vec2{ scaleY, scaleY };
+				m_size = m_referenceSize;
+				break;
+			}
+			
+			case AutoFitMode::FitWidthMatchHeight:
+			{
+				m_scale = Vec2{ scaleX, scaleX };
+				m_size = SizeF{ m_referenceSize.x, scaleX > 0 ? sceneSize.y / scaleX : m_referenceSize.y };
+				break;
+			}
+			
+			case AutoFitMode::FitHeightMatchWidth:
+			{
+				m_scale = Vec2{ scaleY, scaleY };
+				m_size = SizeF{ scaleY > 0 ? sceneSize.x / scaleY : m_referenceSize.x, m_referenceSize.y };
+				break;
+			}
+			
+			case AutoFitMode::MatchSize:
+			{
+				m_scale = Vec2::One();
+				m_size = sceneSize;
+				m_position = Vec2::Zero();
+				break;
+			}
+			
 			default:
-				return Vec2::One();
+				break;
+		}
+		
+		for (const auto& child : m_children)
+		{
+			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
+		
+		if (m_isLayoutDirty)
+		{
+			refreshLayoutImmediately();
+			m_isLayoutDirty = false;
 		}
 	}
+
 
 	Mat3x2 Canvas::rootPosScaleMat() const
 	{
-		const Vec2 autoScale = calculateAutoScale();
-		const Vec2 finalScale = m_scale * autoScale;
-		
-		if (finalScale == Vec2::One() && m_position == Vec2::Zero() && m_rotation == 0.0)
+		if (m_scale == Vec2::One() && m_position == Vec2::Zero() && m_rotation == 0.0)
 		{
 			return Mat3x2::Identity();
 		}
-		return Mat3x2::Scale(finalScale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
+		return Mat3x2::Scale(m_scale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
 	}
 
 	Canvas::Canvas()
@@ -161,10 +190,11 @@ namespace noco
 		}
 	}
 
-	std::shared_ptr<Canvas> Canvas::Create(const SizeF& size)
+	std::shared_ptr<Canvas> Canvas::Create(const SizeF& referenceSize)
 	{
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
-		canvas->m_size = size;
+		canvas->m_size = referenceSize;
+		canvas->m_referenceSize = referenceSize;
 		return canvas;
 	}
 	
@@ -237,16 +267,12 @@ namespace noco
 		{
 			{ U"version", NocoUIVersion },
 			{ U"serializedVersion", CurrentSerializedVersion },
-			{ U"size", ValueToString(m_size) },
+			{ U"referenceSize", ValueToString(m_referenceSize) },
 		};
 
-		if (m_autoScaleMode != AutoScaleMode::None)
+		if (m_autoFitMode != AutoFitMode::None)
 		{
-			json[U"autoScaleMode"] = ValueToString(m_autoScaleMode);
-		}
-		if (m_autoResizeMode != AutoResizeMode::None)
-		{
-			json[U"autoResizeMode"] = ValueToString(m_autoResizeMode);
+			json[U"autoFitMode"] = ValueToString(m_autoFitMode);
 		}
 
 		// childrenLayoutの保存
@@ -296,9 +322,9 @@ namespace noco
 			return nullptr;
 		}
 		
-		if (!json.contains(U"size"))
+		if (!json.contains(U"referenceSize"))
 		{
-			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'size'";
+			Logger << U"[NocoUI error] Canvas::CreateFromJSON: Missing required field 'referenceSize'";
 			return nullptr;
 		}
 		
@@ -319,13 +345,15 @@ namespace noco
 				version, canvas->m_serializedVersion, CurrentSerializedVersion);
 		}
 		
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
+		// referenceSizeの読み込み（必須フィールド）
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].get<String>()))
 		{
-			canvas->m_size = *sizeOpt;
+			canvas->m_referenceSize = *sizeOpt;
+			canvas->m_size = *sizeOpt;  // 初期サイズとしても使用
 		}
 		else
 		{
-			Logger << U"[NocoUI warning] Canvas::CreateFromJSON: Failed to parse size, using default";
+			Logger << U"[NocoUI warning] Canvas::CreateFromJSON: Failed to parse referenceSize, using default";
 		}
 		
 		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
@@ -379,22 +407,19 @@ namespace noco
 			}
 		}
 
-		if (json.contains(U"autoScaleMode"))
+		if (json.contains(U"autoFitMode"))
 		{
-			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			if (const auto modeOpt = StringToValueOpt<AutoFitMode>(json[U"autoFitMode"].get<String>()))
 			{
-				canvas->m_autoScaleMode = *modeOpt;
+				canvas->m_autoFitMode = *modeOpt;
 			}
 		}
-		if (json.contains(U"autoResizeMode"))
+		
+		if (json.contains(U"referenceSize"))
 		{
-			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].getString()))
 			{
-				canvas->m_autoResizeMode = *modeOpt;
-				if (canvas->m_autoResizeMode != AutoResizeMode::None)
-				{
-					canvas->m_lastSceneSize = Scene::Size();
-				}
+				canvas->m_referenceSize = *sizeOpt;
 			}
 		}
 
@@ -430,9 +455,9 @@ namespace noco
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
-		if (!json.contains(U"size"))
+		if (!json.contains(U"referenceSize"))
 		{
-			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'size'";
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'referenceSize'";
 			return false;
 		}
 		
@@ -442,13 +467,15 @@ namespace noco
 			return false;
 		}
 		
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"size"].get<String>()))
+		// referenceSizeの読み込み（必須フィールド）
+		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].get<String>()))
 		{
-			m_size = *sizeOpt;
+			m_referenceSize = *sizeOpt;
+			m_size = *sizeOpt;  // 初期サイズとしても使用
 		}
 		else
 		{
-			Logger << U"[NocoUI warning] Canvas::tryReadFromJSON: Failed to parse size";
+			Logger << U"[NocoUI warning] Canvas::tryReadFromJSON: Failed to parse referenceSize";
 		}
 
 		for (const auto& child : m_children)
@@ -489,22 +516,19 @@ namespace noco
 			}
 		}
 
-		if (json.contains(U"autoScaleMode"))
+		if (json.contains(U"autoFitMode"))
 		{
-			if (const auto modeOpt = StringToValueOpt<AutoScaleMode>(json[U"autoScaleMode"].get<String>()))
+			if (const auto modeOpt = StringToValueOpt<AutoFitMode>(json[U"autoFitMode"].get<String>()))
 			{
-				m_autoScaleMode = *modeOpt;
+				m_autoFitMode = *modeOpt;
 			}
 		}
-		if (json.contains(U"autoResizeMode"))
+		
+		if (json.contains(U"referenceSize"))
 		{
-			if (const auto modeOpt = StringToValueOpt<AutoResizeMode>(json[U"autoResizeMode"].get<String>()))
+			if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].getString()))
 			{
-				m_autoResizeMode = *modeOpt;
-				if (m_autoResizeMode != AutoResizeMode::None)
-				{
-					m_lastSceneSize = Scene::Size();
-				}
+				m_referenceSize = *sizeOpt;
 			}
 		}
 
@@ -545,7 +569,7 @@ namespace noco
 	{
 		m_eventRegistry.clear();
 
-		updateAutoResizeIfNeeded();
+		updateAutoFitIfNeeded();
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
 
@@ -814,6 +838,12 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
+		if (m_autoFitMode != AutoFitMode::None)
+		{
+			// AutoFitModeが有効な間はsetScaleは無視
+			return shared_from_this();
+		}
+		
 		m_scale = scale;
 		for (const auto& child : m_children)
 		{
@@ -825,7 +855,13 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setPositionScale(const Vec2& position, const Vec2& scale)
 	{
 		m_position = position;
-		m_scale = scale;
+		
+		// AutoFitModeが有効な場合はscaleの設定を無視
+		if (m_autoFitMode == AutoFitMode::None)
+		{
+			m_scale = scale;
+		}
+		
 		for (const auto& child : m_children)
 		{
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
@@ -846,8 +882,14 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setTransform(const Vec2& position, const Vec2& scale, double rotation)
 	{
 		m_position = position;
-		m_scale = scale;
 		m_rotation = rotation;
+		
+		// AutoFitModeが有効な場合はscaleの設定を無視
+		if (m_autoFitMode == AutoFitMode::None)
+		{
+			m_scale = scale;
+		}
+		
 		for (const auto& child : m_children)
 		{
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
@@ -1337,13 +1379,23 @@ namespace noco
 		return m_position + Vec2{ m_size.x / 2, m_size.y / 2 };
 	}
 
-	std::shared_ptr<Canvas> Canvas::setAutoScaleMode(AutoScaleMode mode)
+	std::shared_ptr<Canvas> Canvas::setAutoFitMode(AutoFitMode mode)
 	{
-		m_autoScaleMode = mode;
-		if (mode != AutoScaleMode::None)
+		if (m_autoFitMode == mode)
+		{
+			return shared_from_this();
+		}
+		
+		m_autoFitMode = mode;
+		
+		if (mode != AutoFitMode::None)
 		{
 			m_position = Vec2::Zero();
+			m_lastSceneSize = none; // 再計算を強制
 		}
+		
+		updateAutoFitIfNeeded();
+		
 		return shared_from_this();
 	}
 
@@ -1399,18 +1451,15 @@ namespace noco
 	}
 	
 
-	std::shared_ptr<Canvas> Canvas::setAutoResizeMode(AutoResizeMode mode)
+	std::shared_ptr<Canvas> Canvas::setReferenceSize(const SizeF& size)
 	{
-		m_autoResizeMode = mode;
+		m_referenceSize = size;
 		
-		if (mode == AutoResizeMode::None)
+		// AutoFitModeが有効な場合は再計算
+		if (m_autoFitMode != AutoFitMode::None)
 		{
-			m_lastSceneSize = none;
-		}
-		else
-		{
-			m_lastSceneSize = Scene::Size();
-			m_position = Vec2::Zero();
+			m_lastSceneSize = none; // 再計算を強制
+			updateAutoFitIfNeeded();
 		}
 		
 		return shared_from_this();
