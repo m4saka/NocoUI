@@ -25,10 +25,10 @@ namespace noco
 		{
 			return Texture{};
 		}
-		const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 		const String key = AssetNamePrefix + filePath;
 		if (!TextureAsset::IsRegistered(key))
 		{
+			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 			if (!FileSystem::IsFile(combinedPath))
 			{
 				return Texture{};
@@ -77,10 +77,10 @@ namespace noco
 		{
 			return Audio{};
 		}
-		const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 		const String key = AssetNamePrefix + filePath;
 		if (!AudioAsset::IsRegistered(key))
 		{
+			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 			if (!FileSystem::IsFile(combinedPath))
 			{
 				return Audio{};
