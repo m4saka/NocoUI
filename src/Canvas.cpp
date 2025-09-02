@@ -74,29 +74,29 @@ namespace noco
 
 	void Canvas::updateAutoFitIfNeeded()
 	{
+		const SizeF sceneSize = Scene::Size();
 		if (m_autoFitMode == AutoFitMode::None || m_isEditorPreview)
 		{
+			m_lastSceneSize = sceneSize;
 			return;
 		}
 		
-		const SizeF sceneSize = Scene::Size();
-		
-		if (m_lastSceneSize && *m_lastSceneSize == sceneSize)
+		// シーンサイズが変わっていなければ処理不要
+		if (m_lastSceneSize == sceneSize)
 		{
 			return;
 		}
-		
-		m_lastSceneSize = sceneSize;
 		
 		// ゼロ除算を防ぐ
 		if (m_referenceSize.x <= 0 || m_referenceSize.y <= 0)
 		{
+			m_lastSceneSize = sceneSize;
 			return;
 		}
 		
+		const SizeF oldSize = m_size;
 		const double scaleX = sceneSize.x / m_referenceSize.x;
 		const double scaleY = sceneSize.y / m_referenceSize.y;
-		
 		switch (m_autoFitMode)
 		{
 			case AutoFitMode::Contain:
@@ -104,6 +104,8 @@ namespace noco
 				const double scale = Min(scaleX, scaleY);
 				m_scale = Vec2{ scale, scale };
 				m_size = m_referenceSize;
+				const Vec2 scaledSize = m_size * scale;
+				m_position = (sceneSize - scaledSize) / 2;
 				break;
 			}
 			
@@ -112,6 +114,8 @@ namespace noco
 				const double scale = Max(scaleX, scaleY);
 				m_scale = Vec2{ scale, scale };
 				m_size = m_referenceSize;
+				const Vec2 scaledSize = m_size * scale;
+				m_position = (sceneSize - scaledSize) / 2;
 				break;
 			}
 			
@@ -119,6 +123,8 @@ namespace noco
 			{
 				m_scale = Vec2{ scaleX, scaleX };
 				m_size = m_referenceSize;
+				const Vec2 scaledSize = m_size * scaleX;
+				m_position = (sceneSize - scaledSize) / 2;
 				break;
 			}
 			
@@ -126,6 +132,8 @@ namespace noco
 			{
 				m_scale = Vec2{ scaleY, scaleY };
 				m_size = m_referenceSize;
+				const Vec2 scaledSize = m_size * scaleY;
+				m_position = (sceneSize - scaledSize) / 2;
 				break;
 			}
 			
@@ -133,6 +141,7 @@ namespace noco
 			{
 				m_scale = Vec2{ scaleX, scaleX };
 				m_size = SizeF{ m_referenceSize.x, scaleX > 0 ? sceneSize.y / scaleX : m_referenceSize.y };
+				m_position = Vec2{ (sceneSize.x - m_size.x * scaleX) / 2, 0.0 };
 				break;
 			}
 			
@@ -140,6 +149,7 @@ namespace noco
 			{
 				m_scale = Vec2{ scaleY, scaleY };
 				m_size = SizeF{ scaleY > 0 ? sceneSize.x / scaleY : m_referenceSize.x, m_referenceSize.y };
+				m_position = Vec2{ 0.0, (sceneSize.y - m_size.y * scaleY) / 2 };
 				break;
 			}
 			
@@ -155,18 +165,20 @@ namespace noco
 				break;
 		}
 		
+		// シーンサイズが変わったので必ず変換行列を更新
 		for (const auto& child : m_children)
 		{
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		}
 		
-		if (m_isLayoutDirty)
+		// サイズが変更された場合はレイアウトを再計算
+		if (oldSize != m_size)
 		{
-			refreshLayoutImmediately();
-			m_isLayoutDirty = false;
+			refreshLayoutImmediately(OnlyIfDirtyYN::No);
 		}
+		
+		m_lastSceneSize = sceneSize;
 	}
-
 
 	Mat3x2 Canvas::rootPosScaleMat() const
 	{
@@ -569,8 +581,6 @@ namespace noco
 	{
 		m_eventRegistry.clear();
 
-		updateAutoFitIfNeeded();
-
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
 
 		if (m_children.empty())
@@ -762,6 +772,9 @@ namespace noco
 			child->postLateUpdate(Scene::DeltaTime(), m_params);
 		}
 
+		// AutoFitModeによるサイズ・スケールの更新
+		updateAutoFitIfNeeded();
+
 		// 同一フレーム内でのレイアウト更新はまとめて1回遅延実行
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
@@ -828,6 +841,12 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
 	{
+		if (m_autoFitMode != AutoFitMode::None)
+		{
+			// AutoFitModeが有効な間はsetPositionは無視
+			return shared_from_this();
+		}
+		
 		m_position = position;
 		for (const auto& child : m_children)
 		{
@@ -854,13 +873,14 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::setPositionScale(const Vec2& position, const Vec2& scale)
 	{
-		m_position = position;
-		
-		// AutoFitModeが有効な場合はscaleの設定を無視
-		if (m_autoFitMode == AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None)
 		{
-			m_scale = scale;
+			// AutoFitModeが有効な間はsetPositionScaleは無視
+			return shared_from_this();
 		}
+		
+		m_position = position;
+		m_scale = scale;
 		
 		for (const auto& child : m_children)
 		{
@@ -881,13 +901,16 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setTransform(const Vec2& position, const Vec2& scale, double rotation)
 	{
-		m_position = position;
-		m_rotation = rotation;
-		
-		// AutoFitModeが有効な場合はscaleの設定を無視
-		if (m_autoFitMode == AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None)
 		{
+			// AutoFitModeが有効な間は位置とスケールの設定を無視（回転は許可）
+			m_rotation = rotation;
+		}
+		else
+		{
+			m_position = position;
 			m_scale = scale;
+			m_rotation = rotation;
 		}
 		
 		for (const auto& child : m_children)
@@ -1370,6 +1393,12 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setCenter(const Vec2& center)
 	{
+		if (m_autoFitMode != AutoFitMode::None)
+		{
+			// AutoFitModeが有効な間はsetCenterは無視
+			return shared_from_this();
+		}
+		
 		m_position = center - Vec2{ m_size.x / 2, m_size.y / 2 };
 		return shared_from_this();
 	}
@@ -1385,17 +1414,11 @@ namespace noco
 		{
 			return shared_from_this();
 		}
-		
 		m_autoFitMode = mode;
-		
-		if (mode != AutoFitMode::None)
-		{
-			m_position = Vec2::Zero();
-			m_lastSceneSize = none; // 再計算を強制
-		}
-		
+
+		m_lastSceneSize = none; // 再計算
 		updateAutoFitIfNeeded();
-		
+
 		return shared_from_this();
 	}
 
