@@ -422,7 +422,7 @@ namespace noco
 
 		void refreshLayoutImmediately(OnlyIfDirtyYN onlyIfDirty = OnlyIfDirtyYN::Yes);
 		
-		void setLayoutDirty() { m_isLayoutDirty = true; }
+		void markLayoutAsDirty() { m_isLayoutDirty = true; }
 
 		bool containsNodeByName(const String& nodeName) const;
 
@@ -607,25 +607,25 @@ namespace noco
 		void setSize(double width, double height)
 		{
 			m_size = SizeF{ width, height };
-			setLayoutDirty();
+			markLayoutAsDirty();
 		}
 		
 		void setSize(const SizeF& size)
 		{
 			m_size = size;
-			setLayoutDirty();
+			markLayoutAsDirty();
 		}
 		
 		void setWidth(double width)
 		{
 			m_size.x = width;
-			setLayoutDirty();
+			markLayoutAsDirty();
 		}
 		
 		void setHeight(double height)
 		{
 			m_size.y = height;
-			setLayoutDirty();
+			markLayoutAsDirty();
 		}
 
 		[[nodiscard]]

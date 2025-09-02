@@ -398,7 +398,7 @@ namespace noco
 			}
 		}
 
-		canvas->setLayoutDirty();
+		canvas->markLayoutAsDirty();
 
 		return canvas;
 	}
@@ -532,7 +532,7 @@ namespace noco
 			}
 		}
 
-		setLayoutDirty();
+		markLayoutAsDirty();
 		
 		for (const auto& child : m_children)
 		{
@@ -787,7 +787,7 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
-		setLayoutDirty();
+		markLayoutAsDirty();
 	}
 
 	void Canvas::clearAll()
@@ -861,7 +861,7 @@ namespace noco
 		{
 			child->resetScrollOffset(RecursiveYN::Yes);
 		}
-		setLayoutDirty();
+		markLayoutAsDirty();
 	}
 	
 	void Canvas::fireEvent(const Event& event)
@@ -1091,7 +1091,7 @@ namespace noco
 		node->refreshActiveInHierarchy();
 		m_children.push_back(node);
 
-		setLayoutDirty();
+		markLayoutAsDirty();
 
 		return m_children.back();
 	}
@@ -1109,7 +1109,7 @@ namespace noco
 		node->setCanvasRecursive(std::weak_ptr<Canvas>{});
 		node->refreshActiveInHierarchy();
 
-		setLayoutDirty();
+		markLayoutAsDirty();
 	}
 	
 	void Canvas::swapChildren(size_t index1, size_t index2)
@@ -1121,7 +1121,7 @@ namespace noco
 
 		std::swap(m_children[index1], m_children[index2]);
 
-		setLayoutDirty();
+		markLayoutAsDirty();
 	}
 	
 	const std::shared_ptr<Node>& Canvas::emplaceChild(
@@ -1135,7 +1135,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		setLayoutDirty();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -1146,7 +1146,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		setLayoutDirty();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 	
@@ -1157,7 +1157,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(std::move(child));
-		setLayoutDirty();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -1182,7 +1182,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
 
-		setLayoutDirty();
+		markLayoutAsDirty();
 
 		return m_children[index];
 	}
@@ -1350,7 +1350,7 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setChildrenLayout(const LayoutVariant& layout)
 	{
 		m_childrenLayout = layout;
-		setLayoutDirty();
+		markLayoutAsDirty();
 		return shared_from_this();
 	}
 

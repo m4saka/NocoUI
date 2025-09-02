@@ -325,7 +325,7 @@ namespace noco
 	std::shared_ptr<Node> Node::setRegion(const RegionVariant& region)
 	{
 		m_region = region;
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return shared_from_this();
 	}
 
@@ -357,7 +357,7 @@ namespace noco
 	std::shared_ptr<Node> Node::setChildrenLayout(const LayoutVariant& layout)
 	{
 		m_childrenLayout = layout;
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return shared_from_this();
 	}
 
@@ -865,7 +865,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -888,7 +888,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -900,7 +900,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -913,7 +913,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 	
@@ -925,7 +925,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children.back();
 	}
 
@@ -942,7 +942,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return *it;
 	}
 	
@@ -959,7 +959,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return *it;
 	}
 
@@ -988,7 +988,7 @@ namespace noco
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
 		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return m_children[index];
 	}
 
@@ -1002,7 +1002,7 @@ namespace noco
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();
 		m_children.remove(child);
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 	}
 
 	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
@@ -1477,7 +1477,7 @@ namespace noco
 				}
 				
 				// レイアウトを更新
-				markLayoutForRefresh();
+				markLayoutAsDirty();
 			}
 		}
 		
@@ -1786,7 +1786,7 @@ namespace noco
 			// clampScrollOffsetの前にレイアウトを即座に更新
 			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 	}
 
@@ -1810,7 +1810,7 @@ namespace noco
 			refreshContainedCanvasLayoutImmediately();
 			clampScrollOffset();
 		}
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 
 		if (recursive)
 		{
@@ -2274,7 +2274,7 @@ namespace noco
 	{
 		m_activeSelf.setValue(activeSelf.getBool());
 		refreshActiveInHierarchy();
-		markLayoutForRefresh();
+		markLayoutAsDirty();
 		return shared_from_this();
 	}
 
@@ -2379,7 +2379,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 		return shared_from_this();
 	}
@@ -2401,7 +2401,7 @@ namespace noco
 			m_scrollOffset.x = 0.0;
 		}
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 		return shared_from_this();
 	}
@@ -2423,7 +2423,7 @@ namespace noco
 			m_scrollOffset.y = 0.0;
 		}
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 		return shared_from_this();
 	}
@@ -2742,7 +2742,7 @@ namespace noco
 		}
 		m_children.clear();
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 	}
 
@@ -2756,7 +2756,7 @@ namespace noco
 		}
 		std::iter_swap(it1, it2);
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 	}
 
@@ -2768,7 +2768,7 @@ namespace noco
 		}
 		std::iter_swap(m_children.begin() + index1, m_children.begin() + index2);
 		{
-			markLayoutForRefresh();
+			markLayoutAsDirty();
 		}
 	}
 
@@ -2904,11 +2904,11 @@ namespace noco
 		}
 	}
 	
-	void Node::markLayoutForRefresh()
+	void Node::markLayoutAsDirty()
 	{
 		if (const auto canvas = m_canvas.lock())
 		{
-			canvas->setLayoutDirty();
+			canvas->markLayoutAsDirty();
 		}
 	}
 }

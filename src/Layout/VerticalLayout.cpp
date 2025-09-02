@@ -86,6 +86,6 @@ namespace noco
 				});
 		}
 
-		node.markLayoutForRefresh();
+		node.markLayoutAsDirty();
 	}
 }

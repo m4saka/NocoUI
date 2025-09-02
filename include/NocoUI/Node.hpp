@@ -629,7 +629,7 @@ namespace noco
 
 		void refreshContainedCanvasLayoutImmediately(OnlyIfDirtyYN onlyIfDirty = OnlyIfDirtyYN::Yes);
 		
-		void markLayoutForRefresh();
+		void markLayoutAsDirty();
 
 		template <typename TData>
 		void storeData(const TData& value);

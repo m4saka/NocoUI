@@ -225,7 +225,7 @@ namespace noco
 				});
 		}
 
-		node.markLayoutForRefresh();
+		node.markLayoutAsDirty();
 	}
 
 	RectF FlowLayout::executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const
