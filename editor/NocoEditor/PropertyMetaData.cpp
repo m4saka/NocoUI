@@ -798,6 +798,7 @@ namespace noco::editor
 			.tooltip = U"イージング関数",
 			.tooltipDetail = U"時間に対する値の変化のさせ方を指定します",
 		};
+		
 		metadata[PropertyKey{ U"Tween", U"duration" }] = PropertyMetadata{
 			.tooltip = U"アニメーション時間（秒）",
 			.dragValueChangeStep = 0.1,
@@ -808,11 +809,47 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Tween", U"loopType" }] = PropertyMetadata{
 			.tooltip = U"ループの種類",
-			.tooltipDetail = U"None: ループなし\nLoop: 通常ループ\nPingPong: 往復ループ",
+			.tooltipDetail = U"None: ループなし\nLoop: 通常ループ\nPingPong: 往復ループ\n手動モードでも有効です",
+		};
+		const auto tweenRestartsVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* tween = dynamic_cast<const Tween*>(&component))
+			{
+				return !HasAnyTrueState(tween->isManual());
+			}
+			return true;
 		};
 		metadata[PropertyKey{ U"Tween", U"restartsOnActive" }] = PropertyMetadata{
 			.tooltip = U"アクティブ時に最初から再生",
 			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか",
+			.visibilityCondition = tweenRestartsVisibilityCondition,
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"isManual" }] = PropertyMetadata{
+			.tooltip = U"手動制御モード",
+			.tooltipDetail = U"有効にすると、時間経過ではなくmanualTimeプロパティの値(0.0〜1.0)でアニメーションの進行を制御します",
+			.refreshInspectorOnChange = true,
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"applyDuringDelay" }] = PropertyMetadata{
+			.tooltip = U"遅延時間中に0%の値を適用",
+			.tooltipDetail = U"有効にすると、delay時間中も開始値(0%の値)を適用します。\n無効の場合、delay時間中は何もしません",
+		};
+		
+		const auto tweenManualTimeVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* tween = dynamic_cast<const Tween*>(&component))
+			{
+				return HasAnyTrueState(tween->isManual());
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Tween", U"manualTime" }] = PropertyMetadata{
+			.tooltip = U"手動制御の再生時間(秒)",
+			.tooltipDetail = U"アニメーションの再生時間を手動で指定します",
+			.visibilityCondition = tweenManualTimeVisibilityCondition,
+			.dragValueChangeStep = 0.1,
 		};
 		
 		// Canvasのプロパティ

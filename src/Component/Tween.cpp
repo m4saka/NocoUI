@@ -118,6 +118,7 @@ namespace noco
 	void Tween::update(const std::shared_ptr<Node>& node)
 	{
 		const bool currentActive = m_active.value();
+		
 		if (m_restartsOnActive.value() && m_prevActive.has_value() && !m_prevActive.value() && currentActive)
 		{
 			// 最初から再生
@@ -131,37 +132,51 @@ namespace noco
 		{
 			return;
 		}
-		
-		const double deltaTime = Scene::DeltaTime();
-		m_elapsedTime += deltaTime;
-		
-		// delay時間中は0%扱いで適用
-		if (m_elapsedTime < m_delay.value())
+
+		m_elapsedTime += Scene::DeltaTime();
+
+		double time;
+		if (m_isManual.value())
 		{
-			const double easedProgress = applyEasing(0.0);
-			switch (m_target.value())
+			time = m_manualTime.value();
+		}
+		else
+		{
+			time = m_elapsedTime;
+		}
+		
+		// delay時間中の処理
+		if (time < m_delay.value())
+		{
+			if (m_applyDuringDelay.value())
 			{
-			case TweenTarget::None:
-				// 何もしない
-				break;
-			case TweenTarget::Translate:
-				updateTranslate(node, easedProgress);
-				break;
-			case TweenTarget::Scale:
-				updateScale(node, easedProgress);
-				break;
-			case TweenTarget::Rotation:
-				updateRotation(node, easedProgress);
-				break;
-			case TweenTarget::Color:
-				updateColor(node, easedProgress);
-				break;
+				// applyDuringDelayがtrueの場合は0%の値を適用
+				const double easedProgress = applyEasing(0.0);
+				switch (m_target.value())
+				{
+				case TweenTarget::None:
+					// 何もしない
+					break;
+				case TweenTarget::Translate:
+					updateTranslate(node, easedProgress);
+					break;
+				case TweenTarget::Scale:
+					updateScale(node, easedProgress);
+					break;
+				case TweenTarget::Rotation:
+					updateRotation(node, easedProgress);
+					break;
+				case TweenTarget::Color:
+					updateColor(node, easedProgress);
+					break;
+				}
 			}
+			// applyDuringDelayがfalseの場合は何もしない
 			return;
 		}
 		
 		// アニメーション時間を計算
-		const double animationTime = m_elapsedTime - m_delay.value();
+		const double animationTime = time - m_delay.value();
 		const double duration = m_duration.value();
 		
 		if (duration <= 0.0)

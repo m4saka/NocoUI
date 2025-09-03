@@ -78,6 +78,9 @@ namespace noco
 		PropertyNonInteractive<double> m_delay;
 		PropertyNonInteractive<TweenLoopType> m_loopType;
 		PropertyNonInteractive<bool> m_restartsOnActive;
+		PropertyNonInteractive<bool> m_applyDuringDelay;
+		Property<bool> m_isManual;
+		SmoothProperty<double> m_manualTime;
 
 		/* NonSerialized */ double m_elapsedTime = 0.0;
 		/* NonSerialized */ bool m_isForward = true;  // PingPong用
@@ -106,13 +109,17 @@ namespace noco
 			double duration = 1.0,
 			double delay = 0.0,
 			TweenLoopType loopType = TweenLoopType::None,
-			ActiveYN restartsOnActive = ActiveYN::Yes)
+			ActiveYN restartsOnActive = ActiveYN::Yes,
+			ActiveYN applyDuringDelay = ActiveYN::No,
+			const PropertyValue<bool>& isManual = false,
+			const PropertyValue<double>& manualTime = 0.0)
 			: SerializableComponentBase{ U"Tween", { 
 				&m_active, &m_target, 
 				&m_fromVec2, &m_toVec2, 
 				&m_fromDouble, &m_toDouble,
 				&m_fromColor, &m_toColor,
-				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartsOnActive 
+				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartsOnActive,
+				&m_applyDuringDelay, &m_isManual, &m_manualTime
 			} }
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
@@ -127,6 +134,9 @@ namespace noco
 			, m_delay{ U"delay", delay }
 			, m_loopType{ U"loopType", loopType }
 			, m_restartsOnActive{ U"restartsOnActive", restartsOnActive.getBool() }
+			, m_applyDuringDelay{ U"applyDuringDelay", applyDuringDelay.getBool() }
+			, m_isManual{ U"isManual", isManual }
+			, m_manualTime{ U"manualTime", manualTime }
 		{
 		}
 
@@ -286,6 +296,42 @@ namespace noco
 		std::shared_ptr<Tween> setRestartsOnActive(bool restartsOnActive)
 		{
 			m_restartsOnActive.setValue(restartsOnActive);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		bool applyDuringDelay() const
+		{
+			return m_applyDuringDelay.value();
+		}
+
+		std::shared_ptr<Tween> setApplyDuringDelay(bool applyDuringDelay)
+		{
+			m_applyDuringDelay.setValue(applyDuringDelay);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<bool>& isManual() const
+		{
+			return m_isManual.propertyValue();
+		}
+
+		std::shared_ptr<Tween> setIsManual(const PropertyValue<bool>& isManual)
+		{
+			m_isManual.setPropertyValue(isManual);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& manualTime() const
+		{
+			return m_manualTime.propertyValue();
+		}
+
+		std::shared_ptr<Tween> setManualTime(const PropertyValue<double>& manualTime)
+		{
+			m_manualTime.setPropertyValue(manualTime);
 			return shared_from_this();
 		}
 	};
