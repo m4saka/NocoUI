@@ -109,8 +109,8 @@ namespace noco
 			double duration = 1.0,
 			double delay = 0.0,
 			TweenLoopType loopType = TweenLoopType::None,
-			ActiveYN restartOnActive = ActiveYN::Yes,
-			ActiveYN applyDuringDelay = ActiveYN::No,
+			bool restartOnActive = true,
+			bool applyDuringDelay = false,
 			const PropertyValue<bool>& isManual = false,
 			const PropertyValue<double>& manualTime = 0.0)
 			: SerializableComponentBase{ U"Tween", { 
@@ -133,8 +133,8 @@ namespace noco
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", delay }
 			, m_loopType{ U"loopType", loopType }
-			, m_restartOnActive{ U"restartOnActive", restartOnActive.getBool() }
-			, m_applyDuringDelay{ U"applyDuringDelay", applyDuringDelay.getBool() }
+			, m_restartOnActive{ U"restartOnActive", restartOnActive }
+			, m_applyDuringDelay{ U"applyDuringDelay", applyDuringDelay }
 			, m_isManual{ U"isManual", isManual }
 			, m_manualTime{ U"manualTime", manualTime }
 		{
