@@ -2432,8 +2432,8 @@ namespace noco::editor
 			{
 				fnAddLRTBChild(U"hitPadding", node->hitPadding(), [node](const LRTB& value) { node->setHitPadding(value); });
 			}
-			fnAddBoolChild(U"inheritsChildrenHover", node->inheritsChildrenHover(), [node](bool value) { node->setInheritsChildrenHover(value); });
-			fnAddBoolChild(U"inheritsChildrenPress", node->inheritsChildrenPress(), [node](bool value) { node->setInheritsChildrenPress(value); });
+			fnAddBoolChild(U"inheritChildrenHover", node->inheritChildrenHover(), [node](bool value) { node->setInheritChildrenHover(value); });
+			fnAddBoolChild(U"inheritChildrenPress", node->inheritChildrenPress(), [node](bool value) { node->setInheritChildrenPress(value); });
 			{
 				const auto propertyNode = nodeSettingNode->addChild(createBoolPropertyNodeWithTooltip(U"Node", U"interactable", node->interactable(), [node](bool value) { node->setInteractable(value); }, HasInteractivePropertyValueYN::No, HasParameterRefYN{ !node->interactableParamRef().isEmpty() }));
 				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
@@ -3572,7 +3572,7 @@ namespace noco::editor
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
-			fnAddBoolChild(U"affectsHitTest", &pTransform->affectsHitTest(), [this, pTransform](bool value) { pTransform->setAffectsHitTest(value); });
+			fnAddBoolChild(U"hitTestAffected", &pTransform->hitTestAffected(), [this, pTransform](bool value) { pTransform->setHitTestAffected(value); });
 
 			const auto fnAddColorChild =
 				[this, &transformNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)

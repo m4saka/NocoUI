@@ -19,15 +19,15 @@ namespace noco
 				InteractionState childInteractionState = child->updateForCurrentInteractionState(hoveredNode, interactable, isAncestorScrolling, params);
 				if (interactable)
 				{
-					if (!inheritsChildrenPress() && childInteractionState == InteractionState::Pressed)
+					if (!inheritChildrenPress() && childInteractionState == InteractionState::Pressed)
 					{
 						childInteractionState = InteractionState::Hovered;
 					}
-					if (!inheritsChildrenHover() && childInteractionState == InteractionState::Hovered)
+					if (!inheritChildrenHover() && childInteractionState == InteractionState::Hovered)
 					{
 						childInteractionState = InteractionState::Default;
 					}
-					if (inheritsChildrenPress() && child->isClicked())
+					if (inheritChildrenPress() && child->isClicked())
 					{
 						inheritedIsClicked = true;
 					}
@@ -36,8 +36,8 @@ namespace noco
 			}
 		}
 		const bool onClientRect = Cursor::OnClientRect();
-		const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
-		const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
+		const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+		const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
 		m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 		
 		if (interactable)
@@ -62,15 +62,15 @@ namespace noco
 				InteractionState childInteractionState = child->updateForCurrentInteractionStateRight(hoveredNode, interactable, isAncestorScrolling, params);
 				if (interactable)
 				{
-					if (!inheritsChildrenPress() && childInteractionState == InteractionState::Pressed)
+					if (!inheritChildrenPress() && childInteractionState == InteractionState::Pressed)
 					{
 						childInteractionState = InteractionState::Hovered;
 					}
-					if (!inheritsChildrenHover() && childInteractionState == InteractionState::Hovered)
+					if (!inheritChildrenHover() && childInteractionState == InteractionState::Hovered)
 					{
 						childInteractionState = InteractionState::Default;
 					}
-					if (inheritsChildrenPress() && child->isRightClicked())
+					if (inheritChildrenPress() && child->isRightClicked())
 					{
 						inheritedIsRightClicked = true;
 					}
@@ -81,8 +81,8 @@ namespace noco
 		if (interactable)
 		{
 			const bool onClientRect = Cursor::OnClientRect();
-			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
-			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritsChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
 			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 			return ApplyOtherInteractionState(m_mouseRTracker.interactionStateSelf(), inheritedInteractionState);
 		}
@@ -421,8 +421,8 @@ namespace noco
 			{ U"children", childrenJSON },
 			{ U"isHitTarget", m_isHitTarget.getBool() },
 			{ U"hitPadding", m_hitPadding.toJSON() },
-			{ U"inheritsChildrenHover", inheritsChildrenHover() },
-			{ U"inheritsChildrenPress", inheritsChildrenPress() },
+			{ U"inheritChildrenHover", inheritChildrenHover() },
+			{ U"inheritChildrenPress", inheritChildrenPress() },
 			{ U"horizontalScrollable", horizontalScrollable() },
 			{ U"verticalScrollable", verticalScrollable() },
 			{ U"wheelScrollEnabled", wheelScrollEnabled() },
@@ -516,13 +516,13 @@ namespace noco
 		{
 			node->m_hitPadding = LRTB::fromJSON(json[U"hitPadding"]);
 		}
-		if (json.contains(U"inheritsChildrenHover"))
+		if (json.contains(U"inheritChildrenHover"))
 		{
-			node->setInheritsChildrenHover(json[U"inheritsChildrenHover"].getOr<bool>(false));
+			node->setInheritChildrenHover(json[U"inheritChildrenHover"].getOr<bool>(false));
 		}
-		if (json.contains(U"inheritsChildrenPress"))
+		if (json.contains(U"inheritChildrenPress"))
 		{
-			node->setInheritsChildrenPress(json[U"inheritsChildrenPress"].getOr<bool>(false));
+			node->setInheritChildrenPress(json[U"inheritChildrenPress"].getOr<bool>(false));
 		}
 		node->m_interactable.readFromJSON(json);
 		if (json.contains(U"horizontalScrollable"))
@@ -1693,7 +1693,7 @@ namespace noco
 		const Vec2 hitBottomLeft = m_hitTestMatInHierarchy.transformPoint(m_regionRect.pos + Vec2{0, m_regionRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transform.affectsHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.hitTestAffected().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -1729,7 +1729,7 @@ namespace noco
 		const Vec2 paddedBottomLeft = m_hitTestMatInHierarchy.transformPoint(paddedRect.pos + Vec2{0, paddedRect.h});
 		
 		// 負のスケールの場合、Quadの頂点順序を調整
-		if (m_transform.affectsHitTest().value() && (scale.x < 0 || scale.y < 0))
+		if (m_transform.hitTestAffected().value() && (scale.x < 0 || scale.y < 0))
 		{
 			if (scale.x < 0 && scale.y >= 0)
 			{
@@ -2086,7 +2086,7 @@ namespace noco
 
 	Mat3x2 Node::calculateHitTestMat(const Mat3x2& parentHitTestMat) const
 	{
-		if (m_transform.affectsHitTest().value())
+		if (m_transform.hitTestAffected().value())
 		{
 			// TransformをHitTestに適用
 			const Vec2& scale = m_transform.scale().value();
@@ -2326,12 +2326,12 @@ namespace noco
 		return shared_from_this();
 	}
 
-	bool Node::inheritsChildrenHover() const
+	bool Node::inheritChildrenHover() const
 	{
 		return HasFlag(m_inheritChildrenStateFlags, InheritChildrenStateFlags::Hovered);
 	}
 
-	std::shared_ptr<Node> Node::setInheritsChildrenHover(bool value)
+	std::shared_ptr<Node> Node::setInheritChildrenHover(bool value)
 	{
 		if (value)
 		{
@@ -2344,12 +2344,12 @@ namespace noco
 		return shared_from_this();
 	}
 
-	bool Node::inheritsChildrenPress() const
+	bool Node::inheritChildrenPress() const
 	{
 		return HasFlag(m_inheritChildrenStateFlags, InheritChildrenStateFlags::Pressed);
 	}
 
-	std::shared_ptr<Node> Node::setInheritsChildrenPress(bool value)
+	std::shared_ptr<Node> Node::setInheritChildrenPress(bool value)
 	{
 		if (value)
 		{

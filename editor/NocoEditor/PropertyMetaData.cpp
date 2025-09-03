@@ -29,11 +29,11 @@ namespace noco::editor
 			.tooltip = U"ヒットテスト領域の拡縮 (左、右、上、下)",
 			.tooltipDetail = U"ヒットテスト(要素にマウスカーソルがホバーしているかどうかの判定)に使用する領域を、指定されたピクセル数だけ拡大・縮小します\n正の値で領域を拡大、負の値で領域を縮小します\n実際の見た目よりもずれた位置にマウスカーソルがあっても反応させたい場合に使用できます",
 		};
-		metadata[PropertyKey{ U"Node", U"inheritsChildrenHover" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Node", U"inheritChildrenHover" }] = PropertyMetadata{
 			.tooltip = U"子要素のホバー状態(Hovered)を継承するかどうか",
 			.tooltipDetail = U"有効にすると、子要素のInteractionStateがHoveredの場合に、このNodeのInteractionStateがHoveredになります\n※このNodeのInteractionStateがPressed・Disabledの場合は影響を受けません",
 		};
-		metadata[PropertyKey{ U"Node", U"inheritsChildrenPress" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Node", U"inheritChildrenPress" }] = PropertyMetadata{
 			.tooltip = U"子要素の押下状態(Pressed)を継承するかどうか",
 			.tooltipDetail = U"有効にすると、子要素のInteractionStateがPressedの場合に、このNodeのInteractionStateがPressedになります\n※このNodeのInteractionStateがDisabledの場合は影響を受けません",
 		};
@@ -219,11 +219,11 @@ namespace noco::editor
 		// Transform関連
 		metadata[PropertyKey{ U"Transform", U"translate" }] = PropertyMetadata{
 			.tooltip = U"平行移動",
-			.tooltipDetail = U"要素を平行移動させます\nこの値による平行移動はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素を高速に平行移動できます。そのため、アニメーション等の用途で利用できます\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも平行移動を適用します",
+			.tooltipDetail = U"要素を平行移動させます\nこの値による平行移動はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素を高速に平行移動できます。そのため、アニメーション等の用途で利用できます\n※hitTestAffectedがtrueの場合、マウスカーソルのホバー判定にも平行移動を適用します",
 		};
 		metadata[PropertyKey{ U"Transform", U"scale" }] = PropertyMetadata{
 			.tooltip = U"スケール",
-			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも拡大縮小を適用します",
+			.tooltipDetail = U"要素のサイズを拡大・縮小するスケールを指定します\nこの値による拡大縮小はレイアウト計算に影響を与えません\n※Transformはレイアウトの再計算を必要としないため、要素の大きさを高速に変更できます。そのため、アニメーション等の用途で利用できます\n※描画内容はスケールに応じて伸縮されます\n※hitTestAffectedがtrueの場合、マウスカーソルのホバー判定にも拡大縮小を適用します",
 		};
 		metadata[PropertyKey{ U"Transform", U"pivot" }] = PropertyMetadata{
 			.tooltip = U"基準点 (X、Y)",
@@ -231,10 +231,10 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Transform", U"rotation" }] = PropertyMetadata{
 			.tooltip = U"回転角度",
-			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません\n※affectsHitTestがtrueの場合、マウスカーソルのホバー判定にも回転を適用します",
+			.tooltipDetail = U"要素の回転角度を度数法で指定します\n正の値で時計回り、負の値で反時計回りに回転します\n回転の中心はpivotで指定した基準点になります\n※この値による回転はレイアウト計算に影響を与えません\n※hitTestAffectedがtrueの場合、マウスカーソルのホバー判定にも回転を適用します",
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"Transform", U"affectsHitTest" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Transform", U"hitTestAffected" }] = PropertyMetadata{
 			.tooltip = U"ヒットテスト領域へ適用するか",
 			.tooltipDetail = U"Transformの平行移動・スケール・回転をマウスのホバー判定に適用するかどうかを指定します\ntrueの場合：translate, scale, rotationの変換がホバー判定に反映されます\nfalseの場合：変換は描画のみに適用され、ホバー判定は元の位置で行われます",
 		};
@@ -819,7 +819,7 @@ namespace noco::editor
 			}
 			return true;
 		};
-		metadata[PropertyKey{ U"Tween", U"restartsOnActive" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"restartOnActive" }] = PropertyMetadata{
 			.tooltip = U"アクティブ時に最初から再生",
 			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか",
 			.visibilityCondition = tweenRestartsVisibilityCondition,

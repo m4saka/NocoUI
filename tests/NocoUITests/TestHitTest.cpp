@@ -27,14 +27,14 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNode == nullptr);
 	}
 
-	SECTION("Hit test with transform and affectsHitTest")
+	SECTION("Hit test with transform and hitTestAffected")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
 		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
 		node->transform().setTranslate(Vec2{ 100, 100 });
-		// affectsHitTest = trueの場合
-		node->transform().setAffectsHitTest(true);
+		// hitTestAffected = trueの場合
+		node->transform().setHitTestAffected(true);
 		canvas->addChild(node);
 		
 		// Canvasをupdateしてレイアウトを適用
@@ -48,8 +48,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto missNodeOriginal = node->hitTest(Vec2{ 50, 50 });
 		REQUIRE(missNodeOriginal == nullptr);
 		
-		// affectsHitTest = falseに変更
-		node->transform().setAffectsHitTest(false);
+		// hitTestAffected = falseに変更
+		node->transform().setHitTestAffected(false);
 		canvas->update();
 		
 		// 元の位置でヒットする（Transformが適用されない）
@@ -61,7 +61,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		REQUIRE(missNodeTransformed == nullptr);
 	}
 
-	SECTION("Hit test with scale and affectsHitTest")
+	SECTION("Hit test with scale and hitTestAffected")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create();
@@ -72,8 +72,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
 		
-		// affectsHitTest = false（デフォルト）
-		node->transform().setAffectsHitTest(false);
+		// hitTestAffected = false（デフォルト）
+		node->transform().setHitTestAffected(false);
 		canvas->update();
 		
 		// 元のサイズの範囲内でヒット
@@ -84,8 +84,8 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		auto missScaled = node->hitTest(Vec2{ 150, 150 });
 		REQUIRE(missScaled == nullptr);
 		
-		// affectsHitTest = true
-		node->transform().setAffectsHitTest(true);
+		// hitTestAffected = true
+		node->transform().setHitTestAffected(true);
 		canvas->update();
 		
 		// スケール後の範囲でヒット（中心から拡大されるので-50～150の範囲）

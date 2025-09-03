@@ -77,7 +77,7 @@ namespace noco
 		PropertyNonInteractive<double> m_duration;
 		PropertyNonInteractive<double> m_delay;
 		PropertyNonInteractive<TweenLoopType> m_loopType;
-		PropertyNonInteractive<bool> m_restartsOnActive;
+		PropertyNonInteractive<bool> m_restartOnActive;
 		PropertyNonInteractive<bool> m_applyDuringDelay;
 		Property<bool> m_isManual;
 		SmoothProperty<double> m_manualTime;
@@ -109,7 +109,7 @@ namespace noco
 			double duration = 1.0,
 			double delay = 0.0,
 			TweenLoopType loopType = TweenLoopType::None,
-			ActiveYN restartsOnActive = ActiveYN::Yes,
+			ActiveYN restartOnActive = ActiveYN::Yes,
 			ActiveYN applyDuringDelay = ActiveYN::No,
 			const PropertyValue<bool>& isManual = false,
 			const PropertyValue<double>& manualTime = 0.0)
@@ -118,7 +118,7 @@ namespace noco
 				&m_fromVec2, &m_toVec2, 
 				&m_fromDouble, &m_toDouble,
 				&m_fromColor, &m_toColor,
-				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartsOnActive,
+				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartOnActive,
 				&m_applyDuringDelay, &m_isManual, &m_manualTime
 			} }
 			, m_active{ U"active", active }
@@ -133,7 +133,7 @@ namespace noco
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", delay }
 			, m_loopType{ U"loopType", loopType }
-			, m_restartsOnActive{ U"restartsOnActive", restartsOnActive.getBool() }
+			, m_restartOnActive{ U"restartOnActive", restartOnActive.getBool() }
 			, m_applyDuringDelay{ U"applyDuringDelay", applyDuringDelay.getBool() }
 			, m_isManual{ U"isManual", isManual }
 			, m_manualTime{ U"manualTime", manualTime }
@@ -288,14 +288,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool restartsOnActive() const
+		bool restartOnActive() const
 		{
-			return m_restartsOnActive.value();
+			return m_restartOnActive.value();
 		}
 
-		std::shared_ptr<Tween> setRestartsOnActive(bool restartsOnActive)
+		std::shared_ptr<Tween> setRestartOnActive(bool restartOnActive)
 		{
-			m_restartsOnActive.setValue(restartsOnActive);
+			m_restartOnActive.setValue(restartOnActive);
 			return shared_from_this();
 		}
 

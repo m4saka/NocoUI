@@ -119,7 +119,7 @@ namespace noco
 	{
 		const bool currentActive = m_active.value();
 		
-		if (m_restartsOnActive.value() && m_prevActive.has_value() && !m_prevActive.value() && currentActive)
+		if (m_restartOnActive.value() && m_prevActive.has_value() && !m_prevActive.value() && currentActive)
 		{
 			// 最初から再生
 			m_elapsedTime = 0.0;

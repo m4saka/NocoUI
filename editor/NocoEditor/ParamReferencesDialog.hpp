@@ -224,9 +224,9 @@ namespace noco::editor
 				{
 					references.emplace_back(nodeName, U"Transform", U"rotation");
 				}
-				if (transform.affectsHitTest().paramRef() == paramName)
+				if (transform.hitTestAffected().paramRef() == paramName)
 				{
-					references.emplace_back(nodeName, U"Transform", U"affectsHitTest");
+					references.emplace_back(nodeName, U"Transform", U"hitTestAffected");
 				}
 				if (transform.color().paramRef() == paramName)
 				{
