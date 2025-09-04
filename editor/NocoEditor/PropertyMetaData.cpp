@@ -328,6 +328,9 @@ namespace noco::editor
 			.tooltip = U"フォントサイズ",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
+			.tooltip = U"テキスト色",
+		};
 		metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",
 			.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nAutoShrink: ノードサイズに収まるようフォントサイズを自動縮小します\n※AutoShrinkはテキストやその他の値に変化が発生した時のフォントサイズの再計算にかかる負荷が高いため、自動縮小が不要な場合はなるべくFixedを指定することを推奨します",
@@ -345,9 +348,6 @@ namespace noco::editor
 				return false;
 			},
 			.dragValueChangeStep = 1.0,
-		};
-		metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
-			.tooltip = U"テキスト色",
 		};
 		metadata[PropertyKey{ U"Label", U"horizontalAlign" }] = PropertyMetadata{
 			.tooltip = U"水平方向の配置",

@@ -925,8 +925,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 			
 			const auto textBoxNode = propertyNode->emplaceChild(
 				U"TextBox",
@@ -1060,8 +1059,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 			const auto textAreaNode = propertyNode->emplaceChild(
 				U"TextArea",
 				InlineRegion
@@ -1167,8 +1165,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
 				U"TextBoxParent",
@@ -1338,8 +1335,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto textBoxParentNode = propertyNode->emplaceChild(
 				U"TextBoxParent",
@@ -1481,8 +1477,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto line1TextBoxParentNode = line1->emplaceChild(
 				U"TextBoxParent",
@@ -1590,8 +1585,7 @@ namespace noco::editor
 				LabelUnderlineStyle::None,
 				ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto line2TextBoxParentNode = line2->emplaceChild(
 				U"TextBoxParent",
@@ -1798,8 +1792,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto rowNode = propertyNode->emplaceChild(
 				U"ColorPropertyRow",
@@ -2125,8 +2118,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto comboBoxNode = propertyNode->emplaceChild(
 				U"ComboBox",
@@ -2244,8 +2236,7 @@ namespace noco::editor
 				(hasParameterRef || hasInteractivePropertyValue) ? LabelUnderlineStyle::Solid : LabelUnderlineStyle::None,
 				hasParameterRef ? ColorF{ Palette::Cyan, 0.5 } : ColorF{ Palette::Yellow, 0.5 },
 				2.0,
-				LabelSizingMode::AutoShrink,
-				8.0);
+				LabelSizingMode::AutoShrink);
 
 			const auto checkboxParentNode = propertyNode->emplaceChild(
 				U"CheckboxParent",

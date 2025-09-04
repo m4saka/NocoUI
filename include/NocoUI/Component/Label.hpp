@@ -24,9 +24,9 @@ namespace noco
 		Property<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
+		SmoothProperty<ColorF> m_color;
 		Property<LabelSizingMode> m_sizingMode;
 		SmoothProperty<double> m_minFontSize;
-		SmoothProperty<ColorF> m_color;
 		Property<HorizontalAlign> m_horizontalAlign;
 		Property<VerticalAlign> m_verticalAlign;
 		SmoothProperty<LRTB> m_padding;
@@ -125,15 +125,14 @@ namespace noco
 			const PropertyValue<LabelUnderlineStyle>& underlineStyle = LabelUnderlineStyle::None,
 			const PropertyValue<ColorF>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
-			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed,
-			const PropertyValue<double>& minFontSize = 8.0)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_sizingMode, &m_minFontSize, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
+			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
-			, m_sizingMode{ U"sizingMode", sizingMode }
-			, m_minFontSize{ U"minFontSize", minFontSize }
 			, m_color{ U"color", color }
+			, m_sizingMode{ U"sizingMode", sizingMode }
+			, m_minFontSize{ U"minFontSize", 1.0 }
 			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
 			, m_verticalAlign{ U"verticalAlign", verticalAlign }
 			, m_padding{ U"padding", padding }
@@ -197,6 +196,30 @@ namespace noco
 		std::shared_ptr<Label> setColor(const PropertyValue<ColorF>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<LabelSizingMode>& sizingMode() const
+		{
+			return m_sizingMode.propertyValue();
+		}
+
+		std::shared_ptr<Label> setSizingMode(const PropertyValue<LabelSizingMode>& sizingMode)
+		{
+			m_sizingMode.setPropertyValue(sizingMode);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& minFontSize() const
+		{
+			return m_minFontSize.propertyValue();
+		}
+
+		std::shared_ptr<Label> setMinFontSize(const PropertyValue<double>& minFontSize)
+		{
+			m_minFontSize.setPropertyValue(minFontSize);
 			return shared_from_this();
 		}
 
@@ -305,30 +328,6 @@ namespace noco
 		std::shared_ptr<Label> setUnderlineThickness(const PropertyValue<double>& underlineThickness)
 		{
 			m_underlineThickness.setPropertyValue(underlineThickness);
-			return shared_from_this();
-		}
-
-		[[nodiscard]]
-		const PropertyValue<LabelSizingMode>& sizingMode() const
-		{
-			return m_sizingMode.propertyValue();
-		}
-
-		std::shared_ptr<Label> setSizingMode(const PropertyValue<LabelSizingMode>& sizingMode)
-		{
-			m_sizingMode.setPropertyValue(sizingMode);
-			return shared_from_this();
-		}
-
-		[[nodiscard]]
-		const PropertyValue<double>& minFontSize() const
-		{
-			return m_minFontSize.propertyValue();
-		}
-
-		std::shared_ptr<Label> setMinFontSize(const PropertyValue<double>& minFontSize)
-		{
-			m_minFontSize.setPropertyValue(minFontSize);
 			return shared_from_this();
 		}
 
