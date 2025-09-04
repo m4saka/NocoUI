@@ -12,7 +12,7 @@ namespace noco
 		, m_scale{ U"scale", scale }
 		, m_pivot{ U"pivot", pivot }
 		, m_rotation{ U"rotation", rotation }
-		, m_hitTestAffected{ U"hitTestAffected", false }
+		, m_hitTestAffected{ U"hitTestAffected", true }
 		, m_color{ U"color", color }
 	{
 	}

@@ -72,7 +72,7 @@ TEST_CASE("Hit Testing", "[Node][HitTest]")
 		// Canvasをupdateしてレイアウトを適用
 		canvas->update();
 		
-		// hitTestAffected = false（デフォルト）
+		// hitTestAffected = false
 		node->transform().setHitTestAffected(false);
 		canvas->update();
 		
