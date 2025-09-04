@@ -426,14 +426,6 @@ namespace noco
 				canvas->m_autoFitMode = *modeOpt;
 			}
 		}
-		
-		if (json.contains(U"referenceSize"))
-		{
-			if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].getString()))
-			{
-				canvas->m_referenceSize = *sizeOpt;
-			}
-		}
 
 		canvas->markLayoutAsDirty();
 
@@ -533,14 +525,6 @@ namespace noco
 			if (const auto modeOpt = StringToValueOpt<AutoFitMode>(json[U"autoFitMode"].get<String>()))
 			{
 				m_autoFitMode = *modeOpt;
-			}
-		}
-		
-		if (json.contains(U"referenceSize"))
-		{
-			if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].getString()))
-			{
-				m_referenceSize = *sizeOpt;
 			}
 		}
 
