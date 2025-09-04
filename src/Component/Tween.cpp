@@ -115,6 +115,16 @@ namespace noco
 		transform.color().setCurrentFrameOverride(interpolated);
 	}
 
+	void Tween::onActivated(const std::shared_ptr<Node>&)
+	{
+		if (m_active.value() && m_restartOnActive.value())
+		{
+			m_elapsedTime = 0.0;
+			m_loopCount = 0;
+			m_isForward = true;
+		}
+	}
+
 	void Tween::update(const std::shared_ptr<Node>& node)
 	{
 		const bool currentActive = m_active.value();
@@ -255,10 +265,5 @@ namespace noco
 			updateRotation(node, easedProgress);
 			break;
 		}
-	}
-
-	void Tween::updateInactive(const std::shared_ptr<Node>&)
-	{
-		m_prevActive = false;
 	}
 }

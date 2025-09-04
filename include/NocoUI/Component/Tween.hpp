@@ -128,8 +128,8 @@ namespace noco
 		{
 		}
 
+		void onActivated(const std::shared_ptr<Node>& node) override;
 		void update(const std::shared_ptr<Node>& node) override;
-		void updateInactive(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]
 		const PropertyValue<bool>& active() const
