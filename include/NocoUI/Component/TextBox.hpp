@@ -120,8 +120,7 @@ namespace noco
 			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Left,
 			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Middle,
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
-			const Optional<PropertyValue<ColorF>>& selectionColor = unspecified,
-			const PropertyValue<bool>& readOnly = false)
+			const PropertyValue<ColorF>& selectionColor = ColorF{ 0.0, 0.1, 0.3, 0.5 })
 			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_horizontalAlign, &m_verticalAlign, &m_readOnly } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
@@ -132,8 +131,8 @@ namespace noco
 			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
 			, m_verticalAlign{ U"verticalAlign", verticalAlign }
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
-			, m_selectionColor{ U"selectionColor", selectionColor.value_or(ColorF{ 0.0, 0.1, 0.3, 0.5 }) }
-			, m_readOnly{ U"readOnly", readOnly }
+			, m_selectionColor{ U"selectionColor", selectionColor }
+			, m_readOnly{ U"readOnly", false }
 		{
 		}
 

@@ -37,14 +37,14 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
 
 	public:
-		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No)
+		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No)
 			: SerializableComponentBase{ U"UISound", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
 			, m_audioFilePath{ U"audioFilePath", audioFilePath }
 			, m_audioAssetName{ U"audioAssetName", audioAssetName }
 			, m_triggerType{ U"triggerType", triggerType }
 			, m_volume{ U"volume", volume }
 			, m_recursive{ U"recursive", recursive.getBool() }
-			, m_includingDisabled{ U"includingDisabled", includingDisabled.getBool() }
+			, m_includingDisabled{ U"includingDisabled", false }
 		{
 		}
 

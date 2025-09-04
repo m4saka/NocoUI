@@ -99,20 +99,8 @@ namespace noco
 		explicit Tween(
 			const PropertyValue<bool>& active = true,
 			TweenTarget target = TweenTarget::None,
-			const Vec2& fromVec2 = Vec2::Zero(),
-			const Vec2& toVec2 = Vec2::One(),
-			double fromDouble = 0.0,
-			double toDouble = 0.0,
-			const ColorF& fromColor = ColorF{ 1.0, 1.0, 1.0, 1.0 },
-			const ColorF& toColor = ColorF{ 1.0, 1.0, 1.0, 0.0 },
 			TweenEasing easing = TweenEasing::EaseOutQuad,
-			double duration = 1.0,
-			double delay = 0.0,
-			TweenLoopType loopType = TweenLoopType::None,
-			bool restartOnActive = true,
-			bool applyDuringDelay = false,
-			const PropertyValue<bool>& isManual = false,
-			const PropertyValue<double>& manualTime = 0.0)
+			double duration = 1.0)
 			: SerializableComponentBase{ U"Tween", { 
 				&m_active, &m_target, 
 				&m_fromVec2, &m_toVec2, 
@@ -123,20 +111,20 @@ namespace noco
 			} }
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
-			, m_fromVec2{ U"fromVec2", fromVec2 }
-			, m_toVec2{ U"toVec2", toVec2 }
-			, m_fromDouble{ U"fromDouble", fromDouble }
-			, m_toDouble{ U"toDouble", toDouble }
-			, m_fromColor{ U"fromColor", fromColor }
-			, m_toColor{ U"toColor", toColor }
+			, m_fromVec2{ U"fromVec2", Vec2::Zero() }
+			, m_toVec2{ U"toVec2", Vec2::One() }
+			, m_fromDouble{ U"fromDouble", 0.0 }
+			, m_toDouble{ U"toDouble", 0.0 }
+			, m_fromColor{ U"fromColor", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
+			, m_toColor{ U"toColor", ColorF{ 1.0, 1.0, 1.0, 0.0 } }
 			, m_easing{ U"easing", easing }
 			, m_duration{ U"duration", duration }
-			, m_delay{ U"delay", delay }
-			, m_loopType{ U"loopType", loopType }
-			, m_restartOnActive{ U"restartOnActive", restartOnActive }
-			, m_applyDuringDelay{ U"applyDuringDelay", applyDuringDelay }
-			, m_isManual{ U"isManual", isManual }
-			, m_manualTime{ U"manualTime", manualTime }
+			, m_delay{ U"delay", 0.0 }
+			, m_loopType{ U"loopType", TweenLoopType::None }
+			, m_restartOnActive{ U"restartOnActive", true }
+			, m_applyDuringDelay{ U"applyDuringDelay", false }
+			, m_isManual{ U"isManual", false }
+			, m_manualTime{ U"manualTime", 0.0 }
 		{
 		}
 
