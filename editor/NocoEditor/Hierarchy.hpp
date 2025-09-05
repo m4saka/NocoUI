@@ -34,6 +34,7 @@ namespace noco::editor
 			std::shared_ptr<Node> node;
 			std::shared_ptr<Node> hierarchyNode;
 			std::shared_ptr<RectRenderer> hierarchyRectRenderer;
+			std::shared_ptr<Label> hierarchyNameLabel;
 			std::shared_ptr<Label> hierarchyStateLabel;
 			std::shared_ptr<Node> hierarchyToggleFoldedNode;
 			std::shared_ptr<Label> hierarchyToggleFoldedLabel;
@@ -523,11 +524,13 @@ namespace noco::editor
 						rect.draw(ColorF{ 1.0, 0.3 });
 					}
 				});
+			// activeInHierarchyがfalseの場合は文字を薄くする
+			const ColorF textColor = node->activeInHierarchy() ? ColorF{ Palette::White } : ColorF{ Palette::White, 0.5 };
 			const auto nameLabel = hierarchyNode->emplaceComponent<Label>(
 				node->name(),
 				U"",
 				14,
-				Palette::White,
+				textColor,
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				LRTB{ 20 + static_cast<double>(nestLevel) * 20, 5, 0, 0 },
@@ -586,6 +589,7 @@ namespace noco::editor
 					.node = node,
 					.hierarchyNode = hierarchyNode,
 					.hierarchyRectRenderer = hierarchyNode->getComponent<RectRenderer>(),
+					.hierarchyNameLabel = nameLabel,
 					.hierarchyStateLabel = stateLabel,
 					.hierarchyToggleFoldedNode = toggleFoldedNode,
 					.hierarchyToggleFoldedLabel = toggleFoldedLabel,
@@ -830,7 +834,25 @@ namespace noco::editor
 		{
 			for (const auto& element : m_elements)
 			{
-				element.hierarchyNode()->getComponent<Label>()->setText(element.node()->name());
+				if (element.elementDetail().hierarchyNameLabel)
+				{
+					element.elementDetail().hierarchyNameLabel->setText(element.node()->name());
+				}
+			}
+		}
+
+		void refreshNodeActiveStates()
+		{
+			for (const auto& element : m_elements)
+			{
+				const bool isActive = element.node()->activeInHierarchy();
+				
+				// activeInHierarchyに応じて文字色を更新
+				const ColorF textColor = isActive ? ColorF{ 1.0 } : ColorF{ 1.0, 0.5 };
+				if (element.elementDetail().hierarchyNameLabel)
+				{
+					element.elementDetail().hierarchyNameLabel->setColor(textColor);
+				}
 			}
 		}
 
@@ -1503,8 +1525,12 @@ namespace noco::editor
 				}
 				else
 				{
+					// styleStateを表示(ノード非アクティブ時は非表示)
 					const String& styleState = element.node()->styleState();
-					element.elementDetail().hierarchyStateLabel->setText(!styleState.empty() ? U"[{}]"_fmt(styleState) : U"");
+					const String displayText = element.node()->activeInHierarchy() && !styleState.empty() 
+						? U"[{}]"_fmt(styleState) 
+						: U"";
+					element.elementDetail().hierarchyStateLabel->setText(displayText);
 				}
 
 				if (element.hierarchyNode()->isClicked())

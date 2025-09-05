@@ -33,6 +33,7 @@ namespace noco::editor
 		HashTable<PropertyKey, PropertyMetadata> m_propertyMetadata;
 		std::weak_ptr<Node> m_targetNode;
 		std::function<void()> m_onChangeNodeName;
+		std::function<void()> m_onChangeNodeActive;
 		std::shared_ptr<ComponentFactory> m_componentFactory;
 		
 		void renameParam(const String& oldName, const String& newName)
@@ -229,7 +230,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName)
+		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive)
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
@@ -270,6 +271,7 @@ namespace noco::editor
 			, m_defaults(defaults)
 			, m_dialogOpener(dialogOpener)
 			, m_onChangeNodeName(std::move(onChangeNodeName))
+			, m_onChangeNodeActive(std::move(onChangeNodeActive))
 			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
@@ -2275,8 +2277,8 @@ namespace noco::editor
 			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6 });
 			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
-			// activeSelfのチェックボックスを追加
-			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [node](bool value) { node->setActive(value); });
+			// activeSelfのチェックボックス
+			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [this, node](bool value) { node->setActive(value); m_onChangeNodeActive(); });
 			{
 				// ツールチップ
 				const PropertyKey key{ U"Node", U"activeSelf" };
