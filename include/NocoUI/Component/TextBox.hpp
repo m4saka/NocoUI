@@ -138,8 +138,6 @@ namespace noco
 
 		void updateKeyInput(const std::shared_ptr<Node>& node) override;
 
-		void updateKeyInputInactive(const std::shared_ptr<Node>& node) override;
-
 		void updateScrollOffset(const RectF& rect);
 
 		void draw(const Node& node) const override;

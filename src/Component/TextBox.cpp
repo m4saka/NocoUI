@@ -322,6 +322,7 @@ namespace noco
 	void TextBox::onDeactivated(const std::shared_ptr<Node>& node)
 	{
 		CurrentFrame::UnfocusNodeIfFocused(node);
+		m_prevEditingTextExists = false;
 	}
 
 	void TextBox::updateKeyInput(const std::shared_ptr<Node>& node)
@@ -652,11 +653,6 @@ namespace noco
 			m_isChanged = true;
 			m_prevText = m_text.value();
 		}
-	}
-
-	void TextBox::updateKeyInputInactive(const std::shared_ptr<Node>&)
-	{
-		m_prevEditingTextExists = false;
 	}
 
 	void TextBox::updateScrollOffset(const RectF& rect)

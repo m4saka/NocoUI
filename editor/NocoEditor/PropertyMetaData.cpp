@@ -19,7 +19,7 @@ namespace noco::editor
 		// Nodeのプロパティ
 		metadata[PropertyKey{ U"Node", U"activeSelf" }] = PropertyMetadata{
 			.tooltip = U"Nodeの有効/無効",
-			.tooltipDetail = U"このNodeとその子要素の表示を制御します\n無効の場合、updateの代わりにupdateInactiveが実行され、drawは実行されません",
+			.tooltipDetail = U"このNodeとその子要素の表示/非表示状態を制御します\n無効の場合、各コンポーネントのupdate関数およびdraw関数は呼び出されません",
 		};
 		metadata[PropertyKey{ U"Node", U"isHitTarget" }] = PropertyMetadata{
 			.tooltip = U"ヒットテストの対象にするどうか",

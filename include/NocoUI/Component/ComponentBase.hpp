@@ -38,23 +38,11 @@ namespace noco
 		{
 		}
 
-		virtual void updateKeyInputInactive(const std::shared_ptr<Node>&)
-		{
-		}
-
 		virtual void update(const std::shared_ptr<Node>&)
 		{
 		}
 
-		virtual void updateInactive(const std::shared_ptr<Node>&)
-		{
-		}
-
 		virtual void lateUpdate(const std::shared_ptr<Node>&)
-		{
-		}
-
-		virtual void lateUpdateInactive(const std::shared_ptr<Node>&)
 		{
 		}
 

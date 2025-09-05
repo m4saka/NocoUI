@@ -1357,25 +1357,27 @@ namespace noco
 		}
 		m_childrenTempBuffer.clear();
 
-		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-		m_componentTempBuffer.clear();
-		m_componentTempBuffer.reserve(m_components.size());
-		for (const auto& component : m_components)
+		if (m_activeInHierarchy && !detail::s_canvasUpdateContext.keyInputBlocked)
 		{
-			m_componentTempBuffer.push_back(component);
-		}
-		for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
-		{
-			if (m_activeInHierarchy && (!detail::s_canvasUpdateContext.keyInputBlocked)) // updateKeyInput内で更新される場合があるためループ内で分岐が必要
+			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_componentTempBuffer.clear();
+			m_componentTempBuffer.reserve(m_components.size());
+			for (const auto& component : m_components)
+			{
+				m_componentTempBuffer.push_back(component);
+			}
+			for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
 			{
 				(*it)->updateKeyInput(thisNode);
+
+				// updateKeyInput内で更新される場合があるためループ内でもチェックが必要
+				if (!m_activeInHierarchy || detail::s_canvasUpdateContext.keyInputBlocked)
+				{
+					break;
+				}
 			}
-			else
-			{
-				(*it)->updateKeyInputInactive(thisNode);
-			}
+			m_componentTempBuffer.clear();
 		}
-		m_componentTempBuffer.clear();
 	}
 
 	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
@@ -1481,27 +1483,29 @@ namespace noco
 			}
 		}
 		
-		// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-		m_componentTempBuffer.clear();
-		m_componentTempBuffer.reserve(m_components.size());
-		for (const auto& component : m_components)
-		{
-			m_componentTempBuffer.push_back(component);
-		}
-
 		// コンポーネントのupdate実行
-		for (const auto& component : m_componentTempBuffer)
+		if (m_activeInHierarchy)
 		{
-			if (m_activeInHierarchy) // update内で更新される場合があるためループ内で分岐が必要
+			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+			m_componentTempBuffer.clear();
+			m_componentTempBuffer.reserve(m_components.size());
+			for (const auto& component : m_components)
+			{
+				m_componentTempBuffer.push_back(component);
+			}
+
+			for (const auto& component : m_componentTempBuffer)
 			{
 				component->update(thisNode);
+
+				// update内で更新される場合があるためループ内でもチェックが必要
+				if (!m_activeInHierarchy)
+				{
+					break;
+				}
 			}
-			else
-			{
-				component->updateInactive(thisNode);
-			}
+			m_componentTempBuffer.clear();
 		}
-		m_componentTempBuffer.clear();
 
 		// activeStyleStatesを構築（親から受け取ったもの + 自身のstyleState）
 		// 非アクティブな場合でも子ノードに渡すために構築する
@@ -1561,29 +1565,28 @@ namespace noco
 		if (!m_components.empty())
 		{
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_componentTempBuffer.clear();
-			m_componentTempBuffer.reserve(m_components.size());
-			for (const auto& component : m_components)
-			{
-				m_componentTempBuffer.push_back(component);
-			}
-
-			// コンポーネントのlateUpdate実行
 			if (m_activeInHierarchy)
 			{
+				m_componentTempBuffer.clear();
+				m_componentTempBuffer.reserve(m_components.size());
+				for (const auto& component : m_components)
+				{
+					m_componentTempBuffer.push_back(component);
+				}
+
+				// コンポーネントのlateUpdate実行
 				for (const auto& component : m_componentTempBuffer)
 				{
 					component->lateUpdate(thisNode);
+
+					// lateUpdate内で更新される場合があるためループ内でもチェックが必要
+					if (!m_activeInHierarchy)
+					{
+						break;
+					}
 				}
+				m_componentTempBuffer.clear();
 			}
-			else
-			{
-				for (const auto& component : m_componentTempBuffer)
-				{
-					component->lateUpdateInactive(thisNode);
-				}
-			}
-			m_componentTempBuffer.clear();
 		}
 
 		if (!m_children.empty())
@@ -2272,9 +2275,15 @@ namespace noco
 
 	std::shared_ptr<Node> Node::setActive(ActiveYN activeSelf)
 	{
-		m_activeSelf.setValue(activeSelf.getBool());
-		refreshActiveInHierarchy();
-		markLayoutAsDirty();
+		if (m_activeSelf.propertyValue() != activeSelf.getBool())
+		{
+			m_activeSelf.setValue(activeSelf.getBool());
+			if (!m_activeSelf.hasCurrentFrameOverride()) // 上書きがある場合は実際の値に変化がないためレイアウト更新不要
+			{
+				refreshActiveInHierarchy();
+				markLayoutAsDirty();
+			}
+		}
 		return shared_from_this();
 	}
 

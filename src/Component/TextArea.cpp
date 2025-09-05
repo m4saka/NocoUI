@@ -409,6 +409,7 @@ namespace noco
 	void TextArea::onDeactivated(const std::shared_ptr<Node>& node)
 	{
 		CurrentFrame::UnfocusNodeIfFocused(node);
+		m_prevEditingTextExists = false;
 	}
 
 	void TextArea::updateKeyInput(const std::shared_ptr<Node>& node)
@@ -916,11 +917,6 @@ namespace noco
 			m_isChanged = true;
 			m_prevText = m_text.value();
 		}
-	}
-
-	void TextArea::updateKeyInputInactive(const std::shared_ptr<Node>&)
-	{
-		m_prevEditingTextExists = false;
 	}
 
 	void TextArea::draw(const Node& node) const

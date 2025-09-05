@@ -213,10 +213,9 @@ namespace noco
 			m_activeStyleStates = activeStyleStates;
 			
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if (!m_paramRef.isEmpty())
+			if constexpr (IsParamValueType<T>())
 			{
-				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (IsParamValueType<T>())
+				if (!m_paramRef.isEmpty())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
@@ -454,10 +453,9 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing) override
 		{
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if (!m_paramRef.isEmpty())
+			if constexpr (IsParamValueType<T>())
 			{
-				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (IsParamValueType<T>())
+				if (!m_paramRef.isEmpty())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
@@ -738,12 +736,11 @@ namespace noco
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
-			
+
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if (!m_paramRef.isEmpty())
+			if constexpr (IsParamValueType<T>())
 			{
-				// ParamValueがサポートする型のみパラメータバインディングを行う
-				if constexpr (IsParamValueType<T>())
+				if (!m_paramRef.isEmpty())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
