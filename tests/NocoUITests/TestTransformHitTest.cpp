@@ -804,6 +804,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 子：50x50、相対位置(25,25)
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
 		child->transform().setTranslate(Vec2{ 25, 25 });
+		child->transform().setHitTestAffected(false);
 		
 		canvas->addChild(parent);
 		parent->addChild(child);
@@ -976,6 +977,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 子：50x50、Transform位置(40,0) - 親の座標系で右方向
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
 		child->transform().setTranslate(Vec2{ 40, 0 });
+		child->transform().setHitTestAffected(false);
 		
 		canvas->addChild(parent);
 		parent->addChild(child);
@@ -1019,6 +1021,7 @@ TEST_CASE("Transform HitTest with Parent-Child Hierarchy", "[Node][HitTest][Tran
 		// 子：50x50、Transform位置(30,0) - 親の座標系で右方向
 		child->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
 		child->transform().setTranslate(Vec2{ 30, 0 });
+		child->transform().setHitTestAffected(false);
 		
 		canvas->addChild(parent);
 		parent->addChild(child);
