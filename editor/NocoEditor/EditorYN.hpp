@@ -4,6 +4,7 @@
 namespace noco::editor
 {
 	using PreserveScrollYN = YesNo<struct PreserveScrollYN_tag>;
+	using EditorSelectedYN = YesNo<struct EditorSelectedYN_tag>;
 	using HasInteractivePropertyValueYN = YesNo<struct HasInteractivePropertyValueYN_tag>;
 	using HasParameterRefYN = YesNo<struct HasParameterRefYN_tag>;
 	using IsFoldedYN = YesNo<struct IsFoldedYN_tag>;
