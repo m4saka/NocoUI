@@ -1499,29 +1499,36 @@ namespace noco::editor
 
 				if (element.node()->isHitTarget())
 				{
-					const InteractionState interactionState = element.node()->currentInteractionState();
-					// 状態表示を動的に生成
-					String stateText;
-					const String& styleState = element.node()->styleState();
-					const String interactionStateStr = EnumToString(interactionState);
-				
-					if (!styleState.empty())
+					// activeInHierarchyがfalseの場合は状態テキストを表示しない
+					if (!element.node()->activeInHierarchy())
 					{
-						if (interactionState == InteractionState::Default)
-						{
-							stateText = U"[{}]"_fmt(styleState);
-						}
-						else
-						{
-							stateText = U"[{}, {}]"_fmt(styleState, interactionStateStr);
-						}
+						element.elementDetail().hierarchyStateLabel->setText(U"");
 					}
 					else
 					{
-						stateText = U"[{}]"_fmt(interactionStateStr);
+						const InteractionState interactionState = element.node()->currentInteractionState();
+						const String& styleState = element.node()->styleState();
+						const String interactionStateStr = EnumToString(interactionState);
+					
+						String stateText;
+						if (!styleState.empty())
+						{
+							if (interactionState == InteractionState::Default)
+							{
+								stateText = U"[{}]"_fmt(styleState);
+							}
+							else
+							{
+								stateText = U"[{}, {}]"_fmt(styleState, interactionStateStr);
+							}
+						}
+						else
+						{
+							stateText = U"[{}]"_fmt(interactionStateStr);
+						}
+					
+						element.elementDetail().hierarchyStateLabel->setText(stateText);
 					}
-				
-					element.elementDetail().hierarchyStateLabel->setText(stateText);
 				}
 				else
 				{
