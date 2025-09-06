@@ -186,25 +186,25 @@ namespace noco
 			}, m_propertyValue);
 		}
 		
-		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) override
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
 			return std::visit([&](auto& propValue) -> bool {
-				return propValue.trySetValueStringOf(value, interactionState, activeStyleStates);
+				return propValue.trySetValueStringOf(value, interactionState, styleState);
 			}, m_propertyValue);
 		}
 		
-		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
 			std::visit([&](auto& propValue) {
-				propValue.unsetValueOf(interactionState, activeStyleStates);
+				propValue.unsetValueOf(interactionState, styleState);
 			}, m_propertyValue);
 		}
 		
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const override
 		{
 			return std::visit([&](const auto& propValue) -> bool {
-				return propValue.hasValueOf(interactionState, activeStyleStates);
+				return propValue.hasValueOf(interactionState, styleState);
 			}, m_propertyValue);
 		}
 

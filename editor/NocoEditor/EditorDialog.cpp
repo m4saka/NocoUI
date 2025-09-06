@@ -59,14 +59,7 @@ namespace noco::editor
 						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
 						[this, interactionState, currentValueString](StringView value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, m_currentStyleState))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -83,15 +76,8 @@ namespace noco::editor
 						ParseOr<bool>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), false),
 						[this, interactionState, currentValueString](bool value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, m_currentStyleState))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -108,15 +94,8 @@ namespace noco::editor
 						ParseOr<Vec2>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), Vec2{ 0, 0 }),
 						[this, interactionState, currentValueString](const Vec2& value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, m_currentStyleState))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -133,15 +112,8 @@ namespace noco::editor
 						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{}),
 						[this, interactionState, currentValueString](const ColorF& value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, m_currentStyleState))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -158,15 +130,8 @@ namespace noco::editor
 						ParseOr<LRTB>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), LRTB{ 0, 0, 0, 0 }),
 						[this, interactionState, currentValueString](const LRTB& value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
 							const String formattedValue = Format(value);
-							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, m_currentStyleState))
 							{
 								*currentValueString = formattedValue;
 								if (m_onChange)
@@ -183,14 +148,7 @@ namespace noco::editor
 						m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates),
 						[this, interactionState, currentValueString](StringView value)
 						{
-							// 現在のactiveStyleStatesを動的に構築
-							Array<String> currentActiveStyleStates;
-							if (!m_currentStyleState.isEmpty())
-							{
-								currentActiveStyleStates.push_back(m_currentStyleState);
-							}
-
-							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, currentActiveStyleStates))
+							if (m_pProperty->trySetPropertyValueStringOf(value, interactionState, m_currentStyleState))
 							{
 								*currentValueString = value;
 								if (m_onChange)
@@ -209,19 +167,12 @@ namespace noco::editor
 			}
 
 			const auto checkboxNode = propertyNode->addChildAtIndex(Inspector::CreateCheckboxNode(
-				m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates),
+				m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState),
 				[this, interactionState, propertyValueNode, currentValueString](bool value)
 				{
-					// 現在のactiveStyleStatesを動的に構築
-					Array<String> currentActiveStyleStates;
-					if (!m_currentStyleState.isEmpty())
-					{
-						currentActiveStyleStates.push_back(m_currentStyleState);
-					}
-
 					if (value)
 					{
-						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, currentActiveStyleStates))
+						if (m_pProperty->trySetPropertyValueStringOf(*currentValueString, interactionState, m_currentStyleState))
 						{
 							propertyValueNode->setInteractable(true);
 							if (m_onChange)
@@ -232,7 +183,7 @@ namespace noco::editor
 					}
 					else
 					{
-						m_pProperty->unsetPropertyValueOf(interactionState, currentActiveStyleStates);
+						m_pProperty->unsetPropertyValueOf(interactionState, m_currentStyleState);
 						propertyValueNode->setInteractable(false);
 						if (m_onChange)
 						{
@@ -243,7 +194,7 @@ namespace noco::editor
 				0);
 			// Defaultは常に値が存在するのでチェックボックスは無効
 			checkboxNode->setInteractable(interactionState != InteractionState::Default);
-			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
+			propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState));
 			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 			// PropertyValueNodeInfoを保存

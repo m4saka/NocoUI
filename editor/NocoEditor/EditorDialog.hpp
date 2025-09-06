@@ -595,7 +595,7 @@ namespace noco::editor
 				updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
 
 				// チェックボックスの状態を更新
-				const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates);
+				const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState);
 				if (const auto toggler = nodeInfo.checkboxNode->getComponent<CheckboxToggler>())
 				{
 					toggler->setValue(hasValue);
@@ -679,7 +679,7 @@ namespace noco::editor
 			}
 		
 			// プロパティ値ノードの有効/無効を設定
-			nodeInfo.propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, activeStyleStates));
+			nodeInfo.propertyValueNode->setInteractable(m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState));
 		}
 	
 		void onAddStyleState()
@@ -705,15 +705,13 @@ namespace noco::editor
 										currentActiveStyleStates.push_back(m_currentStyleState);
 									}
 								
-									Array<String> newActiveStyleStates = { newState };
-								
 									// 各InteractionStateの値をコピー
 									for (const auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 									{
-										if (m_pProperty->hasPropertyValueOf(interactionState, currentActiveStyleStates))
+										if (m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState))
 										{
 											const String value = m_pProperty->propertyValueStringOfFallback(interactionState, currentActiveStyleStates);
-											m_pProperty->trySetPropertyValueStringOf(value, interactionState, newActiveStyleStates);
+											m_pProperty->trySetPropertyValueStringOf(value, interactionState, newState);
 										}
 									}
 								
@@ -788,12 +786,10 @@ namespace noco::editor
 			// プロパティ値から指定されたstyleStateを削除
 			if (m_pProperty && m_pProperty->isInteractiveProperty())
 			{
-				Array<String> styleStateArray = { styleStateToRemove };
-			
 				// 指定されたstyleStateのすべてのInteractionStateを削除
 				for (auto interactionState : { InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 				{
-					m_pProperty->unsetPropertyValueOf(interactionState, styleStateArray);
+					m_pProperty->unsetPropertyValueOf(interactionState, styleStateToRemove);
 				}
 			}
 		}

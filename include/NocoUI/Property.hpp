@@ -32,9 +32,9 @@ namespace noco
 		virtual Optional<String> propertyValueStringOf(InteractionState interactionState, const Array<String>& activeStyleStates) const = 0;
 		virtual String propertyValueStringOfFallback(InteractionState interactionState, const Array<String>& activeStyleStates) const = 0;
 		virtual bool trySetPropertyValueString(StringView value) = 0;
-		virtual bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) = 0;
-		virtual void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) = 0;
-		virtual bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const = 0;
+		virtual bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") = 0;
+		virtual void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") = 0;
+		virtual bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const = 0;
 		virtual PropertyEditType editType() const = 0;
 		virtual Array<String> enumCandidates() const
 		{
@@ -275,20 +275,20 @@ namespace noco
 			return m_propertyValue.trySetValueString(value);
 		}
 
-		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) override
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
-			return m_propertyValue.trySetValueStringOf(value, interactionState, activeStyleStates);
+			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
 		}
 
-		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
-			m_propertyValue.unsetValueOf(interactionState, activeStyleStates);
+			m_propertyValue.unsetValueOf(interactionState, styleState);
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const override
 		{
-			return m_propertyValue.hasValueOf(interactionState, activeStyleStates);
+			return m_propertyValue.hasValueOf(interactionState, styleState);
 		}
 
 		[[nodiscard]]
@@ -547,20 +547,20 @@ namespace noco
 			return m_propertyValue.trySetValueString(value);
 		}
 
-		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) override
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
-			return m_propertyValue.trySetValueStringOf(value, interactionState, activeStyleStates);
+			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
 		}
 
-		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
-			m_propertyValue.unsetValueOf(interactionState, activeStyleStates);
+			m_propertyValue.unsetValueOf(interactionState, styleState);
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const override
 		{
-			return m_propertyValue.hasValueOf(interactionState, activeStyleStates);
+			return m_propertyValue.hasValueOf(interactionState, styleState);
 		}
 
 		[[nodiscard]]
@@ -835,20 +835,20 @@ namespace noco
 			}
 		}
 
-		bool trySetPropertyValueStringOf(StringView, InteractionState, const Array<String>&) override
+		bool trySetPropertyValueStringOf(StringView, InteractionState, StringView = U"") override
 		{
 			throw Error{ U"trySetPropertyValueStringOf() called for non-interactive property" };
 		}
 
-		void unsetPropertyValueOf(InteractionState, const Array<String>&) override
+		void unsetPropertyValueOf(InteractionState, StringView = U"") override
 		{
 			// NonInteractiveプロパティでは何もしない
 		}
 
 		[[nodiscard]]
-		bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const override
 		{
-			if (interactionState == InteractionState::Default && activeStyleStates.empty())
+			if (interactionState == InteractionState::Default && styleState.isEmpty())
 			{
 				return true;
 			}

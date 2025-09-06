@@ -987,7 +987,7 @@ namespace noco
 			return true;
 		}
 
-		bool trySetValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates)
+		bool trySetValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"")
 		{
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
 			if (!parsedValue)
@@ -995,10 +995,8 @@ namespace noco
 				return false;
 			}
 			
-			if (!activeStyleStates.empty())
+			if (!styleState.isEmpty())
 			{
-				const String& styleState = activeStyleStates.back(); // 最も優先度の高いstyleState
-				
 				if (!styleStateValues)
 				{
 					styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
@@ -1061,17 +1059,15 @@ namespace noco
 			return false;
 		}
 
-		void unsetValueOf(InteractionState interactionState, const Array<String>& activeStyleStates)
+		void unsetValueOf(InteractionState interactionState, StringView styleState = U"")
 		{
 			if (interactionState == InteractionState::Default)
 			{
 				return; // defaultValueは削除できない
 			}
 
-			if (!activeStyleStates.empty())
+			if (!styleState.isEmpty())
 			{
-				const String& styleState = activeStyleStates.back();
-				
 				if (styleStateValues)
 				{
 					if (auto it = styleStateValues->find(styleState); it != styleStateValues->end())
@@ -1115,7 +1111,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		bool hasValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const
+		bool hasValueOf(InteractionState interactionState, StringView styleState = U"") const
 		{
 			if (interactionState == InteractionState::Default)
 			{
@@ -1123,10 +1119,8 @@ namespace noco
 				return true;
 			}
 
-			if (!activeStyleStates.empty())
+			if (!styleState.isEmpty())
 			{
-				const String& styleState = activeStyleStates.back();
-				
 				if (styleStateValues)
 				{
 					if (auto it = styleStateValues->find(styleState); it != styleStateValues->end())
