@@ -150,9 +150,9 @@ namespace noco
 			if (!activeStyleStates.empty() && styleStateValues)
 			{
 				// 優先度の高い順にチェック(配列の末尾から)
-				for (int32 i = static_cast<int32>(activeStyleStates.size()) - 1; i >= 0; --i)
+				for (auto styleStateIt = activeStyleStates.rbegin(); styleStateIt != activeStyleStates.rend(); ++styleStateIt)
 				{
-					const String& currentStyleState = activeStyleStates[i];
+					const String& currentStyleState = *styleStateIt;
 					
 					// styleStateのPropertyStyleStateValueを取得
 					if (auto it = styleStateValues->find(currentStyleState); it != styleStateValues->end())

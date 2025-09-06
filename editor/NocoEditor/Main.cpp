@@ -1149,8 +1149,15 @@ void Main()
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
 
+	Graphics::SetVSyncEnabled(false);
+
 	while (System::Update())
 	{
+		if (Scene::FrameCount() % 60 == 0)
+		{
+			Print << Profiler::FPS();
+		}
+
 		editor.update();
 		if (editor.isExitRequested())
 		{
