@@ -3460,6 +3460,7 @@ namespace noco::editor
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
 							} 
 						},
+						MenuSeparator{},
 						MenuItem
 						{ 
 							.text = U"参照パラメータを選択..."_fmt(name), 
@@ -3469,7 +3470,19 @@ namespace noco::editor
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
+						},
+						MenuItem
+						{
+							.text = U"参照パラメータをクリア"_fmt(name),
+							.hotKeyText = U"",
+							.mnemonicInput = KeyC,
+							.onClick = [pProperty, this]
+							{
+								pProperty->setParamRef(U"");
+								refreshInspector();
 							},
+							.fnIsEnabled = [pProperty] { return !pProperty->paramRef().isEmpty(); },
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3498,6 +3511,7 @@ namespace noco::editor
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
 							} 
 						},
+						MenuSeparator{},
 						MenuItem
 						{ 
 							.text = U"参照パラメータを選択..."_fmt(name), 
@@ -3507,7 +3521,19 @@ namespace noco::editor
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
+						},
+						MenuItem
+						{
+							.text = U"参照パラメータをクリア"_fmt(name),
+							.hotKeyText = U"",
+							.mnemonicInput = KeyC,
+							.onClick = [pProperty, this]
+							{
+								pProperty->setParamRef(U"");
+								refreshInspector();
 							},
+							.fnIsEnabled = [pProperty] { return !pProperty->paramRef().isEmpty(); },
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3549,6 +3575,7 @@ namespace noco::editor
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
 							} 
 						},
+						MenuSeparator{},
 						MenuItem
 						{ 
 							.text = U"参照パラメータを選択..."_fmt(name), 
@@ -3558,7 +3585,19 @@ namespace noco::editor
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
+						},
+						MenuItem
+						{
+							.text = U"参照パラメータをクリア"_fmt(name),
+							.hotKeyText = U"",
+							.mnemonicInput = KeyC,
+							.onClick = [pProperty, this]
+							{
+								pProperty->setParamRef(U"");
+								refreshInspector();
 							},
+							.fnIsEnabled = [pProperty] { return !pProperty->paramRef().isEmpty(); },
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -3583,6 +3622,7 @@ namespace noco::editor
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
 							} 
 						},
+						MenuSeparator{},
 						MenuItem
 						{ 
 							.text = U"参照パラメータを選択..."_fmt(name), 
@@ -3592,7 +3632,19 @@ namespace noco::editor
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(pProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 							},
+						},
+						MenuItem
+						{
+							.text = U"参照パラメータをクリア"_fmt(name),
+							.hotKeyText = U"",
+							.mnemonicInput = KeyC,
+							.onClick = [pProperty, this]
+							{
+								pProperty->setParamRef(U"");
+								refreshInspector();
 							},
+							.fnIsEnabled = [pProperty] { return !pProperty->paramRef().isEmpty(); },
+						},
 					};
 					
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
@@ -4520,6 +4572,7 @@ namespace noco::editor
 						// PropertyNonInteractiveの場合は無効化
 						.fnIsEnabled = [isInteractive] { return isInteractive; }
 					},
+					MenuSeparator{},
 					MenuItem
 					{ 
 						.text = U"参照パラメータを選択..."_fmt(property->name()), 
@@ -4529,6 +4582,18 @@ namespace noco::editor
 						{ 
 							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(property, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
 						},
+					},
+					MenuItem
+					{
+						.text = U"参照パラメータをクリア"_fmt(property->name()),
+						.hotKeyText = U"",
+						.mnemonicInput = KeyC,
+						.onClick = [property, this]
+						{
+							property->setParamRef(U"");
+							refreshInspector();
+						},
+						.fnIsEnabled = [property] { return !property->paramRef().isEmpty(); },
 					},
 				};
 				
