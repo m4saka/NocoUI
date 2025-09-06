@@ -592,7 +592,7 @@ namespace noco::editor
 				*nodeInfo.currentValueString = currentValue;
 
 				// UIを更新
-				updatePropertyValueNode(interactionState, nodeInfo, currentValue, activeStyleStates);
+				updatePropertyValueNode(interactionState, nodeInfo, currentValue);
 
 				// チェックボックスの状態を更新
 				const bool hasValue = m_pProperty->hasPropertyValueOf(interactionState, m_currentStyleState);
@@ -606,7 +606,7 @@ namespace noco::editor
 			}
 		}
 	
-		void updatePropertyValueNode(InteractionState interactionState, const PropertyValueNodeInfo& nodeInfo, const String& value, const Array<String>& activeStyleStates)
+		void updatePropertyValueNode(InteractionState interactionState, const PropertyValueNodeInfo& nodeInfo, const String& value)
 		{
 			// 各プロパティタイプに応じて表示を更新
 			switch (m_pProperty->editType())
