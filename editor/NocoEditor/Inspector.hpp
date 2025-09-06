@@ -644,20 +644,18 @@ namespace noco::editor
 				name,
 				InlineRegion
 				{
-					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
-					.margin = LRTB{ 12, 12, 0, 0 },
+					.flexibleWeight = 1,
+					.margin = LRTB{ 10, 8, 0, 0 },
 				},
 				IsHitTargetYN::Yes);
+			propertyNode->setChildrenLayout(HorizontalLayout{ .verticalAlign = VerticalAlign::Middle });
 			const auto textBoxNode = propertyNode->emplaceChild(
 				U"TextBox",
-				AnchorRegion
+				InlineRegion
 				{
-					.anchorMin = Anchor::MiddleLeft,
-					.anchorMax = Anchor::MiddleRight,
-					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ -4, 26 },
-					.sizeDeltaPivot = Anchor::MiddleCenter,
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 26 },
 				});
 			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
@@ -2274,7 +2272,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 40 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6 });
+			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6, .verticalAlign = VerticalAlign::Middle });
 			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
 
 			// activeSelfのチェックボックス
