@@ -446,6 +446,7 @@ namespace noco::editor
 				Array<MenuElement> menuElements = {
 					MenuItem{ U"Sprite を追加", U"", KeyS, [this] { onClickAddComponent<Sprite>(); } },
 					MenuItem{ U"RectRenderer を追加", U"", KeyR, [this] { onClickAddComponent<RectRenderer>(); } },
+					MenuItem{ U"ShapeRenderer を追加", U"", KeyH, [this] { onClickAddComponent<ShapeRenderer>(); } },
 					MenuItem{ U"TextBox を追加", U"", KeyT, [this] { onClickAddComponent<TextBox>(); } },
 					MenuItem{ U"TextArea を追加", U"", KeyA, [this] { onClickAddComponent<TextArea>(); } },
 					MenuItem{ U"Label を追加", U"", KeyL, [this] { onClickAddComponent<Label>(); } },
@@ -716,6 +717,7 @@ namespace noco::editor
 		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
 			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
+			Optional<double> dragStep = none;
 			
 			// メタデータをチェックして表示名を取得
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -725,9 +727,10 @@ namespace noco::editor
 				{
 					displayName = *metadata.displayName;
 				}
+				dragStep = metadata.dragValueChangeStep;
 			}
 			
-			const auto propertyNode = CreateVec2PropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
+			const auto propertyNode = CreateVec2PropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, dragStep);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -1126,8 +1129,10 @@ namespace noco::editor
 			const Vec2& currentValue,
 			std::function<void(const Vec2&)> fnSetValue,
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No,
+			Optional<double> dragValueChangeStep = none)
 		{
+			double step = dragValueChangeStep.value_or(1.0);
 			const auto propertyNode = Node::Create(
 				name,
 				InlineRegion
@@ -1261,7 +1266,7 @@ namespace noco::editor
 					{
 						return vec2PropertyTextBox->value().x;
 					},
-					1.0,  // 感度
+					step,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
 					std::numeric_limits<double>::max(),   // 最大値
 					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
@@ -1280,7 +1285,7 @@ namespace noco::editor
 					{
 						return vec2PropertyTextBox->value().y;
 					},
-					1.0,  // 感度
+					step,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
 					std::numeric_limits<double>::max(),   // 最大値
 					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）

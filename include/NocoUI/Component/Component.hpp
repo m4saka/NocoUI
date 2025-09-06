@@ -4,6 +4,7 @@
 #include "TextureFontLabel.hpp"
 #include "Sprite.hpp"
 #include "RectRenderer.hpp"
+#include "ShapeRenderer.hpp"
 #include "ITextBox.hpp"
 #include "TextBox.hpp"
 #include "TextArea.hpp"

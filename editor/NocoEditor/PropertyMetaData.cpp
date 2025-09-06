@@ -315,6 +315,205 @@ namespace noco::editor
 			.dragValueChangeStep = 1.0,
 		};
 		
+		// ShapeRenderer
+		metadata[PropertyKey{ U"ShapeRenderer", U"shapeType" }] = PropertyMetadata{
+			.tooltip = U"描画する図形の種類",
+			.tooltipDetail = U"Cross: バツ印\nPlus: プラス記号\nPentagon: 正五角形\nHexagon: 正六角形\nNgon: 正N角形\nStar: 五芒星\nNStar: 星形\nArrow: 矢印\nDoubleHeadedArrow: 両方向矢印\nRhombus: ひし形\nRectBalloon: 長方形の吹き出し\nStairs: 階段形\nHeart: ハート形\nSquircle: 正方形と円の中間\nAstroid: 星芒形",
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"preserveAspect" }] = PropertyMetadata{
+			.tooltip = U"アスペクト比を保持",
+			.tooltipDetail = U"trueの場合、図形のアスペクト比を保持し、ノードの短い辺に内接するようサイズを調整します。\nfalseの場合、ノードのサイズに合わせて図形を変形します。",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					const auto type = shapeRenderer->shapeType();
+					return type != ShapeType::RectBalloon && 
+					       type != ShapeType::Arrow && 
+					       type != ShapeType::DoubleHeadedArrow &&
+					       type != ShapeType::Rhombus &&
+					       type != ShapeType::Stairs &&
+					       type != ShapeType::Astroid;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"thickness" }] = PropertyMetadata{
+			.tooltip = U"太さ",
+			.tooltipDetail = U"Cross、Plus、Arrow、DoubleHeadedArrowの線の太さ",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					const auto type = shapeRenderer->shapeType();
+					return type == ShapeType::Cross || type == ShapeType::Plus || 
+					       type == ShapeType::Arrow || type == ShapeType::DoubleHeadedArrow;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"sides" }] = PropertyMetadata{
+			.tooltip = U"辺の数",
+			.tooltipDetail = U"Ngon(正N角形)の辺の数",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::Ngon;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"points" }] = PropertyMetadata{
+			.tooltip = U"尖端の数",
+			.tooltipDetail = U"NStar(星形)の尖端の数",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::NStar;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"innerRatio" }] = PropertyMetadata{
+			.tooltip = U"内周の比率",
+			.tooltipDetail = U"NStar(星形)の内周の半径を外周に対する比率で指定 (0.0〜1.0)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::NStar;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 0.1,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"startPoint" }] = PropertyMetadata{
+			.tooltip = U"始点",
+			.tooltipDetail = U"Arrow、DoubleHeadedArrowの始点 (要素サイズに対する 0〜1 の比率。0,0 が左上)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					const auto type = shapeRenderer->shapeType();
+					return type == ShapeType::Arrow || type == ShapeType::DoubleHeadedArrow;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 0.1,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"endPoint" }] = PropertyMetadata{
+			.tooltip = U"終点",
+			.tooltipDetail = U"Arrow、DoubleHeadedArrowの終点 (要素サイズに対する 0〜1 の比率。0,0 が左上)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					const auto type = shapeRenderer->shapeType();
+					return type == ShapeType::Arrow || type == ShapeType::DoubleHeadedArrow;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 0.1,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"arrowHeadSize" }] = PropertyMetadata{
+			.tooltip = U"矢じりのサイズ (幅, 高さ, px)",
+			.tooltipDetail = U"Arrow、DoubleHeadedArrowの矢じりのサイズをピクセル単位で指定",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					const auto type = shapeRenderer->shapeType();
+					return type == ShapeType::Arrow || type == ShapeType::DoubleHeadedArrow;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"targetPoint" }] = PropertyMetadata{
+			.tooltip = U"ターゲット座標",
+			.tooltipDetail = U"RectBalloon(吹き出し)の先端が指す座標 (0〜1 の比率で指定、0,0 が左上)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::RectBalloon;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 0.1,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"tailRatio" }] = PropertyMetadata{
+			.tooltip = U"吹き出しの根元の比率",
+			.tooltipDetail = U"RectBalloon(吹き出し)の根元の位置の比率 (0.0〜1.0)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::RectBalloon;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 0.1,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"stairCount" }] = PropertyMetadata{
+			.tooltip = U"階段数",
+			.tooltipDetail = U"Stairs(階段形)の階段数",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::Stairs;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"upStairs" }] = PropertyMetadata{
+			.tooltip = U"右上に上がるか",
+			.tooltipDetail = U"Stairs(階段形)が右上に上がるか、左上に上がるか",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::Stairs;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"squircleQuality" }] = PropertyMetadata{
+			.tooltip = U"品質",
+			.tooltipDetail = U"Squircle(正方形と円の中間)の描画品質 (頂点数)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
+				{
+					return shapeRenderer->shapeType() == ShapeType::Squircle;
+				}
+				return false;
+			},
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"fillColor" }] = PropertyMetadata{
+			.tooltip = U"塗りつぶし色",
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"outlineColor" }] = PropertyMetadata{
+			.tooltip = U"アウトライン色",
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"outlineThickness" }] = PropertyMetadata{
+			.tooltip = U"アウトラインの太さ",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"ShapeRenderer", U"blendMode" }] = PropertyMetadata{
+			.tooltip = U"ブレンドモード",
+			.tooltipDetail = U"描画時のブレンドモードを指定します\nNormal: 通常の描画\nAdditive: 加算合成\nSubtractive: 減算合成\nMultiply: 乗算合成",
+		};
+		
 		// Label
 		metadata[PropertyKey{ U"Label", U"text" }] = PropertyMetadata{
 			.tooltip = U"表示するテキスト",
@@ -762,13 +961,13 @@ namespace noco::editor
 		
 		metadata[PropertyKey{ U"Tween", U"fromDouble" }] = PropertyMetadata{
 			.displayName = U"from",
-			.tooltip = U"開始角度（度）",
+			.tooltip = U"開始角度(度)",
 			.visibilityCondition = tweenDoubleVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"Tween", U"toDouble" }] = PropertyMetadata{
 			.displayName = U"to",
-			.tooltip = U"終了角度（度）",
+			.tooltip = U"終了角度(度)",
 			.visibilityCondition = tweenDoubleVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
@@ -800,11 +999,11 @@ namespace noco::editor
 		};
 		
 		metadata[PropertyKey{ U"Tween", U"duration" }] = PropertyMetadata{
-			.tooltip = U"アニメーション時間（秒）",
+			.tooltip = U"アニメーション時間(秒)",
 			.dragValueChangeStep = 0.1,
 		};
 		metadata[PropertyKey{ U"Tween", U"delay" }] = PropertyMetadata{
-			.tooltip = U"開始までの遅延時間（秒）",
+			.tooltip = U"開始までの遅延時間(秒)",
 			.dragValueChangeStep = 0.1,
 		};
 		metadata[PropertyKey{ U"Tween", U"loopType" }] = PropertyMetadata{
