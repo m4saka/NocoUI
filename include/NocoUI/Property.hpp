@@ -33,7 +33,7 @@ namespace noco
 		virtual String propertyValueStringOfFallback(InteractionState interactionState, const Array<String>& activeStyleStates) const = 0;
 		virtual bool trySetPropertyValueString(StringView value) = 0;
 		virtual bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, const Array<String>& activeStyleStates) = 0;
-		virtual bool tryUnsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) = 0;
+		virtual void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) = 0;
 		virtual bool hasPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) const = 0;
 		virtual PropertyEditType editType() const = 0;
 		virtual Array<String> enumCandidates() const
@@ -280,9 +280,9 @@ namespace noco
 			return m_propertyValue.trySetValueStringOf(value, interactionState, activeStyleStates);
 		}
 
-		bool tryUnsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
 		{
-			return m_propertyValue.tryUnsetValueOf(interactionState, activeStyleStates);
+			m_propertyValue.unsetValueOf(interactionState, activeStyleStates);
 		}
 
 		[[nodiscard]]
@@ -552,9 +552,9 @@ namespace noco
 			return m_propertyValue.trySetValueStringOf(value, interactionState, activeStyleStates);
 		}
 
-		bool tryUnsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
 		{
-			return m_propertyValue.tryUnsetValueOf(interactionState, activeStyleStates);
+			m_propertyValue.unsetValueOf(interactionState, activeStyleStates);
 		}
 
 		[[nodiscard]]
@@ -840,9 +840,9 @@ namespace noco
 			throw Error{ U"trySetPropertyValueStringOf() called for non-interactive property" };
 		}
 
-		bool tryUnsetPropertyValueOf(InteractionState, const Array<String>&) override
+		void unsetPropertyValueOf(InteractionState, const Array<String>&) override
 		{
-			return false;
+			// NonInteractiveプロパティでは何もしない
 		}
 
 		[[nodiscard]]

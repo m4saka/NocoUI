@@ -11,11 +11,11 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 	SECTION("Regular interaction states serialization")
 	{
 		// interactionStateのシリアライズテスト
-		noco::PropertyValue<ColorF> colorProp{ ColorF{ 1.0, 0.0, 0.0, 1.0 } }; // 赤（default）
-		colorProp.hoveredValue = ColorF{ 0.0, 1.0, 0.0, 1.0 }; // 緑（hovered）
-		colorProp.pressedValue = ColorF{ 0.0, 0.0, 1.0, 1.0 }; // 青（pressed）
-		colorProp.disabledValue = ColorF{ 0.5, 0.5, 0.5, 1.0 }; // グレー（disabled）
-		colorProp.smoothTime = 0.3;
+		noco::PropertyValue<ColorF> colorProp = noco::PropertyValue<ColorF>{ ColorF{ 1.0, 0.0, 0.0, 1.0 } } // 赤（default）
+			.withHovered(ColorF{ 0.0, 1.0, 0.0, 1.0 }) // 緑（hovered）
+			.withPressed(ColorF{ 0.0, 0.0, 1.0, 1.0 }) // 青（pressed）
+			.withDisabled(ColorF{ 0.5, 0.5, 0.5, 1.0 }) // グレー（disabled）
+			.withSmoothTime(0.3);
 		
 		// JSONへシリアライズ
 		JSON json = colorProp.toJSON();
@@ -33,12 +33,12 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 		s3d::Array<s3d::String> emptyActiveStyleStates;
 		
 		REQUIRE(deserializedProp.defaultValue == ColorF{ 1.0, 0.0, 0.0, 1.0 });
-		REQUIRE(deserializedProp.hoveredValue.has_value());
-		REQUIRE(*deserializedProp.hoveredValue == ColorF{ 0.0, 1.0, 0.0, 1.0 });
-		REQUIRE(deserializedProp.pressedValue.has_value());
-		REQUIRE(*deserializedProp.pressedValue == ColorF{ 0.0, 0.0, 1.0, 1.0 });
-		REQUIRE(deserializedProp.disabledValue.has_value());
-		REQUIRE(*deserializedProp.disabledValue == ColorF{ 0.5, 0.5, 0.5, 1.0 });
+		REQUIRE(deserializedProp.hoveredValue().has_value());
+		REQUIRE(*deserializedProp.hoveredValue() == ColorF{ 0.0, 1.0, 0.0, 1.0 });
+		REQUIRE(deserializedProp.pressedValue().has_value());
+		REQUIRE(*deserializedProp.pressedValue() == ColorF{ 0.0, 0.0, 1.0, 1.0 });
+		REQUIRE(deserializedProp.disabledValue().has_value());
+		REQUIRE(*deserializedProp.disabledValue() == ColorF{ 0.5, 0.5, 0.5, 1.0 });
 		REQUIRE(deserializedProp.smoothTime == 0.3);
 	}
 	
@@ -49,17 +49,17 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 		alphaProp.smoothTime = 0.2;
 		
 		// styleStateValues を初期化
-		alphaProp.styleStateValues = std::make_unique<HashTable<String, noco::InteractionValues<double>>>();
+		alphaProp.styleStateValues = std::make_unique<HashTable<String, noco::PropertyStyleStateValue<double>>>();
 		
 		// "selected" スタイル状態を追加
-		noco::InteractionValues<double> selectedValues{ 0.8 }; // default
+		noco::PropertyStyleStateValue<double> selectedValues{ 0.8 }; // default
 		selectedValues.hoveredValue = 0.9;
 		selectedValues.pressedValue = 0.7;
 		selectedValues.disabledValue = 0.4;
 		(*alphaProp.styleStateValues)[U"selected"] = selectedValues;
 		
 		// "active" スタイル状態を追加（defaultのみ）
-		noco::InteractionValues<double> activeValues{ 0.95 };
+		noco::PropertyStyleStateValue<double> activeValues{ 0.95 };
 		(*alphaProp.styleStateValues)[U"active"] = activeValues;
 		
 		// JSONへシリアライズ
@@ -121,13 +121,12 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 	{
 		// 通常のinteractionStateとstyleStateの両方を含むテスト
 		noco::PropertyValue<int32> sizeProp{ 100 };
-		sizeProp.hoveredValue = 110;
-		sizeProp.pressedValue = 90;
+		sizeProp = sizeProp.withHovered(110).withPressed(90);
 		sizeProp.smoothTime = 0.15;
 		
 		// styleStateも追加
-		sizeProp.styleStateValues = std::make_unique<HashTable<String, noco::InteractionValues<int32>>>();
-		noco::InteractionValues<int32> focusedValues{ 105 };
+		sizeProp.styleStateValues = std::make_unique<HashTable<String, noco::PropertyStyleStateValue<int32>>>();
+		noco::PropertyStyleStateValue<int32> focusedValues{ 105 };
 		focusedValues.hoveredValue = 115;
 		(*sizeProp.styleStateValues)[U"focused"] = focusedValues;
 		
@@ -147,8 +146,8 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 		// デシリアライズして確認
 		auto deserializedProp = noco::PropertyValue<int32>::fromJSON(json);
 		REQUIRE(deserializedProp.defaultValue == 100);
-		REQUIRE(*deserializedProp.hoveredValue == 110);
-		REQUIRE(*deserializedProp.pressedValue == 90);
+		REQUIRE(*deserializedProp.hoveredValue() == 110);
+		REQUIRE(*deserializedProp.pressedValue() == 90);
 		
 		auto focusedIt = deserializedProp.styleStateValues->find(U"focused");
 		REQUIRE(focusedIt->second.defaultValue == 105);
@@ -159,12 +158,11 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 	{
 		// Enum型でのテスト
 		noco::PropertyValue<CursorStyle> cursorProp{ CursorStyle::Default };
-		cursorProp.hoveredValue = CursorStyle::Hand;
-		cursorProp.pressedValue = CursorStyle::Cross;
+		cursorProp = cursorProp.withHovered(CursorStyle::Hand).withPressed(CursorStyle::Cross);
 		
 		// styleState追加
-		cursorProp.styleStateValues = std::make_unique<HashTable<String, noco::InteractionValues<CursorStyle>>>();
-		noco::InteractionValues<CursorStyle> busyValues{ CursorStyle::Hidden };
+		cursorProp.styleStateValues = std::make_unique<HashTable<String, noco::PropertyStyleStateValue<CursorStyle>>>();
+		noco::PropertyStyleStateValue<CursorStyle> busyValues{ CursorStyle::Hidden };
 		busyValues.hoveredValue = CursorStyle::NotAllowed;
 		(*cursorProp.styleStateValues)[U"busy"] = busyValues;
 		
@@ -183,8 +181,8 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 		// デシリアライズして確認
 		auto deserializedProp = noco::PropertyValue<CursorStyle>::fromJSON(json);
 		REQUIRE(deserializedProp.defaultValue == CursorStyle::Default);
-		REQUIRE(*deserializedProp.hoveredValue == CursorStyle::Hand);
-		REQUIRE(*deserializedProp.pressedValue == CursorStyle::Cross);
+		REQUIRE(*deserializedProp.hoveredValue() == CursorStyle::Hand);
+		REQUIRE(*deserializedProp.pressedValue() == CursorStyle::Cross);
 		
 		auto busyIt = deserializedProp.styleStateValues->find(U"busy");
 		REQUIRE(busyIt->second.defaultValue == CursorStyle::Hidden);
@@ -270,8 +268,8 @@ TEST_CASE("PropertyValue fromJSON type checking", "[PropertyValue]")
 		
 		auto prop = noco::PropertyValue<int32>::fromJSON(objJson);
 		REQUIRE(prop.defaultValue == 0);  // 文字列は受け付けない
-		REQUIRE(prop.hoveredValue.has_value());
-		REQUIRE(*prop.hoveredValue == 50);  // 数値は正しく読み込まれる
+		REQUIRE(prop.hoveredValue().has_value());
+		REQUIRE(*prop.hoveredValue() == 50);  // 数値は正しく読み込まれる
 	}
 }
 

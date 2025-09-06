@@ -139,10 +139,10 @@ TEST_CASE("SmoothProperty InteractionState transitions", "[Property]")
 	{
 		noco::SmoothProperty<double> opacityProperty{ U"opacity", 1.0 };
 		
-		noco::PropertyValue<double> opacityValue{ 1.0 };
-		opacityValue.hoveredValue = 0.8;
-		opacityValue.pressedValue = 0.6;
-		opacityValue.smoothTime = 0.5;
+		noco::PropertyValue<double> opacityValue = noco::PropertyValue<double>{ 1.0 }
+			.withHovered(0.8)
+			.withPressed(0.6)
+			.withSmoothTime(0.5);
 		opacityProperty.setPropertyValue(opacityValue);
 		
 		opacityProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipsSmoothingYN::No);

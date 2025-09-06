@@ -193,10 +193,10 @@ namespace noco
 			}, m_propertyValue);
 		}
 		
-		bool tryUnsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
+		void unsetPropertyValueOf(InteractionState interactionState, const Array<String>& activeStyleStates) override
 		{
-			return std::visit([&](auto& propValue) -> bool {
-				return propValue.tryUnsetValueOf(interactionState, activeStyleStates);
+			std::visit([&](auto& propValue) {
+				propValue.unsetValueOf(interactionState, activeStyleStates);
 			}, m_propertyValue);
 		}
 		

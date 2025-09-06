@@ -791,9 +791,9 @@ namespace noco::editor
 				Array<String> styleStateArray = { styleStateToRemove };
 			
 				// 指定されたstyleStateのすべてのInteractionStateを削除
-				for (auto interactionState : { InteractionState::Default, InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
+				for (auto interactionState : { InteractionState::Hovered, InteractionState::Pressed, InteractionState::Disabled })
 				{
-					m_pProperty->tryUnsetPropertyValueOf(interactionState, styleStateArray);
+					m_pProperty->unsetPropertyValueOf(interactionState, styleStateArray);
 				}
 			}
 		}

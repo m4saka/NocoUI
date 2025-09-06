@@ -232,13 +232,11 @@ namespace noco::editor
 					}
 					else
 					{
-						if (m_pProperty->tryUnsetPropertyValueOf(interactionState, currentActiveStyleStates))
+						m_pProperty->unsetPropertyValueOf(interactionState, currentActiveStyleStates);
+						propertyValueNode->setInteractable(false);
+						if (m_onChange)
 						{
-							propertyValueNode->setInteractable(false);
-							if (m_onChange)
-							{
-								m_onChange();
-							}
+							m_onChange();
 						}
 					}
 				}),

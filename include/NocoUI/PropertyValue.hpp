@@ -1061,8 +1061,13 @@ namespace noco
 			return false;
 		}
 
-		bool tryUnsetValueOf(InteractionState interactionState, const Array<String>& activeStyleStates)
+		void unsetValueOf(InteractionState interactionState, const Array<String>& activeStyleStates)
 		{
+			if (interactionState == InteractionState::Default)
+			{
+				return; // defaultValueは削除できない
+			}
+
 			if (!activeStyleStates.empty())
 			{
 				const String& styleState = activeStyleStates.back();
@@ -1074,46 +1079,39 @@ namespace noco
 						switch (interactionState)
 						{
 						case InteractionState::Default:
-							return false; // defaultValueは削除できない
+							break; // defaultValueは削除できない
 						case InteractionState::Hovered:
 							it->second.hoveredValue = none;
-							return true;
+							break;
 						case InteractionState::Pressed:
 							it->second.pressedValue = none;
-							return true;
+							break;
 						case InteractionState::Disabled:
 							it->second.disabledValue = none;
-							return true;
+							break;
 						}
 					}
 				}
-				return false;
+				return;
 			}
 			
-			switch (interactionState)
+			if (interactionValues != nullptr)
 			{
-			case InteractionState::Default:
-				return false; // defaultValueは削除できない
-			case InteractionState::Hovered:
-				if (interactionValues != nullptr)
+				switch (interactionState)
 				{
+				case InteractionState::Default:
+					break; // defaultValueは削除できない
+				case InteractionState::Hovered:
 					interactionValues->hoveredValue = none;
-				}
-				return true;
-			case InteractionState::Pressed:
-				if (interactionValues != nullptr)
-				{
+					break;
+				case InteractionState::Pressed:
 					interactionValues->pressedValue = none;
-				}
-				return true;
-			case InteractionState::Disabled:
-				if (interactionValues != nullptr)
-				{
+					break;
+				case InteractionState::Disabled:
 					interactionValues->disabledValue = none;
+					break;
 				}
-				return true;
 			}
-			return false;
 		}
 
 		[[nodiscard]]
