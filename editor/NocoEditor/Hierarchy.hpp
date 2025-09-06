@@ -1595,7 +1595,7 @@ namespace noco::editor
 					}
 				}
 
-				if (m_hierarchyRootNode->isClicked() || m_hierarchyTailNode->isClicked())
+				if (m_hierarchyRootNode->isClicked() || m_hierarchyInnerFrameNode->isClicked() || m_hierarchyTailNode->isClicked())
 				{
 					// Hierarchyの空白部分がクリックされた場合は選択を解除
 					clearSelection();

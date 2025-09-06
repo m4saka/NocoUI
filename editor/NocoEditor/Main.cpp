@@ -398,6 +398,10 @@ public:
 					{
 						m_hierarchy.onClickDelete();
 					}
+					else if (KeyEscape.down())
+					{
+						m_hierarchy.clearSelection();
+					}
 				}
 			}
 			else
