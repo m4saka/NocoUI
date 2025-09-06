@@ -130,7 +130,7 @@ namespace noco::editor
 						// ショートカットキー(ニーモニック)があれば追加
 						const Input& input = *pItem->mnemonicInput;
 						itemNode->addClickHotKey(input);
-						String text = label->text().defaultValue;
+						String text = label->text().defaultValue();
 						bool dot = false;
 						if (text.ends_with(U"..."))
 						{
@@ -165,7 +165,7 @@ namespace noco::editor
 						// ショートカットキー(ニーモニック)があれば追加
 						const Input& input = *pCheckableItem->mnemonicInput;
 						itemNode->addClickHotKey(input);
-						String text = label->text().defaultValue;
+						String text = label->text().defaultValue();
 						bool dot = false;
 						if (text.ends_with(U"..."))
 						{

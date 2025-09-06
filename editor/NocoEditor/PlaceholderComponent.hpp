@@ -232,7 +232,7 @@ namespace noco
 		bool isSmoothProperty() const override
 		{
 			return std::visit([](const auto& propValue) -> bool {
-				return propValue.smoothTime > 0.0;
+				return propValue.smoothTime() > 0.0;
 			}, m_propertyValue);
 		}
 		
@@ -240,14 +240,14 @@ namespace noco
 		double smoothTime() const override
 		{
 			return std::visit([](const auto& propValue) -> double {
-				return propValue.smoothTime;
+				return propValue.smoothTime();
 			}, m_propertyValue);
 		}
 		
 		bool trySetSmoothTime(double smoothTime) override
 		{
 			std::visit([&](auto& propValue) {
-				propValue.smoothTime = smoothTime;
+				propValue.setSmoothTime(smoothTime);
 			}, m_propertyValue);
 			return true;
 		}
@@ -256,10 +256,10 @@ namespace noco
 		Array<String> styleStateKeys() const override
 		{
 			return std::visit([](const auto& propValue) -> Array<String> {
-				if (propValue.styleStateValues)
+				if (propValue.styleStateValues())
 				{
 					Array<String> keys;
-					for (const auto& [key, value] : *propValue.styleStateValues)
+					for (const auto& [key, value] : *propValue.styleStateValues())
 					{
 						keys.push_back(key);
 					}

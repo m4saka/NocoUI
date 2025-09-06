@@ -27,8 +27,7 @@ TEST_CASE("Property vs SmoothProperty behavior", "[Property]")
 	{
 		noco::SmoothProperty<double> smoothProperty{ U"test", 100.0 };
 		
-		noco::PropertyValue<double> targetValue{ 200.0 };
-		targetValue.smoothTime = 1.0;
+		noco::PropertyValue<double> targetValue = noco::PropertyValue<double>{ 200.0 }.withSmoothTime(1.0);
 		smoothProperty.setPropertyValue(targetValue);
 		
 		REQUIRE(smoothProperty.value() == 100.0);
@@ -53,8 +52,7 @@ TEST_CASE("SmoothProperty smoothTime behavior", "[Property]")
 	{
 		noco::SmoothProperty<ColorF> smoothColor{ U"color", ColorF{1,0,0} };
 		
-		noco::PropertyValue<ColorF> targetValue{ ColorF{0,1,0} };
-		targetValue.smoothTime = 0.0;
+		noco::PropertyValue<ColorF> targetValue = noco::PropertyValue<ColorF>{ ColorF{0,1,0} }.withSmoothTime(0.0);
 		smoothColor.setPropertyValue(targetValue);
 		
 		// smoothTime=0なら即座に変わる
@@ -67,10 +65,8 @@ TEST_CASE("SmoothProperty smoothTime behavior", "[Property]")
 		noco::SmoothProperty<double> fastProperty{ U"fast", 0.0 };
 		noco::SmoothProperty<double> slowProperty{ U"slow", 0.0 };
 		
-		noco::PropertyValue<double> fastTarget{ 100.0 };
-		fastTarget.smoothTime = 0.1;
-		noco::PropertyValue<double> slowTarget{ 100.0 };
-		slowTarget.smoothTime = 1.0;
+		noco::PropertyValue<double> fastTarget = noco::PropertyValue<double>{ 100.0 }.withSmoothTime(0.1);
+		noco::PropertyValue<double> slowTarget = noco::PropertyValue<double>{ 100.0 }.withSmoothTime(1.0);
 		
 		fastProperty.setPropertyValue(fastTarget);
 		slowProperty.setPropertyValue(slowTarget);

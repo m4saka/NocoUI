@@ -51,7 +51,7 @@ TEST_CASE("ComponentFactory component creation", "[ComponentFactory]")
 			
 			auto label = std::dynamic_pointer_cast<noco::Label>(component);
 			REQUIRE(label != nullptr);
-			REQUIRE(label->text().defaultValue == U"Test Label");
+			REQUIRE(label->text().defaultValue() == U"Test Label");
 		}
 		
 		{
@@ -106,7 +106,7 @@ TEST_CASE("ComponentFactory component creation", "[ComponentFactory]")
 		
 		auto label = std::dynamic_pointer_cast<noco::Label>(component);
 		REQUIRE(label != nullptr);
-		REQUIRE(label->text().defaultValue == U"Unknown: UnknownType");
+		REQUIRE(label->text().defaultValue() == U"Unknown: UnknownType");
 	}
 	
 }

@@ -68,28 +68,31 @@ namespace noco
 	template <class T>
 	struct PropertyValue
 	{
-		T defaultValue;
-		std::unique_ptr<PropertyInteractionValues<T>> interactionValues;
-		double smoothTime = 0.0;
+	private:
+		T m_defaultValue;
+		std::unique_ptr<PropertyInteractionValues<T>> m_interactionValues;
+		double m_smoothTime = 0.0;
 		
-		std::unique_ptr<HashTable<String, PropertyStyleStateValue<T>>> styleStateValues;
+		std::unique_ptr<HashTable<String, PropertyStyleStateValue<T>>> m_styleStateValues;
+
+	public:
 
 		/*implicit*/ PropertyValue(const T& defaultVal)
-			: defaultValue{ static_cast<T>(defaultVal) }
+			: m_defaultValue{ static_cast<T>(defaultVal) }
 		{
 		}
 		
 		PropertyValue(const PropertyValue& other)
-			: defaultValue{ other.defaultValue }
-			, smoothTime{ other.smoothTime }
+			: m_defaultValue{ other.m_defaultValue }
+			, m_smoothTime{ other.m_smoothTime }
 		{
-			if (other.interactionValues)
+			if (other.m_interactionValues)
 			{
-				interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.interactionValues);
+				m_interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.m_interactionValues);
 			}
-			if (other.styleStateValues)
+			if (other.m_styleStateValues)
 			{
-				styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>(*other.styleStateValues);
+				m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>(*other.m_styleStateValues);
 			}
 		}
 		
@@ -97,25 +100,25 @@ namespace noco
 		{
 			if (this != &other)
 			{
-				defaultValue = other.defaultValue;
-				smoothTime = other.smoothTime;
+				m_defaultValue = other.m_defaultValue;
+				m_smoothTime = other.m_smoothTime;
 
-				if (other.interactionValues)
+				if (other.m_interactionValues)
 				{
-					interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.interactionValues);
+					m_interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.m_interactionValues);
 				}
 				else
 				{
-					interactionValues.reset();
+					m_interactionValues.reset();
 				}
 				
-				if (other.styleStateValues)
+				if (other.m_styleStateValues)
 				{
-					styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>(*other.styleStateValues);
+					m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>(*other.m_styleStateValues);
 				}
 				else
 				{
-					styleStateValues.reset();
+					m_styleStateValues.reset();
 				}
 			}
 			return *this;
@@ -126,28 +129,51 @@ namespace noco
 
 		template <class U>
 		/*implicit*/ PropertyValue(const U& defaultVal) requires std::convertible_to<U, T>
-			: defaultValue{ static_cast<T>(defaultVal) }
+			: m_defaultValue{ static_cast<T>(defaultVal) }
 		{
 		}
 
 		/*implicit*/ PropertyValue(StringView defaultVal) requires std::same_as<T, String>
-			: defaultValue{ static_cast<T>(String{ defaultVal }) }
+			: m_defaultValue{ static_cast<T>(String{ defaultVal }) }
 		{
 		}
 
 		PropertyValue(const T& defaultVal, const Optional<T>& hoveredVal, const Optional<T>& pressedVal, const Optional<T>& disabledVal, double smoothTimeVal = 0.0)
-			: defaultValue{ defaultVal }
-			, interactionValues{ hoveredVal || pressedVal || disabledVal ?
+			: m_defaultValue{ defaultVal }
+			, m_interactionValues{ hoveredVal || pressedVal || disabledVal ?
 				std::make_unique<PropertyInteractionValues<T>>(PropertyInteractionValues<T>{ hoveredVal, pressedVal, disabledVal }) : nullptr }
-			, smoothTime{ smoothTimeVal }
+			, m_smoothTime{ smoothTimeVal }
 		{
+		}
+
+		[[nodiscard]]
+		const T& defaultValue() const noexcept
+		{
+			return m_defaultValue;
+		}
+
+		[[nodiscard]]
+		double smoothTime() const noexcept
+		{
+			return m_smoothTime;
+		}
+
+		void setSmoothTime(double smoothTime) noexcept
+		{
+			m_smoothTime = smoothTime;
+		}
+
+		[[nodiscard]]
+		const std::unique_ptr<HashTable<String, PropertyStyleStateValue<T>>>& styleStateValues() const noexcept
+		{
+			return m_styleStateValues;
 		}
 
 		[[nodiscard]]
 		const T& value(InteractionState interactionState, const Array<String>& activeStyleStates) const
 		{
 			// activeStyleStatesがある場合は、優先度の高い順にstyleStateの一致を調べる
-			if (!activeStyleStates.empty() && styleStateValues)
+			if (!activeStyleStates.empty() && m_styleStateValues)
 			{
 				// 優先度の高い順にチェック(配列の末尾から)
 				for (auto styleStateIt = activeStyleStates.rbegin(); styleStateIt != activeStyleStates.rend(); ++styleStateIt)
@@ -155,7 +181,7 @@ namespace noco
 					const String& currentStyleState = *styleStateIt;
 					
 					// styleStateのPropertyStyleStateValueを取得
-					if (auto it = styleStateValues->find(currentStyleState); it != styleStateValues->end())
+					if (auto it = m_styleStateValues->find(currentStyleState); it != m_styleStateValues->end())
 					{
 						const PropertyStyleStateValue<T>& styleStateValue = it->second;
 						
@@ -223,58 +249,58 @@ namespace noco
 				break;
 			}
 			
-			return defaultValue;
+			return m_defaultValue;
 		}
 
 		[[nodiscard]]
 		bool hasHovered() const noexcept
 		{
-			return interactionValues && interactionValues->hoveredValue.has_value();
+			return m_interactionValues && m_interactionValues->hoveredValue.has_value();
 		}
 
 		[[nodiscard]]
 		const Optional<T>& hoveredValue() const
 		{
-			if (!interactionValues)
+			if (!m_interactionValues)
 			{
 				static const Optional<T> noneValue = none;
 				return noneValue;
 			}
-			return interactionValues->hoveredValue;
+			return m_interactionValues->hoveredValue;
 		}
 
 		[[nodiscard]]
 		const Optional<T>& pressedValue() const
 		{
-			if (!interactionValues)
+			if (!m_interactionValues)
 			{
 				static const Optional<T> noneValue = none;
 				return noneValue;
 			}
-			return interactionValues->pressedValue;
+			return m_interactionValues->pressedValue;
 		}
 
 		[[nodiscard]]
 		const Optional<T>& disabledValue() const
 		{
-			if (!interactionValues)
+			if (!m_interactionValues)
 			{
 				static const Optional<T> noneValue = none;
 				return noneValue;
 			}
-			return interactionValues->disabledValue;
+			return m_interactionValues->disabledValue;
 		}
 
 		[[nodiscard]]
 		bool hasPressed() const noexcept
 		{
-			return interactionValues && interactionValues->pressedValue.has_value();
+			return m_interactionValues && m_interactionValues->pressedValue.has_value();
 		}
 
 		[[nodiscard]]
 		bool hasDisabled() const noexcept
 		{
-			return interactionValues && interactionValues->disabledValue.has_value();
+			return m_interactionValues && m_interactionValues->disabledValue.has_value();
 		}
 
 		[[nodiscard]]
@@ -286,13 +312,13 @@ namespace noco
 
 			if constexpr (std::is_enum_v<T>)
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
-				    (!styleStateValues || styleStateValues->empty()))
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
-					return EnumToString(defaultValue);
+					return EnumToString(m_defaultValue);
 				}
 				JSON json;
-				json[U"default"] = EnumToString(defaultValue);
+				json[U"default"] = EnumToString(m_defaultValue);
 				if (hoveredVal)
 				{
 					json[U"hovered"] = EnumToString(*hoveredVal);
@@ -305,16 +331,16 @@ namespace noco
 				{
 					json[U"disabled"] = EnumToString(*disabledVal);
 				}
-				if (smoothTime != 0.0)
+				if (m_smoothTime != 0.0)
 				{
-					json[U"smoothTime"] = smoothTime;
+					json[U"smoothTime"] = m_smoothTime;
 				}
 				
-				if (styleStateValues && !styleStateValues->empty())
+				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
 					
-					for (const auto& [state, values] : *styleStateValues)
+					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
 						
@@ -351,13 +377,13 @@ namespace noco
 			}
 			else if constexpr (HasToJSON<T>)
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
-				    (!styleStateValues || styleStateValues->empty()))
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
-					return defaultValue.toJSON();
+					return m_defaultValue.toJSON();
 				}
 				JSON json;
-				json[U"default"] = defaultValue.toJSON();
+				json[U"default"] = m_defaultValue.toJSON();
 				if (hoveredVal)
 				{
 					json[U"hovered"] = hoveredVal->toJSON();
@@ -370,16 +396,16 @@ namespace noco
 				{
 					json[U"disabled"] = disabledVal->toJSON();
 				}
-				if (smoothTime != 0.0)
+				if (m_smoothTime != 0.0)
 				{
-					json[U"smoothTime"] = smoothTime;
+					json[U"smoothTime"] = m_smoothTime;
 				}
 				
-				if (styleStateValues && !styleStateValues->empty())
+				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
 					
-					for (const auto& [state, values] : *styleStateValues)
+					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
 						
@@ -416,13 +442,13 @@ namespace noco
 			}
 			else
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
-				    (!styleStateValues || styleStateValues->empty()))
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
-					return defaultValue;
+					return m_defaultValue;
 				}
 				JSON json;
-				json[U"default"] = defaultValue;
+				json[U"default"] = m_defaultValue;
 				if (hoveredVal)
 				{
 					json[U"hovered"] = *hoveredVal;
@@ -435,16 +461,16 @@ namespace noco
 				{
 					json[U"disabled"] = *disabledVal;
 				}
-				if (smoothTime != 0.0)
+				if (m_smoothTime != 0.0)
 				{
-					json[U"smoothTime"] = smoothTime;
+					json[U"smoothTime"] = m_smoothTime;
 				}
 				
-				if (styleStateValues && !styleStateValues->empty())
+				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
 					
-					for (const auto& [state, values] : *styleStateValues)
+					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
 						
@@ -506,14 +532,14 @@ namespace noco
 						const JSON& styleStatesJson = json[U"styleStates"];
 						if (styleStatesJson.isObject())
 						{
-							propertyValue.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+							propertyValue.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 							
 							for (const auto& [state, valueJson] : styleStatesJson)
 							{
 								if (valueJson.isString())
 								{
 									// 文字列の場合はDefaultのみ
-									(*propertyValue.styleStateValues)[state] = PropertyStyleStateValue<T>{ StringToEnum<T>(valueJson.getString(), defaultValue) };
+									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ StringToEnum<T>(valueJson.getString(), defaultValue) };
 								}
 								else if (valueJson.isObject())
 								{
@@ -537,7 +563,7 @@ namespace noco
 										styleStateValue.disabledValue = StringToEnum<T>(valueJson[U"disabled"].getString(), defaultValue);
 									}
 									
-									(*propertyValue.styleStateValues)[state] = styleStateValue;
+									(*propertyValue.m_styleStateValues)[state] = styleStateValue;
 								}
 							}
 						}
@@ -565,9 +591,9 @@ namespace noco
 						const JSON& styleStatesJson = json[U"styleStates"];
 						if (styleStatesJson.isObject())
 						{
-							if (!propertyValue.styleStateValues)
+							if (!propertyValue.m_styleStateValues)
 							{
-								propertyValue.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+								propertyValue.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 							}
 							
 							for (const auto& [state, valueJson] : styleStatesJson)
@@ -590,12 +616,12 @@ namespace noco
 										styleStateValues.disabledValue = T::fromJSON(valueJson[U"disabled"], defaultValue);
 									}
 									
-									(*propertyValue.styleStateValues)[state] = styleStateValues;
+									(*propertyValue.m_styleStateValues)[state] = styleStateValues;
 								}
 								else
 								{
 									// 文字列の場合はDefaultのみの値
-									(*propertyValue.styleStateValues)[state] = PropertyStyleStateValue<T>{ T::fromJSON(valueJson, defaultValue) };
+									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ T::fromJSON(valueJson, defaultValue) };
 								}
 							}
 						}
@@ -623,9 +649,9 @@ namespace noco
 						const JSON& styleStatesJson = json[U"styleStates"];
 						if (styleStatesJson.isObject())
 						{
-							if (!propertyValue.styleStateValues)
+							if (!propertyValue.m_styleStateValues)
 							{
-								propertyValue.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+								propertyValue.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 							}
 							
 							for (const auto& [state, valueJson] : styleStatesJson)
@@ -648,12 +674,12 @@ namespace noco
 										styleStateValues.disabledValue = valueJson[U"disabled"].get<T>();
 									}
 									
-									(*propertyValue.styleStateValues)[state] = styleStateValues;
+									(*propertyValue.m_styleStateValues)[state] = styleStateValues;
 								}
 								else
 								{
 									// 文字列の場合はDefaultのみの値
-									(*propertyValue.styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.get<T>() };
+									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.get<T>() };
 								}
 							}
 						}
@@ -669,7 +695,7 @@ namespace noco
 		PropertyValue<T> withDefault(const T& newDefaultValue) const
 		{
 			auto value = *this;
-			value.defaultValue = newDefaultValue;
+			value.m_defaultValue = newDefaultValue;
 			return value;
 		}
 
@@ -678,7 +704,7 @@ namespace noco
 		PropertyValue<T> withDefault(const U& newDefaultValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			value.defaultValue = static_cast<T>(newDefaultValue);
+			value.m_defaultValue = static_cast<T>(newDefaultValue);
 			return value;
 		}
 
@@ -686,11 +712,11 @@ namespace noco
 		PropertyValue<T> withHovered(const T& newHoveredValue) const
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->hoveredValue = newHoveredValue;
+			value.m_interactionValues->hoveredValue = newHoveredValue;
 			return value;
 		}
 
@@ -699,11 +725,11 @@ namespace noco
 		PropertyValue<T> withHovered(const U& newHoveredValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->hoveredValue = static_cast<T>(newHoveredValue);
+			value.m_interactionValues->hoveredValue = static_cast<T>(newHoveredValue);
 			return value;
 		}
 
@@ -711,11 +737,11 @@ namespace noco
 		PropertyValue<T> withPressed(const T& newPressedValue) const
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->pressedValue = newPressedValue;
+			value.m_interactionValues->pressedValue = newPressedValue;
 			return value;
 		}
 
@@ -724,11 +750,11 @@ namespace noco
 		PropertyValue<T> withPressed(const U& newPressedValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->pressedValue = static_cast<T>(newPressedValue);
+			value.m_interactionValues->pressedValue = static_cast<T>(newPressedValue);
 			return value;
 		}
 
@@ -736,11 +762,11 @@ namespace noco
 		PropertyValue<T> withDisabled(const T& newDisabledValue) const
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->disabledValue = newDisabledValue;
+			value.m_interactionValues->disabledValue = newDisabledValue;
 			return value;
 		}
 
@@ -749,11 +775,11 @@ namespace noco
 		PropertyValue<T> withDisabled(const U& newDisabledValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			if (value.interactionValues == nullptr)
+			if (value.m_interactionValues == nullptr)
 			{
-				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				value.m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 			}
-			value.interactionValues->disabledValue = static_cast<T>(newDisabledValue);
+			value.m_interactionValues->disabledValue = static_cast<T>(newDisabledValue);
 			return value;
 		}
 
@@ -761,11 +787,11 @@ namespace noco
 		PropertyValue<T> withStyleState(const String& styleState, const T& newValue) const
 		{
 			auto value = *this;
-			if (!value.styleStateValues)
+			if (!value.m_styleStateValues)
 			{
-				value.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+				value.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 			}
-			(*value.styleStateValues)[styleState] = PropertyStyleStateValue<T>{ newValue };
+			(*value.m_styleStateValues)[styleState] = PropertyStyleStateValue<T>{ newValue };
 			return value;
 		}
 
@@ -774,11 +800,11 @@ namespace noco
 		PropertyValue<T> withStyleState(const String& styleState, const U& newValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			if (!value.styleStateValues)
+			if (!value.m_styleStateValues)
 			{
-				value.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+				value.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 			}
-			(*value.styleStateValues)[styleState] = PropertyStyleStateValue<T>{ static_cast<T>(newValue) };
+			(*value.m_styleStateValues)[styleState] = PropertyStyleStateValue<T>{ static_cast<T>(newValue) };
 			return value;
 		}
 
@@ -786,17 +812,17 @@ namespace noco
 		PropertyValue<T> withStyleStateInteraction(const String& styleState, InteractionState interactionState, const T& newValue) const
 		{
 			auto value = *this;
-			if (!value.styleStateValues)
+			if (!value.m_styleStateValues)
 			{
-				value.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+				value.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 			}
 			
-			auto it = value.styleStateValues->find(styleState);
-			if (it == value.styleStateValues->end())
+			auto it = value.m_styleStateValues->find(styleState);
+			if (it == value.m_styleStateValues->end())
 			{
 				// styleStateが存在しない場合、デフォルト値で初期化
-				(*value.styleStateValues)[styleState] = PropertyStyleStateValue<T>{ defaultValue };
-				it = value.styleStateValues->find(styleState);
+				(*value.m_styleStateValues)[styleState] = PropertyStyleStateValue<T>{ m_defaultValue };
+				it = value.m_styleStateValues->find(styleState);
 			}
 			
 			switch (interactionState)
@@ -823,17 +849,17 @@ namespace noco
 		PropertyValue<T> withStyleStateInteraction(const String& styleState, InteractionState interactionState, const U& newValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			if (!value.styleStateValues)
+			if (!value.m_styleStateValues)
 			{
-				value.styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+				value.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 			}
 			
-			auto it = value.styleStateValues->find(styleState);
-			if (it == value.styleStateValues->end())
+			auto it = value.m_styleStateValues->find(styleState);
+			if (it == value.m_styleStateValues->end())
 			{
 				// styleStateが存在しない場合、デフォルト値で初期化
-				(*value.styleStateValues)[styleState] = PropertyStyleStateValue<T>{ defaultValue };
-				it = value.styleStateValues->find(styleState);
+				(*value.m_styleStateValues)[styleState] = PropertyStyleStateValue<T>{ m_defaultValue };
+				it = value.m_styleStateValues->find(styleState);
 			}
 			
 			switch (interactionState)
@@ -859,7 +885,7 @@ namespace noco
 		PropertyValue<T> withSmoothTime(double newSmoothTime) const
 		{
 			auto value = *this;
-			value.smoothTime = newSmoothTime;
+			value.m_smoothTime = newSmoothTime;
 			return value;
 		}
 
@@ -868,11 +894,11 @@ namespace noco
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
-				return EnumToString(defaultValue);
+				return EnumToString(m_defaultValue);
 			}
 			else
 			{
-				return Format(defaultValue);
+				return Format(m_defaultValue);
 			}
 		}
 
@@ -892,11 +918,11 @@ namespace noco
 				};
 
 			// styleStateの値をチェック
-			if (styleStateValues)
+			if (m_styleStateValues)
 			{
 				for (int32 i = static_cast<int32>(activeStyleStates.size()) - 1; i >= 0; --i)
 				{
-					if (auto it = styleStateValues->find(activeStyleStates[i]); it != styleStateValues->end())
+					if (auto it = m_styleStateValues->find(activeStyleStates[i]); it != m_styleStateValues->end())
 					{
 						const PropertyStyleStateValue<T>& styleStateValue = it->second;
 						
@@ -935,7 +961,7 @@ namespace noco
 			switch (interactionState)
 			{
 			case InteractionState::Default:
-				return fnGetStr(defaultValue);
+				return fnGetStr(m_defaultValue);
 			case InteractionState::Hovered:
 				if (const auto& hoveredVal = hoveredValue())
 				{
@@ -980,10 +1006,10 @@ namespace noco
 			{
 				return false;
 			}
-			defaultValue = *parsedValue;
-			interactionValues.reset();
-			styleStateValues.reset();
-			smoothTime = 0.0;
+			m_defaultValue = *parsedValue;
+			m_interactionValues.reset();
+			m_styleStateValues.reset();
+			m_smoothTime = 0.0;
 			return true;
 		}
 
@@ -997,17 +1023,17 @@ namespace noco
 			
 			if (!styleState.isEmpty())
 			{
-				if (!styleStateValues)
+				if (!m_styleStateValues)
 				{
-					styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
+					m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 				}
 				
-				auto it = styleStateValues->find(styleState);
-				if (it == styleStateValues->end())
+				auto it = m_styleStateValues->find(styleState);
+				if (it == m_styleStateValues->end())
 				{
 					// styleStateが存在しない場合、デフォルト値で初期化
-					(*styleStateValues)[styleState] = PropertyStyleStateValue<T>{ defaultValue };
-					it = styleStateValues->find(styleState);
+					(*m_styleStateValues)[styleState] = PropertyStyleStateValue<T>{ m_defaultValue };
+					it = m_styleStateValues->find(styleState);
 				}
 				
 				switch (interactionState)
@@ -1032,28 +1058,28 @@ namespace noco
 			switch (interactionState)
 			{
 			case InteractionState::Default:
-				defaultValue = *parsedValue;
+				m_defaultValue = *parsedValue;
 				return true;
 			case InteractionState::Hovered:
-				if (interactionValues == nullptr)
+				if (m_interactionValues == nullptr)
 				{
-					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+					m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 				}
-				interactionValues->hoveredValue = *parsedValue;
+				m_interactionValues->hoveredValue = *parsedValue;
 				return true;
 			case InteractionState::Pressed:
-				if (interactionValues == nullptr)
+				if (m_interactionValues == nullptr)
 				{
-					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+					m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 				}
-				interactionValues->pressedValue = *parsedValue;
+				m_interactionValues->pressedValue = *parsedValue;
 				return true;
 			case InteractionState::Disabled:
-				if (interactionValues == nullptr)
+				if (m_interactionValues == nullptr)
 				{
-					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+					m_interactionValues = std::make_unique<PropertyInteractionValues<T>>();
 				}
-				interactionValues->disabledValue = *parsedValue;
+				m_interactionValues->disabledValue = *parsedValue;
 				return true;
 			}
 			return false;
@@ -1068,9 +1094,9 @@ namespace noco
 
 			if (!styleState.isEmpty())
 			{
-				if (styleStateValues)
+				if (m_styleStateValues)
 				{
-					if (auto it = styleStateValues->find(styleState); it != styleStateValues->end())
+					if (auto it = m_styleStateValues->find(styleState); it != m_styleStateValues->end())
 					{
 						switch (interactionState)
 						{
@@ -1091,20 +1117,20 @@ namespace noco
 				return;
 			}
 			
-			if (interactionValues != nullptr)
+			if (m_interactionValues != nullptr)
 			{
 				switch (interactionState)
 				{
 				case InteractionState::Default:
 					break; // defaultValueは削除できない
 				case InteractionState::Hovered:
-					interactionValues->hoveredValue = none;
+					m_interactionValues->hoveredValue = none;
 					break;
 				case InteractionState::Pressed:
-					interactionValues->pressedValue = none;
+					m_interactionValues->pressedValue = none;
 					break;
 				case InteractionState::Disabled:
-					interactionValues->disabledValue = none;
+					m_interactionValues->disabledValue = none;
 					break;
 				}
 			}
@@ -1121,9 +1147,9 @@ namespace noco
 
 			if (!styleState.isEmpty())
 			{
-				if (styleStateValues)
+				if (m_styleStateValues)
 				{
-					if (auto it = styleStateValues->find(styleState); it != styleStateValues->end())
+					if (auto it = m_styleStateValues->find(styleState); it != m_styleStateValues->end())
 					{
 						const PropertyStyleStateValue<T>& styleStateValue = it->second;
 						switch (interactionState)
@@ -1144,21 +1170,21 @@ namespace noco
 			switch (interactionState)
 			{
 			case InteractionState::Hovered:
-				if (interactionValues != nullptr)
+				if (m_interactionValues != nullptr)
 				{
-					return interactionValues->hoveredValue.has_value();
+					return m_interactionValues->hoveredValue.has_value();
 				}
 				return false;
 			case InteractionState::Pressed:
-				if (interactionValues != nullptr)
+				if (m_interactionValues != nullptr)
 				{
-					return interactionValues->pressedValue.has_value();
+					return m_interactionValues->pressedValue.has_value();
 				}
 				return false;
 			case InteractionState::Disabled:
-				if (interactionValues != nullptr)
+				if (m_interactionValues != nullptr)
 				{
-					return interactionValues->disabledValue.has_value();
+					return m_interactionValues->disabledValue.has_value();
 				}
 				return false;
 			default:
@@ -1169,29 +1195,29 @@ namespace noco
 		[[nodiscard]]
 		bool hasInteractiveValue() const
 		{
-			return (interactionValues != nullptr && (interactionValues->hoveredValue.has_value() || interactionValues->pressedValue.has_value() || interactionValues->disabledValue.has_value())) ||
-				(styleStateValues && !styleStateValues->empty());
+			return (m_interactionValues != nullptr && (m_interactionValues->hoveredValue.has_value() || m_interactionValues->pressedValue.has_value() || m_interactionValues->disabledValue.has_value())) ||
+				(m_styleStateValues && !m_styleStateValues->empty());
 		}
 
 		[[nodiscard]]
 		bool hasAnyStateEqualTo(const T& value) const
 		{
-			if (defaultValue == value)
+			if (m_defaultValue == value)
 			{
 				return true;
 			}
-			if (interactionValues)
+			if (m_interactionValues)
 			{
-				if ((interactionValues->hoveredValue && *interactionValues->hoveredValue == value) ||
-					(interactionValues->pressedValue && *interactionValues->pressedValue == value) ||
-					(interactionValues->disabledValue && *interactionValues->disabledValue == value))
+				if ((m_interactionValues->hoveredValue && *m_interactionValues->hoveredValue == value) ||
+					(m_interactionValues->pressedValue && *m_interactionValues->pressedValue == value) ||
+					(m_interactionValues->disabledValue && *m_interactionValues->disabledValue == value))
 				{
 					return true;
 				}
 			}
-			if (styleStateValues)
+			if (m_styleStateValues)
 			{
-				for (const auto& [key, val] : *styleStateValues)
+				for (const auto& [key, val] : *m_styleStateValues)
 				{
 					if (val.defaultValue == value ||
 						(val.hoveredValue && *val.hoveredValue == value) ||

@@ -52,7 +52,7 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 		// コンポーネントの確認
 		auto restoredLabel = restoredNode->getComponentOrNull<noco::Label>();
 		REQUIRE(restoredLabel != nullptr);
-		REQUIRE(restoredLabel->text().defaultValue == U"Test Label");
+		REQUIRE(restoredLabel->text().defaultValue() == U"Test Label");
 	}
 }
 

@@ -47,7 +47,7 @@ TEST_CASE("Label component", "[Component][Label]")
 		auto label = node->emplaceComponent<noco::Label>();
 		
 		label->setText(U"Hello, World!");
-		REQUIRE(label->text().defaultValue == U"Hello, World!");
+		REQUIRE(label->text().defaultValue() == U"Hello, World!");
 	}
 }
 
@@ -540,13 +540,13 @@ TEST_CASE("Component type checking from JSON", "[Component]")
 		json[U"fontSize"] = U"14";  // 文字列（数値であるべき）
 		
 		auto label = std::make_shared<noco::Label>(U"Initial Text");
-		REQUIRE(label->fontSize().defaultValue == 24.0);
+		REQUIRE(label->fontSize().defaultValue() == 24.0);
 		
 		bool result = label->tryReadFromJSON(json);
 		REQUIRE(result == true);  // JSONの読み込み自体は成功
-		REQUIRE(label->text().defaultValue == U"Test Label");  // textは正しく読み込まれる
+		REQUIRE(label->text().defaultValue() == U"Test Label");  // textは正しく読み込まれる
 		// fontSizeが文字列で与えられた場合、T{}（0.0）で初期化される
-		REQUIRE(label->fontSize().defaultValue == 0.0);
+		REQUIRE(label->fontSize().defaultValue() == 0.0);
 	}
 	
 	SECTION("RectRenderer component color as number resets to zero")
@@ -557,16 +557,16 @@ TEST_CASE("Component type checking from JSON", "[Component]")
 		json[U"fillColor"] = 123;  // 数値（文字列形式のColorFであるべき）
 		
 		auto rect = std::make_shared<noco::RectRenderer>(Palette::White);
-		REQUIRE(rect->fillColor().defaultValue.r == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue.g == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue.b == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue.a == 1.0f);
+		REQUIRE(rect->fillColor().defaultValue().r == 1.0f);
+		REQUIRE(rect->fillColor().defaultValue().g == 1.0f);
+		REQUIRE(rect->fillColor().defaultValue().b == 1.0f);
+		REQUIRE(rect->fillColor().defaultValue().a == 1.0f);
 		
 		rect->tryReadFromJSON(json);
 		// fillColorが数値で与えられた場合、ColorF{}（0,0,0,0）で初期化される
-		REQUIRE(rect->fillColor().defaultValue.r == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue.g == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue.b == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue.a == 0.0f);
+		REQUIRE(rect->fillColor().defaultValue().r == 0.0f);
+		REQUIRE(rect->fillColor().defaultValue().g == 0.0f);
+		REQUIRE(rect->fillColor().defaultValue().b == 0.0f);
+		REQUIRE(rect->fillColor().defaultValue().a == 0.0f);
 	}
 }

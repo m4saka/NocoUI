@@ -193,7 +193,7 @@ namespace noco::editor
 		
 		void doSnapNodeSizeToTexture(const std::shared_ptr<Sprite>& sprite, const std::shared_ptr<Node>& node)
 		{
-			const String texturePath = sprite->textureFilePath().defaultValue;
+			const String texturePath = sprite->textureFilePath().defaultValue();
 			if (texturePath.isEmpty())
 			{
 				return;
@@ -3447,7 +3447,7 @@ namespace noco::editor
 			const auto fnAddVec2Child =
 				[this, &transformNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
+					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue(), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
@@ -3485,7 +3485,7 @@ namespace noco::editor
 			const auto fnAddDoubleChild =
 				[this, &transformNode](StringView name, SmoothProperty<double>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createPropertyNodeWithTooltip(U"Transform", name, Format(pProperty->propertyValue().defaultValue), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
+					const auto propertyNode = transformNode->addChild(createPropertyNodeWithTooltip(U"Transform", name, Format(pProperty->propertyValue().defaultValue()), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
@@ -3537,7 +3537,7 @@ namespace noco::editor
 			const auto fnAddBoolChild =
 				[this, &transformNode](StringView name, Property<bool>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createBoolPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
+					const auto propertyNode = transformNode->addChild(createBoolPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue(), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					Array<MenuElement> menuElements
 					{
@@ -3570,7 +3570,7 @@ namespace noco::editor
 			const auto fnAddColorChild =
 				[this, &transformNode](StringView name, SmoothProperty<ColorF>* pProperty, auto fnSetValue)
 				{
-					const auto propertyNode = transformNode->addChild(createColorPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue, fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
+					const auto propertyNode = transformNode->addChild(createColorPropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue(), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements

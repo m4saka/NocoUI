@@ -331,12 +331,12 @@ namespace noco
 		[[nodiscard]]
 		double smoothTime() const override
 		{
-			return m_propertyValue.smoothTime;
+			return m_propertyValue.smoothTime();
 		}
 
 		bool trySetSmoothTime(double smoothTime) override
 		{
-			m_propertyValue.smoothTime = smoothTime;
+			m_propertyValue.setSmoothTime(smoothTime);
 			return true;
 		}
 
@@ -345,9 +345,9 @@ namespace noco
 			Array<String> result;
 			
 			// styleStateValuesから収集
-			if (m_propertyValue.styleStateValues)
+			if (m_propertyValue.styleStateValues())
 			{
-				for (const auto& [state, value] : *m_propertyValue.styleStateValues)
+				for (const auto& [state, value] : *m_propertyValue.styleStateValues())
 				{
 					if (!result.contains(state))
 					{
@@ -473,7 +473,7 @@ namespace noco
 			}
 			else
 			{
-				m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime, deltaTime);
+				m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
 			}
 		}
 
@@ -596,12 +596,12 @@ namespace noco
 		[[nodiscard]]
 		double smoothTime() const override
 		{
-			return m_propertyValue.smoothTime;
+			return m_propertyValue.smoothTime();
 		}
 
 		bool trySetSmoothTime(double smoothTime) override
 		{
-			m_propertyValue.smoothTime = smoothTime;
+			m_propertyValue.setSmoothTime(smoothTime);
 			return true;
 		}
 
@@ -610,9 +610,9 @@ namespace noco
 			Array<String> result;
 			
 			// styleStateValuesから収集
-			if (m_propertyValue.styleStateValues)
+			if (m_propertyValue.styleStateValues())
 			{
-				for (const auto& [state, value] : *m_propertyValue.styleStateValues)
+				for (const auto& [state, value] : *m_propertyValue.styleStateValues())
 				{
 					if (!result.contains(state))
 					{
@@ -781,7 +781,7 @@ namespace noco
 			}
 
 			// Propertyが後からPropertyNonInteractiveに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
-			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue;
+			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue();
 			
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))

@@ -343,7 +343,7 @@ namespace noco::editor
 			{
 				if (auto label = dynamic_cast<const Label*>(&component))
 				{
-					return label->sizingMode().defaultValue == LabelSizingMode::AutoShrink;
+					return label->sizingMode().defaultValue() == LabelSizingMode::AutoShrink;
 				}
 				return false;
 			},
@@ -540,7 +540,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return sprite->textureRegionMode().defaultValue == TextureRegionMode::OffsetSize;
+				return sprite->textureRegionMode().defaultValue() == TextureRegionMode::OffsetSize;
 			}
 			return false;
 		};
@@ -550,7 +550,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return sprite->textureRegionMode().defaultValue == TextureRegionMode::Grid;
+				return sprite->textureRegionMode().defaultValue() == TextureRegionMode::Grid;
 			}
 			return false;
 		};
@@ -560,7 +560,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				const auto mode = sprite->textureRegionMode().defaultValue;
+				const auto mode = sprite->textureRegionMode().defaultValue();
 				return mode == TextureRegionMode::OffsetSize || mode == TextureRegionMode::Grid;
 			}
 			return false;
