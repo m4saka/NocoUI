@@ -825,7 +825,7 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
 	{
-		if (m_autoFitMode != AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
 		{
 			// AutoFitModeが有効な間はsetPositionは無視
 			return shared_from_this();
@@ -841,7 +841,7 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
-		if (m_autoFitMode != AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
 		{
 			// AutoFitModeが有効な間はsetScaleは無視
 			return shared_from_this();
@@ -857,7 +857,7 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::setPositionScale(const Vec2& position, const Vec2& scale)
 	{
-		if (m_autoFitMode != AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
 		{
 			// AutoFitModeが有効な間はsetPositionScaleは無視
 			return shared_from_this();
@@ -876,27 +876,6 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setRotation(double rotation)
 	{
 		m_rotation = rotation;
-		for (const auto& child : m_children)
-		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
-		}
-		return shared_from_this();
-	}
-
-	std::shared_ptr<Canvas> Canvas::setTransform(const Vec2& position, const Vec2& scale, double rotation)
-	{
-		if (m_autoFitMode != AutoFitMode::None)
-		{
-			// AutoFitModeが有効な間は位置とスケールの設定を無視（回転は許可）
-			m_rotation = rotation;
-		}
-		else
-		{
-			m_position = position;
-			m_scale = scale;
-			m_rotation = rotation;
-		}
-		
 		for (const auto& child : m_children)
 		{
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
@@ -1377,7 +1356,7 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setCenter(const Vec2& center)
 	{
-		if (m_autoFitMode != AutoFitMode::None)
+		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
 		{
 			// AutoFitModeが有効な間はsetCenterは無視
 			return shared_from_this();

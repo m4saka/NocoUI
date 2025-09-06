@@ -506,8 +506,6 @@ namespace noco
 			return m_rotation;
 		}
 
-		std::shared_ptr<Canvas> setTransform(const Vec2& position, const Vec2& scale, double rotation);
-
 		void resetScrollOffsetRecursive();
 
 		void fireEvent(const Event& event);
