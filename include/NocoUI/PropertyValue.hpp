@@ -38,14 +38,38 @@ namespace noco
 		InteractionValues(InteractionValues&&) noexcept = default;
 		InteractionValues& operator=(InteractionValues&&) noexcept = default;
 	};
+
+	template <class T>
+	struct PropertyInteractionValues
+	{
+		Optional<T> hoveredValue = none;
+		Optional<T> pressedValue = none;
+		Optional<T> disabledValue = none;
+
+		PropertyInteractionValues() = default;
+		PropertyInteractionValues(const Optional<T>& hoveredVal, const Optional<T>& pressedVal, const Optional<T>& disabledVal)
+			: hoveredValue{ hoveredVal }
+			, pressedValue{ pressedVal }
+			, disabledValue{ disabledVal }
+		{
+		}
+		PropertyInteractionValues(const PropertyInteractionValues&) = default;
+		PropertyInteractionValues& operator=(const PropertyInteractionValues&) = default;
+		PropertyInteractionValues(PropertyInteractionValues&&) noexcept = default;
+		PropertyInteractionValues& operator=(PropertyInteractionValues&&) noexcept = default;
+
+		[[nodiscard]]
+		bool hasAny() const noexcept
+		{
+			return hoveredValue.has_value() || pressedValue.has_value() || disabledValue.has_value();
+		}
+	};
 	
 	template <class T>
 	struct PropertyValue
 	{
 		T defaultValue;
-		Optional<T> hoveredValue = none;
-		Optional<T> pressedValue = none;
-		Optional<T> disabledValue = none;
+		std::unique_ptr<PropertyInteractionValues<T>> interactionValues;
 		double smoothTime = 0.0;
 		
 		std::unique_ptr<HashTable<String, InteractionValues<T>>> styleStateValues;
@@ -57,11 +81,12 @@ namespace noco
 		
 		PropertyValue(const PropertyValue& other)
 			: defaultValue{ other.defaultValue }
-			, hoveredValue{ other.hoveredValue }
-			, pressedValue{ other.pressedValue }
-			, disabledValue{ other.disabledValue }
 			, smoothTime{ other.smoothTime }
 		{
+			if (other.interactionValues)
+			{
+				interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.interactionValues);
+			}
 			if (other.styleStateValues)
 			{
 				styleStateValues = std::make_unique<HashTable<String, InteractionValues<T>>>(*other.styleStateValues);
@@ -73,10 +98,16 @@ namespace noco
 			if (this != &other)
 			{
 				defaultValue = other.defaultValue;
-				hoveredValue = other.hoveredValue;
-				pressedValue = other.pressedValue;
-				disabledValue = other.disabledValue;
 				smoothTime = other.smoothTime;
+
+				if (other.interactionValues)
+				{
+					interactionValues = std::make_unique<PropertyInteractionValues<T>>(*other.interactionValues);
+				}
+				else
+				{
+					interactionValues.reset();
+				}
 				
 				if (other.styleStateValues)
 				{
@@ -106,9 +137,8 @@ namespace noco
 
 		PropertyValue(const T& defaultVal, const Optional<T>& hoveredVal, const Optional<T>& pressedVal, const Optional<T>& disabledVal, double smoothTimeVal = 0.0)
 			: defaultValue{ defaultVal }
-			, hoveredValue{ hoveredVal }
-			, pressedValue{ pressedVal }
-			, disabledValue{ disabledVal }
+			, interactionValues{ hoveredVal || pressedVal || disabledVal ?
+				std::make_unique<PropertyInteractionValues<T>>(PropertyInteractionValues<T>{ hoveredVal, pressedVal, disabledVal }) : nullptr }
 			, smoothTime{ smoothTimeVal }
 		{
 		}
@@ -170,25 +200,25 @@ namespace noco
 			case InteractionState::Default:
 				break;
 			case InteractionState::Hovered:
-				if (hoveredValue)
+				if (const auto& hoveredVal = hoveredValue())
 				{
-					return *hoveredValue;
+					return *hoveredVal;
 				}
 				break;
 			case InteractionState::Pressed:
-				if (pressedValue)
+				if (const auto& pressedVal = pressedValue())
 				{
-					return *pressedValue;
+					return *pressedVal;
 				}
-				if (hoveredValue)
+				if (const auto& hoveredVal = hoveredValue())
 				{
-					return *hoveredValue;
+					return *hoveredVal;
 				}
 				break;
 			case InteractionState::Disabled:
-				if (disabledValue)
+				if (const auto& disabledVal = disabledValue())
 				{
-					return *disabledValue;
+					return *disabledVal;
 				}
 				break;
 			}
@@ -197,28 +227,83 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		bool hasHovered() const noexcept
+		{
+			return interactionValues && interactionValues->hoveredValue.has_value();
+		}
+
+		[[nodiscard]]
+		const Optional<T>& hoveredValue() const
+		{
+			if (!interactionValues)
+			{
+				static const Optional<T> noneValue = none;
+				return noneValue;
+			}
+			return interactionValues->hoveredValue;
+		}
+
+		[[nodiscard]]
+		const Optional<T>& pressedValue() const
+		{
+			if (!interactionValues)
+			{
+				static const Optional<T> noneValue = none;
+				return noneValue;
+			}
+			return interactionValues->pressedValue;
+		}
+
+		[[nodiscard]]
+		const Optional<T>& disabledValue() const
+		{
+			if (!interactionValues)
+			{
+				static const Optional<T> noneValue = none;
+				return noneValue;
+			}
+			return interactionValues->disabledValue;
+		}
+
+		[[nodiscard]]
+		bool hasPressed() const noexcept
+		{
+			return interactionValues && interactionValues->pressedValue.has_value();
+		}
+
+		[[nodiscard]]
+		bool hasDisabled() const noexcept
+		{
+			return interactionValues && interactionValues->disabledValue.has_value();
+		}
+
+		[[nodiscard]]
 		JSON toJSON() const
 		{
+			const auto& hoveredVal = hoveredValue();
+			const auto& pressedVal = pressedValue();
+			const auto& disabledVal = disabledValue();
+
 			if constexpr (std::is_enum_v<T>)
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
 				    (!styleStateValues || styleStateValues->empty()))
 				{
 					return EnumToString(defaultValue);
 				}
 				JSON json;
 				json[U"default"] = EnumToString(defaultValue);
-				if (hoveredValue)
+				if (hoveredVal)
 				{
-					json[U"hovered"] = EnumToString(*hoveredValue);
+					json[U"hovered"] = EnumToString(*hoveredVal);
 				}
-				if (pressedValue)
+				if (pressedVal)
 				{
-					json[U"pressed"] = EnumToString(*pressedValue);
+					json[U"pressed"] = EnumToString(*pressedVal);
 				}
-				if (disabledValue)
+				if (disabledVal)
 				{
-					json[U"disabled"] = EnumToString(*disabledValue);
+					json[U"disabled"] = EnumToString(*disabledVal);
 				}
 				if (smoothTime != 0.0)
 				{
@@ -266,24 +351,24 @@ namespace noco
 			}
 			else if constexpr (HasToJSON<T>)
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
 				    (!styleStateValues || styleStateValues->empty()))
 				{
 					return defaultValue.toJSON();
 				}
 				JSON json;
 				json[U"default"] = defaultValue.toJSON();
-				if (hoveredValue)
+				if (hoveredVal)
 				{
-					json[U"hovered"] = hoveredValue->toJSON();
+					json[U"hovered"] = hoveredVal->toJSON();
 				}
-				if (pressedValue)
+				if (pressedVal)
 				{
-					json[U"pressed"] = pressedValue->toJSON();
+					json[U"pressed"] = pressedVal->toJSON();
 				}
-				if (disabledValue)
+				if (disabledVal)
 				{
-					json[U"disabled"] = disabledValue->toJSON();
+					json[U"disabled"] = disabledVal->toJSON();
 				}
 				if (smoothTime != 0.0)
 				{
@@ -331,24 +416,24 @@ namespace noco
 			}
 			else
 			{
-				if (!hoveredValue && !pressedValue && !disabledValue && smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && smoothTime == 0.0 && 
 				    (!styleStateValues || styleStateValues->empty()))
 				{
 					return defaultValue;
 				}
 				JSON json;
 				json[U"default"] = defaultValue;
-				if (hoveredValue)
+				if (hoveredVal)
 				{
-					json[U"hovered"] = *hoveredValue;
+					json[U"hovered"] = *hoveredVal;
 				}
-				if (pressedValue)
+				if (pressedVal)
 				{
-					json[U"pressed"] = *pressedValue;
+					json[U"pressed"] = *pressedVal;
 				}
-				if (disabledValue)
+				if (disabledVal)
 				{
-					json[U"disabled"] = *disabledValue;
+					json[U"disabled"] = *disabledVal;
 				}
 				if (smoothTime != 0.0)
 				{
@@ -602,7 +687,11 @@ namespace noco
 		PropertyValue<T> withHovered(const T& newHoveredValue) const
 		{
 			auto value = *this;
-			value.hoveredValue = newHoveredValue;
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->hoveredValue = newHoveredValue;
 			return value;
 		}
 
@@ -611,7 +700,11 @@ namespace noco
 		PropertyValue<T> withHovered(const U& newHoveredValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			value.hoveredValue = static_cast<T>(newHoveredValue);
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->hoveredValue = static_cast<T>(newHoveredValue);
 			return value;
 		}
 
@@ -619,7 +712,11 @@ namespace noco
 		PropertyValue<T> withPressed(const T& newPressedValue) const
 		{
 			auto value = *this;
-			value.pressedValue = newPressedValue;
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->pressedValue = newPressedValue;
 			return value;
 		}
 
@@ -628,7 +725,11 @@ namespace noco
 		PropertyValue<T> withPressed(const U& newPressedValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			value.pressedValue = static_cast<T>(newPressedValue);
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->pressedValue = static_cast<T>(newPressedValue);
 			return value;
 		}
 
@@ -636,7 +737,11 @@ namespace noco
 		PropertyValue<T> withDisabled(const T& newDisabledValue) const
 		{
 			auto value = *this;
-			value.disabledValue = newDisabledValue;
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->disabledValue = newDisabledValue;
 			return value;
 		}
 
@@ -645,7 +750,11 @@ namespace noco
 		PropertyValue<T> withDisabled(const U& newDisabledValue) const requires std::convertible_to<U, T>
 		{
 			auto value = *this;
-			value.disabledValue = static_cast<T>(newDisabledValue);
+			if (value.interactionValues == nullptr)
+			{
+				value.interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+			}
+			value.interactionValues->disabledValue = static_cast<T>(newDisabledValue);
 			return value;
 		}
 
@@ -829,21 +938,21 @@ namespace noco
 			case InteractionState::Default:
 				return fnGetStr(defaultValue);
 			case InteractionState::Hovered:
-				if (hoveredValue)
+				if (const auto& hoveredVal = hoveredValue())
 				{
-					return fnGetStr(*hoveredValue);
+					return fnGetStr(*hoveredVal);
 				}
 				break;
 			case InteractionState::Pressed:
-				if (pressedValue)
+				if (const auto& pressedVal = pressedValue())
 				{
-					return fnGetStr(*pressedValue);
+					return fnGetStr(*pressedVal);
 				}
 				break;
 			case InteractionState::Disabled:
-				if (disabledValue)
+				if (const auto& disabledVal = disabledValue())
 				{
-					return fnGetStr(*disabledValue);
+					return fnGetStr(*disabledVal);
 				}
 				break;
 			}
@@ -873,9 +982,7 @@ namespace noco
 				return false;
 			}
 			defaultValue = *parsedValue;
-			hoveredValue = none;
-			pressedValue = none;
-			disabledValue = none;
+			interactionValues.reset();
 			styleStateValues.reset();
 			smoothTime = 0.0;
 			return true;
@@ -931,13 +1038,25 @@ namespace noco
 				defaultValue = *parsedValue;
 				return true;
 			case InteractionState::Hovered:
-				hoveredValue = *parsedValue;
+				if (interactionValues == nullptr)
+				{
+					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				}
+				interactionValues->hoveredValue = *parsedValue;
 				return true;
 			case InteractionState::Pressed:
-				pressedValue = *parsedValue;
+				if (interactionValues == nullptr)
+				{
+					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				}
+				interactionValues->pressedValue = *parsedValue;
 				return true;
 			case InteractionState::Disabled:
-				disabledValue = *parsedValue;
+				if (interactionValues == nullptr)
+				{
+					interactionValues = std::make_unique<PropertyInteractionValues<T>>();
+				}
+				interactionValues->disabledValue = *parsedValue;
 				return true;
 			}
 			return false;
@@ -977,13 +1096,22 @@ namespace noco
 			case InteractionState::Default:
 				return false; // defaultValueは削除できない
 			case InteractionState::Hovered:
-				hoveredValue = none;
+				if (interactionValues != nullptr)
+				{
+					interactionValues->hoveredValue = none;
+				}
 				return true;
 			case InteractionState::Pressed:
-				pressedValue = none;
+				if (interactionValues != nullptr)
+				{
+					interactionValues->pressedValue = none;
+				}
 				return true;
 			case InteractionState::Disabled:
-				disabledValue = none;
+				if (interactionValues != nullptr)
+				{
+					interactionValues->disabledValue = none;
+				}
 				return true;
 			}
 			return false;
@@ -1025,11 +1153,23 @@ namespace noco
 			switch (interactionState)
 			{
 			case InteractionState::Hovered:
-				return hoveredValue.has_value();
+				if (interactionValues != nullptr)
+				{
+					return interactionValues->hoveredValue.has_value();
+				}
+				return false;
 			case InteractionState::Pressed:
-				return pressedValue.has_value();
+				if (interactionValues != nullptr)
+				{
+					return interactionValues->pressedValue.has_value();
+				}
+				return false;
 			case InteractionState::Disabled:
-				return disabledValue.has_value();
+				if (interactionValues != nullptr)
+				{
+					return interactionValues->disabledValue.has_value();
+				}
+				return false;
 			default:
 				return false;
 			}
@@ -1038,9 +1178,7 @@ namespace noco
 		[[nodiscard]]
 		bool hasInteractiveValue() const
 		{
-			return hoveredValue.has_value() ||
-				pressedValue.has_value() ||
-				disabledValue.has_value() ||
+			return (interactionValues != nullptr && (interactionValues->hoveredValue.has_value() || interactionValues->pressedValue.has_value() || interactionValues->disabledValue.has_value())) ||
 				(styleStateValues && !styleStateValues->empty());
 		}
 
@@ -1051,17 +1189,14 @@ namespace noco
 			{
 				return true;
 			}
-			if (hoveredValue && *hoveredValue == value)
+			if (interactionValues)
 			{
-				return true;
-			}
-			if (pressedValue && *pressedValue == value)
-			{
-				return true;
-			}
-			if (disabledValue && *disabledValue == value)
-			{
-				return true;
+				if ((interactionValues->hoveredValue && *interactionValues->hoveredValue == value) ||
+					(interactionValues->pressedValue && *interactionValues->pressedValue == value) ||
+					(interactionValues->disabledValue && *interactionValues->disabledValue == value))
+				{
+					return true;
+				}
 			}
 			if (styleStateValues)
 			{
