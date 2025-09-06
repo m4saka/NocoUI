@@ -685,7 +685,7 @@ namespace noco::editor
 				if (metadata.numTextAreaLines.has_value())
 				{
 					// TextAreaを使用
-					propertyNode = CreatePropertyNodeWithTextArea(displayName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines, std::move(fnGetValue));
+					propertyNode = CreatePropertyNodeWithTextArea(displayName, value, std::move(fnSetValue), hasInteractivePropertyValue, *metadata.numTextAreaLines, std::move(fnGetValue), hasParameterRef);
 				}
 				else
 				{
