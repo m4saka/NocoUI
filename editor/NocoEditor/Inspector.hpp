@@ -4152,26 +4152,24 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, String{ value });
 									};
 									
-									if (propSchema.numTextAreaLines.has_value())
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
 									{
-										propertyNode = CreatePropertyNodeWithTextArea(
-											displayName,
-											currentValue,
-											onChange,
-											HasInteractivePropertyValueYN::No,
-											*propSchema.numTextAreaLines);
-									}
-									else
-									{
-										propertyNode = CreatePropertyNode(
-											displayName,
-											currentValue,
-											onChange,
-											HasInteractivePropertyValueYN::No,
-											HasParameterRefYN::No,
-											nullptr,
-											propSchema.dragValueChangeStep);
-									}
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+										.numTextAreaLines = propSchema.numTextAreaLines,
+										.dragValueChangeStep = propSchema.dragValueChangeStep,
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
+										currentValue,
+										onChange,
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4182,14 +4180,23 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, String{ value });
 									};
 									
-									propertyNode = CreatePropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+										.dragValueChangeStep = propSchema.dragValueChangeStep,
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										currentValue,
 										onChange,
-										HasInteractivePropertyValueYN::No,
-										HasParameterRefYN::No,
-										nullptr,
-										propSchema.dragValueChangeStep);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4201,12 +4208,22 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
 									};
 									
-									propertyNode = CreateBoolPropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createBoolPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										value,
 										onChange,
-										HasInteractivePropertyValueYN::No,
-										HasParameterRefYN::No);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4218,12 +4235,22 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
 									};
 									
-									propertyNode = CreateVec2PropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createVec2PropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										value,
 										onChange,
-										HasInteractivePropertyValueYN::No,
-										HasParameterRefYN::No);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4235,12 +4262,22 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
 									};
 									
-									propertyNode = CreateColorPropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createColorPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										value,
 										onChange,
-										HasInteractivePropertyValueYN::No,
-										HasParameterRefYN::No);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4252,12 +4289,22 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
 									};
 									
-									propertyNode = CreateLRTBPropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createLRTBPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										value,
 										onChange,
-										HasInteractivePropertyValueYN::No,
-										HasParameterRefYN::No);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 								
@@ -4268,30 +4315,77 @@ namespace noco::editor
 										placeholderComponent->setPropertyValueString(propName, String{ value });
 									};
 									
-									propertyNode = CreateEnumPropertyNode(
-										displayName,
+									// Placeholderではメタデータを動的に設定
+									const PropertyMetadata tempMetadata
+									{
+										.displayName = displayName,
+										.tooltip = propSchema.tooltip.isEmpty() ? none : Optional<String>{ propSchema.tooltip },
+										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
+									};
+									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
+									
+									propertyNode = createEnumPropertyNodeWithTooltip(
+										placeholderComponent->originalType(),
+										propSchema.name,
 										currentValue,
 										onChange,
 										m_contextMenu,
 										propSchema.enumCandidates,
-										HasInteractivePropertyValueYN::No);
+										HasInteractivePropertyValueYN{ placeholderComponent->getProperty(propSchema.name)->hasInteractivePropertyValue() },
+										HasParameterRefYN{ placeholderComponent->getProperty(propSchema.name)->hasParamRef() });
 								}
 								break;
 							}
 							
 							if (propertyNode)
 							{
-								if (!propSchema.tooltip.isEmpty())
+								if (auto placeholderProperty = placeholderComponent->getProperty(propSchema.name))
 								{
-									// boolプロパティの場合はpropertyNode全体にツールチップを追加
-									if (propSchema.editType == PropertyEditType::Bool)
+									const bool isInteractive = placeholderProperty->isInteractiveProperty();
+									
+									Array<MenuElement> stateMenuElements
 									{
-										propertyNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, propSchema.tooltip, propSchema.tooltipDetail);
-									}
-									else if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
-									{
-										labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, propSchema.tooltip, propSchema.tooltipDetail);
-									}
+										MenuItem
+										{ 
+											.text = U"ステート毎に値を変更..."_fmt(placeholderProperty->name()), 
+											.hotKeyText = U"", 
+											.mnemonicInput = KeyC, 
+											.onClick = [this, placeholderProperty] 
+											{ 
+												m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(placeholderProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
+											},
+											.fnIsEnabled = [isInteractive] { return isInteractive; }
+										},
+										MenuSeparator{},
+										MenuItem
+										{ 
+											.text = U"参照パラメータを選択..."_fmt(placeholderProperty->name()), 
+											.hotKeyText = U"", 
+											.mnemonicInput = KeyP, 
+											.onClick = [this, placeholderProperty] 
+											{ 
+												m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(placeholderProperty, m_canvas, [this] { refreshInspector(); }, m_dialogOpener)); 
+											},
+										},
+										MenuItem
+										{
+											.text = U"参照パラメータをクリア"_fmt(placeholderProperty->name()),
+											.hotKeyText = U"",
+											.mnemonicInput = KeyC,
+											.onClick = [placeholderProperty, this]
+											{
+												placeholderProperty->setParamRef(U"");
+												refreshInspector();
+											},
+											.fnIsEnabled = [placeholderProperty] { return !placeholderProperty->paramRef().isEmpty(); },
+										},
+									};
+									
+									propertyNode->emplaceComponent<ContextMenuOpener>(
+										m_contextMenu,
+										stateMenuElements,
+										nullptr,
+										RecursiveYN::Yes);
 								}
 								
 								componentNode->addChild(propertyNode);
