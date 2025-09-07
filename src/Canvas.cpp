@@ -1439,6 +1439,11 @@ namespace noco
 
 	std::shared_ptr<Canvas> Canvas::setReferenceSize(const SizeF& size)
 	{
+		if (m_referenceSize == size)
+		{
+			return shared_from_this();
+		}
+
 		m_referenceSize = size;
 		
 		// AutoFitModeが有効な場合は再計算
