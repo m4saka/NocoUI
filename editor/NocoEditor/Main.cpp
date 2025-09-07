@@ -31,21 +31,6 @@ using namespace noco;
 using namespace noco::editor;
 using noco::detail::WithInstanceIdYN;
 
-Vec2 calculateCanvasCenterOffset(const Size& sceneSize, const std::shared_ptr<Canvas>& canvas)
-{
-	// Canvas表示エリア（メニューバーとツールバーを除く）の中央を計算
-	const double contentAreaTop = MenuBarHeight + Toolbar::ToolbarHeight;
-	const double contentAreaHeight = sceneSize.y - contentAreaTop;
-	const Vec2 contentAreaCenter{ 
-		sceneSize.x / 2.0, 
-		contentAreaTop + contentAreaHeight / 2.0 
-	};
-	
-	const Vec2 canvasSize{ canvas->width(), canvas->height() };
-	const Vec2 targetPosition = contentAreaCenter - canvasSize / 2.0;
-	return -targetPosition;
-}
-
 class Editor
 {
 private:
@@ -74,9 +59,10 @@ private:
 	bool m_isAltScrolling = false;
 	HistorySystem m_historySystem;
 	
-	// リサイズ機能
 	double m_hierarchyWidth = 300.0;
 	double m_inspectorWidth = 400.0;
+	double m_preferredHierarchyWidth = 300.0;
+	double m_preferredInspectorWidth = 400.0;
 	std::unique_ptr<ResizableHandle> m_hierarchyResizeHandle;
 	std::unique_ptr<ResizableHandle> m_inspectorResizeHandle;
 
@@ -220,9 +206,8 @@ public:
 		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); }, [this] { return m_hierarchy.hasSelection(); });
 		m_toolbar.addSeparator();
 
-		// Canvas初期位置をウィンドウ中央に設定
-		m_scrollOffset = calculateCanvasCenterOffset(Scene::Size(), m_canvas);
-		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		// Canvas初期位置をCanvas表示エリア中央に設定
+		refreshLayout();
 		
 		// ツールバーの初期状態を更新
 		m_toolbar.updateButtonStates();
@@ -271,7 +256,12 @@ public:
 		const auto sceneSize = Scene::Size();
 		if (m_prevSceneSize != sceneSize)
 		{
-			refreshLayout();
+			// ウィンドウサイズをもとにHierarchy・Inspectorのサイズを必要に応じて制限
+			m_hierarchyWidth = clampPanelWidth(m_preferredHierarchyWidth);
+			m_inspectorWidth = clampPanelWidth(m_preferredInspectorWidth);
+			
+			updatePanelLayout();
+			keepCenterPositionOnWindowResize(m_prevSceneSize, sceneSize);
 			m_prevSceneSize = sceneSize;
 		}
 
@@ -511,18 +501,27 @@ public:
 	
 	void onHierarchyResize(double newWidth)
 	{
-		m_hierarchyWidth = Math::Clamp(newWidth, 150.0, Scene::Width() * 0.4);
+		const double prevHierarchyWidth = m_hierarchyWidth;
+		const double prevInspectorWidth = m_inspectorWidth;
+		
+		m_hierarchyWidth = clampPanelWidth(newWidth);
+		m_preferredHierarchyWidth = m_hierarchyWidth;
+		
 		updatePanelLayout();
-		updateResizeHandlePositions();
+		keepCenterPositionOnPanelResize(prevHierarchyWidth, prevInspectorWidth);
 	}
 	
 	void onInspectorResize(double newXPosition)
 	{
-		// Inspectorの左端の位置から幅を計算
+		const double prevHierarchyWidth = m_hierarchyWidth;
+		const double prevInspectorWidth = m_inspectorWidth;
+		
 		const double newWidth = Scene::Width() - newXPosition;
-		m_inspectorWidth = Math::Clamp(newWidth, 150.0, Scene::Width() * 0.4);
+		m_inspectorWidth = clampPanelWidth(newWidth);
+		m_preferredInspectorWidth = m_inspectorWidth;  // ユーザーの希望サイズを記憶
+		
 		updatePanelLayout();
-		updateResizeHandlePositions();
+		keepCenterPositionOnPanelResize(prevHierarchyWidth, prevInspectorWidth);
 	}
 	
 	void updatePanelLayout()
@@ -530,7 +529,7 @@ public:
 		m_hierarchy.setWidth(m_hierarchyWidth);
 		m_inspector.setWidth(m_inspectorWidth);
 		
-		refreshLayout();
+		updateResizeHandlePositions();
 	}
 
 	void refreshLayout()
@@ -538,8 +537,52 @@ public:
 		updateResizeHandlePositions();
 		const auto sceneSize = Scene::Size();
 		
-		// ウィンドウリサイズ時にCanvas中央位置を保持
-		m_scrollOffset = calculateCanvasCenterOffset(sceneSize, m_canvas);
+		// Canvas表示エリアの中央にCanvasを配置
+		const Vec2 canvasAreaCenter = getCanvasAreaCenter(sceneSize, m_hierarchyWidth, m_inspectorWidth);
+		const Vec2 canvasSize{ m_canvas->width(), m_canvas->height() };
+		const Vec2 targetPosition = canvasAreaCenter - canvasSize / 2.0;
+		m_scrollOffset = -targetPosition;
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+	}
+
+	double clampPanelWidth(double width) const
+	{
+		return Math::Clamp(width, 200.0, Math::Min(600.0, Scene::Width() * 0.5));
+	}
+
+	Vec2 getCanvasAreaCenter(const Size& sceneSize, double hierarchyWidth, double inspectorWidth) const
+	{
+		// Hierarchy・Inspectorを除いたCanvas表示エリアの中央
+		const double contentAreaTop = MenuBarHeight + Toolbar::ToolbarHeight;
+		const double contentAreaHeight = sceneSize.y - contentAreaTop;
+		const double canvasAreaLeft = hierarchyWidth;
+		const double canvasAreaWidth = sceneSize.x - hierarchyWidth - inspectorWidth;
+		
+		return Vec2{ canvasAreaLeft + canvasAreaWidth / 2, contentAreaTop + contentAreaHeight / 2 };
+	}
+
+	void keepCenterPositionOnWindowResize(const Size& prevSize, const Size& newSize)
+	{
+		updateResizeHandlePositions();
+		
+		// ウィンドウリサイズ前後でCanvas表示エリア中央が維持されるように
+		const Vec2 prevScreenCenter = getCanvasAreaCenter(prevSize, m_hierarchyWidth, m_inspectorWidth);
+		const Vec2 worldCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
+		const Vec2 newScreenCenter = getCanvasAreaCenter(newSize, m_hierarchyWidth, m_inspectorWidth);
+		
+		m_scrollOffset = worldCenterPos * m_scrollScale - newScreenCenter;
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+	}
+
+	void keepCenterPositionOnPanelResize(double prevHierarchyWidth, double prevInspectorWidth)
+	{
+		// Inspector・Hierarchyのリサイズ前後で画面中央が維持されるように
+		const Size sceneSize = Scene::Size();
+		const Vec2 prevScreenCenter = getCanvasAreaCenter(sceneSize, prevHierarchyWidth, prevInspectorWidth);
+		const Vec2 worldCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
+		const Vec2 newScreenCenter = getCanvasAreaCenter(sceneSize, m_hierarchyWidth, m_inspectorWidth);
+		
+		m_scrollOffset = worldCenterPos * m_scrollScale - newScreenCenter;
 		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
@@ -1088,9 +1131,8 @@ public:
 
 	void onClickMenuViewResetPosition()
 	{
-		m_scrollOffset = calculateCanvasCenterOffset(Scene::Size(), m_canvas);
 		m_scrollScale = 1.0;
-		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+		refreshLayout();
 	}
 
 	void onClickMenuToolChangeAssetDirectory()
