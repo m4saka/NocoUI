@@ -142,7 +142,7 @@ namespace noco
 				const auto stairCount = Max(m_stairCount.value(), 0);
 				const auto upStairs = m_upStairs.value();
 				
-				const Vec2 stairsPos{ center.x - region.w / 2, center.y - region.h / 2 };
+				const Vec2 stairsPos{ center.x - region.w / 2 * (upStairs ? -1 : 1), center.y + region.h / 2 };
 				shape = Shape2D::Stairs(stairsPos, region.w, region.h, stairCount, upStairs);
 			}
 			break;
