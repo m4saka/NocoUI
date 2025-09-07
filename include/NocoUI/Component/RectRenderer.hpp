@@ -21,7 +21,8 @@ namespace noco
 		SmoothProperty<ColorF> m_fillGradationColor2;
 		Property<BlendMode> m_blendMode;
 		SmoothProperty<ColorF> m_outlineColor;
-		SmoothProperty<double> m_outlineThickness;
+		SmoothProperty<double> m_outlineThicknessInner;
+		SmoothProperty<double> m_outlineThicknessOuter;
 		SmoothProperty<double> m_cornerRadius;
 		SmoothProperty<ColorF> m_shadowColor;
 		SmoothProperty<Vec2> m_shadowOffset;
@@ -32,20 +33,22 @@ namespace noco
 		explicit RectRenderer(
 			const PropertyValue<ColorF>& fillColor = Palette::White,
 			const PropertyValue<ColorF>& outlineColor = Palette::Black,
-			const PropertyValue<double>& outlineThickness = 0.0,
+			const PropertyValue<double>& outlineThicknessInner = 0.0,
+			const PropertyValue<double>& outlineThicknessOuter = 0.0,
 			const PropertyValue<double>& cornerRadius = 0.0,
 			const PropertyValue<ColorF>& shadowColor = ColorF{ 0.0, 0.0 },
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
 			const PropertyValue<double>& shadowSpread = 0.0)
-			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_blendMode, &m_outlineColor, &m_outlineThickness, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_blendMode, &m_outlineColor, &m_outlineThicknessInner, &m_outlineThicknessOuter, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
 			, m_fillGradationType{ U"fillGradationType", RectFillGradationType::None }
 			, m_fillColor{ U"fillColor", fillColor }
 			, m_fillGradationColor1{ U"fillGradationColor1", fillColor }
 			, m_fillGradationColor2{ U"fillGradationColor2", fillColor }
 			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_outlineColor{ U"outlineColor", outlineColor }
-			, m_outlineThickness{ U"outlineThickness", outlineThickness }
+			, m_outlineThicknessInner{ U"outlineThicknessInner", outlineThicknessInner }
+			, m_outlineThicknessOuter{ U"outlineThicknessOuter", outlineThicknessOuter }
 			, m_cornerRadius{ U"cornerRadius", cornerRadius }
 			, m_shadowColor{ U"shadowColor", shadowColor }
 			, m_shadowOffset{ U"shadowOffset", shadowOffset }
@@ -136,14 +139,26 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<double>& outlineThickness() const
+		const PropertyValue<double>& outlineThicknessInner() const
 		{
-			return m_outlineThickness.propertyValue();
+			return m_outlineThicknessInner.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setOutlineThickness(const PropertyValue<double>& outlineThickness)
+		std::shared_ptr<RectRenderer> setOutlineThicknessInner(const PropertyValue<double>& outlineThicknessInner)
 		{
-			m_outlineThickness.setPropertyValue(outlineThickness);
+			m_outlineThicknessInner.setPropertyValue(outlineThicknessInner);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& outlineThicknessOuter() const
+		{
+			return m_outlineThicknessOuter.propertyValue();
+		}
+
+		std::shared_ptr<RectRenderer> setOutlineThicknessOuter(const PropertyValue<double>& outlineThicknessOuter)
+		{
+			m_outlineThicknessOuter.setPropertyValue(outlineThicknessOuter);
 			return shared_from_this();
 		}
 

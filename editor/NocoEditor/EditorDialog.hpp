@@ -90,7 +90,7 @@ namespace noco::editor
 			m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
 
 			m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } });
-			m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
+			m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 			const auto buttonParentNode = m_dialogNode->emplaceChild(
 				U"Dialog_ButtonParent",
@@ -322,6 +322,7 @@ namespace noco::editor
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
 				1.0,
+				0.0,
 				4.0);
 			const auto textBox = m_textBoxNode->emplaceComponent<TextBox>(
 				U"",
@@ -451,6 +452,7 @@ namespace noco::editor
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0,
+				0.0,
 				4.0);
 		
 			m_styleStateLabel = m_styleStateComboBox->emplaceComponent<Label>(
@@ -486,6 +488,7 @@ namespace noco::editor
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0,
+				0.0,
 				4.0);
 			addButton->emplaceComponent<Label>(
 				U"＋ 追加",
@@ -506,6 +509,7 @@ namespace noco::editor
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withDisabled(ColorF{ 0.05, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withDisabled(ColorF{ 1.0, 0.2 }).withSmoothTime(0.05),
 				1.0,
+				0.0,
 				4.0);
 			m_removeButton->emplaceComponent<Label>(
 				U"－ 削除",

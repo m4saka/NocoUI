@@ -85,7 +85,7 @@ namespace noco::editor
 
 			m_rootNode->setChildrenLayout(VerticalLayout{});
 			m_rootNode->setVerticalScrollable(true);
-			m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
+			m_rootNode->emplaceComponent<RectRenderer>(ColorF{ 0.95 }, Palette::Black, 0.0, 0.0, 0.0, ColorF{ 0.0, 0.4 }, Vec2{ 2, 2 }, 5);
 
 			m_editorOverlayCanvas->refreshLayoutImmediately();
 		}

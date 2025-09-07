@@ -88,6 +88,7 @@ namespace noco::editor
 				ColorF{ 0.15 },
 				ColorF{ 0.4 },
 				1.0,
+				0.0,
 				4.0);
 			scrollAreaNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8 } });
 			
@@ -152,6 +153,7 @@ namespace noco::editor
 						ColorF{ 0.2, 0.3 },
 						ColorF{ 0.5, 0.3 },
 						1.0,
+						0.0,
 						2.0);
 					
 					// ノード名

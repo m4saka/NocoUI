@@ -292,8 +292,12 @@ namespace noco::editor
 		metadata[PropertyKey{ U"RectRenderer", U"outlineColor" }] = PropertyMetadata{
 			.tooltip = U"アウトライン色",
 		};
-		metadata[PropertyKey{ U"RectRenderer", U"outlineThickness" }] = PropertyMetadata{
-			.tooltip = U"アウトラインの太さ",
+		metadata[PropertyKey{ U"RectRenderer", U"outlineThicknessInner" }] = PropertyMetadata{
+			.tooltip = U"アウトラインの内側の太さ",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"RectRenderer", U"outlineThicknessOuter" }] = PropertyMetadata{
+			.tooltip = U"アウトラインの外側の太さ",
 			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"RectRenderer", U"cornerRadius" }] = PropertyMetadata{

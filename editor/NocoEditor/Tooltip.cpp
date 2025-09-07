@@ -31,7 +31,7 @@ namespace noco::editor
 					.sizeDeltaPivot = Anchor::TopLeft,
 				},
 				IsHitTargetYN::No);
-			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 4.0);
+			m_tooltipNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.9 }, ColorF{ 0.3 }, 1.0, 0.0, 4.0);
 			m_tooltipNode->setChildrenLayout(
 				VerticalLayout
 				{

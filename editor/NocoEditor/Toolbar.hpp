@@ -83,6 +83,7 @@ namespace noco::editor
 				PropertyValue<ColorF>{ ColorF{ 0.95, 0.0 }, ColorF{ 0.88 }, ColorF{ 0.83 }, ColorF{ 0.95, 0.0 }, 0.1 },
 				PropertyValue<ColorF>{ ColorF{ 0.0, 0.0 }, ColorF{ 0.4 }, ColorF{ 0.4 }, ColorF{ 0.0, 0.0 }, 0.1 },
 				0.0,
+				0.0,
 				4.0);
 			
 			// アイコンラベル

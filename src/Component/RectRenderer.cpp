@@ -11,7 +11,8 @@ namespace noco
 		const ColorF& fillGradationColor2 = m_fillGradationColor2.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		const ColorF& outlineColor = m_outlineColor.value();
-		const double outlineThickness = m_outlineThickness.value();
+		const double outlineThicknessInner = m_outlineThicknessInner.value();
+		const double outlineThicknessOuter = m_outlineThicknessOuter.value();
 		const double cornerRadius = m_cornerRadius.value();
 		const ColorF& shadowColor = m_shadowColor.value();
 		const Vec2& shadowOffset = m_shadowOffset.value();
@@ -38,7 +39,7 @@ namespace noco
 
 		if (cornerRadius == 0.0)
 		{
-			const RectF rect = node.regionRect().stretched(-outlineThickness / 2);
+			const RectF rect = node.regionRect();
 			if (shadowColor.a > 0.0)
 			{
 				rect.drawShadow(shadowOffset, shadowBlur, shadowSpread, shadowColor);
@@ -60,14 +61,14 @@ namespace noco
 				rect.draw(fillColor);
 			}
 			
-			if (outlineThickness > 0.0)
+			if (outlineThicknessInner > 0.0 || outlineThicknessOuter > 0.0)
 			{
-				rect.drawFrame(outlineThickness, outlineColor);
+				rect.drawFrame(outlineThicknessInner, outlineThicknessOuter, outlineColor);
 			}
 		}
 		else
 		{
-			const RectF rect = node.regionRect().stretched(-outlineThickness / 2);
+			const RectF rect = node.regionRect();
 			const RoundRect roundRect = rect.rounded(cornerRadius);
 			if (shadowColor.a > 0.0)
 			{
@@ -94,9 +95,9 @@ namespace noco
 				roundRect.draw(fillColor);
 			}
 			
-			if (outlineThickness > 0.0)
+			if (outlineThicknessInner > 0.0 || outlineThicknessOuter > 0.0)
 			{
-				roundRect.drawFrame(outlineThickness, outlineColor);
+				roundRect.drawFrame(outlineThicknessInner, outlineThicknessOuter, outlineColor);
 			}
 		}
 	}

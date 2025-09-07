@@ -214,7 +214,7 @@ namespace noco::editor
 					m_lastEditorSelectedNode = node;
 					m_shiftSelectOriginNode = node;
 				});
-			hierarchyNode->emplaceComponent<RectRenderer>(Element::HierarchyRectFillColor(EditorSelectedYN::No), Element::HierarchyRectOutlineColor(EditorSelectedYN::No), 1.0, 3.0);
+			hierarchyNode->emplaceComponent<RectRenderer>(Element::HierarchyRectFillColor(EditorSelectedYN::No), Element::HierarchyRectOutlineColor(EditorSelectedYN::No), 1.0, 0.0, 3.0);
 			hierarchyNode->emplaceComponent<DragDropSource>([this, hierarchyNode]() -> Array<std::shared_ptr<Node>>
 				{
 					// 未選択のノードをドラッグ開始した場合は単一選択
@@ -683,8 +683,8 @@ namespace noco::editor
 			, m_dialogOpener(dialogOpener)
 			, m_componentFactory(componentFactory)
 		{
-			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
-			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
+			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
+			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 0.0, 10.0);
 			m_hierarchyInnerFrameNode->emplaceComponent<ContextMenuOpener>(contextMenu,
 				Array<MenuElement>
 				{

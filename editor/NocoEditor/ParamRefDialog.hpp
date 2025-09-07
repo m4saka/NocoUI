@@ -167,7 +167,7 @@ namespace noco::editor
 			m_comboBox->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
-				1.0, 4.0);
+				1.0, 0.0, 4.0);
 			
 			// 現在選択されているパラメータ名を表示
 			String displayText = m_selectedParamName.isEmpty() ? U"(なし)" : m_selectedParamName;
@@ -208,7 +208,7 @@ namespace noco::editor
 			newParamButton->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
 				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
-				1.0, 4.0);
+				1.0, 0.0, 4.0);
 			newParamButton->emplaceComponent<Label>(
 				U"＋ 新規",
 				U"",
@@ -257,7 +257,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1.0,
 				});
-			valueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.05, 0.8 }, ColorF{ 0.5, 0.4 }, 1.0, 4.0);
+			valueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.05, 0.8 }, ColorF{ 0.5, 0.4 }, 1.0, 0.0, 4.0);
 			
 			// 現在選択されているパラメータの値を表示
 			String valueText = U"";

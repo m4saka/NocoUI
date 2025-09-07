@@ -275,8 +275,8 @@ namespace noco::editor
 			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
-			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 10.0);
-			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 10.0);
+			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
+			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 0.0, 10.0);
 			m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 			m_inspectorRootNode->setVerticalScrollable(true);
 		}
@@ -516,7 +516,7 @@ namespace noco::editor
 					Palette::White,
 					HorizontalAlign::Center,
 					VerticalAlign::Middle);
-				canvasNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.2, 0.2 }, ColorF{ 0.4, 0.4 }, 0.0, 4.0);
+			canvasNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.2, 0.2 }, ColorF{ 0.4, 0.4 }, 0.0, 0.0, 4.0);
 				m_inspectorRootNode->addChild(canvasNameNode);
 
 				// Canvas Settingセクションを追加
@@ -548,6 +548,7 @@ namespace noco::editor
 			headingNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ color, 0.8 }).withHovered(ColorF{ color + ColorF{ 0.05 }, 0.8 }).withPressed(ColorF{ color - ColorF{ 0.05 }, 0.8 }),
 				Palette::Black,
+				0.0,
 				0.0,
 				3.0);
 			const auto arrowLabel = headingNode->emplaceComponent<Label>(
@@ -658,7 +659,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 26 },
 				});
-			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
@@ -902,7 +903,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
 			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 			
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
@@ -937,7 +938,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				});
-			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, fnSetValue, fnGetValue));
@@ -1040,7 +1041,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
 			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
 				InlineRegion
@@ -1070,7 +1071,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, textAreaHeight },
 					.flexibleWeight = 1,
 				});
-			textAreaNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textAreaNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textArea = textAreaNode->emplaceComponent<TextArea>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textArea->setText(value, IgnoreIsChangedYN::Yes);
 			
@@ -1147,6 +1148,7 @@ namespace noco::editor
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
 				0.0,
+				0.0,
 				3.0);
 
 			const auto labelNode = propertyNode->emplaceChild(
@@ -1197,7 +1199,7 @@ namespace noco::editor
 			// Xラベルに背景を追加（ホバー時のフィードバック用）
 			xLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// X
 			const auto textBoxXNode = textBoxParentNode->emplaceChild(
@@ -1208,7 +1210,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 6, 0, 0 },
 				});
-			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxXNode->emplaceComponent<TabStop>();
@@ -1228,7 +1230,7 @@ namespace noco::editor
 			// Yラベルに背景を追加（ホバー時のフィードバック用）
 			yLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// Y
 			const auto textBoxYNode = textBoxParentNode->emplaceChild(
@@ -1239,7 +1241,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxYNode->emplaceComponent<TabStop>();
@@ -1313,6 +1315,7 @@ namespace noco::editor
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
 				0.0,
+				0.0,
 				3.0);
 
 			const auto labelNode = propertyNode->emplaceChild(
@@ -1358,7 +1361,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 2, 0, 0 },
 				});
-			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxXNode->emplaceComponent<TabStop>();
@@ -1373,7 +1376,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 2, 0, 0 },
 				});
-			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxYNode->emplaceComponent<TabStop>();
@@ -1388,7 +1391,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 2, 0, 0 },
 				});
-			textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxZNode->emplaceComponent<TabStop>();
@@ -1403,7 +1406,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 0, 0, 0 },
 				});
-			textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxWNode->emplaceComponent<TabStop>();
@@ -1442,6 +1445,7 @@ namespace noco::editor
 			propertyNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
+				0.0,
 				0.0,
 				3.0);
 
@@ -1505,7 +1509,7 @@ namespace noco::editor
 			// Lラベルに背景を追加（ホバー時のフィードバック用）
 			lLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// L
 			const auto textBoxLNode = line1TextBoxParentNode->emplaceChild(
@@ -1516,7 +1520,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxLNode->emplaceComponent<TabStop>();
@@ -1536,7 +1540,7 @@ namespace noco::editor
 			// Rラベルに背景を追加（ホバー時のフィードバック用）
 			rLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// R
 			const auto textBoxRNode = line1TextBoxParentNode->emplaceChild(
@@ -1547,7 +1551,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxRNode->emplaceComponent<TabStop>();
@@ -1613,7 +1617,7 @@ namespace noco::editor
 			// Tラベルに背景を追加（ホバー時のフィードバック用）
 			tLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// T
 			const auto textBoxTNode = line2TextBoxParentNode->emplaceChild(
@@ -1624,7 +1628,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxTNode->emplaceComponent<TabStop>();
@@ -1644,7 +1648,7 @@ namespace noco::editor
 			// Bラベルに背景を追加（ホバー時のフィードバック用）
 			bLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// B
 			const auto textBoxBNode = line2TextBoxParentNode->emplaceChild(
@@ -1655,7 +1659,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxBNode->emplaceComponent<TabStop>();
@@ -1762,7 +1766,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
 			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 
 			const auto labelNode = propertyNode->emplaceChild(
 				U"Label",
@@ -1838,7 +1842,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 2, 0, 0 },
 				},
 				IsHitTargetYN::No);
-			const auto previewRectRenderer = previewNode->emplaceComponent<RectRenderer>(currentValue, ColorF{ 1.0, 0.3 }, 1.0, 0.0);
+			const auto previewRectRenderer = previewNode->emplaceComponent<RectRenderer>(currentValue, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 0.0);
 
 			const auto textBoxParentNode = rowNode->emplaceChild(
 				U"TextBoxParent",
@@ -1865,7 +1869,7 @@ namespace noco::editor
 			// Rラベルに背景を追加（ホバー時のフィードバック用）
 			rLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// R
 			const auto textBoxRNode = textBoxParentNode->emplaceChild(
@@ -1876,7 +1880,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxRNode->emplaceComponent<TabStop>();
@@ -1896,7 +1900,7 @@ namespace noco::editor
 			// Gラベルに背景を追加（ホバー時のフィードバック用）
 			gLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// G
 			const auto textBoxGNode = textBoxParentNode->emplaceChild(
@@ -1907,7 +1911,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxGNode->emplaceComponent<TabStop>();
@@ -1927,7 +1931,7 @@ namespace noco::editor
 			// Bラベルに背景を追加（ホバー時のフィードバック用）
 			bLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// B
 			const auto textBoxBNode = textBoxParentNode->emplaceChild(
@@ -1938,7 +1942,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxBNode->emplaceComponent<TabStop>();
@@ -1958,7 +1962,7 @@ namespace noco::editor
 			// Aラベルに背景を追加（ホバー時のフィードバック用）
 			aLabelNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-				Palette::Black, 0.0, 2.0);
+				Palette::Black, 0.0, 0.0, 2.0);
 
 			// A
 			const auto textBoxANode = textBoxParentNode->emplaceChild(
@@ -1969,7 +1973,7 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxANode->emplaceComponent<TabStop>();
@@ -2079,7 +2083,7 @@ namespace noco::editor
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
 			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 
 			const auto labelNode =
 				propertyNode->emplaceChild(
@@ -2112,7 +2116,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				});
-			comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 4.0);
+			comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 
 			const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
 				currentValue,
@@ -2158,7 +2162,7 @@ namespace noco::editor
 				},
 				useParentHoverState ? IsHitTargetYN::No : IsHitTargetYN::Yes);
 
-			checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 
 			const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 				initialValue ? U"✓" : U"",
@@ -2196,6 +2200,7 @@ namespace noco::editor
 			propertyNode->emplaceComponent<RectRenderer>(
 				PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
 				Palette::Black,
+				0.0,
 				0.0,
 				3.0);
 
@@ -2258,7 +2263,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			nodeNameNode->setChildrenLayout(HorizontalLayout{ .padding = 6, .verticalAlign = VerticalAlign::Middle });
-			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			// activeSelfのチェックボックス
 			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [this, node](bool value) { node->setActive(value); m_onChangeNodeActive(); });
@@ -2372,7 +2377,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			nodeSettingNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedNodeSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			nodeSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			nodeSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			nodeSettingNode->addChild(CreateHeadingNode(U"Node Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedNodeSetting,
 				[this](IsFoldedYN isFolded)
@@ -2534,7 +2539,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			layoutNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 			layoutNode->addChild(CreateHeadingNode(U"Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
 				[this](IsFoldedYN isFolded)
 				{
@@ -2682,7 +2687,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			layoutNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedLayout ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			layoutNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 			layoutNode->addChild(CreateHeadingNode(U"Children Layout", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedLayout,
 				[this](IsFoldedYN isFolded)
 				{
@@ -2828,7 +2833,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			regionNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedRegion ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			regionNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			regionNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			regionNode->addChild(CreateHeadingNode(U"Region", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedRegion,
 				[this](IsFoldedYN isFolded)
@@ -2878,7 +2883,7 @@ namespace noco::editor
 						IsHitTargetYN::Yes,
 						InheritChildrenStateFlags::Hovered);
 					propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
-					propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 3.0);
+					propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 					
 					// ラベル領域（チェックボックスを含む）
 					const auto labelNode = propertyNode->emplaceChild(
@@ -2929,7 +2934,7 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, 26 },
 							.flexibleWeight = 1,
 						});
-					textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 4.0);
+			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 					const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 					textBox->setText(Format(currentValue.value_or(0.0)), IgnoreIsChangedYN::Yes);
 					textBoxNode->setInteractable(hasValue ? InteractableYN::Yes : InteractableYN::No);
@@ -3419,7 +3424,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			transformNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedTransform ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			transformNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			transformNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			transformNode->addChild(CreateHeadingNode(U"Transform", ColorF{ 0.3, 0.5, 0.3 }, m_isFoldedTransform,
 				[this](IsFoldedYN isFolded)
@@ -3888,7 +3893,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			canvasSettingNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedCanvasSetting ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			canvasSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			canvasSettingNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			canvasSettingNode->addChild(CreateHeadingNode(U"Canvas Settings", ColorF{ 0.5, 0.3, 0.3 }, m_isFoldedCanvasSetting,
 				[this](IsFoldedYN isFolded)
@@ -3938,7 +3943,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			paramsNode->setChildrenLayout(VerticalLayout{ .padding = m_isFoldedParams ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			paramsNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			paramsNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			paramsNode->addChild(CreateHeadingNode(U"Params", ColorF{ 0.3, 0.5, 0.6 }, m_isFoldedParams,
 				[this](IsFoldedYN isFolded)
@@ -4033,7 +4038,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
 			componentNode->setChildrenLayout(VerticalLayout{ .padding = isFolded ? LRTB::Zero() : LRTB{ 0, 0, 0, 8 } });
-			componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 3.0);
+			componentNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			const auto headingNode = componentNode->addChild(CreateHeadingNode(componentDisplayName, ColorF{ 0.3, 0.3, 0.5 }, isFolded, std::move(onToggleFold)));
 			Array<MenuElement> menuElements;
