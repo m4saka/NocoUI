@@ -25,6 +25,8 @@
 #include "PlaceholderComponent.hpp"
 #include <NocoUI/ComponentFactory.hpp>
 
+//#deine MONITOR_FPS
+
 using namespace noco;
 using namespace noco::editor;
 using noco::detail::WithInstanceIdYN;
@@ -1153,14 +1155,18 @@ void Main()
 
 	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
 
+#ifdef MONITOR_FPS
 	Graphics::SetVSyncEnabled(false);
+#endif
 
 	while (System::Update())
 	{
+#ifdef MONITOR_FPS
 		if (Scene::FrameCount() % 60 == 0)
 		{
 			Print << Profiler::FPS();
 		}
+#endif
 
 		editor.update();
 		if (editor.isExitRequested())
