@@ -39,7 +39,7 @@ namespace noco
 		IsHitTargetYN m_isHitTarget;
 		LRTB m_hitPadding{ 0.0, 0.0, 0.0, 0.0 };
 		InheritChildrenStateFlags m_inheritChildrenStateFlags = InheritChildrenStateFlags::None;
-		/* NonSerialized */ PropertyNonInteractive<bool> m_interactable{ U"interactable", true };
+		PropertyNonInteractive<bool> m_interactable{ U"interactable", true };
 		ScrollableAxisFlags m_scrollableAxisFlags = ScrollableAxisFlags::None;
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率

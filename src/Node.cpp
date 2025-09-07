@@ -680,12 +680,11 @@ namespace noco
 			parent->removeChild(shared_from_this());
 			return true;
 		}
-		// Canvasの直下にある場合
 		else if (const auto canvas = m_canvas.lock())
 		{
-			// isTopLevelNode()でトップレベルかチェック
 			if (isTopLevelNode())
 			{
+				// Canvas直下にある場合はCanvasから削除
 				canvas->removeChild(shared_from_this());
 				return true;
 			}
@@ -804,9 +803,9 @@ namespace noco
 
 	void Node::removeComponent(const std::shared_ptr<ComponentBase>& component)
 	{
-		// activeInHierarchyがtrueの場合、onDeactivatedを呼び出し
 		if (m_activeInHierarchy)
 		{
+			// アクティブなノードの場合はonDeactivatedを呼び出してから削除
 			component->onDeactivated(shared_from_this());
 		}
 		m_components.remove(component);
@@ -1642,17 +1641,15 @@ namespace noco
 		
 		const Vec2 pivotPos = m_regionRect.pos + m_regionRect.size * pivot;
 		
-		// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
+		// 自身の変換行列を構築
 		Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
-		
 		if (rotation != 0.0)
 		{
 			selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 		}
-		
 		selfTransform = selfTransform * Mat3x2::Translate(translate);
 		
-		// 親の変換と合成（親の変換が先に適用される）
+		// 親の変換と合成
 		m_transformMatInHierarchy = selfTransform * parentTransformMat;
 		
 		// transformedQuadを計算
@@ -1719,7 +1716,7 @@ namespace noco
 			m_hitQuad = Quad{ hitTopLeft, hitTopRight, hitBottomRight, hitBottomLeft };
 		}
 		
-		// パディング有りのHitTestQuadを計算
+		// パディングを含んだHitTestQuadを計算
 		const RectF paddedRect{
 			m_regionRect.x - m_hitPadding.left,
 			m_regionRect.y - m_hitPadding.top,
@@ -2119,14 +2116,12 @@ namespace noco
 			
 			const Vec2 pivotPos = m_regionRect.pos + m_regionRect.size * pivot;
 			
-			// 自身の変換行列を構築（適用順: Scale → Rotate → Translate）
+			// 自身の変換行列を構築
 			Mat3x2 selfTransform = Mat3x2::Scale(scale, pivotPos);
-			
 			if (rotation != 0.0)
 			{
 				selfTransform = selfTransform * Mat3x2::Rotate(Math::ToRadians(rotation), pivotPos);
 			}
-			
 			selfTransform = selfTransform * Mat3x2::Translate(translate);
 			
 			return selfTransform * parentHitTestMat;
