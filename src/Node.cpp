@@ -1147,6 +1147,10 @@ namespace noco
 		double bottom = -std::numeric_limits<double>::infinity();
 		for (const auto& child : m_children)
 		{
+			if (!child->activeSelf()) // 非表示ノードはスキップ(親の影響を受けないためにactiveSelfで判定)
+			{
+				continue;
+			}
 			if (!child->hasInlineRegion())
 			{
 				continue;
