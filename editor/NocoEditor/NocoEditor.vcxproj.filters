@@ -401,9 +401,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\NocoUI.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HistorySystem.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -474,6 +471,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ComponentSchemaLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AddParamDialog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Defaults.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamRefDialog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParamReferencesDialog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyTextBox.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Toolbar.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
