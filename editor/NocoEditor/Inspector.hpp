@@ -1789,19 +1789,32 @@ namespace noco::editor
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
 			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
 		{
+			constexpr int32 LineHeight = 36;
 			const auto propertyNode = Node::Create(
 				name,
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ 0, 36 },
+					.sizeDelta = Vec2{ 0, LineHeight * 2 },
 				},
 				IsHitTargetYN::Yes,
 				InheritChildrenStateFlags::Hovered);
-			propertyNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
+			propertyNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 10, 8, 0, 0 } });
 			propertyNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }), Palette::Black, 0.0, 0.0, 3.0);
 
-			const auto labelNode = propertyNode->emplaceChild(
+			// 1行目のコンテナ(プロパティ名、色プレビュー、RGB)
+			const auto line1 = propertyNode->emplaceChild(
+				U"Line1",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, LineHeight },
+				},
+				IsHitTargetYN::No,
+				InheritChildrenStateFlags::Hovered);
+			line1->setChildrenLayout(HorizontalLayout{});
+
+			const auto labelNode = line1->emplaceChild(
 				U"Label",
 				InlineRegion
 				{
@@ -1824,7 +1837,7 @@ namespace noco::editor
 				2.0,
 				LabelSizingMode::AutoShrink);
 
-			const auto rowNode = propertyNode->emplaceChild(
+			const auto rgbRowNode = line1->emplaceChild(
 				U"ColorPropertyRow",
 				InlineRegion
 				{
@@ -1833,9 +1846,9 @@ namespace noco::editor
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			rowNode->setChildrenLayout(HorizontalLayout{});
+			rgbRowNode->setChildrenLayout(HorizontalLayout{});
 
-			const auto previewRootNode = rowNode->emplaceChild(
+			const auto previewRootNode = rgbRowNode->emplaceChild(
 				U"ColorPreviewRoot",
 				InlineRegion
 				{
@@ -1844,6 +1857,7 @@ namespace noco::editor
 					.margin = LRTB{ 0, 2, 0, 0 },
 				},
 				IsHitTargetYN::No);
+			previewRootNode->transform().setTranslate(Vec2{ 0, LineHeight / 2 });
 
 			// 透明の市松模様
 			constexpr int32 GridSize = 3;
@@ -1877,7 +1891,7 @@ namespace noco::editor
 				IsHitTargetYN::No);
 			const auto previewRectRenderer = previewNode->emplaceComponent<RectRenderer>(currentValue, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 0.0);
 
-			const auto textBoxParentNode = rowNode->emplaceChild(
+			const auto rgbTextBoxParentNode = rgbRowNode->emplaceChild(
 				U"TextBoxParent",
 				InlineRegion
 				{
@@ -1886,10 +1900,10 @@ namespace noco::editor
 				},
 				IsHitTargetYN::No,
 				InheritChildrenStateFlags::Hovered);
-			textBoxParentNode->setChildrenLayout(HorizontalLayout{});
+			rgbTextBoxParentNode->setChildrenLayout(HorizontalLayout{});
 
 			// Rラベル
-			const auto rLabelNode = textBoxParentNode->emplaceChild(
+			const auto rLabelNode = rgbTextBoxParentNode->emplaceChild(
 				U"RLabel",
 				InlineRegion
 				{
@@ -1905,7 +1919,7 @@ namespace noco::editor
 				Palette::Black, 0.0, 0.0, 2.0);
 
 			// R
-			const auto textBoxRNode = textBoxParentNode->emplaceChild(
+			const auto textBoxRNode = rgbTextBoxParentNode->emplaceChild(
 				U"TextBoxR",
 				InlineRegion
 				{
@@ -1920,7 +1934,7 @@ namespace noco::editor
 			textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
 
 			// Gラベル
-			const auto gLabelNode = textBoxParentNode->emplaceChild(
+			const auto gLabelNode = rgbTextBoxParentNode->emplaceChild(
 				U"GLabel",
 				InlineRegion
 				{
@@ -1936,7 +1950,7 @@ namespace noco::editor
 				Palette::Black, 0.0, 0.0, 2.0);
 
 			// G
-			const auto textBoxGNode = textBoxParentNode->emplaceChild(
+			const auto textBoxGNode = rgbTextBoxParentNode->emplaceChild(
 				U"TextBoxG",
 				InlineRegion
 				{
@@ -1951,7 +1965,7 @@ namespace noco::editor
 			textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
 
 			// Bラベル
-			const auto bLabelNode = textBoxParentNode->emplaceChild(
+			const auto bLabelNode = rgbTextBoxParentNode->emplaceChild(
 				U"BLabel",
 				InlineRegion
 				{
@@ -1967,13 +1981,13 @@ namespace noco::editor
 				Palette::Black, 0.0, 0.0, 2.0);
 
 			// B
-			const auto textBoxBNode = textBoxParentNode->emplaceChild(
+			const auto textBoxBNode = rgbTextBoxParentNode->emplaceChild(
 				U"TextBoxB",
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 0, 4, 0, 0 },
+					.margin = LRTB{ 0, 0, 0, 0 },
 				});
 			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
@@ -1981,8 +1995,62 @@ namespace noco::editor
 			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
 
+			// 2行目のコンテナ(A)
+			const auto line2 = propertyNode->emplaceChild(
+				U"Line2",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, LineHeight },
+				},
+				IsHitTargetYN::No,
+				InheritChildrenStateFlags::Hovered);
+			line2->setChildrenLayout(HorizontalLayout{});
+
+			line2->emplaceChild(
+				U"Label",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.flexibleWeight = 0.85,
+				});
+
+			// Aのコンテナ
+			const auto alphaRowNode = line2->emplaceChild(
+				U"AlphaRow",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 0, 26 },
+					.flexibleWeight = 1,
+				},
+				IsHitTargetYN::No,
+				InheritChildrenStateFlags::Hovered);
+			alphaRowNode->setChildrenLayout(HorizontalLayout{});
+
+			// プレビュー部分のインデント用
+			alphaRowNode->emplaceChild(
+				U"PreviewSpacer",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.sizeDelta = Vec2{ 26, 0 },
+					.margin = LRTB{ 0, 2, 0, 0 },
+				});
+
+			const auto alphaTextBoxParentNode = alphaRowNode->emplaceChild(
+				U"TextBoxParent",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.flexibleWeight = 1,
+				},
+				IsHitTargetYN::No,
+				InheritChildrenStateFlags::Hovered);
+			// 左揃えにする
+			alphaTextBoxParentNode->setChildrenLayout(HorizontalLayout{});
+
 			// Aラベル
-			const auto aLabelNode = textBoxParentNode->emplaceChild(
+			const auto aLabelNode = alphaTextBoxParentNode->emplaceChild(
 				U"ALabel",
 				InlineRegion
 				{
@@ -1998,19 +2066,29 @@ namespace noco::editor
 				Palette::Black, 0.0, 0.0, 2.0);
 
 			// A
-			const auto textBoxANode = textBoxParentNode->emplaceChild(
+			const auto textBoxANode = alphaTextBoxParentNode->emplaceChild(
 				U"TextBoxA",
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 1,
-					.margin = LRTB{ 0, 0, 0, 0 },
+					.margin = LRTB{ 0, 4, 0, 0 },
 				});
 			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBoxANode->emplaceComponent<TabStop>();
 			textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
+
+			// GとBの要素（ラベル＋テキストボックス）に相当するスペーサー
+			alphaTextBoxParentNode->emplaceChild(
+				U"Spacer",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 1 },
+					.sizeDelta = Vec2{ 16 + 4 + 16, 0}, // GLabel(16) + Gのmargin.right(4) + BLabel(16)
+					.flexibleWeight = 2, // GとBのTextBox分
+				});
 
 			const auto colorPropertyTextBox = std::make_shared<ColorPropertyTextBox>(
 				textBoxR,
