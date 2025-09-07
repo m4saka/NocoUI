@@ -1306,6 +1306,14 @@ namespace noco
 		}
 	}
 
+	void Canvas::clearCurrentFrameOverride()
+	{
+		for (auto& child : m_children)
+		{
+			child->clearCurrentFrameOverride();
+		}
+	}
+
 	std::shared_ptr<Node> Canvas::findNodeByInstanceId(uint64 instanceId) const
 	{
 		for (const auto& child : m_children)

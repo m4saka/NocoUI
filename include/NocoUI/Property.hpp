@@ -50,12 +50,11 @@ namespace noco
 		virtual double smoothTime() const = 0;
 		virtual bool trySetSmoothTime(double smoothTime) = 0;
 		virtual Array<String> styleStateKeys() const = 0;
-		
-		// パラメータ参照関連
 		virtual const String& paramRef() const = 0;
 		virtual void setParamRef(const String& paramRef) = 0;
 		virtual bool hasParamRef() const = 0;
 		virtual void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) = 0;
+		virtual void clearCurrentFrameOverride() = 0;
 	};
 
 	template <typename T>
@@ -196,7 +195,7 @@ namespace noco
 			m_currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 		
-		void clearCurrentFrameOverride()
+		void clearCurrentFrameOverride() override
 		{
 			m_currentFrameOverride.reset();
 		}
@@ -488,7 +487,7 @@ namespace noco
 			m_currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 		
-		void clearCurrentFrameOverride()
+		void clearCurrentFrameOverride() override
 		{
 			m_currentFrameOverride.reset();
 		}
@@ -721,7 +720,7 @@ namespace noco
 			m_currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 		
-		void clearCurrentFrameOverride()
+		void clearCurrentFrameOverride() override
 		{
 			m_currentFrameOverride.reset();
 		}

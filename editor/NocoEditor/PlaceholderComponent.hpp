@@ -294,6 +294,11 @@ namespace noco
 				m_paramRef.clear();
 			}
 		}
+
+		void clearCurrentFrameOverride() override
+		{
+			// エディタ専用型なので処理不要
+		}
 		
 	private:
 		[[nodiscard]]

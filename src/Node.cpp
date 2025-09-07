@@ -1865,6 +1865,26 @@ namespace noco
 		}
 	}
 
+	void Node::clearCurrentFrameOverride(RecursiveYN recursive)
+	{
+		m_activeSelf.clearCurrentFrameOverride();
+		m_interactable.clearCurrentFrameOverride();
+		m_styleState.clearCurrentFrameOverride();
+		m_transform.clearCurrentFrameOverride();
+		for (const auto& component : m_components)
+		{
+			component->clearCurrentFrameOverride();
+		}
+
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->clearCurrentFrameOverride();
+			}
+		}
+	}
+
 	void Node::draw() const
 	{
 		if (!m_activeSelf.value() || !m_activeInHierarchy)

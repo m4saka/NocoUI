@@ -78,6 +78,14 @@ namespace noco
 			}
 			return nullptr;
 		}
+
+		void clearCurrentFrameOverride()
+		{
+			for (IProperty* property : m_properties)
+			{
+				property->clearCurrentFrameOverride();
+			}
+		}
 	};
 
 	inline ComponentBase::~ComponentBase() = default;

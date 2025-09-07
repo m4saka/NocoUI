@@ -292,4 +292,13 @@ namespace noco
 		
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
+
+	void Transform::clearCurrentFrameOverride()
+	{
+		m_translate.clearCurrentFrameOverride();
+		m_scale.clearCurrentFrameOverride();
+		m_pivot.clearCurrentFrameOverride();
+		m_rotation.clearCurrentFrameOverride();
+		m_color.clearCurrentFrameOverride();
+	}
 }

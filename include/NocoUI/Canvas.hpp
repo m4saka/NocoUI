@@ -762,6 +762,8 @@ namespace noco
 	// 全ノードのパラメータ参照を一括更新
 	void replaceParamRefs(const String& oldName, const String& newName);
 
+	void clearCurrentFrameOverride();
+
 	// instanceIdによるノード検索
 	[[nodiscard]]
 	std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;

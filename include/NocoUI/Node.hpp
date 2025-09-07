@@ -341,6 +341,8 @@ namespace noco
 		// パラメータ参照を置換
 		void replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);
 
+		void clearCurrentFrameOverride(RecursiveYN recursive = RecursiveYN::Yes);
+
 		void draw() const;
 
 		void requestClick();

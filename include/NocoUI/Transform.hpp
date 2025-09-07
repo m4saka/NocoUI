@@ -89,5 +89,7 @@ namespace noco
 		void replaceParamRefs(StringView oldName, StringView newName);
 
 		Array<String> removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams);
+
+		void clearCurrentFrameOverride();
 	};
 }

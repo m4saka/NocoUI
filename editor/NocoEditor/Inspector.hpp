@@ -2317,7 +2317,14 @@ namespace noco::editor
 			nodeNameNode->emplaceComponent<RectRenderer>(ColorF{ 0.3, 0.3 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0);
 
 			// activeSelfのチェックボックス
-			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [this, node](bool value) { node->setActive(value); m_onChangeNodeActive(); });
+			const auto activeCheckboxNode = CreateCheckboxNode(node->activeSelfProperty().propertyValue(), [this, node](bool value)
+				{
+					node->setActive(value);
+					if (m_onChangeNodeActive)
+					{
+						m_onChangeNodeActive();
+					}
+				});
 			{
 				// ツールチップ
 				const PropertyKey key{ U"Node", U"activeSelf" };
@@ -2344,7 +2351,14 @@ namespace noco::editor
 							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
 								&node->activeSelfProperty(),
 								m_canvas,
-								[this] { refreshInspector(); },
+								[this]
+								{
+									if (m_onChangeNodeActive)
+									{
+										m_onChangeNodeActive();
+									}
+									refreshInspector();
+								},
 								m_dialogOpener
 							));
 						},
@@ -2357,6 +2371,10 @@ namespace noco::editor
 						.onClick = [node, this]
 						{
 							node->setActiveSelfParamRef(U"");
+							if (m_onChangeNodeActive)
+							{
+								m_onChangeNodeActive();
+							}
 							refreshInspector();
 						},
 						.fnIsEnabled = [node] { return !node->activeSelfParamRef().isEmpty(); },
