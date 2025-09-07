@@ -16,6 +16,7 @@ namespace noco::editor
 		std::shared_ptr<Node> m_comboBox;
 		std::shared_ptr<Label> m_comboLabel;
 		std::shared_ptr<Label> m_valueLabel;
+		std::shared_ptr<Node> m_warningNode;
 		
 		String m_selectedParamName;
 		Array<std::pair<String, ParamValue>> m_availableParams;
@@ -51,6 +52,16 @@ namespace noco::editor
 			}
 			
 			m_availableParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
+			
+			updateWarningVisibility();
+		}
+		
+		void updateWarningVisibility()
+		{
+			if (m_warningNode)
+			{
+				m_warningNode->setActive(m_availableParams.empty());
+			}
 		}
 		
 		String getParamValueString(const ParamValue& value) const
@@ -277,24 +288,23 @@ namespace noco::editor
 				VerticalAlign::Middle);
 			
 			// 利用可能なパラメータがない場合の警告
-			if (m_availableParams.empty())
-			{
-				const auto warningNode = contentRootNode->emplaceChild(
-					U"Warning",
-					InlineRegion
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, 32 },
-						.margin = LRTB{ 0, 0, 8, 8 },
-					});
-				warningNode->emplaceComponent<Label>(
-					U"※ この型に対応するパラメータがありません",
-					U"",
-					14,
-					ColorF{ 1.0, 0.7, 0.7 },
-					HorizontalAlign::Center,
-					VerticalAlign::Middle);
-			}
+			m_warningNode = contentRootNode->emplaceChild(
+				U"Warning",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 32 },
+					.margin = LRTB{ 0, 0, 8, 8 },
+				});
+			m_warningNode->emplaceComponent<Label>(
+				U"※ この型に対応するパラメータがありません",
+				U"",
+				14,
+				ColorF{ 1.0, 0.7, 0.7 },
+				HorizontalAlign::Center,
+				VerticalAlign::Middle);
+			
+			updateWarningVisibility();
 		}
 		
 		void onComboBoxClick(const std::shared_ptr<ContextMenu>& dialogContextMenu)
