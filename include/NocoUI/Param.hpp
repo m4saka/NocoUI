@@ -116,9 +116,9 @@ namespace noco
 		}
 	}
 	
-	// 型がParamValueでサポートされているか判定
+	// 型がパラメータ参照をサポートしているか返す
 	template<typename T>
-	constexpr bool IsParamValueType()
+	constexpr bool IsParamSupportedType()
 	{
 		return std::is_same_v<T, bool> ||
 			std::is_same_v<T, String> ||
@@ -126,7 +126,8 @@ namespace noco
 			std::is_same_v<T, Vec2> ||
 			std::is_same_v<T, LRTB> ||
 			std::is_same_v<T, Color> ||
-			std::is_arithmetic_v<T>;
+			std::is_arithmetic_v<T> ||
+			std::is_enum_v<T>;
 	}
 	
 	// 値をParamValue用の型に変換
@@ -178,6 +179,14 @@ namespace noco
 			if (auto* ptr = std::get_if<ColorF>(&value))
 			{
 				return Color{ *ptr };
+			}
+		}
+		else if constexpr (std::is_enum_v<T>)
+		{
+			// enum型の場合、String型パラメータからenum値に変換
+			if (auto* ptr = std::get_if<String>(&value))
+			{
+				return StringToEnum<T>(*ptr, T{});
 			}
 		}
 		else if (auto* ptr = std::get_if<T>(&value))

@@ -716,6 +716,106 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		node->setStyleState(U"");
 		REQUIRE(node->styleState() == U""); // 即座に反映される
 	}
+	
+	SECTION("PropertyNonInteractive parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// パラメータを設定
+		canvas->setParamValue(U"nodeActive", false);
+		canvas->setParamValue(U"nodeInteractable", false);
+		canvas->setParamValue(U"nodeStyle", U"selected");
+		
+		// ノードを作成
+		auto node = canvas->emplaceChild(U"TestNode");
+		
+		// デフォルト値を設定
+		node->setActive(true);
+		node->setInteractable(true);
+		node->setStyleState(U"");
+		
+		// パラメータ参照を設定
+		node->setActiveSelfParamRef(U"nodeActive");
+		node->setInteractableParamRef(U"nodeInteractable");
+		node->setStyleStateParamRef(U"nodeStyle");
+		
+		// update前はまだパラメータ値が適用されない
+		REQUIRE(node->activeSelf() == true);
+		REQUIRE(node->interactable() == true);
+		REQUIRE(node->styleState() == U"");
+		
+		// updateするとパラメータ値が適用される
+		canvas->update();
+		REQUIRE(node->activeSelf() == false);
+		REQUIRE(node->interactable() == false);
+		REQUIRE(node->styleState() == U"selected");
+		
+		// パラメータ値を変更
+		canvas->setParamValue(U"nodeActive", true);
+		canvas->setParamValue(U"nodeInteractable", true);
+		canvas->setParamValue(U"nodeStyle", U"hover");
+		canvas->update();
+		REQUIRE(node->activeSelf() == true);
+		REQUIRE(node->interactable() == true);
+		REQUIRE(node->styleState() == U"hover");
+		
+		// パラメータ参照を削除
+		node->setActiveSelfParamRef(U"");
+		node->setInteractableParamRef(U"");
+		node->setStyleStateParamRef(U"");
+		
+		System::Update();  // フレームを進める
+		canvas->update();
+		
+		// デフォルト値に戻る
+		REQUIRE(node->activeSelf() == true);
+		REQUIRE(node->interactable() == true);
+		REQUIRE(node->styleState() == U"");
+	}
+	
+	SECTION("PropertyNonInteractive enum parameter reference")
+	{
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		
+		// String型パラメータでEnum値を設定
+		canvas->setParamValue(U"shapeType", U"Pentagon");
+		
+		// ノードを作成
+		auto node = canvas->emplaceChild(U"TestNode");
+		auto shapeRenderer = std::make_shared<noco::ShapeRenderer>();
+		node->addComponent(shapeRenderer);
+		
+		// デフォルト値を確認（ShapeRendererのデフォルトはStar）
+		REQUIRE(shapeRenderer->shapeType() == noco::ShapeType::Star);
+		
+		// PropertyNonInteractiveプロパティにアクセス
+		auto* shapeTypeProp = shapeRenderer->getPropertyByName(U"shapeType");
+		REQUIRE(shapeTypeProp != nullptr);
+		
+		// パラメータ参照を設定
+		shapeTypeProp->setParamRef(U"shapeType");
+		
+		// update前はまだパラメータ値が適用されない
+		REQUIRE(shapeRenderer->shapeType() == noco::ShapeType::Star);
+		
+		// updateするとパラメータ値が適用される
+		canvas->update();
+		REQUIRE(shapeRenderer->shapeType() == noco::ShapeType::Pentagon);
+		
+		// パラメータ値を変更
+		canvas->setParamValue(U"shapeType", U"Hexagon");
+		canvas->update();
+		REQUIRE(shapeRenderer->shapeType() == noco::ShapeType::Hexagon);
+		
+		// パラメータ参照を削除
+		shapeTypeProp->setParamRef(U"");
+		
+		System::Update();  // フレームを進める
+		canvas->update();
+		
+		// デフォルト値に戻る
+		REQUIRE(shapeRenderer->shapeType() == noco::ShapeType::Star);
+	}
 }
 
 TEST_CASE("Canvas interactable property", "[Canvas]")

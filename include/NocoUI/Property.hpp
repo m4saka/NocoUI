@@ -213,7 +213,7 @@ namespace noco
 			m_activeStyleStates = activeStyleStates;
 			
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if constexpr (IsParamValueType<T>())
+			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
@@ -453,7 +453,7 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing) override
 		{
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if constexpr (IsParamValueType<T>())
+			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
@@ -738,7 +738,7 @@ namespace noco
 			m_activeStyleStates = activeStyleStates;
 
 			// パラメータ参照がある場合（サポートされている型のみ）
-			if constexpr (IsParamValueType<T>())
+			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
