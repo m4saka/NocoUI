@@ -30,7 +30,7 @@ namespace noco::editor
 
 		virtual Array<DialogButtonDesc> buttonDescs() const = 0;
 
-		virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) = 0;
+		virtual void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()> fnRefreshLayoutForContent) = 0;
 
 		virtual void onResult(StringView resultButtonText) = 0;
 	};
@@ -190,7 +190,14 @@ namespace noco::editor
 		void openDialog(const std::shared_ptr<IDialog>& dialog)
 		{
 			auto dialogFrame = std::make_shared<DialogFrame>(m_dialogCanvas, dialog->dialogWidth(), [this, dialogId = m_nextDialogId, dialog](StringView resultButtonText) { dialog->onResult(resultButtonText); m_openedDialogFrames.erase(dialogId); }, dialog->buttonDescs());
-			dialog->createDialogContent(dialogFrame->contentRootNode(), m_dialogContextMenu);
+			dialog->createDialogContent(dialogFrame->contentRootNode(), m_dialogContextMenu,
+				[dialogFrameWeak = std::weak_ptr<DialogFrame>{ dialogFrame }]
+				{
+					if (const auto dialogFrame = dialogFrameWeak.lock())
+					{
+						dialogFrame->refreshLayoutForContent();
+					}
+				});
 			dialogFrame->refreshLayoutForContent();
 			m_openedDialogFrames.emplace(m_nextDialogId, dialogFrame);
 			++m_nextDialogId;
@@ -236,7 +243,7 @@ namespace noco::editor
 			return m_buttonDescs;
 		}
 
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&, std::function<void()>) override
 		{
 			const auto labelNode = contentRootNode->emplaceChild(
 				U"Label",
@@ -292,7 +299,7 @@ namespace noco::editor
 			return m_buttonDescs;
 		}
 
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&, std::function<void()>) override
 		{
 			const auto labelNode = contentRootNode->emplaceChild(
 				U"Label",
@@ -810,7 +817,7 @@ namespace noco::editor
 			m_availableStyleStates = m_pProperty->styleStateKeys();
 		}
 
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override;
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()> fnRefreshLayoutForContent) override;
 
 		void onResult(StringView) override
 		{

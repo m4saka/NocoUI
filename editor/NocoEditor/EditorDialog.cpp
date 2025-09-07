@@ -3,7 +3,7 @@
 
 namespace noco::editor
 {
-	void editor::InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	void editor::InteractivePropertyValueDialog::createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()>)
 	{
 		if (!m_pProperty)
 		{

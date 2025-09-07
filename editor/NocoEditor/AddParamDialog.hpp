@@ -67,7 +67,7 @@ namespace noco::editor
 			};
 		}
 		
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()>) override
 		{
 			// 既存のパラメータ名から重複しない初期名を生成
 			constexpr StringView DefaultName = U"param";

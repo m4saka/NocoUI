@@ -411,6 +411,12 @@ namespace noco
 		void setPropertyValue(const PropertyValue<T>& propertyValue)
 		{
 			m_propertyValue = propertyValue;
+			if (m_propertyValue.smoothTime() <= 0.0)
+			{
+				// Canvas更新より後にsetPropertyValueされた場合になるべく1フレーム遅れが発生しないよう、smoothTimeが0以下なら即座に反映
+				// (ステート毎の値への即時更新が必要な場合はライブラリユーザー側で明示的にCanvas更新を呼ぶ必要がある)
+				m_smoothing.setCurrentValue(m_propertyValue.value(InteractionState::Default, Array<String>{}));
+			}
 		}
 
 		[[nodiscard]]

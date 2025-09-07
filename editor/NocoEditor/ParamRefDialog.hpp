@@ -23,6 +23,8 @@ namespace noco::editor
 		
 		// ダイアログ管理
 		std::shared_ptr<DialogOpener> m_dialogOpener;
+
+		std::function<void()> m_fnRefreshLayoutForContent = nullptr;
 		
 		Optional<ParamType> getPropertyParamType() const
 		{
@@ -61,6 +63,10 @@ namespace noco::editor
 			if (m_warningNode)
 			{
 				m_warningNode->setActive(m_availableParams.empty());
+				if (m_fnRefreshLayoutForContent)
+				{
+					m_fnRefreshLayoutForContent();
+				}
 			}
 		}
 		
@@ -77,7 +83,6 @@ namespace noco::editor
 			, m_selectedParamName(m_pProperty->paramRef())
 			, m_dialogOpener(dialogOpener)
 		{
-			filterAvailableParams();
 		}
 		
 		double dialogWidth() const override
@@ -105,8 +110,10 @@ namespace noco::editor
 			};
 		}
 		
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu) override
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()> fnRefreshLayoutForContent) override
 		{
+			m_fnRefreshLayoutForContent = std::move(fnRefreshLayoutForContent);
+
 			// タイトル
 			const auto titleNode = contentRootNode->emplaceChild(
 				U"Title",
@@ -297,14 +304,15 @@ namespace noco::editor
 					.margin = LRTB{ 0, 0, 8, 8 },
 				});
 			m_warningNode->emplaceComponent<Label>(
-				U"※ この型に対応するパラメータがありません",
+				U"※ この型に対応するパラメータはまだ作成されていません。\n　 「＋ 新規」ボタンからパラメータを作成できます。",
 				U"",
-				14,
-				ColorF{ 1.0, 0.7, 0.7 },
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			
-			updateWarningVisibility();
+				12,
+				ColorF{ 1.0, 1.0, 0.7 },
+				HorizontalAlign::Left,
+				VerticalAlign::Middle)
+				->setPadding(LRTB{ 24, 24, 0, 0 });
+
+			filterAvailableParams();
 		}
 		
 		void onComboBoxClick(const std::shared_ptr<ContextMenu>& dialogContextMenu)

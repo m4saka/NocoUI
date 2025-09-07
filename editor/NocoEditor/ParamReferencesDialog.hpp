@@ -40,7 +40,7 @@ namespace noco::editor
 			};
 		}
 		
-		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&) override
+		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>&, std::function<void()>) override
 		{
 			contentRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 16 } });
 			
