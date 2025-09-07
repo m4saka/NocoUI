@@ -699,6 +699,10 @@ namespace noco::editor
 
 		void refreshNodeList()
 		{
+			// activeSelfのパラメータ参照が変更された時の更新用に、パラメータ値を即時反映させる
+			m_canvas->clearCurrentFrameOverride(); // パラメータ参照あり→なし に変わった場合も即時反映する必要があるため、事前にパラメータによる上書きをクリアする必要がある
+			m_canvas->update();
+
 			Array<std::weak_ptr<Node>> foldedNodes;
 			foldedNodes.reserve(m_elements.size());
 			for (const auto& element : m_elements)
