@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
+#include "EditorYN.hpp"
 
 namespace noco::editor
 {
@@ -10,17 +11,27 @@ namespace noco::editor
 		std::function<void(bool)> m_fnSetValue;
 		std::shared_ptr<Label> m_checkLabel;
 		bool m_useParentHoverState;
+		std::weak_ptr<Label> m_propertyLabelWeak;
+		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 	public:
-		CheckboxToggler(bool initialValue,
+		CheckboxToggler(
+			bool initialValue,
 			std::function<void(bool)> fnSetValue,
 			const std::shared_ptr<Label>& checkLabel,
-			bool useParentHoverState)
+			bool useParentHoverState,
+			std::weak_ptr<Label> propertyLabelWeak = {},
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
 			: ComponentBase{ {} }
 			, m_value(initialValue)
 			, m_fnSetValue(std::move(fnSetValue))
 			, m_checkLabel(checkLabel)
 			, m_useParentHoverState(useParentHoverState)
+			, m_propertyLabelWeak(propertyLabelWeak)
+			, m_hasInteractivePropertyValue(hasInteractivePropertyValue)
+			, m_hasParamRef(hasParamRef)
 		{
 		}
 
@@ -57,6 +68,15 @@ namespace noco::editor
 				if (m_fnSetValue)
 				{
 					m_fnSetValue(m_value);
+				}
+				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
+				if (m_hasInteractivePropertyValue && !m_hasParamRef)
+				{
+					if (const auto pl = m_propertyLabelWeak.lock())
+					{
+						pl->setUnderlineStyle(LabelUnderlineStyle::None);
+					}
+					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
 				}
 			}
 		}

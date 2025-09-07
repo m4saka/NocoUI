@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
+#include "EditorYN.hpp"
 
 namespace noco::editor
 {
@@ -11,6 +12,9 @@ namespace noco::editor
 		std::shared_ptr<Label> m_label;
 		std::shared_ptr<ContextMenu> m_contextMenu;
 		Array<String> m_enumCandidates;
+		std::weak_ptr<Label> m_propertyLabelWeak;
+		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 	public:
 		EnumPropertyComboBox(
@@ -18,13 +22,19 @@ namespace noco::editor
 			std::function<void(StringView)> onValueChanged,
 			const std::shared_ptr<Label>& label,
 			const std::shared_ptr<ContextMenu>& contextMenu,
-			const Array<String>& enumCandidates)
+			const Array<String>& enumCandidates,
+			std::weak_ptr<Label> propertyLabelWeak = {},
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
 			: ComponentBase{ {} }
 			, m_value(initialValue)
 			, m_fnOnValueChanged(std::move(onValueChanged))
 			, m_label(label)
 			, m_contextMenu(contextMenu)
 			, m_enumCandidates(enumCandidates)
+			, m_propertyLabelWeak(propertyLabelWeak)
+			, m_hasInteractivePropertyValue(hasInteractivePropertyValue)
+			, m_hasParamRef(hasParamRef)
 		{
 		}
 
@@ -46,6 +56,15 @@ namespace noco::editor
 								m_value = name;
 								m_label->setText(name);
 								m_fnOnValueChanged(m_value);
+								// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
+								if (m_hasInteractivePropertyValue && !m_hasParamRef)
+								{
+									if (const auto pl = m_propertyLabelWeak.lock())
+									{
+										pl->setUnderlineStyle(LabelUnderlineStyle::None);
+									}
+									m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+								}
 							}
 						});
 				}

@@ -941,7 +941,13 @@ namespace noco::editor
 			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
-			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, fnSetValue, fnGetValue));
+			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(
+				textBox,
+				fnSetValue,
+				fnGetValue,
+				std::weak_ptr<Label>{ labelComponent },
+				hasInteractivePropertyValue,
+				hasParameterRef));
 			textBoxNode->emplaceComponent<TabStop>();
 			
 			// dragValueChangeStepが設定されている場合、ラベルにPropertyLabelDraggerを追加
@@ -949,7 +955,7 @@ namespace noco::editor
 			{
 				// textBoxへの参照を取得してラムダでキャプチャ
 				const auto textBoxWeak = std::weak_ptr<TextBox>(textBox);
-				const auto labelComponentWeak = std::weak_ptr<Label>(labelComponent);
+				const auto labelComponentWeak = std::weak_ptr<Label>{ labelComponent };
 				
 				// fnGetValueがある場合はそれを使い、ない場合はtextBoxから直接取得
 				if (fnGetValue)
@@ -1049,7 +1055,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto propertyLabel = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -1083,14 +1089,20 @@ namespace noco::editor
 				std::function<void(StringView)> m_fnSetValue;
 				std::function<String()> m_fnGetValue;
 				String m_prevExternalValue;
+				std::weak_ptr<Label> m_propertyLabelWeak;
+				HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+				HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 			public:
-				PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
+				PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr, std::weak_ptr<Label> propertyLabelWeak = {}, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParamRef = HasParameterRefYN::No)
 					: ComponentBase{ {} }
 					, m_textArea{ textArea }
 					, m_fnSetValue{ std::move(fnSetValue) }
 					, m_fnGetValue{ std::move(fnGetValue) }
 					, m_prevExternalValue{ m_fnGetValue ? String{ m_fnGetValue() } : U"" }
+					, m_propertyLabelWeak{ propertyLabelWeak }
+					, m_hasInteractivePropertyValue{ hasInteractivePropertyValue }
+					, m_hasParamRef{ hasParamRef }
 				{
 				}
 
@@ -1115,11 +1127,26 @@ namespace noco::editor
 						{
 							m_prevExternalValue = String{ m_fnGetValue() };
 						}
+						// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
+						if (m_hasInteractivePropertyValue && !m_hasParamRef)
+						{
+							if (const auto label = m_propertyLabelWeak.lock())
+							{
+								label->setUnderlineStyle(LabelUnderlineStyle::None);
+							}
+							m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+						}
 					}
 				}
 			};
 			
-			textAreaNode->addComponent(std::make_shared<PropertyTextArea>(textArea, std::move(fnSetValue), std::move(fnGetValue)));
+			textAreaNode->addComponent(std::make_shared<PropertyTextArea>(
+				textArea,
+				std::move(fnSetValue),
+				std::move(fnGetValue),
+				std::weak_ptr<Label>{ propertyLabel },
+				hasInteractivePropertyValue,
+				hasParameterRef));
 			textAreaNode->emplaceComponent<TabStop>();
 			return propertyNode;
 		}
@@ -1158,7 +1185,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto vec2Label = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -1251,7 +1278,10 @@ namespace noco::editor
 				textBoxX,
 				textBoxY,
 				fnSetValue,
-				currentValue);
+				currentValue,
+				std::weak_ptr<Label>{ vec2Label },
+				hasInteractivePropertyValue,
+				hasParameterRef);
 			propertyNode->addComponent(vec2PropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -1325,7 +1355,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto colorLabel = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -1468,7 +1498,7 @@ namespace noco::editor
 						.sizeRatio = Vec2{ 0, 1 },
 						.flexibleWeight = 0.85,
 					});
-			line1LabelNode->emplaceComponent<Label>(
+			const auto lrtbLabel = line1LabelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -1671,7 +1701,10 @@ namespace noco::editor
 				textBoxT,
 				textBoxB,
 				fnSetValue,
-				currentValue);
+				currentValue,
+				std::weak_ptr<Label>{ lrtbLabel },
+				hasInteractivePropertyValue,
+				hasParameterRef);
 			propertyNode->addComponent(lrtbPropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -1775,7 +1808,7 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 0, 1 },
 					.flexibleWeight = 0.85,
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto colorLabel = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -1986,7 +2019,10 @@ namespace noco::editor
 				textBoxA,
 				previewRectRenderer,
 				fnSetValue,
-				currentValue);
+				currentValue,
+				std::weak_ptr<Label>{ colorLabel },
+				hasInteractivePropertyValue,
+				hasParameterRef);
 			propertyNode->addComponent(colorPropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -2093,7 +2129,7 @@ namespace noco::editor
 						.sizeRatio = Vec2{ 0, 1 },
 						.flexibleWeight = 0.85,
 					});
-			labelNode->emplaceComponent<Label>(
+			const auto enumPropLabel = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -2133,7 +2169,10 @@ namespace noco::editor
 				fnSetValue,
 				enumLabel,
 				contextMenu,
-				enumCandidates));
+				enumCandidates,
+				std::weak_ptr<Label>{ enumPropLabel },
+				hasInteractivePropertyValue,
+				hasParameterRef));
 
 			comboBoxNode->emplaceComponent<Label>(
 				U"▼",
@@ -2151,7 +2190,10 @@ namespace noco::editor
 		static std::shared_ptr<Node> CreateCheckboxNode(
 			bool initialValue,
 			std::function<void(bool)> fnSetValue,
-			bool useParentHoverState = false)
+			bool useParentHoverState = false,
+			std::weak_ptr<Label> propertyLabelWeak = {},
+			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
+			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
 		{
 			auto checkboxNode = Node::Create(
 				U"Checkbox",
@@ -2176,7 +2218,10 @@ namespace noco::editor
 				initialValue,
 				std::move(fnSetValue),
 				checkLabel,
-				useParentHoverState));
+				useParentHoverState,
+				propertyLabelWeak,
+				hasInteractivePropertyValue,
+				hasParamRef));
 
 			return checkboxNode;
 		}
@@ -2212,7 +2257,7 @@ namespace noco::editor
 					.flexibleWeight = 0.85,
 				},
 				IsHitTargetYN::No);
-			labelNode->emplaceComponent<Label>(
+			const auto boolPropLabel = labelNode->emplaceComponent<Label>(
 				name,
 				U"",
 				14,
@@ -2236,7 +2281,13 @@ namespace noco::editor
 					.flexibleWeight = 1,
 				},
 				IsHitTargetYN::No);
-			const auto checkboxNode = CreateCheckboxNode(currentValue, fnSetValue, true);
+			const auto checkboxNode = CreateCheckboxNode(
+				currentValue,
+				fnSetValue,
+				true,
+				std::weak_ptr<Label>{ boolPropLabel },
+				hasInteractivePropertyValue,
+				hasParameterRef);
 			checkboxNode->setRegion(
 				AnchorRegion
 				{
