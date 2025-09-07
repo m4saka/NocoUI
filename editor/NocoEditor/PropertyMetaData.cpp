@@ -333,12 +333,13 @@ namespace noco::editor
 				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
 				{
 					const auto type = shapeRenderer->shapeType();
-					return type != ShapeType::RectBalloon && 
-					       type != ShapeType::Arrow && 
-					       type != ShapeType::DoubleHeadedArrow &&
-					       type != ShapeType::Rhombus &&
-					       type != ShapeType::Stairs &&
-					       type != ShapeType::Astroid;
+					return
+						type != ShapeType::RectBalloon &&
+						type != ShapeType::Arrow &&
+						type != ShapeType::DoubleHeadedArrow &&
+						type != ShapeType::Rhombus &&
+						type != ShapeType::Stairs &&
+						type != ShapeType::Astroid;
 				}
 				return false;
 			},
@@ -351,8 +352,11 @@ namespace noco::editor
 				if (const auto* shapeRenderer = dynamic_cast<const ShapeRenderer*>(&component))
 				{
 					const auto type = shapeRenderer->shapeType();
-					return type == ShapeType::Cross || type == ShapeType::Plus || 
-					       type == ShapeType::Arrow || type == ShapeType::DoubleHeadedArrow;
+					return
+						type == ShapeType::Cross ||
+						type == ShapeType::Plus ||
+						type == ShapeType::Arrow ||
+						type == ShapeType::DoubleHeadedArrow;
 				}
 				return false;
 			},

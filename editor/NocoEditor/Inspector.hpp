@@ -3003,7 +3003,7 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, 26 },
 							.flexibleWeight = 1,
 						});
-			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+					textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
 					const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
 					textBox->setText(Format(currentValue.value_or(0.0)), IgnoreIsChangedYN::Yes);
 					textBoxNode->setInteractable(hasValue ? InteractableYN::Yes : InteractableYN::No);
@@ -4814,6 +4814,5 @@ namespace noco::editor
 				Logger << U"[NocoEditor warning] AnchorRegion not found in inspectorFrameNode";
 			}
 		}
-		
 	};
 }
