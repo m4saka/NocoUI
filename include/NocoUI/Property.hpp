@@ -370,6 +370,8 @@ namespace noco
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
 		String m_paramRef;  // パラメータ参照名
+		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
+		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
@@ -413,9 +415,8 @@ namespace noco
 			m_propertyValue = propertyValue;
 			if (m_propertyValue.smoothTime() <= 0.0)
 			{
-				// Canvas更新より後にsetPropertyValueされた場合になるべく1フレーム遅れが発生しないよう、smoothTimeが0以下なら即座に反映
-				// (ステート毎の値への即時更新が必要な場合はライブラリユーザー側で明示的にCanvas更新を呼ぶ必要がある)
-				m_smoothing.setCurrentValue(m_propertyValue.value(InteractionState::Default, Array<String>{}));
+				// Canvas更新より後にsetPropertyValueされた場合に1フレーム遅れが発生しないよう、smoothTimeが0なら即座に反映
+				m_smoothing.setCurrentValue(m_propertyValue.value(m_interactionState, m_activeStyleStates));
 			}
 		}
 
@@ -457,6 +458,9 @@ namespace noco
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing) override
 		{
+			m_interactionState = interactionState;
+			m_activeStyleStates = activeStyleStates;
+
 			// パラメータ参照がある場合（サポートされている型のみ）
 			if constexpr (IsParamSupportedType<T>())
 			{
