@@ -54,12 +54,7 @@ namespace noco::editor
 			}
 			
 			m_availableParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
-			
-			updateWarningVisibility();
-		}
-		
-		void updateWarningVisibility()
-		{
+
 			if (m_warningNode)
 			{
 				m_warningNode->setActive(m_availableParams.empty());

@@ -252,17 +252,20 @@ namespace noco
 
 		const RectF& contentRect = *contentRectOpt;
 
-		const double viewWidth = m_regionRect.w;
-		const double viewHeight = m_regionRect.h;
-		const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
-		const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
-		if (maxScrollX <= 0.0 && maxScrollY <= 0.0)
+		const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
+		if (maxScrollX <= 0.0)
 		{
-			m_scrollOffset = Vec2::Zero();
-			return;
+			// 横スクロール不要なのでリセット
+			m_scrollOffset.x = 0.0;
+		}
+		const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
+		if (maxScrollY <= 0.0)
+		{
+			// 縦スクロール不要なのでリセット
+			m_scrollOffset.y = 0.0;
 		}
 
-		// ラバーバンドスクロールが無効な場合のみクランプする
+		// ラバーバンドスクロールが無効な場合のみ即時クランプする
 		if (!m_rubberBandScrollEnabled)
 		{
 			const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
@@ -287,10 +290,8 @@ namespace noco
 				if (contentRectOpt)
 				{
 					const RectF& contentRect = *contentRectOpt;
-					const double viewWidth = m_regionRect.w;
-					const double viewHeight = m_regionRect.h;
-					const double maxScrollX = Max(contentRect.w - viewWidth, 0.0);
-					const double maxScrollY = Max(contentRect.h - viewHeight, 0.0);
+					const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
+					const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
 					
 					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
 					
@@ -1797,7 +1798,6 @@ namespace noco
 
 	void Node::resetScrollOffset(RecursiveYN recursive)
 	{
-
 		if (m_children.empty())
 		{
 			m_scrollOffset = Vec2::Zero();

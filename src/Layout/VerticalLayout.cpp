@@ -30,7 +30,7 @@ namespace noco
 
 	SizeF VerticalLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
-		double totalHeight = padding.top + padding.bottom;
+		double totalHeight = padding.totalHeight();
 		double maxWidth = 0.0;
 		bool isFirstInlineRegionChild = true;
 		for (const auto& child : children)
@@ -42,10 +42,10 @@ namespace noco
 			if (const auto pInlineRegion = child->inlineRegion())
 			{
 				const RectF measuredRect = pInlineRegion->applyRegion(
-					RectF{ 0, 0, parentRect.w - (padding.left + padding.right), parentRect.h - (padding.top + padding.bottom) }, // 計測用に親サイズだけ渡す
+					RectF{ 0, 0, parentRect.w - padding.totalWidth(), parentRect.h - padding.totalHeight() }, // 計測用に親サイズだけ渡す
 					Vec2::Zero());
-				const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
-				const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
+				const double childW = measuredRect.w + pInlineRegion->margin.totalWidth();
+				const double childH = measuredRect.h + pInlineRegion->margin.totalHeight();
 				if (!isFirstInlineRegionChild)
 				{
 					totalHeight += spacing;
@@ -55,7 +55,7 @@ namespace noco
 				isFirstInlineRegionChild = false;
 			}
 		}
-		return { maxWidth + padding.left + padding.right, totalHeight };
+		return { maxWidth + padding.totalWidth(), totalHeight };
 	}
 
 	void VerticalLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget) const

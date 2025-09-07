@@ -30,7 +30,7 @@ namespace noco
 
 	SizeF HorizontalLayout::getFittingSizeToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children) const
 	{
-		double totalWidth = padding.left + padding.right;
+		double totalWidth = padding.totalWidth();
 		double maxHeight = 0.0;
 		bool isFirstInlineRegionChild = true;
 		for (const auto& child : children)
@@ -44,8 +44,8 @@ namespace noco
 				const RectF measuredRect = pInlineRegion->applyRegion(
 					RectF{ 0, 0, parentRect.w, parentRect.h }, // サイズが分かれば良いので親のサイズだけ渡す
 					Vec2::Zero());
-				const double childW = measuredRect.w + pInlineRegion->margin.left + pInlineRegion->margin.right;
-				const double childH = measuredRect.h + pInlineRegion->margin.top + pInlineRegion->margin.bottom;
+				const double childW = measuredRect.w + pInlineRegion->margin.totalWidth();
+				const double childH = measuredRect.h + pInlineRegion->margin.totalHeight();
 				if (!isFirstInlineRegionChild)
 				{
 					totalWidth += spacing;
@@ -55,7 +55,7 @@ namespace noco
 				isFirstInlineRegionChild = false;
 			}
 		}
-		return { totalWidth, maxHeight + padding.top + padding.bottom };
+		return { totalWidth, maxHeight + padding.totalHeight() };
 	}
 
 	void HorizontalLayout::setInlineRegionToFitToChildren(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Node& node, FitTarget fitTarget) const
