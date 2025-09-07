@@ -586,11 +586,11 @@ namespace noco::editor
 		// TextureFontLabel
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureFilePath" }] = PropertyMetadata{
 			.tooltip = U"テクスチャファイルのパス",
-			.tooltipDetail = U"textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+			.tooltipDetail = U"※textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureAssetName" }] = PropertyMetadata{
 			.tooltip = U"TextureAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でTextureAssetを使用するため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"characterSet" }] = PropertyMetadata{
 			.tooltip = U"文字セット",
@@ -672,7 +672,7 @@ namespace noco::editor
 		// Sprite
 		metadata[PropertyKey{ U"Sprite", U"textureFilePath" }] = PropertyMetadata{
 			.tooltip = U"テクスチャファイルのパス",
-			.tooltipDetail = U"textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+			.tooltipDetail = U"※textureAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
 		};
 		metadata[PropertyKey{ U"Sprite", U"textureAssetName" }] = PropertyMetadata{
 			.tooltip = U"TextureAssetのキー名 (任意)",
@@ -901,7 +901,7 @@ namespace noco::editor
 		// UISound
 		metadata[PropertyKey{ U"UISound", U"audioFilePath" }] = PropertyMetadata{
 			.tooltip = U"音声ファイルのパス",
-			.tooltipDetail = U"audioAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
+			.tooltipDetail = U"※audioAssetName使用時は、Editor上でのプレビュー用としてのみ使用されます",
 		};
 		metadata[PropertyKey{ U"UISound", U"audioAssetName" }] = PropertyMetadata{
 			.tooltip = U"AudioAssetのキー名 (任意)",
