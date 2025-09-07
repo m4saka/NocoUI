@@ -22,11 +22,6 @@ namespace noco::editor
 			// カーソルを変更
 			Cursor::RequestStyle(CursorStyle::ResizeLeftRight);
 			
-			// ドラッグ開始イベント（履歴記録などに使用）
-			if (m_fnOnDragStart)
-			{
-				m_fnOnDragStart();
-			}
 		}
 		
 		if (m_isDragging && MouseL.pressed())
@@ -133,11 +128,6 @@ namespace noco::editor
 				// ドラッグ終了
 				m_isDragging = false;
 				
-				// ドラッグ終了イベント（履歴記録などに使用）
-				if (m_fnOnDragEnd)
-				{
-					m_fnOnDragEnd();
-				}
 			}
 		}
 		

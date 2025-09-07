@@ -9,8 +9,6 @@ namespace noco::editor
 	private:
 		std::function<void(double)> m_fnSetValue;
 		std::function<double()> m_fnGetValue;
-		std::function<void()> m_fnOnDragStart;
-		std::function<void()> m_fnOnDragEnd;
 		double m_dragStartValue = 0.0;
 		Vec2 m_dragStartPos = Vec2::Zero();
 		bool m_isDragging = false;
@@ -24,14 +22,10 @@ namespace noco::editor
 			std::function<double()> fnGetValue,
 			double step = 1.0,
 			double minValue = -std::numeric_limits<double>::max(),
-			double maxValue = std::numeric_limits<double>::max(),
-			std::function<void()> fnOnDragStart = nullptr,
-			std::function<void()> fnOnDragEnd = nullptr)
+			double maxValue = std::numeric_limits<double>::max())
 			: ComponentBase{ {} }
 			, m_fnSetValue{ std::move(fnSetValue) }
 			, m_fnGetValue{ std::move(fnGetValue) }
-			, m_fnOnDragStart{ std::move(fnOnDragStart) }
-			, m_fnOnDragEnd{ std::move(fnOnDragEnd) }
 			, m_step{ step }
 			, m_minValue{ minValue }
 			, m_maxValue{ maxValue }

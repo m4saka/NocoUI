@@ -1268,9 +1268,7 @@ namespace noco::editor
 					},
 					step,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
-					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+					std::numeric_limits<double>::max()   // 最大値
 				);
 
 				// Yラベルにドラッグ機能を追加
@@ -1287,9 +1285,7 @@ namespace noco::editor
 					},
 					step,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
-					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+					std::numeric_limits<double>::max()   // 最大値
 				);
 			}
 
@@ -1690,9 +1686,7 @@ namespace noco::editor
 					},
 					1.0,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
-					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+					std::numeric_limits<double>::max()   // 最大値
 				);
 
 				// Rラベルにドラッグ機能を追加
@@ -1709,9 +1703,7 @@ namespace noco::editor
 					},
 					1.0,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
-					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+					std::numeric_limits<double>::max()   // 最大値
 				);
 
 				// Tラベルにドラッグ機能を追加
@@ -1728,9 +1720,7 @@ namespace noco::editor
 					},
 					1.0,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,
-					nullptr
+					std::numeric_limits<double>::max()   // 最大値
 				);
 
 				// Bラベルにドラッグ機能を追加
@@ -1747,9 +1737,7 @@ namespace noco::editor
 					},
 					1.0,  // 感度
 					-std::numeric_limits<double>::max(),  // 最小値
-					std::numeric_limits<double>::max(),   // 最大値
-					nullptr,
-					nullptr
+					std::numeric_limits<double>::max()   // 最大値
 				);
 			}
 
@@ -2013,9 +2001,7 @@ namespace noco::editor
 					},
 					0.01,  // 感度（色は0-1の範囲なので小さめ）
 					0.0,   // 最小値
-					1.0,   // 最大値
-					nullptr,  // ドラッグ開始時（履歴記録は自動で行われるため不要）
-					nullptr   // ドラッグ終了時（履歴記録は自動で行われるため不要）
+					1.0   // 最大値
 				);
 
 				// Gラベルにドラッグ機能を追加
@@ -2032,9 +2018,7 @@ namespace noco::editor
 					},
 					0.01,  // 感度
 					0.0,   // 最小値
-					1.0,   // 最大値
-					nullptr,
-					nullptr
+					1.0   // 最大値
 				);
 
 				// Bラベルにドラッグ機能を追加
@@ -2051,9 +2035,7 @@ namespace noco::editor
 					},
 					0.01,  // 感度
 					0.0,   // 最小値
-					1.0,   // 最大値
-					nullptr,
-					nullptr
+					1.0   // 最大値
 				);
 
 				// Aラベルにドラッグ機能を追加
@@ -2070,9 +2052,7 @@ namespace noco::editor
 					},
 					0.01,  // 感度
 					0.0,   // 最小値
-					1.0,   // 最大値
-					nullptr,
-					nullptr
+					1.0   // 最大値
 				);
 			}
 
