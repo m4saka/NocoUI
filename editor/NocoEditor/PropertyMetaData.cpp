@@ -582,6 +582,29 @@ namespace noco::editor
 			.tooltip = U"下線の太さ",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"Label", U"outlineColor" }] = PropertyMetadata{
+			.tooltip = U"アウトラインの色",
+			.tooltipDetail = U"※ビットマップフォントの場合はアウトラインは描画されません",
+		};
+		metadata[PropertyKey{ U"Label", U"outlineFactorInner" }] = PropertyMetadata{
+			.tooltip = U"アウトライン内側のしきい値",
+			.tooltipDetail = U"SDF/MSDFフォント用のアウトライン内側しきい値（通常0.5、0.0でアウトラインなし）\n※ビットマップフォントの場合はアウトラインは描画されません",
+			.dragValueChangeStep = 0.01,
+		};
+		metadata[PropertyKey{ U"Label", U"outlineFactorOuter" }] = PropertyMetadata{
+			.tooltip = U"アウトライン外側のしきい値",
+			.tooltipDetail = U"SDF/MSDFフォント用のアウトライン外側しきい値（両方、0.0でアウトラインなし）\n※ビットマップフォントの場合はアウトラインは描画されません",
+			.dragValueChangeStep = 0.01,
+		};
+		metadata[PropertyKey{ U"Label", U"shadowColor" }] = PropertyMetadata{
+			.tooltip = U"シャドウの色",
+			.tooltipDetail = U"アルファ値が0より大きい場合にシャドウが有効になります\n※ビットマップフォントの場合はシャドウは描画されません",
+		};
+		metadata[PropertyKey{ U"Label", U"shadowOffset" }] = PropertyMetadata{
+			.tooltip = U"シャドウのオフセット (X, Y)",
+			.tooltipDetail = U"シャドウの表示位置をピクセル単位で指定\n※ビットマップフォントの場合はシャドウは描画されません",
+			.dragValueChangeStep = 1.0,
+		};
 		
 		// TextureFontLabel
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureFilePath" }] = PropertyMetadata{

@@ -271,8 +271,47 @@ namespace noco
 
 		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
 
+		const double outlineFactorInner = Max(m_outlineFactorInner.value(), 0.0);
+		const double outlineFactorOuter = Max(m_outlineFactorOuter.value(), 0.0);
+		const bool hasOutline = (outlineFactorInner != 0.0 || outlineFactorOuter != 0.0) && m_outlineColor.value().a > 0.0;
+		const bool hasShadow = m_shadowColor.value().a > 0.0;
+		const bool isSDF = m_cache.fontMethod == FontMethod::SDF;
+		const bool isMSDF = m_cache.fontMethod == FontMethod::MSDF;
+
+		TextStyle textStyle = TextStyle::Default();
+		if (isSDF || isMSDF)
 		{
-			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod) };
+			// SDFアウトラインの色にはScopedColorMul2Dの色が自動では乗らないため乗算が必要
+			const ColorF colorMul{ Graphics2D::GetColorMul() };
+			if (hasOutline && hasShadow)
+			{
+				textStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, m_outlineColor.value() * colorMul, m_shadowOffset.value(), m_shadowColor.value() * colorMul);
+			}
+			else if (hasOutline)
+			{
+				textStyle = TextStyle::Outline(outlineFactorInner, outlineFactorOuter, m_outlineColor.value() * colorMul);
+			}
+			else if (hasShadow)
+			{
+				textStyle = TextStyle::Shadow(m_shadowOffset.value(), m_shadowColor.value() * colorMul);
+			}
+		}
+
+		{
+			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod, textStyle.type) };
+			
+			if (hasOutline || hasShadow)
+			{
+				if (isSDF)
+				{
+					Graphics2D::SetSDFParameters(textStyle);
+				}
+				else if (isMSDF)
+				{
+					Graphics2D::SetMSDFParameters(textStyle);
+				}
+			}
+
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
 				const double startX = [&rect, &lineCache, horizontalAlign]()

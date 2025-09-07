@@ -36,6 +36,11 @@ namespace noco
 		Property<LabelUnderlineStyle> m_underlineStyle;
 		SmoothProperty<ColorF> m_underlineColor;
 		SmoothProperty<double> m_underlineThickness;
+		SmoothProperty<ColorF> m_outlineColor;
+		SmoothProperty<double> m_outlineFactorInner;
+		SmoothProperty<double> m_outlineFactorOuter;
+		SmoothProperty<ColorF> m_shadowColor;
+		SmoothProperty<Vec2> m_shadowOffset;
 
 		/* NonSerialized */ Optional<Font> m_fontOpt;
 		
@@ -126,7 +131,7 @@ namespace noco
 			const PropertyValue<ColorF>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
 			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness } }
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -142,6 +147,11 @@ namespace noco
 			, m_underlineStyle{ U"underlineStyle", underlineStyle }
 			, m_underlineColor{ U"underlineColor", underlineColor }
 			, m_underlineThickness{ U"underlineThickness", underlineThickness }
+			, m_outlineColor{ U"outlineColor", Palette::Black }
+			, m_outlineFactorInner{ U"outlineFactorInner", 0.0 }
+			, m_outlineFactorOuter{ U"outlineFactorOuter", 0.0 }
+			, m_shadowColor{ U"shadowColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_shadowOffset{ U"shadowOffset", Vec2{ 1.0, 1.0 } }
 		{
 		}
 
@@ -342,6 +352,66 @@ namespace noco
 		{
 			m_fontOpt.reset();
 			m_cache.prevParams.reset();
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& outlineColor() const
+		{
+			return m_outlineColor.propertyValue();
+		}
+
+		std::shared_ptr<Label> setOutlineColor(const PropertyValue<ColorF>& outlineColor)
+		{
+			m_outlineColor.setPropertyValue(outlineColor);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& outlineFactorInner() const
+		{
+			return m_outlineFactorInner.propertyValue();
+		}
+
+		std::shared_ptr<Label> setOutlineFactorInner(const PropertyValue<double>& outlineFactorInner)
+		{
+			m_outlineFactorInner.setPropertyValue(outlineFactorInner);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<double>& outlineFactorOuter() const
+		{
+			return m_outlineFactorOuter.propertyValue();
+		}
+
+		std::shared_ptr<Label> setOutlineFactorOuter(const PropertyValue<double>& outlineFactorOuter)
+		{
+			m_outlineFactorOuter.setPropertyValue(outlineFactorOuter);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<ColorF>& shadowColor() const
+		{
+			return m_shadowColor.propertyValue();
+		}
+
+		std::shared_ptr<Label> setShadowColor(const PropertyValue<ColorF>& shadowColor)
+		{
+			m_shadowColor.setPropertyValue(shadowColor);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Vec2>& shadowOffset() const
+		{
+			return m_shadowOffset.propertyValue();
+		}
+
+		std::shared_ptr<Label> setShadowOffset(const PropertyValue<Vec2>& shadowOffset)
+		{
+			m_shadowOffset.setPropertyValue(shadowOffset);
 			return shared_from_this();
 		}
 
