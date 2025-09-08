@@ -257,4 +257,3 @@ TEST_CASE("PropertyValue fromJSON type checking", "[PropertyValue]")
 		REQUIRE(*prop.hoveredValue() == 50);  // 数値は正しく読み込まれる
 	}
 }
-
