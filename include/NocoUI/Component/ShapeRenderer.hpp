@@ -46,6 +46,88 @@ namespace noco
 		SmoothProperty<double> m_outlineThickness;
 		Property<BlendMode> m_blendMode;
 
+		struct CacheParams
+		{
+			ShapeType shapeType;
+			bool preserveAspect;
+			double thickness;
+			int32 sides;
+			int32 points;
+			double innerRatio;
+			Vec2 startPoint;
+			Vec2 endPoint;
+			Vec2 arrowHeadSize;
+			Vec2 targetPoint;
+			double tailRatio;
+			int32 stairCount;
+			bool upStairs;
+			int32 squircleQuality;
+			SizeF regionSize;
+
+			[[nodiscard]]
+			bool isDirty(
+				ShapeType newShapeType,
+				bool newPreserveAspect,
+				double newThickness,
+				int32 newSides,
+				int32 newPoints,
+				double newInnerRatio,
+				const Vec2& newStartPoint,
+				const Vec2& newEndPoint,
+				const Vec2& newArrowHeadSize,
+				const Vec2& newTargetPoint,
+				double newTailRatio,
+				int32 newStairCount,
+				bool newUpStairs,
+				int32 newSquircleQuality,
+				const SizeF& newRegionSize) const
+			{
+				return shapeType != newShapeType
+					|| preserveAspect != newPreserveAspect
+					|| thickness != newThickness
+					|| sides != newSides
+					|| points != newPoints
+					|| innerRatio != newInnerRatio
+					|| startPoint != newStartPoint
+					|| endPoint != newEndPoint
+					|| arrowHeadSize != newArrowHeadSize
+					|| targetPoint != newTargetPoint
+					|| tailRatio != newTailRatio
+					|| stairCount != newStairCount
+					|| upStairs != newUpStairs
+					|| squircleQuality != newSquircleQuality
+					|| regionSize != newRegionSize;
+			}
+		};
+
+		struct Cache
+		{
+			Shape2D baseShape;
+			Shape2D scaledShape;
+			Optional<CacheParams> prevParams;
+			bool isScaled = false;
+
+			bool refreshIfDirty(
+				ShapeType shapeType,
+				bool preserveAspect,
+				double thickness,
+				int32 sides,
+				int32 points,
+				double innerRatio,
+				const Vec2& startPoint,
+				const Vec2& endPoint,
+				const Vec2& arrowHeadSize,
+				const Vec2& targetPoint,
+				double tailRatio,
+				int32 stairCount,
+				bool upStairs,
+				int32 squircleQuality,
+				const SizeF& regionSize,
+				const Vec2& center);
+		};
+
+		/* NonSerialized */ mutable Cache m_cache;
+
 	public:
 		explicit ShapeRenderer(
 			ShapeType shapeType = ShapeType::Star,
