@@ -54,12 +54,6 @@ namespace noco::editor
 			const ColorF newColor{ r, g, b, a };
 			if (newColor != m_value)
 			{
-				m_value = newColor;
-				if (m_fnOnValueChanged)
-				{
-					m_fnOnValueChanged(newColor);
-				}
-				m_previewRect->setFillColor(newColor);
 				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
 				if (m_hasInteractivePropertyValue && !m_hasParamRef)
 				{
@@ -68,6 +62,14 @@ namespace noco::editor
 						label->setUnderlineStyle(LabelUnderlineStyle::None);
 					}
 					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+				}
+				
+				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
+				m_value = newColor;
+				m_previewRect->setFillColor(newColor);
+				if (m_fnOnValueChanged)
+				{
+					m_fnOnValueChanged(newColor);
 				}
 			}
 		}

@@ -63,20 +63,22 @@ namespace noco::editor
 			}
 			if (isClicked)
 			{
+				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
+				if (m_hasInteractivePropertyValue && !m_hasParamRef)
+				{
+					if (const auto label = m_propertyLabelWeak.lock())
+					{
+						label->setUnderlineStyle(LabelUnderlineStyle::None);
+					}
+					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+				}
+				
+				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
 				m_value = !m_value;
 				m_checkLabel->setText(m_value ? U"✓" : U"");
 				if (m_fnSetValue)
 				{
 					m_fnSetValue(m_value);
-				}
-				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
-				if (m_hasInteractivePropertyValue && !m_hasParamRef)
-				{
-					if (const auto pl = m_propertyLabelWeak.lock())
-					{
-						pl->setUnderlineStyle(LabelUnderlineStyle::None);
-					}
-					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
 				}
 			}
 		}

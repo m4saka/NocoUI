@@ -31,12 +31,7 @@ namespace noco::editor
 			// ユーザーによる変更をチェック
 			if (m_textBox->isChanged())
 			{
-				m_fnSetValue(m_textBox->text());
-				if (m_fnGetValue)
-				{
-					m_prevExternalValue = String{ m_fnGetValue() };
-				}
-				// ステート値がある状態でテキスト編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
+				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
 				if (m_hasInteractivePropertyValue && !m_hasParamRef)
 				{
 					if (const auto label = m_propertyLabelWeak.lock())
@@ -44,6 +39,16 @@ namespace noco::editor
 						label->setUnderlineStyle(LabelUnderlineStyle::None);
 					}
 					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+				}
+				
+				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
+				if (m_fnSetValue)
+				{
+					m_fnSetValue(m_textBox->text());
+				}
+				if (m_fnGetValue)
+				{
+					m_prevExternalValue = String{ m_fnGetValue() };
 				}
 			}
 		}

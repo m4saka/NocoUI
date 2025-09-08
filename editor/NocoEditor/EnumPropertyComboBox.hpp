@@ -53,17 +53,22 @@ namespace noco::editor
 							none,
 							[this, name]
 							{
-								m_value = name;
-								m_label->setText(name);
-								m_fnOnValueChanged(m_value);
 								// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
 								if (m_hasInteractivePropertyValue && !m_hasParamRef)
 								{
-									if (const auto pl = m_propertyLabelWeak.lock())
+									if (const auto label = m_propertyLabelWeak.lock())
 									{
-										pl->setUnderlineStyle(LabelUnderlineStyle::None);
+										label->setUnderlineStyle(LabelUnderlineStyle::None);
 									}
 									m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+								}
+								
+								// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
+								m_value = name;
+								m_label->setText(name);
+								if (m_fnOnValueChanged)
+								{
+									m_fnOnValueChanged(m_value);
 								}
 							}
 						});
