@@ -667,3 +667,220 @@ TEST_CASE("Node interactable immediate property update", "[Node]")
 		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
 	}
 }
+
+// ========================================
+// siblingZIndexのテスト
+// ========================================
+
+TEST_CASE("Node siblingZIndex basic properties", "[Node][ZIndex]")
+{
+	SECTION("Default siblingZIndex value")
+	{
+		auto node = noco::Node::Create(U"TestNode");
+		REQUIRE(node->siblingZIndex() == 0);
+	}
+
+	SECTION("Set and get siblingZIndex")
+	{
+		auto node = noco::Node::Create(U"TestNode");
+		
+		// 基本的な値設定
+		node->setSiblingZIndex(noco::PropertyValue<int32>{ 5 });
+		REQUIRE(node->siblingZIndex() == 5);
+		
+		// 負の値も設定可能
+		node->setSiblingZIndex(noco::PropertyValue<int32>{ -10 });
+		REQUIRE(node->siblingZIndex() == -10);
+	}
+
+	SECTION("siblingZIndex affects member function execution order")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create(U"Parent");
+		canvas->addChild(parent);
+		
+		// 3つの子ノードを作成、ZIndexを設定
+		auto childA = noco::Node::Create(U"ChildA");
+		auto childB = noco::Node::Create(U"ChildB");  
+		auto childC = noco::Node::Create(U"ChildC");
+		
+		childA->setSiblingZIndex(noco::PropertyValue<int32>{ 2 });
+		childB->setSiblingZIndex(noco::PropertyValue<int32>{ 1 });
+		childC->setSiblingZIndex(noco::PropertyValue<int32>{ 3 });
+		
+		parent->addChild(childA);
+		parent->addChild(childB);
+		parent->addChild(childC);
+		
+		// Canvasを更新してプロパティを反映
+		canvas->update();
+		
+		// ZIndexが反映されていることを確認
+		REQUIRE(childA->siblingZIndex() == 2);
+		REQUIRE(childB->siblingZIndex() == 1);
+		REQUIRE(childC->siblingZIndex() == 3);
+		
+		// 実行順序を記録するテストコンポーネント
+		String updateKeyInputOrder;
+		String updateOrder;
+		String lateUpdateOrder;
+		String drawOrder;
+		
+		class OrderTestComponent : public noco::ComponentBase
+		{
+		public:
+			String* pUpdateKeyInputOrder;
+			String* pUpdateOrder;
+			String* pLateUpdateOrder;
+			String* pDrawOrder;
+			String nodeName;
+			
+			OrderTestComponent(String* pUpdateKeyInputOrder, String* pUpdateOrder, String* pLateUpdateOrder, String* pDrawOrder, const String& name) 
+				: ComponentBase({}), pUpdateKeyInputOrder(pUpdateKeyInputOrder), pUpdateOrder(pUpdateOrder), pLateUpdateOrder(pLateUpdateOrder), pDrawOrder(pDrawOrder), nodeName(name) {}
+			
+			void updateKeyInput(const std::shared_ptr<noco::Node>&) override
+			{
+				*pUpdateKeyInputOrder += nodeName;
+			}
+			
+			void update(const std::shared_ptr<noco::Node>&) override
+			{
+				*pUpdateOrder += nodeName;
+			}
+			
+			void lateUpdate(const std::shared_ptr<noco::Node>&) override
+			{
+				*pLateUpdateOrder += nodeName;
+			}
+			
+			void draw(const noco::Node&) const override
+			{
+				*pDrawOrder += nodeName;
+			}
+		};
+		
+		// テストコンポーネントを追加
+		childA->emplaceComponent<OrderTestComponent>(&updateKeyInputOrder, &updateOrder, &lateUpdateOrder, &drawOrder, U"A"); // zIndex=2
+		childB->emplaceComponent<OrderTestComponent>(&updateKeyInputOrder, &updateOrder, &lateUpdateOrder, &drawOrder, U"B"); // zIndex=1  
+		childC->emplaceComponent<OrderTestComponent>(&updateKeyInputOrder, &updateOrder, &lateUpdateOrder, &drawOrder, U"C"); // zIndex=3
+		
+		canvas->update();
+		canvas->draw();
+		
+		// updateKeyInput: zIndex降順（手前から奥へ）
+		REQUIRE(updateKeyInputOrder == U"CAB");
+		
+		// update: Hierarchy順（zIndexとは関係なくaddChildした順）
+		REQUIRE(updateOrder == U"ABC");
+		
+		// lateUpdate: Hierarchy順（zIndexとは関係なくaddChildした順）
+		REQUIRE(lateUpdateOrder == U"ABC");
+		
+		// draw: zIndex昇順（奥から手前へ）
+		REQUIRE(drawOrder == U"BAC");
+	}
+}
+
+TEST_CASE("Node siblingZIndex with styleState", "[Node][ZIndex][StyleState]")
+{
+	SECTION("siblingZIndex with different styleState values")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		canvas->addChild(node);
+		
+		// デフォルト値とstyleState毎の値を設定
+		auto zIndexProperty = noco::PropertyValue<int32>{ 0 }  // デフォルト値
+			.withStyleState(U"highlighted", 10)           // styleState "highlighted"時は10
+			.withStyleState(U"selected", 20);             // styleState "selected"時は20
+		
+		node->setSiblingZIndex(zIndexProperty);
+		
+		// 初期状態（デフォルト値）
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 0);
+		
+		// styleStateを"highlighted"に設定
+		node->setStyleState(U"highlighted");
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 10);
+		
+		// styleStateを"selected"に設定  
+		node->setStyleState(U"selected");
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 20);
+		
+		// styleStateをクリア（デフォルト値に戻る）
+		node->clearStyleState();
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 0);
+	}
+}
+
+TEST_CASE("Node siblingZIndex with parameter reference", "[Node][ZIndex][Param]")
+{
+	SECTION("siblingZIndex with parameter reference")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		canvas->addChild(node);
+		
+		// パラメータ参照を設定
+		node->setSiblingZIndexParamRef(U"layerIndex");
+		
+		// パラメータが未設定の場合はデフォルト値
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 0);  // デフォルト値
+		
+		// パラメータを設定
+		canvas->setParamValue(U"layerIndex", 15);
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 15);
+		
+		// パラメータ値を変更
+		canvas->setParamValue(U"layerIndex", -5);
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == -5);
+		
+		// パラメータ参照をクリア
+		node->setSiblingZIndexParamRef(U"");
+		System::Update();  // フレームを進める
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 0);  // デフォルト値に戻る
+	}
+
+	SECTION("siblingZIndex parameter reference with styleState")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create(U"TestNode");
+		canvas->addChild(node);
+		
+		// styleState毎の値とパラメータ参照を併用
+		auto zIndexProperty = noco::PropertyValue<int32>{ 1 }  // デフォルト値
+			.withStyleState(U"active", 5);                // styleState "active"時は5
+		
+		node->setSiblingZIndex(zIndexProperty);
+		node->setSiblingZIndexParamRef(U"dynamicLayer");
+		
+		// パラメータが設定されている場合はパラメータ値が優先される
+		canvas->setParamValue(U"dynamicLayer", 100);
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 100);
+		
+		// styleStateを設定してもパラメータ値が優先される
+		node->setStyleState(U"active");
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 100);  // パラメータ値が優先
+		
+		// パラメータを削除するとstyleStateの値が使用される
+		canvas->removeParam(U"dynamicLayer");
+		System::Update();  // フレームを進める
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 5);  // styleState "active"の値
+		
+		// styleStateをクリアするとデフォルト値が使用される
+		node->clearStyleState();
+		canvas->update();
+		REQUIRE(node->siblingZIndex() == 1);  // デフォルト値
+	}
+}

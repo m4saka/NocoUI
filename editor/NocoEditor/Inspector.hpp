@@ -2450,7 +2450,7 @@ namespace noco::editor
 					{
 						.text = U"参照パラメータをクリア",
 						.hotKeyText = U"",
-						.mnemonicInput = KeyC,
+						.mnemonicInput = KeyL,
 						.onClick = [node, this]
 						{
 							node->setActiveSelfParamRef(U"");
@@ -2592,7 +2592,7 @@ namespace noco::editor
 					{
 						.text = U"参照パラメータをクリア",
 						.hotKeyText = U"",
-						.mnemonicInput = KeyC,
+						.mnemonicInput = KeyL,
 						.onClick = [node, this]
 						{
 							node->setInteractableParamRef(U"");
@@ -2655,13 +2655,61 @@ namespace noco::editor
 					{
 						.text = U"参照パラメータをクリア",
 						.hotKeyText = U"",
-						.mnemonicInput = KeyC,
+						.mnemonicInput = KeyL,
 						.onClick = [node, this]
 						{
 							node->setStyleStateParamRef(U"");
 							refreshInspector();
 						},
 						.fnIsEnabled = [node] { return !node->styleStateParamRef().isEmpty(); },
+					},
+				};
+				
+				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
+			}
+
+			{
+				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"siblingZIndex", Format(node->siblingZIndex()), [node](StringView value) { node->setSiblingZIndex(PropertyValue<int32>{ ParseOr<int32>(value, 0) }); }, HasInteractivePropertyValueYN{ node->siblingZIndexProperty().hasInteractivePropertyValue() }, HasParameterRefYN{ !node->siblingZIndexParamRef().isEmpty() }));
+				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
+				Array<MenuElement> menuElements
+				{
+					MenuItem
+					{ 
+						.text = U"ステート毎に値を変更...", 
+						.hotKeyText = U"", 
+						.mnemonicInput = KeyC, 
+						.onClick = [this, node] 
+						{ 
+							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(&node->siblingZIndexProperty(), [this] { refreshInspector(); }, m_dialogOpener)); 
+						},
+					},
+					MenuSeparator{},
+					MenuItem
+					{ 
+						.text = U"参照パラメータを選択...", 
+						.hotKeyText = U"", 
+						.mnemonicInput = KeyP, 
+						.onClick = [this, node] 
+						{ 
+							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
+								&node->siblingZIndexProperty(),
+								m_canvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							)); 
+						},
+					},
+					MenuItem
+					{
+						.text = U"参照パラメータをクリア",
+						.hotKeyText = U"",
+						.mnemonicInput = KeyL,
+						.onClick = [node, this]
+						{
+							node->setSiblingZIndexParamRef(U"");
+							refreshInspector();
+						},
+						.fnIsEnabled = [node] { return !node->siblingZIndexParamRef().isEmpty(); },
 					},
 				};
 				
@@ -3594,18 +3642,18 @@ namespace noco::editor
 					{
 						MenuItem
 						{ 
-							U"ステート毎に値を変更..."_fmt(name), 
-							U"", 
-							KeyC, 
-							[this, pProperty] 
+							.text = U"ステート毎に値を変更...", 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyC, 
+							.onClick = [this, pProperty] 
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
-							} 
+							}, 
 						},
 						MenuSeparator{},
 						MenuItem
 						{ 
-							.text = U"参照パラメータを選択..."_fmt(name), 
+							.text = U"参照パラメータを選択...", 
 							.hotKeyText = U"", 
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
@@ -3615,9 +3663,9 @@ namespace noco::editor
 						},
 						MenuItem
 						{
-							.text = U"参照パラメータをクリア"_fmt(name),
+							.text = U"参照パラメータをクリア",
 							.hotKeyText = U"",
-							.mnemonicInput = KeyC,
+							.mnemonicInput = KeyL,
 							.onClick = [pProperty, this]
 							{
 								pProperty->setParamRef(U"");
@@ -3645,18 +3693,18 @@ namespace noco::editor
 					{
 						MenuItem
 						{ 
-							U"ステート毎に値を変更..."_fmt(name), 
-							U"", 
-							KeyC, 
-							[this, pProperty] 
+							.text = U"ステート毎に値を変更...", 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyC, 
+							.onClick = [this, pProperty] 
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
-							} 
+							}, 
 						},
 						MenuSeparator{},
 						MenuItem
 						{ 
-							.text = U"参照パラメータを選択..."_fmt(name), 
+							.text = U"参照パラメータを選択...", 
 							.hotKeyText = U"", 
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
@@ -3666,9 +3714,9 @@ namespace noco::editor
 						},
 						MenuItem
 						{
-							.text = U"参照パラメータをクリア"_fmt(name),
+							.text = U"参照パラメータをクリア",
 							.hotKeyText = U"",
-							.mnemonicInput = KeyC,
+							.mnemonicInput = KeyL,
 							.onClick = [pProperty, this]
 							{
 								pProperty->setParamRef(U"");
@@ -3709,18 +3757,18 @@ namespace noco::editor
 					{
 						MenuItem
 						{ 
-							U"ステート毎に値を変更..."_fmt(name), 
-							U"", 
-							KeyC, 
-							[this, pProperty] 
+							.text = U"ステート毎に値を変更...", 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyC, 
+							.onClick = [this, pProperty] 
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
-							} 
+							}, 
 						},
 						MenuSeparator{},
 						MenuItem
 						{ 
-							.text = U"参照パラメータを選択..."_fmt(name), 
+							.text = U"参照パラメータを選択...", 
 							.hotKeyText = U"", 
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
@@ -3730,9 +3778,9 @@ namespace noco::editor
 						},
 						MenuItem
 						{
-							.text = U"参照パラメータをクリア"_fmt(name),
+							.text = U"参照パラメータをクリア",
 							.hotKeyText = U"",
-							.mnemonicInput = KeyC,
+							.mnemonicInput = KeyL,
 							.onClick = [pProperty, this]
 							{
 								pProperty->setParamRef(U"");
@@ -3756,18 +3804,18 @@ namespace noco::editor
 					{
 						MenuItem
 						{ 
-							U"ステート毎に値を変更..."_fmt(name), 
-							U"", 
-							KeyC, 
-							[this, pProperty] 
+							.text = U"ステート毎に値を変更...", 
+							.hotKeyText = U"", 
+							.mnemonicInput = KeyC, 
+							.onClick = [this, pProperty] 
 							{ 
 								m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(pProperty, [this] { refreshInspector(); }, m_dialogOpener)); 
-							} 
+							}, 
 						},
 						MenuSeparator{},
 						MenuItem
 						{ 
-							.text = U"参照パラメータを選択..."_fmt(name), 
+							.text = U"参照パラメータを選択...", 
 							.hotKeyText = U"", 
 							.mnemonicInput = KeyP, 
 							.onClick = [this, pProperty] 
@@ -3777,9 +3825,9 @@ namespace noco::editor
 						},
 						MenuItem
 						{
-							.text = U"参照パラメータをクリア"_fmt(name),
+							.text = U"参照パラメータをクリア",
 							.hotKeyText = U"",
-							.mnemonicInput = KeyC,
+							.mnemonicInput = KeyL,
 							.onClick = [pProperty, this]
 							{
 								pProperty->setParamRef(U"");
@@ -4489,7 +4537,7 @@ namespace noco::editor
 									{
 										MenuItem
 										{ 
-											.text = U"ステート毎に値を変更..."_fmt(placeholderProperty->name()), 
+											.text = U"ステート毎に値を変更...", 
 											.hotKeyText = U"", 
 											.mnemonicInput = KeyC, 
 											.onClick = [this, placeholderProperty] 
@@ -4501,7 +4549,7 @@ namespace noco::editor
 										MenuSeparator{},
 										MenuItem
 										{ 
-											.text = U"参照パラメータを選択..."_fmt(placeholderProperty->name()), 
+											.text = U"参照パラメータを選択...", 
 											.hotKeyText = U"", 
 											.mnemonicInput = KeyP, 
 											.onClick = [this, placeholderProperty] 
@@ -4511,9 +4559,9 @@ namespace noco::editor
 										},
 										MenuItem
 										{
-											.text = U"参照パラメータをクリア"_fmt(placeholderProperty->name()),
+											.text = U"参照パラメータをクリア",
 											.hotKeyText = U"",
-											.mnemonicInput = KeyC,
+											.mnemonicInput = KeyL,
 											.onClick = [placeholderProperty, this]
 											{
 												placeholderProperty->setParamRef(U"");
@@ -4798,7 +4846,7 @@ namespace noco::editor
 				{
 					MenuItem
 					{ 
-						.text = U"ステート毎に値を変更..."_fmt(property->name()), 
+						.text = U"ステート毎に値を変更...", 
 						.hotKeyText = U"", 
 						.mnemonicInput = KeyC, 
 						.onClick = [this, property] 
@@ -4811,7 +4859,7 @@ namespace noco::editor
 					MenuSeparator{},
 					MenuItem
 					{ 
-						.text = U"参照パラメータを選択..."_fmt(property->name()), 
+						.text = U"参照パラメータを選択...", 
 						.hotKeyText = U"", 
 						.mnemonicInput = KeyP, 
 						.onClick = [this, property] 
@@ -4821,9 +4869,9 @@ namespace noco::editor
 					},
 					MenuItem
 					{
-						.text = U"参照パラメータをクリア"_fmt(property->name()),
+						.text = U"参照パラメータをクリア",
 						.hotKeyText = U"",
-						.mnemonicInput = KeyC,
+						.mnemonicInput = KeyL,
 						.onClick = [property, this]
 						{
 							property->setParamRef(U"");

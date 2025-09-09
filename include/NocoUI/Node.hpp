@@ -46,6 +46,7 @@ namespace noco
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		PropertyNonInteractive<bool> m_activeSelf{ U"activeSelf", true };
+		Property<int32> m_siblingZIndex{ U"siblingZIndex", 0 };
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
@@ -59,6 +60,7 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::No;
 		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
+		/* NonSerialized */ ActiveYN m_activeInHierarchyForDraw = ActiveYN::No;
 		/* NonSerialized */ PropertyNonInteractive<String> m_styleState{ U"styleState", U"" };
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
@@ -67,8 +69,6 @@ namespace noco
 		/* NonSerialized */ bool m_rightClickRequested = false;
 		/* NonSerialized */ bool m_prevClickRequested = false;
 		/* NonSerialized */ bool m_prevRightClickRequested = false;
-		/* NonSerialized */ Array<std::shared_ptr<ComponentBase>> m_componentTempBuffer;
-		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 		/* NonSerialized */ Optional<Vec2> m_dragStartPos; // ドラッグ開始位置
 		/* NonSerialized */ Vec2 m_dragStartScrollOffset{ 0.0, 0.0 }; // ドラッグ開始時のスクロールオフセット
 		/* NonSerialized */ Vec2 m_scrollVelocity{ 0.0, 0.0 }; // スクロール速度
@@ -81,6 +81,8 @@ namespace noco
 		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelf
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfParamOverrideAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelfの上書き値
+		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
+		/* NonSerialized */ mutable Array<std::shared_ptr<ComponentBase>> m_tempComponentsBuffer; // コンポーネントの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 
 		[[nodiscard]]
 		Mat3x2 calculateHitTestMat(const Mat3x2& parentHitTestMat) const;
@@ -320,11 +322,11 @@ namespace noco
 
 		void updateNodeParams(const HashTable<String, ParamValue>& params);
 
-		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params);
+		void updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates);
 
 		void updateKeyInput();
 
-		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates = {});
+		void update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params);
 
 		void lateUpdate();
 
@@ -680,6 +682,30 @@ namespace noco
 		{
 			return false;
 		}
+
+		[[nodiscard]]
+		int32 siblingZIndex() const;
+
+		std::shared_ptr<Node> setSiblingZIndex(const PropertyValue<int32>& siblingZIndex);
+
+		[[nodiscard]]
+		const PropertyValue<int32>& siblingZIndexPropertyValue() const;
+
+		[[nodiscard]]
+		const String& siblingZIndexParamRef() const { return m_siblingZIndex.paramRef(); }
+
+		std::shared_ptr<Node> setSiblingZIndexParamRef(const String& paramRef)
+		{
+			m_siblingZIndex.setParamRef(paramRef);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		Property<int32>& siblingZIndexProperty() { return m_siblingZIndex; }
+
+		[[nodiscard]]
+		const Property<int32>& siblingZIndexProperty() const { return m_siblingZIndex; }
+
 	};
 
 	template <typename TComponent>

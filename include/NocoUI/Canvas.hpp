@@ -389,12 +389,12 @@ namespace noco
 		/* NonSerialized */ double m_rotation = 0.0;
 		/* NonSerialized */ EventRegistry m_eventRegistry;
 		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
-		/* NonSerialized */ Array<std::shared_ptr<Node>> m_childrenTempBuffer;
 		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
 		/* NonSerialized */ bool m_isEditorPreview = false;
 		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
 		/* NonSerialized */ InteractableYN m_interactable = InteractableYN::Yes;
+		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のCanvasのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;

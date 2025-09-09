@@ -8,6 +8,22 @@
 namespace noco
 {
 	class Node;
+	
+	namespace
+	{
+		void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes)
+		{
+			if (nodes.size() <= 1)
+			{
+				return;
+			}
+			std::stable_sort(nodes.begin(), nodes.end(),
+				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
+				{
+					return a->siblingZIndex() < b->siblingZIndex();
+				});
+		}
+	}
 	void Canvas::EventRegistry::addEvent(const Event& event)
 	{
 		m_events.push_back(event);
@@ -563,6 +579,8 @@ namespace noco
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
+		static const Array<String> EmptyStringArray{};
+
 		m_eventRegistry.clear();
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
@@ -719,40 +737,47 @@ namespace noco
 		// ノード更新
 		const bool currentDragScrollingWithThreshold = dragScrollingNode && dragScrollingNode->m_dragThresholdExceeded;
 		const IsScrollingYN isScrolling{ currentDragScrollingWithThreshold || m_prevDragScrollingWithThresholdExceeded };
-		
-		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-		m_childrenTempBuffer.clear();
-		m_childrenTempBuffer.reserve(m_children.size());
+
+		// updateNodeParamsは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
 		for (const auto& child : m_children)
-		{
-			m_childrenTempBuffer.push_back(child);
-		}
-		
-		// updateNodeParamsは通常順で実行
-		for (const auto& child : m_childrenTempBuffer)
 		{
 			child->updateNodeParams(m_params);
 		}
 		// パラメータによるactiveSelf変更でレイアウトが変わる場合のためにここでも更新
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
-		// updateInteractionStateは通常順で実行
-		for (const auto& child : m_childrenTempBuffer)
+		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
+		for (const auto& child : m_children)
 		{
-			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params);
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
 		}
-		
-		// updateKeyInputは前面のノードから処理する必要があるため逆順で実行
-		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
+
+		// updateKeyInput・update・lateUpdate中のaddChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+		m_tempChildrenBuffer.clear();
+		m_tempChildrenBuffer.reserve(m_children.size());
+		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+
+		// updateKeyInputはzIndex降順で実行(手前から奥へ)
+		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
+		SortBySiblingZIndex(m_tempChildrenBuffer); // siblingZIndexはステート毎の値を持つためupdateInteractionStateより後にソートする必要がある点に注意
+		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			(*it)->updateKeyInput();
 		}
 		
-		// その他の更新処理は通常順で実行
-		for (const auto& child : m_childrenTempBuffer)
+		// updateはzIndexに関係なく順番に実行(そのため元の順番で上書きが必要)
+		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
+		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+		for (const auto& child : m_tempChildrenBuffer)
 		{
-			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params, {});
+			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params);
+		}
+		for (const auto& child : m_tempChildrenBuffer)
+		{
 			child->lateUpdate();
+		}
+		for (const auto& child : m_tempChildrenBuffer)
+		{
 			child->postLateUpdate(Scene::DeltaTime(), m_params);
 		}
 
@@ -762,7 +787,7 @@ namespace noco
 		// 同一フレーム内でのレイアウト更新はまとめて1回遅延実行
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
-		m_childrenTempBuffer.clear();
+		m_tempChildrenBuffer.clear();
 
 		// ドラッグスクロール開始判定
 		// (ドラッグアンドドロップと競合しないよう、フレームの最後に実施)
@@ -781,22 +806,36 @@ namespace noco
 	
 	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point) const
 	{
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
+		// hitTestはzIndex降順で実行(手前から奥へ)
+		m_tempChildrenBuffer.clear();
+		m_tempChildrenBuffer.reserve(m_children.size());
+		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+		SortBySiblingZIndex(m_tempChildrenBuffer);
+		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			if (const auto hoveredNode = (*it)->hitTest(point))
 			{
+				m_tempChildrenBuffer.clear();
 				return hoveredNode;
 			}
 		}
+		m_tempChildrenBuffer.clear();
 		return nullptr;
 	}
 	
 	void Canvas::draw() const
 	{
-		for (const auto& child : m_children)
+		// drawはzIndex昇順で実行(奥から手前へ)
+		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
+		m_tempChildrenBuffer.clear();
+		m_tempChildrenBuffer.reserve(m_children.size());
+		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+		SortBySiblingZIndex(m_tempChildrenBuffer);
+		for (const auto& child : m_tempChildrenBuffer)
 		{
 			child->draw();
 		}
+		m_tempChildrenBuffer.clear();
 	}
 	
 	void Canvas::removeChildrenAll()
@@ -977,6 +1016,10 @@ namespace noco
 			{
 				count++;
 			}
+			if (node->siblingZIndexParamRef() == paramName)
+			{
+				count++;
+			}
 			
 			// コンポーネントのプロパティをチェック
 			for (const auto& component : node->components())
@@ -1029,6 +1072,10 @@ namespace noco
 			{
 				node->setStyleStateParamRef(U"");
 			}
+			if (node->siblingZIndexParamRef() == paramName)
+			{
+				node->setSiblingZIndexParamRef(U"");
+			}
 			
 			// コンポーネントのプロパティから参照を解除
 			for (const auto& component : node->components())
@@ -1071,6 +1118,7 @@ namespace noco
 			node->activeSelfProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			node->interactableProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			node->styleStateProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
+			node->siblingZIndexProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			
 			// コンポーネントのプロパティの無効な参照を解除
 			for (const auto& component : node->components())

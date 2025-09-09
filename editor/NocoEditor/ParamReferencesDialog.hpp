@@ -248,6 +248,10 @@ namespace noco::editor
 				{
 					references.emplace_back(nodeName, U"Node", U"styleState");
 				}
+				if (node->siblingZIndexParamRef() == paramName)
+				{
+					references.emplace_back(nodeName, U"Node", U"siblingZIndex");
+				}
 				
 				// コンポーネントのプロパティをチェック
 				for (const auto& component : node->components())

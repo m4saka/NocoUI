@@ -7,6 +7,22 @@
 
 namespace noco
 {
+	namespace
+	{
+		void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes)
+		{
+			if (nodes.size() <= 1)
+			{
+				return;
+			}
+			std::stable_sort(nodes.begin(), nodes.end(),
+				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
+				{
+					return a->siblingZIndex() < b->siblingZIndex();
+				});
+		}
+	}
+	
 	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
 		const InteractableYN interactable{ m_interactable.value() && parentInteractable };
@@ -436,6 +452,7 @@ namespace noco
 		m_activeSelf.appendJSON(result);
 		m_interactable.appendJSON(result);
 		m_styleState.appendJSON(result);
+		m_siblingZIndex.appendJSON(result);
 
 		if (withInstanceId)
 		{
@@ -556,6 +573,7 @@ namespace noco
 		}
 		node->m_activeSelf.readFromJSON(json);
 		node->m_styleState.readFromJSON(json);
+		node->m_siblingZIndex.readFromJSON(json);
 		if (withInstanceId && json.contains(U"_instanceId"))
 		{
 			node->m_instanceId = json[U"_instanceId"].get<uint64>();
@@ -1209,20 +1227,29 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitQuad(WithPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_transformedQuad.contains(point))
+
+		// 子のヒットテスト実行
+		// (クリッピング有効の場合は座標が自身の領域(※hitPaddingを含まない)内である場合のみ実行)
+		if (!m_clippingEnabled || m_hitQuad.contains(point))
 		{
-			return nullptr;
-		}
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-		{
-			if (const auto hoveredNode = (*it)->hitTest(point))
+			m_tempChildrenBuffer.clear();
+			m_tempChildrenBuffer.reserve(m_children.size());
+			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+			SortBySiblingZIndex(m_tempChildrenBuffer);
+
+			// hitTestはzIndex降順で実行(手前から奥へ)
+			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				return hoveredNode;
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
 			}
+			m_tempChildrenBuffer.clear();
 		}
-		if (m_isHitTarget && hit)
+
+		// 自身のヒットテスト実行
+		if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
 		{
 			return shared_from_this();
 		}
@@ -1241,20 +1268,29 @@ namespace noco
 		{
 			return nullptr;
 		}
-		// hitPaddingを考慮した当たり判定領域を計算
-		const bool hit = hitQuad(WithPaddingYN::Yes).contains(point);
-		if (m_clippingEnabled && !m_transformedQuad.contains(point))
+
+		// 子のヒットテスト実行
+		// (クリッピング有効の場合は座標が自身の領域(※hitPaddingを含まない)内である場合のみ実行)
+		if (!m_clippingEnabled || m_hitQuad.contains(point))
 		{
-			return nullptr;
-		}
-		for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-		{
-			if (const auto hoveredNode = (*it)->hitTest(point))
+			m_tempChildrenBuffer.clear();
+			m_tempChildrenBuffer.reserve(m_children.size());
+			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+			SortBySiblingZIndex(m_tempChildrenBuffer);
+
+			// hitTestはzIndex降順で実行(手前から奥へ)
+			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				return hoveredNode;
+				if (const auto hoveredNode = (*it)->hitTest(point))
+				{
+					return hoveredNode;
+				}
 			}
+			m_tempChildrenBuffer.clear();
 		}
-		if (m_isHitTarget && hit)
+
+		// 自身のヒットテスト実行
+		if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
 		{
 			return shared_from_this();
 		}
@@ -1313,7 +1349,7 @@ namespace noco
 		}
 	}
 
-	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
+	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
 	{
 		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
@@ -1324,6 +1360,7 @@ namespace noco
 		m_clickRequested = false;
 		m_rightClickRequested = false;
 
+		// interactionStateを確定
 		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
 		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
 		if (!m_isHitTarget)
@@ -1333,13 +1370,26 @@ namespace noco
 			m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
 		}
 
+		// 有効なstyleState一覧を確定(親から継承したstyleState一覧＋自身のstyleState)
+		m_activeStyleStates.clear();
+		const bool hasStyleStateSelf = !m_styleState.value().empty();
+		m_activeStyleStates.reserve(parentActiveStyleStates.size() + (hasStyleStateSelf ? 1 : 0));
+		m_activeStyleStates.assign(parentActiveStyleStates.begin(), parentActiveStyleStates.end());
+		if (hasStyleStateSelf)
+		{
+			m_activeStyleStates.push_back(m_styleState.value());
+		}
+
+		// siblingIndexはステート反映のためにステート確定後に更新
+		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+
 		if (!m_children.empty())
 		{
 			// 子ノードのupdateInteractionState実行
 			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params);
+				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
 			}
 		}
 	}
@@ -1349,28 +1399,28 @@ namespace noco
 		const auto thisNode = shared_from_this();
 
 		// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-		m_childrenTempBuffer.clear();
-		m_childrenTempBuffer.reserve(m_children.size());
-		for (const auto& child : m_children)
-		{
-			m_childrenTempBuffer.push_back(child);
-		}
-		for (auto it = m_childrenTempBuffer.rbegin(); it != m_childrenTempBuffer.rend(); ++it)
+		m_tempChildrenBuffer.clear();
+		m_tempChildrenBuffer.reserve(m_children.size());
+		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+		SortBySiblingZIndex(m_tempChildrenBuffer);
+
+		// updateKeyInputはzIndex降順で実行(手前から奥へ)
+		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			(*it)->updateKeyInput();
 		}
-		m_childrenTempBuffer.clear();
+		m_tempChildrenBuffer.clear();
 
 		if (m_activeInHierarchy && !detail::s_canvasUpdateContext.keyInputBlocked)
 		{
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_componentTempBuffer.clear();
-			m_componentTempBuffer.reserve(m_components.size());
+			m_tempComponentsBuffer.clear();
+			m_tempComponentsBuffer.reserve(m_components.size());
 			for (const auto& component : m_components)
 			{
-				m_componentTempBuffer.push_back(component);
+				m_tempComponentsBuffer.push_back(component);
 			}
-			for (auto it = m_componentTempBuffer.rbegin(); it != m_componentTempBuffer.rend(); ++it)
+			for (auto it = m_tempComponentsBuffer.rbegin(); it != m_tempComponentsBuffer.rend(); ++it)
 			{
 				(*it)->updateKeyInput(thisNode);
 
@@ -1380,11 +1430,11 @@ namespace noco
 					break;
 				}
 			}
-			m_componentTempBuffer.clear();
+			m_tempComponentsBuffer.clear();
 		}
 	}
 
-	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
+	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		const auto thisNode = shared_from_this();
 		
@@ -1486,19 +1536,19 @@ namespace noco
 				markLayoutAsDirty();
 			}
 		}
-		
-		// コンポーネントのupdate実行
+
 		if (m_activeInHierarchy)
 		{
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_componentTempBuffer.clear();
-			m_componentTempBuffer.reserve(m_components.size());
+			m_tempComponentsBuffer.clear();
+			m_tempComponentsBuffer.reserve(m_components.size());
 			for (const auto& component : m_components)
 			{
-				m_componentTempBuffer.push_back(component);
+				m_tempComponentsBuffer.push_back(component);
 			}
 
-			for (const auto& component : m_componentTempBuffer)
+			// コンポーネントのupdate実行
+			for (const auto& component : m_tempComponentsBuffer)
 			{
 				component->update(thisNode);
 
@@ -1508,21 +1558,8 @@ namespace noco
 					break;
 				}
 			}
-			m_componentTempBuffer.clear();
-		}
+			m_tempComponentsBuffer.clear();
 
-		// activeStyleStatesを構築（親から受け取ったもの + 自身のstyleState）
-		// 非アクティブな場合でも子ノードに渡すために構築する
-		m_activeStyleStates = parentActiveStyleStates;
-		
-		// 自身のstyleStateを追加
-		if (!m_styleState.value().empty())
-		{
-			m_activeStyleStates.push_back(m_styleState.value());
-		}
-		
-		if (m_activeInHierarchy)
-		{
 			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
 		}
 
@@ -1543,22 +1580,17 @@ namespace noco
 		if (!m_children.empty())
 		{
 			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_childrenTempBuffer.clear();
-			m_childrenTempBuffer.reserve(m_children.size());
-			for (const auto& child : m_children)
-			{
-				m_childrenTempBuffer.push_back(child);
-			}
+			m_tempChildrenBuffer.clear();
+			m_tempChildrenBuffer.reserve(m_children.size());
+			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 
-			// 子ノードのupdate実行
+			// updateはzIndexに関係なく順番に実行
 			const Mat3x2 childHitTestMat = calculateHitTestMat(parentHitTestMat);
-			
-			for (const auto& child : m_childrenTempBuffer)
+			for (const auto& child : m_tempChildrenBuffer)
 			{
-				child->update(scrollableHoveredNode, deltaTime, m_transformMatInHierarchy, childHitTestMat, params, m_activeStyleStates);
+				child->update(scrollableHoveredNode, deltaTime, m_transformMatInHierarchy, childHitTestMat, params);
 			}
-
-			m_childrenTempBuffer.clear();
+			m_tempChildrenBuffer.clear();
 		}
 	}
 
@@ -1571,15 +1603,15 @@ namespace noco
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
 			if (m_activeInHierarchy)
 			{
-				m_componentTempBuffer.clear();
-				m_componentTempBuffer.reserve(m_components.size());
+				m_tempComponentsBuffer.clear();
+				m_tempComponentsBuffer.reserve(m_components.size());
 				for (const auto& component : m_components)
 				{
-					m_componentTempBuffer.push_back(component);
+					m_tempComponentsBuffer.push_back(component);
 				}
 
 				// コンポーネントのlateUpdate実行
-				for (const auto& component : m_componentTempBuffer)
+				for (const auto& component : m_tempComponentsBuffer)
 				{
 					component->lateUpdate(thisNode);
 
@@ -1589,26 +1621,23 @@ namespace noco
 						break;
 					}
 				}
-				m_componentTempBuffer.clear();
+				m_tempComponentsBuffer.clear();
 			}
 		}
 
 		if (!m_children.empty())
 		{
 			// addChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_childrenTempBuffer.clear();
-			m_childrenTempBuffer.reserve(m_children.size());
-			for (const auto& child : m_children)
-			{
-				m_childrenTempBuffer.push_back(child);
-			}
+			m_tempChildrenBuffer.clear();
+			m_tempChildrenBuffer.reserve(m_children.size());
+			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 
-			// 子ノードのlateUpdate実行
-			for (const auto& child : m_childrenTempBuffer)
+			// lateUpdateはzIndexに関係なく順番に実行
+			for (const auto& child : m_tempChildrenBuffer)
 			{
 				child->lateUpdate();
 			}
-			m_childrenTempBuffer.clear();
+			m_tempChildrenBuffer.clear();
 		}
 	}
 
@@ -1637,6 +1666,7 @@ namespace noco
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
+		// deltaTime=0でプロパティを即座に更新
 		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		
 		const Vec2& scale = m_transform.scale().value();
@@ -1848,6 +1878,10 @@ namespace noco
 		{
 			m_styleState.setParamRef(newName);
 		}
+		if (m_siblingZIndex.paramRef() == oldName)
+		{
+			m_siblingZIndex.setParamRef(newName);
+		}
 		
 		for (const auto& component : m_components)
 		{
@@ -1871,6 +1905,7 @@ namespace noco
 		m_activeSelf.clearCurrentFrameOverride();
 		m_interactable.clearCurrentFrameOverride();
 		m_styleState.clearCurrentFrameOverride();
+		m_siblingZIndex.clearCurrentFrameOverride();
 		m_transform.clearCurrentFrameOverride();
 		for (const auto& component : m_components)
 		{
@@ -1924,10 +1959,17 @@ namespace noco
 			}
 		}
 		{
-			for (const auto& child : m_children)
+			m_tempChildrenBuffer.clear();
+			m_tempChildrenBuffer.reserve(m_children.size());
+			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
+			SortBySiblingZIndex(m_tempChildrenBuffer);
+
+			// drawはzIndex昇順で実行(奥から手前へ)
+			for (const auto& child : m_tempChildrenBuffer)
 			{
 				child->draw();
 			}
+			m_tempChildrenBuffer.clear();
 		}
 
 		// スクロールバー描画
@@ -2832,6 +2874,22 @@ namespace noco
 			return nullptr;
 		}
 		return m_children[index];
+	}
+
+	int32 Node::siblingZIndex() const
+	{
+		return m_siblingZIndex.value();
+	}
+
+	std::shared_ptr<Node> Node::setSiblingZIndex(const PropertyValue<int32>& siblingZIndex)
+	{
+		m_siblingZIndex.setPropertyValue(siblingZIndex);
+		return shared_from_this();
+	}
+
+	const PropertyValue<int32>& Node::siblingZIndexPropertyValue() const
+	{
+		return m_siblingZIndex.propertyValue();
 	}
 
 	std::shared_ptr<Node> Node::addKeyInputUpdater(std::function<void(const std::shared_ptr<Node>&)> keyInputUpdater)
