@@ -81,6 +81,7 @@ namespace noco
 		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelf
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfParamOverrideAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelfの上書き値
+		/* NonSerialized */ Optional<int32> m_prevSiblingZIndex; // 前回フレームのsiblingZIndex
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 		/* NonSerialized */ mutable Array<std::shared_ptr<ComponentBase>> m_tempComponentsBuffer; // コンポーネントの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 		/* NonSerialized */ mutable FirstActiveLifecycleCompletedFlags m_firstActiveLifecycleCompletedFlags = FirstActiveLifecycleCompletedFlags::None; // activeInHierarchy=Yesで一度でも各種updateが呼ばれたかどうかのビットフラグ
@@ -118,6 +119,8 @@ namespace noco
 
 		[[nodiscard]]
 		std::pair<Vec2, Vec2> getValidScrollRange() const;
+
+		static void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
 
 	public:
 		[[nodiscard]]
@@ -307,16 +310,16 @@ namespace noco
 		Optional<RectF> getChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hoveredNodeRecursive();
+		std::shared_ptr<Node> hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hitTest(const Vec2& point);
+		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hoveredNodeRecursive() const;
+		std::shared_ptr<const Node> hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No) const;
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hitTest(const Vec2& point) const;
+		std::shared_ptr<const Node> hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();

@@ -594,14 +594,10 @@ namespace noco
 		std::shared_ptr<Node> hoveredNode = nullptr;
 		if (canHover)
 		{
-			for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
-			{
-				if (auto node = (*it)->hoveredNodeRecursive())
-				{
-					hoveredNode = node;
-					break;
-				}
-			}
+			// hoveredNodeを決める時点では今回フレームのsiblingZIndexのステート毎の値が確定しないため、前回フレームのsiblingZIndexがあれば使用する
+			// (siblingIndexにHovered等の値を設定した場合の挙動用)
+			// なお、ライブラリユーザーがCanvasのupdate呼び出しの手前でパラメータやsetSiblingZIndex等を経由してsiblingZIndexを変更した場合であっても、hoveredNode決定用のヒットテストに対しては次フレームからの反映となる。これは正常動作。
+			hoveredNode = hitTest(Cursor::PosF(), detail::UsePrevSiblingZIndexYN::Yes);
 		}
 		if (hoveredNode)
 		{
@@ -765,6 +761,12 @@ namespace noco
 			(*it)->updateKeyInput();
 		}
 		
+		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
+		for (const auto& child : m_children)
+		{
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
+		}
+		
 		// update・lateUpdate・postLateUpdateはzIndexに関係なく順番に実行(そのため元の順番で上書きが必要)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
 		const Mat3x2 rootMat = rootPosScaleMat();
@@ -805,7 +807,7 @@ namespace noco
 		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
 	}
 	
-	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point) const
+	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
 	{
 		// hitTestはzIndex降順で実行(手前から奥へ)
 		m_tempChildrenBuffer.clear();
@@ -814,7 +816,7 @@ namespace noco
 		SortBySiblingZIndex(m_tempChildrenBuffer);
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
-			if (const auto hoveredNode = (*it)->hitTest(point))
+			if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
 			{
 				m_tempChildrenBuffer.clear();
 				return hoveredNode;

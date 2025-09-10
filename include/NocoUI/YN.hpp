@@ -28,5 +28,6 @@ namespace noco
 	namespace detail
 	{
 		using WithInstanceIdYN = YesNo<struct WithInstanceIdYN_tag>;
+		using UsePrevSiblingZIndexYN = YesNo<struct UsePrevSiblingZIndexYN_tag>;
 	}
 }

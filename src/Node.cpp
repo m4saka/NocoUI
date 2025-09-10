@@ -7,22 +7,6 @@
 
 namespace noco
 {
-	namespace
-	{
-		void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes)
-		{
-			if (nodes.size() <= 1)
-			{
-				return;
-			}
-			std::stable_sort(nodes.begin(), nodes.end(),
-				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
-				{
-					return a->siblingZIndex() < b->siblingZIndex();
-				});
-		}
-	}
-	
 	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
 		const InteractableYN interactable{ m_interactable.value() && parentInteractable };
@@ -330,6 +314,31 @@ namespace noco
 		}
 		
 		return { minScroll, maxScroll };
+	}
+
+	void Node::SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
+	{
+		if (nodes.size() <= 1)
+		{
+			return;
+		}
+
+		if (usePrevSiblingZIndex)
+		{
+			std::stable_sort(nodes.begin(), nodes.end(),
+				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
+				{
+					return a->m_prevSiblingZIndex.value_or(a->siblingZIndex()) < b->m_prevSiblingZIndex.value_or(b->siblingZIndex());
+				});
+		}
+		else
+		{
+			std::stable_sort(nodes.begin(), nodes.end(),
+				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
+				{
+					return a->siblingZIndex() < b->siblingZIndex();
+				});
+		}
 	}
 
 	std::shared_ptr<Node> Node::Create(StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -1218,12 +1227,12 @@ namespace noco
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
-	std::shared_ptr<Node> Node::hoveredNodeRecursive()
+	std::shared_ptr<Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
 	{
-		return hitTest(Cursor::PosF());
+		return hitTest(Cursor::PosF(), usePrevSiblingZIndex);
 	}
 
-	std::shared_ptr<Node> Node::hitTest(const Vec2& point)
+	std::shared_ptr<Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1238,12 +1247,12 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortBySiblingZIndex(m_tempChildrenBuffer);
+			SortBySiblingZIndex(m_tempChildrenBuffer, usePrevSiblingZIndex);
 
 			// hitTestはzIndex降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point))
+				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
 				{
 					return hoveredNode;
 				}
@@ -1259,12 +1268,12 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<const Node> Node::hoveredNodeRecursive() const
+	std::shared_ptr<const Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
 	{
-		return hitTest(Cursor::PosF());
+		return hitTest(Cursor::PosF(), usePrevSiblingZIndex);
 	}
 
-	std::shared_ptr<const Node> Node::hitTest(const Vec2& point) const
+	std::shared_ptr<const Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1279,12 +1288,12 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortBySiblingZIndex(m_tempChildrenBuffer);
+			SortBySiblingZIndex(m_tempChildrenBuffer, usePrevSiblingZIndex);
 
 			// hitTestはzIndex降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point))
+				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
 				{
 					return hoveredNode;
 				}
@@ -1672,6 +1681,8 @@ namespace noco
 			}
 			m_tempChildrenBuffer.clear();
 		}
+
+		m_prevSiblingZIndex = m_siblingZIndex.value();
 	}
 
 	void Node::postLateUpdate(double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
