@@ -765,12 +765,13 @@ namespace noco
 			(*it)->updateKeyInput();
 		}
 		
-		// updateはzIndexに関係なく順番に実行(そのため元の順番で上書きが必要)
+		// update・lateUpdate・postLateUpdateはzIndexに関係なく順番に実行(そのため元の順番で上書きが必要)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
+		const Mat3x2 rootMat = rootPosScaleMat();
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 		for (const auto& child : m_tempChildrenBuffer)
 		{
-			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootPosScaleMat(), rootPosScaleMat(), m_params);
+			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootMat, rootMat, m_params);
 		}
 		for (const auto& child : m_tempChildrenBuffer)
 		{
@@ -778,7 +779,7 @@ namespace noco
 		}
 		for (const auto& child : m_tempChildrenBuffer)
 		{
-			child->postLateUpdate(Scene::DeltaTime(), m_params);
+			child->postLateUpdate(Scene::DeltaTime(), rootMat, rootMat, m_params);
 		}
 
 		// AutoFitModeによるサイズ・スケールの更新

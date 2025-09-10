@@ -52,8 +52,8 @@ namespace noco
 			}
 		}
 		const bool onClientRect = Cursor::OnClientRect();
-		const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
-		const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
+		const bool mouseOverForHovered = onClientRect && m_activeInHierarchyForLifecycle && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+		const bool mouseOverForPressed = onClientRect && m_activeInHierarchyForLifecycle && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisClickedも加味している
 		m_mouseLTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 		
 		if (interactable)
@@ -97,8 +97,8 @@ namespace noco
 		if (interactable)
 		{
 			const bool onClientRect = Cursor::OnClientRect();
-			const bool mouseOverForHovered = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
-			const bool mouseOverForPressed = onClientRect && m_activeInHierarchy && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
+			const bool mouseOverForHovered = onClientRect && m_activeInHierarchyForLifecycle && (hoveredNode.get() == this || (inheritChildrenHover() && (inheritedInteractionState == InteractionState::Hovered || inheritedInteractionState == InteractionState::Pressed)));
+			const bool mouseOverForPressed = onClientRect && m_activeInHierarchyForLifecycle && (hoveredNode.get() == this || (inheritChildrenPress() && (inheritedInteractionState == InteractionState::Pressed || inheritedIsRightClicked))); // クリック判定用に離した瞬間もホバー扱いにする必要があるため、子のisRightClickedも加味している
 			m_mouseRTracker.update(mouseOverForHovered, mouseOverForPressed, isAncestorScrolling);
 			return ApplyOtherInteractionState(m_mouseRTracker.interactionStateSelf(), inheritedInteractionState);
 		}
@@ -143,6 +143,9 @@ namespace noco
 			{
 				component->onDeactivated(shared_from_this());
 			}
+
+			// ライフサイクルの呼び出しも途中で止める
+			m_activeInHierarchyForLifecycle = ActiveYN::No;
 		}
 		
 		for (const auto& child : m_children)
@@ -208,7 +211,7 @@ namespace noco
 				child->m_currentInteractionState = InteractionState::Default;
 			}
 
-			// 子ノードのプロパティを更新
+			// 子ノードのプロパティをdeltaTime=0で再更新
 			child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipsSmoothing);
 			for (const auto& component : child->m_components)
 			{
@@ -1321,9 +1324,11 @@ namespace noco
 	void Node::updateNodeParams(const HashTable<String, ParamValue>& params)
 	{
 		// パラメータ参照をもとに値を更新
-		m_activeSelf.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
-		m_interactable.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
-		m_styleState.update(InteractionState::Default, {}, 0.0, params, SkipsSmoothingYN::No);
+		// (activeSelf・interactable・styleStateはPropertyNonInteractiveであり、InteractionState引数とactiveStyleStates引数は不使用のため渡すのはダミーの値でよい)
+		static const Array<String> EmptyStringArray{};
+		m_activeSelf.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
+		m_interactable.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
+		m_styleState.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
 		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() &&
 			m_prevActiveSelfParamOverrideAfterUpdateNodeParams != m_activeSelf.currentFrameOverride())
 		{
@@ -1336,6 +1341,10 @@ namespace noco
 		}
 		m_prevActiveSelfAfterUpdateNodeParams = m_activeSelf.value();
 		m_prevActiveSelfParamOverrideAfterUpdateNodeParams = m_activeSelf.currentFrameOverride();
+
+		// 現在フレームのライフサイクル用のactiveInHierarchyを更新
+		// (フレームの途中でsetActive(true)が呼ばれた場合もライフサイクルが途中から実行されないようにするためのもの)
+		m_activeInHierarchyForLifecycle = m_activeInHierarchy;
 		
 		// MouseTrackerのinteractableを更新
 		const InteractableYN interactable{ m_interactable.value() };
@@ -1380,8 +1389,17 @@ namespace noco
 			m_activeStyleStates.push_back(m_styleState.value());
 		}
 
-		// siblingIndexはステート反映のためにステート確定後に更新
+		// siblingIndexはステート毎の値の反映も必要であるため、他プロパティ(interactable, activeSelf)とは別でステート確定後に更新が必要
 		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+
+		// Transformのプロパティ値更新
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+
+		// コンポーネントのプロパティ値更新
+		for (const auto& component : m_components)
+		{
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+		}
 
 		if (!m_children.empty())
 		{
@@ -1411,7 +1429,7 @@ namespace noco
 		}
 		m_tempChildrenBuffer.clear();
 
-		if (m_activeInHierarchy && !detail::s_canvasUpdateContext.keyInputBlocked)
+		if (m_activeInHierarchyForLifecycle && !m_components.empty() && !detail::s_canvasUpdateContext.keyInputBlocked)
 		{
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
 			m_tempComponentsBuffer.clear();
@@ -1425,24 +1443,29 @@ namespace noco
 				(*it)->updateKeyInput(thisNode);
 
 				// updateKeyInput内で更新される場合があるためループ内でもチェックが必要
-				if (!m_activeInHierarchy || detail::s_canvasUpdateContext.keyInputBlocked)
+				if (!m_activeInHierarchyForLifecycle || detail::s_canvasUpdateContext.keyInputBlocked)
 				{
 					break;
 				}
 			}
 			m_tempComponentsBuffer.clear();
 		}
+
+		if (m_activeInHierarchyForLifecycle) // updateKeyInput内で変更される場合があるため上にある「if (m_activeInHierarchyForLifecycle && ...)」とは統合できない点に注意
+		{
+			m_firstActiveLifecycleCompletedFlags |= FirstActiveLifecycleCompletedFlags::UpdateKeyInput;
+		}
 	}
 
 	void Node::update(const std::shared_ptr<Node>& scrollableHoveredNode, double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		const auto thisNode = shared_from_this();
-		
+
 		// 慣性スクロール処理
 		constexpr double MinInertiaVelocity = 1.0;
 		constexpr double MinActualDelta = 0.001;
 		if (m_scrollVelocity.length() > 0.0 && !m_dragStartPos.has_value())
-		{	
+		{
 			const Vec2 scrollDelta = m_scrollVelocity * deltaTime;
 			if (m_scrollVelocity.length() > MinInertiaVelocity) // 速度が十分小さい場合は停止
 			{
@@ -1457,7 +1480,7 @@ namespace noco
 				{
 					// 減衰
 					m_scrollVelocity *= Math::Pow(m_decelerationRate, deltaTime);
-					
+
 					// 範囲外に到達した場合は慣性を消す
 					const auto [minScroll, maxScroll] = getValidScrollRange();
 					if ((m_scrollOffset.x <= minScroll.x && m_scrollVelocity.x < 0) ||
@@ -1478,19 +1501,19 @@ namespace noco
 				m_scrollVelocity = Vec2::Zero();
 			}
 		}
-		
+
 		if (m_preventDragScroll && !MouseL.pressed())
 		{
 			m_preventDragScroll = false;
 		}
-		
+
 		// ラバーバンドスクロール処理(ドラッグしていない時に範囲外なら戻す)
 		if (m_rubberBandScrollEnabled && !m_dragStartPos.has_value())
 		{
 			const auto [minScroll, maxScroll] = getValidScrollRange();
 			Vec2 targetOffset = m_scrollOffset;
 			bool needsRubberBand = false;
-			
+
 			// 範囲外かチェック
 			if (m_scrollOffset.x < minScroll.x)
 			{
@@ -1502,7 +1525,7 @@ namespace noco
 				targetOffset.x = maxScroll.x;
 				needsRubberBand = true;
 			}
-			
+
 			if (m_scrollOffset.y < minScroll.y)
 			{
 				targetOffset.y = minScroll.y;
@@ -1513,14 +1536,14 @@ namespace noco
 				targetOffset.y = maxScroll.y;
 				needsRubberBand = true;
 			}
-			
+
 			// 範囲外なら戻す
 			if (needsRubberBand)
 			{
 				constexpr double RubberBandSpeed = 10.0; // 戻る速度係数
 				const Vec2 diff = targetOffset - m_scrollOffset;
 				const Vec2 scrollDelta = diff * RubberBandSpeed * deltaTime;
-				
+
 				// 十分近くなったら完全に合わせる
 				constexpr double SnapThreshold = 0.5;
 				if (diff.length() < SnapThreshold)
@@ -1531,36 +1554,39 @@ namespace noco
 				{
 					m_scrollOffset += scrollDelta;
 				}
-				
+
 				// レイアウトを更新
 				markLayoutAsDirty();
 			}
 		}
 
-		if (m_activeInHierarchy)
+		if (m_activeInHierarchyForLifecycle)
 		{
-			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			m_tempComponentsBuffer.clear();
-			m_tempComponentsBuffer.reserve(m_components.size());
-			for (const auto& component : m_components)
-			{
-				m_tempComponentsBuffer.push_back(component);
-			}
-
-			// コンポーネントのupdate実行
-			for (const auto& component : m_tempComponentsBuffer)
-			{
-				component->update(thisNode);
-
-				// update内で更新される場合があるためループ内でもチェックが必要
-				if (!m_activeInHierarchy)
-				{
-					break;
-				}
-			}
-			m_tempComponentsBuffer.clear();
-
 			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
+
+			if (!m_components.empty())
+			{
+				// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
+				m_tempComponentsBuffer.clear();
+				m_tempComponentsBuffer.reserve(m_components.size());
+				for (const auto& component : m_components)
+				{
+					m_tempComponentsBuffer.push_back(component);
+				}
+
+				// コンポーネントのupdate実行
+				for (const auto& component : m_tempComponentsBuffer)
+				{
+					component->update(thisNode);
+
+					// update内で更新される場合があるためループ内でもチェックが必要
+					if (!m_activeInHierarchyForLifecycle)
+					{
+						break;
+					}
+				}
+				m_tempComponentsBuffer.clear();
+			}
 		}
 
 		// ホバー中、ドラッグスクロール中、または慣性スクロール中はスクロールバーを表示
@@ -1575,6 +1601,11 @@ namespace noco
 		else
 		{
 			m_scrollBarAlpha.update(0.0, 0.1, deltaTime);
+		}
+
+		if (m_activeInHierarchyForLifecycle) // update内で変更される場合があるため上にある「if (m_activeInHierarchyForLifecycle)」とは統合できない点に注意
+		{
+			m_firstActiveLifecycleCompletedFlags |= FirstActiveLifecycleCompletedFlags::Update;
 		}
 
 		if (!m_children.empty())
@@ -1598,31 +1629,33 @@ namespace noco
 	{
 		const auto thisNode = shared_from_this();
 
-		if (!m_components.empty())
+		if (m_activeInHierarchyForLifecycle && !m_components.empty())
 		{
 			// addComponent等によるイテレータ破壊を避けるためにバッファへ複製してから処理
-			if (m_activeInHierarchy)
+			m_tempComponentsBuffer.clear();
+			m_tempComponentsBuffer.reserve(m_components.size());
+			for (const auto& component : m_components)
 			{
-				m_tempComponentsBuffer.clear();
-				m_tempComponentsBuffer.reserve(m_components.size());
-				for (const auto& component : m_components)
-				{
-					m_tempComponentsBuffer.push_back(component);
-				}
-
-				// コンポーネントのlateUpdate実行
-				for (const auto& component : m_tempComponentsBuffer)
-				{
-					component->lateUpdate(thisNode);
-
-					// lateUpdate内で更新される場合があるためループ内でもチェックが必要
-					if (!m_activeInHierarchy)
-					{
-						break;
-					}
-				}
-				m_tempComponentsBuffer.clear();
+				m_tempComponentsBuffer.push_back(component);
 			}
+
+			// コンポーネントのlateUpdate実行
+			for (const auto& component : m_tempComponentsBuffer)
+			{
+				component->lateUpdate(thisNode);
+
+				// lateUpdate内で更新される場合があるためループ内でもチェックが必要
+				if (!m_activeInHierarchyForLifecycle)
+				{
+					break;
+				}
+			}
+			m_tempComponentsBuffer.clear();
+		}
+
+		if (m_activeInHierarchyForLifecycle) // lateUpdate内で変更される場合があるため上にある「if (m_activeInHierarchyForLifecycle && ...)」とは統合できない点に注意
+		{
+			m_firstActiveLifecycleCompletedFlags |= FirstActiveLifecycleCompletedFlags::LateUpdate;
 		}
 
 		if (!m_children.empty())
@@ -1641,27 +1674,25 @@ namespace noco
 		}
 	}
 
-	void Node::postLateUpdate(double deltaTime, const HashTable<String, ParamValue>& params)
+	void Node::postLateUpdate(double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		// postLateUpdateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊は起きないため、一時バッファは使用不要
 
-		// Transformのプロパティ値更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
-
-		// コンポーネントのプロパティ値更新
+		// コンポーネントのupdate・lateUpdateでパラメータ値の変更があった場合用にdeltaTime=0でプロパティを再更新
+		refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
+		m_interactable.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+		m_activeSelf.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		for (const auto& component : m_components)
 		{
-			// m_activeStyleStatesはupdateで構築済み
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		}
 
 		// 子ノードのpostLateUpdate実行
 		for (const auto& child : m_children)
 		{
-			child->postLateUpdate(deltaTime, params);
+			child->postLateUpdate(deltaTime, m_transformMatInHierarchy, m_hitTestMatInHierarchy, params);
 		}
-
-		m_prevActiveInHierarchy = m_activeInHierarchy;
 	}
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
@@ -1923,7 +1954,7 @@ namespace noco
 
 	void Node::draw() const
 	{
-		if (!m_activeSelf.value() || !m_activeInHierarchy)
+		if (!m_activeSelf.value() || !m_activeInHierarchyForLifecycle)
 		{
 			return;
 		}
@@ -1958,6 +1989,13 @@ namespace noco
 				component->draw(*this);
 			}
 		}
+
+		// ライブラリユーザーがコンポーネントのdraw内でsetActiveを呼ばない限り、ここではm_activeInHierarchyはtrueのはず
+		assert(m_activeInHierarchy && "Node activeInHierarchy must not be modified in draw function");
+		m_firstActiveLifecycleCompletedFlags |= FirstActiveLifecycleCompletedFlags::Draw;
+
+		// 子ノードのdraw実行
+		if (!m_children.empty())
 		{
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
@@ -2313,7 +2351,10 @@ namespace noco
 		// パラメータ上書きがある場合は実効値に変化がないため更新不要
 		if (prevPropertyValue != interactable.getBool() && !m_interactable.hasCurrentFrameOverride())
 		{
-			refreshPropertiesForInteractable(effectiveInteractable, SkipsSmoothingYN::No);
+			// 初回のLateUpdate完了までの間であればスムージングをスキップ
+			// (ノード生成後にsetInteractable(false)を呼んだ場合に、初回のDefault→Disabledのスムージングが入らないようにするため)
+			const SkipsSmoothingYN skipsSmoothing{ !HasFlag(m_firstActiveLifecycleCompletedFlags, FirstActiveLifecycleCompletedFlags::LateUpdate) };
+			refreshPropertiesForInteractable(effectiveInteractable, skipsSmoothing);
 		}
 		
 		return shared_from_this();

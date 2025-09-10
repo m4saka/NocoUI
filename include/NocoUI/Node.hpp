@@ -4,6 +4,7 @@
 #include "PropertyValue.hpp"
 #include "Property.hpp"
 #include "InheritChildrenStateFlags.hpp"
+#include "FirstActiveLifecycleCompletedFlags.hpp"
 #include "ScrollableAxisFlags.hpp"
 #include "InteractionState.hpp"
 #include "MouseTracker.hpp"
@@ -59,8 +60,7 @@ namespace noco
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::No;
-		/* NonSerialized */ ActiveYN m_prevActiveInHierarchy = ActiveYN::No;
-		/* NonSerialized */ ActiveYN m_activeInHierarchyForDraw = ActiveYN::No;
+		/* NonSerialized */ ActiveYN m_activeInHierarchyForLifecycle = ActiveYN::No;
 		/* NonSerialized */ PropertyNonInteractive<String> m_styleState{ U"styleState", U"" };
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
 		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
@@ -83,6 +83,7 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfParamOverrideAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelfの上書き値
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 		/* NonSerialized */ mutable Array<std::shared_ptr<ComponentBase>> m_tempComponentsBuffer; // コンポーネントの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
+		/* NonSerialized */ mutable FirstActiveLifecycleCompletedFlags m_firstActiveLifecycleCompletedFlags = FirstActiveLifecycleCompletedFlags::None; // activeInHierarchy=Yesで一度でも各種updateが呼ばれたかどうかのビットフラグ
 
 		[[nodiscard]]
 		Mat3x2 calculateHitTestMat(const Mat3x2& parentHitTestMat) const;
@@ -330,7 +331,7 @@ namespace noco
 
 		void lateUpdate();
 
-		void postLateUpdate(double deltaTime, const HashTable<String, ParamValue>& params);
+		void postLateUpdate(double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params);
 
 		void refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params);
 

@@ -495,6 +495,7 @@ namespace noco
 		{
 			m_currentFrameOverride = value;
 			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+			m_smoothing.setCurrentValue(value);
 		}
 		
 		void clearCurrentFrameOverride() override

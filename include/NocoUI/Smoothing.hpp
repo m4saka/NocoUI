@@ -57,6 +57,7 @@ namespace noco
 		void setCurrentValue(const T& value)
 		{
 			m_currentValue = value;
+			m_velocity = T{};
 		}
 	};
 }
