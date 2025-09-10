@@ -38,9 +38,6 @@ namespace noco
 	namespace detail
 	{
 		inline int32 s_lastCopiedCanvasUpdateContextToPrevFrameCount = -1;
-		inline int32 s_lastUpdateInteractionStateFrameCount = -1;
-		inline int32 s_lastUpdateInputFrameCount = -1;
-		inline int32 s_lastUpdateFrameCount = -1;
 		inline CanvasUpdateContext s_canvasUpdateContext;
 		inline CanvasUpdateContext s_prevCanvasUpdateContext;
 		inline bool s_isEditorMode = false;
@@ -58,7 +55,6 @@ namespace noco
 			s_prevCanvasUpdateContext = s_canvasUpdateContext;
 
 			// 現在のフレームの状態をクリア
-			s_lastUpdateInputFrameCount = currentFrameCount;
 			s_canvasUpdateContext.clear();
 		}
 	}
