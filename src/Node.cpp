@@ -1404,10 +1404,11 @@ namespace noco
 		// Transformのプロパティ値更新
 		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
 
-		// コンポーネントのプロパティ値更新
+		// コンポーネントのプロパティ値をdeltaTime=0で更新
+		// (コンポーネントのupdate等でのsetCurrentFrameOverrideの上書き値の反映が必要なため、実際に時間を進めるのはここではなくpostLateUpdateのタイミングで行う)
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		}
 
 		if (!m_children.empty())
@@ -1696,7 +1697,7 @@ namespace noco
 		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
 		}
 
 		// 子ノードのpostLateUpdate実行
