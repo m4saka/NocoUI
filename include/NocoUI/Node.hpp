@@ -28,7 +28,7 @@ namespace noco
 		friend class Canvas;
 
 	private:
-		static inline uint64_t s_nextInstanceId = 1;
+		static inline uint64 s_nextInstanceId = 1;
 		uint64 m_instanceId;
 		String m_name;
 		RegionVariant m_region;
@@ -51,9 +51,9 @@ namespace noco
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
 		/* NonSerialized */ RectF m_regionRect{ 0.0, 0.0, 0.0, 0.0 };
-		/* NonSerialized */ Quad m_transformedQuad;
-		/* NonSerialized */ Quad m_hitQuad;
-		/* NonSerialized */ Quad m_hitQuadWithPadding;
+		/* NonSerialized */ Quad m_transformedQuad{ Vec2::Zero(), Vec2::Zero(), Vec2::Zero(), Vec2::Zero() };
+		/* NonSerialized */ Quad m_hitQuad{ Vec2::Zero(), Vec2::Zero(), Vec2::Zero(), Vec2::Zero() };
+		/* NonSerialized */ Quad m_hitQuadWithPadding{ Vec2::Zero(), Vec2::Zero(), Vec2::Zero(), Vec2::Zero() };
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
