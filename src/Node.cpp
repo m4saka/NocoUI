@@ -316,19 +316,19 @@ namespace noco
 		return { minScroll, maxScroll };
 	}
 
-	void Node::SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
+	void Node::SortBySiblingZOrder(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder)
 	{
 		if (nodes.size() <= 1)
 		{
 			return;
 		}
 
-		if (usePrevSiblingZIndex)
+		if (usePrevSiblingZOrder)
 		{
 			std::stable_sort(nodes.begin(), nodes.end(),
 				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
 				{
-					return a->m_prevSiblingZIndex.value_or(a->siblingZIndex()) < b->m_prevSiblingZIndex.value_or(b->siblingZIndex());
+					return a->m_prevSiblingZOrder.value_or(a->siblingZOrder()) < b->m_prevSiblingZOrder.value_or(b->siblingZOrder());
 				});
 		}
 		else
@@ -336,7 +336,7 @@ namespace noco
 			std::stable_sort(nodes.begin(), nodes.end(),
 				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
 				{
-					return a->siblingZIndex() < b->siblingZIndex();
+					return a->siblingZOrder() < b->siblingZOrder();
 				});
 		}
 	}
@@ -464,7 +464,7 @@ namespace noco
 		m_activeSelf.appendJSON(result);
 		m_interactable.appendJSON(result);
 		m_styleState.appendJSON(result);
-		m_siblingZIndex.appendJSON(result);
+		m_siblingZOrder.appendJSON(result);
 
 		if (withInstanceId)
 		{
@@ -585,7 +585,7 @@ namespace noco
 		}
 		node->m_activeSelf.readFromJSON(json);
 		node->m_styleState.readFromJSON(json);
-		node->m_siblingZIndex.readFromJSON(json);
+		node->m_siblingZOrder.readFromJSON(json);
 		if (withInstanceId && json.contains(U"_instanceId"))
 		{
 			node->m_instanceId = json[U"_instanceId"].get<uint64>();
@@ -1227,12 +1227,12 @@ namespace noco
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
-	std::shared_ptr<Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
+	std::shared_ptr<Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder)
 	{
-		return hitTest(Cursor::PosF(), usePrevSiblingZIndex);
+		return hitTest(Cursor::PosF(), usePrevSiblingZOrder);
 	}
 
-	std::shared_ptr<Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex)
+	std::shared_ptr<Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder)
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1247,12 +1247,12 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortBySiblingZIndex(m_tempChildrenBuffer, usePrevSiblingZIndex);
+			SortBySiblingZOrder(m_tempChildrenBuffer, usePrevSiblingZOrder);
 
-			// hitTestはzIndex降順で実行(手前から奥へ)
+			// hitTestはzOrder降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
+				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZOrder))
 				{
 					return hoveredNode;
 				}
@@ -1268,12 +1268,12 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<const Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
+	std::shared_ptr<const Node> Node::hoveredNodeRecursive(detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder) const
 	{
-		return hitTest(Cursor::PosF(), usePrevSiblingZIndex);
+		return hitTest(Cursor::PosF(), usePrevSiblingZOrder);
 	}
 
-	std::shared_ptr<const Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
+	std::shared_ptr<const Node> Node::hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder) const
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1288,12 +1288,12 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortBySiblingZIndex(m_tempChildrenBuffer, usePrevSiblingZIndex);
+			SortBySiblingZOrder(m_tempChildrenBuffer, usePrevSiblingZOrder);
 
-			// hitTestはzIndex降順で実行(手前から奥へ)
+			// hitTestはzOrder降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
+				if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZOrder))
 				{
 					return hoveredNode;
 				}
@@ -1399,7 +1399,7 @@ namespace noco
 		}
 
 		// siblingIndexはステート毎の値の反映も必要であるため、他プロパティ(interactable, activeSelf)とは別でステート確定後に更新が必要
-		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
 
 		// Transformのプロパティ値更新
 		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
@@ -1430,9 +1430,9 @@ namespace noco
 		m_tempChildrenBuffer.clear();
 		m_tempChildrenBuffer.reserve(m_children.size());
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-		SortBySiblingZIndex(m_tempChildrenBuffer);
+		SortBySiblingZOrder(m_tempChildrenBuffer);
 
-		// updateKeyInputはzIndex降順で実行(手前から奥へ)
+		// updateKeyInputはzOrder降順で実行(手前から奥へ)
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			(*it)->updateKeyInput();
@@ -1625,7 +1625,7 @@ namespace noco
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 
-			// updateはzIndexに関係なく順番に実行
+			// updateはzOrderに関係なく順番に実行
 			const Mat3x2 childHitTestMat = calculateHitTestMat(parentHitTestMat);
 			for (const auto& child : m_tempChildrenBuffer)
 			{
@@ -1675,7 +1675,7 @@ namespace noco
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 
-			// lateUpdateはzIndexに関係なく順番に実行
+			// lateUpdateはzOrderに関係なく順番に実行
 			for (const auto& child : m_tempChildrenBuffer)
 			{
 				child->lateUpdate();
@@ -1683,7 +1683,7 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 		}
 
-		m_prevSiblingZIndex = m_siblingZIndex.value();
+		m_prevSiblingZOrder = m_siblingZOrder.value();
 	}
 
 	void Node::postLateUpdate(double deltaTime, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
@@ -1694,7 +1694,7 @@ namespace noco
 		refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
 		m_interactable.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		m_activeSelf.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
-		m_siblingZIndex.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
 		for (const auto& component : m_components)
 		{
 			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
@@ -1921,9 +1921,9 @@ namespace noco
 		{
 			m_styleState.setParamRef(newName);
 		}
-		if (m_siblingZIndex.paramRef() == oldName)
+		if (m_siblingZOrder.paramRef() == oldName)
 		{
-			m_siblingZIndex.setParamRef(newName);
+			m_siblingZOrder.setParamRef(newName);
 		}
 		
 		for (const auto& component : m_components)
@@ -1948,7 +1948,7 @@ namespace noco
 		m_activeSelf.clearCurrentFrameOverride();
 		m_interactable.clearCurrentFrameOverride();
 		m_styleState.clearCurrentFrameOverride();
-		m_siblingZIndex.clearCurrentFrameOverride();
+		m_siblingZOrder.clearCurrentFrameOverride();
 		m_transform.clearCurrentFrameOverride();
 		for (const auto& component : m_components)
 		{
@@ -2012,9 +2012,9 @@ namespace noco
 			m_tempChildrenBuffer.clear();
 			m_tempChildrenBuffer.reserve(m_children.size());
 			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortBySiblingZIndex(m_tempChildrenBuffer);
+			SortBySiblingZOrder(m_tempChildrenBuffer);
 
-			// drawはzIndex昇順で実行(奥から手前へ)
+			// drawはzOrder昇順で実行(奥から手前へ)
 			for (const auto& child : m_tempChildrenBuffer)
 			{
 				child->draw();
@@ -2929,20 +2929,20 @@ namespace noco
 		return m_children[index];
 	}
 
-	int32 Node::siblingZIndex() const
+	int32 Node::siblingZOrder() const
 	{
-		return m_siblingZIndex.value();
+		return m_siblingZOrder.value();
 	}
 
-	std::shared_ptr<Node> Node::setSiblingZIndex(const PropertyValue<int32>& siblingZIndex)
+	std::shared_ptr<Node> Node::setSiblingZOrder(const PropertyValue<int32>& siblingZOrder)
 	{
-		m_siblingZIndex.setPropertyValue(siblingZIndex);
+		m_siblingZOrder.setPropertyValue(siblingZOrder);
 		return shared_from_this();
 	}
 
-	const PropertyValue<int32>& Node::siblingZIndexPropertyValue() const
+	const PropertyValue<int32>& Node::siblingZOrderPropertyValue() const
 	{
-		return m_siblingZIndex.propertyValue();
+		return m_siblingZOrder.propertyValue();
 	}
 
 	std::shared_ptr<Node> Node::addKeyInputUpdater(std::function<void(const std::shared_ptr<Node>&)> keyInputUpdater)

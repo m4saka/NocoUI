@@ -441,7 +441,7 @@ namespace noco
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const;
+		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder) const;
 
 		void draw() const;
 

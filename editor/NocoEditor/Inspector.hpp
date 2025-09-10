@@ -2669,7 +2669,7 @@ namespace noco::editor
 			}
 
 			{
-				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"siblingZIndex", Format(node->siblingZIndex()), [node](StringView value) { node->setSiblingZIndex(PropertyValue<int32>{ ParseOr<int32>(value, 0) }); }, HasInteractivePropertyValueYN{ node->siblingZIndexProperty().hasInteractivePropertyValue() }, HasParameterRefYN{ !node->siblingZIndexParamRef().isEmpty() }));
+				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"siblingZOrder", Format(node->siblingZOrder()), [node](StringView value) { node->setSiblingZOrder(PropertyValue<int32>{ ParseOr<int32>(value, 0) }); }, HasInteractivePropertyValueYN{ node->siblingZOrderProperty().hasInteractivePropertyValue() }, HasParameterRefYN{ !node->siblingZOrderParamRef().isEmpty() }));
 				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
 				Array<MenuElement> menuElements
 				{
@@ -2680,7 +2680,7 @@ namespace noco::editor
 						.mnemonicInput = KeyC, 
 						.onClick = [this, node] 
 						{ 
-							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(&node->siblingZIndexProperty(), [this] { refreshInspector(); }, m_dialogOpener)); 
+							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(&node->siblingZOrderProperty(), [this] { refreshInspector(); }, m_dialogOpener)); 
 						},
 					},
 					MenuSeparator{},
@@ -2692,7 +2692,7 @@ namespace noco::editor
 						.onClick = [this, node] 
 						{ 
 							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
-								&node->siblingZIndexProperty(),
+								&node->siblingZOrderProperty(),
 								m_canvas,
 								[this] { refreshInspector(); },
 								m_dialogOpener
@@ -2706,10 +2706,10 @@ namespace noco::editor
 						.mnemonicInput = KeyL,
 						.onClick = [node, this]
 						{
-							node->setSiblingZIndexParamRef(U"");
+							node->setSiblingZOrderParamRef(U"");
 							refreshInspector();
 						},
-						.fnIsEnabled = [node] { return !node->siblingZIndexParamRef().isEmpty(); },
+						.fnIsEnabled = [node] { return !node->siblingZOrderParamRef().isEmpty(); },
 					},
 				};
 				

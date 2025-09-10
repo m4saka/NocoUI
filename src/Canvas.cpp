@@ -11,7 +11,7 @@ namespace noco
 	
 	namespace
 	{
-		void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes)
+		void SortBySiblingZOrder(Array<std::shared_ptr<Node>>& nodes)
 		{
 			if (nodes.size() <= 1)
 			{
@@ -20,7 +20,7 @@ namespace noco
 			std::stable_sort(nodes.begin(), nodes.end(),
 				[](const std::shared_ptr<Node>& a, const std::shared_ptr<Node>& b)
 				{
-					return a->siblingZIndex() < b->siblingZIndex();
+					return a->siblingZOrder() < b->siblingZOrder();
 				});
 		}
 	}
@@ -594,10 +594,10 @@ namespace noco
 		std::shared_ptr<Node> hoveredNode = nullptr;
 		if (canHover)
 		{
-			// hoveredNodeを決める時点では今回フレームのsiblingZIndexのステート毎の値が確定しないため、前回フレームのsiblingZIndexがあれば使用する
+			// hoveredNodeを決める時点では今回フレームのsiblingZOrderのステート毎の値が確定しないため、前回フレームのsiblingZOrderがあれば使用する
 			// (siblingIndexにHovered等の値を設定した場合の挙動用)
-			// なお、ライブラリユーザーがCanvasのupdate呼び出しの手前でパラメータやsetSiblingZIndex等を経由してsiblingZIndexを変更した場合であっても、hoveredNode決定用のヒットテストに対しては次フレームからの反映となる。これは正常動作。
-			hoveredNode = hitTest(Cursor::PosF(), detail::UsePrevSiblingZIndexYN::Yes);
+			// なお、ライブラリユーザーがCanvasのupdate呼び出しの手前でパラメータやsetSiblingZOrder等を経由してsiblingZOrderを変更した場合であっても、hoveredNode決定用のヒットテストに対しては次フレームからの反映となる。これは正常動作。
+			hoveredNode = hitTest(Cursor::PosF(), detail::UsePrevSiblingZOrderYN::Yes);
 		}
 		if (hoveredNode)
 		{
@@ -753,9 +753,9 @@ namespace noco
 		m_tempChildrenBuffer.reserve(m_children.size());
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 
-		// updateKeyInputはzIndex降順で実行(手前から奥へ)
+		// updateKeyInputはzOrder降順で実行(手前から奥へ)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
-		SortBySiblingZIndex(m_tempChildrenBuffer); // siblingZIndexはステート毎の値を持つためupdateInteractionStateより後にソートする必要がある点に注意
+		SortBySiblingZOrder(m_tempChildrenBuffer); // siblingZOrderはステート毎の値を持つためupdateInteractionStateより後にソートする必要がある点に注意
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			(*it)->updateKeyInput();
@@ -767,7 +767,7 @@ namespace noco
 			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
 		}
 		
-		// update・lateUpdate・postLateUpdateはzIndexに関係なく順番に実行(そのため元の順番で上書きが必要)
+		// update・lateUpdate・postLateUpdateはzOrderに関係なく順番に実行(そのため元の順番で上書きが必要)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
 		const Mat3x2 rootMat = rootPosScaleMat();
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
@@ -807,16 +807,16 @@ namespace noco
 		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
 	}
 	
-	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex) const
+	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder) const
 	{
-		// hitTestはzIndex降順で実行(手前から奥へ)
+		// hitTestはzOrder降順で実行(手前から奥へ)
 		m_tempChildrenBuffer.clear();
 		m_tempChildrenBuffer.reserve(m_children.size());
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-		SortBySiblingZIndex(m_tempChildrenBuffer);
+		SortBySiblingZOrder(m_tempChildrenBuffer);
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
-			if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZIndex))
+			if (const auto hoveredNode = (*it)->hitTest(point, usePrevSiblingZOrder))
 			{
 				m_tempChildrenBuffer.clear();
 				return hoveredNode;
@@ -828,12 +828,12 @@ namespace noco
 	
 	void Canvas::draw() const
 	{
-		// drawはzIndex昇順で実行(奥から手前へ)
+		// drawはzOrder昇順で実行(奥から手前へ)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
 		m_tempChildrenBuffer.clear();
 		m_tempChildrenBuffer.reserve(m_children.size());
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-		SortBySiblingZIndex(m_tempChildrenBuffer);
+		SortBySiblingZOrder(m_tempChildrenBuffer);
 		for (const auto& child : m_tempChildrenBuffer)
 		{
 			child->draw();
@@ -1019,7 +1019,7 @@ namespace noco
 			{
 				count++;
 			}
-			if (node->siblingZIndexParamRef() == paramName)
+			if (node->siblingZOrderParamRef() == paramName)
 			{
 				count++;
 			}
@@ -1075,9 +1075,9 @@ namespace noco
 			{
 				node->setStyleStateParamRef(U"");
 			}
-			if (node->siblingZIndexParamRef() == paramName)
+			if (node->siblingZOrderParamRef() == paramName)
 			{
-				node->setSiblingZIndexParamRef(U"");
+				node->setSiblingZOrderParamRef(U"");
 			}
 			
 			// コンポーネントのプロパティから参照を解除
@@ -1121,7 +1121,7 @@ namespace noco
 			node->activeSelfProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			node->interactableProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			node->styleStateProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
-			node->siblingZIndexProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
+			node->siblingZOrderProperty().clearParamRefIfInvalid(m_params, clearedParamsSet);
 			
 			// コンポーネントのプロパティの無効な参照を解除
 			for (const auto& component : node->components())

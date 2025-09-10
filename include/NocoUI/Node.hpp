@@ -47,7 +47,7 @@ namespace noco
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		PropertyNonInteractive<bool> m_activeSelf{ U"activeSelf", true };
-		Property<int32> m_siblingZIndex{ U"siblingZIndex", 0 };
+		Property<int32> m_siblingZOrder{ U"siblingZOrder", 0 };
 
 		/* NonSerialized */ std::weak_ptr<Canvas> m_canvas;
 		/* NonSerialized */ std::weak_ptr<Node> m_parent;
@@ -81,7 +81,7 @@ namespace noco
 		/* NonSerialized */ Mat3x2 m_hitTestMatInHierarchy = Mat3x2::Identity(); // 階層内でのヒットテスト用変換行列
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelf
 		/* NonSerialized */ Optional<bool> m_prevActiveSelfParamOverrideAfterUpdateNodeParams; // 前回のupdateNodeParams後のactiveSelfの上書き値
-		/* NonSerialized */ Optional<int32> m_prevSiblingZIndex; // 前回フレームのsiblingZIndex
+		/* NonSerialized */ Optional<int32> m_prevSiblingZOrder; // 前回フレームのsiblingZOrder
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 		/* NonSerialized */ mutable Array<std::shared_ptr<ComponentBase>> m_tempComponentsBuffer; // コンポーネントの一時バッファ(update内で別のNodeのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 		/* NonSerialized */ mutable FirstActiveLifecycleCompletedFlags m_firstActiveLifecycleCompletedFlags = FirstActiveLifecycleCompletedFlags::None; // activeInHierarchy=Yesで一度でも各種updateが呼ばれたかどうかのビットフラグ
@@ -120,7 +120,7 @@ namespace noco
 		[[nodiscard]]
 		std::pair<Vec2, Vec2> getValidScrollRange() const;
 
-		static void SortBySiblingZIndex(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
+		static void SortBySiblingZOrder(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder = detail::UsePrevSiblingZOrderYN::No);
 
 	public:
 		[[nodiscard]]
@@ -310,16 +310,16 @@ namespace noco
 		Optional<RectF> getChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
+		std::shared_ptr<Node> hoveredNodeRecursive(detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder = detail::UsePrevSiblingZOrderYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No);
+		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder = detail::UsePrevSiblingZOrderYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hoveredNodeRecursive(detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No) const;
+		std::shared_ptr<const Node> hoveredNodeRecursive(detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder = detail::UsePrevSiblingZOrderYN::No) const;
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hitTest(const Vec2& point, detail::UsePrevSiblingZIndexYN usePrevSiblingZIndex = detail::UsePrevSiblingZIndexYN::No) const;
+		std::shared_ptr<const Node> hitTest(const Vec2& point, detail::UsePrevSiblingZOrderYN usePrevSiblingZOrder = detail::UsePrevSiblingZOrderYN::No) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();
@@ -688,27 +688,27 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		int32 siblingZIndex() const;
+		int32 siblingZOrder() const;
 
-		std::shared_ptr<Node> setSiblingZIndex(const PropertyValue<int32>& siblingZIndex);
-
-		[[nodiscard]]
-		const PropertyValue<int32>& siblingZIndexPropertyValue() const;
+		std::shared_ptr<Node> setSiblingZOrder(const PropertyValue<int32>& siblingZOrder);
 
 		[[nodiscard]]
-		const String& siblingZIndexParamRef() const { return m_siblingZIndex.paramRef(); }
+		const PropertyValue<int32>& siblingZOrderPropertyValue() const;
 
-		std::shared_ptr<Node> setSiblingZIndexParamRef(const String& paramRef)
+		[[nodiscard]]
+		const String& siblingZOrderParamRef() const { return m_siblingZOrder.paramRef(); }
+
+		std::shared_ptr<Node> setSiblingZOrderParamRef(const String& paramRef)
 		{
-			m_siblingZIndex.setParamRef(paramRef);
+			m_siblingZOrder.setParamRef(paramRef);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		Property<int32>& siblingZIndexProperty() { return m_siblingZIndex; }
+		Property<int32>& siblingZOrderProperty() { return m_siblingZOrder; }
 
 		[[nodiscard]]
-		const Property<int32>& siblingZIndexProperty() const { return m_siblingZIndex; }
+		const Property<int32>& siblingZOrderProperty() const { return m_siblingZOrder; }
 
 	};
 
