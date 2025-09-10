@@ -73,8 +73,8 @@ namespace noco::editor
 			.tooltipDetail = U"styleStateとは、要素の状態を識別するために設定する文字列です(例: \"focused\")\n各プロパティの値はstyleState毎に異なる値を設定でき、状態に応じて見た目を変えることができます\nstyleStateはノード毎に1つのみ設定できます\n\n親要素のstyleStateがあればそれを受け継ぎます\n適用の優先度は自身の要素のstyleStateが最も高く、遠い親になるにつれて優先度は下がります",
 		};
 		metadata[PropertyKey{ U"Node", U"siblingZIndex" }] = PropertyMetadata{
-			.tooltip = U"兄弟要素間での描画順序",
-			.tooltipDetail = U"兄弟間で値が大きい要素が手前に描画されます\nupdateKeyInput・drawの実行順序、およびヒットテストの優先度に影響します\n※update・lateUpdateの実行順序には影響しません\n※兄弟要素間の実行順序にのみ影響します。異なる親を持つ要素同士の実行順序には影響しません",
+			.tooltip = U"兄弟要素間での表示順序",
+			.tooltipDetail = U"兄弟間で値が大きい要素を手前に表示します\nupdateKeyInput・drawの実行順序、およびヒットテストの優先度に影響します\n※update・lateUpdateの実行順序には影響しません\n※兄弟要素間の実行順序にのみ影響します。異なる親を持つ要素同士の実行順序には影響しません\n※要素間でsiblingZIndexの値が同じ場合、Hierarchy上で下にある要素が手前に表示されます",
 			.dragValueChangeStep = 1.0,
 		};
 		
