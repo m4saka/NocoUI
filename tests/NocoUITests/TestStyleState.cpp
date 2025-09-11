@@ -64,10 +64,10 @@ TEST_CASE("ActiveStyleStates Collection", "[Node][StyleState]")
 			           const Array<String>& activeStyleStates, 
 			           double deltaTime,
 			           const HashTable<String, noco::ParamValue>& params,
-			           noco::SkipsSmoothingYN skipsSmoothing) override
+			           noco::SkipSmoothingYN skipSmoothing) override
 			{
 				// 親クラスのupdateを呼ぶ
-				Property::update(interactionState, activeStyleStates, deltaTime, params, skipsSmoothing);
+				Property::update(interactionState, activeStyleStates, deltaTime, params, skipSmoothing);
 				// キャプチャ
 				parent->lastActiveStyleStates = activeStyleStates;
 				parent->lastInteractionState = interactionState;

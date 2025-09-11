@@ -16,10 +16,10 @@ TEST_CASE("Property vs SmoothProperty behavior", "[Property]")
 		property.setPropertyValue(newValue);
 		
 		// Propertyは即座に値が変わる
-		property.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipsSmoothingYN::No);
+		property.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
 		REQUIRE(property.value() == 200.0);
 		
-		property.update(noco::InteractionState::Default, {}, 1.0, {}, noco::SkipsSmoothingYN::No);
+		property.update(noco::InteractionState::Default, {}, 1.0, {}, noco::SkipSmoothingYN::No);
 		REQUIRE(property.value() == 200.0);
 	}
 	
@@ -33,13 +33,13 @@ TEST_CASE("Property vs SmoothProperty behavior", "[Property]")
 		REQUIRE(smoothProperty.value() == 100.0);
 		
 		// 0.5秒後は100と200の中間値になる
-		smoothProperty.update(noco::InteractionState::Default, {}, 0.5, {}, noco::SkipsSmoothingYN::No);
+		smoothProperty.update(noco::InteractionState::Default, {}, 0.5, {}, noco::SkipSmoothingYN::No);
 		double halfWayValue = smoothProperty.value();
 		REQUIRE(halfWayValue > 100.0);
 		REQUIRE(halfWayValue < 200.0);
 		
 		// さらに更新すると目標値に近づく
-		smoothProperty.update(noco::InteractionState::Default, {}, 0.5, {}, noco::SkipsSmoothingYN::No);
+		smoothProperty.update(noco::InteractionState::Default, {}, 0.5, {}, noco::SkipSmoothingYN::No);
 		double laterValue = smoothProperty.value();
 		REQUIRE(laterValue > halfWayValue);
 		REQUIRE(laterValue <= 200.0);
@@ -56,7 +56,7 @@ TEST_CASE("SmoothProperty smoothTime behavior", "[Property]")
 		smoothColor.setPropertyValue(targetValue);
 		
 		// smoothTime=0なら即座に変わる
-		smoothColor.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipsSmoothingYN::No);
+		smoothColor.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
 		REQUIRE(smoothColor.value() == ColorF{0,1,0});
 	}
 	
@@ -71,8 +71,8 @@ TEST_CASE("SmoothProperty smoothTime behavior", "[Property]")
 		fastProperty.setPropertyValue(fastTarget);
 		slowProperty.setPropertyValue(slowTarget);
 		
-		fastProperty.update(noco::InteractionState::Default, {}, 0.05, {}, noco::SkipsSmoothingYN::No);
-		slowProperty.update(noco::InteractionState::Default, {}, 0.05, {}, noco::SkipsSmoothingYN::No);
+		fastProperty.update(noco::InteractionState::Default, {}, 0.05, {}, noco::SkipSmoothingYN::No);
+		slowProperty.update(noco::InteractionState::Default, {}, 0.05, {}, noco::SkipSmoothingYN::No);
 		
 		// 短いsmoothTimeの方が目標値により近い
 		REQUIRE(fastProperty.value() > slowProperty.value());
@@ -90,11 +90,11 @@ TEST_CASE("Property parameter reference", "[Property][Param]")
 		params[U"themeColor"] = noco::MakeParamValue(ColorF{0,1,0});
 		
 		// パラメータ参照により値が変わる
-		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipsSmoothingYN::No);
+		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
 		REQUIRE(colorProperty.value() == ColorF{0,1,0});
 		
 		params[U"themeColor"] = noco::MakeParamValue(ColorF{0,0,1});
-		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipsSmoothingYN::No);
+		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
 		REQUIRE(colorProperty.value() == ColorF{0,0,1});
 	}
 	
@@ -106,7 +106,7 @@ TEST_CASE("Property parameter reference", "[Property][Param]")
 		HashTable<String, noco::ParamValue> params;
 		params[U"baseSize"] = noco::MakeParamValue(200.0);
 		
-		sizeProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipsSmoothingYN::No);
+		sizeProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
 		REQUIRE(sizeProperty.value() == 200.0);
 	}
 	
@@ -117,13 +117,13 @@ TEST_CASE("Property parameter reference", "[Property][Param]")
 		
 		HashTable<String, noco::ParamValue> params;
 		params[U"count"] = noco::MakeParamValue(50);
-		intProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipsSmoothingYN::No);
+		intProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
 		REQUIRE(intProperty.value() == 50);
 		
 		// パラメータを削除してフレームを進める
 		params.clear();
 		System::Update();
-		intProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipsSmoothingYN::No);
+		intProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
 		// パラメータが削除されると元の値に戻る
 		REQUIRE(intProperty.value() == 10);
 	}
@@ -141,17 +141,17 @@ TEST_CASE("SmoothProperty InteractionState transitions", "[Property]")
 			.withSmoothTime(0.5);
 		opacityProperty.setPropertyValue(opacityValue);
 		
-		opacityProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipsSmoothingYN::No);
+		opacityProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
 		REQUIRE(opacityProperty.value() == 1.0);
 		
 		// Hovered状態では目標値に向かって変化中
-		opacityProperty.update(noco::InteractionState::Hovered, {}, 0.1, {}, noco::SkipsSmoothingYN::No);
+		opacityProperty.update(noco::InteractionState::Hovered, {}, 0.1, {}, noco::SkipSmoothingYN::No);
 		double hoveredValue = opacityProperty.value();
 		REQUIRE(hoveredValue < 1.0);
 		REQUIRE(hoveredValue > 0.8);
 		
 		// Pressed状態では更に小さい値へ変化中
-		opacityProperty.update(noco::InteractionState::Pressed, {}, 0.1, {}, noco::SkipsSmoothingYN::No);
+		opacityProperty.update(noco::InteractionState::Pressed, {}, 0.1, {}, noco::SkipSmoothingYN::No);
 		double pressedValue = opacityProperty.value();
 		REQUIRE(pressedValue < hoveredValue);
 	}
@@ -163,7 +163,7 @@ TEST_CASE("Property currentFrameOverride", "[Property]")
 	{
 		noco::SmoothProperty<Vec2> posProperty{ U"position", Vec2{0,0} };
 		
-		posProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipsSmoothingYN::No);
+		posProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
 		REQUIRE(posProperty.value() == Vec2{0,0});
 		
 		// overrideにより一時的に値を変更
