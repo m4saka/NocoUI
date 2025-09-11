@@ -31,15 +31,25 @@ namespace noco
 		Property<int32> m_textureGridColumns;
 		Property<int32> m_textureGridRows;
 		Property<int32> m_textureGridIndex;
+		Property<SpriteGridAnimationType> m_gridAnimationType;
+		PropertyNonInteractive<double> m_gridAnimationFPS;
+		PropertyNonInteractive<int32> m_gridAnimationStartIndex;
+		PropertyNonInteractive<int32> m_gridAnimationEndIndex;
+		Property<SpriteOffsetAnimationType> m_offsetAnimationType;
+		PropertyNonInteractive<Vec2> m_offsetAnimationSpeed;
 		
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
+		/* NonSerialized */ Stopwatch m_animationStopwatch;
+		/* NonSerialized */ int32 m_currentGridAnimationIndex = 0;
+		/* NonSerialized */ bool m_gridAnimationFinished = false;
+		/* NonSerialized */ Vec2 m_currentOffsetAnimation = Vec2::Zero();
 
 		void drawNineSlice(const Texture& texture, const RectF& rect, const ColorF& color) const;
 		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const ColorF& color) const;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -62,9 +72,17 @@ namespace noco
 			, m_textureGridColumns{ U"textureGridColumns", 1 }
 			, m_textureGridRows{ U"textureGridRows", 1 }
 			, m_textureGridIndex{ U"textureGridIndex", 0 }
+			, m_gridAnimationType{ U"gridAnimationType", SpriteGridAnimationType::None }
+			, m_gridAnimationFPS{ U"gridAnimationFPS", 10.0 }
+			, m_gridAnimationStartIndex{ U"gridAnimationStartIndex", 0 }
+			, m_gridAnimationEndIndex{ U"gridAnimationEndIndex", 0 }
+			, m_offsetAnimationType{ U"offsetAnimationType", SpriteOffsetAnimationType::None }
+			, m_offsetAnimationSpeed{ U"offsetAnimationSpeed", Vec2{ 0.0, 0.0 } }
 		{
 		}
 
+		void onActivated(const std::shared_ptr<Node>& node) override;
+		void update(const std::shared_ptr<Node>& node) override;
 		void draw(const Node& node) const override;
 
 		[[nodiscard]]
@@ -340,6 +358,87 @@ namespace noco
 		std::shared_ptr<Sprite> clearTexture()
 		{
 			m_textureOpt.reset();
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<SpriteGridAnimationType>& gridAnimationType() const
+		{
+			return m_gridAnimationType.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setGridAnimationType(const PropertyValue<SpriteGridAnimationType>& gridAnimationType)
+		{
+			m_gridAnimationType.setPropertyValue(gridAnimationType);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		double gridAnimationFPS() const
+		{
+			return m_gridAnimationFPS.value();
+		}
+		
+		std::shared_ptr<Sprite> setGridAnimationFPS(double gridAnimationFPS)
+		{
+			m_gridAnimationFPS.setValue(gridAnimationFPS);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		int32 gridAnimationStartIndex() const
+		{
+			return m_gridAnimationStartIndex.value();
+		}
+		
+		std::shared_ptr<Sprite> setGridAnimationStartIndex(int32 gridAnimationStartIndex)
+		{
+			m_gridAnimationStartIndex.setValue(gridAnimationStartIndex);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		int32 gridAnimationEndIndex() const
+		{
+			return m_gridAnimationEndIndex.value();
+		}
+		
+		std::shared_ptr<Sprite> setGridAnimationEndIndex(int32 gridAnimationEndIndex)
+		{
+			m_gridAnimationEndIndex.setValue(gridAnimationEndIndex);
+			return shared_from_this();
+		}
+		
+		std::shared_ptr<Sprite> restartAnimation()
+		{
+			m_animationStopwatch.restart();
+			m_currentGridAnimationIndex = 0;
+			m_gridAnimationFinished = false;
+			m_currentOffsetAnimation = Vec2::Zero();
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		const PropertyValue<SpriteOffsetAnimationType>& offsetAnimationType() const
+		{
+			return m_offsetAnimationType.propertyValue();
+		}
+		
+		std::shared_ptr<Sprite> setOffsetAnimationType(const PropertyValue<SpriteOffsetAnimationType>& offsetAnimationType)
+		{
+			m_offsetAnimationType.setPropertyValue(offsetAnimationType);
+			return shared_from_this();
+		}
+		
+		[[nodiscard]]
+		Vec2 offsetAnimationSpeed() const
+		{
+			return m_offsetAnimationSpeed.value();
+		}
+		
+		std::shared_ptr<Sprite> setOffsetAnimationSpeed(const Vec2& offsetAnimationSpeed)
+		{
+			m_offsetAnimationSpeed.setValue(offsetAnimationSpeed);
 			return shared_from_this();
 		}
 	};

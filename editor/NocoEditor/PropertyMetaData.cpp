@@ -775,7 +775,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return sprite->textureRegionMode().defaultValue() == TextureRegionMode::OffsetSize;
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::OffsetSize);
 			}
 			return false;
 		};
@@ -785,7 +785,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return sprite->textureRegionMode().defaultValue() == TextureRegionMode::Grid;
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::Grid);
 			}
 			return false;
 		};
@@ -795,8 +795,8 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				const auto mode = sprite->textureRegionMode().defaultValue();
-				return mode == TextureRegionMode::OffsetSize || mode == TextureRegionMode::Grid;
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::OffsetSize) ||
+				       sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::Grid);
 			}
 			return false;
 		};
@@ -828,10 +828,92 @@ namespace noco::editor
 			.visibilityCondition = gridRegionVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
+		// アニメーション無効時かつGrid表示の時のみtextureGridIndexを表示する条件
+		const auto gridRegionNoAnimationVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::Grid) &&
+					   !sprite->gridAnimationType().hasAnyStateEqualTo(SpriteGridAnimationType::OneShot) &&
+					   !sprite->gridAnimationType().hasAnyStateEqualTo(SpriteGridAnimationType::Loop);
+			}
+			return false;
+		};
+		
 		metadata[PropertyKey{ U"Sprite", U"textureGridIndex" }] = PropertyMetadata{
 			.tooltip = U"表示するセル番号",
-			.tooltipDetail = U"0から始まるインデックス\n左上から横方向に数えます",
+			.tooltipDetail = U"0から始まるインデックス\n左上から横方向に数えます\n※アニメーション有効時は使用されません",
+			.visibilityCondition = gridRegionNoAnimationVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		
+		// アニメーション有効時のみ表示する条件
+		const auto gridAnimationEnabledVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::Grid) &&
+					   (sprite->gridAnimationType().hasAnyStateEqualTo(SpriteGridAnimationType::OneShot) ||
+					    sprite->gridAnimationType().hasAnyStateEqualTo(SpriteGridAnimationType::Loop));
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Sprite", U"gridAnimationType" }] = PropertyMetadata{
+			.tooltip = U"アニメーションの種類",
+			.tooltipDetail = U"None: アニメーションなし\nOneShot: 一度だけ再生\nLoop: ループ再生",
 			.visibilityCondition = gridRegionVisibilityCondition,
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"Sprite", U"gridAnimationFPS" }] = PropertyMetadata{
+			.tooltip = U"アニメーションFPS",
+			.tooltipDetail = U"アニメーションの再生速度（フレーム/秒）",
+			.visibilityCondition = gridAnimationEnabledVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Sprite", U"gridAnimationStartIndex" }] = PropertyMetadata{
+			.tooltip = U"アニメーション開始インデックス",
+			.tooltipDetail = U"アニメーションの開始フレーム番号\n0から始まるインデックス",
+			.visibilityCondition = gridAnimationEnabledVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Sprite", U"gridAnimationEndIndex" }] = PropertyMetadata{
+			.tooltip = U"アニメーション終了インデックス",
+			.tooltipDetail = U"アニメーションの終了フレーム番号\n0から始まるインデックス",
+			.visibilityCondition = gridAnimationEnabledVisibilityCondition,
+			.dragValueChangeStep = 1.0,
+		};
+		
+		// OffsetSizeモードでのアニメーション条件
+		const auto offsetAnimationVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::OffsetSize);
+			}
+			return false;
+		};
+		
+		const auto offsetAnimationEnabledVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return sprite->textureRegionMode().hasAnyStateEqualTo(TextureRegionMode::OffsetSize) &&
+					   sprite->offsetAnimationType().hasAnyStateEqualTo(SpriteOffsetAnimationType::Scroll);
+			}
+			return false;
+		};
+		
+		metadata[PropertyKey{ U"Sprite", U"offsetAnimationType" }] = PropertyMetadata{
+			.tooltip = U"アニメーションの種類",
+			.tooltipDetail = U"None: アニメーションなし\nScroll: スクロール\n　※スクロールに使用するテクスチャはループ素材であることを前提とします",
+			.visibilityCondition = offsetAnimationVisibilityCondition,
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"Sprite", U"offsetAnimationSpeed" }] = PropertyMetadata{
+			.tooltip = U"スクロール速度",
+			.tooltipDetail = U"1秒あたりのスクロール量（ピクセル）\nX: 水平速度, Y: 垂直速度",
+			.visibilityCondition = offsetAnimationEnabledVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
 		

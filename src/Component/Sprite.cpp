@@ -6,6 +6,123 @@
 
 namespace noco
 {
+	void Sprite::onActivated(const std::shared_ptr<Node>&)
+	{
+		restartAnimation();
+	}
+	
+	void Sprite::update(const std::shared_ptr<Node>&)
+	{
+		const SpriteGridAnimationType gridAnimType = m_gridAnimationType.value();
+		const SpriteOffsetAnimationType offsetAnimType = m_offsetAnimationType.value();
+		
+		if (!m_animationStopwatch.isRunning() && (gridAnimType != SpriteGridAnimationType::None || offsetAnimType != SpriteOffsetAnimationType::None))
+		{
+			m_animationStopwatch.start();
+		}
+		
+		const double elapsedTime = m_animationStopwatch.sF();
+		
+		if (gridAnimType != SpriteGridAnimationType::None)
+		{
+			const double fps = m_gridAnimationFPS.value();
+			if (fps > 0)
+			{
+				const int32 columns = m_textureGridColumns.value();
+				const int32 rows = m_textureGridRows.value();
+				
+				if (gridAnimType == SpriteGridAnimationType::OneShot)
+				{
+					if (!m_gridAnimationFinished)
+					{
+						const int32 startIndex = m_gridAnimationStartIndex.value();
+						const int32 endIndex = m_gridAnimationEndIndex.value();
+
+						const int32 frameCount = endIndex - startIndex + 1;
+
+						if (frameCount <= 0)
+						{
+							m_currentGridAnimationIndex = startIndex;
+							m_gridAnimationFinished = true;
+						}
+						else
+						{
+							const int32 frameIndex = static_cast<int32>(elapsedTime * fps);
+
+							if (frameIndex >= frameCount)
+							{
+								m_currentGridAnimationIndex = endIndex;
+								m_gridAnimationFinished = true;
+							}
+							else
+							{
+								m_currentGridAnimationIndex = startIndex + frameIndex;
+							}
+						}
+					}
+				}
+				else if (gridAnimType == SpriteGridAnimationType::Loop)
+				{
+					const int32 startIndex = m_gridAnimationStartIndex.value();
+					const int32 endIndex = m_gridAnimationEndIndex.value();
+
+					const int32 frameCount = endIndex - startIndex + 1;
+
+					if (frameCount <= 0)
+					{
+						m_currentGridAnimationIndex = startIndex;
+					}
+					else
+					{
+						const double totalDuration = frameCount / fps;
+						const double loopTime = std::fmod(elapsedTime, totalDuration);
+						m_currentGridAnimationIndex = startIndex + static_cast<int32>(loopTime * fps) % frameCount;
+					}
+				}
+			}
+		}
+		
+		if (offsetAnimType != SpriteOffsetAnimationType::None)
+		{
+			const Vec2 speed = m_offsetAnimationSpeed.value();
+			const double deltaTime = Scene::DeltaTime();
+
+			switch (offsetAnimType)
+			{
+			case SpriteOffsetAnimationType::Scroll:
+				{
+					m_currentOffsetAnimation += speed * deltaTime;
+
+					const Vec2& textureSize = m_textureSize.value();
+					if (textureSize.x > 0.0)
+					{
+						m_currentOffsetAnimation.x = std::fmod(m_currentOffsetAnimation.x, textureSize.x);
+						if (m_currentOffsetAnimation.x < 0.0)
+						{
+							m_currentOffsetAnimation.x += textureSize.x;
+						}
+					}
+					if (textureSize.y > 0.0)
+					{
+						m_currentOffsetAnimation.y = std::fmod(m_currentOffsetAnimation.y, textureSize.y);
+						if (m_currentOffsetAnimation.y < 0.0)
+						{
+							m_currentOffsetAnimation.y += textureSize.y;
+						}
+					}
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
+		else
+		{
+			m_currentOffsetAnimation = Vec2::Zero();
+		}
+	}
+
 	namespace
 	{
 		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
@@ -300,8 +417,10 @@ namespace noco
 		// テクスチャ領域の指定がある場合
 		if (textureRegionModeValue == TextureRegionMode::OffsetSize)
 		{
-			const Vec2& offset = m_textureOffset.value();
+			const Vec2& baseOffset = m_textureOffset.value();
 			const Vec2& size = m_textureSize.value();
+			
+			const Vec2 offset = baseOffset + m_currentOffsetAnimation;
 			
 			// サイズが0の場合はテクスチャ全体のサイズを使用
 			const Vec2 actualSize = (size.x > 0 && size.y > 0) ? size : Vec2{ texture.size() };
@@ -324,7 +443,9 @@ namespace noco
 		}
 		else if (textureRegionModeValue == TextureRegionMode::Grid)
 		{
-			const int32 index = m_textureGridIndex.value();
+			const int32 index = (m_gridAnimationType.value() == SpriteGridAnimationType::None)
+				? m_textureGridIndex.value()
+				: m_currentGridAnimationIndex;
 			const int32 columns = m_textureGridColumns.value();
 			const int32 rows = m_textureGridRows.value();
 			

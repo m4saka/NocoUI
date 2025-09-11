@@ -51,4 +51,17 @@ namespace noco
 		OffsetSize,
 		Grid,
 	};
+
+	enum class SpriteGridAnimationType : uint8
+	{
+		None,
+		OneShot,
+		Loop,
+	};
+
+	enum class SpriteOffsetAnimationType : uint8
+	{
+		None,
+		Scroll,
+	};
 }
