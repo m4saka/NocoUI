@@ -248,9 +248,9 @@ namespace noco::editor
 				{
 					references.emplace_back(nodeName, U"Node", U"styleState");
 				}
-				if (node->siblingZOrderParamRef() == paramName)
+				if (node->zOrderInSiblingsParamRef() == paramName)
 				{
-					references.emplace_back(nodeName, U"Node", U"siblingZOrder");
+					references.emplace_back(nodeName, U"Node", U"zOrderInSiblings");
 				}
 				
 				// コンポーネントのプロパティをチェック

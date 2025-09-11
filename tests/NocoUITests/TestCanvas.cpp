@@ -653,7 +653,7 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		REQUIRE(node->interactable() == false);
 	}
 	
-	SECTION("siblingZOrder parameter reference")
+	SECTION("zOrderInSiblings parameter reference")
 	{
 		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
 		
@@ -662,30 +662,30 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		
 		// ノードを作成
 		auto node = canvas->emplaceChild(U"TestNode");
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ 0 });
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ 0 });
 		
 		// パラメータ参照を設定
-		node->setSiblingZOrderParamRef(U"layerIndex");
-		REQUIRE(node->siblingZOrderParamRef() == U"layerIndex");
+		node->setZOrderInSiblingsParamRef(U"layerIndex");
+		REQUIRE(node->zOrderInSiblingsParamRef() == U"layerIndex");
 		
 		// update前はまだパラメータ値が適用されない
-		REQUIRE(node->siblingZOrder() == 0);
+		REQUIRE(node->zOrderInSiblings() == 0);
 		
 		// updateするとパラメータ値が適用される
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 10);
+		REQUIRE(node->zOrderInSiblings() == 10);
 		
 		// パラメータを変更
 		canvas->setParamValue(U"layerIndex", -5);
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == -5);
+		REQUIRE(node->zOrderInSiblings() == -5);
 		
 		// パラメータ参照をクリア
-		node->setSiblingZOrderParamRef(U"");
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ 100 });
+		node->setZOrderInSiblingsParamRef(U"");
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ 100 });
 		System::Update();  // フレームを進める
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 100);
+		REQUIRE(node->zOrderInSiblings() == 100);
 	}
 	
 	SECTION("activeSelf and interactable serialization with parameter reference")
@@ -699,10 +699,10 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		auto node = canvas->emplaceChild(U"Original");
 		node->setActive(true);
 		node->setInteractable(false);
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ 5 });
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ 5 });
 		node->setActiveSelfParamRef(U"isActive");
 		node->setInteractableParamRef(U"canInteract");
-		node->setSiblingZOrderParamRef(U"zLayer");
+		node->setZOrderInSiblingsParamRef(U"zLayer");
 		
 		// JSONにシリアライズ
 		const JSON json = node->toJSON();
@@ -714,16 +714,16 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		// 値とパラメータ参照が保持されているか確認
 		REQUIRE(loadedNode->activeSelf() == true);  // 保存された値
 		REQUIRE(loadedNode->interactable() == false);  // 保存された値
-		REQUIRE(loadedNode->siblingZOrder() == 5);  // 保存された値
+		REQUIRE(loadedNode->zOrderInSiblings() == 5);  // 保存された値
 		REQUIRE(loadedNode->activeSelfParamRef() == U"isActive");  // パラメータ参照
 		REQUIRE(loadedNode->interactableParamRef() == U"canInteract");  // パラメータ参照
-		REQUIRE(loadedNode->siblingZOrderParamRef() == U"zLayer");  // パラメータ参照
+		REQUIRE(loadedNode->zOrderInSiblingsParamRef() == U"zLayer");  // パラメータ参照
 		
 		// updateでパラメータ値が適用される
 		canvas->update();
 		REQUIRE(loadedNode->activeSelf() == false);
 		REQUIRE(loadedNode->interactable() == true);
-		REQUIRE(loadedNode->siblingZOrder() == 99);
+		REQUIRE(loadedNode->zOrderInSiblings() == 99);
 	}
 	
 	SECTION("Properties without parameter reference should reflect values immediately")
@@ -754,12 +754,12 @@ TEST_CASE("Canvas styleState integration", "[Canvas][StyleState]")
 		node->setStyleState(U"pressed");
 		REQUIRE(node->styleState() == U"pressed"); // 即座に反映される
 		
-		// siblingZOrderのテスト（パラメータ参照なし） - Propertyなので即時反映される
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ 10 });
-		REQUIRE(node->siblingZOrder() == 10); // 即座に反映される
+		// zOrderInSiblingsのテスト（パラメータ参照なし） - Propertyなので即時反映される
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ 10 });
+		REQUIRE(node->zOrderInSiblings() == 10); // 即座に反映される
 		
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ -5 });
-		REQUIRE(node->siblingZOrder() == -5); // 即座に反映される
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ -5 });
+		REQUIRE(node->zOrderInSiblings() == -5); // 即座に反映される
 		
 		node->setStyleState(U"");
 		REQUIRE(node->styleState() == U""); // 即座に反映される
@@ -965,35 +965,35 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 }
 
 // ========================================
-// Canvas siblingZOrderのテスト
+// Canvas zOrderInSiblingsのテスト
 // ========================================
 
-TEST_CASE("Canvas top-level nodes siblingZOrder basic properties", "[Canvas][ZIndex]")
+TEST_CASE("Canvas top-level nodes zOrderInSiblings basic properties", "[Canvas][ZIndex]")
 {
-	SECTION("Default siblingZOrder value for top-level nodes")
+	SECTION("Default zOrderInSiblings value for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
 		canvas->addChild(node);
-		REQUIRE(node->siblingZOrder() == 0);
+		REQUIRE(node->zOrderInSiblings() == 0);
 	}
 
-	SECTION("Set and get siblingZOrder for top-level nodes")
+	SECTION("Set and get zOrderInSiblings for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
 		canvas->addChild(node);
 		
 		// 基本的な値設定
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ 5 });
-		REQUIRE(node->siblingZOrder() == 5);
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ 5 });
+		REQUIRE(node->zOrderInSiblings() == 5);
 		
 		// 負の値も設定可能
-		node->setSiblingZOrder(noco::PropertyValue<int32>{ -10 });
-		REQUIRE(node->siblingZOrder() == -10);
+		node->setZOrderInSiblings(noco::PropertyValue<int32>{ -10 });
+		REQUIRE(node->zOrderInSiblings() == -10);
 	}
 
-	SECTION("siblingZOrder affects draw order for top-level nodes")
+	SECTION("zOrderInSiblings affects draw order for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		
@@ -1002,28 +1002,28 @@ TEST_CASE("Canvas top-level nodes siblingZOrder basic properties", "[Canvas][ZIn
 		auto node2 = noco::Node::Create(U"Node2");
 		auto node3 = noco::Node::Create(U"Node3");
 		
-		node1->setSiblingZOrder(noco::PropertyValue<int32>{ 10 });  // 最前面
-		node2->setSiblingZOrder(noco::PropertyValue<int32>{ 5 });   // 中間
-		node3->setSiblingZOrder(noco::PropertyValue<int32>{ 1 });   // 最背面
+		node1->setZOrderInSiblings(noco::PropertyValue<int32>{ 10 });  // 最前面
+		node2->setZOrderInSiblings(noco::PropertyValue<int32>{ 5 });   // 中間
+		node3->setZOrderInSiblings(noco::PropertyValue<int32>{ 1 });   // 最背面
 		
 		canvas->addChild(node3);  // 最背面を最初に追加
 		canvas->addChild(node1);  // 最前面を次に追加
 		canvas->addChild(node2);  // 中間を最後に追加
 		
 		// プロパティ値が正しく設定されていることを確認
-		REQUIRE(node1->siblingZOrder() == 10);
-		REQUIRE(node2->siblingZOrder() == 5);
-		REQUIRE(node3->siblingZOrder() == 1);
+		REQUIRE(node1->zOrderInSiblings() == 10);
+		REQUIRE(node2->zOrderInSiblings() == 5);
+		REQUIRE(node3->zOrderInSiblings() == 1);
 		
 		// ZIndexの順序が保たれることを期待（描画順序はCanvas内部で制御される）
-		REQUIRE(node1->siblingZOrder() > node2->siblingZOrder());
-		REQUIRE(node2->siblingZOrder() > node3->siblingZOrder());
+		REQUIRE(node1->zOrderInSiblings() > node2->zOrderInSiblings());
+		REQUIRE(node2->zOrderInSiblings() > node3->zOrderInSiblings());
 	}
 }
 
-TEST_CASE("Canvas top-level nodes siblingZOrder with styleState", "[Canvas][ZIndex][StyleState]")
+TEST_CASE("Canvas top-level nodes zOrderInSiblings with styleState", "[Canvas][ZIndex][StyleState]")
 {
-	SECTION("siblingZOrder with different styleState values for top-level nodes")
+	SECTION("zOrderInSiblings with different styleState values for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
@@ -1034,62 +1034,62 @@ TEST_CASE("Canvas top-level nodes siblingZOrder with styleState", "[Canvas][ZInd
 			.withStyleState(U"highlighted", 10)           // styleState "highlighted"時は10
 			.withStyleState(U"selected", 20);             // styleState "selected"時は20
 		
-		node->setSiblingZOrder(zIndexProperty);
+		node->setZOrderInSiblings(zIndexProperty);
 		
 		// 初期状態（デフォルト値）
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 0);
+		REQUIRE(node->zOrderInSiblings() == 0);
 		
 		// styleStateを"highlighted"に設定
 		node->setStyleState(U"highlighted");
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 10);
+		REQUIRE(node->zOrderInSiblings() == 10);
 		
 		// styleStateを"selected"に設定  
 		node->setStyleState(U"selected");
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 20);
+		REQUIRE(node->zOrderInSiblings() == 20);
 		
 		// styleStateをクリア（デフォルト値に戻る）
 		node->clearStyleState();
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 0);
+		REQUIRE(node->zOrderInSiblings() == 0);
 	}
 }
 
-TEST_CASE("Canvas top-level nodes siblingZOrder with parameter reference", "[Canvas][ZIndex][Param]")
+TEST_CASE("Canvas top-level nodes zOrderInSiblings with parameter reference", "[Canvas][ZIndex][Param]")
 {
-	SECTION("siblingZOrder with parameter reference for top-level nodes")
+	SECTION("zOrderInSiblings with parameter reference for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
 		canvas->addChild(node);
 		
 		// パラメータ参照を設定
-		node->setSiblingZOrderParamRef(U"layerIndex");
+		node->setZOrderInSiblingsParamRef(U"layerIndex");
 		
 		// 初期状態（パラメータなし）
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 0);  // デフォルト値
+		REQUIRE(node->zOrderInSiblings() == 0);  // デフォルト値
 		
 		// パラメータを設定
 		canvas->setParamValue(U"layerIndex", 15);
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 15);
+		REQUIRE(node->zOrderInSiblings() == 15);
 		
 		// パラメータ値を変更
 		canvas->setParamValue(U"layerIndex", -5);
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == -5);
+		REQUIRE(node->zOrderInSiblings() == -5);
 		
 		// パラメータ参照をクリア
-		node->setSiblingZOrderParamRef(U"");
+		node->setZOrderInSiblingsParamRef(U"");
 		System::Update();  // フレームを進める
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 0);  // デフォルト値に戻る
+		REQUIRE(node->zOrderInSiblings() == 0);  // デフォルト値に戻る
 	}
 
-	SECTION("siblingZOrder parameter reference with styleState for top-level nodes")
+	SECTION("zOrderInSiblings parameter reference with styleState for top-level nodes")
 	{
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
@@ -1099,28 +1099,28 @@ TEST_CASE("Canvas top-level nodes siblingZOrder with parameter reference", "[Can
 		auto zIndexProperty = noco::PropertyValue<int32>{ 1 }  // デフォルト値
 			.withStyleState(U"active", 5);                // styleState "active"時は5
 		
-		node->setSiblingZOrder(zIndexProperty);
-		node->setSiblingZOrderParamRef(U"dynamicLayer");
+		node->setZOrderInSiblings(zIndexProperty);
+		node->setZOrderInSiblingsParamRef(U"dynamicLayer");
 		
 		// パラメータが設定されている場合はパラメータ値が優先される
 		canvas->setParamValue(U"dynamicLayer", 100);
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 100);
+		REQUIRE(node->zOrderInSiblings() == 100);
 		
 		// styleStateを設定してもパラメータ値が優先される
 		node->setStyleState(U"active");
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 100);  // パラメータ値が優先
+		REQUIRE(node->zOrderInSiblings() == 100);  // パラメータ値が優先
 		
 		// パラメータを削除するとstyleStateの値が使用される
 		canvas->removeParam(U"dynamicLayer");
 		System::Update();  // フレームを進める
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 5);  // styleState "active"の値
+		REQUIRE(node->zOrderInSiblings() == 5);  // styleState "active"の値
 		
 		// styleStateをクリアするとデフォルト値が使用される
 		node->clearStyleState();
 		canvas->update();
-		REQUIRE(node->siblingZOrder() == 1);  // デフォルト値
+		REQUIRE(node->zOrderInSiblings() == 1);  // デフォルト値
 	}
 }

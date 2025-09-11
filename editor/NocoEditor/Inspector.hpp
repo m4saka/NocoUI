@@ -2669,7 +2669,7 @@ namespace noco::editor
 			}
 
 			{
-				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"siblingZOrder", Format(node->siblingZOrder()), [node](StringView value) { node->setSiblingZOrder(PropertyValue<int32>{ ParseOr<int32>(value, 0) }); }, HasInteractivePropertyValueYN{ node->siblingZOrderProperty().hasInteractivePropertyValue() }, HasParameterRefYN{ !node->siblingZOrderParamRef().isEmpty() }));
+				const auto propertyNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"zOrderInSiblings", Format(node->zOrderInSiblings()), [node](StringView value) { node->setZOrderInSiblings(PropertyValue<int32>{ ParseOr<int32>(value, 0) }); }, HasInteractivePropertyValueYN{ node->zOrderInSiblingsProperty().hasInteractivePropertyValue() }, HasParameterRefYN{ !node->zOrderInSiblingsParamRef().isEmpty() }));
 				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
 				Array<MenuElement> menuElements
 				{
@@ -2680,7 +2680,7 @@ namespace noco::editor
 						.mnemonicInput = KeyC, 
 						.onClick = [this, node] 
 						{ 
-							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(&node->siblingZOrderProperty(), [this] { refreshInspector(); }, m_dialogOpener)); 
+							m_dialogOpener->openDialog(std::make_shared<InteractivePropertyValueDialog>(&node->zOrderInSiblingsProperty(), [this] { refreshInspector(); }, m_dialogOpener)); 
 						},
 					},
 					MenuSeparator{},
@@ -2692,7 +2692,7 @@ namespace noco::editor
 						.onClick = [this, node] 
 						{ 
 							m_dialogOpener->openDialog(std::make_shared<ParamRefDialog>(
-								&node->siblingZOrderProperty(),
+								&node->zOrderInSiblingsProperty(),
 								m_canvas,
 								[this] { refreshInspector(); },
 								m_dialogOpener
@@ -2706,10 +2706,10 @@ namespace noco::editor
 						.mnemonicInput = KeyL,
 						.onClick = [node, this]
 						{
-							node->setSiblingZOrderParamRef(U"");
+							node->setZOrderInSiblingsParamRef(U"");
 							refreshInspector();
 						},
-						.fnIsEnabled = [node] { return !node->siblingZOrderParamRef().isEmpty(); },
+						.fnIsEnabled = [node] { return !node->zOrderInSiblingsParamRef().isEmpty(); },
 					},
 				};
 				
