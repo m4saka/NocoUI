@@ -11,9 +11,9 @@ namespace noco
 		Disabled,
 	};
 
-	inline InteractionState ApplyOtherInteractionState(InteractionState state, InteractionState otherState, AppliesDisabledStateYN appliesDisabledState = AppliesDisabledStateYN::Yes)
+	inline InteractionState ApplyOtherInteractionState(InteractionState state, InteractionState otherState, ApplyDisabledStateYN applyDisabledState = ApplyDisabledStateYN::Yes)
 	{
-		if (!appliesDisabledState && otherState == InteractionState::Disabled)
+		if (!applyDisabledState && otherState == InteractionState::Disabled)
 		{
 			return state;
 		}

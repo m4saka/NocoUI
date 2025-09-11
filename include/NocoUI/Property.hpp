@@ -25,7 +25,7 @@ namespace noco
 	public:
 		virtual ~IProperty() = default;
 		virtual StringView name() const = 0;
-		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing) = 0;
+		virtual void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) = 0;
 		virtual void appendJSON(JSON& json) const = 0;
 		virtual void readFromJSON(const JSON& json) = 0;
 		virtual String propertyValueStringOfDefault() const = 0;
@@ -206,7 +206,7 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipsSmoothingYN) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
@@ -456,7 +456,7 @@ namespace noco
 			return m_smoothing.currentValue();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
@@ -476,7 +476,7 @@ namespace noco
 				}
 			}
 			
-			if (skipsSmoothing)
+			if (skipSmoothing)
 			{
 				m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
 			}
@@ -742,7 +742,7 @@ namespace noco
 			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipsSmoothingYN) override
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;

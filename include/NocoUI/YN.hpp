@@ -9,11 +9,11 @@ namespace noco
 	using RecursiveYN = YesNo<struct RecursiveYN_tag>;
 	using IsHitTargetYN = YesNo<struct IsHitTargetYN_tag>;
 	using ClippingEnabledYN = YesNo<struct ClippingEnabledYN_tag>;
-	using AppliesDisabledStateYN = YesNo<struct AppliesDisabledStateYN_tag>;
+	using ApplyDisabledStateYN = YesNo<struct ApplyDisabledStateYN_tag>;
 	using FoldedYN = YesNo<struct FoldedYN_tag>;
-	using ClearsInputYN = YesNo<struct ClearsInputYN_tag>;
+	using ClearInputYN = YesNo<struct ClearInputYN_tag>;
 	using EnabledWhileTextEditingYN = YesNo<struct EnabledWhileTextEditingYN_tag>;
-	using ClearsArrayYN = YesNo<struct ClearsArrayYN_tag>;
+	using ClearArrayYN = YesNo<struct ClearArrayYN_tag>;
 	using HitTestEnabledYN = YesNo<struct HitTestEnabledYN_tag>;
 	using AltYN = YesNo<struct AltYN_tag>;
 	using CtrlYN = YesNo<struct CtrlYN_tag>;
@@ -23,7 +23,7 @@ namespace noco
 	using RubberBandScrollEnabledYN = YesNo<struct RubberBandScrollEnabledYN_tag>;
 	using WithPaddingYN = YesNo<struct WithPaddingYN_tag>;
 	using OnlyIfDirtyYN = YesNo<struct OnlyIfDirtyYN_tag>;
-	using SkipsSmoothingYN = YesNo<struct SkipsSmoothingYN_tag>;
+	using SkipSmoothingYN = YesNo<struct SkipSmoothingYN_tag>;
 
 	namespace detail
 	{

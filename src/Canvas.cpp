@@ -1481,14 +1481,14 @@ namespace noco
 				}
 				
 				// 子ノードのプロパティを更新
-				child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipsSmoothingYN::No);
+				child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
 				for (const auto& component : child->m_components)
 				{
-					component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipsSmoothingYN::No);
+					component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
 				}
 				
 				// 子ノードの子孫も更新
-				child->refreshChildrenPropertiesForInteractableRecursive(effectiveInteractable, m_params, SkipsSmoothingYN::No);
+				child->refreshChildrenPropertiesForInteractableRecursive(effectiveInteractable, m_params, SkipSmoothingYN::No);
 			}
 		}
 		

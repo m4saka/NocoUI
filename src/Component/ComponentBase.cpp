@@ -3,11 +3,11 @@
 
 namespace noco
 {
-	void ComponentBase::updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing)
+	void ComponentBase::updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing)
 	{
 		for (IProperty* property : m_properties)
 		{
-			property->update(interactionState, activeStyleStates, deltaTime, params, skipsSmoothing);
+			property->update(interactionState, activeStyleStates, deltaTime, params, skipSmoothing);
 		}
 	}
 }

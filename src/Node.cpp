@@ -31,7 +31,7 @@ namespace noco
 					{
 						inheritedIsClicked = true;
 					}
-					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, AppliesDisabledStateYN::No);
+					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, ApplyDisabledStateYN::No);
 				}
 			}
 		}
@@ -74,7 +74,7 @@ namespace noco
 					{
 						inheritedIsRightClicked = true;
 					}
-					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, AppliesDisabledStateYN::No);
+					inheritedInteractionState = ApplyOtherInteractionState(inheritedInteractionState, childInteractionState, ApplyDisabledStateYN::No);
 				}
 			}
 		}
@@ -138,7 +138,7 @@ namespace noco
 		}
 	}
 
-	void Node::refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipsSmoothingYN skipsSmoothing)
+	void Node::refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipSmoothingYN skipSmoothing)
 	{
 		const auto canvas = m_canvas.lock();
 		if (!canvas)
@@ -162,17 +162,17 @@ namespace noco
 		}
 
 		// deltaTime=0でプロパティを即座に更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipsSmoothing);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipSmoothing);
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipsSmoothing);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipSmoothing);
 		}
 
 		// 自身がDisabledなら子もDisabledにする必要がある
-		refreshChildrenPropertiesForInteractableRecursive(InteractableYN{ interactableInHierarchy() }, params, skipsSmoothing);
+		refreshChildrenPropertiesForInteractableRecursive(InteractableYN{ interactableInHierarchy() }, params, skipSmoothing);
 	}
 
-	void Node::refreshChildrenPropertiesForInteractableRecursive(InteractableYN parentInteractable, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing)
+	void Node::refreshChildrenPropertiesForInteractableRecursive(InteractableYN parentInteractable, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing)
 	{
 		// 子ノードのInteractionStateとプロパティを更新
 		for (const auto& child : m_children)
@@ -196,14 +196,14 @@ namespace noco
 			}
 
 			// 子ノードのプロパティをdeltaTime=0で再更新
-			child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipsSmoothing);
+			child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipSmoothing);
 			for (const auto& component : child->m_components)
 			{
-				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipsSmoothing);
+				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipSmoothing);
 			}
 
 			// 再帰的に子ノードの子も更新
-			child->refreshChildrenPropertiesForInteractableRecursive(effectiveInteractable, params, skipsSmoothing);
+			child->refreshChildrenPropertiesForInteractableRecursive(effectiveInteractable, params, skipSmoothing);
 		}
 	}
 
@@ -894,7 +894,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children.back();
 	}
@@ -917,7 +917,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children.back();
 	}
@@ -929,7 +929,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children.back();
 	}
@@ -942,7 +942,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children.back();
 	}
@@ -954,7 +954,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.push_back(child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children.back();
 	}
@@ -971,7 +971,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return *it;
 	}
@@ -988,7 +988,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		const auto it = m_children.insert(m_children.begin() + index, child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return *it;
 	}
@@ -1017,7 +1017,7 @@ namespace noco
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
 		m_children.insert(m_children.begin() + index, child);
-		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipsSmoothingYN::Yes);
+		child->refreshPropertiesForInteractable(InteractableYN{ interactable() }, SkipSmoothingYN::Yes);
 		markLayoutAsDirty();
 		return m_children[index];
 	}
@@ -1335,9 +1335,9 @@ namespace noco
 		// パラメータ参照をもとに値を更新
 		// (activeSelf・interactable・styleStateはPropertyNonInteractiveであり、InteractionState引数とactiveStyleStates引数は不使用のため渡すのはダミーの値でよい)
 		static const Array<String> EmptyStringArray{};
-		m_activeSelf.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
-		m_interactable.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
-		m_styleState.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipsSmoothingYN::No);
+		m_activeSelf.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
+		m_interactable.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
+		m_styleState.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
 		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() &&
 			m_prevActiveSelfParamOverrideAfterUpdateNodeParams != m_activeSelf.currentFrameOverride())
 		{
@@ -1399,16 +1399,16 @@ namespace noco
 		}
 
 		// siblingIndexはステート毎の値の反映も必要であるため、他プロパティ(interactable, activeSelf)とは別でステート確定後に更新が必要
-		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 
 		// Transformのプロパティ値更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 
 		// コンポーネントのプロパティ値をdeltaTime=0で更新
 		// (コンポーネントのupdate等でのsetCurrentFrameOverrideの上書き値の反映が必要なため、実際に時間を進めるのはここではなくpostLateUpdateのタイミングで行う)
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		}
 
 		if (!m_children.empty())
@@ -1692,12 +1692,12 @@ namespace noco
 
 		// コンポーネントのupdate・lateUpdateでパラメータ値の変更があった場合用にdeltaTime=0でプロパティを再更新
 		refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
-		m_interactable.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
-		m_activeSelf.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
-		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+		m_interactable.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_activeSelf.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_siblingZOrder.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipsSmoothingYN::No);
+			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -1710,7 +1710,7 @@ namespace noco
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		// deltaTime=0でプロパティを即座に更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipsSmoothingYN::No);
+		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		
 		const Vec2& scale = m_transform.scale().value();
 		const Vec2& pivot = m_transform.pivot().value();
@@ -2365,8 +2365,8 @@ namespace noco
 		{
 			// 初回のLateUpdate完了までの間であればスムージングをスキップ
 			// (ノード生成後にsetInteractable(false)を呼んだ場合に、初回のDefault→Disabledのスムージングが入らないようにするため)
-			const SkipsSmoothingYN skipsSmoothing{ !HasFlag(m_firstActiveLifecycleCompletedFlags, FirstActiveLifecycleCompletedFlags::LateUpdate) };
-			refreshPropertiesForInteractable(effectiveInteractable, skipsSmoothing);
+			const SkipSmoothingYN skipSmoothing{ !HasFlag(m_firstActiveLifecycleCompletedFlags, FirstActiveLifecycleCompletedFlags::LateUpdate) };
+			refreshPropertiesForInteractable(effectiveInteractable, skipSmoothing);
 		}
 		
 		return shared_from_this();
@@ -3011,27 +3011,27 @@ namespace noco
 		return shared_from_this();
 	}
 
-	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput)
 	{
-		addClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+		addClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearInput);
 		return shared_from_this();
 	}
 
-	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput)
 	{
-		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::Click, enabledWhileTextEditing, clearsInput);
+		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::Click, enabledWhileTextEditing, clearInput);
 		return shared_from_this();
 	}
 
-	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput)
 	{
-		addRightClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearsInput);
+		addRightClickHotKey(input, CtrlYN::No, AltYN::No, ShiftYN::No, enabledWhileTextEditing, clearInput);
 		return shared_from_this();
 	}
 
-	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput)
+	std::shared_ptr<Node> Node::addRightClickHotKey(const Input& input, CtrlYN ctrl, AltYN alt, ShiftYN shift, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput)
 	{
-		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::RightClick, enabledWhileTextEditing, clearsInput);
+		emplaceComponent<HotKeyInputHandler>(input, ctrl, alt, shift, HotKeyTarget::RightClick, enabledWhileTextEditing, clearInput);
 		return shared_from_this();
 	}
 

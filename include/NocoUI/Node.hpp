@@ -109,9 +109,9 @@ namespace noco
 
 		void refreshActiveInHierarchy();
 
-		void refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipsSmoothingYN skipsSmoothing);
+		void refreshPropertiesForInteractable(InteractableYN effectiveInteractable, SkipSmoothingYN skipSmoothing);
 
-		void refreshChildrenPropertiesForInteractableRecursive(InteractableYN interactable, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing);
+		void refreshChildrenPropertiesForInteractableRecursive(InteractableYN interactable, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 
 		void setCanvasRecursive(const std::weak_ptr<Canvas>& canvas);
 
@@ -284,7 +284,7 @@ namespace noco
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template<class Fty>
-		void findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearsArrayYN clearsArray = ClearsArrayYN::Yes)
+		void findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearArrayYN clearArray = ClearArrayYN::Yes)
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class TComponent>
@@ -627,13 +627,13 @@ namespace noco
 
 		std::shared_ptr<Node> addOnRightClick(std::function<void()> onRightClick);
 
-		std::shared_ptr<Node> addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput = ClearInputYN::Yes);
 
-		std::shared_ptr<Node> addClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearInputYN clearInput = ClearInputYN::Yes);
 
-		std::shared_ptr<Node> addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addRightClickHotKey(const Input& input, EnabledWhileTextEditingYN enabledWhileTextEditing, ClearInputYN clearInput = ClearInputYN::Yes);
 
-		std::shared_ptr<Node> addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearsInputYN clearsInput = ClearsInputYN::Yes);
+		std::shared_ptr<Node> addRightClickHotKey(const Input& input, CtrlYN ctrl = CtrlYN::No, AltYN alt = AltYN::No, ShiftYN shift = ShiftYN::No, EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No, ClearInputYN clearInput = ClearInputYN::Yes);
 
 		void refreshContainedCanvasLayoutImmediately(OnlyIfDirtyYN onlyIfDirty = OnlyIfDirtyYN::Yes);
 		
@@ -758,12 +758,12 @@ namespace noco
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		Array<std::weak_ptr<Node>> result;
-		findAll(std::forward<Fty>(predicate), &result, ClearsArrayYN::Yes);
+		findAll(std::forward<Fty>(predicate), &result, ClearArrayYN::Yes);
 		return result;
 	}
 
 	template <class Fty>
-	void Node::findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearsArrayYN clearsArray)
+	void Node::findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearArrayYN clearArray)
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		if (pResults == nullptr)
@@ -771,7 +771,7 @@ namespace noco
 			throw Error{ U"Node::findAll: pResults is nullptr" };
 		}
 
-		if (clearsArray)
+		if (clearArray)
 		{
 			pResults->clear();
 		}
@@ -785,7 +785,7 @@ namespace noco
 		// 子ノードを再帰的に検索
 		for (const auto& child : m_children)
 		{
-			child->findAll(predicate, pResults, ClearsArrayYN::No);
+			child->findAll(predicate, pResults, ClearArrayYN::No);
 		}
 	}
 

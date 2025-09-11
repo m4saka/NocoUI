@@ -58,7 +58,7 @@ namespace noco
 		{
 		}
 
-		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing);
+		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 
 		[[nodiscard]]
 		const Array<IProperty*>& properties() const

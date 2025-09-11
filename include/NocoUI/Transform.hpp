@@ -74,7 +74,7 @@ namespace noco
 
 		void setColor(const PropertyValue<ColorF>& color);
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipsSmoothingYN skipsSmoothing);
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 
 		[[nodiscard]]
 		JSON toJSON() const;

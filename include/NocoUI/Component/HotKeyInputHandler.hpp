@@ -21,7 +21,7 @@ namespace noco
 		ShiftYN m_shift;
 		HotKeyTarget m_target;
 		EnabledWhileTextEditingYN m_enabledWhileTextEditing;
-		ClearsInputYN m_clearsInput;
+		ClearInputYN m_clearInput;
 
 		[[nodiscard]]
 		bool getModifiersPressed() const
@@ -49,7 +49,7 @@ namespace noco
 			ShiftYN shift = ShiftYN::No,
 			HotKeyTarget target = HotKeyTarget::Click,
 			EnabledWhileTextEditingYN enabledWhileTextEditing = EnabledWhileTextEditingYN::No,
-			ClearsInputYN clearsInput = ClearsInputYN::Yes)
+			ClearInputYN clearInput = ClearInputYN::Yes)
 			: ComponentBase{ {} }
 			, m_input{ input }
 			, m_ctrl{ ctrl }
@@ -57,7 +57,7 @@ namespace noco
 			, m_shift{ shift }
 			, m_target{ target }
 			, m_enabledWhileTextEditing{ enabledWhileTextEditing }
-			, m_clearsInput{ clearsInput }
+			, m_clearInput{ clearInput }
 		{
 		}
 
@@ -75,7 +75,7 @@ namespace noco
 			if (m_target == HotKeyTarget::Click && inputDown && modifiersPressed)
 			{
 				node->requestClick();
-				if (m_clearsInput)
+				if (m_clearInput)
 				{
 					m_input.clearInput();
 				}
@@ -84,7 +84,7 @@ namespace noco
 			if (m_target == HotKeyTarget::RightClick && inputDown && modifiersPressed)
 			{
 				node->requestRightClick();
-				if (m_clearsInput)
+				if (m_clearInput)
 				{
 					m_input.clearInput();
 				}

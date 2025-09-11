@@ -61,7 +61,7 @@ namespace noco
 		}
 		
 
-		void update(InteractionState, const Array<String>&, double, const HashTable<String, ParamValue>&, SkipsSmoothingYN) override
+		void update(InteractionState, const Array<String>&, double, const HashTable<String, ParamValue>&, SkipSmoothingYN) override
 		{
 			// エディタ専用型なのでupdate処理は不要
 		}
