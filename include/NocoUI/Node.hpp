@@ -29,7 +29,8 @@ namespace noco
 		friend class Canvas;
 
 	private:
-		static inline uint64 s_nextInstanceId = 1;
+		// ライブラリレベルでのマルチスレッド対応はしないが、atomicにはしておく
+		static inline std::atomic<uint64> s_nextInstanceId = 1;
 		uint64 m_instanceId;
 		String m_name;
 		RegionVariant m_region;

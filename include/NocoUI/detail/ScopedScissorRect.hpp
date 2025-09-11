@@ -6,7 +6,8 @@ namespace noco::detail
 	class ScopedScissorRect
 	{
 	private:
-		static inline size_t s_nestLevel = 0;
+		// ライブラリレベルでのマルチスレッド対応はしないが、atomicにはしておく
+		static inline std::atomic<size_t> s_nestLevel = 0;
 		Rect m_prevScissorRect;
 		ScopedRenderStates2D m_renderStates;
 
