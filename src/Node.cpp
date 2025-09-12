@@ -1367,7 +1367,7 @@ namespace noco
 		}
 	}
 
-	void Node::updateInteractionState(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
+	void Node::updateNodeStates(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
 	{
 		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
@@ -1417,7 +1417,7 @@ namespace noco
 			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateInteractionState(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
+				child->updateNodeStates(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
 			}
 		}
 	}
