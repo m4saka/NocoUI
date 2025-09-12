@@ -742,10 +742,11 @@ namespace noco
 		// パラメータによるactiveSelf変更でレイアウトが変わる場合のためにここでも更新
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
+		// ステートを確定(deltaTimeはここではなくlateUpdate後の呼び出しで適用)
 		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
 		for (const auto& child : m_children)
 		{
-			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
+			child->updateInteractionState(hoveredNode, 0.0, m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
 		}
 
 		// updateKeyInput・update・lateUpdate中のaddChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
@@ -761,12 +762,6 @@ namespace noco
 			(*it)->updateKeyInput();
 		}
 		
-		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
-		for (const auto& child : m_children)
-		{
-			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
-		}
-		
 		// update・lateUpdate・postLateUpdateはzOrderに関係なく順番に実行(そのため元の順番で上書きが必要)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
 		const Mat3x2 rootMat = rootPosScaleMat();
@@ -779,6 +774,14 @@ namespace noco
 		{
 			child->lateUpdate();
 		}
+
+		// update内でstyleStateがsetCurrentFrameOverrideで上書きされた場合用にステート更新はlateUpdate後に改めて実行(deltaTime適用)
+		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
+		for (const auto& child : m_children)
+		{
+			child->updateInteractionState(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
+		}
+
 		for (const auto& child : m_tempChildrenBuffer)
 		{
 			child->postLateUpdate(Scene::DeltaTime(), rootMat, rootMat, m_params);
