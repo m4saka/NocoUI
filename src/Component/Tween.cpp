@@ -155,6 +155,13 @@ namespace noco
 			time = m_elapsedTime;
 		}
 		
+		// loopDurationが設定されている場合、その周期でループ
+		const double loopDuration = m_loopDuration.value();
+		if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
+		{
+			time = Math::Fmod(time, loopDuration);
+		}
+		
 		// delay時間中の処理
 		if (time < m_delay.value())
 		{
@@ -216,9 +223,9 @@ namespace noco
 		
 		double rawProgress = animationTime / duration;
 		
-		// ループ処理
+		// ループ処理（loopDurationが設定されていない場合のみ）
 		const auto loopType = m_loopType.value();
-		if (loopType != TweenLoopType::None && rawProgress >= 1.0)
+		if (loopDuration <= 0.0 && loopType != TweenLoopType::None && rawProgress >= 1.0)
 		{
 			if (loopType == TweenLoopType::Loop)
 			{
@@ -240,6 +247,11 @@ namespace noco
 				
 				m_loopCount = cycle;
 			}
+		}
+		// loopDurationが設定されている場合は、アニメーション終了後も最終値を維持
+		else if (loopDuration > 0.0 && rawProgress > 1.0)
+		{
+			rawProgress = 1.0;
 		}
 
 		// イージング適用

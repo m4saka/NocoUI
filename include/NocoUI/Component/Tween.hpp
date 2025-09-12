@@ -77,6 +77,7 @@ namespace noco
 		PropertyNonInteractive<double> m_duration;
 		PropertyNonInteractive<double> m_delay;
 		PropertyNonInteractive<TweenLoopType> m_loopType;
+		PropertyNonInteractive<double> m_loopDuration;
 		PropertyNonInteractive<bool> m_restartOnActive;
 		PropertyNonInteractive<bool> m_applyDuringDelay;
 		Property<bool> m_isManual;
@@ -106,7 +107,7 @@ namespace noco
 				&m_fromVec2, &m_toVec2, 
 				&m_fromDouble, &m_toDouble,
 				&m_fromColor, &m_toColor,
-				&m_easing, &m_duration, &m_delay, &m_loopType, &m_restartOnActive,
+				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
 				&m_applyDuringDelay, &m_isManual, &m_manualTime
 			} }
 			, m_active{ U"active", active }
@@ -121,6 +122,7 @@ namespace noco
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", 0.0 }
 			, m_loopType{ U"loopType", TweenLoopType::None }
+			, m_loopDuration{ U"loopDuration", 0.0 }
 			, m_restartOnActive{ U"restartOnActive", true }
 			, m_applyDuringDelay{ U"applyDuringDelay", false }
 			, m_isManual{ U"isManual", false }
@@ -272,6 +274,18 @@ namespace noco
 		std::shared_ptr<Tween> setLoopType(TweenLoopType loopType)
 		{
 			m_loopType.setValue(loopType);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double loopDuration() const
+		{
+			return m_loopDuration.value();
+		}
+
+		std::shared_ptr<Tween> setLoopDuration(double loopDuration)
+		{
+			m_loopDuration.setValue(loopDuration);
 			return shared_from_this();
 		}
 

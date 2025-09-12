@@ -1046,6 +1046,11 @@ namespace noco::editor
 			.tooltip = U"ループの種類",
 			.tooltipDetail = U"None: ループなし\nLoop: 通常ループ\nPingPong: 往復ループ\n手動モードでも有効です",
 		};
+		metadata[PropertyKey{ U"Tween", U"loopDuration" }] = PropertyMetadata{
+			.tooltip = U"ループ周期(秒)",
+			.tooltipDetail = U"ループの周期を指定します\n0の場合: durationのみでループ(delayは初回のみ)\n0より大きい値: delayを含めて指定した時間でループ\n複数のTweenを組み合わせた一連のアニメーションをループさせる際に活用できます",
+			.dragValueChangeStep = 0.1,
+		};
 		const auto tweenRestartsVisibilityCondition = [](const ComponentBase& component) -> bool
 		{
 			if (const auto* tween = dynamic_cast<const Tween*>(&component))
