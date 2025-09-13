@@ -1323,6 +1323,7 @@ void Main()
 {
 	noco::detail::SetEditorMode(true);
 
+	Window::SetTitle(U"NocoEditor v{}"_fmt(NocoUIVersion));
 	Window::SetStyle(WindowStyle::Sizable);
 	Window::Resize(1280, 720);
 
