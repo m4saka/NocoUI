@@ -1373,11 +1373,6 @@ namespace noco
 
 		const auto thisNode = shared_from_this();
 
-		m_prevClickRequested = m_clickRequested;
-		m_prevRightClickRequested = m_rightClickRequested;
-		m_clickRequested = false;
-		m_rightClickRequested = false;
-
 		// interactionStateを確定
 		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
 		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
@@ -1705,6 +1700,11 @@ namespace noco
 		{
 			child->postLateUpdate(deltaTime, m_transformMatInHierarchy, m_hitTestMatInHierarchy, params);
 		}
+
+		m_prevClickRequested = m_clickRequested;
+		m_prevRightClickRequested = m_rightClickRequested;
+		m_clickRequested = false;
+		m_rightClickRequested = false;
 	}
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
