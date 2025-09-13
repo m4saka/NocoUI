@@ -1022,6 +1022,7 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Toggle", U"value" }] = PropertyMetadata{
 			.tooltip = U"トグルの値",
 			.tooltipDetail = U"現在のオン/オフ状態を表します\n※現在のvalueの値に応じて要素のstyleStateが\"on\"/\"off\"へ上書きされます",
+			.refreshesEveryFrame = true,
 		};
 		metadata[PropertyKey{ U"Toggle", U"tag" }] = PropertyMetadata{
 			.tooltip = U"タグ",

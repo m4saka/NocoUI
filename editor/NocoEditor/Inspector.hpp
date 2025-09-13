@@ -828,10 +828,10 @@ namespace noco::editor
 		}
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
+		std::shared_ptr<Node> createBoolPropertyNodeWithTooltip(StringView componentName, StringView propertyName, bool currentValue, std::function<void(bool)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, std::function<bool()> fnGetValue = nullptr)
 		{
 			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
-			
+
 			// メタデータをチェックして表示名を取得
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 			{
@@ -841,9 +841,9 @@ namespace noco::editor
 					displayName = *metadata.displayName;
 				}
 			}
-			
-			const auto propertyNode = CreateBoolPropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef);
-			
+
+			const auto propertyNode = CreateBoolPropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, std::move(fnGetValue));
+
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
 			{
@@ -854,7 +854,7 @@ namespace noco::editor
 					propertyNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 				}
 			}
-			
+
 			return propertyNode;
 		}
 
@@ -2277,7 +2277,8 @@ namespace noco::editor
 			bool useParentHoverState = false,
 			std::weak_ptr<Label> propertyLabelWeak = {},
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
+			HasParameterRefYN hasParamRef = HasParameterRefYN::No,
+			std::function<bool()> fnGetValue = nullptr)
 		{
 			auto checkboxNode = Node::Create(
 				U"Checkbox",
@@ -2305,7 +2306,8 @@ namespace noco::editor
 				useParentHoverState,
 				propertyLabelWeak,
 				hasInteractivePropertyValue,
-				hasParamRef));
+				hasParamRef,
+				std::move(fnGetValue)));
 
 			return checkboxNode;
 		}
@@ -2316,7 +2318,8 @@ namespace noco::editor
 			bool currentValue,
 			std::function<void(bool)> fnSetValue,
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
+			HasParameterRefYN hasParameterRef = HasParameterRefYN::No,
+			std::function<bool()> fnGetValue = nullptr)
 		{
 			auto propertyNode = Node::Create(
 				name,
@@ -2371,7 +2374,8 @@ namespace noco::editor
 				true,
 				std::weak_ptr<Label>{ boolPropLabel },
 				hasInteractivePropertyValue,
-				hasParameterRef);
+				hasParameterRef,
+				fnGetValue);
 			checkboxNode->setRegion(
 				AnchorRegion
 				{
@@ -4658,9 +4662,10 @@ namespace noco::editor
 				case PropertyEditType::Bool:
 					{
 						std::function<void(bool)> onChange = [property](bool value) { property->trySetPropertyValueString(Format(value)); };
-						
+
 						// メタデータに基づいて変更時の処理を設定
 						const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
+						std::function<bool()> fnGetValue = nullptr;
 						if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
 						{
 							const auto& metadata = it->second;
@@ -4672,8 +4677,13 @@ namespace noco::editor
 									refreshInspector();
 								};
 							}
+							// refreshesEveryFrameがtrueの場合のみfnGetValueを設定
+							if (metadata.refreshesEveryFrame)
+							{
+								fnGetValue = [property]() -> bool { return ParseOr<bool>(property->propertyValueStringOfDefault(), false); };
+							}
 						}
-						
+
 						propertyNode = componentNode->addChild(
 							createBoolPropertyNodeWithTooltip(
 								component->type(),
@@ -4681,7 +4691,8 @@ namespace noco::editor
 								ParseOr<bool>(property->propertyValueStringOfDefault(), false),
 								onChange,
 								HasInteractivePropertyValueYN{ property->hasInteractivePropertyValue() },
-								HasParameterRefYN{ !property->paramRef().isEmpty() }));
+								HasParameterRefYN{ !property->paramRef().isEmpty() },
+								fnGetValue));
 					}
 					break;
 				case PropertyEditType::Vec2:
