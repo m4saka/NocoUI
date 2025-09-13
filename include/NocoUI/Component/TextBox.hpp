@@ -145,7 +145,7 @@ namespace noco
 		void onDeactivated(const std::shared_ptr<Node>& node) override;
 
 		[[nodiscard]]
-		StringView text() const override
+		const String& text() const override
 		{
 			return m_text.value();
 		}

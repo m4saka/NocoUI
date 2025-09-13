@@ -16,6 +16,6 @@ namespace noco
 		virtual bool isChanged() const = 0;
 
 		[[nodiscard]]
-		virtual StringView text() const = 0;
+		virtual const String& text() const = 0;
 	};
 }
