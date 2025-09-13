@@ -584,7 +584,7 @@ public:
 	{
 		m_canvas->draw();
 		constexpr double Thickness = 2.0;
-		m_canvas->quad().drawFrame(0.0, Thickness, ColorF{ 1.0 });
+		m_canvas->quad().drawFrame(0.0, Thickness, Color{ 255, 255, 255 });
 		m_hierarchy.drawSelectedNodesGizmo();
 		m_editorCanvas->draw();
 		m_editorOverlayCanvas->draw();
@@ -1341,7 +1341,7 @@ void Main()
 	
 	editor.recordInitialHistoryState();
 
-	Scene::SetBackground(ColorF{ 0.2, 0.2, 0.3 });
+	Scene::SetBackground(Color{ 51, 51, 77 });
 
 #ifdef MONITOR_FPS
 	Graphics::SetVSyncEnabled(false);

@@ -14,13 +14,13 @@ namespace noco
 		PropertyNonInteractive<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
-		SmoothProperty<ColorF> m_color;
+		SmoothProperty<Color> m_color;
 		SmoothProperty<Vec2> m_horizontalPadding;
 		SmoothProperty<Vec2> m_verticalPadding;
 		Property<HorizontalAlign> m_horizontalAlign;
 		Property<VerticalAlign> m_verticalAlign;
-		SmoothProperty<ColorF> m_cursorColor;
-		SmoothProperty<ColorF> m_selectionColor;
+		SmoothProperty<Color> m_cursorColor;
+		SmoothProperty<Color> m_selectionColor;
 		Property<bool> m_readOnly;
 		PropertyNonInteractive<String> m_tag;
 
@@ -115,13 +115,13 @@ namespace noco
 		explicit TextBox(
 			const PropertyValue<String>& fontAssetName = U"",
 			const PropertyValue<double>& fontSize = 24.0,
-			const PropertyValue<ColorF>& color = Palette::Black,
+			const PropertyValue<Color>& color = Palette::Black,
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Left,
 			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Middle,
-			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
-			const PropertyValue<ColorF>& selectionColor = ColorF{ 0.0, 0.1, 0.3, 0.5 })
+			const Optional<PropertyValue<Color>>& cursorColor = unspecified,
+			const PropertyValue<Color>& selectionColor = Color{ 0, 26, 77, 128 })
 			: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_horizontalAlign, &m_verticalAlign, &m_readOnly, &m_tag } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
@@ -179,12 +179,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& color() const
+		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
 		}
 
-		std::shared_ptr<TextBox> setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<TextBox> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
 			return shared_from_this();
@@ -215,24 +215,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& cursorColor() const
+		const PropertyValue<Color>& cursorColor() const
 		{
 			return m_cursorColor.propertyValue();
 		}
 
-		std::shared_ptr<TextBox> setCursorColor(const PropertyValue<ColorF>& cursorColor)
+		std::shared_ptr<TextBox> setCursorColor(const PropertyValue<Color>& cursorColor)
 		{
 			m_cursorColor.setPropertyValue(cursorColor);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& selectionColor() const
+		const PropertyValue<Color>& selectionColor() const
 		{
 			return m_selectionColor.propertyValue();
 		}
 
-		std::shared_ptr<TextBox> setSelectionColor(const PropertyValue<ColorF>& selectionColor)
+		std::shared_ptr<TextBox> setSelectionColor(const PropertyValue<Color>& selectionColor)
 		{
 			m_selectionColor.setPropertyValue(selectionColor);
 			return shared_from_this();

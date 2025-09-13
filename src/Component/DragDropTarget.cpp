@@ -45,7 +45,7 @@ namespace noco
 			}
 			else
 			{
-				node.regionRect().draw(ColorF{ Palette::White, 0.3 });
+				node.regionRect().draw(Color{ 255, 255, 255, 76 });
 			}
 		}
 	}

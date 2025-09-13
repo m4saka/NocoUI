@@ -16,27 +16,27 @@ namespace noco
 	{
 	private:
 		Property<RectFillGradationType> m_fillGradationType;
-		SmoothProperty<ColorF> m_fillColor;
-		SmoothProperty<ColorF> m_fillGradationColor1;
-		SmoothProperty<ColorF> m_fillGradationColor2;
+		SmoothProperty<Color> m_fillColor;
+		SmoothProperty<Color> m_fillGradationColor1;
+		SmoothProperty<Color> m_fillGradationColor2;
 		Property<BlendMode> m_blendMode;
-		SmoothProperty<ColorF> m_outlineColor;
+		SmoothProperty<Color> m_outlineColor;
 		SmoothProperty<double> m_outlineThicknessInner;
 		SmoothProperty<double> m_outlineThicknessOuter;
 		SmoothProperty<double> m_cornerRadius;
-		SmoothProperty<ColorF> m_shadowColor;
+		SmoothProperty<Color> m_shadowColor;
 		SmoothProperty<Vec2> m_shadowOffset;
 		SmoothProperty<double> m_shadowBlur;
 		SmoothProperty<double> m_shadowSpread;
 
 	public:
 		explicit RectRenderer(
-			const PropertyValue<ColorF>& fillColor = Palette::White,
-			const PropertyValue<ColorF>& outlineColor = Palette::Black,
+			const PropertyValue<Color>& fillColor = Palette::White,
+			const PropertyValue<Color>& outlineColor = Palette::Black,
 			const PropertyValue<double>& outlineThicknessInner = 0.0,
 			const PropertyValue<double>& outlineThicknessOuter = 0.0,
 			const PropertyValue<double>& cornerRadius = 0.0,
-			const PropertyValue<ColorF>& shadowColor = ColorF{ 0.0, 0.0 },
+			const PropertyValue<Color>& shadowColor = Color{ 0, 0, 0, 0 },
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
 			const PropertyValue<double>& shadowSpread = 0.0)
@@ -72,42 +72,42 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& fillColor() const
+		const PropertyValue<Color>& fillColor() const
 		{
 			return m_fillColor.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setFillColor(const PropertyValue<ColorF>& fillColor)
+		std::shared_ptr<RectRenderer> setFillColor(const PropertyValue<Color>& fillColor)
 		{
 			m_fillColor.setPropertyValue(fillColor);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& fillGradationColor1() const
+		const PropertyValue<Color>& fillGradationColor1() const
 		{
 			return m_fillGradationColor1.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setFillGradationColor1(const PropertyValue<ColorF>& fillGradationColor1)
+		std::shared_ptr<RectRenderer> setFillGradationColor1(const PropertyValue<Color>& fillGradationColor1)
 		{
 			m_fillGradationColor1.setPropertyValue(fillGradationColor1);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& fillGradationColor2() const
+		const PropertyValue<Color>& fillGradationColor2() const
 		{
 			return m_fillGradationColor2.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setFillGradationColor2(const PropertyValue<ColorF>& fillGradationColor2)
+		std::shared_ptr<RectRenderer> setFillGradationColor2(const PropertyValue<Color>& fillGradationColor2)
 		{
 			m_fillGradationColor2.setPropertyValue(fillGradationColor2);
 			return shared_from_this();
 		}
 
-		std::shared_ptr<RectRenderer> setFillGradationColors(const PropertyValue<ColorF>& color1, const PropertyValue<ColorF>& color2)
+		std::shared_ptr<RectRenderer> setFillGradationColors(const PropertyValue<Color>& color1, const PropertyValue<Color>& color2)
 		{
 			m_fillGradationColor1.setPropertyValue(color1);
 			m_fillGradationColor2.setPropertyValue(color2);
@@ -127,12 +127,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& outlineColor() const
+		const PropertyValue<Color>& outlineColor() const
 		{
 			return m_outlineColor.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setOutlineColor(const PropertyValue<ColorF>& outlineColor)
+		std::shared_ptr<RectRenderer> setOutlineColor(const PropertyValue<Color>& outlineColor)
 		{
 			m_outlineColor.setPropertyValue(outlineColor);
 			return shared_from_this();
@@ -175,12 +175,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& shadowColor() const
+		const PropertyValue<Color>& shadowColor() const
 		{
 			return m_shadowColor.propertyValue();
 		}
 
-		std::shared_ptr<RectRenderer> setShadowColor(const PropertyValue<ColorF>& shadowColor)
+		std::shared_ptr<RectRenderer> setShadowColor(const PropertyValue<Color>& shadowColor)
 		{
 			m_shadowColor.setPropertyValue(shadowColor);
 			return shared_from_this();

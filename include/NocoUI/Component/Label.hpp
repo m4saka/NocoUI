@@ -24,7 +24,7 @@ namespace noco
 		Property<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
-		SmoothProperty<ColorF> m_color;
+		SmoothProperty<Color> m_color;
 		Property<LabelSizingMode> m_sizingMode;
 		SmoothProperty<double> m_minFontSize;
 		Property<HorizontalAlign> m_horizontalAlign;
@@ -34,12 +34,12 @@ namespace noco
 		Property<VerticalOverflow> m_verticalOverflow;
 		SmoothProperty<Vec2> m_characterSpacing;
 		Property<LabelUnderlineStyle> m_underlineStyle;
-		SmoothProperty<ColorF> m_underlineColor;
+		SmoothProperty<Color> m_underlineColor;
 		SmoothProperty<double> m_underlineThickness;
-		SmoothProperty<ColorF> m_outlineColor;
+		SmoothProperty<Color> m_outlineColor;
 		SmoothProperty<double> m_outlineFactorInner;
 		SmoothProperty<double> m_outlineFactorOuter;
-		SmoothProperty<ColorF> m_shadowColor;
+		SmoothProperty<Color> m_shadowColor;
 		SmoothProperty<Vec2> m_shadowOffset;
 
 		/* NonSerialized */ Optional<Font> m_fontOpt;
@@ -120,7 +120,7 @@ namespace noco
 			const PropertyValue<String>& text = U"",
 			const PropertyValue<String>& fontAssetName = U"",
 			const PropertyValue<double>& fontSize = 24.0,
-			const PropertyValue<ColorF>& color = Palette::White,
+			const PropertyValue<Color>& color = Palette::White,
 			const PropertyValue<HorizontalAlign>& horizontalAlign = HorizontalAlign::Center,
 			const PropertyValue<VerticalAlign>& verticalAlign = VerticalAlign::Middle,
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
@@ -128,7 +128,7 @@ namespace noco
 			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
 			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<LabelUnderlineStyle>& underlineStyle = LabelUnderlineStyle::None,
-			const PropertyValue<ColorF>& underlineColor = Palette::White,
+			const PropertyValue<Color>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
 			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
 			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
@@ -150,7 +150,7 @@ namespace noco
 			, m_outlineColor{ U"outlineColor", Palette::Black }
 			, m_outlineFactorInner{ U"outlineFactorInner", 0.0 }
 			, m_outlineFactorOuter{ U"outlineFactorOuter", 0.0 }
-			, m_shadowColor{ U"shadowColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_shadowColor{ U"shadowColor", Color{ 0, 0, 0, 0 } }
 			, m_shadowOffset{ U"shadowOffset", Vec2{ 1.0, 1.0 } }
 		{
 		}
@@ -198,12 +198,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& color() const
+		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
 		}
 
-		std::shared_ptr<Label> setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<Label> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
 			return shared_from_this();
@@ -318,12 +318,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& underlineColor() const
+		const PropertyValue<Color>& underlineColor() const
 		{
 			return m_underlineColor.propertyValue();
 		}
 
-		std::shared_ptr<Label> setUnderlineColor(const PropertyValue<ColorF>& underlineColor)
+		std::shared_ptr<Label> setUnderlineColor(const PropertyValue<Color>& underlineColor)
 		{
 			m_underlineColor.setPropertyValue(underlineColor);
 			return shared_from_this();
@@ -356,12 +356,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& outlineColor() const
+		const PropertyValue<Color>& outlineColor() const
 		{
 			return m_outlineColor.propertyValue();
 		}
 
-		std::shared_ptr<Label> setOutlineColor(const PropertyValue<ColorF>& outlineColor)
+		std::shared_ptr<Label> setOutlineColor(const PropertyValue<Color>& outlineColor)
 		{
 			m_outlineColor.setPropertyValue(outlineColor);
 			return shared_from_this();
@@ -392,12 +392,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& shadowColor() const
+		const PropertyValue<Color>& shadowColor() const
 		{
 			return m_shadowColor.propertyValue();
 		}
 
-		std::shared_ptr<Label> setShadowColor(const PropertyValue<ColorF>& shadowColor)
+		std::shared_ptr<Label> setShadowColor(const PropertyValue<Color>& shadowColor)
 		{
 			m_shadowColor.setPropertyValue(shadowColor);
 			return shared_from_this();

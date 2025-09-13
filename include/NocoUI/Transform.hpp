@@ -16,7 +16,7 @@ namespace noco
 		SmoothProperty<Vec2> m_pivot;
 		SmoothProperty<double> m_rotation;
 		Property<bool> m_hitTestAffected;
-		SmoothProperty<ColorF> m_color;
+		SmoothProperty<Color> m_color;
 
 	public:
 		Transform(
@@ -24,7 +24,7 @@ namespace noco
 			const PropertyValue<Vec2>& scale = Vec2::One(),
 			const PropertyValue<Vec2>& pivot = Anchor::MiddleCenter,
 			const PropertyValue<double>& rotation = 0.0,
-			const PropertyValue<ColorF>& color = ColorF{ 1.0 });
+			const PropertyValue<Color>& color = Palette::White);
 
 		[[nodiscard]]
 		const SmoothProperty<Vec2>& translate() const;
@@ -67,12 +67,12 @@ namespace noco
 		void setHitTestAffected(const PropertyValue<bool>& value);
 
 		[[nodiscard]]
-		const SmoothProperty<ColorF>& color() const;
+		const SmoothProperty<Color>& color() const;
 
 		[[nodiscard]]
-		SmoothProperty<ColorF>& color();
+		SmoothProperty<Color>& color();
 
-		void setColor(const PropertyValue<ColorF>& color);
+		void setColor(const PropertyValue<Color>& color);
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 

@@ -36,7 +36,7 @@ namespace noco
 			PropertyValue<bool>,
 			PropertyValue<double>,
 			PropertyValue<String>,
-			PropertyValue<ColorF>,
+			PropertyValue<Color>,
 			PropertyValue<Vec2>,
 			PropertyValue<LRTB>
 		>;
@@ -140,7 +140,7 @@ namespace noco
 				break;
 				
 			case PropertyEditType::Color:
-				m_propertyValue = PropertyValue<ColorF>::fromJSON(valueJson, ColorF{});
+				m_propertyValue = PropertyValue<Color>::fromJSON(valueJson, Color{});
 				break;
 				
 			case PropertyEditType::LRTB:
@@ -316,7 +316,7 @@ namespace noco
 			case PropertyEditType::Vec2:
 				return PropertyValue<Vec2>{ Vec2::Zero() };
 			case PropertyEditType::Color:
-				return PropertyValue<ColorF>{ ColorF{} };
+				return PropertyValue<Color>{ Color{} };
 			case PropertyEditType::LRTB:
 				return PropertyValue<LRTB>{ LRTB::Zero() };
 			}

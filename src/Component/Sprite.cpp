@@ -149,7 +149,7 @@ namespace noco
 		}
 	}
 
-	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const ColorF& color) const
+	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Color& color) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
 		const Size textureSize = texture.size();
@@ -363,8 +363,8 @@ namespace noco
 		}
 		
 		const RectF rect = node.regionRect();
-		const ColorF& color = m_color.value();
-		const ColorF& addColorValue = m_addColor.value();
+		const Color& color = m_color.value();
+		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		const TextureRegionMode textureRegionModeValue = m_textureRegionMode.value();
 		
@@ -573,7 +573,7 @@ namespace noco
 		}
 	}
 
-	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const ColorF& color) const
+	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Color& color) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
 		

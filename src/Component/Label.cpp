@@ -285,15 +285,15 @@ namespace noco
 			const ColorF colorMul{ Graphics2D::GetColorMul() };
 			if (hasOutline && hasShadow)
 			{
-				textStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, m_outlineColor.value() * colorMul, m_shadowOffset.value(), m_shadowColor.value() * colorMul);
+				textStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, ColorF{ m_outlineColor.value() } * colorMul, m_shadowOffset.value(), ColorF{ m_shadowColor.value() } * colorMul);
 			}
 			else if (hasOutline)
 			{
-				textStyle = TextStyle::Outline(outlineFactorInner, outlineFactorOuter, m_outlineColor.value() * colorMul);
+				textStyle = TextStyle::Outline(outlineFactorInner, outlineFactorOuter, ColorF{ m_outlineColor.value() } * colorMul);
 			}
 			else if (hasShadow)
 			{
-				textStyle = TextStyle::Shadow(m_shadowOffset.value(), m_shadowColor.value() * colorMul);
+				textStyle = TextStyle::Shadow(m_shadowOffset.value(), ColorF{ m_shadowColor.value() } * colorMul);
 			}
 		}
 

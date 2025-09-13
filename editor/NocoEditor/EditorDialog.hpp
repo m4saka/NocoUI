@@ -326,8 +326,8 @@ namespace noco::editor
 					.margin = LRTB{ 16, 16, 8, 16 },
 				});
 			m_textBoxNode->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
@@ -456,8 +456,8 @@ namespace noco::editor
 					.flexibleWeight = 1,
 				});
 			m_styleStateComboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
@@ -492,8 +492,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{60, 26},
 				});
 			addButton->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
@@ -513,8 +513,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{60, 26},
 				});
 			m_removeButton->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withDisabled(ColorF{ 0.05, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withDisabled(ColorF{ 1.0, 0.2 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withDisabled(ColorF{ 0.05, 0.8 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withDisabled(ColorF{ 1.0, 0.2 }).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
@@ -660,7 +660,7 @@ namespace noco::editor
 			case PropertyEditType::Color:
 				if (const auto colorPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<ColorPropertyTextBox>(RecursiveYN::Yes))
 				{
-					colorPropertyTextBox->setValue(StringToValueOpt<ColorF>(value).value_or(ColorF{}));
+					colorPropertyTextBox->setValue(StringToValueOpt<Color>(value).value_or(Color{}));
 				}
 				else
 				{

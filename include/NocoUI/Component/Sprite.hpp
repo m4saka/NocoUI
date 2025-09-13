@@ -11,8 +11,8 @@ namespace noco
 	private:
 		Property<String> m_textureFilePath;
 		Property<String> m_textureAssetName;
-		SmoothProperty<ColorF> m_color;
-		SmoothProperty<ColorF> m_addColor;
+		SmoothProperty<Color> m_color;
+		SmoothProperty<Color> m_addColor;
 		Property<BlendMode> m_blendMode;
 		Property<bool> m_preserveAspect;
 		Property<bool> m_nineSliceEnabled;
@@ -46,16 +46,16 @@ namespace noco
 		/* NonSerialized */ bool m_gridAnimationFinished = false;
 		/* NonSerialized */ Vec2 m_currentOffsetAnimation = Vec2::Zero();
 
-		void drawNineSlice(const Texture& texture, const RectF& rect, const ColorF& color) const;
-		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const ColorF& color) const;
+		void drawNineSlice(const Texture& texture, const RectF& rect, const Color& color) const;
+		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Color& color) const;
 
 	public:
-		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
+		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<Color>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
 			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_textureAddressMode } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
-			, m_addColor{ U"addColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_addColor{ U"addColor", Color{ 0, 0, 0, 0 } }
 			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }
 			, m_nineSliceEnabled{ U"nineSliceEnabled", false }
@@ -114,24 +114,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& color() const
+		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
 		}
 
-		std::shared_ptr<Sprite> setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<Sprite> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& addColor() const
+		const PropertyValue<Color>& addColor() const
 		{
 			return m_addColor.propertyValue();
 		}
 
-		std::shared_ptr<Sprite> setAddColor(const PropertyValue<ColorF>& addColor)
+		std::shared_ptr<Sprite> setAddColor(const PropertyValue<Color>& addColor)
 		{
 			m_addColor.setPropertyValue(addColor);
 			return shared_from_this();

@@ -548,13 +548,15 @@ namespace noco
 			(setParamValue(params.first, params.second), ...);
 		}
 		
-		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int32, double, const char32_t*, String, ColorF, Vec2, LRTB>>> params)
+		void setParamValues(std::initializer_list<std::pair<const char32_t*, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
 		{
 			for (const auto& [name, value] : params)
 			{
-				std::visit([this, n = String{name}](const auto& v) {
+				std::visit([this, n = String{ name }](const auto& v) {
 					if constexpr (std::is_same_v<std::decay_t<decltype(v)>, const char32_t*>)
-						setParamValue(n, String{v});
+						setParamValue(n, String{ v });
+					else if constexpr (std::is_same_v<std::decay_t<decltype(v)>, ColorF>)
+						setParamValue(n, Color{ v });  // ColorFをColorに変換
 					else
 						setParamValue(n, v);
 				}, value);

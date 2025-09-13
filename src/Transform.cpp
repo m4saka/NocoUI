@@ -7,7 +7,7 @@ namespace noco
 		const PropertyValue<Vec2>& scale,
 		const PropertyValue<Vec2>& pivot,
 		const PropertyValue<double>& rotation,
-		const PropertyValue<ColorF>& color)
+		const PropertyValue<Color>& color)
 		: m_translate{ U"translate", translate }
 		, m_scale{ U"scale", scale }
 		, m_pivot{ U"pivot", pivot }
@@ -92,17 +92,17 @@ namespace noco
 		m_hitTestAffected.setPropertyValue(value);
 	}
 
-	const SmoothProperty<ColorF>& Transform::color() const
+	const SmoothProperty<Color>& Transform::color() const
 	{
 		return m_color;
 	}
 
-	SmoothProperty<ColorF>& Transform::color()
+	SmoothProperty<Color>& Transform::color()
 	{
 		return m_color;
 	}
 
-	void Transform::setColor(const PropertyValue<ColorF>& color)
+	void Transform::setColor(const PropertyValue<Color>& color)
 	{
 		m_color.setPropertyValue(color);
 	}

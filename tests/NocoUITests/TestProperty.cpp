@@ -50,14 +50,14 @@ TEST_CASE("SmoothProperty smoothTime behavior", "[Property]")
 {
 	SECTION("Zero smoothTime acts like immediate change")
 	{
-		noco::SmoothProperty<ColorF> smoothColor{ U"color", ColorF{1,0,0} };
+		noco::SmoothProperty<Color> smoothColor{ U"color", Color{1,0,0} };
 		
-		noco::PropertyValue<ColorF> targetValue = noco::PropertyValue<ColorF>{ ColorF{0,1,0} }.withSmoothTime(0.0);
+		noco::PropertyValue<Color> targetValue = noco::PropertyValue<Color>{ Color{0,1,0} }.withSmoothTime(0.0);
 		smoothColor.setPropertyValue(targetValue);
 		
 		// smoothTime=0なら即座に変わる
 		smoothColor.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
-		REQUIRE(smoothColor.value() == ColorF{0,1,0});
+		REQUIRE(smoothColor.value() == Color{0,1,0});
 	}
 	
 	SECTION("Different smoothTime affects transition speed")
@@ -83,19 +83,19 @@ TEST_CASE("Property parameter reference", "[Property][Param]")
 {
 	SECTION("SmoothProperty parameter binding")
 	{
-		noco::SmoothProperty<ColorF> colorProperty{ U"color", ColorF{1,0,0} };
+		noco::SmoothProperty<Color> colorProperty{ U"color", Color{1,0,0} };
 		colorProperty.setParamRef(U"themeColor");
 		
 		HashTable<String, noco::ParamValue> params;
-		params[U"themeColor"] = noco::MakeParamValue(ColorF{0,1,0});
+		params[U"themeColor"] = noco::MakeParamValue(Color{0,1,0});
 		
 		// パラメータ参照により値が変わる
 		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
-		REQUIRE(colorProperty.value() == ColorF{0,1,0});
+		REQUIRE(colorProperty.value() == Color{0,1,0});
 		
-		params[U"themeColor"] = noco::MakeParamValue(ColorF{0,0,1});
+		params[U"themeColor"] = noco::MakeParamValue(Color{0,0,1});
 		colorProperty.update(noco::InteractionState::Default, {}, 0.016, params, noco::SkipSmoothingYN::No);
-		REQUIRE(colorProperty.value() == ColorF{0,0,1});
+		REQUIRE(colorProperty.value() == Color{0,0,1});
 	}
 	
 	SECTION("Property parameter binding")

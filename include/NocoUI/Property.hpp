@@ -72,7 +72,7 @@ namespace noco
 		{
 			return PropertyEditType::Vec2;
 		}
-		else if constexpr (std::same_as<T, ColorF>)
+		else if constexpr (std::same_as<T, Color> || std::same_as<T, ColorF>)
 		{
 			return PropertyEditType::Color;
 		}
@@ -935,6 +935,268 @@ namespace noco
 		{
 			// PropertyNonInteractiveはstyleStateをサポートしない
 			return {};
+		}
+	};
+
+	// SmoothProperty<Color>の特殊化
+	// 内部的にColorFで補間計算を行い、外部インターフェースはColorで統一
+	template <>
+	class SmoothProperty<Color> : public IProperty
+	{
+	private:
+		const char32_t* m_name;
+		PropertyValue<Color> m_propertyValue;
+		String m_paramRef;
+		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
+		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Smoothing<ColorF> m_smoothing;  // ColorFで補間
+		/*NonSerialized*/ Optional<Color> m_currentFrameOverride;
+		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+
+	public:
+		SmoothProperty(const char32_t* name, const PropertyValue<Color>& propertyValue)
+			: m_name{ name }
+			, m_propertyValue{ propertyValue }
+			, m_smoothing{ ColorF{ propertyValue.value(InteractionState::Default, Array<String>{}) } }
+		{
+		}
+
+		template <class U>
+		SmoothProperty(const char32_t* name, const U& defaultValue) requires std::convertible_to<U, Color>
+			: m_name{ name }
+			, m_propertyValue{ defaultValue }
+			, m_smoothing{ ColorF{ Color{ defaultValue } } }
+		{
+		}
+
+		[[nodiscard]]
+		StringView name() const override
+		{
+			return m_name;
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& propertyValue() const
+		{
+			return m_propertyValue;
+		}
+
+		[[nodiscard]]
+		const Color& propertyValue(InteractionState interactionState, const Array<String>& activeStyleStates) const
+		{
+			return m_propertyValue.value(interactionState, activeStyleStates);
+		}
+
+		void setPropertyValue(const PropertyValue<Color>& propertyValue)
+		{
+			m_propertyValue = propertyValue;
+			if (m_propertyValue.smoothTime() <= 0.0)
+			{
+				m_smoothing.setCurrentValue(ColorF{ m_propertyValue.value(m_interactionState, m_activeStyleStates) });
+			}
+		}
+
+		[[nodiscard]]
+		const String& paramRef() const override
+		{
+			return m_paramRef;
+		}
+
+		void setParamRef(const String& paramRef) override
+		{
+			m_paramRef = paramRef;
+		}
+
+		[[nodiscard]]
+		bool hasParamRef() const override
+		{
+			return !m_paramRef.isEmpty();
+		}
+
+		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
+		{
+			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			{
+				clearedParams.insert(m_paramRef);
+				m_paramRef = U"";
+			}
+		}
+
+		[[nodiscard]]
+		Color value() const
+		{
+			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			{
+				return *m_currentFrameOverride;
+			}
+			return Color{ m_smoothing.currentValue() };  // ColorF→Color変換
+		}
+
+		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
+		{
+			m_interactionState = interactionState;
+			m_activeStyleStates = activeStyleStates;
+
+			// パラメータ参照処理
+			if (!m_paramRef.isEmpty())
+			{
+				if (auto it = params.find(m_paramRef); it != params.end())
+				{
+					if (auto val = GetParamValueAs<Color>(it->second))
+					{
+						setCurrentFrameOverride(*val);
+					}
+				}
+			}
+
+			const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
+			const ColorF targetColorF{ targetColor };
+
+			if (skipSmoothing)
+			{
+				m_smoothing.setCurrentValue(targetColorF);
+			}
+			else
+			{
+				m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
+			}
+		}
+
+		const Optional<Color>& currentFrameOverride() const
+		{
+			static const Optional<Color> NoneValue = none;
+			if (!hasCurrentFrameOverride())
+			{
+				return NoneValue;
+			}
+			return m_currentFrameOverride;
+		}
+
+		void setCurrentFrameOverride(const Color& value)
+		{
+			m_currentFrameOverride = value;
+			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+		}
+
+		[[nodiscard]]
+		bool hasCurrentFrameOverride() const
+		{
+			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
+		}
+
+		void clearCurrentFrameOverride() override
+		{
+			m_currentFrameOverride = none;
+		}
+
+		void appendJSON(JSON& json) const override
+		{
+			json[m_name] = m_propertyValue.toJSON();
+			if (!m_paramRef.isEmpty())
+			{
+				json[String{ m_name } + U"_paramRef"] = m_paramRef;
+			}
+		}
+
+		void readFromJSON(const JSON& json) override
+		{
+			if (!json.contains(m_name))
+			{
+				return;
+			}
+			m_propertyValue = PropertyValue<Color>::fromJSON(json[m_name]);
+			m_smoothing = Smoothing<ColorF>{ ColorF{ m_propertyValue.value(InteractionState::Default, Array<String>{}) } };
+
+			const String paramRefKey = String{ m_name } + U"_paramRef";
+			if (json.contains(paramRefKey))
+			{
+				m_paramRef = json[paramRefKey].getString();
+			}
+		}
+
+		String propertyValueStringOfDefault() const override
+		{
+			return m_propertyValue.getValueStringOfDefault();
+		}
+
+		Optional<String> propertyValueStringOf(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		{
+			return m_propertyValue.getValueStringOf(interactionState, activeStyleStates);
+		}
+
+		String propertyValueStringOfFallback(InteractionState interactionState, const Array<String>& activeStyleStates) const override
+		{
+			return m_propertyValue.getValueStringOfFallback(interactionState, activeStyleStates);
+		}
+
+		bool trySetPropertyValueString(StringView value) override
+		{
+			return m_propertyValue.trySetValueString(value);
+		}
+
+		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
+		{
+			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
+		}
+
+		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
+		{
+			m_propertyValue.unsetValueOf(interactionState, styleState);
+		}
+
+		bool hasPropertyValueOf(InteractionState interactionState, StringView styleState = U"") const override
+		{
+			return m_propertyValue.hasValueOf(interactionState, styleState);
+		}
+
+		PropertyEditType editType() const override
+		{
+			return PropertyEditType::Color;
+		}
+
+		bool isInteractiveProperty() const override
+		{
+			return true;
+		}
+
+		bool hasInteractivePropertyValue() const override
+		{
+			return m_propertyValue.hasInteractiveValue();
+		}
+
+		bool isSmoothProperty() const override
+		{
+			return true;
+		}
+
+		double smoothTime() const override
+		{
+			return m_propertyValue.smoothTime();
+		}
+
+		bool trySetSmoothTime(double smoothTime) override
+		{
+			m_propertyValue.setSmoothTime(smoothTime);
+			return true;
+		}
+
+		Array<String> styleStateKeys() const override
+		{
+			Array<String> result;
+
+			// styleStateValuesから収集
+			if (m_propertyValue.styleStateValues())
+			{
+				for (const auto& [state, value] : *m_propertyValue.styleStateValues())
+				{
+					if (!result.contains(state))
+					{
+						result.push_back(state);
+					}
+				}
+			}
+
+			return result;
 		}
 	};
 }

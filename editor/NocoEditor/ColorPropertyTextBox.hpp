@@ -12,8 +12,8 @@ namespace noco::editor
 		std::shared_ptr<TextBox> m_textBoxB;
 		std::shared_ptr<TextBox> m_textBoxA;
 		std::shared_ptr<RectRenderer> m_previewRect;
-		std::function<void(const ColorF&)> m_fnOnValueChanged;
-		ColorF m_value;
+		std::function<void(const Color&)> m_fnOnValueChanged;
+		Color m_value;
 		std::weak_ptr<Label> m_propertyLabelWeak;
 		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
 		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
@@ -25,8 +25,8 @@ namespace noco::editor
 			const std::shared_ptr<TextBox>& b,
 			const std::shared_ptr<TextBox>& a,
 			const std::shared_ptr<RectRenderer>& previewRect,
-			std::function<void(const ColorF&)> fnOnValueChanged,
-			const ColorF& initialValue,
+			std::function<void(const Color&)> fnOnValueChanged,
+			const Color& initialValue,
 			std::weak_ptr<Label> propertyLabelWeak = {},
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
 			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
@@ -46,12 +46,12 @@ namespace noco::editor
 
 		void update(const std::shared_ptr<Node>&) override
 		{
-			const double r = Clamp(ParseOpt<double>(m_textBoxR->text()).value_or(m_value.r), 0.0, 1.0);
-			const double g = Clamp(ParseOpt<double>(m_textBoxG->text()).value_or(m_value.g), 0.0, 1.0);
-			const double b = Clamp(ParseOpt<double>(m_textBoxB->text()).value_or(m_value.b), 0.0, 1.0);
-			const double a = Clamp(ParseOpt<double>(m_textBoxA->text()).value_or(m_value.a), 0.0, 1.0);
+			const int32 r = Clamp(ParseOpt<int32>(m_textBoxR->text()).value_or(m_value.r), 0, 255);
+			const int32 g = Clamp(ParseOpt<int32>(m_textBoxG->text()).value_or(m_value.g), 0, 255);
+			const int32 b = Clamp(ParseOpt<int32>(m_textBoxB->text()).value_or(m_value.b), 0, 255);
+			const int32 a = Clamp(ParseOpt<int32>(m_textBoxA->text()).value_or(m_value.a), 0, 255);
 
-			const ColorF newColor{ r, g, b, a };
+			const Color newColor{ static_cast<uint8>(r), static_cast<uint8>(g), static_cast<uint8>(b), static_cast<uint8>(a) };
 			if (newColor != m_value)
 			{
 				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
@@ -74,10 +74,10 @@ namespace noco::editor
 			}
 		}
 
-		void setValue(const ColorF& value, bool callsOnValueChanged = false)
+		void setValue(const Color& value, bool callsOnValueChanged = false)
 		{
 			m_value = value;
-			
+
 			m_textBoxR->setText(Format(value.r));
 			m_textBoxG->setText(Format(value.g));
 			m_textBoxB->setText(Format(value.b));
@@ -90,7 +90,7 @@ namespace noco::editor
 			}
 		}
 
-		const ColorF& value() const
+		const Color& value() const
 		{
 			return m_value;
 		}

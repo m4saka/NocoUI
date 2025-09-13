@@ -182,8 +182,8 @@ namespace noco
 		const auto region = node.regionRect();
 		const auto center = region.center();
 		
-		const ColorF& fillColor = m_fillColor.value();
-		const ColorF& outlineColor = m_outlineColor.value();
+		const Color& fillColor = m_fillColor.value();
+		const Color& outlineColor = m_outlineColor.value();
 		const double outlineThickness = m_outlineThickness.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		

@@ -33,9 +33,9 @@ namespace noco::editor
 	using MenuElement = std::variant<MenuItem, CheckableMenuItem, MenuSeparator>;
 
 	[[nodiscard]]
-	static PropertyValue<ColorF> MenuItemRectFillColor()
+	static PropertyValue<Color> MenuItemRectFillColor()
 	{
-		return PropertyValue<ColorF>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
+		return PropertyValue<Color>{ ColorF{ 0.8, 0.0 }, ColorF{ 0.8 }, ColorF{ 0.8 }, ColorF{ 0.8, 0.0 }, 0.05 };
 	}
 
 	class ContextMenu
@@ -120,10 +120,10 @@ namespace noco::editor
 						IsHitTargetYN::Yes,
 						InheritChildrenStateFlags::None);
 					itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-					const auto label = itemNode->emplaceComponent<Label>(pItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+					const auto label = itemNode->emplaceComponent<Label>(pItem->text, U"", 14, PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 					if (!pItem->hotKeyText.empty())
 					{
-						itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+						itemNode->emplaceComponent<Label>(pItem->hotKeyText, U"", 14, PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
 					}
 					if (pItem->mnemonicInput.has_value())
 					{
@@ -155,10 +155,10 @@ namespace noco::editor
 						IsHitTargetYN::Yes,
 						InheritChildrenStateFlags::None);
 					itemNode->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
-					const auto label = itemNode->emplaceComponent<Label>(pCheckableItem->text, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
+					const auto label = itemNode->emplaceComponent<Label>(pCheckableItem->text, U"", 14, PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Left, VerticalAlign::Middle, LRTB{ 30, 10, 0, 0 });
 					if (!pCheckableItem->hotKeyText.empty())
 					{
-						itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
+						itemNode->emplaceComponent<Label>(pCheckableItem->hotKeyText, U"", 14, PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }), HorizontalAlign::Right, VerticalAlign::Middle, LRTB{ 0, 10, 0, 0 });
 					}
 					if (pCheckableItem->mnemonicInput.has_value())
 					{
@@ -178,7 +178,7 @@ namespace noco::editor
 						pCheckableItem->checked ? U"✔" : U"",
 						U"",
 						14,
-						PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }),
+						PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.5 }),
 						HorizontalAlign::Left,
 						VerticalAlign::Middle,
 						LRTB{ 10, 10, 0, 0 });

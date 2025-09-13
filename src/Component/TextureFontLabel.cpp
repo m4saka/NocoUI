@@ -33,7 +33,6 @@ namespace noco
 		}
 	}
 
-
 	bool TextureFontLabel::CharacterCache::refreshIfDirty(
 		StringView text,
 		StringView characterSet,
@@ -443,8 +442,8 @@ namespace noco
 			m_cache.prevParams->characterSize = m_characterSize.value();
 		}
 
-		const ColorF& color = m_color.value();
-		const ColorF& addColorValue = m_addColor.value();
+		const Color& color = m_color.value();
+		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		const Vec2& characterSize = effectiveCharacterSize;
 		const bool preserveAspect = m_preserveAspect.value();

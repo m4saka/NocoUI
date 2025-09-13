@@ -51,7 +51,7 @@ namespace noco
 		case ParamType::String:
 			return StringToValueOr<String>(value, String{});
 		case ParamType::Color:
-			return StringToValueOr<ColorF>(value, ColorF{});
+			return StringToValueOr<Color>(value, Color{});
 		case ParamType::Vec2:
 			return StringToValueOr<Vec2>(value, Vec2{});
 		case ParamType::LRTB:

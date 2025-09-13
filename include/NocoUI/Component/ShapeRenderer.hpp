@@ -41,8 +41,8 @@ namespace noco
 		Property<int32> m_stairCount;
 		Property<bool> m_upStairs;
 		Property<int32> m_squircleQuality;
-		SmoothProperty<ColorF> m_fillColor;
-		SmoothProperty<ColorF> m_outlineColor;
+		SmoothProperty<Color> m_fillColor;
+		SmoothProperty<Color> m_outlineColor;
 		SmoothProperty<double> m_outlineThickness;
 		Property<BlendMode> m_blendMode;
 
@@ -131,8 +131,8 @@ namespace noco
 	public:
 		explicit ShapeRenderer(
 			ShapeType shapeType = ShapeType::Star,
-			const PropertyValue<ColorF>& fillColor = Palette::White,
-			const PropertyValue<ColorF>& outlineColor = Palette::Black,
+			const PropertyValue<Color>& fillColor = Palette::White,
+			const PropertyValue<Color>& outlineColor = Palette::Black,
 			const PropertyValue<double>& outlineThickness = 0.0)
 			: SerializableComponentBase{ U"ShapeRenderer", { 
 				&m_shapeType, &m_preserveAspect, &m_thickness, &m_sides, &m_points, &m_innerRatio,
@@ -332,24 +332,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& fillColor() const
+		const PropertyValue<Color>& fillColor() const
 		{
 			return m_fillColor.propertyValue();
 		}
 
-		std::shared_ptr<ShapeRenderer> setFillColor(const PropertyValue<ColorF>& fillColor)
+		std::shared_ptr<ShapeRenderer> setFillColor(const PropertyValue<Color>& fillColor)
 		{
 			m_fillColor.setPropertyValue(fillColor);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& outlineColor() const
+		const PropertyValue<Color>& outlineColor() const
 		{
 			return m_outlineColor.propertyValue();
 		}
 
-		std::shared_ptr<ShapeRenderer> setOutlineColor(const PropertyValue<ColorF>& outlineColor)
+		std::shared_ptr<ShapeRenderer> setOutlineColor(const PropertyValue<Color>& outlineColor)
 		{
 			m_outlineColor.setPropertyValue(outlineColor);
 			return shared_from_this();

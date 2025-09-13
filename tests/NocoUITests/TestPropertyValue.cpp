@@ -11,10 +11,10 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 	SECTION("Regular interaction states serialization")
 	{
 		// interactionStateのシリアライズテスト
-		noco::PropertyValue<ColorF> colorProp = noco::PropertyValue<ColorF>{ ColorF{ 1.0, 0.0, 0.0, 1.0 } } // 赤（default）
-			.withHovered(ColorF{ 0.0, 1.0, 0.0, 1.0 }) // 緑（hovered）
-			.withPressed(ColorF{ 0.0, 0.0, 1.0, 1.0 }) // 青（pressed）
-			.withDisabled(ColorF{ 0.5, 0.5, 0.5, 1.0 }) // グレー（disabled）
+		noco::PropertyValue<Color> colorProp = noco::PropertyValue<Color>{ Color{ 255, 0, 0, 255 } } // 赤（default）
+			.withHovered(Color{ 0, 255, 0, 255 }) // 緑（hovered）
+			.withPressed(Color{ 0, 0, 255, 255 }) // 青（pressed）
+			.withDisabled(Color{ 128, 128, 128, 255 }) // グレー（disabled）
 			.withSmoothTime(0.3);
 		
 		// JSONへシリアライズ
@@ -29,16 +29,16 @@ TEST_CASE("PropertyValue JSON serialization", "[PropertyValue][Serialization]")
 		REQUIRE(json.contains(U"smoothTime"));
 		
 		// デシリアライズして値が正しく復元されることを確認
-		auto deserializedProp = noco::PropertyValue<ColorF>::fromJSON(json);
+		auto deserializedProp = noco::PropertyValue<Color>::fromJSON(json);
 		s3d::Array<s3d::String> emptyActiveStyleStates;
 		
-		REQUIRE(deserializedProp.defaultValue() == ColorF{ 1.0, 0.0, 0.0, 1.0 });
+		REQUIRE(deserializedProp.defaultValue() == Color{ 255, 0, 0, 255 });
 		REQUIRE(deserializedProp.hoveredValue().has_value());
-		REQUIRE(*deserializedProp.hoveredValue() == ColorF{ 0.0, 1.0, 0.0, 1.0 });
+		REQUIRE(*deserializedProp.hoveredValue() == Color{ 0, 255, 0, 255 });
 		REQUIRE(deserializedProp.pressedValue().has_value());
-		REQUIRE(*deserializedProp.pressedValue() == ColorF{ 0.0, 0.0, 1.0, 1.0 });
+		REQUIRE(*deserializedProp.pressedValue() == Color{ 0, 0, 255, 255 });
 		REQUIRE(deserializedProp.disabledValue().has_value());
-		REQUIRE(*deserializedProp.disabledValue() == ColorF{ 0.5, 0.5, 0.5, 1.0 });
+		REQUIRE(*deserializedProp.disabledValue() == Color{ 128, 128, 128, 255 });
 		REQUIRE(deserializedProp.smoothTime() == 0.3);
 	}
 	

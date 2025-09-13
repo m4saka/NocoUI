@@ -557,16 +557,16 @@ TEST_CASE("Component type checking from JSON", "[Component]")
 		json[U"fillColor"] = 123;  // 数値（文字列形式のColorFであるべき）
 		
 		auto rect = std::make_shared<noco::RectRenderer>(Palette::White);
-		REQUIRE(rect->fillColor().defaultValue().r == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue().g == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue().b == 1.0f);
-		REQUIRE(rect->fillColor().defaultValue().a == 1.0f);
+		REQUIRE(rect->fillColor().defaultValue().r == 255);
+		REQUIRE(rect->fillColor().defaultValue().g == 255);
+		REQUIRE(rect->fillColor().defaultValue().b == 255);
+		REQUIRE(rect->fillColor().defaultValue().a == 255);
 		
 		rect->tryReadFromJSON(json);
-		// fillColorが数値で与えられた場合、ColorF{}（0,0,0,0）で初期化される
-		REQUIRE(rect->fillColor().defaultValue().r == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue().g == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue().b == 0.0f);
-		REQUIRE(rect->fillColor().defaultValue().a == 0.0f);
+		// fillColorが数値で与えられた場合、Color{}（0,0,0,0）で初期化される
+		REQUIRE(rect->fillColor().defaultValue().r == 0);
+		REQUIRE(rect->fillColor().defaultValue().g == 0);
+		REQUIRE(rect->fillColor().defaultValue().b == 0);
+		REQUIRE(rect->fillColor().defaultValue().a == 0);
 	}
 }

@@ -170,20 +170,20 @@ namespace noco::editor
 			case PropertyEditType::Color:
 				if (defaultJson.isString())
 				{
-					if (auto opt = StringToValueOpt<ColorF>(defaultJson.getString()))
+					if (auto opt = StringToValueOpt<Color>(defaultJson.getString()))
 					{
 						prop.defaultValue = *opt;
 					}
 					else
 					{
 						Logger << U"[NocoUI warning] Invalid color value: {}, using default: (0, 0, 0, 0)"_fmt(defaultJson.getString());
-						prop.defaultValue = ColorF{};
+						prop.defaultValue = Color{};
 					}
 				}
 				else
 				{
 					Logger << U"[NocoUI warning] defaultValue for Color type must be string, using default: (0, 0, 0, 0)";
-					prop.defaultValue = ColorF{};
+					prop.defaultValue = Color{};
 				}
 				break;
 				

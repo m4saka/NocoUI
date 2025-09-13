@@ -177,7 +177,6 @@ namespace noco
 		return m_cache.getCursorIndex(drawOffsetX, m_scrollOffset, posX);
 	}
 
-
 	bool TextBox::hasSelection() const
 	{
 		return (m_cursorIndex != m_selectionAnchor);
@@ -796,7 +795,7 @@ namespace noco
 				for (size_t index = m_scrollOffset; index < m_cache.glyphs.size(); ++index)
 				{
 					const auto& glyph = m_cache.glyphs[index];
-					const ColorF& color = m_color.value();
+					const Color& color = m_color.value();
 					glyph.texture.scaled(m_cache.scale).draw(pos + glyph.getOffset(m_cache.scale), color);
 					pos.x += glyph.xAdvance * m_cache.scale;
 				}
@@ -830,7 +829,7 @@ namespace noco
 				// 領域を塗りつぶし
 				{
 					const RectF editingRect = RectF{ editingOffset, m_editingCache.regionSize };
-					editingRect.draw(ColorF{ 0.0, 0.6 });
+					editingRect.draw(Color{ 0, 0, 0, 153 });
 				}
 
 				// 各文字を描画

@@ -7,7 +7,7 @@
 namespace noco
 {
 	// パラメータ値の型定義
-	using ParamValue = std::variant<bool, double, String, ColorF, Vec2, LRTB>;
+	using ParamValue = std::variant<bool, double, String, Color, Vec2, LRTB>;
 	
 	// UI表示用の型列挙
 	enum class ParamType : uint8
@@ -16,7 +16,7 @@ namespace noco
 		Bool,
 		Number,  // 数値は全てdouble型で保持
 		String,
-		Color,   // 色は全てColorF型で保持
+		Color,   // 色は全てColor型で保持
 		Vec2,
 		LRTB,
 	};
@@ -63,7 +63,7 @@ namespace noco
 				{
 					return ParamType::String;
 				}
-				else if constexpr (std::is_same_v<T, ColorF>)
+				else if constexpr (std::is_same_v<T, Color>)
 				{
 					return ParamType::Color;
 				}
@@ -98,7 +98,7 @@ namespace noco
 		{
 			return ParamType::String;
 		}
-		else if constexpr (std::is_same_v<T, Color> || std::is_same_v<T, ColorF>)
+		else if constexpr (std::is_same_v<T, Color>)
 		{
 			return ParamType::Color;
 		}
@@ -122,10 +122,9 @@ namespace noco
 	{
 		return std::is_same_v<T, bool> ||
 			std::is_same_v<T, String> ||
-			std::is_same_v<T, ColorF> ||
+			std::is_same_v<T, Color> ||
 			std::is_same_v<T, Vec2> ||
 			std::is_same_v<T, LRTB> ||
-			std::is_same_v<T, Color> ||
 			std::is_arithmetic_v<T> ||
 			std::is_enum_v<T>;
 	}
@@ -138,10 +137,7 @@ namespace noco
 		{
 			return static_cast<double>(value); // 全ての数値型はdoubleとして保持
 		}
-		else if constexpr (std::is_same_v<T, Color>)
-		{
-			return ColorF{ value }; // ColorはColorFとして保持
-		}
+		// Colorは直接保持するため変換不要
 		else if constexpr (std::is_same_v<T, const char32_t*>)
 		{
 			return String{ value }; // 文字列リテラル
@@ -173,14 +169,7 @@ namespace noco
 				return static_cast<T>(*ptr);
 			}
 		}
-		else if constexpr (std::is_same_v<T, Color>)
-		{
-			// ColorはColorFで保持している
-			if (auto* ptr = std::get_if<ColorF>(&value))
-			{
-				return Color{ *ptr };
-			}
-		}
+		// Colorは直接保持しているため変換不要
 		else if constexpr (std::is_enum_v<T>)
 		{
 			// enum型の場合、String型パラメータからenum値に変換
@@ -226,7 +215,7 @@ namespace noco
 		case ParamType::String:
 			return ParamValue{ str };
 		case ParamType::Color:
-			if (auto opt = StringToValueOpt<ColorF>(str))
+			if (auto opt = StringToValueOpt<Color>(str))
 			{
 				return ParamValue{ *opt };
 			}
@@ -272,9 +261,9 @@ namespace noco
 			{
 				json[U"value"] = v;
 			}
-			else if constexpr (std::is_same_v<T, ColorF>)
+			else if constexpr (std::is_same_v<T, Color>)
 			{
-				// ColorFは文字列形式で保存（PropertyValueと同様）
+				// Colorは文字列形式で保存（PropertyValueと同様）
 				json[U"value"] = ValueToString(v);
 			}
 			else if constexpr (std::is_same_v<T, Vec2>)
@@ -349,11 +338,11 @@ namespace noco
 		}
 		else if (typeStr == U"Color")
 		{
-			// ColorFは文字列形式で保存されている
+			// Colorは文字列形式で保存されている
 			// カラーコード文字列はSiv3D側で実装されているためデシリアライズされる
 			if (valueJson.isString())
 			{
-				if (auto opt = StringToValueOpt<ColorF>(valueJson.getString()))
+				if (auto opt = StringToValueOpt<Color>(valueJson.getString()))
 				{
 					return ParamValue{ *opt };
 				}

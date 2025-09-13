@@ -19,14 +19,14 @@ namespace noco
 		Property<String> m_text;
 		SmoothProperty<Vec2> m_characterSize;
 		Property<TextureFontLabelSizingMode> m_sizingMode;
-		SmoothProperty<ColorF> m_color;
+		SmoothProperty<Color> m_color;
 		Property<HorizontalAlign> m_horizontalAlign;
 		Property<VerticalAlign> m_verticalAlign;
 		SmoothProperty<Vec2> m_characterSpacing;
 		SmoothProperty<LRTB> m_padding;
 		Property<HorizontalOverflow> m_horizontalOverflow;
 		Property<VerticalOverflow> m_verticalOverflow;
-		SmoothProperty<ColorF> m_addColor;
+		SmoothProperty<Color> m_addColor;
 		Property<BlendMode> m_blendMode;
 		Property<bool> m_preserveAspect;
 		Property<String> m_textureFilePath;
@@ -272,7 +272,7 @@ namespace noco
 			, m_padding{ U"padding", padding }
 			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
 			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
-			, m_addColor{ U"addColor", ColorF{ 0.0, 0.0, 0.0, 0.0 } }
+			, m_addColor{ U"addColor", Color{ 0, 0, 0, 0 } }
 			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_preserveAspect{ U"preserveAspect", true }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
@@ -494,24 +494,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& color() const
+		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
 		}
 
-		std::shared_ptr<TextureFontLabel> setColor(const PropertyValue<ColorF>& color)
+		std::shared_ptr<TextureFontLabel> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const PropertyValue<ColorF>& addColor() const
+		const PropertyValue<Color>& addColor() const
 		{
 			return m_addColor.propertyValue();
 		}
 
-		std::shared_ptr<TextureFontLabel> setAddColor(const PropertyValue<ColorF>& addColor)
+		std::shared_ptr<TextureFontLabel> setAddColor(const PropertyValue<Color>& addColor)
 		{
 			m_addColor.setPropertyValue(addColor);
 			return shared_from_this();

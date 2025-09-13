@@ -67,16 +67,9 @@ TEST_CASE("Parameter values", "[Param]")
 	
 	SECTION("Color conversions")
 	{
-		// ColorとColorFの相互変換
+		// Colorのパラメータ処理
 		ParamValue colorParam = MakeParamValue(Palette::Yellow);
-		
-		// ColorFとして取得
-		auto colorF = GetParamValueAs<ColorF>(colorParam);
-		REQUIRE(colorF.has_value());
-		REQUIRE(colorF->r == Approx(1.0).epsilon(0.01));
-		REQUIRE(colorF->g == Approx(1.0).epsilon(0.01));
-		REQUIRE(colorF->b == Approx(0.0).epsilon(0.01));
-		
+
 		// Colorとして取得
 		auto color = GetParamValueAs<Color>(colorParam);
 		REQUIRE(color.has_value());
@@ -117,7 +110,7 @@ TEST_CASE("Canvas parameter management", "[Param]")
 			{U"param2", U"test"},
 			{U"param3", Vec2{10, 20}},
 			{U"param4", true},
-			{U"param5", ColorF{0.5, 0.5, 0.5}}
+			{U"param5", Color{128, 128, 128}}
 		});
 		
 		REQUIRE(canvas->paramValueOpt<int32>(U"param1").value_or(0) == 100);
@@ -127,9 +120,9 @@ TEST_CASE("Canvas parameter management", "[Param]")
 		REQUIRE(vec->x == 10);
 		REQUIRE(vec->y == 20);
 		REQUIRE(canvas->paramValueOpt<bool>(U"param4").value_or(false) == true);
-		auto color = canvas->paramValueOpt<ColorF>(U"param5");
+		auto color = canvas->paramValueOpt<Color>(U"param5");
 		REQUIRE(color.has_value());
-		REQUIRE(color->r == Approx(0.5));
+		REQUIRE(color->r == 128);
 	}
 	
 	SECTION("Remove and clear parameters")
@@ -262,7 +255,7 @@ TEST_CASE("Canvas parameter serialization", "[Param]")
 		canvas1->setParamValue(U"number", 123.45);
 		canvas1->setParamValue(U"string", U"test");
 		canvas1->setParamValue(U"vec2", Vec2{10, 20});
-		canvas1->setParamValue(U"color", ColorF{1.0, 0.5, 0.25, 1.0});
+		canvas1->setParamValue(U"color", Color{255, 128, 64, 255});
 		
 		JSON json = canvas1->toJSON();
 		
@@ -670,12 +663,12 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Color);
 		
-		auto color = GetParamValueAs<ColorF>(*result);
+		auto color = GetParamValueAs<Color>(*result);
 		REQUIRE(color.has_value());
-		REQUIRE(color->r == Approx(1.0));
-		REQUIRE(color->g == Approx(0.0));
-		REQUIRE(color->b == Approx(0.0));
-		REQUIRE(color->a == Approx(1.0));
+		REQUIRE(color->r == 255);
+		REQUIRE(color->g == 0);
+		REQUIRE(color->b == 0);
+		REQUIRE(color->a == 255);
 	}
 	
 	SECTION("Vec2 type requires string format")

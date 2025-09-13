@@ -873,7 +873,7 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		auto canvas = noco::Canvas::Create();
 		auto node = noco::Node::Create(U"TestNode");
 		auto rectRenderer = std::make_shared<noco::RectRenderer>()
-			->setFillColor(noco::PropertyValue<ColorF>{ Palette::White }
+			->setFillColor(noco::PropertyValue<Color>{ Palette::White }
 				.withDisabled(Palette::Gray));
 		node->addComponent(rectRenderer);
 		canvas->addChild(node);
@@ -888,15 +888,15 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
 		
 		// プロパティ値も即座に更新される（deltaTime=0で適用）
-		auto* fillColorProp = dynamic_cast<noco::SmoothProperty<ColorF>*>(rectRenderer->getPropertyByName(U"fillColor"));
+		auto* fillColorProp = dynamic_cast<noco::SmoothProperty<Color>*>(rectRenderer->getPropertyByName(U"fillColor"));
 		REQUIRE(fillColorProp != nullptr);
-		REQUIRE(fillColorProp->value() == ColorF{ Palette::Gray });
+		REQUIRE(fillColorProp->value() == Color{ Palette::Gray });
 		
 		// Canvasを再度enableすると子ノードもenabledになる
 		canvas->setInteractable(true);
 		REQUIRE(canvas->interactable() == true);
 		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
-		REQUIRE(fillColorProp->value() == ColorF{ Palette::White });
+		REQUIRE(fillColorProp->value() == Color{ Palette::White });
 	}
 	
 	SECTION("Canvas interactable with node hierarchy")

@@ -25,7 +25,7 @@ namespace noco::editor
 		std::shared_ptr<Label> m_typeLabel;
 		
 		String m_selectedType = U"Number";
-		std::variant<bool, double, String, ColorF, Vec2, LRTB> m_value = 0.0;
+		std::variant<bool, double, String, Color, Vec2, LRTB> m_value = 0.0;
 		
 		Optional<ParamType> m_fixedType;
 		
@@ -129,15 +129,15 @@ namespace noco::editor
 					.flexibleWeight = 1.0,
 				});
 			nameTextBoxNode->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
+				PropertyValue<Color>{ Color{ 26, 26, 26, 204 } }.withDisabled(Color{ 51, 51, 51, 204 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ Color{ 255, 255, 255, 102 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
 			m_nameTextBox = nameTextBoxNode->emplaceComponent<TextBox>(
 				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, 
 				HorizontalAlign::Left, VerticalAlign::Middle, 
-				Palette::White, ColorF{ Palette::Orange, 0.5 });
+				Palette::White, Color{ 255, 165, 0, 128 });
 			m_nameTextBox->setText(initialName);
 			nameTextBoxNode->emplaceComponent<TabStop>();
 			
@@ -179,8 +179,8 @@ namespace noco::editor
 			}
 			
 			m_typeComboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<ColorF>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<ColorF>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ Color{ 26, 26, 26, 204 } }.withDisabled(Color{ 51, 51, 51, 204 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ Color{ 255, 255, 255, 102 } }.withHovered(Color{ 255, 255, 255, 153 }).withSmoothTime(0.05),
 				1.0,
 				0.0,
 				4.0);
@@ -188,7 +188,7 @@ namespace noco::editor
 				m_selectedType,
 				U"",
 				14,
-				PropertyValue<ColorF>{ ColorF{ Palette::White } }.withDisabled(ColorF{ 0.6, 0.6, 0.6 }),
+				PropertyValue<Color>{ Palette::White }.withDisabled(Color{ 153, 153, 153 }),
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				LRTB{ 8, 25, 0, 0 });
@@ -262,7 +262,7 @@ namespace noco::editor
 			}
 			else if (type == U"Color")
 			{
-				m_value = ColorF{ 1.0, 1.0, 1.0, 1.0 };
+				m_value = Color{ 255, 255, 255, 255 };
 			}
 			else if (type == U"Vec2")
 			{
@@ -312,7 +312,7 @@ namespace noco::editor
 				}
 				else if (m_selectedType == U"Color")
 				{
-					m_canvas->setParamValue(name, std::get<ColorF>(m_value));
+					m_canvas->setParamValue(name, std::get<Color>(m_value));
 				}
 				else if (m_selectedType == U"Vec2")
 				{

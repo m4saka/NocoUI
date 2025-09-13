@@ -109,8 +109,8 @@ namespace noco::editor
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreateColorPropertyNode(
 						headingText,
-						ParseOr<ColorF>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), ColorF{}),
-						[this, interactionState, currentValueString](const ColorF& value)
+						ParseOr<Color>(m_pProperty->propertyValueStringOfFallback(interactionState, activeStyleStates), Color{}),
+						[this, interactionState, currentValueString](const Color& value)
 						{
 							const String formattedValue = Format(value);
 							if (m_pProperty->trySetPropertyValueStringOf(formattedValue, interactionState, m_currentStyleState))
@@ -217,7 +217,7 @@ namespace noco::editor
 					.sizeDelta = SizeF{ 0, 1 },
 					.margin = LRTB{ 0, 0, 0, 8 },
 				});
-			separatorNode2->emplaceComponent<RectRenderer>(ColorF{ 1.0, 0.3 });
+			separatorNode2->emplaceComponent<RectRenderer>(Color{ 255, 255, 255, 77 });
 
 			const auto propertyNode = contentRootNode->emplaceChild(
 				U"Property",

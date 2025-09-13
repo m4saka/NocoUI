@@ -55,7 +55,7 @@ namespace noco::editor
 				});
 			node->emplaceComponent<RectRenderer>(MenuItemRectFillColor());
 			const String labelText = U"{}({})"_fmt(text, mnemonicInput.name());
-			node->emplaceComponent<Label>(labelText, U"", 14, PropertyValue<ColorF>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
+			node->emplaceComponent<Label>(labelText, U"", 14, PropertyValue<Color>{ ColorF{ 0.0 } }.withDisabled(ColorF{ 0.0, 0.5 }), HorizontalAlign::Center, VerticalAlign::Middle);
 			node->addClickHotKey(mnemonicInput, CtrlYN::No, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 
 			m_menuCategories.push_back(MenuCategory

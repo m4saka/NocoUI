@@ -316,7 +316,6 @@ namespace noco
 		return { false, 0, 0 };
 	}
 
-
 	void TextArea::updateScrollOffset(const RectF& rect)
 	{
 		m_cache.refreshIfDirty(
@@ -1034,7 +1033,7 @@ namespace noco
 				// 領域を塗りつぶし
 				{
 					const RectF editingRect = RectF{ editingOffset, m_editingCache.regionSize };
-					editingRect.draw(ColorF{ 0.0, 0.6 });
+					editingRect.draw(Color{ 0, 0, 0, 153 });
 				}
 
 				// 各文字を描画

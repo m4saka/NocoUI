@@ -117,7 +117,7 @@ namespace noco::editor
 			}
 
 			[[nodiscard]]
-			static PropertyValue<ColorF> HierarchyRectFillColor(EditorSelectedYN editorSelected)
+			static PropertyValue<Color> HierarchyRectFillColor(EditorSelectedYN editorSelected)
 			{
 				if (editorSelected)
 				{
@@ -125,12 +125,12 @@ namespace noco::editor
 				}
 				else
 				{
-					return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.2 });
+					return PropertyValue<Color>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.2 });
 				}
 			}
 
 			[[nodiscard]]
-			static PropertyValue<ColorF> HierarchyRectOutlineColor(EditorSelectedYN editorSelected)
+			static PropertyValue<Color> HierarchyRectOutlineColor(EditorSelectedYN editorSelected)
 			{
 				if (editorSelected)
 				{
@@ -138,7 +138,7 @@ namespace noco::editor
 				}
 				else
 				{
-					return PropertyValue<ColorF>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.6 });
+					return PropertyValue<Color>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.6 });
 				}
 			}
 		};

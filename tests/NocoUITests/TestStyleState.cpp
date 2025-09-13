@@ -412,16 +412,16 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 {
 	SECTION("Basic styleState value resolution")
 	{
-		auto prop = noco::PropertyValue<ColorF>{ ColorF{1, 0, 0} }  // 赤がデフォルト
-			.withStyleState(U"focused", ColorF{0, 0, 1});    // 青がfocused時
+		auto prop = noco::PropertyValue<Color>{ Color{1, 0, 0} }  // 赤がデフォルト
+			.withStyleState(U"focused", Color{0, 0, 1});    // 青がfocused時
 		
 		// styleStateなしの場合はデフォルト値
 		Array<String> emptyStates;
-		REQUIRE(prop.value(noco::InteractionState::Default, emptyStates) == ColorF{1, 0, 0});
+		REQUIRE(prop.value(noco::InteractionState::Default, emptyStates) == Color{1, 0, 0});
 		
 		// focusedがactiveStyleStatesに含まれる場合
 		Array<String> focusedStates = { U"focused" };
-		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == ColorF{0, 0, 1});
+		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == Color{0, 0, 1});
 	}
 	
 	SECTION("StyleState priority (closer state wins)")
@@ -441,23 +441,23 @@ TEST_CASE("PropertyValue with StyleState", "[Property][StyleState]")
 	
 	SECTION("StyleState with InteractionState combination")
 	{
-		auto prop = noco::PropertyValue<ColorF>{ ColorF{0.5, 0.5, 0.5} }
+		auto prop = noco::PropertyValue<Color>{ Color{128, 128, 128} }
 			// 通常時のホバー色
-			.withHovered(ColorF{0.6, 0.6, 0.6})
+			.withHovered(Color{153, 153, 153})
 			// focused時のデフォルト色とホバー色
-			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, ColorF{0, 0, 1})
-			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1});
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, Color{0, 0, 255})
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, Color{51, 51, 255});
 		
 		Array<String> focusedStates = { U"focused" };
 		
 		// focused + Default
-		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == ColorF{0, 0, 1});
-		
+		REQUIRE(prop.value(noco::InteractionState::Default, focusedStates) == Color{0, 0, 255});
+
 		// focused + Hovered
-		REQUIRE(prop.value(noco::InteractionState::Hovered, focusedStates) == ColorF{0.2, 0.2, 1});
-		
+		REQUIRE(prop.value(noco::InteractionState::Hovered, focusedStates) == Color{51, 51, 255});
+
 		// focused + Pressed（定義なし → focused時のHoveredにフォールバック）
-		REQUIRE(prop.value(noco::InteractionState::Pressed, focusedStates) == ColorF{0.2, 0.2, 1});
+		REQUIRE(prop.value(noco::InteractionState::Pressed, focusedStates) == Color{51, 51, 255});
 	}
 	
 	SECTION("Complex priority resolution")
@@ -512,12 +512,12 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 	
 	SECTION("StyleState with InteractionState serialization")
 	{
-		auto prop = noco::PropertyValue<ColorF>{ ColorF{0.5, 0.5, 0.5} }
+		auto prop = noco::PropertyValue<Color>{ Color{128, 128, 128} }
 			// focusedの複数InteractionState値
-			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, ColorF{0, 0, 1})
-			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, ColorF{0.2, 0.2, 1})
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Default, Color{0, 0, 255})
+			.withStyleStateInteraction(U"focused", noco::InteractionState::Hovered, Color{51, 51, 255})
 			// checkedのdefaultのみ
-			.withStyleState(U"checked", ColorF{0, 1, 0});
+			.withStyleState(U"checked", Color{0, 255, 0});
 		
 		JSON json = prop.toJSON();
 		
@@ -525,12 +525,12 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		
 		// focusedは複数値があるのでオブジェクト形式
 		REQUIRE(styleStates[U"focused"].isObject());
-		REQUIRE(styleStates[U"focused"][U"default"].getString() == U"(0, 0, 1, 1)");
-		REQUIRE(styleStates[U"focused"][U"hovered"].getString() == U"(0.2, 0.2, 1, 1)");
+		REQUIRE(styleStates[U"focused"][U"default"].getString() == U"(0, 0, 255, 255)");
+		REQUIRE(styleStates[U"focused"][U"hovered"].getString() == U"(51, 51, 255, 255)");
 		
 		// checkedはdefaultのみなので省略記法（文字列）
 		REQUIRE(styleStates[U"checked"].isString());
-		REQUIRE(styleStates[U"checked"].getString() == U"(0, 1, 0, 1)");
+		REQUIRE(styleStates[U"checked"].getString() == U"(0, 255, 0, 255)");
 	}
 	
 	SECTION("JSON format verification")

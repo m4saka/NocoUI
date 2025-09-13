@@ -68,8 +68,8 @@ namespace noco
 
 		// Color用プロパティ
 		PropertyNonInteractive<bool> m_colorEnabled;
-		PropertyNonInteractive<ColorF> m_colorFrom;
-		PropertyNonInteractive<ColorF> m_colorTo;
+		PropertyNonInteractive<Color> m_colorFrom;
+		PropertyNonInteractive<Color> m_colorTo;
 		
 		PropertyNonInteractive<TweenEasing> m_easing;
 		PropertyNonInteractive<double> m_duration;
@@ -118,8 +118,8 @@ namespace noco
 			, m_rotationFrom{ U"rotationFrom", 0.0 }
 			, m_rotationTo{ U"rotationTo", 0.0 }
 			, m_colorEnabled{ U"colorEnabled", false }
-			, m_colorFrom{ U"colorFrom", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
-			, m_colorTo{ U"colorTo", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
+			, m_colorFrom{ U"colorFrom", Color{ 255, 255, 255, 255 } }
+			, m_colorTo{ U"colorTo", Color{ 255, 255, 255, 255 } }
 			, m_easing{ U"easing", easing }
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", 0.0 }
@@ -273,24 +273,24 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const ColorF& colorFrom() const
+		const Color& colorFrom() const
 		{
 			return m_colorFrom.value();
 		}
 
-		std::shared_ptr<Tween> setColorFrom(const ColorF& value)
+		std::shared_ptr<Tween> setColorFrom(const Color& value)
 		{
 			m_colorFrom.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const ColorF& colorTo() const
+		const Color& colorTo() const
 		{
 			return m_colorTo.value();
 		}
 
-		std::shared_ptr<Tween> setColorTo(const ColorF& value)
+		std::shared_ptr<Tween> setColorTo(const Color& value)
 		{
 			m_colorTo.setValue(value);
 			return shared_from_this();

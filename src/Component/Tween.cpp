@@ -107,9 +107,13 @@ namespace noco
 
 	void Tween::updateColor(const std::shared_ptr<Node>& node, double progress)
 	{
-		const ColorF& from = m_colorFrom.value();
-		const ColorF& to = m_colorTo.value();
-		const ColorF interpolated = from.lerp(to, progress);
+		const Color& from = m_colorFrom.value();
+		const Color& to = m_colorTo.value();
+		// ColorFに変換して補間し、結果をColorに戻す
+		const ColorF fromF{ from };
+		const ColorF toF{ to };
+		const ColorF interpolatedF = fromF.lerp(toF, progress);
+		const Color interpolated{ interpolatedF };
 
 		auto& transform = node->transform();
 		transform.color().setCurrentFrameOverride(interpolated);
