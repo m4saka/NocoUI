@@ -743,10 +743,10 @@ namespace noco
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
 		
 		// ステート(interactionStateとstyleState)を確定(deltaTimeはここではなくlateUpdate後の呼び出しで適用)
-		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
+		// updateNodeStatesは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
 		for (const auto& child : m_children)
 		{
-			child->updateNodeStates(hoveredNode, 0.0, m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
+			child->updateNodeStates(detail::UpdateInteractionStateYN::Yes, hoveredNode, 0.0, m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
 		}
 
 		// updateKeyInput・update・lateUpdate中のaddChild等によるイテレータ破壊を避けるためにバッファへ複製してから処理
@@ -756,7 +756,7 @@ namespace noco
 
 		// updateKeyInputはzOrder降順で実行(手前から奥へ)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
-		SortByZOrderInSiblings(m_tempChildrenBuffer); // zOrderInSiblingsはステート毎の値を持つためupdateInteractionStateより後にソートする必要がある点に注意
+		SortByZOrderInSiblings(m_tempChildrenBuffer); // zOrderInSiblingsはステート毎の値を持つためupdateNodeStatesより後にソートする必要がある点に注意
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
 			(*it)->updateKeyInput();
@@ -776,10 +776,11 @@ namespace noco
 		}
 
 		// update内でstyleStateがsetCurrentFrameOverrideで上書きされた場合用にステート更新はlateUpdate後に改めて実行(deltaTime適用)
-		// updateInteractionStateは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
+		// updateNodeStatesは順不同かつユーザーコードを含まないためm_childrenに対して直接実行
 		for (const auto& child : m_children)
 		{
-			child->updateNodeStates(hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
+			// InteractionStateはライフサイクルの途中では変えないためNoを指定
+			child->updateNodeStates(detail::UpdateInteractionStateYN::No, hoveredNode, Scene::DeltaTime(), m_interactable, InteractionState::Default, InteractionState::Default, isScrolling, m_params, EmptyStringArray);
 		}
 
 		for (const auto& child : m_tempChildrenBuffer)

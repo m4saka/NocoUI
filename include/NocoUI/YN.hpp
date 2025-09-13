@@ -29,5 +29,6 @@ namespace noco
 	{
 		using WithInstanceIdYN = YesNo<struct WithInstanceIdYN_tag>;
 		using UsePrevZOrderInSiblingsYN = YesNo<struct UsePrevZOrderInSiblingsYN_tag>;
+		using UpdateInteractionStateYN = YesNo<struct UpdateInteractionStateYN_tag>;
 	}
 }

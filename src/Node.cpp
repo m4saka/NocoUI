@@ -1367,20 +1367,23 @@ namespace noco
 		}
 	}
 
-	void Node::updateNodeStates(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
+	void Node::updateNodeStates(detail::UpdateInteractionStateYN updateInteractionState, const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates)
 	{
-		// updateInteractionStateはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
+		// updateNodeStatesはユーザーコードを含まずaddChildやaddComponentによるイテレータ破壊が起きないため、一時バッファは使用不要
 
 		const auto thisNode = shared_from_this();
 
 		// interactionStateを確定
-		m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
-		m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
-		if (!m_isHitTarget)
+		if (updateInteractionState)
 		{
-			// HitTargetでない場合は親のinteractionStateを引き継ぐ
-			m_currentInteractionState = ApplyOtherInteractionState(m_currentInteractionState, parentInteractionState);
-			m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
+			m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
+			m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
+			if (!m_isHitTarget)
+			{
+				// HitTargetでない場合は親のinteractionStateを引き継ぐ
+				m_currentInteractionState = ApplyOtherInteractionState(m_currentInteractionState, parentInteractionState);
+				m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
+			}
 		}
 
 		// 有効なstyleState一覧を確定(親から継承したstyleState一覧＋自身のstyleState)
@@ -1408,11 +1411,11 @@ namespace noco
 
 		if (!m_children.empty())
 		{
-			// 子ノードのupdateInteractionState実行
+			// 子ノードのupdateNodeStates実行
 			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateNodeStates(hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
+				child->updateNodeStates(updateInteractionState, hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
 			}
 		}
 	}

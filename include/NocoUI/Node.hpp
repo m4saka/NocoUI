@@ -327,7 +327,7 @@ namespace noco
 
 		void updateNodeParams(const HashTable<String, ParamValue>& params);
 
-		void updateNodeStates(const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates);
+		void updateNodeStates(detail::UpdateInteractionStateYN updateInteractionState, const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates);
 
 		void updateKeyInput();
 
