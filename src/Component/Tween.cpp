@@ -119,9 +119,7 @@ namespace noco
 	{
 		if (m_active.value() && m_restartOnActive.value())
 		{
-			m_elapsedTime = 0.0;
-			m_loopCount = 0;
-			m_isForward = true;
+			m_stopwatch.restart();
 		}
 	}
 
@@ -132,18 +130,19 @@ namespace noco
 		if (m_restartOnActive.value() && m_prevActive.has_value() && !m_prevActive.value() && currentActive)
 		{
 			// 最初から再生
-			m_elapsedTime = 0.0;
-			m_loopCount = 0;
-			m_isForward = true;
+			m_stopwatch.restart();
 		}
 		m_prevActive = currentActive;
+
+		if (!m_stopwatch.isStarted())
+		{
+			m_stopwatch.start();
+		}
 
 		if (!currentActive)
 		{
 			return;
 		}
-
-		m_elapsedTime += Scene::DeltaTime();
 
 		double time;
 		const double loopDuration = m_loopDuration.value();
@@ -159,7 +158,7 @@ namespace noco
 		}
 		else
 		{
-			time = m_elapsedTime;
+			time = m_stopwatch.sF();
 			// 自動モードでloopDurationが設定されている場合
 			if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
 			{
@@ -236,7 +235,6 @@ namespace noco
 			{
 				// 通常ループ
 				rawProgress = Math::Fmod(rawProgress, 1.0);
-				m_loopCount = static_cast<int32>(animationTime / duration);
 			}
 			else if (loopType == TweenLoopType::PingPong)
 			{
@@ -249,8 +247,6 @@ namespace noco
 				{
 					rawProgress = 1.0 - rawProgress;
 				}
-
-				m_loopCount = cycle;
 			}
 		}
 		// ループしない場合、アニメーション終了後は最終値を維持

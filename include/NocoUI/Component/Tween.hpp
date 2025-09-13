@@ -83,9 +83,7 @@ namespace noco
 		Property<bool> m_manualMode;
 		SmoothProperty<double> m_manualTime;
 
-		/* NonSerialized */ double m_elapsedTime = 0.0;
-		/* NonSerialized */ bool m_isForward = true;  // PingPong用
-		/* NonSerialized */ int32 m_loopCount = 0;
+		/* NonSerialized */ Stopwatch m_stopwatch;
 		/* NonSerialized */ Optional<bool> m_prevActive = none;
 
 		[[nodiscard]]
