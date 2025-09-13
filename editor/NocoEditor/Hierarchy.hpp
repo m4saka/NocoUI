@@ -894,7 +894,14 @@ namespace noco::editor
 				element.setEditorSelected(EditorSelectedYN::Yes);
 			}
 
-			m_lastEditorSelectedNode = m_elements.back().node();
+			if (m_elements.size() == 1)
+			{
+				m_lastEditorSelectedNode = m_elements.front().node();
+			}
+			else
+			{
+				m_lastEditorSelectedNode = std::weak_ptr<Node>{};
+			}
 			m_shiftSelectOriginNode = m_elements.front().node();
 		}
 
