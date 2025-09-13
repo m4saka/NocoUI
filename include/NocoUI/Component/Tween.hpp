@@ -113,11 +113,11 @@ namespace noco
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
 			, m_fromVec2{ U"fromVec2", Vec2::Zero() }
-			, m_toVec2{ U"toVec2", Vec2::One() }
+			, m_toVec2{ U"toVec2", Vec2::Zero() }
 			, m_fromDouble{ U"fromDouble", 0.0 }
 			, m_toDouble{ U"toDouble", 0.0 }
 			, m_fromColor{ U"fromColor", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
-			, m_toColor{ U"toColor", ColorF{ 1.0, 1.0, 1.0, 0.0 } }
+			, m_toColor{ U"toColor", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
 			, m_easing{ U"easing", easing }
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", 0.0 }
