@@ -373,7 +373,6 @@ public:
 		m_dialogContextMenu->update();
 		m_contextMenu->update();
 		m_menuBar.update();
-		m_hierarchy.update();
 		m_inspector.update();
 		
 		if (m_hierarchyResizeHandle)
@@ -566,6 +565,9 @@ public:
 		}
 
 		m_canvas->update();
+
+		// HierarchyはコンポーネントによるstyleStateの上書き値を表示するのでm_canvasより後ろでupdateが必要
+		m_hierarchy.update();
 
 		// エディタ系Canvasやスクロール可能ノードにカーソルがなければズーム操作を更新
 		if (!editorCanvasHovered && !CurrentFrame::AnyScrollableNodeHovered())
