@@ -128,7 +128,7 @@ namespace noco
 	void Tween::update(const std::shared_ptr<Node>& node)
 	{
 		const bool currentActive = m_active.value();
-		
+
 		if (m_restartOnActive.value() && m_prevActive.has_value() && !m_prevActive.value() && currentActive)
 		{
 			// 最初から再生
@@ -137,7 +137,7 @@ namespace noco
 			m_isForward = true;
 		}
 		m_prevActive = currentActive;
-		
+
 		if (!currentActive)
 		{
 			return;
@@ -146,20 +146,25 @@ namespace noco
 		m_elapsedTime += Scene::DeltaTime();
 
 		double time;
+		const double loopDuration = m_loopDuration.value();
+
 		if (m_isManual.value())
 		{
 			time = m_manualTime.value();
+			// マニュアルモードでloopDurationが設定されている場合、manualTimeを直接fmod
+			if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
+			{
+				time = Math::Fmod(time, loopDuration);
+			}
 		}
 		else
 		{
 			time = m_elapsedTime;
-		}
-		
-		// loopDurationが設定されている場合、その周期でループ
-		const double loopDuration = m_loopDuration.value();
-		if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
-		{
-			time = Math::Fmod(time, loopDuration);
+			// 自動モードでloopDurationが設定されている場合
+			if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
+			{
+				time = Math::Fmod(time, loopDuration);
+			}
 		}
 		
 		// delay時間中の処理
@@ -195,7 +200,7 @@ namespace noco
 		// アニメーション時間を計算
 		const double animationTime = time - m_delay.value();
 		const double duration = m_duration.value();
-		
+			
 		if (duration <= 0.0)
 		{
 			// durationが0以下の場合は即座に100%の値にする
@@ -222,7 +227,7 @@ namespace noco
 		}
 		
 		double rawProgress = animationTime / duration;
-		
+	
 		// ループ処理（loopDurationが設定されていない場合のみ）
 		const auto loopType = m_loopType.value();
 		if (loopDuration <= 0.0 && loopType != TweenLoopType::None && rawProgress >= 1.0)

@@ -47,6 +47,7 @@ add_executable(${TARGET_NAME}
     TestTextBox.cpp
     TestTextArea.cpp
     TestComponentFactory.cpp
+    TestTween.cpp
 )
 
 if(APPLE)
