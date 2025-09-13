@@ -717,6 +717,13 @@ namespace noco
 		// タグによるTweenコンポーネントの一括制御
 		void setTweenActiveByTag(const String& tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
 
+		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
+		[[nodiscard]]
+		Optional<String> getTextValueByTag(const String& tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+
+		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
+		void setTextValueByTag(const String& tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes);
+
 	};
 
 	template <typename TComponent>

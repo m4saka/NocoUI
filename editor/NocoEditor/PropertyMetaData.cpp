@@ -964,6 +964,10 @@ namespace noco::editor
 			.tooltip = U"読み取り専用",
 			.tooltipDetail = U"有効にすると編集不可になりますが、テキストの選択やコピーは可能です",
 		};
+		metadata[PropertyKey{ U"TextBox", U"tag" }] = PropertyMetadata{
+			.tooltip = U"タグ",
+			.tooltipDetail = U"TextBoxを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\n同じタグを持つTextBoxのテキストを取得・設定できます",
+		};
 		
 		// TextArea
 		metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
@@ -996,6 +1000,10 @@ namespace noco::editor
 		metadata[PropertyKey{ U"TextArea", U"readOnly" }] = PropertyMetadata{
 			.tooltip = U"読み取り専用",
 			.tooltipDetail = U"有効にすると編集不可になりますが、テキストの選択やコピーは可能です",
+		};
+		metadata[PropertyKey{ U"TextArea", U"tag" }] = PropertyMetadata{
+			.tooltip = U"タグ",
+			.tooltipDetail = U"TextAreaを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\n同じタグを持つTextAreaのテキストを取得・設定できます",
 		};
 		
 		// EventTrigger

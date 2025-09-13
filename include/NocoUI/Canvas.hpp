@@ -770,6 +770,13 @@ namespace noco
 	// タグによるTweenコンポーネントの一括制御
 	void setTweenActiveByTag(const String& tag, bool active);
 
+	// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
+	[[nodiscard]]
+	Optional<String> getTextValueByTag(const String& tag) const;
+
+	// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
+	void setTextValueByTag(const String& tag, StringView text);
+
 private:
 	// ノードツリー内でinstanceIdによるノード検索（再帰）
 	[[nodiscard]]

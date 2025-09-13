@@ -45,6 +45,7 @@ add_executable(${TARGET_NAME}
     TestParam.cpp
     TestParent.cpp
     TestTextBox.cpp
+    TestTextBoxTag.cpp
     TestTextArea.cpp
     TestComponentFactory.cpp
     TestTween.cpp

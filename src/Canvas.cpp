@@ -1545,4 +1545,35 @@ namespace noco
 			child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
 		}
 	}
+
+	Optional<String> Canvas::getTextValueByTag(const String& tag) const
+	{
+		if (tag.isEmpty())
+		{
+			return none;
+		}
+
+		for (const auto& child : m_children)
+		{
+			if (auto result = child->getTextValueByTag(tag, RecursiveYN::Yes))
+			{
+				return result;
+			}
+		}
+
+		return none;
+	}
+
+	void Canvas::setTextValueByTag(const String& tag, StringView text)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		for (auto& child : m_children)
+		{
+			child->setTextValueByTag(tag, text, RecursiveYN::Yes);
+		}
+	}
 }

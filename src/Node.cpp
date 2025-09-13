@@ -4,6 +4,8 @@
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Component/Component.hpp"
 #include "NocoUI/Component/Tween.hpp"
+#include "NocoUI/Component/TextBox.hpp"
+#include "NocoUI/Component/TextArea.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
@@ -3101,6 +3103,83 @@ namespace noco
 			for (const auto& child : m_children)
 			{
 				child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
+			}
+		}
+	}
+
+	Optional<String> Node::getTextValueByTag(const String& tag, RecursiveYN recursive) const
+	{
+		if (tag.isEmpty())
+		{
+			return none;
+		}
+
+		// 自身のTextBox/TextAreaコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto textBox = std::dynamic_pointer_cast<TextBox>(component))
+			{
+				if (textBox->tag() == tag)
+				{
+					return textBox->text();
+				}
+			}
+			else if (auto textArea = std::dynamic_pointer_cast<TextArea>(component))
+			{
+				if (textArea->tag() == tag)
+				{
+					return textArea->text();
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (auto result = child->getTextValueByTag(tag, RecursiveYN::Yes))
+				{
+					return result;
+				}
+			}
+		}
+
+		return none;
+	}
+
+	void Node::setTextValueByTag(const String& tag, StringView text, RecursiveYN recursive)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		// 自身のTextBox/TextAreaコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto textBox = std::dynamic_pointer_cast<TextBox>(component))
+			{
+				if (textBox->tag() == tag)
+				{
+					textBox->setText(text);
+				}
+			}
+			else if (auto textArea = std::dynamic_pointer_cast<TextArea>(component))
+			{
+				if (textArea->tag() == tag)
+				{
+					textArea->setText(text);
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->setTextValueByTag(tag, text, RecursiveYN::Yes);
 			}
 		}
 	}

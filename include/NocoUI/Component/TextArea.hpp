@@ -19,6 +19,7 @@ namespace noco
 		SmoothProperty<ColorF> m_cursorColor;
 		SmoothProperty<ColorF> m_selectionColor;
 		Property<bool> m_readOnly;
+		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ double m_cursorBlinkTime = 0.0;
 		/* NonSerialized */ bool m_isEditing = false;
@@ -133,7 +134,7 @@ namespace noco
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<ColorF>>& cursorColor = unspecified,
 			const PropertyValue<ColorF>& selectionColor = ColorF{ 0.0, 0.1, 0.3, 0.5 })
-			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_readOnly } }
+			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_readOnly, &m_tag } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -143,6 +144,7 @@ namespace noco
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
 			, m_selectionColor{ U"selectionColor", selectionColor }
 			, m_readOnly{ U"readOnly", false }
+			, m_tag{ U"tag", U"" }
 		{
 		}
 
@@ -265,6 +267,18 @@ namespace noco
 		std::shared_ptr<TextArea> setReadOnly(const PropertyValue<bool>& readOnly)
 		{
 			m_readOnly.setPropertyValue(readOnly);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& tag() const
+		{
+			return m_tag.value();
+		}
+
+		std::shared_ptr<TextArea> setTag(const String& tag)
+		{
+			m_tag.setValue(tag);
 			return shared_from_this();
 		}
 	};
