@@ -1080,76 +1080,131 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Tween", U"active" }] = PropertyMetadata{
 			.tooltip = U"Tweenアニメーションの再生状態",
 		};
-		metadata[PropertyKey{ U"Tween", U"target" }] = PropertyMetadata{
-			.tooltip = U"Tweenアニメーション対象",
-			.tooltipDetail = U"None: アニメーションしない\nTranslate: Transformのtranslateプロパティ\nScale: Transformのscaleプロパティ\nRotation: Transformのrotationプロパティ\nColor: Transformのcolorプロパティ",
+
+		// Translate関連
+		metadata[PropertyKey{ U"Tween", U"translateEnabled" }] = PropertyMetadata{
+			.tooltip = U"Translateアニメーションを有効にする",
+			.tooltipDetail = U"有効にすると、Transformのtranslateプロパティをアニメーションします",
 			.refreshInspectorOnChange = true,
 		};
-		
-		// Vec2用プロパティの条件付き表示
-		const auto tweenVec2VisibilityCondition = [](const ComponentBase& component) -> bool
-		{
-			if (const auto* tween = dynamic_cast<const Tween*>(&component))
-			{
-				const auto target = tween->target();
-				return target == TweenTarget::Translate || target == TweenTarget::Scale;
-			}
-			return false;
+
+		metadata[PropertyKey{ U"Tween", U"translateFrom" }] = PropertyMetadata{
+			.tooltip = U"Translate開始値",
+			.tooltipDetail = U"アニメーション開始時のtranslate値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->translateEnabled();
+				}
+				return false;
+			},
+		};
+
+		metadata[PropertyKey{ U"Tween", U"translateTo" }] = PropertyMetadata{
+			.tooltip = U"Translate終了値",
+			.tooltipDetail = U"アニメーション終了時のtranslate値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->translateEnabled();
+				}
+				return false;
+			},
+		};
+
+		// Scale関連
+		metadata[PropertyKey{ U"Tween", U"scaleEnabled" }] = PropertyMetadata{
+			.tooltip = U"Scaleアニメーションを有効にする",
+			.tooltipDetail = U"有効にすると、Transformのscaleプロパティをアニメーションします",
+			.refreshInspectorOnChange = true,
+		};
+
+		metadata[PropertyKey{ U"Tween", U"scaleFrom" }] = PropertyMetadata{
+			.tooltip = U"Scale開始値",
+			.tooltipDetail = U"アニメーション開始時のscale値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->scaleEnabled();
+				}
+				return false;
+			},
+		};
+
+		metadata[PropertyKey{ U"Tween", U"scaleTo" }] = PropertyMetadata{
+			.tooltip = U"Scale終了値",
+			.tooltipDetail = U"アニメーション終了時のscale値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->scaleEnabled();
+				}
+				return false;
+			},
 		};
 		
-		metadata[PropertyKey{ U"Tween", U"fromVec2" }] = PropertyMetadata{
-			.displayName = U"from",
-			.tooltip = U"開始値",
-			.visibilityCondition = tweenVec2VisibilityCondition,
+		// Rotation関連
+		metadata[PropertyKey{ U"Tween", U"rotationEnabled" }] = PropertyMetadata{
+			.tooltip = U"Rotationアニメーションを有効にする",
+			.tooltipDetail = U"有効にすると、Transformのrotationプロパティをアニメーションします",
+			.refreshInspectorOnChange = true,
 		};
-		metadata[PropertyKey{ U"Tween", U"toVec2" }] = PropertyMetadata{
-			.displayName = U"to",
-			.tooltip = U"終了値",
-			.visibilityCondition = tweenVec2VisibilityCondition,
-		};
-		
-		// double用プロパティの条件付き表示（Rotation用）
-		const auto tweenDoubleVisibilityCondition = [](const ComponentBase& component) -> bool
-		{
-			if (const auto* tween = dynamic_cast<const Tween*>(&component))
-			{
-				return tween->target() == TweenTarget::Rotation;
-			}
-			return false;
-		};
-		
-		metadata[PropertyKey{ U"Tween", U"fromDouble" }] = PropertyMetadata{
-			.displayName = U"from",
-			.tooltip = U"開始角度(度)",
-			.visibilityCondition = tweenDoubleVisibilityCondition,
+
+		metadata[PropertyKey{ U"Tween", U"rotationFrom" }] = PropertyMetadata{
+			.tooltip = U"Rotation開始値",
+			.tooltipDetail = U"アニメーション開始時のrotation値（度単位）",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->rotationEnabled();
+				}
+				return false;
+			},
 			.dragValueChangeStep = 1.0,
 		};
-		metadata[PropertyKey{ U"Tween", U"toDouble" }] = PropertyMetadata{
-			.displayName = U"to",
-			.tooltip = U"終了角度(度)",
-			.visibilityCondition = tweenDoubleVisibilityCondition,
+
+		metadata[PropertyKey{ U"Tween", U"rotationTo" }] = PropertyMetadata{
+			.tooltip = U"Rotation終了値",
+			.tooltipDetail = U"アニメーション終了時のrotation値（度単位）",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->rotationEnabled();
+				}
+				return false;
+			},
 			.dragValueChangeStep = 1.0,
 		};
 		
-		// ColorF用プロパティの条件付き表示
-		const auto tweenColorVisibilityCondition = [](const ComponentBase& component) -> bool
-		{
-			if (const auto* tween = dynamic_cast<const Tween*>(&component))
-			{
-				return tween->target() == TweenTarget::Color;
-			}
-			return false;
+		// Color関連
+		metadata[PropertyKey{ U"Tween", U"colorEnabled" }] = PropertyMetadata{
+			.tooltip = U"Colorアニメーションを有効にする",
+			.tooltipDetail = U"有効にすると、Transformのcolorプロパティをアニメーションします",
+			.refreshInspectorOnChange = true,
 		};
-		
-		metadata[PropertyKey{ U"Tween", U"fromColor" }] = PropertyMetadata{
-			.displayName = U"from",
-			.tooltip = U"開始値",
-			.visibilityCondition = tweenColorVisibilityCondition,
+
+		metadata[PropertyKey{ U"Tween", U"colorFrom" }] = PropertyMetadata{
+			.tooltip = U"Color開始値",
+			.tooltipDetail = U"アニメーション開始時のcolor値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->colorEnabled();
+				}
+				return false;
+			},
 		};
-		metadata[PropertyKey{ U"Tween", U"toColor" }] = PropertyMetadata{
-			.displayName = U"to",
-			.tooltip = U"終了値",
-			.visibilityCondition = tweenColorVisibilityCondition,
+
+		metadata[PropertyKey{ U"Tween", U"colorTo" }] = PropertyMetadata{
+			.tooltip = U"Color終了値",
+			.tooltipDetail = U"アニメーション終了時のcolor値",
+			.visibilityCondition = [](const ComponentBase& component) -> bool {
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->colorEnabled();
+				}
+				return false;
+			},
 		};
 		
 		metadata[PropertyKey{ U"Tween", U"easing" }] = PropertyMetadata{

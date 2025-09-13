@@ -77,8 +77,8 @@ namespace noco
 
 	void Tween::updateTranslate(const std::shared_ptr<Node>& node, double progress)
 	{
-		const Vec2& from = m_fromVec2.value();
-		const Vec2& to = m_toVec2.value();
+		const Vec2& from = m_translateFrom.value();
+		const Vec2& to = m_translateTo.value();
 		const Vec2 interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
@@ -87,8 +87,8 @@ namespace noco
 
 	void Tween::updateScale(const std::shared_ptr<Node>& node, double progress)
 	{
-		const Vec2& from = m_fromVec2.value();
-		const Vec2& to = m_toVec2.value();
+		const Vec2& from = m_scaleFrom.value();
+		const Vec2& to = m_scaleTo.value();
 		const Vec2 interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
@@ -97,8 +97,8 @@ namespace noco
 
 	void Tween::updateRotation(const std::shared_ptr<Node>& node, double progress)
 	{
-		const double from = m_fromDouble.value();
-		const double to = m_toDouble.value();
+		const double from = m_rotationFrom.value();
+		const double to = m_rotationTo.value();
 		const double interpolated = Math::Lerp(from, to, progress);
 
 		auto& transform = node->transform();
@@ -107,8 +107,8 @@ namespace noco
 
 	void Tween::updateColor(const std::shared_ptr<Node>& node, double progress)
 	{
-		const ColorF& from = m_fromColor.value();
-		const ColorF& to = m_toColor.value();
+		const ColorF& from = m_colorFrom.value();
+		const ColorF& to = m_colorTo.value();
 		const ColorF interpolated = from.lerp(to, progress);
 
 		auto& transform = node->transform();
@@ -171,28 +171,26 @@ namespace noco
 		{
 			if (m_applyDuringDelay.value())
 			{
-				// applyDuringDelayがtrueの場合は0%の値を適用
 				const double easedProgress = applyEasing(0.0);
-				switch (m_target.value())
+
+				// 有効なプロパティに0%の値を適用
+				if (m_translateEnabled.value())
 				{
-				case TweenTarget::None:
-					// 何もしない
-					break;
-				case TweenTarget::Translate:
 					updateTranslate(node, easedProgress);
-					break;
-				case TweenTarget::Scale:
+				}
+				if (m_scaleEnabled.value())
+				{
 					updateScale(node, easedProgress);
-					break;
-				case TweenTarget::Rotation:
+				}
+				if (m_rotationEnabled.value())
+				{
 					updateRotation(node, easedProgress);
-					break;
-				case TweenTarget::Color:
+				}
+				if (m_colorEnabled.value())
+				{
 					updateColor(node, easedProgress);
-					break;
 				}
 			}
-			// applyDuringDelayがfalseの場合は何もしない
 			return;
 		}
 		
@@ -204,23 +202,23 @@ namespace noco
 		{
 			// durationが0以下の場合は即座に100%の値にする
 			const double easedProgress = applyEasing(1.0);
-			switch (m_target.value())
+
+			// 有効なプロパティに100%の値を適用
+			if (m_translateEnabled.value())
 			{
-			case TweenTarget::None:
-				// 何もしない
-				break;
-			case TweenTarget::Translate:
 				updateTranslate(node, easedProgress);
-				break;
-			case TweenTarget::Scale:
+			}
+			if (m_scaleEnabled.value())
+			{
 				updateScale(node, easedProgress);
-				break;
-			case TweenTarget::Rotation:
+			}
+			if (m_rotationEnabled.value())
+			{
 				updateRotation(node, easedProgress);
-				break;
-			case TweenTarget::Color:
+			}
+			if (m_colorEnabled.value())
+			{
 				updateColor(node, easedProgress);
-				break;
 			}
 			return;
 		}
@@ -258,25 +256,23 @@ namespace noco
 		// イージング適用
 		const double clampedProgress = Math::Clamp(rawProgress, 0.0, 1.0);
 		const double easedProgress = applyEasing(clampedProgress);
-		
-		// 値を反映
-		switch (m_target.value())
+
+		// 有効なプロパティに値を反映
+		if (m_translateEnabled.value())
 		{
-		case TweenTarget::None:
-			// 何もしない
-			break;
-		case TweenTarget::Translate:
 			updateTranslate(node, easedProgress);
-			break;
-		case TweenTarget::Scale:
+		}
+		if (m_scaleEnabled.value())
+		{
 			updateScale(node, easedProgress);
-			break;
-		case TweenTarget::Color:
-			updateColor(node, easedProgress);
-			break;
-		case TweenTarget::Rotation:
+		}
+		if (m_rotationEnabled.value())
+		{
 			updateRotation(node, easedProgress);
-			break;
+		}
+		if (m_colorEnabled.value())
+		{
+			updateColor(node, easedProgress);
 		}
 	}
 }

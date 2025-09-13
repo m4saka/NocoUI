@@ -4,15 +4,6 @@
 
 namespace noco
 {
-	enum class TweenTarget : uint8
-	{
-		None,
-		Translate,
-		Scale,
-		Rotation,
-		Color,
-	};
-
 	enum class TweenEasing : uint8
 	{
 		Linear,
@@ -59,19 +50,26 @@ namespace noco
 	{
 	private:
 		Property<bool> m_active;
-		PropertyNonInteractive<TweenTarget> m_target;
-		
-		// Vec2用（Translate/Scale）
-		PropertyNonInteractive<Vec2> m_fromVec2;
-		PropertyNonInteractive<Vec2> m_toVec2;
-		
-		// double用（Rotation）
-		PropertyNonInteractive<double> m_fromDouble;
-		PropertyNonInteractive<double> m_toDouble;
-		
-		// ColorF用
-		PropertyNonInteractive<ColorF> m_fromColor;
-		PropertyNonInteractive<ColorF> m_toColor;
+
+		// Translate用プロパティ
+		PropertyNonInteractive<bool> m_translateEnabled;
+		PropertyNonInteractive<Vec2> m_translateFrom;
+		PropertyNonInteractive<Vec2> m_translateTo;
+
+		// Scale用プロパティ
+		PropertyNonInteractive<bool> m_scaleEnabled;
+		PropertyNonInteractive<Vec2> m_scaleFrom;
+		PropertyNonInteractive<Vec2> m_scaleTo;
+
+		// Rotation用プロパティ
+		PropertyNonInteractive<bool> m_rotationEnabled;
+		PropertyNonInteractive<double> m_rotationFrom;
+		PropertyNonInteractive<double> m_rotationTo;
+
+		// Color用プロパティ
+		PropertyNonInteractive<bool> m_colorEnabled;
+		PropertyNonInteractive<ColorF> m_colorFrom;
+		PropertyNonInteractive<ColorF> m_colorTo;
 		
 		PropertyNonInteractive<TweenEasing> m_easing;
 		PropertyNonInteractive<double> m_duration;
@@ -98,25 +96,30 @@ namespace noco
 	public:
 		explicit Tween(
 			const PropertyValue<bool>& active = true,
-			TweenTarget target = TweenTarget::None,
 			TweenEasing easing = TweenEasing::EaseOutQuad,
 			double duration = 1.0)
 			: SerializableComponentBase{ U"Tween", {
-				&m_active, &m_target,
-				&m_fromVec2, &m_toVec2,
-				&m_fromDouble, &m_toDouble,
-				&m_fromColor, &m_toColor,
+				&m_active,
+				&m_translateEnabled, &m_translateFrom, &m_translateTo,
+				&m_scaleEnabled, &m_scaleFrom, &m_scaleTo,
+				&m_rotationEnabled, &m_rotationFrom, &m_rotationTo,
+				&m_colorEnabled, &m_colorFrom, &m_colorTo,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
 				&m_applyDuringDelay, &m_manualMode, &m_manualTime, &m_tag
 			} }
 			, m_active{ U"active", active }
-			, m_target{ U"target", target }
-			, m_fromVec2{ U"fromVec2", Vec2::Zero() }
-			, m_toVec2{ U"toVec2", Vec2::Zero() }
-			, m_fromDouble{ U"fromDouble", 0.0 }
-			, m_toDouble{ U"toDouble", 0.0 }
-			, m_fromColor{ U"fromColor", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
-			, m_toColor{ U"toColor", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
+			, m_translateEnabled{ U"translateEnabled", false }
+			, m_translateFrom{ U"translateFrom", Vec2{ 0.0, 0.0 } }
+			, m_translateTo{ U"translateTo", Vec2{ 0.0, 0.0 } }
+			, m_scaleEnabled{ U"scaleEnabled", false }
+			, m_scaleFrom{ U"scaleFrom", Vec2{ 1.0, 1.0 } }
+			, m_scaleTo{ U"scaleTo", Vec2{ 1.0, 1.0 } }
+			, m_rotationEnabled{ U"rotationEnabled", false }
+			, m_rotationFrom{ U"rotationFrom", 0.0 }
+			, m_rotationTo{ U"rotationTo", 0.0 }
+			, m_colorEnabled{ U"colorEnabled", false }
+			, m_colorFrom{ U"colorFrom", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
+			, m_colorTo{ U"colorTo", ColorF{ 1.0, 1.0, 1.0, 1.0 } }
 			, m_easing{ U"easing", easing }
 			, m_duration{ U"duration", duration }
 			, m_delay{ U"delay", 0.0 }
@@ -145,87 +148,151 @@ namespace noco
 			return shared_from_this();
 		}
 
+		// Translate関連のgetter/setter
 		[[nodiscard]]
-		TweenTarget target() const
+		bool translateEnabled() const
 		{
-			return m_target.value();
+			return m_translateEnabled.value();
 		}
 
-		std::shared_ptr<Tween> setTarget(TweenTarget target)
+		std::shared_ptr<Tween> setTranslateEnabled(bool enabled)
 		{
-			m_target.setValue(target);
+			m_translateEnabled.setValue(enabled);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const Vec2& fromVec2() const
+		const Vec2& translateFrom() const
 		{
-			return m_fromVec2.value();
+			return m_translateFrom.value();
 		}
 
-		std::shared_ptr<Tween> setFromVec2(const Vec2& value)
+		std::shared_ptr<Tween> setTranslateFrom(const Vec2& value)
 		{
-			m_fromVec2.setValue(value);
+			m_translateFrom.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const Vec2& toVec2() const
+		const Vec2& translateTo() const
 		{
-			return m_toVec2.value();
+			return m_translateTo.value();
 		}
 
-		std::shared_ptr<Tween> setToVec2(const Vec2& value)
+		std::shared_ptr<Tween> setTranslateTo(const Vec2& value)
 		{
-			m_toVec2.setValue(value);
+			m_translateTo.setValue(value);
+			return shared_from_this();
+		}
+
+		// Scale関連のgetter/setter
+		[[nodiscard]]
+		bool scaleEnabled() const
+		{
+			return m_scaleEnabled.value();
+		}
+
+		std::shared_ptr<Tween> setScaleEnabled(bool enabled)
+		{
+			m_scaleEnabled.setValue(enabled);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		double fromDouble() const
+		const Vec2& scaleFrom() const
 		{
-			return m_fromDouble.value();
+			return m_scaleFrom.value();
 		}
 
-		std::shared_ptr<Tween> setFromDouble(double value)
+		std::shared_ptr<Tween> setScaleFrom(const Vec2& value)
 		{
-			m_fromDouble.setValue(value);
+			m_scaleFrom.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		double toDouble() const
+		const Vec2& scaleTo() const
 		{
-			return m_toDouble.value();
+			return m_scaleTo.value();
 		}
 
-		std::shared_ptr<Tween> setToDouble(double value)
+		std::shared_ptr<Tween> setScaleTo(const Vec2& value)
 		{
-			m_toDouble.setValue(value);
+			m_scaleTo.setValue(value);
+			return shared_from_this();
+		}
+
+		// Rotation関連のgetter/setter
+		[[nodiscard]]
+		bool rotationEnabled() const
+		{
+			return m_rotationEnabled.value();
+		}
+
+		std::shared_ptr<Tween> setRotationEnabled(bool enabled)
+		{
+			m_rotationEnabled.setValue(enabled);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const ColorF& fromColor() const
+		double rotationFrom() const
 		{
-			return m_fromColor.value();
+			return m_rotationFrom.value();
 		}
 
-		std::shared_ptr<Tween> setFromColor(const ColorF& value)
+		std::shared_ptr<Tween> setRotationFrom(double value)
 		{
-			m_fromColor.setValue(value);
+			m_rotationFrom.setValue(value);
 			return shared_from_this();
 		}
 
 		[[nodiscard]]
-		const ColorF& toColor() const
+		double rotationTo() const
 		{
-			return m_toColor.value();
+			return m_rotationTo.value();
 		}
 
-		std::shared_ptr<Tween> setToColor(const ColorF& value)
+		std::shared_ptr<Tween> setRotationTo(double value)
 		{
-			m_toColor.setValue(value);
+			m_rotationTo.setValue(value);
+			return shared_from_this();
+		}
+
+		// Color関連のgetter/setter
+		[[nodiscard]]
+		bool colorEnabled() const
+		{
+			return m_colorEnabled.value();
+		}
+
+		std::shared_ptr<Tween> setColorEnabled(bool enabled)
+		{
+			m_colorEnabled.setValue(enabled);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const ColorF& colorFrom() const
+		{
+			return m_colorFrom.value();
+		}
+
+		std::shared_ptr<Tween> setColorFrom(const ColorF& value)
+		{
+			m_colorFrom.setValue(value);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const ColorF& colorTo() const
+		{
+			return m_colorTo.value();
+		}
+
+		std::shared_ptr<Tween> setColorTo(const ColorF& value)
+		{
+			m_colorTo.setValue(value);
 			return shared_from_this();
 		}
 
