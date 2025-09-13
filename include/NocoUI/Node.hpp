@@ -711,6 +711,12 @@ namespace noco
 		[[nodiscard]]
 		const Property<int32>& zOrderInSiblingsProperty() const { return m_zOrderInSiblings; }
 
+		// すべてのTweenコンポーネントの一括制御
+		void setTweenActiveAll(bool active, RecursiveYN recursive = RecursiveYN::Yes);
+
+		// タグによるTweenコンポーネントの一括制御
+		void setTweenActiveByTag(const String& tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
+
 	};
 
 	template <typename TComponent>

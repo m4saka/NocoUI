@@ -1524,4 +1524,25 @@ namespace noco
 		m_isEditorPreview = isEditorPreview;
 		return shared_from_this();
 	}
+
+	void Canvas::setTweenActiveAll(bool active)
+	{
+		for (auto& child : m_children)
+		{
+			child->setTweenActiveAll(active, RecursiveYN::Yes);
+		}
+	}
+
+	void Canvas::setTweenActiveByTag(const String& tag, bool active)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		for (auto& child : m_children)
+		{
+			child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
+		}
+	}
 }

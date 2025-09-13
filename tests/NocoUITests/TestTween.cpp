@@ -221,4 +221,185 @@ TEST_CASE("Tween component", "[Tween]")
 			CHECK(actualPos.y == Approx(testCase.expectedPos.y).margin(0.01));
 		}
 	}
+
+	SECTION("Tween tag and batch control")
+	{
+		auto canvas = noco::Canvas::Create();
+
+		// ノード1: tag="in"のTween
+		auto node1 = noco::Node::Create();
+		auto tween1 = std::make_shared<noco::Tween>();
+		tween1->setActive(true)
+			->setTarget(noco::TweenTarget::Translate)
+			->setFromVec2(Vec2{ 100.0, 100.0 })
+			->setToVec2(Vec2{ 200.0, 100.0 })
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setTag(U"in");
+		node1->addComponent(tween1);
+
+		// ノード2: tag="in"のTween
+		auto node2 = noco::Node::Create();
+		auto tween2 = std::make_shared<noco::Tween>();
+		tween2->setActive(true)
+			->setTarget(noco::TweenTarget::Translate)
+			->setFromVec2(Vec2{ 100.0, 200.0 })
+			->setToVec2(Vec2{ 200.0, 200.0 })
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setTag(U"in");
+		node2->addComponent(tween2);
+
+		// ノード3: tag="out"のTween
+		auto node3 = noco::Node::Create();
+		auto tween3 = std::make_shared<noco::Tween>();
+		tween3->setActive(true)
+			->setTarget(noco::TweenTarget::Translate)
+			->setFromVec2(Vec2{ 100.0, 300.0 })
+			->setToVec2(Vec2{ 200.0, 300.0 })
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setTag(U"out");
+		node3->addComponent(tween3);
+
+		// ノード4: tagなしのTween
+		auto node4 = noco::Node::Create();
+		auto tween4 = std::make_shared<noco::Tween>();
+		tween4->setActive(true)
+			->setTarget(noco::TweenTarget::Translate)
+			->setFromVec2(Vec2{ 100.0, 400.0 })
+			->setToVec2(Vec2{ 200.0, 400.0 })
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setTag(U"");
+		node4->addComponent(tween4);
+
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
+		canvas->addChild(node4);
+
+		// 初期状態確認
+		CHECK(tween1->active().defaultValue() == true);
+		CHECK(tween2->active().defaultValue() == true);
+		CHECK(tween3->active().defaultValue() == true);
+		CHECK(tween4->active().defaultValue() == true);
+
+		// tag="in"のTweenを非アクティブに
+		canvas->setTweenActiveByTag(U"in", false);
+		CHECK(tween1->active().defaultValue() == false);
+		CHECK(tween2->active().defaultValue() == false);
+		CHECK(tween3->active().defaultValue() == true);  // tag="out"なので変更なし
+		CHECK(tween4->active().defaultValue() == true);  // tagなしなので変更なし
+
+		// tag="out"のTweenを非アクティブに
+		canvas->setTweenActiveByTag(U"out", false);
+		CHECK(tween1->active().defaultValue() == false);
+		CHECK(tween2->active().defaultValue() == false);
+		CHECK(tween3->active().defaultValue() == false);
+		CHECK(tween4->active().defaultValue() == true);  // tagなしなので変更なし
+
+		// tag="in"のTweenをアクティブに
+		canvas->setTweenActiveByTag(U"in", true);
+		CHECK(tween1->active().defaultValue() == true);
+		CHECK(tween2->active().defaultValue() == true);
+		CHECK(tween3->active().defaultValue() == false);  // tag="out"なので変更なし
+		CHECK(tween4->active().defaultValue() == true);
+
+		// すべてのTweenを非アクティブに
+		canvas->setTweenActiveAll(false);
+		CHECK(tween1->active().defaultValue() == false);
+		CHECK(tween2->active().defaultValue() == false);
+		CHECK(tween3->active().defaultValue() == false);
+		CHECK(tween4->active().defaultValue() == false);
+
+		// すべてのTweenをアクティブに
+		canvas->setTweenActiveAll(true);
+		CHECK(tween1->active().defaultValue() == true);
+		CHECK(tween2->active().defaultValue() == true);
+		CHECK(tween3->active().defaultValue() == true);
+		CHECK(tween4->active().defaultValue() == true);
+	}
+
+	SECTION("Tween tag control with nested nodes")
+	{
+		auto canvas = noco::Canvas::Create();
+
+		// 親ノード
+		auto parentNode = noco::Node::Create();
+
+		// 親ノードのTween (tag="in")
+		auto parentTween = std::make_shared<noco::Tween>();
+		parentTween->setActive(true)
+			->setTag(U"in");
+		parentNode->addComponent(parentTween);
+
+		// 子ノード1
+		auto childNode1 = noco::Node::Create();
+		auto childTween1 = std::make_shared<noco::Tween>();
+		childTween1->setActive(true)
+			->setTag(U"in");
+		childNode1->addComponent(childTween1);
+
+		// 子ノード2
+		auto childNode2 = noco::Node::Create();
+		auto childTween2 = std::make_shared<noco::Tween>();
+		childTween2->setActive(true)
+			->setTag(U"out");
+		childNode2->addComponent(childTween2);
+
+		// 孫ノード
+		auto grandChildNode = noco::Node::Create();
+		auto grandChildTween = std::make_shared<noco::Tween>();
+		grandChildTween->setActive(true)
+			->setTag(U"in");
+		grandChildNode->addComponent(grandChildTween);
+
+		// 階層構造を作成
+		parentNode->addChild(childNode1);
+		parentNode->addChild(childNode2);
+		childNode1->addChild(grandChildNode);
+		canvas->addChild(parentNode);
+
+		// 初期状態確認
+		CHECK(parentTween->active().defaultValue() == true);
+		CHECK(childTween1->active().defaultValue() == true);
+		CHECK(childTween2->active().defaultValue() == true);
+		CHECK(grandChildTween->active().defaultValue() == true);
+
+		// tag="in"のTweenを非アクティブに（再帰的）
+		canvas->setTweenActiveByTag(U"in", false);
+		CHECK(parentTween->active().defaultValue() == false);
+		CHECK(childTween1->active().defaultValue() == false);
+		CHECK(childTween2->active().defaultValue() == true);  // tag="out"
+		CHECK(grandChildTween->active().defaultValue() == false);
+
+		// ノードレベルでの制御（非再帰）
+		parentNode->setTweenActiveByTag(U"in", true, noco::RecursiveYN::No);
+		CHECK(parentTween->active().defaultValue() == true);   // 親ノードのみ変更
+		CHECK(childTween1->active().defaultValue() == false);  // 子は変更なし
+		CHECK(childTween2->active().defaultValue() == true);
+		CHECK(grandChildTween->active().defaultValue() == false);
+
+		// ノードレベルでの制御（再帰的）
+		childNode1->setTweenActiveByTag(U"in", true, noco::RecursiveYN::Yes);
+		CHECK(parentTween->active().defaultValue() == true);
+		CHECK(childTween1->active().defaultValue() == true);   // 子ノード1変更
+		CHECK(childTween2->active().defaultValue() == true);
+		CHECK(grandChildTween->active().defaultValue() == true);  // 孫も変更
+
+		// ノードレベルですべてのTweenを非アクティブに（非再帰）
+		parentNode->setTweenActiveAll(false, noco::RecursiveYN::No);
+		CHECK(parentTween->active().defaultValue() == false);  // 親のみ変更
+		CHECK(childTween1->active().defaultValue() == true);   // 子は変更なし
+		CHECK(childTween2->active().defaultValue() == true);
+		CHECK(grandChildTween->active().defaultValue() == true);
+
+		// ノードレベルですべてのTweenをアクティブに（再帰的）
+		parentNode->setTweenActiveAll(true, noco::RecursiveYN::Yes);
+		CHECK(parentTween->active().defaultValue() == true);
+		CHECK(childTween1->active().defaultValue() == true);
+		CHECK(childTween2->active().defaultValue() == true);
+		CHECK(grandChildTween->active().defaultValue() == true);
+	}
 }

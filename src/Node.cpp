@@ -3,6 +3,7 @@
 #include "NocoUI/Serialization.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Component/Component.hpp"
+#include "NocoUI/Component/Tween.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
@@ -3051,6 +3052,56 @@ namespace noco
 		if (const auto canvas = m_canvas.lock())
 		{
 			canvas->markLayoutAsDirty();
+		}
+	}
+
+	void Node::setTweenActiveAll(bool active, RecursiveYN recursive)
+	{
+		// 自身のTweenコンポーネントをすべて制御
+		for (const auto& component : m_components)
+		{
+			if (auto tween = std::dynamic_pointer_cast<Tween>(component))
+			{
+				tween->setActive(active);
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->setTweenActiveAll(active, RecursiveYN::Yes);
+			}
+		}
+	}
+
+	void Node::setTweenActiveByTag(const String& tag, bool active, RecursiveYN recursive)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		// 自身のTweenコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto tween = std::dynamic_pointer_cast<Tween>(component))
+			{
+				if (tween->tag() == tag)
+				{
+					tween->setActive(active);
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
+			}
 		}
 	}
 }

@@ -82,6 +82,7 @@ namespace noco
 		PropertyNonInteractive<bool> m_applyDuringDelay;
 		Property<bool> m_manualMode;
 		SmoothProperty<double> m_manualTime;
+		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ Stopwatch m_stopwatch;
 		/* NonSerialized */ Optional<bool> m_prevActive = none;
@@ -100,13 +101,13 @@ namespace noco
 			TweenTarget target = TweenTarget::None,
 			TweenEasing easing = TweenEasing::EaseOutQuad,
 			double duration = 1.0)
-			: SerializableComponentBase{ U"Tween", { 
-				&m_active, &m_target, 
-				&m_fromVec2, &m_toVec2, 
+			: SerializableComponentBase{ U"Tween", {
+				&m_active, &m_target,
+				&m_fromVec2, &m_toVec2,
 				&m_fromDouble, &m_toDouble,
 				&m_fromColor, &m_toColor,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
-				&m_applyDuringDelay, &m_manualMode, &m_manualTime
+				&m_applyDuringDelay, &m_manualMode, &m_manualTime, &m_tag
 			} }
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
@@ -125,6 +126,7 @@ namespace noco
 			, m_applyDuringDelay{ U"applyDuringDelay", false }
 			, m_manualMode{ U"manualMode", false }
 			, m_manualTime{ U"manualTime", 0.0 }
+			, m_tag{ U"tag", U"" }
 		{
 		}
 
@@ -332,6 +334,18 @@ namespace noco
 		std::shared_ptr<Tween> setManualTime(const PropertyValue<double>& manualTime)
 		{
 			m_manualTime.setPropertyValue(manualTime);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& tag() const
+		{
+			return m_tag.value();
+		}
+
+		std::shared_ptr<Tween> setTag(const String& tag)
+		{
+			m_tag.setValue(tag);
 			return shared_from_this();
 		}
 	};

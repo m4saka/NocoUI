@@ -764,6 +764,12 @@ namespace noco
 	[[nodiscard]]
 	std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;
 
+	// すべてのTweenコンポーネントの一括制御
+	void setTweenActiveAll(bool active);
+
+	// タグによるTweenコンポーネントの一括制御
+	void setTweenActiveByTag(const String& tag, bool active);
+
 private:
 	// ノードツリー内でinstanceIdによるノード検索（再帰）
 	[[nodiscard]]

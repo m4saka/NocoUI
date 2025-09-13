@@ -1195,6 +1195,11 @@ namespace noco::editor
 			.visibilityCondition = tweenManualTimeVisibilityCondition,
 			.dragValueChangeStep = 0.1,
 		};
+
+		metadata[PropertyKey{ U"Tween", U"tag" }] = PropertyMetadata{
+			.tooltip = U"タグ",
+			.tooltipDetail = U"Tweenを一括制御するためのタグ文字列です\nCanvas::setTweenActiveByTag()で同じタグを持つ\nTweenを一括でアクティブ/非アクティブにできます",
+		};
 		
 		// Canvasのプロパティ
 		metadata[PropertyKey{ U"Canvas", U"size" }] = PropertyMetadata{
