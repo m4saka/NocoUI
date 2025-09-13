@@ -34,6 +34,7 @@ namespace noco::editor
 		std::weak_ptr<Node> m_targetNode;
 		std::function<void()> m_onChangeNodeName;
 		std::function<void()> m_onChangeNodeActive;
+		std::function<void(const SizeF&, const SizeF&)> m_onChangeCanvasSize;
 		std::shared_ptr<ComponentFactory> m_componentFactory;
 		
 		void renameParam(const String& oldName, const String& newName)
@@ -230,7 +231,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive)
+		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive, std::function<void(const SizeF&, const SizeF&)> onChangeCanvasSize = nullptr)
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
@@ -272,6 +273,7 @@ namespace noco::editor
 			, m_dialogOpener(dialogOpener)
 			, m_onChangeNodeName(std::move(onChangeNodeName))
 			, m_onChangeNodeActive(std::move(onChangeNodeActive))
+			, m_onChangeCanvasSize(std::move(onChangeCanvasSize))
 			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
@@ -4113,7 +4115,13 @@ namespace noco::editor
 					m_canvas->referenceSize(),
 					[this](const Vec2& value)
 					{
-						m_canvas->setReferenceSize(SizeF{ value });
+						const SizeF prevSize = m_canvas->size();
+						m_canvas->setReferenceSize(value);
+						m_canvas->setSize(value);
+						if (m_onChangeCanvasSize)
+						{
+							m_onChangeCanvasSize(prevSize, value);
+						}
 					});
 				canvasSettingNode->addChild(referenceSizePropertyNode);
 

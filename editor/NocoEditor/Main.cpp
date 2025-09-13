@@ -109,7 +109,7 @@ public:
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory)
-		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); })
+		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
@@ -713,10 +713,10 @@ public:
 		
 		// ウィンドウリサイズ前後でCanvas表示エリア中央が維持されるように
 		const Vec2 prevScreenCenter = getCanvasAreaCenter(prevSize, m_hierarchyWidth, m_inspectorWidth);
-		const Vec2 worldCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
+		const Vec2 canvasCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
 		const Vec2 newScreenCenter = getCanvasAreaCenter(newSize, m_hierarchyWidth, m_inspectorWidth);
-		
-		m_scrollOffset = worldCenterPos * m_scrollScale - newScreenCenter;
+
+		m_scrollOffset = canvasCenterPos * m_scrollScale - newScreenCenter;
 		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
@@ -725,10 +725,28 @@ public:
 		// Inspector・Hierarchyのリサイズ前後で画面中央が維持されるように
 		const Size sceneSize = Scene::Size();
 		const Vec2 prevScreenCenter = getCanvasAreaCenter(sceneSize, prevHierarchyWidth, prevInspectorWidth);
-		const Vec2 worldCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
+		const Vec2 canvasCenterPos = (prevScreenCenter + m_scrollOffset) / m_scrollScale;
 		const Vec2 newScreenCenter = getCanvasAreaCenter(sceneSize, m_hierarchyWidth, m_inspectorWidth);
-		
-		m_scrollOffset = worldCenterPos * m_scrollScale - newScreenCenter;
+
+		m_scrollOffset = canvasCenterPos * m_scrollScale - newScreenCenter;
+		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
+	}
+
+	void keepCenterPositionOnCanvasResize(const SizeF& prevSize, const SizeF& newSize)
+	{
+		// Canvas referenceSizeの変更前後で画面中央の座標を維持
+		const Size sceneSize = Scene::Size();
+		const Vec2 screenCenter = getCanvasAreaCenter(sceneSize, m_hierarchyWidth, m_inspectorWidth);
+
+		// 画面中央のCanvas座標を保存
+		const Vec2 canvasCenterPos = (screenCenter + m_scrollOffset) / m_scrollScale;
+
+		// Canvasのサイズ変更によるオフセット調整
+		const Vec2 canvasSizeDiff = newSize - prevSize;
+		const Vec2 adjustedCanvasPos = canvasCenterPos + canvasSizeDiff / 2;
+
+		// 新しいオフセットを計算
+		m_scrollOffset = adjustedCanvasPos * m_scrollScale - screenCenter;
 		m_canvas->setPositionScale(-m_scrollOffset, Vec2::All(m_scrollScale));
 	}
 
