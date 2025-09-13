@@ -36,6 +36,8 @@ namespace noco
 		Property<Vec2> m_textureOffset;
 		Property<int32> m_textureGridColumns;
 		Property<int32> m_textureGridRows;
+		Property<SpriteTextureFilter> m_textureFilter;
+		Property<SpriteTextureAddressMode> m_textureAddressMode;
 
 		struct TextureFontCache
 		{
@@ -259,7 +261,7 @@ namespace noco
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
 			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow)
-			: SerializableComponentBase{ U"TextureFontLabel", { &m_text, &m_characterSize, &m_sizingMode, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_characterSpacing, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_addColor, &m_blendMode, &m_preserveAspect, &m_textureFilePath, &m_textureAssetName, &m_characterSet, &m_textureCellSize, &m_textureOffset, &m_textureGridColumns, &m_textureGridRows } }
+			: SerializableComponentBase{ U"TextureFontLabel", { &m_text, &m_characterSize, &m_sizingMode, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_characterSpacing, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_addColor, &m_blendMode, &m_preserveAspect, &m_textureFilePath, &m_textureAssetName, &m_characterSet, &m_textureCellSize, &m_textureOffset, &m_textureGridColumns, &m_textureGridRows, &m_textureFilter, &m_textureAddressMode } }
 			, m_text{ U"text", text }
 			, m_characterSize{ U"characterSize", characterSize }
 			, m_sizingMode{ U"sizingMode", sizingMode }
@@ -280,6 +282,8 @@ namespace noco
 			, m_textureOffset{ U"textureOffset", textureOffset }
 			, m_textureGridColumns{ U"textureGridColumns", textureGridColumns }
 			, m_textureGridRows{ U"textureGridRows", textureGridRows }
+			, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
+			, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
 		{
 		}
 
@@ -522,6 +526,30 @@ namespace noco
 		std::shared_ptr<TextureFontLabel> setBlendMode(const PropertyValue<BlendMode>& blendMode)
 		{
 			m_blendMode.setPropertyValue(blendMode);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<SpriteTextureFilter>& textureFilter() const
+		{
+			return m_textureFilter.propertyValue();
+		}
+
+		std::shared_ptr<TextureFontLabel> setTextureFilter(const PropertyValue<SpriteTextureFilter>& textureFilter)
+		{
+			m_textureFilter.setPropertyValue(textureFilter);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<SpriteTextureAddressMode>& textureAddressMode() const
+		{
+			return m_textureAddressMode.propertyValue();
+		}
+
+		std::shared_ptr<TextureFontLabel> setTextureAddressMode(const PropertyValue<SpriteTextureAddressMode>& textureAddressMode)
+		{
+			m_textureAddressMode.setPropertyValue(textureAddressMode);
 			return shared_from_this();
 		}
 	};

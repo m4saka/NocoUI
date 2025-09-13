@@ -700,7 +700,15 @@ namespace noco::editor
 			.tooltip = U"ブレンドモード",
 			.tooltipDetail = U"Normal: 通常\nAdditive: 加算\nSubtractive: 減算\nMultiply: 乗算",
 		};
-		
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureFilter" }] = PropertyMetadata{
+			.tooltip = U"テクスチャフィルター",
+			.tooltipDetail = U"Default: デフォルトのフィルタリング\nNearest: 最近傍（ピクセルアート向き）\nLinear: リニア（滑らか）\nAniso: 異方性フィルタリング（高品質）",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureAddressMode" }] = PropertyMetadata{
+			.tooltip = U"テクスチャアドレスモード",
+			.tooltipDetail = U"Default: デフォルトのアドレスモード\nRepeat: タイル状に繰り返し\nMirror: 反転しながら繰り返し\nClamp: 端の色を延長\nBorderColor: 範囲外は境界色",
+		};
+
 		// Sprite
 		metadata[PropertyKey{ U"Sprite", U"textureFilePath" }] = PropertyMetadata{
 			.tooltip = U"テクスチャファイルのパス",
