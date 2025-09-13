@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Component/TextArea.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
+#include "NocoUI/detail/Input.hpp"
 namespace noco
 {
 	void TextArea::Cache::refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize)
@@ -243,7 +244,7 @@ namespace noco
 			return { false, 0, 0 };
 		}
 
-		const bool ctrl = KeyControl.pressed();
+		const bool ctrl = noco::detail::KeyCommandControl.pressed();
 		const bool alt = KeyAlt.pressed();
 		const bool shift = KeyShift.pressed();
 		const bool ctrlOnly = ctrl && !alt && !shift;
@@ -622,7 +623,7 @@ namespace noco
 			const size_t prevCursorLine = m_cursorLine;
 			const size_t prevCursorColumn = m_cursorColumn;
 
-			const bool ctrl = KeyControl.pressed();
+			const bool ctrl = noco::detail::KeyCommandControl.pressed();
 			const bool alt = KeyAlt.pressed();
 			const bool shift = KeyShift.pressed();
 			bool keyMoveTried = false;

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
+#include <NocoUI/detail/Input.hpp>
 #include "ContextMenu.hpp"
 #include "Defaults.hpp"
 #include "EditorYN.hpp"
@@ -177,11 +178,35 @@ namespace noco::editor
 					MenuItem{ U"新規ノード", U"", KeyN, [this] { onClickNewNode(); } },
 					MenuItem{ U"子として新規ノード", U"", KeyE, [this, node] { onClickNewNode(node); } },
 					MenuSeparator{},
-					MenuItem{ U"切り取り", U"Ctrl+X", KeyT, [this] { onClickCut(); } },
-					MenuItem{ U"コピー", U"Ctrl+C", KeyC, [this] { onClickCopy(); } },
-					MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
+					MenuItem{ U"切り取り",
+						#ifdef __APPLE__
+							U"Cmd+X",
+						#else
+							U"Ctrl+X",
+						#endif
+						KeyT, [this] { onClickCut(); } },
+					MenuItem{ U"コピー",
+						#ifdef __APPLE__
+							U"Cmd+C",
+						#else
+							U"Ctrl+C",
+						#endif
+						KeyC, [this] { onClickCopy(); } },
+					MenuItem{ U"貼り付け",
+						#ifdef __APPLE__
+							U"Cmd+V",
+						#else
+							U"Ctrl+V",
+						#endif
+						KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
 					MenuItem{ U"子として貼り付け", U"", KeyA, [this, node] { onClickPaste(node); }, [this] { return canPaste(); } },
-					MenuItem{ U"複製を作成", U"Ctrl+D", KeyL, [this] { onClickDuplicate(); } },
+					MenuItem{ U"複製を作成",
+						#ifdef __APPLE__
+							U"Cmd+D",
+						#else
+							U"Ctrl+D",
+						#endif
+						KeyL, [this] { onClickDuplicate(); } },
 					MenuItem{ U"削除", U"Delete", none, [this] { onClickDelete(); } },
 					MenuSeparator{},
 					MenuItem{ U"上に移動", U"Alt+Up", KeyU, [this] { onClickMoveUp(); } },
@@ -689,7 +714,13 @@ namespace noco::editor
 				Array<MenuElement>
 				{
 					MenuItem{ U"新規ノード", U"", KeyN, [this] { onClickNewNode(); } },
-					MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
+					MenuItem{ U"貼り付け",
+						#ifdef __APPLE__
+							U"Cmd+V",
+						#else
+							U"Ctrl+V",
+						#endif
+						KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
 				});
 			m_hierarchyRootNode->setChildrenLayout(VerticalLayout{ .padding = 2 });
 			m_hierarchyRootNode->setVerticalScrollable(true);
@@ -737,7 +768,13 @@ namespace noco::editor
 				Array<MenuElement>
 				{
 					MenuItem{ U"新規ノード", U"", KeyN, [this] { onClickNewNode(); } },
-					MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
+					MenuItem{ U"貼り付け",
+						#ifdef __APPLE__
+							U"Cmd+V",
+						#else
+							U"Ctrl+V",
+						#endif
+						KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
 				});
 		
 			// 末尾ノードにDragDropTargetを追加
@@ -1575,7 +1612,7 @@ namespace noco::editor
 					}
 					else
 					{
-						if (KeyControl.pressed())
+						if (noco::detail::KeyCommandControl.pressed())
 						{
 							// Ctrlキーを押しながらクリックした場合は選択/非選択を切り替え
 							const EditorSelectedYN newSelected = EditorSelectedYN{ !element.editorSelected() };

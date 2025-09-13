@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 #include "../YN.hpp"
 #include "ComponentBase.hpp"
+#include "../detail/Input.hpp"
 
 namespace noco
 {
@@ -26,7 +27,7 @@ namespace noco
 		[[nodiscard]]
 		bool getModifiersPressed() const
 		{
-			if (m_ctrl.getBool() != KeyControl.pressed())
+			if (m_ctrl.getBool() != noco::detail::KeyCommandControl.pressed())
 			{
 				return false;
 			}

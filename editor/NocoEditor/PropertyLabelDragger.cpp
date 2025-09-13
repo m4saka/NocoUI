@@ -1,5 +1,6 @@
 ﻿#include "PropertyLabelDragger.hpp"
 #include "NocoUI/Node.hpp"
+#include "NocoUI/detail/Input.hpp"
 
 namespace noco::editor
 {
@@ -56,11 +57,11 @@ namespace noco::editor
 				
 				// 速度調整
 				double speedMultiplier = 0.25;
-				if (KeyShift.pressed() && KeyControl.pressed())
+				if (KeyShift.pressed() && noco::detail::KeyCommandControl.pressed())
 				{
 					speedMultiplier = 2.5; // 10倍速、刻みなし
 				}
-				else if (KeyAlt.pressed() && KeyControl.pressed())
+				else if (KeyAlt.pressed() && noco::detail::KeyCommandControl.pressed())
 				{
 					speedMultiplier = 0.025; // 1/10倍速、刻みなし
 				}
@@ -72,7 +73,7 @@ namespace noco::editor
 				{
 					speedMultiplier = 0.025; // 1/10倍速
 				}
-				else if (KeyControl.pressed())
+				else if (noco::detail::KeyCommandControl.pressed())
 				{
 					speedMultiplier = 0.25; // 通常速度
 				}
@@ -81,12 +82,12 @@ namespace noco::editor
 				double newValue = m_dragStartValue + deltaX * m_step * speedMultiplier;
 				
 				// 刻み調整（m_stepをステップ値として使用）
-				if (KeyShift.pressed() && KeyControl.pressed())
+				if (KeyShift.pressed() && noco::detail::KeyCommandControl.pressed())
 				{
 					// 刻みなし（10倍速）
 					// 丸め処理を行わない
 				}
-				else if (KeyAlt.pressed() && KeyControl.pressed())
+				else if (KeyAlt.pressed() && noco::detail::KeyCommandControl.pressed())
 				{
 					// 刻みなし（1/10倍速）
 					// 丸め処理を行わない
@@ -103,7 +104,7 @@ namespace noco::editor
 					const double smallStep = m_step * 0.1;
 					newValue = Math::Round(newValue / smallStep) * smallStep;
 				}
-				else if (KeyControl.pressed())
+				else if (noco::detail::KeyCommandControl.pressed())
 				{
 					// 刻みなし（自由な値）
 					// 丸め処理を行わない

@@ -1,5 +1,6 @@
 ﻿#include <Siv3D.hpp>
 #include <NocoUI.hpp>
+#include <NocoUI/detail/Input.hpp>
 #include "HistorySystem.hpp"
 #include "ResizableHandle.hpp"
 #include "Tooltip.hpp"
@@ -136,10 +137,34 @@ public:
 			KeyF,
 			Array<MenuElement>
 			{
-				MenuItem{ U"新規作成", U"Ctrl+N", KeyN, [this] { onClickMenuFileNew(); } },
-				MenuItem{ U"開く...", U"Ctrl+O", KeyO, [this] { onClickMenuFileOpen(); } },
-				MenuItem{ U"保存", U"Ctrl+S", KeyS, [this] { onClickMenuFileSave(); } },
-				MenuItem{ U"名前を付けて保存...", U"Ctrl+Shift+S", KeyA, [this] { onClickMenuFileSaveAs(); } },
+				MenuItem{ U"新規作成",
+					#ifdef __APPLE__
+						U"Cmd+N",
+					#else
+						U"Ctrl+N",
+					#endif
+					KeyN, [this] { onClickMenuFileNew(); } },
+				MenuItem{ U"開く...",
+					#ifdef __APPLE__
+						U"Cmd+O",
+					#else
+						U"Ctrl+O",
+					#endif
+					KeyO, [this] { onClickMenuFileOpen(); } },
+				MenuItem{ U"保存",
+					#ifdef __APPLE__
+						U"Cmd+S",
+					#else
+						U"Ctrl+S",
+					#endif
+					KeyS, [this] { onClickMenuFileSave(); } },
+				MenuItem{ U"名前を付けて保存...",
+					#ifdef __APPLE__
+						U"Cmd+Shift+S",
+					#else
+						U"Ctrl+Shift+S",
+					#endif
+					KeyA, [this] { onClickMenuFileSaveAs(); } },
 				MenuSeparator{},
 				MenuItem{ U"終了", U"Alt+F4", KeyQ, [this] { onClickMenuFileExit(); } },
 			},
@@ -149,47 +174,148 @@ public:
 			U"編集",
 			KeyE,
 			{
-				MenuItem{ U"元に戻す", U"Ctrl+Z", KeyU, [this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); } },
-				MenuItem{ U"やり直し", U"Ctrl+Shift+Z", KeyR, [this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); } },
+				MenuItem{ U"元に戻す",
+					#ifdef __APPLE__
+						U"Cmd+Z",
+					#else
+						U"Ctrl+Z",
+					#endif
+					KeyU, [this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); } },
+				MenuItem{ U"やり直し",
+					#ifdef __APPLE__
+						U"Cmd+Shift+Z",
+					#else
+						U"Ctrl+Shift+Z",
+					#endif
+					KeyR, [this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); } },
 				MenuSeparator{},
-				MenuItem{ U"切り取り", U"Ctrl+X", KeyT, [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
-				MenuItem{ U"コピー", U"Ctrl+C", KeyC, [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
-				MenuItem{ U"貼り付け", U"Ctrl+V", KeyP, [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
-				MenuItem{ U"複製を作成", U"Ctrl+D", KeyL, [this] { onClickMenuEditDuplicate(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"切り取り",
+					#ifdef __APPLE__
+						U"Cmd+X",
+					#else
+						U"Ctrl+X",
+					#endif
+					KeyT, [this] { onClickMenuEditCut(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"コピー",
+					#ifdef __APPLE__
+						U"Cmd+C",
+					#else
+						U"Ctrl+C",
+					#endif
+					KeyC, [this] { onClickMenuEditCopy(); }, [this] { return m_hierarchy.hasSelection(); } },
+				MenuItem{ U"貼り付け",
+					#ifdef __APPLE__
+						U"Cmd+V",
+					#else
+						U"Ctrl+V",
+					#endif
+					KeyP, [this] { onClickMenuEditPaste(); }, [this] { return m_hierarchy.canPaste(); } },
+				MenuItem{ U"複製を作成",
+					#ifdef __APPLE__
+						U"Cmd+D",
+					#else
+						U"Ctrl+D",
+					#endif
+					KeyL, [this] { onClickMenuEditDuplicate(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuItem{ U"削除", U"Delete", KeyD, [this] { onClickMenuEditDelete(); }, [this] { return m_hierarchy.hasSelection(); } },
 				MenuSeparator{},
-				MenuItem{ U"すべて選択", U"Ctrl+A", KeyA, [this] { m_hierarchy.selectAll(); } },
+				MenuItem{ U"すべて選択",
+					#ifdef __APPLE__
+						U"Cmd+A",
+					#else
+						U"Ctrl+A",
+					#endif
+					KeyA, [this] { m_hierarchy.selectAll(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"View",
 			U"表示",
 			KeyV,
 			{
-				MenuItem{ U"表示位置をリセット", U"Ctrl+0", KeyR, [this] { onClickMenuViewResetPosition(); } },
+				MenuItem{ U"表示位置をリセット",
+					#ifdef __APPLE__
+						U"Cmd+0",
+					#else
+						U"Ctrl+0",
+					#endif
+					KeyR, [this] { onClickMenuViewResetPosition(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"Tool",
 			U"ツール",
 			KeyT,
 			{
-				MenuItem{ U"アセットのルートディレクトリ(プレビュー用)を設定...", U"Ctrl+Alt+O", KeyA, [this] { onClickMenuToolChangeAssetDirectory(); } },
+				MenuItem{ U"アセットのルートディレクトリ(プレビュー用)を設定...",
+					#ifdef __APPLE__
+						U"Cmd+Option+O",
+					#else
+						U"Ctrl+Alt+O",
+					#endif
+					KeyA, [this] { onClickMenuToolChangeAssetDirectory(); } },
 			},
 			80,
 			480);
 		
 		// ツールバーの初期化
-		m_toolbar.addButton(U"New", U"\xF0224", U"新規作成 (Ctrl+N)", [this] { onClickMenuFileNew(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
-		m_toolbar.addButton(U"Open", U"\xF0256", U"開く (Ctrl+O)", [this] { onClickMenuFileOpen(); })->addClickHotKey(KeyO, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
-		m_toolbar.addButton(U"Save", U"\xF0818", U"保存 (Ctrl+S)", [this] { onClickMenuFileSave(); })->addClickHotKey(KeyS, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
-		m_toolbar.addButton(U"SaveAs", U"\xF0E28", U"名前を付けて保存 (Ctrl+Shift+S)", [this] { onClickMenuFileSaveAs(); })->addClickHotKey(KeyA, CtrlYN::Yes, AltYN::No, ShiftYN::Yes, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"New", U"\xF0224",
+			#ifdef __APPLE__
+				U"新規作成 (Cmd+N)",
+			#else
+				U"新規作成 (Ctrl+N)",
+			#endif
+			[this] { onClickMenuFileNew(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"Open", U"\xF0256",
+			#ifdef __APPLE__
+				U"開く (Cmd+O)",
+			#else
+				U"開く (Ctrl+O)",
+			#endif
+			[this] { onClickMenuFileOpen(); })->addClickHotKey(KeyO, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"Save", U"\xF0818",
+			#ifdef __APPLE__
+				U"保存 (Cmd+S)",
+			#else
+				U"保存 (Ctrl+S)",
+			#endif
+			[this] { onClickMenuFileSave(); })->addClickHotKey(KeyS, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"SaveAs", U"\xF0E28",
+			#ifdef __APPLE__
+				U"名前を付けて保存 (Cmd+Shift+S)",
+			#else
+				U"名前を付けて保存 (Ctrl+Shift+S)",
+			#endif
+			[this] { onClickMenuFileSaveAs(); })->addClickHotKey(KeyA, CtrlYN::Yes, AltYN::No, ShiftYN::Yes, EnabledWhileTextEditingYN::Yes);
 		m_toolbar.addSeparator();
-		m_toolbar.addButton(U"Undo", U"\xF054C", U"元に戻す (Ctrl+Z)", [this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); })->addClickHotKey(KeyZ, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
-		m_toolbar.addButton(U"Redo", U"\xF054D", U"やり直し (Ctrl+Shift+Z)", [this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); })
+		m_toolbar.addButton(U"Undo", U"\xF054C",
+			#ifdef __APPLE__
+				U"元に戻す (Cmd+Z)",
+			#else
+				U"元に戻す (Ctrl+Z)",
+			#endif
+			[this] { onClickMenuEditUndo(); }, [this] { return m_historySystem.canUndo(); })->addClickHotKey(KeyZ, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"Redo", U"\xF054D",
+			#ifdef __APPLE__
+				U"やり直し (Cmd+Shift+Z)",
+			#else
+				U"やり直し (Ctrl+Shift+Z)",
+			#endif
+			[this] { onClickMenuEditRedo(); }, [this] { return m_historySystem.canRedo(); })
 			->addClickHotKey(KeyY, CtrlYN::Yes, AltYN::No, ShiftYN::No, EnabledWhileTextEditingYN::Yes)
 			->addClickHotKey(KeyZ, CtrlYN::Yes, AltYN::No, ShiftYN::Yes, EnabledWhileTextEditingYN::Yes);
 		m_toolbar.addSeparator();
-		m_toolbar.addButton(U"NewNode", U"\xF1200", U"新規ノード (Ctrl+Shift+N)", [this] { m_hierarchy.onClickNewNode(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::Yes, EnabledWhileTextEditingYN::Yes);
-		m_toolbar.addButton(U"NewNodeAsChild", U"\xF0F97", U"選択ノードの子として新規ノード (Ctrl+Alt+N)",
+		m_toolbar.addButton(U"NewNode", U"\xF1200",
+			#ifdef __APPLE__
+				U"新規ノード (Cmd+Shift+N)",
+			#else
+				U"新規ノード (Ctrl+Shift+N)",
+			#endif
+			[this] { m_hierarchy.onClickNewNode(); })->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::No, ShiftYN::Yes, EnabledWhileTextEditingYN::Yes);
+		m_toolbar.addButton(U"NewNodeAsChild", U"\xF0F97",
+			#ifdef __APPLE__
+				U"選択ノードの子として新規ノード (Cmd+Option+N)",
+			#else
+				U"選択ノードの子として新規ノード (Ctrl+Alt+N)",
+			#endif
 			[this]
 			{
 				if (const auto parent = m_hierarchy.selectedNode().lock())
@@ -200,9 +326,27 @@ public:
 			[this] { return m_hierarchy.hasSelection(); })
 			->addClickHotKey(KeyN, CtrlYN::Yes, AltYN::Yes, ShiftYN::No, EnabledWhileTextEditingYN::Yes);
 		m_toolbar.addSeparator();
-		m_toolbar.addButton(U"CopyNode", U"\xF018F", U"選択ノードをコピー (Ctrl+C)", [this] { m_hierarchy.onClickCopy(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyC, CtrlYN::Yes, AltYN::No, ShiftYN::No);
-		m_toolbar.addButton(U"PasteNode", U"\xF0192", U"ノードを貼り付け (Ctrl+V)", [this] { m_hierarchy.onClickPaste(); }, [this] { return m_hierarchy.canPaste(); })->addClickHotKey(KeyV, CtrlYN::Yes, AltYN::No, ShiftYN::No);
-		m_toolbar.addButton(U"CutNode", U"\xF0190", U"選択ノードを切り取り (Ctrl+X)", [this] { m_hierarchy.onClickCut(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyX, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"CopyNode", U"\xF018F",
+			#ifdef __APPLE__
+				U"選択ノードをコピー (Cmd+C)",
+			#else
+				U"選択ノードをコピー (Ctrl+C)",
+			#endif
+			[this] { m_hierarchy.onClickCopy(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyC, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"PasteNode", U"\xF0192",
+			#ifdef __APPLE__
+				U"ノードを貼り付け (Cmd+V)",
+			#else
+				U"ノードを貼り付け (Ctrl+V)",
+			#endif
+			[this] { m_hierarchy.onClickPaste(); }, [this] { return m_hierarchy.canPaste(); })->addClickHotKey(KeyV, CtrlYN::Yes, AltYN::No, ShiftYN::No);
+		m_toolbar.addButton(U"CutNode", U"\xF0190",
+			#ifdef __APPLE__
+				U"選択ノードを切り取り (Cmd+X)",
+			#else
+				U"選択ノードを切り取り (Ctrl+X)",
+			#endif
+			[this] { m_hierarchy.onClickCut(); }, [this] { return m_hierarchy.hasSelection(); })->addClickHotKey(KeyX, CtrlYN::Yes, AltYN::No, ShiftYN::No);
 		m_toolbar.addButton(U"DeleteNode", U"\xF0A7A", U"選択ノードを削除 (Delete)", [this] { m_hierarchy.onClickDelete(); }, [this] { return m_hierarchy.hasSelection(); });
 		m_toolbar.addSeparator();
 
@@ -269,7 +413,7 @@ public:
 		const bool isWindowActive = Window::GetState().focused;
 		if (isWindowActive && !CurrentFrame::HasKeyInputBlocked() && !IsDraggingNode() && !m_dialogOpener->anyDialogOpened()) // ドラッグ中・ダイアログ表示中は無視
 		{
-			const bool ctrl = KeyControl.pressed();
+			const bool ctrl = noco::detail::KeyCommandControl.pressed();
 			const bool alt = KeyAlt.pressed();
 			const bool shift = KeyShift.pressed();
 

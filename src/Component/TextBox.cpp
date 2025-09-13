@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Component/TextBox.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
+#include "NocoUI/detail/Input.hpp"
 
 namespace noco
 {
@@ -228,7 +229,7 @@ namespace noco
 			return;
 		}
 
-		const bool ctrl = KeyControl.pressed();
+		const bool ctrl = noco::detail::KeyCommandControl.pressed();
 		const bool alt = KeyAlt.pressed();
 		const bool shift = KeyShift.pressed();
 
@@ -490,7 +491,7 @@ namespace noco
 
 			const size_t prevCursorIndex = m_cursorIndex;
 
-			const bool ctrl = KeyControl.pressed();
+			const bool ctrl = noco::detail::KeyCommandControl.pressed();
 			const bool alt = KeyAlt.pressed();
 			const bool shift = KeyShift.pressed();
 			bool keyMoveTried = false;

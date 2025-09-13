@@ -179,6 +179,9 @@
     <ClInclude Include="include\NocoUI\Region\Region.hpp">
       <Filter>Header Files\Region</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\detail\Input.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
