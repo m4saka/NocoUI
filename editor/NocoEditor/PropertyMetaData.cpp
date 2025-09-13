@@ -966,6 +966,8 @@ namespace noco::editor
 			.tooltip = U"選択範囲の色",
 		};
 		metadata[PropertyKey{ U"TextBox", U"text" }] = PropertyMetadata{
+			.tooltip = U"テキスト",
+			.tooltipDetail = U"入力されたテキスト内容\n※フォーカス時は要素のstyleStateが\"focused\"へ、フォーカスされていない時は\"unfocused\"へ上書きされます",
 			.refreshesEveryFrame = true,
 		};
 		metadata[PropertyKey{ U"TextBox", U"readOnly" }] = PropertyMetadata{
@@ -974,7 +976,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextBox", U"tag" }] = PropertyMetadata{
 			.tooltip = U"タグ",
-			.tooltipDetail = U"TextBoxを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\n同じタグを持つTextBoxのテキストを取得・設定できます",
+			.tooltipDetail = U"TextBoxを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\nそのタグを持つTextBoxのテキストを取得・設定できます",
 		};
 		
 		// TextArea
@@ -1002,6 +1004,8 @@ namespace noco::editor
 			.tooltip = U"選択範囲の色",
 		};
 		metadata[PropertyKey{ U"TextArea", U"text" }] = PropertyMetadata{
+			.tooltip = U"テキスト",
+			.tooltipDetail = U"入力されたテキスト内容\n※フォーカス時は要素のstyleStateが\"focused\"へ、フォーカスされていない時は\"unfocused\"へ上書きされます",
 			.numTextAreaLines = 3,
 			.refreshesEveryFrame = true,
 		};
@@ -1011,9 +1015,19 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextArea", U"tag" }] = PropertyMetadata{
 			.tooltip = U"タグ",
-			.tooltipDetail = U"TextAreaを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\n同じタグを持つTextAreaのテキストを取得・設定できます",
+			.tooltipDetail = U"TextAreaを識別するためのタグ文字列です\nCanvas::getTextValueByTag()やsetTextValueByTag()で\nそのタグを持つTextAreaのテキストを取得・設定できます",
 		};
-		
+
+		// Toggleのプロパティ
+		metadata[PropertyKey{ U"Toggle", U"value" }] = PropertyMetadata{
+			.tooltip = U"トグルの値",
+			.tooltipDetail = U"現在のオン/オフ状態を表します\n※現在のvalueの値に応じて要素のstyleStateが\"on\"/\"off\"へ上書きされます",
+		};
+		metadata[PropertyKey{ U"Toggle", U"tag" }] = PropertyMetadata{
+			.tooltip = U"タグ",
+			.tooltipDetail = U"Toggleを識別するためのタグ文字列です\nCanvas::getToggleValueByTag()やsetToggleValueByTag()で\nそのタグを持つToggleの値を取得・設定できます",
+		};
+
 		// EventTrigger
 		metadata[PropertyKey{ U"EventTrigger", U"tag" }] = PropertyMetadata{
 			.tooltip = U"プログラムから参照する際のタグ名",
@@ -1216,7 +1230,7 @@ namespace noco::editor
 			.tooltip = U"タグ",
 			.tooltipDetail = U"Tweenを一括制御するためのタグ文字列です\nCanvas::setTweenActiveByTag()で同じタグを持つ\nTweenを一括でアクティブ/非アクティブにできます",
 		};
-		
+
 		// Canvasのプロパティ
 		metadata[PropertyKey{ U"Canvas", U"size" }] = PropertyMetadata{
 			.tooltip = U"Canvasのサイズ",

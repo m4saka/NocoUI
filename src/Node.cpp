@@ -6,6 +6,7 @@
 #include "NocoUI/Component/Tween.hpp"
 #include "NocoUI/Component/TextBox.hpp"
 #include "NocoUI/Component/TextArea.hpp"
+#include "NocoUI/Component/Toggle.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
@@ -3180,6 +3181,69 @@ namespace noco
 			for (const auto& child : m_children)
 			{
 				child->setTextValueByTag(tag, text, RecursiveYN::Yes);
+			}
+		}
+	}
+
+	Optional<bool> Node::getToggleValueByTag(const String& tag, RecursiveYN recursive) const
+	{
+		if (tag.isEmpty())
+		{
+			return none;
+		}
+
+		// 自身のToggleコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto toggle = std::dynamic_pointer_cast<Toggle>(component))
+			{
+				if (toggle->tag() == tag)
+				{
+					return toggle->value();
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (auto result = child->getToggleValueByTag(tag, RecursiveYN::Yes))
+				{
+					return result;
+				}
+			}
+		}
+
+		return none;
+	}
+
+	void Node::setToggleValueByTag(const String& tag, bool value, RecursiveYN recursive)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		// 自身のToggleコンポーネントをチェック
+		for (auto& component : m_components)
+		{
+			if (auto toggle = std::dynamic_pointer_cast<Toggle>(component))
+			{
+				if (toggle->tag() == tag)
+				{
+					toggle->setValue(value);
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
 			}
 		}
 	}

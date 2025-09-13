@@ -66,6 +66,9 @@
     <ClCompile Include="src\Component\TextBox.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
+    <ClCompile Include="src\Component\Toggle.cpp">
+      <Filter>Source Files\Component</Filter>
+    </ClCompile>
     <ClCompile Include="src\Layout\FlowLayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -159,6 +162,9 @@
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\TextBox.hpp">
+      <Filter>Header Files\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\Component\Toggle.hpp">
       <Filter>Header Files\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\UpdaterComponent.hpp">

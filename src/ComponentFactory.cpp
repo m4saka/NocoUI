@@ -14,11 +14,12 @@ namespace noco
 		factory.registerComponentType<ShapeRenderer>(U"ShapeRenderer");
 		factory.registerComponentType<TextBox>(U"TextBox");
 		factory.registerComponentType<TextArea>(U"TextArea");
+		factory.registerComponentType<Toggle>(U"Toggle");
 		factory.registerComponentType<EventTrigger>(U"EventTrigger");
 		factory.registerComponentType<CursorChanger>(U"CursorChanger");
 		factory.registerComponentType<UISound>(U"UISound");
 		factory.registerComponentType<Tween>(U"Tween");
-		
+
 		return factory;
 	}
 	

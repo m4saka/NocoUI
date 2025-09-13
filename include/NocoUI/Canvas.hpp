@@ -777,6 +777,13 @@ namespace noco
 	// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
 	void setTextValueByTag(const String& tag, StringView text);
 
+	// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
+	[[nodiscard]]
+	Optional<bool> getToggleValueByTag(const String& tag) const;
+
+	// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
+	void setToggleValueByTag(const String& tag, bool value);
+
 private:
 	// ノードツリー内でinstanceIdによるノード検索（再帰）
 	[[nodiscard]]

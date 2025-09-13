@@ -724,6 +724,13 @@ namespace noco
 		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
 		void setTextValueByTag(const String& tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes);
 
+		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
+		[[nodiscard]]
+		Optional<bool> getToggleValueByTag(const String& tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+
+		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
+		void setToggleValueByTag(const String& tag, bool value, RecursiveYN recursive = RecursiveYN::Yes);
+
 	};
 
 	template <typename TComponent>

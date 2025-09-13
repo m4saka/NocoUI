@@ -1576,4 +1576,35 @@ namespace noco
 			child->setTextValueByTag(tag, text, RecursiveYN::Yes);
 		}
 	}
+
+	Optional<bool> Canvas::getToggleValueByTag(const String& tag) const
+	{
+		if (tag.isEmpty())
+		{
+			return none;
+		}
+
+		for (const auto& child : m_children)
+		{
+			if (auto result = child->getToggleValueByTag(tag, RecursiveYN::Yes))
+			{
+				return result;
+			}
+		}
+
+		return none;
+	}
+
+	void Canvas::setToggleValueByTag(const String& tag, bool value)
+	{
+		if (tag.isEmpty())
+		{
+			return;
+		}
+
+		for (auto& child : m_children)
+		{
+			child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
+		}
+	}
 }
