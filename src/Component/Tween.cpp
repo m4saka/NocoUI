@@ -238,18 +238,18 @@ namespace noco
 				// PingPongループ
 				const int32 cycle = static_cast<int32>(rawProgress);
 				rawProgress = Math::Fmod(rawProgress, 1.0);
-				
+
 				// 偶数サイクルは順方向、奇数サイクルは逆方向
 				if (cycle % 2 == 1)
 				{
 					rawProgress = 1.0 - rawProgress;
 				}
-				
+
 				m_loopCount = cycle;
 			}
 		}
-		// loopDurationが設定されている場合は、アニメーション終了後も最終値を維持
-		else if (loopDuration > 0.0 && rawProgress > 1.0)
+		// ループしない場合、アニメーション終了後は最終値を維持
+		else if (loopType == TweenLoopType::None && rawProgress > 1.0)
 		{
 			rawProgress = 1.0;
 		}
