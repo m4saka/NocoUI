@@ -26,15 +26,15 @@ namespace noco
 		[[nodiscard]]
 		bool getModifiersPressed() const
 		{
-			if (m_ctrl && !KeyControl.pressed())
+			if (m_ctrl.getBool() != KeyControl.pressed())
 			{
 				return false;
 			}
-			if (m_alt && !KeyAlt.pressed())
+			if (m_alt.getBool() != KeyAlt.pressed())
 			{
 				return false;
 			}
-			if (m_shift && !KeyShift.pressed())
+			if (m_shift.getBool() != KeyShift.pressed())
 			{
 				return false;
 			}
