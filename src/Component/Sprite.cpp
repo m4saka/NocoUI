@@ -28,9 +28,6 @@ namespace noco
 			const double fps = m_gridAnimationFPS.value();
 			if (fps > 0)
 			{
-				const int32 columns = m_textureGridColumns.value();
-				const int32 rows = m_textureGridRows.value();
-				
 				if (gridAnimType == SpriteGridAnimationType::OneShot)
 				{
 					if (!m_gridAnimationFinished)
