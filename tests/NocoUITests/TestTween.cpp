@@ -16,7 +16,7 @@ TEST_CASE("Tween component", "[Tween]")
 
 		// delay=1で0,0から100,100へduration=1で移動
 		auto tween = std::make_shared<noco::Tween>();
-		tween->setIsManual(true)
+		tween->setManualMode(true)
 			->setActive(true)
 			->setTarget(noco::TweenTarget::Translate)
 			->setFromVec2(Vec2{ 0.0, 0.0 })
@@ -77,7 +77,7 @@ TEST_CASE("Tween component", "[Tween]")
 
 		// 1秒のdelayのあと0,0から12,34に1秒かけて移動
 		auto tween1 = std::make_shared<noco::Tween>();
-		tween1->setIsManual(true)
+		tween1->setManualMode(true)
 			->setActive(true)
 			->setTarget(noco::TweenTarget::Translate)
 			->setFromVec2(Vec2{ 0.0, 0.0 })
@@ -92,7 +92,7 @@ TEST_CASE("Tween component", "[Tween]")
 
 		// 12,34から-45,-67へ1秒かけて移動
 		auto tween2 = std::make_shared<noco::Tween>();
-		tween2->setIsManual(true)
+		tween2->setManualMode(true)
 			->setActive(true)
 			->setTarget(noco::TweenTarget::Translate)
 			->setFromVec2(Vec2{ 12.0, 34.0 })
@@ -165,7 +165,7 @@ TEST_CASE("Tween component", "[Tween]")
 
 		// delay=1で0,0から100,100へduration=1で移動、PingPongループ
 		auto tween = std::make_shared<noco::Tween>();
-		tween->setIsManual(true)
+		tween->setManualMode(true)
 			->setActive(true)
 			->setTarget(noco::TweenTarget::Translate)
 			->setFromVec2(Vec2{ 0.0, 0.0 })

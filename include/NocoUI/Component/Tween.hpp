@@ -80,7 +80,7 @@ namespace noco
 		PropertyNonInteractive<double> m_loopDuration;
 		PropertyNonInteractive<bool> m_restartOnActive;
 		PropertyNonInteractive<bool> m_applyDuringDelay;
-		Property<bool> m_isManual;
+		Property<bool> m_manualMode;
 		SmoothProperty<double> m_manualTime;
 
 		/* NonSerialized */ double m_elapsedTime = 0.0;
@@ -108,7 +108,7 @@ namespace noco
 				&m_fromDouble, &m_toDouble,
 				&m_fromColor, &m_toColor,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
-				&m_applyDuringDelay, &m_isManual, &m_manualTime
+				&m_applyDuringDelay, &m_manualMode, &m_manualTime
 			} }
 			, m_active{ U"active", active }
 			, m_target{ U"target", target }
@@ -125,7 +125,7 @@ namespace noco
 			, m_loopDuration{ U"loopDuration", 0.0 }
 			, m_restartOnActive{ U"restartOnActive", true }
 			, m_applyDuringDelay{ U"applyDuringDelay", false }
-			, m_isManual{ U"isManual", false }
+			, m_manualMode{ U"manualMode", false }
 			, m_manualTime{ U"manualTime", 0.0 }
 		{
 		}
@@ -314,14 +314,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<bool>& isManual() const
+		const PropertyValue<bool>& manualMode() const
 		{
-			return m_isManual.propertyValue();
+			return m_manualMode.propertyValue();
 		}
 
-		std::shared_ptr<Tween> setIsManual(const PropertyValue<bool>& isManual)
+		std::shared_ptr<Tween> setManualMode(const PropertyValue<bool>& manualMode)
 		{
-			m_isManual.setPropertyValue(isManual);
+			m_manualMode.setPropertyValue(manualMode);
 			return shared_from_this();
 		}
 

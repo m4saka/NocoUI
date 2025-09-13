@@ -148,7 +148,7 @@ namespace noco
 		double time;
 		const double loopDuration = m_loopDuration.value();
 
-		if (m_isManual.value())
+		if (m_manualMode.value())
 		{
 			time = m_manualTime.value();
 			// マニュアルモードでloopDurationが設定されている場合、manualTimeを直接fmod

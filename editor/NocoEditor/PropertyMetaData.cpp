@@ -1147,7 +1147,7 @@ namespace noco::editor
 		{
 			if (const auto* tween = dynamic_cast<const Tween*>(&component))
 			{
-				return !HasAnyTrueState(tween->isManual());
+				return !HasAnyTrueState(tween->manualMode());
 			}
 			return true;
 		};
@@ -1157,7 +1157,7 @@ namespace noco::editor
 			.visibilityCondition = tweenRestartsVisibilityCondition,
 		};
 		
-		metadata[PropertyKey{ U"Tween", U"isManual" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"Tween", U"manualMode" }] = PropertyMetadata{
 			.tooltip = U"手動制御モード",
 			.tooltipDetail = U"有効にすると、時間経過ではなくmanualTimeプロパティの値(0.0〜1.0)でアニメーションの進行を制御します",
 			.refreshInspectorOnChange = true,
@@ -1172,7 +1172,7 @@ namespace noco::editor
 		{
 			if (const auto* tween = dynamic_cast<const Tween*>(&component))
 			{
-				return HasAnyTrueState(tween->isManual());
+				return HasAnyTrueState(tween->manualMode());
 			}
 			return false;
 		};
