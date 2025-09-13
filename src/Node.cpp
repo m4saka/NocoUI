@@ -1569,6 +1569,11 @@ namespace noco
 			}
 		}
 
+		m_prevClickRequested = m_clickRequested;
+		m_prevRightClickRequested = m_rightClickRequested;
+		m_clickRequested = false;
+		m_rightClickRequested = false;
+
 		if (m_activeInHierarchyForLifecycle)
 		{
 			refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
@@ -1704,11 +1709,6 @@ namespace noco
 		{
 			child->postLateUpdate(deltaTime, m_transformMatInHierarchy, m_hitTestMatInHierarchy, params);
 		}
-
-		m_prevClickRequested = m_clickRequested;
-		m_prevRightClickRequested = m_rightClickRequested;
-		m_clickRequested = false;
-		m_rightClickRequested = false;
 	}
 
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
