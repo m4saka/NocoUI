@@ -50,8 +50,8 @@ namespace noco
 			JSON json
 			{
 				{ U"type", U"InlineRegion" },
-				{ U"sizeRatio", sizeRatio },
-				{ U"sizeDelta", sizeDelta },
+				{ U"sizeRatio", ToArrayJSON<Vec2>(sizeRatio) },
+				{ U"sizeDelta", ToArrayJSON<Vec2>(sizeDelta) },
 				{ U"flexibleWeight", flexibleWeight },
 				{ U"margin", margin.toJSON() },
 			};
@@ -77,12 +77,12 @@ namespace noco
 		}
 
 		[[nodiscard]]
-				static InlineRegion FromJSON(const JSON& json)
+		static InlineRegion FromJSON(const JSON& json)
 		{
 			return InlineRegion
 			{
-				.sizeRatio = GetFromJSONOr(json, U"sizeRatio", Vec2::Zero()),
-				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
+				.sizeRatio = json.contains(U"sizeRatio") ? FromArrayJSON<Vec2>(json[U"sizeRatio"], Vec2::Zero()) : Vec2::Zero(),
+				.sizeDelta = json.contains(U"sizeDelta") ? FromArrayJSON<Vec2>(json[U"sizeDelta"], Vec2::Zero()) : Vec2::Zero(),
 				.flexibleWeight = Max(GetFromJSONOr(json, U"flexibleWeight", 0.0), 0.0),
 				.margin = GetFromJSONOr(json, U"margin", LRTB::Zero()),
 				.minWidth = GetFromJSONOpt<double>(json, U"minWidth"),

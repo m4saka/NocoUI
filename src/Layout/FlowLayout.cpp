@@ -9,7 +9,7 @@ namespace noco
 		{
 			{ U"type", U"FlowLayout" },
 			{ U"padding", padding.toJSON() },
-			{ U"spacing", spacing },
+			{ U"spacing", ToArrayJSON<Vec2>(spacing) },
 			{ U"horizontalAlign", EnumToString(horizontalAlign) },
 			{ U"verticalAlign", EnumToString(verticalAlign) },
 		};
@@ -20,7 +20,7 @@ namespace noco
 		return FlowLayout
 		{
 			.padding = GetFromJSONOr(json, U"padding", LRTB::Zero()),
-			.spacing = GetFromJSONOr(json, U"spacing", Vec2::Zero()),
+			.spacing = json.contains(U"spacing") ? FromArrayJSON<Vec2>(json[U"spacing"]) : Vec2::Zero(),
 			.horizontalAlign = GetFromJSONOr(json, U"horizontalAlign", HorizontalAlign::Left),
 			.verticalAlign = GetFromJSONOr(json, U"verticalAlign", VerticalAlign::Top),
 		};

@@ -525,12 +525,28 @@ TEST_CASE("PropertyValue JSON Serialization with StyleState", "[Property][StyleS
 		
 		// focusedは複数値があるのでオブジェクト形式
 		REQUIRE(styleStates[U"focused"].isObject());
-		REQUIRE(styleStates[U"focused"][U"default"].getString() == U"(0, 0, 255, 255)");
-		REQUIRE(styleStates[U"focused"][U"hovered"].getString() == U"(51, 51, 255, 255)");
-		
-		// checkedはdefaultのみなので省略記法（文字列）
-		REQUIRE(styleStates[U"checked"].isString());
-		REQUIRE(styleStates[U"checked"].getString() == U"(0, 255, 0, 255)");
+		// Colorは配列フォーマット [r, g, b, a] でシリアライズされる
+		REQUIRE(styleStates[U"focused"][U"default"].isArray());
+		REQUIRE(styleStates[U"focused"][U"default"].size() == 4);
+		REQUIRE(styleStates[U"focused"][U"default"][0].get<int32>() == 0);
+		REQUIRE(styleStates[U"focused"][U"default"][1].get<int32>() == 0);
+		REQUIRE(styleStates[U"focused"][U"default"][2].get<int32>() == 255);
+		REQUIRE(styleStates[U"focused"][U"default"][3].get<int32>() == 255);
+
+		REQUIRE(styleStates[U"focused"][U"hovered"].isArray());
+		REQUIRE(styleStates[U"focused"][U"hovered"].size() == 4);
+		REQUIRE(styleStates[U"focused"][U"hovered"][0].get<int32>() == 51);
+		REQUIRE(styleStates[U"focused"][U"hovered"][1].get<int32>() == 51);
+		REQUIRE(styleStates[U"focused"][U"hovered"][2].get<int32>() == 255);
+		REQUIRE(styleStates[U"focused"][U"hovered"][3].get<int32>() == 255);
+
+		// checkedはdefaultのみなので省略記法（配列）
+		REQUIRE(styleStates[U"checked"].isArray());
+		REQUIRE(styleStates[U"checked"].size() == 4);
+		REQUIRE(styleStates[U"checked"][0].get<int32>() == 0);
+		REQUIRE(styleStates[U"checked"][1].get<int32>() == 255);
+		REQUIRE(styleStates[U"checked"][2].get<int32>() == 0);
+		REQUIRE(styleStates[U"checked"][3].get<int32>() == 255);
 	}
 	
 	SECTION("JSON format verification")

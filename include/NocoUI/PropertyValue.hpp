@@ -312,7 +312,7 @@ namespace noco
 
 			if constexpr (std::is_enum_v<T>)
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 &&
 				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
 					return EnumToString(m_defaultValue);
@@ -335,18 +335,18 @@ namespace noco
 				{
 					json[U"smoothTime"] = m_smoothTime;
 				}
-				
+
 				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
-					
+
 					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
-						
+
 						if (hasOnlyDefault)
 						{
-							// Defaultのみの場合は文字列で保存
+							// Defaultのみの場合は値を直接保存
 							styleStatesJson[state] = EnumToString(values.defaultValue);
 						}
 						else
@@ -369,15 +369,15 @@ namespace noco
 							styleStatesJson[state] = stateJson;
 						}
 					}
-					
+
 					json[U"styleStates"] = styleStatesJson;
 				}
-				
+
 				return json;
 			}
 			else if constexpr (HasToJSON<T>)
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 &&
 				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
 					return m_defaultValue.toJSON();
@@ -400,18 +400,18 @@ namespace noco
 				{
 					json[U"smoothTime"] = m_smoothTime;
 				}
-				
+
 				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
-					
+
 					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
-						
+
 						if (hasOnlyDefault)
 						{
-							// Defaultのみの場合は文字列で保存
+							// Defaultのみの場合は値を直接保存
 							styleStatesJson[state] = values.defaultValue.toJSON();
 						}
 						else
@@ -434,75 +434,143 @@ namespace noco
 							styleStatesJson[state] = stateJson;
 						}
 					}
-					
+
 					json[U"styleStates"] = styleStatesJson;
 				}
-				
+
 				return json;
 			}
 			else
 			{
-				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 && 
+				if (!hoveredVal && !pressedVal && !disabledVal && m_smoothTime == 0.0 &&
 				    (!m_styleStateValues || m_styleStateValues->empty()))
 				{
-					return m_defaultValue;
+					if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+					{
+						return ToArrayJSON<T>(m_defaultValue);
+					}
+					else
+					{
+						return m_defaultValue;
+					}
 				}
 				JSON json;
-				json[U"default"] = m_defaultValue;
+				if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+				{
+					json[U"default"] = ToArrayJSON<T>(m_defaultValue);
+				}
+				else
+				{
+					json[U"default"] = m_defaultValue;
+				}
 				if (hoveredVal)
 				{
-					json[U"hovered"] = *hoveredVal;
+					if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+					{
+						json[U"hovered"] = ToArrayJSON<T>(*hoveredVal);
+					}
+					else
+					{
+						json[U"hovered"] = *hoveredVal;
+					}
 				}
 				if (pressedVal)
 				{
-					json[U"pressed"] = *pressedVal;
+					if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+					{
+						json[U"pressed"] = ToArrayJSON<T>(*pressedVal);
+					}
+					else
+					{
+						json[U"pressed"] = *pressedVal;
+					}
 				}
 				if (disabledVal)
 				{
-					json[U"disabled"] = *disabledVal;
+					if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+					{
+						json[U"disabled"] = ToArrayJSON<T>(*disabledVal);
+					}
+					else
+					{
+						json[U"disabled"] = *disabledVal;
+					}
 				}
 				if (m_smoothTime != 0.0)
 				{
 					json[U"smoothTime"] = m_smoothTime;
 				}
-				
+
 				if (m_styleStateValues && !m_styleStateValues->empty())
 				{
 					JSON styleStatesJson;
-					
+
 					for (const auto& [state, values] : *m_styleStateValues)
 					{
 						bool hasOnlyDefault = !values.hoveredValue && !values.pressedValue && !values.disabledValue;
-						
+
 						if (hasOnlyDefault)
 						{
-							// Defaultのみの場合は文字列で保存
-							styleStatesJson[state] = values.defaultValue;
+							if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+							{
+								styleStatesJson[state] = ToArrayJSON<T>(values.defaultValue);
+							}
+							else
+							{
+								styleStatesJson[state] = values.defaultValue;
+							}
 						}
 						else
 						{
-							// interactionState毎の値がある場合はオブジェクトで保存
 							JSON stateJson;
-							stateJson[U"default"] = values.defaultValue;
+							if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+							{
+								stateJson[U"default"] = ToArrayJSON<T>(values.defaultValue);
+							}
+							else
+							{
+								stateJson[U"default"] = values.defaultValue;
+							}
 							if (values.hoveredValue)
 							{
-								stateJson[U"hovered"] = *values.hoveredValue;
+								if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+								{
+									stateJson[U"hovered"] = ToArrayJSON<T>(*values.hoveredValue);
+								}
+								else
+								{
+									stateJson[U"hovered"] = *values.hoveredValue;
+								}
 							}
 							if (values.pressedValue)
 							{
-								stateJson[U"pressed"] = *values.pressedValue;
+								if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+								{
+									stateJson[U"pressed"] = ToArrayJSON<T>(*values.pressedValue);
+								}
+								else
+								{
+									stateJson[U"pressed"] = *values.pressedValue;
+								}
 							}
 							if (values.disabledValue)
 							{
-								stateJson[U"disabled"] = *values.disabledValue;
+								if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+								{
+									stateJson[U"disabled"] = ToArrayJSON<T>(*values.disabledValue);
+								}
+								else
+								{
+									stateJson[U"disabled"] = *values.disabledValue;
+								}
 							}
 							styleStatesJson[state] = stateJson;
 						}
 					}
-					
+
 					json[U"styleStates"] = styleStatesJson;
 				}
-				
+
 				return json;
 			}
 		}
@@ -635,15 +703,30 @@ namespace noco
 			{
 				if (json.isObject() && json.contains(U"default"))
 				{
-					auto propertyValue = PropertyValue<T>
+					PropertyValue<T> propertyValue{ defaultValue };
+					if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
 					{
-						GetFromJSONOr(json, U"default", defaultValue),
-						GetFromJSONOpt<T>(json, U"hovered"),
-						GetFromJSONOpt<T>(json, U"pressed"),
-						GetFromJSONOpt<T>(json, U"disabled"),
-						GetFromJSONOr(json, U"smoothTime", 0.0),
-					};
-					
+						propertyValue = PropertyValue<T>
+						{
+							FromArrayJSON<T>(json[U"default"], defaultValue),
+							json.contains(U"hovered") ? FromArrayJSON<T>(json[U"hovered"], defaultValue) : Optional<T>{ none },
+							json.contains(U"pressed") ? FromArrayJSON<T>(json[U"pressed"], defaultValue) : Optional<T>{ none },
+							json.contains(U"disabled") ? FromArrayJSON<T>(json[U"disabled"], defaultValue) : Optional<T>{ none },
+							GetFromJSONOr(json, U"smoothTime", 0.0),
+						};
+					}
+					else
+					{
+						propertyValue = PropertyValue<T>
+						{
+							GetFromJSONOr(json, U"default", defaultValue),
+							GetFromJSONOpt<T>(json, U"hovered"),
+							GetFromJSONOpt<T>(json, U"pressed"),
+							GetFromJSONOpt<T>(json, U"disabled"),
+							GetFromJSONOr(json, U"smoothTime", 0.0),
+						};
+					}
+
 					if (json.contains(U"styleStates"))
 					{
 						const JSON& styleStatesJson = json[U"styleStates"];
@@ -653,41 +736,71 @@ namespace noco
 							{
 								propertyValue.m_styleStateValues = std::make_unique<HashTable<String, PropertyStyleStateValue<T>>>();
 							}
-							
+
 							for (const auto& [state, valueJson] : styleStatesJson)
 							{
 								if (valueJson.isObject() && valueJson.contains(U"default"))
 								{
-									// オブジェクトの場合はInteractionStateごとの値がある
-									PropertyStyleStateValue<T> styleStateValues{ valueJson[U"default"].get<T>() };
-									
-									if (valueJson.contains(U"hovered"))
+									PropertyStyleStateValue<T> styleStateValues;
+									if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
 									{
-										styleStateValues.hoveredValue = valueJson[U"hovered"].get<T>();
+										styleStateValues.defaultValue = FromArrayJSON<T>(valueJson[U"default"], defaultValue);
+										if (valueJson.contains(U"hovered"))
+										{
+											styleStateValues.hoveredValue = FromArrayJSON<T>(valueJson[U"hovered"], defaultValue);
+										}
+										if (valueJson.contains(U"pressed"))
+										{
+											styleStateValues.pressedValue = FromArrayJSON<T>(valueJson[U"pressed"], defaultValue);
+										}
+										if (valueJson.contains(U"disabled"))
+										{
+											styleStateValues.disabledValue = FromArrayJSON<T>(valueJson[U"disabled"], defaultValue);
+										}
 									}
-									if (valueJson.contains(U"pressed"))
+									else
 									{
-										styleStateValues.pressedValue = valueJson[U"pressed"].get<T>();
+										styleStateValues.defaultValue = valueJson[U"default"].get<T>();
+										if (valueJson.contains(U"hovered"))
+										{
+											styleStateValues.hoveredValue = valueJson[U"hovered"].get<T>();
+										}
+										if (valueJson.contains(U"pressed"))
+										{
+											styleStateValues.pressedValue = valueJson[U"pressed"].get<T>();
+										}
+										if (valueJson.contains(U"disabled"))
+										{
+											styleStateValues.disabledValue = valueJson[U"disabled"].get<T>();
+										}
 									}
-									if (valueJson.contains(U"disabled"))
-									{
-										styleStateValues.disabledValue = valueJson[U"disabled"].get<T>();
-									}
-									
 									(*propertyValue.m_styleStateValues)[state] = styleStateValues;
 								}
 								else
 								{
-									// 文字列の場合はDefaultのみの値
-									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.get<T>() };
+									if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+									{
+										(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ FromArrayJSON<T>(valueJson, defaultValue) };
+									}
+									else
+									{
+										(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.get<T>() };
+									}
 								}
 							}
 						}
 					}
-					
+
 					return propertyValue;
 				}
-				return PropertyValue<T>{ json.getOr<T>(defaultValue) };
+				if constexpr (std::same_as<T, Color> || std::same_as<T, Vec2>)
+				{
+					return PropertyValue<T>{ FromArrayJSON<T>(json, defaultValue) };
+				}
+				else
+				{
+					return PropertyValue<T>{ json.getOr<T>(defaultValue) };
+				}
 			}
 		}
 

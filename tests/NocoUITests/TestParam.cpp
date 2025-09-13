@@ -489,7 +489,7 @@ TEST_CASE("Parameter name validation", "[Param]")
 	SECTION("Invalid parameter names are rejected in JSON loading")
 	{
 		JSON json;
-		json[U"referenceSize"] = U"(800, 600)"; // Canvas作成に必要
+		json[U"referenceSize"] = Array<double>{ 800.0, 600.0 }; // Canvas作成に必要
 		json[U"version"] = noco::NocoUIVersion;
 		json[U"serializedVersion"] = noco::CurrentSerializedVersion;
 		json[U"children"] = Array<JSON>{}; // Canvas作成に必要
@@ -653,16 +653,16 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		REQUIRE(GetParamValueAs<String>(*result).value_or(U"") == U"test");
 	}
 	
-	SECTION("Color type requires string format")
+	SECTION("Color type as array format")
 	{
 		JSON json;
 		json[U"type"] = U"Color";
-		json[U"value"] = U"#FF0000FF";  // 文字列形式
-		
+		json[U"value"] = Array<int32>{ 255, 0, 0, 255 };  // 配列形式
+
 		auto result = ParamValueFromJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Color);
-		
+
 		auto color = GetParamValueAs<Color>(*result);
 		REQUIRE(color.has_value());
 		REQUIRE(color->r == 255);
@@ -670,39 +670,94 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		REQUIRE(color->b == 0);
 		REQUIRE(color->a == 255);
 	}
-	
-	SECTION("Vec2 type requires string format")
+
+	SECTION("Color type with string format returns default")
+	{
+		JSON json;
+		json[U"type"] = U"Color";
+		json[U"value"] = U"#FF0000FF";  // 文字列形式はエラー
+
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Color);
+
+		auto color = GetParamValueAs<Color>(*result);
+		REQUIRE(color.has_value());
+		// デフォルト値(0, 0, 0, 0)が返される
+		REQUIRE(color->r == 0);
+		REQUIRE(color->g == 0);
+		REQUIRE(color->b == 0);
+		REQUIRE(color->a == 0);
+	}
+
+	SECTION("Vec2 type as array format")
 	{
 		JSON json;
 		json[U"type"] = U"Vec2";
-		json[U"value"] = U"(100, 200)";  // 文字列形式
-		
+		json[U"value"] = Array<double>{ 100, 200 };  // 配列形式
+
 		auto result = ParamValueFromJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Vec2);
-		
+
 		auto vec = GetParamValueAs<Vec2>(*result);
 		REQUIRE(vec.has_value());
 		REQUIRE(vec->x == Approx(100));
 		REQUIRE(vec->y == Approx(200));
 	}
-	
-	SECTION("LRTB type requires string format")
+
+	SECTION("Vec2 type with string format returns default")
+	{
+		JSON json;
+		json[U"type"] = U"Vec2";
+		json[U"value"] = U"(100, 200)";  // 文字列形式はエラー
+
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Vec2);
+
+		auto vec = GetParamValueAs<Vec2>(*result);
+		REQUIRE(vec.has_value());
+		// デフォルト値(0, 0)が返される
+		REQUIRE(vec->x == Approx(0));
+		REQUIRE(vec->y == Approx(0));
+	}
+
+	SECTION("LRTB type as array format")
 	{
 		JSON json;
 		json[U"type"] = U"LRTB";
-		json[U"value"] = U"(10, 20, 30, 40)";  // 文字列形式
-		
+		json[U"value"] = Array<double>{ 10, 20, 30, 40 };  // 配列形式
+
 		auto result = ParamValueFromJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::LRTB);
-		
+
 		auto lrtb = GetParamValueAs<LRTB>(*result);
 		REQUIRE(lrtb.has_value());
 		REQUIRE(lrtb->left == Approx(10));
 		REQUIRE(lrtb->right == Approx(20));
 		REQUIRE(lrtb->top == Approx(30));
 		REQUIRE(lrtb->bottom == Approx(40));
+	}
+
+	SECTION("LRTB type with string format returns default")
+	{
+		JSON json;
+		json[U"type"] = U"LRTB";
+		json[U"value"] = U"(10, 20, 30, 40)";  // 文字列形式はエラー
+
+		auto result = ParamValueFromJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::LRTB);
+
+		auto lrtb = GetParamValueAs<LRTB>(*result);
+		REQUIRE(lrtb.has_value());
+		// デフォルト値(0, 0, 0, 0)が返される
+		REQUIRE(lrtb->left == Approx(0));
+		REQUIRE(lrtb->right == Approx(0));
+		REQUIRE(lrtb->top == Approx(0));
+		REQUIRE(lrtb->bottom == Approx(0));
 	}
 	
 	SECTION("Missing required fields")
@@ -712,16 +767,201 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		noType[U"value"] = 42;
 		auto resultNoType = ParamValueFromJSON(noType);
 		REQUIRE(!resultNoType.has_value());
-		
+
 		// valueフィールドがない場合
 		JSON noValue;
 		noValue[U"type"] = U"Number";
 		auto resultNoValue = ParamValueFromJSON(noValue);
 		REQUIRE(!resultNoValue.has_value());
-		
+
 		// 両方のフィールドがない場合
 		JSON empty;
 		auto resultEmpty = ParamValueFromJSON(empty);
 		REQUIRE(!resultEmpty.has_value());
+	}
+
+	SECTION("Canvas params are saved as arrays in JSON")
+	{
+		// Canvasにパラメータを設定
+		auto canvas = Canvas::Create();
+		canvas->setParamValue(U"testColor", Color{255, 128, 64, 32});
+		canvas->setParamValue(U"testVec2", Vec2{100.5, 200.25});
+		canvas->setParamValue(U"testLRTB", LRTB{10.1, 20.2, 30.3, 40.4});
+		canvas->setParamValue(U"testBool", true);
+		canvas->setParamValue(U"testNumber", 42.5);
+		canvas->setParamValue(U"testString", U"test value");
+
+		// JSON形式で保存
+		JSON json = canvas->toJSON();
+
+		// paramsオブジェクトが存在することを確認
+		REQUIRE(json.contains(U"params"));
+		REQUIRE(json[U"params"].isObject());
+
+		// 各パラメータが正しい形式で保存されているか検証
+		const JSON& params = json[U"params"];
+
+		// Colorは配列形式 [r, g, b, a]
+		REQUIRE(params.contains(U"testColor"));
+		REQUIRE(params[U"testColor"].contains(U"type"));
+		REQUIRE(params[U"testColor"][U"type"].getString() == U"Color");
+		REQUIRE(params[U"testColor"].contains(U"value"));
+		REQUIRE(params[U"testColor"][U"value"].isArray());
+		REQUIRE(params[U"testColor"][U"value"].size() == 4);
+		REQUIRE(params[U"testColor"][U"value"][0].get<int32>() == 255);
+		REQUIRE(params[U"testColor"][U"value"][1].get<int32>() == 128);
+		REQUIRE(params[U"testColor"][U"value"][2].get<int32>() == 64);
+		REQUIRE(params[U"testColor"][U"value"][3].get<int32>() == 32);
+
+		// Vec2は配列形式 [x, y]
+		REQUIRE(params.contains(U"testVec2"));
+		REQUIRE(params[U"testVec2"][U"type"].getString() == U"Vec2");
+		REQUIRE(params[U"testVec2"][U"value"].isArray());
+		REQUIRE(params[U"testVec2"][U"value"].size() == 2);
+		REQUIRE(params[U"testVec2"][U"value"][0].get<double>() == Approx(100.5));
+		REQUIRE(params[U"testVec2"][U"value"][1].get<double>() == Approx(200.25));
+
+		// LRTBは配列形式 [left, right, top, bottom]
+		REQUIRE(params.contains(U"testLRTB"));
+		REQUIRE(params[U"testLRTB"][U"type"].getString() == U"LRTB");
+		REQUIRE(params[U"testLRTB"][U"value"].isArray());
+		REQUIRE(params[U"testLRTB"][U"value"].size() == 4);
+		REQUIRE(params[U"testLRTB"][U"value"][0].get<double>() == Approx(10.1));
+		REQUIRE(params[U"testLRTB"][U"value"][1].get<double>() == Approx(20.2));
+		REQUIRE(params[U"testLRTB"][U"value"][2].get<double>() == Approx(30.3));
+		REQUIRE(params[U"testLRTB"][U"value"][3].get<double>() == Approx(40.4));
+
+		// boolは直接bool値として保存
+		REQUIRE(params.contains(U"testBool"));
+		REQUIRE(params[U"testBool"][U"type"].getString() == U"Bool");
+		REQUIRE(params[U"testBool"][U"value"].isBool());
+		REQUIRE(params[U"testBool"][U"value"].get<bool>() == true);
+
+		// numberは直接double値として保存
+		REQUIRE(params.contains(U"testNumber"));
+		REQUIRE(params[U"testNumber"][U"type"].getString() == U"Number");
+		REQUIRE(params[U"testNumber"][U"value"].isNumber());
+		REQUIRE(params[U"testNumber"][U"value"].get<double>() == Approx(42.5));
+
+		// stringは直接文字列として保存
+		REQUIRE(params.contains(U"testString"));
+		REQUIRE(params[U"testString"][U"type"].getString() == U"String");
+		REQUIRE(params[U"testString"][U"value"].isString());
+		REQUIRE(params[U"testString"][U"value"].getString() == U"test value");
+
+		// デバッグ用: 実際のJSON出力を確認
+		Logger << U"JSON output: " << Unicode::FromUTF8(json.formatUTF8());
+	}
+
+	SECTION("Component PropertyValues are saved as arrays in JSON")
+	{
+		// Canvasを作成してコンポーネントプロパティを設定
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		// Color、Vec2、LRTBプロパティを持つコンポーネントを追加
+		auto rectRenderer = node->emplaceComponent<RectRenderer>();
+		rectRenderer->setFillColor(Color{200, 100, 50, 25});
+
+		auto label = node->emplaceComponent<Label>();
+		label->setColor(Color{150, 75, 25, 200});
+
+		// Transformも確認
+		node->transform().setColor(Color{180, 90, 45, 220});
+		node->transform().setTranslate(Vec2{150.5, 250.75});
+		node->transform().setScale(Vec2{1.5, 2.0});
+
+		// JSON形式で保存
+		JSON json = canvas->toJSON();
+
+		// 最初の子ノードを取得
+		REQUIRE(json.contains(U"children"));
+		REQUIRE(json[U"children"].isArray());
+		REQUIRE(json[U"children"].size() > 0);
+
+		const JSON& childNode = json[U"children"][0];
+
+		// RectRendererのfillColorプロパティを確認
+		REQUIRE(childNode.contains(U"components"));
+		REQUIRE(childNode[U"components"].isArray());
+
+		// RectRendererコンポーネントを検索
+		bool foundRectRenderer = false;
+		for (size_t i = 0; i < childNode[U"components"].size(); ++i)
+		{
+			const JSON& component = childNode[U"components"][i];
+			if (component[U"type"].getString() == U"RectRenderer")
+			{
+				foundRectRenderer = true;
+				// fillColorが配列形式 [r, g, b, a] で保存されているか確認
+				const JSON& fillColor = component[U"fillColor"];
+
+				// PropertyValueは配列形式で保存されるべき
+				REQUIRE(fillColor.isArray());
+				REQUIRE(fillColor.size() == 4);
+				REQUIRE(fillColor[0].get<int32>() == 200);
+				REQUIRE(fillColor[1].get<int32>() == 100);
+				REQUIRE(fillColor[2].get<int32>() == 50);
+				REQUIRE(fillColor[3].get<int32>() == 25);
+				break;
+			}
+		}
+		REQUIRE(foundRectRenderer);
+
+		// Labelコンポーネントのcolorプロパティを確認
+		bool foundLabel = false;
+		for (size_t i = 0; i < childNode[U"components"].size(); ++i)
+		{
+			const JSON& component = childNode[U"components"][i];
+			if (component[U"type"].getString() == U"Label")
+			{
+				foundLabel = true;
+				const JSON& color = component[U"color"];
+
+				// PropertyValueは配列形式で保存されるべき
+				REQUIRE(color.isArray());
+				REQUIRE(color.size() == 4);
+				REQUIRE(color[0].get<int32>() == 150);
+				REQUIRE(color[1].get<int32>() == 75);
+				REQUIRE(color[2].get<int32>() == 25);
+				REQUIRE(color[3].get<int32>() == 200);
+				break;
+			}
+		}
+		REQUIRE(foundLabel);
+
+		// Transformのプロパティを確認
+		REQUIRE(childNode.contains(U"transform"));
+		const JSON& transform = childNode[U"transform"];
+
+		// Transform colorプロパティ
+		REQUIRE(transform.contains(U"color"));
+		const JSON& transformColor = transform[U"color"];
+		// PropertyValueは配列形式で保存されるべき
+		REQUIRE(transformColor.isArray());
+		REQUIRE(transformColor.size() == 4);
+		REQUIRE(transformColor[0].get<int32>() == 180);
+		REQUIRE(transformColor[1].get<int32>() == 90);
+		REQUIRE(transformColor[2].get<int32>() == 45);
+		REQUIRE(transformColor[3].get<int32>() == 220);
+
+		// Transform translateプロパティ
+		REQUIRE(transform.contains(U"translate"));
+		const JSON& translateValue = transform[U"translate"];
+		// PropertyValueは配列形式で保存されるべき
+		REQUIRE(translateValue.isArray());
+		REQUIRE(translateValue.size() == 2);
+		REQUIRE(translateValue[0].get<double>() == Approx(150.5));
+		REQUIRE(translateValue[1].get<double>() == Approx(250.75));
+
+		// Transform scaleプロパティ
+		REQUIRE(transform.contains(U"scale"));
+		const JSON& scaleValue = transform[U"scale"];
+		// PropertyValueは配列形式で保存されるべき
+		REQUIRE(scaleValue.isArray());
+		REQUIRE(scaleValue.size() == 2);
+		REQUIRE(scaleValue[0].get<double>() == Approx(1.5));
+		REQUIRE(scaleValue[1].get<double>() == Approx(2.0));
 	}
 }

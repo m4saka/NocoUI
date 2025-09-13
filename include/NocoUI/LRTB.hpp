@@ -14,22 +14,25 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON() const
 		{
-			// Vec4に変換してから文字列形式でシリアライズ
-			const Vec4 vec{ left, right, top, bottom };
-			return JSON(Format(vec));
+			return Array<double>{ left, right, top, bottom };
 		}
 
 		[[nodiscard]]
 		static LRTB fromJSON(const JSON& json, const LRTB& defaultValue = Zero())
 		{
-			if (json.isString())
+			if (json.isArray() && json.size() == 4)
 			{
-				// 文字列形式 "(left, right, top, bottom)" をパース
-				const String str = json.getString();
-				if (const auto vec = ParseOpt<Vec4>(str))
-				{
-					return LRTB{ vec->x, vec->y, vec->z, vec->w };
-				}
+				return LRTB{
+					.left = json[0].getOr<double>(0.0),
+					.right = json[1].getOr<double>(0.0),
+					.top = json[2].getOr<double>(0.0),
+					.bottom = json[3].getOr<double>(0.0),
+				};
+			}
+			else if (json.isString())
+			{
+				Logger << U"[NocoUI warning] String format LRTB found, returning default value";
+				return defaultValue;
 			}
 			return defaultValue;
 		}
@@ -131,4 +134,30 @@ namespace noco
 			};
 		}
 	};
+
+	template<>
+	[[nodiscard]]
+	inline LRTB GetFromJSONOr<LRTB>(const JSON& json, const String& key, const LRTB& defaultValue)
+	{
+		if (json.isObject() && json.contains(key))
+		{
+			return LRTB::fromJSON(json[key], defaultValue);
+		}
+		return defaultValue;
+	}
+
+	template<>
+	[[nodiscard]]
+	inline Optional<LRTB> GetFromJSONOpt<LRTB>(const JSON& json, const String& key)
+	{
+		if (json.isObject() && json.contains(key))
+		{
+			const JSON& valueJson = json[key];
+			if (valueJson.isArray() && valueJson.size() == 4)
+			{
+				return LRTB::fromJSON(valueJson);
+			}
+		}
+		return none;
+	}
 }

@@ -5,6 +5,11 @@
 
 namespace noco
 {
+	struct LRTB;
+}
+
+namespace noco
+{
 	constexpr int32 CurrentSerializedVersion = 1;
 
 	template <typename T>
@@ -44,10 +49,6 @@ namespace noco
 			if constexpr (std::is_enum_v<T>)
 			{
 				return StringToEnum<T>(json[key].getOr<String>(EnumToString(defaultValue)), defaultValue);
-			}
-			else if constexpr (std::same_as<T, struct LRTB>)
-			{
-				return LRTB::fromJSON(json[key], defaultValue);
 			}
 			else
 			{
@@ -160,4 +161,64 @@ namespace noco
 	{
 		{ T::fromJSON(JSON{}, T{}) } -> std::convertible_to<T>;
 	};
+
+	template<typename T>
+	[[nodiscard]]
+	JSON ToArrayJSON(const T& value);
+
+	template<typename T>
+	[[nodiscard]]
+	T FromArrayJSON(const JSON& json, const T& defaultValue = T{});
+
+	template<>
+	[[nodiscard]]
+	inline JSON ToArrayJSON<Vec2>(const Vec2& value)
+	{
+		return Array<double>{ value.x, value.y };
+	}
+
+	template<>
+	[[nodiscard]]
+	inline Vec2 FromArrayJSON<Vec2>(const JSON& json, const Vec2& defaultValue)
+	{
+		if (json.isArray() && json.size() == 2)
+		{
+			return Vec2{ json[0].getOr<double>(0.0), json[1].getOr<double>(0.0) };
+		}
+		else if (json.isString())
+		{
+			Logger << U"[NocoUI warning] String format Vec2 found, returning default value";
+			return defaultValue;
+		}
+		return json.getOr<Vec2>(defaultValue);
+	}
+
+	template<>
+	[[nodiscard]]
+	inline JSON ToArrayJSON<Color>(const Color& value)
+	{
+		return Array<int32>{ value.r, value.g, value.b, value.a };
+	}
+
+	template<>
+	[[nodiscard]]
+	inline Color FromArrayJSON<Color>(const JSON& json, const Color& defaultValue)
+	{
+		if (json.isArray() && json.size() == 4)
+		{
+			return Color{
+				static_cast<uint8>(Clamp(json[0].getOr<int32>(0), 0, 255)),
+				static_cast<uint8>(Clamp(json[1].getOr<int32>(0), 0, 255)),
+				static_cast<uint8>(Clamp(json[2].getOr<int32>(0), 0, 255)),
+				static_cast<uint8>(Clamp(json[3].getOr<int32>(255), 0, 255))
+			};
+		}
+		else if (json.isString())
+		{
+			Logger << U"[NocoUI warning] String format Color found, returning default value";
+			return defaultValue;
+		}
+		return json.getOr<Color>(defaultValue);
+	}
+
 }

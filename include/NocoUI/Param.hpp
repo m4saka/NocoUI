@@ -263,18 +263,18 @@ namespace noco
 			}
 			else if constexpr (std::is_same_v<T, Color>)
 			{
-				// Colorは文字列形式で保存（PropertyValueと同様）
-				json[U"value"] = ValueToString(v);
+				// Colorは配列形式で保存 [r, g, b, a]
+				json[U"value"] = Array<int32>{ v.r, v.g, v.b, v.a };
 			}
 			else if constexpr (std::is_same_v<T, Vec2>)
 			{
-				// Vec2は文字列形式で保存（PropertyValueと同様）
-				json[U"value"] = ValueToString(v);
+				// Vec2は配列形式で保存 [x, y]
+				json[U"value"] = Array<double>{ v.x, v.y };
 			}
 			else if constexpr (std::is_same_v<T, LRTB>)
 			{
-				// LRTBは文字列形式で保存（PropertyValueと同様）
-				json[U"value"] = ValueToString(v);
+				// LRTBは配列形式で保存 [left, right, top, bottom]
+				json[U"value"] = Array<double>{ v.left, v.right, v.top, v.bottom };
 			}
 			
 			return json;
@@ -338,43 +338,58 @@ namespace noco
 		}
 		else if (typeStr == U"Color")
 		{
-			// Colorは文字列形式で保存されている
-			// カラーコード文字列はSiv3D側で実装されているためデシリアライズされる
-			if (valueJson.isString())
+			// Colorは配列形式 [r, g, b, a] のみ受け付ける
+			if (valueJson.isArray() && valueJson.size() == 4)
 			{
-				if (auto opt = StringToValueOpt<Color>(valueJson.getString()))
-				{
-					return ParamValue{ *opt };
-				}
+				const int32 r = valueJson[0].get<int32>();
+				const int32 g = valueJson[1].get<int32>();
+				const int32 b = valueJson[2].get<int32>();
+				const int32 a = valueJson[3].get<int32>();
+				return ParamValue{ Color{ static_cast<uint8>(Clamp(r, 0, 255)), static_cast<uint8>(Clamp(g, 0, 255)), static_cast<uint8>(Clamp(b, 0, 255)), static_cast<uint8>(Clamp(a, 0, 255)) } };
 			}
-			Logger << U"[NocoUI warning] Failed to parse Color parameter. Skipping.";
-			return none;
+			else if (valueJson.isString())
+			{
+				Logger << U"[NocoUI warning] Color parameter must be an array [r, g, b, a], not a string. Using default Color(0, 0, 0, 0).";
+				return ParamValue{ Color{ 0, 0, 0, 0 } };
+			}
+			Logger << U"[NocoUI warning] Failed to parse Color parameter. Expected array format [r, g, b, a]. Using default Color(0, 0, 0, 0).";
+			return ParamValue{ Color{ 0, 0, 0, 0 } };
 		}
 		else if (typeStr == U"Vec2")
 		{
-			// Vec2は文字列形式で保存されている
-			if (valueJson.isString())
+			// Vec2は配列形式 [x, y] のみ受け付ける
+			if (valueJson.isArray() && valueJson.size() == 2)
 			{
-				if (auto opt = StringToValueOpt<Vec2>(valueJson.getString()))
-				{
-					return ParamValue{ *opt };
-				}
+				const double x = valueJson[0].get<double>();
+				const double y = valueJson[1].get<double>();
+				return ParamValue{ Vec2{ x, y } };
 			}
-			Logger << U"[NocoUI warning] Failed to parse Vec2 parameter. Skipping.";
-			return none;
+			else if (valueJson.isString())
+			{
+				Logger << U"[NocoUI warning] Vec2 parameter must be an array [x, y], not a string. Using default Vec2(0, 0).";
+				return ParamValue{ Vec2{ 0.0, 0.0 } };
+			}
+			Logger << U"[NocoUI warning] Failed to parse Vec2 parameter. Expected array format [x, y]. Using default Vec2(0, 0).";
+			return ParamValue{ Vec2{ 0.0, 0.0 } };
 		}
 		else if (typeStr == U"LRTB")
 		{
-			// LRTBは文字列形式で保存されている
-			if (valueJson.isString())
+			// LRTBは配列形式 [left, right, top, bottom] のみ受け付ける
+			if (valueJson.isArray() && valueJson.size() == 4)
 			{
-				if (auto opt = StringToValueOpt<LRTB>(valueJson.getString()))
-				{
-					return ParamValue{ *opt };
-				}
+				const double left = valueJson[0].get<double>();
+				const double right = valueJson[1].get<double>();
+				const double top = valueJson[2].get<double>();
+				const double bottom = valueJson[3].get<double>();
+				return ParamValue{ LRTB{ left, right, top, bottom } };
 			}
-			Logger << U"[NocoUI warning] Failed to parse LRTB parameter. Skipping.";
-			return none;
+			else if (valueJson.isString())
+			{
+				Logger << U"[NocoUI warning] LRTB parameter must be an array [left, right, top, bottom], not a string. Using default LRTB(0, 0, 0, 0).";
+				return ParamValue{ LRTB{ 0.0, 0.0, 0.0, 0.0 } };
+			}
+			Logger << U"[NocoUI warning] Failed to parse LRTB parameter. Expected array format [left, right, top, bottom]. Using default LRTB(0, 0, 0, 0).";
+			return ParamValue{ LRTB{ 0.0, 0.0, 0.0, 0.0 } };
 		}
 		else
 		{

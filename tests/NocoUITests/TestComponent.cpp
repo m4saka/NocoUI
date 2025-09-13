@@ -554,7 +554,7 @@ TEST_CASE("Component type checking from JSON", "[Component]")
 		// fillColorが数値の場合
 		JSON json;
 		json[U"type"] = U"RectRenderer";
-		json[U"fillColor"] = 123;  // 数値（文字列形式のColorFであるべき）
+		json[U"fillColor"] = 123;  // 数値（配列形式のColorであるべき）
 		
 		auto rect = std::make_shared<noco::RectRenderer>(Palette::White);
 		REQUIRE(rect->fillColor().defaultValue().r == 255);

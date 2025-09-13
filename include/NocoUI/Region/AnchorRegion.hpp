@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "../Serialization.hpp"
 
 namespace noco
 {
@@ -58,11 +59,11 @@ namespace noco
 			JSON json
 			{
 				{ U"type", U"AnchorRegion" },
-				{ U"anchorMin", anchorMin },
-				{ U"anchorMax", anchorMax },
-				{ U"posDelta", posDelta },
-				{ U"sizeDelta", sizeDelta },
-				{ U"sizeDeltaPivot", sizeDeltaPivot },
+				{ U"anchorMin", ToArrayJSON<Vec2>(anchorMin) },
+				{ U"anchorMax", ToArrayJSON<Vec2>(anchorMax) },
+				{ U"posDelta", ToArrayJSON<Vec2>(posDelta) },
+				{ U"sizeDelta", ToArrayJSON<Vec2>(sizeDelta) },
+				{ U"sizeDeltaPivot", ToArrayJSON<Vec2>(sizeDeltaPivot) },
 			};
 			
 			if (minWidth)
@@ -90,11 +91,11 @@ namespace noco
 		{
 			return AnchorRegion
 			{
-				.anchorMin = GetFromJSONOr(json, U"anchorMin", Anchor::MiddleCenter),
-				.anchorMax = GetFromJSONOr(json, U"anchorMax", Anchor::MiddleCenter),
-				.posDelta = GetFromJSONOr(json, U"posDelta", Vec2::Zero()),
-				.sizeDelta = GetFromJSONOr(json, U"sizeDelta", Vec2::Zero()),
-				.sizeDeltaPivot = GetFromJSONOr(json, U"sizeDeltaPivot", Anchor::MiddleCenter),
+				.anchorMin = json.contains(U"anchorMin") ? FromArrayJSON<Vec2>(json[U"anchorMin"], Anchor::MiddleCenter) : Anchor::MiddleCenter,
+				.anchorMax = json.contains(U"anchorMax") ? FromArrayJSON<Vec2>(json[U"anchorMax"], Anchor::MiddleCenter) : Anchor::MiddleCenter,
+				.posDelta = json.contains(U"posDelta") ? FromArrayJSON<Vec2>(json[U"posDelta"], Vec2::Zero()) : Vec2::Zero(),
+				.sizeDelta = json.contains(U"sizeDelta") ? FromArrayJSON<Vec2>(json[U"sizeDelta"], Vec2::Zero()) : Vec2::Zero(),
+				.sizeDeltaPivot = json.contains(U"sizeDeltaPivot") ? FromArrayJSON<Vec2>(json[U"sizeDeltaPivot"], Anchor::MiddleCenter) : Anchor::MiddleCenter,
 				.minWidth = GetFromJSONOpt<double>(json, U"minWidth"),
 				.minHeight = GetFromJSONOpt<double>(json, U"minHeight"),
 				.maxWidth = GetFromJSONOpt<double>(json, U"maxWidth"),

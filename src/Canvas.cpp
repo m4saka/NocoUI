@@ -295,7 +295,7 @@ namespace noco
 		{
 			{ U"version", NocoUIVersion },
 			{ U"serializedVersion", CurrentSerializedVersion },
-			{ U"referenceSize", ValueToString(m_referenceSize) },
+			{ U"referenceSize", ToArrayJSON(m_referenceSize) },
 		};
 
 		if (m_autoFitMode != AutoFitMode::None)
@@ -374,15 +374,9 @@ namespace noco
 		}
 		
 		// referenceSizeの読み込み（必須フィールド）
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].get<String>()))
-		{
-			canvas->m_referenceSize = *sizeOpt;
-			canvas->m_size = *sizeOpt;  // 初期サイズとしても使用
-		}
-		else
-		{
-			Logger << U"[NocoUI warning] Canvas::CreateFromJSON: Failed to parse referenceSize, using default";
-		}
+		const SizeF referenceSize = FromArrayJSON<Vec2>(json[U"referenceSize"], SizeF{ 800, 600 });
+		canvas->m_referenceSize = referenceSize;
+		canvas->m_size = referenceSize;  // 初期サイズとしても使用
 		
 		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
@@ -488,15 +482,9 @@ namespace noco
 		}
 		
 		// referenceSizeの読み込み（必須フィールド）
-		if (auto sizeOpt = StringToValueOpt<SizeF>(json[U"referenceSize"].get<String>()))
-		{
-			m_referenceSize = *sizeOpt;
-			m_size = *sizeOpt;  // 初期サイズとしても使用
-		}
-		else
-		{
-			Logger << U"[NocoUI warning] Canvas::tryReadFromJSON: Failed to parse referenceSize";
-		}
+		const SizeF referenceSize = FromArrayJSON<Vec2>(json[U"referenceSize"], SizeF{ 800, 600 });
+		m_referenceSize = referenceSize;
+		m_size = referenceSize;  // 初期サイズとしても使用
 
 		for (const auto& child : m_children)
 		{

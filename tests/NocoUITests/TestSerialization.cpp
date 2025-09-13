@@ -77,11 +77,31 @@ TEST_CASE("Min/Max Size Regions Serialization", "[Region][AnchorRegion][InlineRe
 		
 		// JSONの内容確認
 		REQUIRE(json[U"type"].getString() == U"AnchorRegion");
-		REQUIRE(json[U"anchorMin"] == originalRegion.anchorMin);
-		REQUIRE(json[U"anchorMax"] == originalRegion.anchorMax);
-		REQUIRE(json[U"posDelta"] == originalRegion.posDelta);
-		REQUIRE(json[U"sizeDelta"] == originalRegion.sizeDelta);
-		REQUIRE(json[U"sizeDeltaPivot"] == originalRegion.sizeDeltaPivot);
+		// Vec2は配列フォーマット [x, y] でシリアライズされる
+		REQUIRE(json[U"anchorMin"].isArray());
+		REQUIRE(json[U"anchorMin"].size() == 2);
+		REQUIRE(json[U"anchorMin"][0].get<double>() == Approx(originalRegion.anchorMin.x));
+		REQUIRE(json[U"anchorMin"][1].get<double>() == Approx(originalRegion.anchorMin.y));
+
+		REQUIRE(json[U"anchorMax"].isArray());
+		REQUIRE(json[U"anchorMax"].size() == 2);
+		REQUIRE(json[U"anchorMax"][0].get<double>() == Approx(originalRegion.anchorMax.x));
+		REQUIRE(json[U"anchorMax"][1].get<double>() == Approx(originalRegion.anchorMax.y));
+
+		REQUIRE(json[U"posDelta"].isArray());
+		REQUIRE(json[U"posDelta"].size() == 2);
+		REQUIRE(json[U"posDelta"][0].get<double>() == Approx(originalRegion.posDelta.x));
+		REQUIRE(json[U"posDelta"][1].get<double>() == Approx(originalRegion.posDelta.y));
+
+		REQUIRE(json[U"sizeDelta"].isArray());
+		REQUIRE(json[U"sizeDelta"].size() == 2);
+		REQUIRE(json[U"sizeDelta"][0].get<double>() == Approx(originalRegion.sizeDelta.x));
+		REQUIRE(json[U"sizeDelta"][1].get<double>() == Approx(originalRegion.sizeDelta.y));
+
+		REQUIRE(json[U"sizeDeltaPivot"].isArray());
+		REQUIRE(json[U"sizeDeltaPivot"].size() == 2);
+		REQUIRE(json[U"sizeDeltaPivot"][0].get<double>() == Approx(originalRegion.sizeDeltaPivot.x));
+		REQUIRE(json[U"sizeDeltaPivot"][1].get<double>() == Approx(originalRegion.sizeDeltaPivot.y));
 		REQUIRE(json[U"minWidth"].get<double>() == 80.0);
 		REQUIRE(json[U"minHeight"].get<double>() == 60.0);
 		REQUIRE(json[U"maxWidth"].get<double>() == 500.0);
@@ -157,8 +177,16 @@ TEST_CASE("Min/Max Size Regions Serialization", "[Region][AnchorRegion][InlineRe
 		
 		// JSONの内容確認
 		REQUIRE(json[U"type"].getString() == U"InlineRegion");
-		REQUIRE(json[U"sizeRatio"] == originalRegion.sizeRatio);
-		REQUIRE(json[U"sizeDelta"] == originalRegion.sizeDelta);
+		// Vec2は配列フォーマット [x, y] でシリアライズされる
+		REQUIRE(json[U"sizeRatio"].isArray());
+		REQUIRE(json[U"sizeRatio"].size() == 2);
+		REQUIRE(json[U"sizeRatio"][0].get<double>() == Approx(originalRegion.sizeRatio.x));
+		REQUIRE(json[U"sizeRatio"][1].get<double>() == Approx(originalRegion.sizeRatio.y));
+
+		REQUIRE(json[U"sizeDelta"].isArray());
+		REQUIRE(json[U"sizeDelta"].size() == 2);
+		REQUIRE(json[U"sizeDelta"][0].get<double>() == Approx(originalRegion.sizeDelta.x));
+		REQUIRE(json[U"sizeDelta"][1].get<double>() == Approx(originalRegion.sizeDelta.y));
 		REQUIRE(json[U"flexibleWeight"].get<double>() == 1.5);
 		REQUIRE(json[U"minWidth"].get<double>() == 120.0);
 		REQUIRE(json[U"minHeight"].get<double>() == 90.0);
@@ -168,9 +196,13 @@ TEST_CASE("Min/Max Size Regions Serialization", "[Region][AnchorRegion][InlineRe
 		// marginのJSONを確認
 		REQUIRE(json.contains(U"margin"));
 		const JSON& marginJson = json[U"margin"];
-		// LRTBは文字列として保存される
-		REQUIRE(marginJson.isString());
-		REQUIRE(marginJson.getString() == U"(5, 10, 15, 20)");
+		// LRTBは配列フォーマット [left, right, top, bottom] として保存される
+		REQUIRE(marginJson.isArray());
+		REQUIRE(marginJson.size() == 4);
+		REQUIRE(marginJson[0].get<double>() == Approx(5.0));
+		REQUIRE(marginJson[1].get<double>() == Approx(10.0));
+		REQUIRE(marginJson[2].get<double>() == Approx(15.0));
+		REQUIRE(marginJson[3].get<double>() == Approx(20.0));
 		
 		// JSONからデシリアライズ
 		noco::InlineRegion deserializedRegion = noco::InlineRegion::FromJSON(json);
@@ -294,20 +326,37 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		// 通常の値
 		noco::LRTB original{ 10.5, 20.5, 30.5, 40.5 };
 		JSON json = original.toJSON();
-		REQUIRE(json.getString() == U"(10.5, 20.5, 30.5, 40.5)");
+		// LRTBは配列フォーマット [left, right, top, bottom] でシリアライズされる
+		REQUIRE(json.isArray());
+		REQUIRE(json.size() == 4);
+		REQUIRE(json[0].get<double>() == Approx(10.5));
+		REQUIRE(json[1].get<double>() == Approx(20.5));
+		REQUIRE(json[2].get<double>() == Approx(30.5));
+		REQUIRE(json[3].get<double>() == Approx(40.5));
 		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
 		REQUIRE(deserialized == original);
 		
 		// ゼロ値
 		noco::LRTB zero = noco::LRTB::Zero();
 		JSON zeroJson = zero.toJSON();
-		REQUIRE(zeroJson.getString() == U"(0, 0, 0, 0)");
+		// LRTBは配列フォーマット [left, right, top, bottom] でシリアライズされる
+		REQUIRE(zeroJson.isArray());
+		REQUIRE(zeroJson.size() == 4);
+		REQUIRE(zeroJson[0].get<double>() == Approx(0.0));
+		REQUIRE(zeroJson[1].get<double>() == Approx(0.0));
+		REQUIRE(zeroJson[2].get<double>() == Approx(0.0));
+		REQUIRE(zeroJson[3].get<double>() == Approx(0.0));
 		REQUIRE(noco::LRTB::fromJSON(zeroJson) == zero);
 		
 		// 負の値
 		noco::LRTB negative{ -10, -20, -30, -40 };
 		JSON negJson = negative.toJSON();
-		REQUIRE(negJson.getString() == U"(-10, -20, -30, -40)");
+		REQUIRE(negJson.isArray());
+		REQUIRE(negJson.size() == 4);
+		REQUIRE(negJson[0].getOr<double>(0.0) == -10.0);
+		REQUIRE(negJson[1].getOr<double>(0.0) == -20.0);
+		REQUIRE(negJson[2].getOr<double>(0.0) == -30.0);
+		REQUIRE(negJson[3].getOr<double>(0.0) == -40.0);
 		REQUIRE(noco::LRTB::fromJSON(negJson) == negative);
 	}
 	
@@ -335,7 +384,7 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		regionJson[U"flexibleWeight"] = 0.0;
 		
 		// marginあり
-		regionJson[U"margin"] = U"(5, 10, 15, 20)";
+		regionJson[U"margin"] = Array<double>{ 5.0, 10.0, 15.0, 20.0 };
 		noco::InlineRegion withMargin = noco::InlineRegion::FromJSON(regionJson);
 		REQUIRE(withMargin.margin == noco::LRTB{ 5, 10, 15, 20 });
 		
