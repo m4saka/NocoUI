@@ -37,7 +37,9 @@ namespace noco
 		PropertyNonInteractive<int32> m_gridAnimationEndIndex;
 		Property<SpriteOffsetAnimationType> m_offsetAnimationType;
 		PropertyNonInteractive<Vec2> m_offsetAnimationSpeed;
-		
+		Property<SpriteTextureFilter> m_textureFilter;
+		Property<SpriteTextureAddressMode> m_textureAddressMode;
+
 		/* NonSerialized */ Optional<Texture> m_textureOpt;
 		/* NonSerialized */ Stopwatch m_animationStopwatch;
 		/* NonSerialized */ int32 m_currentGridAnimationIndex = 0;
@@ -49,7 +51,7 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<ColorF>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_textureAddressMode } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -78,6 +80,8 @@ namespace noco
 			, m_gridAnimationEndIndex{ U"gridAnimationEndIndex", 0 }
 			, m_offsetAnimationType{ U"offsetAnimationType", SpriteOffsetAnimationType::None }
 			, m_offsetAnimationSpeed{ U"offsetAnimationSpeed", Vec2{ 0.0, 0.0 } }
+			, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
+			, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
 		{
 		}
 
@@ -439,6 +443,30 @@ namespace noco
 		std::shared_ptr<Sprite> setOffsetAnimationSpeed(const Vec2& offsetAnimationSpeed)
 		{
 			m_offsetAnimationSpeed.setValue(offsetAnimationSpeed);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<SpriteTextureFilter>& textureFilter() const
+		{
+			return m_textureFilter.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setTextureFilter(const PropertyValue<SpriteTextureFilter>& textureFilter)
+		{
+			m_textureFilter.setPropertyValue(textureFilter);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<SpriteTextureAddressMode>& textureAddressMode() const
+		{
+			return m_textureAddressMode.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setTextureAddressMode(const PropertyValue<SpriteTextureAddressMode>& textureAddressMode)
+		{
+			m_textureAddressMode.setPropertyValue(textureAddressMode);
 			return shared_from_this();
 		}
 	};

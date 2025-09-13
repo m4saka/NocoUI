@@ -406,7 +406,75 @@ namespace noco
 		{
 			colorAdd.emplace(addColorValue);
 		}
-		
+
+		// SamplerStateの設定
+		Optional<ScopedRenderStates2D> samplerState;
+		const SpriteTextureFilter filterMode = m_textureFilter.value();
+		const SpriteTextureAddressMode addressMode = m_textureAddressMode.value();
+
+		if (filterMode != SpriteTextureFilter::Default || addressMode != SpriteTextureAddressMode::Default)
+		{
+			// 現在のSamplerStateを取得してベースにする
+			SamplerState currentState = Graphics2D::GetSamplerState(ShaderStage::Pixel, 0);
+
+			// TextureAddressModeの設定
+			if (addressMode != SpriteTextureAddressMode::Default)
+			{
+				TextureAddressMode textureAddressMode;
+				switch (addressMode)
+				{
+				case SpriteTextureAddressMode::Repeat:
+					textureAddressMode = TextureAddressMode::Repeat;
+					break;
+				case SpriteTextureAddressMode::Mirror:
+					textureAddressMode = TextureAddressMode::Mirror;
+					break;
+				case SpriteTextureAddressMode::Clamp:
+					textureAddressMode = TextureAddressMode::Clamp;
+					break;
+				case SpriteTextureAddressMode::BorderColor:
+					textureAddressMode = TextureAddressMode::Border;
+					break;
+				default:
+					textureAddressMode = currentState.addressU;
+					break;
+				}
+				currentState.addressU = textureAddressMode;
+				currentState.addressV = textureAddressMode;
+				currentState.addressW = textureAddressMode;
+			}
+
+			// TextureFilterの設定
+			if (filterMode != SpriteTextureFilter::Default)
+			{
+				switch (filterMode)
+				{
+				case SpriteTextureFilter::Nearest:
+					currentState.min = TextureFilter::Nearest;
+					currentState.mag = TextureFilter::Nearest;
+					currentState.mip = TextureFilter::Nearest;
+					currentState.maxAnisotropy = 1;
+					break;
+				case SpriteTextureFilter::Linear:
+					currentState.min = TextureFilter::Linear;
+					currentState.mag = TextureFilter::Linear;
+					currentState.mip = TextureFilter::Linear;
+					currentState.maxAnisotropy = 1;
+					break;
+				case SpriteTextureFilter::Aniso:
+					currentState.min = TextureFilter::Linear;
+					currentState.mag = TextureFilter::Linear;
+					currentState.mip = TextureFilter::Linear;
+					currentState.maxAnisotropy = SamplerState::DefaultMaxAnisotropy;
+					break;
+				default:
+					break;
+				}
+			}
+
+			samplerState.emplace(currentState);
+		}
+
 		// 空のテクスチャ(黄色になる)の場合はそのまま描画
 		if (!texture)
 		{

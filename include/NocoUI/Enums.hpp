@@ -64,4 +64,21 @@ namespace noco
 		None,
 		Scroll,
 	};
+
+	enum class SpriteTextureFilter : uint8
+	{
+		Default,
+		Nearest,
+		Linear,
+		Aniso,
+	};
+
+	enum class SpriteTextureAddressMode : uint8
+	{
+		Default,
+		Repeat,
+		Mirror,
+		Clamp,
+		BorderColor,
+	};
 }

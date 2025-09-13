@@ -916,6 +916,16 @@ namespace noco::editor
 			.visibilityCondition = offsetAnimationEnabledVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
+
+		metadata[PropertyKey{ U"Sprite", U"textureFilter" }] = PropertyMetadata{
+			.tooltip = U"テクスチャフィルタ",
+			.tooltipDetail = U"テクスチャの補間方法\nDefault: 現在の設定を使用\nNearest: 最近傍補間（ドット絵向け）\nLinear: バイリニア補間（滑らか）\nAniso: 異方性フィルタリング（高品質）",
+		};
+
+		metadata[PropertyKey{ U"Sprite", U"textureAddressMode" }] = PropertyMetadata{
+			.tooltip = U"テクスチャアドレスモード",
+			.tooltipDetail = U"テクスチャ座標が範囲外の時の動作\nDefault: 現在の設定を使用\nRepeat: 繰り返し\nMirror: ミラー繰り返し\nClamp: 端の色で埋める\nBorderColor: 境界色で埋める",
+		};
 		
 		// TextBox
 		metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
