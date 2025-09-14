@@ -81,11 +81,10 @@ TEST_CASE("Toggle component", "[Toggle]")
 
 		// 単一ノードからの取得
 		auto value = node->getToggleValueByTag(U"darkMode");
-		CHECK(value.has_value());
-		CHECK(*value == true);
+		CHECK(value == true);
 
 		// 存在しないタグ
-		auto notFound = node->getToggleValueByTag(U"nonexistent");
+		auto notFound = node->getToggleValueByTagOpt(U"nonexistent");
 		CHECK(!notFound.has_value());
 
 		// 値の設定
@@ -111,8 +110,7 @@ TEST_CASE("Toggle component", "[Toggle]")
 
 		// 最初に見つかったものを取得
 		auto value = canvas->getToggleValueByTag(U"option");
-		CHECK(value.has_value());
-		CHECK(*value == true);
+		CHECK(value == true);
 
 		// すべてに設定
 		canvas->setToggleValueByTag(U"option", false);
@@ -141,15 +139,14 @@ TEST_CASE("Toggle component", "[Toggle]")
 
 		// 再帰的検索（デフォルト）
 		auto value = canvas->getToggleValueByTag(U"deepToggle");
-		CHECK(value.has_value());
-		CHECK(*value == true);
+		CHECK(value == true);
 
 		// 再帰的設定（デフォルト）
 		canvas->setToggleValueByTag(U"deepToggle", false);
 		CHECK(toggle->value() == false);
 
 		// 非再帰的検索
-		auto nonRecursive = parent->getToggleValueByTag(U"deepToggle", noco::RecursiveYN::No);
+		auto nonRecursive = parent->getToggleValueByTagOpt(U"deepToggle", noco::RecursiveYN::No);
 		CHECK(!nonRecursive.has_value());
 
 		// 非再帰的設定（grandchildには影響しない）
@@ -169,8 +166,8 @@ TEST_CASE("Toggle component", "[Toggle]")
 		// タグを設定しない（空文字列のまま）
 
 		// 空のタグでの検索は何も返さない
-		auto value = canvas->getToggleValueByTag(U"");
-		CHECK(!value.has_value());
+		auto value = canvas->getToggleValueByTag(U"", false);
+		CHECK(value == false);
 
 		// 空のタグでの設定は何もしない
 		canvas->setToggleValueByTag(U"", false);
@@ -222,5 +219,62 @@ TEST_CASE("Toggle component", "[Toggle]")
 		CHECK(toggle->value() == true);
 		canvas->update();
 		CHECK(node->styleState() == U"on");
+	}
+
+	SECTION("getToggleValueByTagOpt tests")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create();
+		auto child = noco::Node::Create();
+		canvas->addChild(parent);
+		parent->addChild(child);
+
+		auto toggle = child->emplaceComponent<noco::Toggle>();
+		toggle->setTag(U"testTag");
+		toggle->setValue(true);
+
+		// Optバージョンで存在するタグを取得
+		auto optValue = canvas->getToggleValueByTagOpt(U"testTag");
+		CHECK(optValue.has_value());
+		CHECK(*optValue == true);
+
+		// Optバージョンで存在しないタグを取得
+		auto notFound = canvas->getToggleValueByTagOpt(U"nonExistent");
+		CHECK(!notFound.has_value());
+
+		// 非再帰的検索で存在しないケース
+		auto nonRecursive = parent->getToggleValueByTagOpt(U"testTag", noco::RecursiveYN::No);
+		CHECK(!nonRecursive.has_value());
+
+		// 非再帰的検索で存在するケース
+		auto parentToggle = parent->emplaceComponent<noco::Toggle>();
+		parentToggle->setTag(U"parentTag");
+		parentToggle->setValue(false);
+
+		auto parentOpt = parent->getToggleValueByTagOpt(U"parentTag", noco::RecursiveYN::No);
+		CHECK(parentOpt.has_value());
+		CHECK(*parentOpt == false);
+	}
+
+	SECTION("getToggleValueByTag with default value")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		// タグが存在しない場合はデフォルト値を返す
+		auto value1 = node->getToggleValueByTag(U"notFound", true);
+		CHECK(value1 == true);
+
+		auto value2 = node->getToggleValueByTag(U"notFound", false);
+		CHECK(value2 == false);
+
+		// タグが存在する場合は実際の値を返す
+		auto toggle = node->emplaceComponent<noco::Toggle>();
+		toggle->setTag(U"exists");
+		toggle->setValue(false);
+
+		auto value3 = node->getToggleValueByTag(U"exists", true);
+		CHECK(value3 == false);  // デフォルト値ではなく実際の値
 	}
 }

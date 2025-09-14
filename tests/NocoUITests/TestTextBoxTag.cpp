@@ -58,11 +58,10 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 
 		// 単一ノードからの取得
 		auto value = node->getTextValueByTag(U"username");
-		CHECK(value.has_value());
-		CHECK(*value == U"John Doe");
+		CHECK(value == U"John Doe");
 
 		// 存在しないタグ
-		auto notFound = node->getTextValueByTag(U"nonexistent");
+		auto notFound = node->getTextValueByTagOpt(U"nonexistent");
 		CHECK(!notFound.has_value());
 
 		// テキストの設定
@@ -88,8 +87,7 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 
 		// 最初に見つかったものを取得
 		auto value = canvas->getTextValueByTag(U"field");
-		CHECK(value.has_value());
-		CHECK(*value == U"Value1");
+		CHECK(value == U"Value1");
 
 		// すべてに設定
 		canvas->setTextValueByTag(U"field", U"NewValue");
@@ -114,15 +112,14 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 
 		// 再帰的検索（デフォルト）
 		auto value = canvas->getTextValueByTag(U"deep");
-		CHECK(value.has_value());
-		CHECK(*value == U"Deep Value");
+		CHECK(value == U"Deep Value");
 
 		// 再帰的設定（デフォルト）
 		canvas->setTextValueByTag(U"deep", U"Updated Deep");
 		CHECK(textBox->text() == U"Updated Deep");
 
 		// 非再帰的検索
-		auto nonRecursive = parent->getTextValueByTag(U"deep", noco::RecursiveYN::No);
+		auto nonRecursive = parent->getTextValueByTagOpt(U"deep", noco::RecursiveYN::No);
 		CHECK(!nonRecursive.has_value());
 
 		// 非再帰的設定（grandchildには影響しない）
@@ -148,8 +145,7 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 
 		// TextBoxが先に見つかる
 		auto value = canvas->getTextValueByTag(U"input");
-		CHECK(value.has_value());
-		CHECK(*value == U"Single line");
+		CHECK(value == U"Single line");
 
 		// 両方に設定される
 		canvas->setTextValueByTag(U"input", U"Same value");
@@ -169,7 +165,7 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 
 		// 空のタグでの検索は何も返さない
 		auto value = canvas->getTextValueByTag(U"");
-		CHECK(!value.has_value());
+		CHECK(value == U"");
 
 		// 空のタグでの設定は何もしない
 		canvas->setTextValueByTag(U"", U"Should not change");
@@ -206,5 +202,79 @@ TEST_CASE("TextBox and TextArea tag functionality", "[TextBox][TextArea][tag]")
 		CHECK(textBox1->text() == U"Updated");
 		CHECK(textBox2->text() == U"Updated");
 		CHECK(textBox3->text() == U"OtherField");  // tag="other"なので変更なし
+	}
+
+	SECTION("getTextValueByTagOpt tests")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parent = noco::Node::Create();
+		auto child = noco::Node::Create();
+		canvas->addChild(parent);
+		parent->addChild(child);
+
+		auto textBox = child->emplaceComponent<noco::TextBox>();
+		textBox->setTag(U"inputField");
+		textBox->setText(U"Test Value");
+
+		// Optバージョンで存在するタグを取得
+		auto optValue = canvas->getTextValueByTagOpt(U"inputField");
+		CHECK(optValue.has_value());
+		CHECK(*optValue == U"Test Value");
+
+		// Optバージョンで存在しないタグを取得
+		auto notFound = canvas->getTextValueByTagOpt(U"nonExistent");
+		CHECK(!notFound.has_value());
+
+		// 非再帰的検索で存在しないケース
+		auto nonRecursive = parent->getTextValueByTagOpt(U"inputField", noco::RecursiveYN::No);
+		CHECK(!nonRecursive.has_value());
+
+		// 非再帰的検索で存在するケース
+		auto parentTextBox = parent->emplaceComponent<noco::TextBox>();
+		parentTextBox->setTag(U"parentInput");
+		parentTextBox->setText(U"Parent Value");
+
+		auto parentOpt = parent->getTextValueByTagOpt(U"parentInput", noco::RecursiveYN::No);
+		CHECK(parentOpt.has_value());
+		CHECK(*parentOpt == U"Parent Value");
+	}
+
+	SECTION("getTextValueByTagOpt with TextArea")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto textArea = node->emplaceComponent<noco::TextArea>();
+		textArea->setTag(U"description");
+		textArea->setText(U"Multi\nLine\nText");
+
+		// TextAreaからも取得できる
+		auto optValue = node->getTextValueByTagOpt(U"description");
+		CHECK(optValue.has_value());
+		CHECK(*optValue == U"Multi\nLine\nText");
+
+		// 存在しないタグ
+		auto notFound = node->getTextValueByTagOpt(U"missing");
+		CHECK(!notFound.has_value());
+	}
+
+	SECTION("getTextValueByTag with empty string default")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		// タグが存在しない場合は空文字列を返す
+		auto value = node->getTextValueByTag(U"notFound");
+		CHECK(value == U"");
+
+		// タグが存在する場合は実際の値を返す
+		auto textBox = node->emplaceComponent<noco::TextBox>();
+		textBox->setTag(U"field");
+		textBox->setText(U"Actual Value");
+
+		auto actualValue = node->getTextValueByTag(U"field");
+		CHECK(actualValue == U"Actual Value");
 	}
 }

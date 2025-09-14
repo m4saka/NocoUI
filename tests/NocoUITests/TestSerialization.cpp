@@ -333,7 +333,7 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(json[1].get<double>() == Approx(20.5));
 		REQUIRE(json[2].get<double>() == Approx(30.5));
 		REQUIRE(json[3].get<double>() == Approx(40.5));
-		noco::LRTB deserialized = noco::LRTB::fromJSON(json);
+		noco::LRTB deserialized = noco::LRTB::FromJSON(json);
 		REQUIRE(deserialized == original);
 		
 		// ゼロ値
@@ -346,7 +346,7 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(zeroJson[1].get<double>() == Approx(0.0));
 		REQUIRE(zeroJson[2].get<double>() == Approx(0.0));
 		REQUIRE(zeroJson[3].get<double>() == Approx(0.0));
-		REQUIRE(noco::LRTB::fromJSON(zeroJson) == zero);
+		REQUIRE(noco::LRTB::FromJSON(zeroJson) == zero);
 		
 		// 負の値
 		noco::LRTB negative{ -10, -20, -30, -40 };
@@ -357,7 +357,7 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(negJson[1].getOr<double>(0.0) == -20.0);
 		REQUIRE(negJson[2].getOr<double>(0.0) == -30.0);
 		REQUIRE(negJson[3].getOr<double>(0.0) == -40.0);
-		REQUIRE(noco::LRTB::fromJSON(negJson) == negative);
+		REQUIRE(noco::LRTB::FromJSON(negJson) == negative);
 	}
 	
 	SECTION("LRTB error handling with default values")
@@ -366,12 +366,12 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		JSON invalidJson;
 		invalidJson[U"someField"] = 42;
 		noco::LRTB defaultValue{ 1, 2, 3, 4 };
-		noco::LRTB result = noco::LRTB::fromJSON(invalidJson, defaultValue);
+		noco::LRTB result = noco::LRTB::FromJSON(invalidJson, defaultValue);
 		REQUIRE(result == defaultValue);
 		
 		// 不正な文字列形式
 		JSON malformedJson = JSON(U"not a valid LRTB format");
-		result = noco::LRTB::fromJSON(malformedJson, defaultValue);
+		result = noco::LRTB::FromJSON(malformedJson, defaultValue);
 		REQUIRE(result == defaultValue);
 	}
 	
