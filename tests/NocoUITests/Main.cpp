@@ -1,6 +1,7 @@
-# define CATCH_CONFIG_RUNNER
-# include <catch2/catch.hpp>
-# include <Siv3D.hpp>
+#define CATCH_CONFIG_RUNNER
+#include <catch2/catch.hpp>
+#include <Siv3D.hpp>
+#include <NocoUI.hpp>
 
 // Linux環境でのみヘッドレスモードを使用
 #ifdef __linux__
@@ -9,6 +10,8 @@ SIV3D_SET(EngineOption::Renderer::Headless)
 
 void Main()
 {
+	noco::Init();
+
 	Catch::Session session;
 
 	// コマンドライン引数を取得

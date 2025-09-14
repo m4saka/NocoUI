@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Canvas.hpp"
+#include "NocoUI/Init.hpp"
 #include "NocoUI/ComponentFactory.hpp"
 #include "NocoUI/ParamUtils.hpp"
 #include "NocoUI/Serialization.hpp"
@@ -230,6 +231,11 @@ namespace noco
 
 	Canvas::Canvas()
 	{
+		// noco::Init()が呼ばれていない場合は例外を投げる
+		if (!noco::IsInitialized())
+		{
+			throw Error{ U"Canvas::Canvas: NocoUI is not initialized. Call noco::Init() first." };
+		}
 	}
 
 	Canvas::~Canvas()

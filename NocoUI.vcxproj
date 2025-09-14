@@ -133,6 +133,7 @@
     <ClCompile Include="src\Component\TextBox.cpp" />
     <ClCompile Include="src\Component\Toggle.cpp" />
     <ClCompile Include="src\Component\Tween.cpp" />
+    <ClCompile Include="src\Init.cpp" />
     <ClCompile Include="src\Layout\FlowLayout.cpp" />
     <ClCompile Include="src\Layout\HorizontalLayout.cpp" />
     <ClCompile Include="src\Layout\VerticalLayout.cpp" />
@@ -143,6 +144,7 @@
     <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\NocoUI.hpp" />
     <ClInclude Include="include\NocoUI\Anchor.hpp" />
     <ClInclude Include="include\NocoUI\Asset.hpp" />
     <ClInclude Include="include\NocoUI\Canvas.hpp" />
@@ -169,6 +171,7 @@
     <ClInclude Include="include\NocoUI\Component\Toggle.hpp" />
     <ClInclude Include="include\NocoUI\Component\Tween.hpp" />
     <ClInclude Include="include\NocoUI\Component\UpdaterComponent.hpp" />
+    <ClInclude Include="include\NocoUI\Init.hpp" />
     <ClInclude Include="include\NocoUI\Region\AnchorRegion.hpp" />
     <ClInclude Include="include\NocoUI\Region\InlineRegion.hpp" />
     <ClInclude Include="include\NocoUI\Region\Region.hpp" />
@@ -196,6 +199,7 @@
     <ClInclude Include="include\NocoUI\Serialization.hpp" />
     <ClInclude Include="include\NocoUI\Smoothing.hpp" />
     <ClInclude Include="include\NocoUI\Transform.hpp" />
+    <ClInclude Include="include\NocoUI\Version.hpp" />
     <ClInclude Include="include\NocoUI\YN.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

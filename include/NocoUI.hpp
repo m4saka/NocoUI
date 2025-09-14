@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "NocoUI/Init.hpp"
 #include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/Region/Region.hpp"

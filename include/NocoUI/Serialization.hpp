@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "YN.hpp"
-#include "magic_enum.hpp" // https://github.com/Neargye/magic_enum
+#ifndef NOCO_NOINCLUDE_MAGIC_ENUM
+#include "ThirdParty/magic_enum.hpp" // https://github.com/Neargye/magic_enum
+#endif
 
 namespace noco
 {

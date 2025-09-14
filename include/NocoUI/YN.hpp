@@ -3,6 +3,8 @@
 
 namespace noco
 {
+	using AddNocoUILicenseYN = YesNo<struct AddNocoUILicenseYN_tag>;
+	using AddMagicEnumLicenseYN = YesNo<struct AddMagicEnumLicenseYN_tag>;
 	using IgnoreIsChangedYN = YesNo<struct IgnoreIsChangedYN_tag>;
 	using InteractableYN = YesNo<struct InteractableYN_tag>;
 	using ActiveYN = YesNo<struct ActiveYN_tag>;

@@ -24,7 +24,6 @@
 #include "Inspector.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "PlaceholderComponent.hpp"
-#include <NocoUI/ComponentFactory.hpp>
 
 //#deine MONITOR_FPS
 
@@ -1321,6 +1320,7 @@ public:
 
 void Main()
 {
+	noco::Init();
 	noco::detail::SetEditorMode(true);
 
 	Window::SetTitle(U"NocoEditor v{}"_fmt(NocoUIVersion));
