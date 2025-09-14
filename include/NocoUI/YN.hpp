@@ -13,7 +13,7 @@ namespace noco
 	using FoldedYN = YesNo<struct FoldedYN_tag>;
 	using ClearInputYN = YesNo<struct ClearInputYN_tag>;
 	using EnabledWhileTextEditingYN = YesNo<struct EnabledWhileTextEditingYN_tag>;
-	using ClearArrayYN = YesNo<struct ClearArrayYN_tag>;
+	using AppendYN = YesNo<struct AppendYN_tag>;
 	using HitTestEnabledYN = YesNo<struct HitTestEnabledYN_tag>;
 	using AltYN = YesNo<struct AltYN_tag>;
 	using CtrlYN = YesNo<struct CtrlYN_tag>;

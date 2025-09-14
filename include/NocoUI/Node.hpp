@@ -276,16 +276,13 @@ namespace noco
 		[[nodiscard]]
 		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const override;
 
-		[[nodiscard]]
-		bool containsChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) const override;
-
 		template <class Fty>
 		[[nodiscard]]
-		Array<std::weak_ptr<Node>> findAll(Fty&& predicate)
+		Array<std::shared_ptr<Node>> findAll(Fty&& predicate)
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template<class Fty>
-		void findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearArrayYN clearArray = ClearArrayYN::Yes)
+		void findAll(Fty&& predicate, Array<std::shared_ptr<Node>>* pResults, AppendYN append = AppendYN::No)
 			requires std::invocable<Fty, const std::shared_ptr<Node>&>;
 
 		template <class TComponent>
@@ -296,11 +293,24 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const;
 
+		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<Node> getChildByName(StringView name, RecursiveYN recursive = RecursiveYN::No) override;
+		Array<std::shared_ptr<TComponent>> getComponents(RecursiveYN recursive = RecursiveYN::No) const;
+
+		template <class TComponent>
+		void getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::No, AppendYN append = AppendYN::No) const;
+
+		template <class TComponent, class Fty>
+		[[nodiscard]]
+		Array<std::shared_ptr<TComponent>> findComponentsAll(Fty&& predicate, RecursiveYN recursive = RecursiveYN::Yes)
+			requires std::invocable<Fty, const std::shared_ptr<TComponent>&>;
+
+		template <class TComponent, class Fty>
+		void findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::Yes, AppendYN append = AppendYN::No)
+			requires std::invocable<Fty, const std::shared_ptr<TComponent>&>;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> getChildByNameOrNull(StringView name, RecursiveYN recursive = RecursiveYN::No) override;
+		std::shared_ptr<Node> findByName(StringView name, RecursiveYN recursive = RecursiveYN::Yes) override;
 
 		void refreshChildrenLayout();
 
@@ -775,16 +785,16 @@ namespace noco
 	}
 
 	template <class Fty>
-	Array<std::weak_ptr<Node>> Node::findAll(Fty&& predicate)
+	Array<std::shared_ptr<Node>> Node::findAll(Fty&& predicate)
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
-		Array<std::weak_ptr<Node>> result;
-		findAll(std::forward<Fty>(predicate), &result, ClearArrayYN::Yes);
+		Array<std::shared_ptr<Node>> result;
+		findAll(std::forward<Fty>(predicate), &result, AppendYN::No);
 		return result;
 	}
 
 	template <class Fty>
-	void Node::findAll(Fty&& predicate, Array<std::weak_ptr<Node>>* pResults, ClearArrayYN clearArray)
+	void Node::findAll(Fty&& predicate, Array<std::shared_ptr<Node>>* pResults, AppendYN append)
 		requires std::invocable<Fty, const std::shared_ptr<Node>&>
 	{
 		if (pResults == nullptr)
@@ -792,7 +802,7 @@ namespace noco
 			throw Error{ U"Node::findAll: pResults is nullptr" };
 		}
 
-		if (clearArray)
+		if (!append)
 		{
 			pResults->clear();
 		}
@@ -800,13 +810,13 @@ namespace noco
 		// 自分自身が条件を満たすかどうか
 		if (predicate(shared_from_this()))
 		{
-			pResults->push_back(weak_from_this());
+			pResults->push_back(shared_from_this());
 		}
 
 		// 子ノードを再帰的に検索
 		for (const auto& child : m_children)
 		{
-			child->findAll(predicate, pResults, ClearArrayYN::No);
+			child->findAll(predicate, pResults, AppendYN::Yes);
 		}
 	}
 
@@ -853,6 +863,93 @@ namespace noco
 			}
 		}
 		return nullptr;
+	}
+
+	template <class TComponent>
+	[[nodiscard]]
+	Array<std::shared_ptr<TComponent>> Node::getComponents(RecursiveYN recursive) const
+	{
+		Array<std::shared_ptr<TComponent>> result;
+		getComponents(&result, recursive, AppendYN::No);
+		return result;
+	}
+
+	template <class TComponent>
+	void Node::getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, AppendYN append) const
+	{
+		if (pResults == nullptr)
+		{
+			throw Error{ U"Node::getComponents: pResults is nullptr" };
+		}
+
+		if (!append)
+		{
+			pResults->clear();
+		}
+
+		// 自身のコンポーネントから該当する型のものを収集
+		for (const auto& component : m_components)
+		{
+			if (auto concreteComponent = std::dynamic_pointer_cast<TComponent>(component))
+			{
+				pResults->push_back(concreteComponent);
+			}
+		}
+
+		// 再帰的に子ノードのコンポーネントも収集
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->getComponents<TComponent>(pResults, RecursiveYN::Yes, AppendYN::Yes);
+			}
+		}
+	}
+
+	template <class TComponent, class Fty>
+	[[nodiscard]]
+	Array<std::shared_ptr<TComponent>> Node::findComponentsAll(Fty&& predicate, RecursiveYN recursive)
+		requires std::invocable<Fty, const std::shared_ptr<TComponent>&>
+	{
+		Array<std::shared_ptr<TComponent>> result;
+		findComponentsAll<TComponent>(std::forward<Fty>(predicate), &result, recursive, AppendYN::No);
+		return result;
+	}
+
+	template <class TComponent, class Fty>
+	void Node::findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, AppendYN append)
+		requires std::invocable<Fty, const std::shared_ptr<TComponent>&>
+	{
+		if (pResults == nullptr)
+		{
+			throw Error{ U"Node::findComponentsAll: pResults is nullptr" };
+		}
+
+		if (!append)
+		{
+			pResults->clear();
+		}
+
+		// 自身のコンポーネントから条件を満たすものを収集
+		for (const auto& component : m_components)
+		{
+			if (auto concreteComponent = std::dynamic_pointer_cast<TComponent>(component))
+			{
+				if (predicate(concreteComponent))
+				{
+					pResults->push_back(concreteComponent);
+				}
+			}
+		}
+
+		// 再帰的に子ノードのコンポーネントも収集
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				child->findComponentsAll<TComponent>(std::forward<Fty>(predicate), pResults, RecursiveYN::Yes, AppendYN::Yes);
+			}
+		}
 	}
 
 	template<typename TData>

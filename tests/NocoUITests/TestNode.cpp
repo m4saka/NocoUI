@@ -211,11 +211,11 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		parent->addChild(child2);
 		
 		// 再帰的に名前で検索
-		auto found = parent->getChildByName(U"UniqueChild", noco::RecursiveYN::Yes);
+		auto found = parent->findByName(U"UniqueChild", noco::RecursiveYN::Yes);
 		REQUIRE(found == child1);
 		
 		// 存在しない名前
-		auto notFound = parent->getChildByNameOrNull(U"NonExistent", noco::RecursiveYN::Yes);
+		auto notFound = parent->findByName(U"NonExistent", noco::RecursiveYN::Yes);
 		REQUIRE(notFound == nullptr);
 	}
 
@@ -253,7 +253,7 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 		level2->addChild(level3);
 		
 		// 深い階層での検索
-		auto found = root->getChildByName(U"Level3", noco::RecursiveYN::Yes);
+		auto found = root->findByName(U"Level3", noco::RecursiveYN::Yes);
 		REQUIRE(found == level3);
 		
 		REQUIRE(root->hasChildren());

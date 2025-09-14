@@ -205,6 +205,29 @@ namespace noco
 		return Mat3x2::Scale(m_scale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
 	}
 
+	std::shared_ptr<Node> Canvas::findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const
+	{
+		if (!node)
+		{
+			return nullptr;
+		}
+
+		if (node->instanceId() == instanceId)
+		{
+			return node;
+		}
+
+		for (const auto& child : node->children())
+		{
+			if (auto result = findNodeByInstanceIdRecursive(child, instanceId))
+			{
+				return result;
+			}
+		}
+
+		return nullptr;
+	}
+
 	Canvas::Canvas()
 	{
 	}
@@ -256,24 +279,8 @@ namespace noco
 			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
 		}
 	}
-
-	bool Canvas::containsNodeByName(const String& nodeName) const
-	{
-		for (const auto& child : m_children)
-		{
-			if (child->name() == nodeName)
-			{
-				return true;
-			}
-			if (child->containsChildByName(nodeName, RecursiveYN::Yes))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
 	
-	std::shared_ptr<Node> Canvas::getNodeByName(const String& nodeName) const
+	std::shared_ptr<Node> Canvas::findByName(StringView nodeName, RecursiveYN recursive) const
 	{
 		for (const auto& child : m_children)
 		{
@@ -281,9 +288,12 @@ namespace noco
 			{
 				return child;
 			}
-			if (auto found = child->getChildByNameOrNull(nodeName, RecursiveYN::Yes))
+			if (recursive)
 			{
-				return found;
+				if (auto found = child->findByName(nodeName, RecursiveYN::Yes))
+				{
+					return found;
+				}
 			}
 		}
 		return nullptr;
@@ -1277,23 +1287,7 @@ namespace noco
 		return false;
 	}
 
-	bool Canvas::containsChildByName(StringView name, RecursiveYN recursive) const
-	{
-		for (const auto& child : m_children)
-		{
-			if (child->name() == name)
-			{
-				return true;
-			}
-			if (recursive && child->containsChildByName(name, recursive))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	std::shared_ptr<Node> Canvas::getChildByName(StringView name, RecursiveYN recursive)
+	std::shared_ptr<Node> Canvas::findByName(StringView name, RecursiveYN recursive)
 	{
 		for (const auto& child : m_children)
 		{
@@ -1303,26 +1297,7 @@ namespace noco
 			}
 			if (recursive)
 			{
-				if (auto found = child->getChildByNameOrNull(name, recursive))
-				{
-					return found;
-				}
-			}
-		}
-		throw Error{ U"Child node '{}' not found in canvas"_fmt(name) };
-	}
-
-	std::shared_ptr<Node> Canvas::getChildByNameOrNull(StringView name, RecursiveYN recursive)
-	{
-		for (const auto& child : m_children)
-		{
-			if (child->name() == name)
-			{
-				return child;
-			}
-			if (recursive)
-			{
-				if (auto found = child->getChildByNameOrNull(name, recursive))
+				if (auto found = child->findByName(name, recursive))
 				{
 					return found;
 				}
@@ -1366,29 +1341,6 @@ namespace noco
 				return result;
 			}
 		}
-		return nullptr;
-	}
-
-	std::shared_ptr<Node> Canvas::findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const
-	{
-		if (!node)
-		{
-			return nullptr;
-		}
-		
-		if (node->instanceId() == instanceId)
-		{
-			return node;
-		}
-		
-		for (const auto& child : node->children())
-		{
-			if (auto result = findNodeByInstanceIdRecursive(child, instanceId))
-			{
-				return result;
-			}
-		}
-		
 		return nullptr;
 	}
 

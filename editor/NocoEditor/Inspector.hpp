@@ -329,7 +329,7 @@ namespace noco::editor
 			if (isInInspector && !focusedNodeName.empty())
 			{
 				// 同じ名前のノードを探してフォーカスを復元
-				auto newFocusNode = m_inspectorRootNode->getChildByNameOrNull(focusedNodeName, RecursiveYN::Yes);
+				auto newFocusNode = m_inspectorRootNode->findByName(focusedNodeName, RecursiveYN::Yes);
 				if (newFocusNode && newFocusNode->getComponentOrNull<TabStop>())
 				{
 					CurrentFrame::SetFocusedNode(newFocusNode);
@@ -701,7 +701,7 @@ namespace noco::editor
 				// ツールチップを追加
 				if (metadata.tooltip)
 				{
-					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+					if (const auto labelNode = propertyNode->findByName(U"Label", RecursiveYN::Yes))
 					{
 						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
@@ -742,7 +742,7 @@ namespace noco::editor
 				const auto& metadata = it->second;
 				if (metadata.tooltip)
 				{
-					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+					if (const auto labelNode = propertyNode->findByName(U"Label", RecursiveYN::Yes))
 					{
 						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
@@ -775,7 +775,7 @@ namespace noco::editor
 				const auto& metadata = it->second;
 				if (metadata.tooltip)
 				{
-					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+					if (const auto labelNode = propertyNode->findByName(U"Label", RecursiveYN::Yes))
 					{
 						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
@@ -809,16 +809,16 @@ namespace noco::editor
 				if (metadata.tooltip)
 				{
 					// Line1とLine2の両方のLabelノードにツールチップを追加
-					if (const auto line1 = propertyNode->getChildByNameOrNull(U"Line1", RecursiveYN::No))
+					if (const auto line1 = propertyNode->findByName(U"Line1", RecursiveYN::No))
 					{
-						if (const auto labelNode = line1->getChildByNameOrNull(U"Label", RecursiveYN::No))
+						if (const auto labelNode = line1->findByName(U"Label", RecursiveYN::No))
 						{
 							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
 					}
-					if (const auto line2 = propertyNode->getChildByNameOrNull(U"Line2", RecursiveYN::No))
+					if (const auto line2 = propertyNode->findByName(U"Line2", RecursiveYN::No))
 					{
-						if (const auto labelNode = line2->getChildByNameOrNull(U"Label", RecursiveYN::No))
+						if (const auto labelNode = line2->findByName(U"Label", RecursiveYN::No))
 						{
 							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}
@@ -883,7 +883,7 @@ namespace noco::editor
 				const auto& metadata = it->second;
 				if (metadata.tooltip)
 				{
-					if (const auto labelNode = propertyNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+					if (const auto labelNode = propertyNode->findByName(U"Label", RecursiveYN::Yes))
 					{
 						labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 					}
@@ -2513,7 +2513,7 @@ namespace noco::editor
 					if (metadata.tooltip)
 					{
 						// CreateNodeNameTextboxNodeはLabelを含むNodeを返すので、そのLabelを探す
-						if (const auto labelNode = nameTextboxNode->getChildByNameOrNull(U"Label", RecursiveYN::Yes))
+						if (const auto labelNode = nameTextboxNode->findByName(U"Label", RecursiveYN::Yes))
 						{
 							labelNode->emplaceComponent<TooltipOpener>(m_editorOverlayCanvas, *metadata.tooltip, metadata.tooltipDetail.value_or(U""));
 						}

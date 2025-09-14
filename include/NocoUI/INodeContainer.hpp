@@ -49,19 +49,9 @@ namespace noco
 			RecursiveYN recursive = RecursiveYN::No) const = 0;
 
 		[[nodiscard]]
-		virtual bool containsChildByName(
+		virtual std::shared_ptr<Node> findByName(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) const = 0;
-
-		[[nodiscard]]
-		virtual std::shared_ptr<Node> getChildByName(
-			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) = 0;
-
-		[[nodiscard]]
-		virtual std::shared_ptr<Node> getChildByNameOrNull(
-			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) = 0;
+			RecursiveYN recursive = RecursiveYN::Yes) = 0;
 
 		[[nodiscard]]
 		virtual Optional<size_t> indexOfChildOpt(

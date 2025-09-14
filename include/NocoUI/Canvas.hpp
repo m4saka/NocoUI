@@ -397,6 +397,10 @@ namespace noco
 
 		void updateAutoFitIfNeeded();
 
+		// ノードツリー内でinstanceIdによるノード検索（再帰）
+		[[nodiscard]]
+		std::shared_ptr<Node> findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const;
+
 		Canvas();
 
 	public:
@@ -414,10 +418,8 @@ namespace noco
 		
 		void markLayoutAsDirty() { m_isLayoutDirty = true; }
 
-		bool containsNodeByName(const String& nodeName) const;
-
 		[[nodiscard]]
-		std::shared_ptr<Node> getNodeByName(const String& nodeName) const;
+		std::shared_ptr<Node> findByName(StringView nodeName, RecursiveYN recursive = RecursiveYN::Yes) const;
 
 		[[nodiscard]]
 		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
@@ -726,21 +728,11 @@ namespace noco
 		bool containsChild(
 			const std::shared_ptr<Node>& child,
 			RecursiveYN recursive = RecursiveYN::No) const override;
-		
+
 		[[nodiscard]]
-		bool containsChildByName(
+		std::shared_ptr<Node> findByName(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) const override;
-		
-		[[nodiscard]]
-		std::shared_ptr<Node> getChildByName(
-			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) override;
-		
-		[[nodiscard]]
-		std::shared_ptr<Node> getChildByNameOrNull(
-			StringView name,
-			RecursiveYN recursive = RecursiveYN::No) override;
+			RecursiveYN recursive = RecursiveYN::Yes) override;
 		
 		[[nodiscard]]
 		Optional<size_t> indexOfChildOpt(
@@ -752,43 +744,38 @@ namespace noco
 			IsHitTargetYN isHitTarget = IsHitTargetYN::Yes,
 			InheritChildrenStateFlags inheritChildrenStateFlags = InheritChildrenStateFlags::None) override;
 
-	// JSONから子ノードを追加
-	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
-	
-	const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
+		// JSONから子ノードを追加
+		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json) override;
 
-	// 全ノードのパラメータ参照を一括更新
-	void replaceParamRefs(const String& oldName, const String& newName);
+		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
-	void clearCurrentFrameOverride();
+		// 全ノードのパラメータ参照を一括更新
+		void replaceParamRefs(const String& oldName, const String& newName);
 
-	// instanceIdによるノード検索
-	[[nodiscard]]
-	std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;
+		void clearCurrentFrameOverride();
 
-	// すべてのTweenコンポーネントの一括制御
-	void setTweenActiveAll(bool active);
+		// instanceIdによるノード検索
+		[[nodiscard]]
+		std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;
 
-	// タグによるTweenコンポーネントの一括制御
-	void setTweenActiveByTag(const String& tag, bool active);
+		// すべてのTweenコンポーネントの一括制御
+		void setTweenActiveAll(bool active);
 
-	// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
-	[[nodiscard]]
-	Optional<String> getTextValueByTag(const String& tag) const;
+		// タグによるTweenコンポーネントの一括制御
+		void setTweenActiveByTag(const String& tag, bool active);
 
-	// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
-	void setTextValueByTag(const String& tag, StringView text);
+		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
+		[[nodiscard]]
+		Optional<String> getTextValueByTag(const String& tag) const;
 
-	// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
-	[[nodiscard]]
-	Optional<bool> getToggleValueByTag(const String& tag) const;
+		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
+		void setTextValueByTag(const String& tag, StringView text);
 
-	// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
-	void setToggleValueByTag(const String& tag, bool value);
+		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
+		[[nodiscard]]
+		Optional<bool> getToggleValueByTag(const String& tag) const;
 
-private:
-	// ノードツリー内でinstanceIdによるノード検索（再帰）
-	[[nodiscard]]
-	std::shared_ptr<Node> findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const;
+		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
+		void setToggleValueByTag(const String& tag, bool value);
 	};
 }

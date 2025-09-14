@@ -1058,29 +1058,7 @@ namespace noco
 		return false;
 	}
 
-	bool Node::containsChildByName(StringView name, RecursiveYN recursive) const
-	{
-		for (const auto& child : m_children)
-		{
-			if (child->m_name == name)
-			{
-				return true;
-			}
-		}
-		if (recursive)
-		{
-			for (const auto& child : m_children)
-			{
-				if (child->containsChildByName(name, RecursiveYN::Yes))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	std::shared_ptr<Node> Node::getChildByName(StringView name, RecursiveYN recursive)
+	std::shared_ptr<Node> Node::findByName(StringView name, RecursiveYN recursive)
 	{
 		for (const auto& child : m_children)
 		{
@@ -1093,30 +1071,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				// 例外を投げられると途中で終了してしまうため、getChildByNameではなくgetChildByNameOrNullを使う必要がある
-				if (const auto found = child->getChildByNameOrNull(name, RecursiveYN::Yes))
-				{
-					return found;
-				}
-			}
-		}
-		throw Error{ U"Child node '{}' not found in node '{}'"_fmt(name, m_name) };
-	}
-
-	std::shared_ptr<Node> Node::getChildByNameOrNull(StringView name, RecursiveYN recursive)
-	{
-		for (const auto& child : m_children)
-		{
-			if (child->m_name == name)
-			{
-				return child;
-			}
-		}
-		if (recursive)
-		{
-			for (const auto& child : m_children)
-			{
-				if (const auto found = child->getChildByNameOrNull(name, RecursiveYN::Yes))
+				if (const auto found = child->findByName(name, RecursiveYN::Yes))
 				{
 					return found;
 				}
