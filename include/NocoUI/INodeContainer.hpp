@@ -70,12 +70,6 @@ namespace noco
 			const JSON& json, const ComponentFactory& factory) = 0;
 
 		[[nodiscard]]
-		virtual bool isNode() const = 0;
-
-		[[nodiscard]]
-		virtual bool isCanvas() const = 0;
-
-		[[nodiscard]]
 		virtual const LayoutVariant& childrenLayout() const = 0;
 
 		[[nodiscard]]

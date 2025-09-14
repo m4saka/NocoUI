@@ -687,18 +687,6 @@ namespace noco
 		std::shared_ptr<Node> childAt(size_t index) const override;
 
 		[[nodiscard]]
-		bool isNode() const override
-		{
-			return true;
-		}
-
-		[[nodiscard]]
-		bool isCanvas() const override
-		{
-			return false;
-		}
-
-		[[nodiscard]]
 		int32 zOrderInSiblings() const;
 
 		std::shared_ptr<Node> setZOrderInSiblings(const PropertyValue<int32>& zOrderInSiblings);

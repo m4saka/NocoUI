@@ -701,18 +701,6 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> childAt(size_t index) const override;
 
-		[[nodiscard]]
-		bool isNode() const override
-		{
-			return false;
-		}
-
-		[[nodiscard]]
-		bool isCanvas() const override
-		{
-			return true;
-		}
-
 		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node) override;
 		void removeChild(const std::shared_ptr<Node>& node) override;
 		
