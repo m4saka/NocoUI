@@ -796,8 +796,17 @@ namespace noco
 				{
 					const auto& glyph = m_cache.glyphs[index];
 					const Color& color = m_color.value();
-					glyph.texture.scaled(m_cache.scale).draw(pos + glyph.getOffset(m_cache.scale), color);
+
+					if (pos.x + glyph.xAdvance * m_cache.scale > rect.x && pos.x < rect.br().x)
+					{
+						glyph.texture.scaled(m_cache.scale).draw(pos + glyph.getOffset(m_cache.scale), color);
+					}
 					pos.x += glyph.xAdvance * m_cache.scale;
+
+					if (pos.x > rect.br().x)
+					{
+						break;
+					}
 				}
 			}
 
