@@ -18,13 +18,12 @@ namespace noco
 		int32 stairCount,
 		bool upStairs,
 		int32 squircleQuality,
-		const SizeF& regionSize,
-		const Vec2& center)
+		const RectF& regionRect)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(
 			shapeType, preserveAspect, thickness, sides, points, innerRatio,
 			startPoint, endPoint, arrowHeadSize, targetPoint, tailRatio,
-			stairCount, upStairs, squircleQuality, regionSize))
+			stairCount, upStairs, squircleQuality, regionRect))
 		{
 			return false;
 		}
@@ -45,9 +44,11 @@ namespace noco
 			.stairCount = stairCount,
 			.upStairs = upStairs,
 			.squircleQuality = squircleQuality,
-			.regionSize = regionSize,
+			.regionRect = regionRect,
 		};
 
+		const SizeF regionSize = regionRect.size;
+		const Vec2 center = regionRect.center();
 		const double minDimension = Min(regionSize.x, regionSize.y);
 		const double radius = minDimension / 2.0;
 
@@ -218,8 +219,7 @@ namespace noco
 			m_stairCount.value(),
 			m_upStairs.value(),
 			m_squircleQuality.value(),
-			region.size,
-			center);
+			region);
 		
 		const Shape2D& shapeToRender = m_cache.isScaled ? m_cache.scaledShape : m_cache.baseShape;
 		shapeToRender.draw(fillColor);

@@ -3237,12 +3237,12 @@ namespace noco::editor
 							{
 								if (auto optVal = ParseOpt<double>(s))
 								{
-									if (auto ac = node->anchorRegion())
+									if (auto ar = node->anchorRegion())
 									{
-										auto copy = *ac;
+										auto copy = *ar;
 										setter(copy, *optVal);
 										node->setRegion(copy);
-										m_canvas->refreshLayoutImmediately();
+										//m_canvas->refreshLayoutImmediately();
 									}
 								}
 							};
@@ -3253,12 +3253,12 @@ namespace noco::editor
 						return
 							[this, node, setter](const Vec2& val)
 							{
-								if (auto ac = node->anchorRegion())
+								if (auto ar = node->anchorRegion())
 								{
-									auto copy = *ac;
+									auto copy = *ar;
 									setter(copy, val);
 									node->setRegion(copy);
-									m_canvas->refreshLayoutImmediately();
+									//m_canvas->refreshLayoutImmediately();
 								}
 							};
 					};

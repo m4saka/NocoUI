@@ -62,7 +62,7 @@ namespace noco
 			int32 stairCount;
 			bool upStairs;
 			int32 squircleQuality;
-			SizeF regionSize;
+			RectF regionRect;
 
 			[[nodiscard]]
 			bool isDirty(
@@ -80,7 +80,7 @@ namespace noco
 				int32 newStairCount,
 				bool newUpStairs,
 				int32 newSquircleQuality,
-				const SizeF& newRegionSize) const
+				const RectF& newRegionRect) const
 			{
 				return shapeType != newShapeType
 					|| preserveAspect != newPreserveAspect
@@ -96,7 +96,7 @@ namespace noco
 					|| stairCount != newStairCount
 					|| upStairs != newUpStairs
 					|| squircleQuality != newSquircleQuality
-					|| regionSize != newRegionSize;
+					|| regionRect != newRegionRect;
 			}
 		};
 
@@ -122,8 +122,7 @@ namespace noco
 				int32 stairCount,
 				bool upStairs,
 				int32 squircleQuality,
-				const SizeF& regionSize,
-				const Vec2& center);
+				const RectF& regionRect);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
