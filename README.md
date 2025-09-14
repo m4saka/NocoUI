@@ -266,6 +266,174 @@ canvas->setParamValue(U"dialogTitle", U"新たな仲間が参戦！");
 canvas->setParamValue(U"messageText", U"仲間の名前を入力してください");
 ```
 
+## 独自コンポーネントの利用(高度な使い方)
+
+独自コンポーネントを作成するには、下記の2通りの方法があります。
+
+### `SerializableComponentBase`を継承してエディタ上で使用
+
+独自コンポーネントをエディタ上で使用するには、`noco::SerializableComponentBase`を継承してコンポーネントを作成します。
+
+```cpp
+// enumも使用可能
+enum class IconType
+{
+    None,
+    Home,
+    Settings,
+    Search,
+};
+
+// 独自コンポーネント
+class CustomButton : public noco::SerializableComponentBase
+{
+private:
+    Property<String> m_text{ U"text", U"" };
+    SmoothProperty<Color> m_backgroundColor{ U"backgroundColor", Palette::White };
+    SmoothProperty<Color> m_textColor{ U"textColor", Palette::Black };
+    SmoothProperty<double> m_fontSize{ U"fontSize", 16.0 };
+    Property<bool> m_enabled{ U"enabled", true };
+    Property<IconType> m_iconType{ U"iconType", IconType::None };
+
+public:
+    CustomButton()
+        : noco::SerializableComponentBase{
+            {
+                m_text,
+                m_backgroundColor,
+                m_textColor,
+                m_fontSize,
+                m_enabled,
+                m_iconType
+            } }
+    {
+    }
+
+    void update() override
+    {
+        // 更新処理
+    }
+
+    void draw() const override
+    {
+        // 描画処理
+    }
+};
+```
+
+その上で、NocoEditorの実行ファイルから見て`Custom/Components`ディレクトリへコンポーネントスキーマ定義をJSON形式で記述したものを配置します。
+例えば、`Custom/Components/CustomButton.json`に下記の内容を配置します。
+
+```json
+{
+	"type": "CustomButton",
+	"properties": [
+		{
+			"name": "text",
+			"editType": "Text",
+			"defaultValue": "ボタン",
+			"tooltip": "ボタンに表示するテキスト"
+		},
+		{
+			"name": "backgroundColor",
+			"editType": "Color",
+			"defaultValue": [255, 255, 255, 255],
+			"tooltip": "ボタンの背景色"
+		},
+		{
+			"name": "textColor",
+			"editType": "Color",
+			"defaultValue": [0, 0, 0, 255],
+			"tooltip": "テキストの色"
+		},
+		{
+			"name": "padding",
+			"editType": "LRTB",
+			"defaultValue": [2, 2, 2, 2],
+			"tooltip": "内側の余白"
+		},
+		{
+			"name": "fontSize",
+			"editType": "Number",
+			"defaultValue": 16,
+			"tooltip": "テキストのフォントサイズ",
+			"dragValueChangeStep": 1.0
+		},
+		{
+			"name": "enabled",
+			"editType": "Bool",
+			"defaultValue": true,
+			"tooltip": "ボタンが有効かどうか"
+		},
+		{
+			"name": "iconType",
+			"editType": "Enum",
+			"defaultValue": "None",
+			"enumCandidates": ["None", "Home", "Settings", "Search"],
+			"tooltip": "アイコンの種類"
+		}
+	]
+}
+```
+
+すると、下記のようにNocoEditor上で独自コンポーネントを追加できるようになります。
+
+![独自コンポーネントの追加](./docs/readme_custom_component_editor.png)
+
+プログラム上で独自コンポーネントを利用するには、下記のようにComponentFactoryを取得して独自コンポーネントを登録し、`Canvas::LoadFromFile`の第2引数に渡します。
+```cpp
+// 標準コンポーネントを含むComponentFactoryを取得
+ComponentFactory factory = ComponentFactory::GetBuiltinFactory();
+
+// 独自コンポーネントを登録
+factory.registerComponentType<CustomButton>(U"CustomButton");
+
+// Canvasを読み込む際、factoryを渡す
+const auto canvas = noco::Canvas::LoadFromFile(U"canvas.noco", factory);
+```
+
+### `ComponentBase`を継承してプログラム上で使用
+
+独自コンポーネントをプログラム上でのみ使用する場合は、`noco::ComponentBase`を継承してコンポーネントを作成します。
+
+なお、この方法の場合は、ステートに応じた値変化が必要なければ`Property`や`SmoothProperty`を利用せずに実装しても構いません。
+
+```cpp
+// 独自コンポーネント
+class CustomButton : public noco::ComponentBase
+{
+private:
+    String m_text = U"";
+    Color m_backgroundColor = Palette::White;
+
+public:
+    CustomButton(StringView text, const Color& backgroundColor)
+        : noco::ComponentBase{ {} } // プロパティが必要なければ空の配列を渡す
+        , m_text{ text }
+        , m_backgroundColor{ backgroundColor }
+    {
+    }
+
+    void update() override
+    {
+        // 更新処理
+    }
+
+    void draw() const override
+    {
+        // 描画処理
+    }
+};
+```
+
+プログラム上では、emplaceComponentまたはaddComponentでノードへ追加して利用します。
+
+```cpp
+node->emplaceComponent<CustomButton>(U"OK", Palette::White);
+// または
+node->addComponent(std::make_shared<CustomButton>(U"OK", Palette::White));
+```
+
 ## ライセンス・外部依存ライブラリ
 
 本ライブラリは MIT License で提供されます。  
