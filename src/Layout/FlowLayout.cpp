@@ -9,7 +9,7 @@ namespace noco
 		{
 			{ U"type", U"FlowLayout" },
 			{ U"padding", padding.toJSON() },
-			{ U"spacing", ToArrayJSON<Vec2>(spacing) },
+			{ U"spacing", ToArrayJSON(spacing) },
 			{ U"horizontalAlign", EnumToString(horizontalAlign) },
 			{ U"verticalAlign", EnumToString(verticalAlign) },
 		};

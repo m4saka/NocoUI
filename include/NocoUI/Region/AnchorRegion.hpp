@@ -59,11 +59,11 @@ namespace noco
 			JSON json
 			{
 				{ U"type", U"AnchorRegion" },
-				{ U"anchorMin", ToArrayJSON<Vec2>(anchorMin) },
-				{ U"anchorMax", ToArrayJSON<Vec2>(anchorMax) },
-				{ U"posDelta", ToArrayJSON<Vec2>(posDelta) },
-				{ U"sizeDelta", ToArrayJSON<Vec2>(sizeDelta) },
-				{ U"sizeDeltaPivot", ToArrayJSON<Vec2>(sizeDeltaPivot) },
+				{ U"anchorMin", ToArrayJSON(anchorMin) },
+				{ U"anchorMax", ToArrayJSON(anchorMax) },
+				{ U"posDelta", ToArrayJSON(posDelta) },
+				{ U"sizeDelta", ToArrayJSON(sizeDelta) },
+				{ U"sizeDeltaPivot", ToArrayJSON(sizeDeltaPivot) },
 			};
 			
 			if (minWidth)

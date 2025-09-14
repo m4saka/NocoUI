@@ -164,61 +164,60 @@ namespace noco
 
 	template<typename T>
 	[[nodiscard]]
-	JSON ToArrayJSON(const T& value);
+	JSON ToArrayJSON(const T& value) requires std::same_as<T, Vec2> || std::same_as<T, Color>
+	{
+		// Vec2とColorはJSON化すると文字列になってしまうので、明示的に配列に変換する関数を設けている
+		if constexpr (std::same_as<T, Vec2>)
+		{
+			return Array<double>{ value.x, value.y };
+		}
+		else if constexpr (std::same_as<T, Color>)
+		{
+			return Array<int32>{ value.r, value.g, value.b, value.a };
+		}
+		else
+		{
+			static_assert([] { return false; }(), "Unsupported type for ToArrayJSON");
+		}
+	}
 
 	template<typename T>
 	[[nodiscard]]
-	T FromArrayJSON(const JSON& json, const T& defaultValue = T{});
-
-	template<>
-	[[nodiscard]]
-	inline JSON ToArrayJSON<Vec2>(const Vec2& value)
+	T FromArrayJSON(const JSON& json, const T& defaultValue = T{}) requires std::same_as<T, Vec2> || std::same_as<T, Color>
 	{
-		return Array<double>{ value.x, value.y };
-	}
-
-	template<>
-	[[nodiscard]]
-	inline Vec2 FromArrayJSON<Vec2>(const JSON& json, const Vec2& defaultValue)
-	{
-		if (json.isArray() && json.size() == 2)
+		// Vec2とColorはJSON化すると文字列になってしまうので、明示的に配列から変換する関数を設けている
+		if constexpr (std::same_as<T, Vec2>)
 		{
-			return Vec2{ json[0].getOr<double>(0.0), json[1].getOr<double>(0.0) };
+			if (json.isArray() && json.size() == 2)
+			{
+				return Vec2{ json[0].getOr<double>(0.0), json[1].getOr<double>(0.0) };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Vec2 must be an array of two numbers";
+				return defaultValue;
+			}
 		}
-		else if (json.isString())
+		else if constexpr (std::same_as<T, Color>)
 		{
-			Logger << U"[NocoUI warning] String format Vec2 found, returning default value";
-			return defaultValue;
+			if (json.isArray() && json.size() == 4)
+			{
+				return Color{
+					static_cast<uint8>(Clamp(json[0].getOr<int32>(0), 0, 255)),
+					static_cast<uint8>(Clamp(json[1].getOr<int32>(0), 0, 255)),
+					static_cast<uint8>(Clamp(json[2].getOr<int32>(0), 0, 255)),
+					static_cast<uint8>(Clamp(json[3].getOr<int32>(255), 0, 255))
+				};
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Color must be an array of four integers (0-255)";
+				return defaultValue;
+			}
 		}
-		return json.getOr<Vec2>(defaultValue);
-	}
-
-	template<>
-	[[nodiscard]]
-	inline JSON ToArrayJSON<Color>(const Color& value)
-	{
-		return Array<int32>{ value.r, value.g, value.b, value.a };
-	}
-
-	template<>
-	[[nodiscard]]
-	inline Color FromArrayJSON<Color>(const JSON& json, const Color& defaultValue)
-	{
-		if (json.isArray() && json.size() == 4)
+		else
 		{
-			return Color{
-				static_cast<uint8>(Clamp(json[0].getOr<int32>(0), 0, 255)),
-				static_cast<uint8>(Clamp(json[1].getOr<int32>(0), 0, 255)),
-				static_cast<uint8>(Clamp(json[2].getOr<int32>(0), 0, 255)),
-				static_cast<uint8>(Clamp(json[3].getOr<int32>(255), 0, 255))
-			};
+			static_assert([] { return false; }(), "Unsupported type for FromArrayJSON");
 		}
-		else if (json.isString())
-		{
-			Logger << U"[NocoUI warning] String format Color found, returning default value";
-			return defaultValue;
-		}
-		return json.getOr<Color>(defaultValue);
 	}
-
 }
