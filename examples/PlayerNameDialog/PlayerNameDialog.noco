@@ -1,0 +1,2163 @@
+﻿{
+  "children": [
+    {
+      "activeSelf": true,
+      "children": [
+        {
+          "activeSelf": true,
+          "children": [
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid1",
+              "region": {
+                "anchorMax": [
+                  0.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  0.0,
+                  0.5
+                ],
+                "posDelta": [
+                  10.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  0.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            },
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid2",
+              "region": {
+                "anchorMax": [
+                  0.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  0.0,
+                  0.5
+                ],
+                "posDelta": [
+                  30.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  0.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            },
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid3",
+              "region": {
+                "anchorMax": [
+                  0.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  0.0,
+                  0.5
+                ],
+                "posDelta": [
+                  50.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  0.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            },
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid4",
+              "region": {
+                "anchorMax": [
+                  1.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  1.0,
+                  0.5
+                ],
+                "posDelta": [
+                  -10.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  1.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            },
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid5",
+              "region": {
+                "anchorMax": [
+                  1.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  1.0,
+                  0.5
+                ],
+                "posDelta": [
+                  -30.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  1.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            },
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "arrowHeadSize": [
+                    16.0,
+                    16.0
+                  ],
+                  "blendMode": "Normal",
+                  "endPoint": [
+                    1.0,
+                    1.0
+                  ],
+                  "fillColor": [
+                    255,
+                    255,
+                    255,
+                    40
+                  ],
+                  "innerRatio": 0.5,
+                  "outlineColor": [
+                    0,
+                    0,
+                    0,
+                    255
+                  ],
+                  "outlineThickness": 0.0,
+                  "points": 5,
+                  "preserveAspect": true,
+                  "shapeType": "Astroid",
+                  "sides": 6,
+                  "squircleQuality": 64,
+                  "stairCount": 5,
+                  "startPoint": [
+                    0.0,
+                    0.0
+                  ],
+                  "tailRatio": 0.5,
+                  "targetPoint": [
+                    0.5,
+                    1.2
+                  ],
+                  "thickness": 10.0,
+                  "type": "ShapeRenderer",
+                  "upStairs": true
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "Astroid6",
+              "region": {
+                "anchorMax": [
+                  1.0,
+                  0.5
+                ],
+                "anchorMin": [
+                  1.0,
+                  0.5
+                ],
+                "posDelta": [
+                  -50.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  18.0,
+                  30.0
+                ],
+                "sizeDeltaPivot": [
+                  1.0,
+                  0.5
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  255,
+                  255,
+                  255,
+                  255
+                ],
+                "hitTestAffected": true,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            }
+          ],
+          "childrenLayout": {
+            "horizontalAlign": "Left",
+            "padding": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "spacing": [
+              0.0,
+              0.0
+            ],
+            "type": "FlowLayout",
+            "verticalAlign": "Top"
+          },
+          "clippingEnabled": false,
+          "components": [
+            {
+              "blendMode": "Normal",
+              "cornerRadius": 0.0,
+              "fillColor": [
+                0,
+                0,
+                0,
+                80
+              ],
+              "fillGradationColor1": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fillGradationColor2": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fillGradationType": "None",
+              "outlineColor": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "outlineThicknessInner": 0.0,
+              "outlineThicknessOuter": 0.0,
+              "shadowBlur": 0.0,
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                2.0,
+                2.0
+              ],
+              "shadowSpread": 0.0,
+              "type": "RectRenderer"
+            },
+            {
+              "characterSpacing": [
+                0.0,
+                0.0
+              ],
+              "color": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fontAssetName": "",
+              "fontSize": 24.0,
+              "horizontalAlign": "Center",
+              "horizontalOverflow": "Wrap",
+              "minFontSize": 1.0,
+              "outlineColor": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "outlineFactorInner": 0.0,
+              "outlineFactorOuter": 0.0,
+              "padding": [
+                0.0,
+                0.0,
+                0.0,
+                2.0
+              ],
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                1.0,
+                1.0
+              ],
+              "sizingMode": "Fixed",
+              "text": "",
+              "text_paramRef": "dialogTitle",
+              "type": "Label",
+              "underlineColor": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "underlineStyle": "None",
+              "underlineThickness": 1.0,
+              "verticalAlign": "Middle",
+              "verticalOverflow": "Overflow"
+            }
+          ],
+          "decelerationRate": 0.2,
+          "dragScrollEnabled": true,
+          "hitPadding": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "horizontalScrollable": false,
+          "inheritChildrenHover": false,
+          "inheritChildrenPress": false,
+          "interactable": true,
+          "isHitTarget": false,
+          "name": "Title",
+          "region": {
+            "anchorMax": [
+              1.0,
+              0.0
+            ],
+            "anchorMin": [
+              0.0,
+              0.0
+            ],
+            "posDelta": [
+              2.0,
+              20.0
+            ],
+            "sizeDelta": [
+              -4.0,
+              40.0
+            ],
+            "sizeDeltaPivot": [
+              0.0,
+              0.0
+            ],
+            "type": "AnchorRegion"
+          },
+          "rubberBandScrollEnabled": true,
+          "styleState": "",
+          "transform": {
+            "color": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "hitTestAffected": true,
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "rotation": 0.0,
+            "scale": [
+              1.0,
+              1.0
+            ],
+            "translate": [
+              0.0,
+              0.0
+            ]
+          },
+          "verticalScrollable": false,
+          "wheelScrollEnabled": true,
+          "zOrderInSiblings": 0
+        },
+        {
+          "activeSelf": true,
+          "children": [],
+          "childrenLayout": {
+            "horizontalAlign": "Left",
+            "padding": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "spacing": [
+              0.0,
+              0.0
+            ],
+            "type": "FlowLayout",
+            "verticalAlign": "Top"
+          },
+          "clippingEnabled": false,
+          "components": [
+            {
+              "characterSpacing": [
+                0.0,
+                0.0
+              ],
+              "color": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fontAssetName": "",
+              "fontSize": 18.0,
+              "horizontalAlign": "Center",
+              "horizontalOverflow": "Wrap",
+              "minFontSize": 1.0,
+              "outlineColor": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "outlineFactorInner": 0.0,
+              "outlineFactorOuter": 0.0,
+              "padding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                1.0,
+                1.0
+              ],
+              "sizingMode": "Fixed",
+              "text": "",
+              "text_paramRef": "messageText",
+              "type": "Label",
+              "underlineColor": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "underlineStyle": "None",
+              "underlineThickness": 1.0,
+              "verticalAlign": "Middle",
+              "verticalOverflow": "Overflow"
+            }
+          ],
+          "decelerationRate": 0.2,
+          "dragScrollEnabled": true,
+          "hitPadding": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "horizontalScrollable": false,
+          "inheritChildrenHover": false,
+          "inheritChildrenPress": false,
+          "interactable": true,
+          "isHitTarget": false,
+          "name": "Message",
+          "region": {
+            "anchorMax": [
+              0.5,
+              0.5
+            ],
+            "anchorMin": [
+              0.5,
+              0.5
+            ],
+            "posDelta": [
+              0.0,
+              -40.0
+            ],
+            "sizeDelta": [
+              400.0,
+              80.0
+            ],
+            "sizeDeltaPivot": [
+              0.5,
+              0.5
+            ],
+            "type": "AnchorRegion"
+          },
+          "rubberBandScrollEnabled": true,
+          "styleState": "",
+          "transform": {
+            "color": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "hitTestAffected": true,
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "rotation": 0.0,
+            "scale": [
+              1.0,
+              1.0
+            ],
+            "translate": [
+              0.0,
+              0.0
+            ]
+          },
+          "verticalScrollable": false,
+          "wheelScrollEnabled": true,
+          "zOrderInSiblings": 0
+        },
+        {
+          "activeSelf": true,
+          "children": [],
+          "childrenLayout": {
+            "horizontalAlign": "Left",
+            "padding": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "spacing": [
+              0.0,
+              0.0
+            ],
+            "type": "FlowLayout",
+            "verticalAlign": "Top"
+          },
+          "clippingEnabled": false,
+          "components": [
+            {
+              "blendMode": "Normal",
+              "cornerRadius": 10.0,
+              "fillColor": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fillGradationColor1": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fillGradationColor2": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fillGradationType": "None",
+              "outlineColor": {
+                "default": [
+                  255,
+                  255,
+                  255,
+                  0
+                ],
+                "hovered": [
+                  255,
+                  255,
+                  255,
+                  128
+                ],
+                "smoothTime": 0.05,
+                "styleStates": {
+                  "focused": [
+                    80,
+                    160,
+                    240,
+                    192
+                  ],
+                  "hovered": [
+                    80,
+                    160,
+                    240,
+                    192
+                  ]
+                }
+              },
+              "outlineThicknessInner": 0.0,
+              "outlineThicknessOuter": 2.0,
+              "shadowBlur": 0.0,
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                2.0,
+                2.0
+              ],
+              "shadowSpread": 0.0,
+              "type": "RectRenderer"
+            },
+            {
+              "color": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "cursorColor": [
+                0,
+                0,
+                0,
+                255
+              ],
+              "fontAssetName": "",
+              "fontSize": 24.0,
+              "horizontalAlign": "Center",
+              "horizontalPadding": [
+                8.0,
+                8.0
+              ],
+              "readOnly": false,
+              "selectionColor": [
+                0,
+                26,
+                77,
+                128
+              ],
+              "tag": "playerName",
+              "text": "",
+              "type": "TextBox",
+              "verticalAlign": "Middle",
+              "verticalPadding": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "decelerationRate": 0.2,
+          "dragScrollEnabled": true,
+          "hitPadding": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "horizontalScrollable": false,
+          "inheritChildrenHover": false,
+          "inheritChildrenPress": false,
+          "interactable": true,
+          "isHitTarget": true,
+          "name": "PlayerNameTextBox",
+          "region": {
+            "anchorMax": [
+              0.5,
+              1.0
+            ],
+            "anchorMin": [
+              0.5,
+              1.0
+            ],
+            "posDelta": [
+              0.0,
+              -95.0
+            ],
+            "sizeDelta": [
+              300.0,
+              40.0
+            ],
+            "sizeDeltaPivot": [
+              0.5,
+              1.0
+            ],
+            "type": "AnchorRegion"
+          },
+          "rubberBandScrollEnabled": true,
+          "styleState": "",
+          "transform": {
+            "color": [
+              255,
+              255,
+              255,
+              255
+            ],
+            "hitTestAffected": true,
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "rotation": 0.0,
+            "scale": [
+              1.0,
+              1.0
+            ],
+            "translate": [
+              0.0,
+              0.0
+            ]
+          },
+          "verticalScrollable": false,
+          "wheelScrollEnabled": true,
+          "zOrderInSiblings": 0
+        },
+        {
+          "activeSelf": true,
+          "children": [
+            {
+              "activeSelf": true,
+              "children": [],
+              "childrenLayout": {
+                "horizontalAlign": "Left",
+                "padding": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "spacing": [
+                  0.0,
+                  0.0
+                ],
+                "type": "FlowLayout",
+                "verticalAlign": "Top"
+              },
+              "clippingEnabled": false,
+              "components": [
+                {
+                  "blendMode": "Normal",
+                  "cornerRadius": 10.0,
+                  "fillColor": [
+                    0,
+                    10,
+                    20,
+                    0
+                  ],
+                  "fillGradationColor1": {
+                    "default": [
+                      0,
+                      20,
+                      40,
+                      255
+                    ],
+                    "hovered": [
+                      0,
+                      40,
+                      60,
+                      255
+                    ],
+                    "pressed": [
+                      0,
+                      10,
+                      20,
+                      255
+                    ],
+                    "smoothTime": 0.1
+                  },
+                  "fillGradationColor2": {
+                    "default": [
+                      0,
+                      10,
+                      20,
+                      255
+                    ],
+                    "hovered": [
+                      0,
+                      15,
+                      30,
+                      255
+                    ],
+                    "pressed": [
+                      0,
+                      5,
+                      10,
+                      255
+                    ],
+                    "smoothTime": 0.1
+                  },
+                  "fillGradationType": "None",
+                  "outlineColor": [
+                    255,
+                    255,
+                    255,
+                    255
+                  ],
+                  "outlineThicknessInner": 2.0,
+                  "outlineThicknessOuter": 0.0,
+                  "shadowBlur": 0.0,
+                  "shadowColor": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "shadowOffset": [
+                    2.0,
+                    2.0
+                  ],
+                  "shadowSpread": 0.0,
+                  "type": "RectRenderer"
+                },
+                {
+                  "active": {
+                    "default": true,
+                    "hovered": false
+                  },
+                  "applyDuringDelay": false,
+                  "colorEnabled": true,
+                  "colorFrom": [
+                    80,
+                    160,
+                    240,
+                    128
+                  ],
+                  "colorTo": [
+                    255,
+                    255,
+                    255,
+                    0
+                  ],
+                  "delay": 0.0,
+                  "duration": 1.0,
+                  "easing": "EaseInOutSine",
+                  "loopDuration": 0.0,
+                  "loopType": "PingPong",
+                  "manualMode": false,
+                  "manualTime": 0.0,
+                  "restartOnActive": false,
+                  "rotationEnabled": false,
+                  "rotationFrom": 0.0,
+                  "rotationTo": 0.0,
+                  "scaleEnabled": false,
+                  "scaleFrom": [
+                    1.0,
+                    1.0
+                  ],
+                  "scaleTo": [
+                    1.0,
+                    1.0
+                  ],
+                  "tag": "",
+                  "translateEnabled": false,
+                  "translateFrom": [
+                    0.0,
+                    0.0
+                  ],
+                  "translateTo": [
+                    0.0,
+                    0.0
+                  ],
+                  "type": "Tween"
+                },
+                {
+                  "active": {
+                    "default": false,
+                    "hovered": true,
+                    "pressed": false
+                  },
+                  "applyDuringDelay": false,
+                  "colorEnabled": true,
+                  "colorFrom": [
+                    80,
+                    160,
+                    240,
+                    24
+                  ],
+                  "colorTo": [
+                    80,
+                    160,
+                    240,
+                    0
+                  ],
+                  "delay": 0.0,
+                  "duration": 0.2,
+                  "easing": "EaseInOutSine",
+                  "loopDuration": 0.0,
+                  "loopType": "PingPong",
+                  "manualMode": false,
+                  "manualTime": 0.0,
+                  "restartOnActive": false,
+                  "rotationEnabled": false,
+                  "rotationFrom": 0.0,
+                  "rotationTo": 0.0,
+                  "scaleEnabled": false,
+                  "scaleFrom": [
+                    1.0,
+                    1.0
+                  ],
+                  "scaleTo": [
+                    1.0,
+                    1.0
+                  ],
+                  "tag": "",
+                  "translateEnabled": false,
+                  "translateFrom": [
+                    0.0,
+                    0.0
+                  ],
+                  "translateTo": [
+                    0.0,
+                    0.0
+                  ],
+                  "type": "Tween"
+                }
+              ],
+              "decelerationRate": 0.2,
+              "dragScrollEnabled": true,
+              "hitPadding": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "horizontalScrollable": false,
+              "inheritChildrenHover": false,
+              "inheritChildrenPress": false,
+              "interactable": true,
+              "isHitTarget": false,
+              "name": "FadingOutline",
+              "region": {
+                "anchorMax": [
+                  1.0,
+                  1.0
+                ],
+                "anchorMin": [
+                  0.0,
+                  0.0
+                ],
+                "posDelta": [
+                  0.0,
+                  0.0
+                ],
+                "sizeDelta": [
+                  0.0,
+                  0.0
+                ],
+                "sizeDeltaPivot": [
+                  0.0,
+                  0.0
+                ],
+                "type": "AnchorRegion"
+              },
+              "rubberBandScrollEnabled": true,
+              "styleState": "",
+              "transform": {
+                "color": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "hitTestAffected": false,
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "rotation": 0.0,
+                "scale": [
+                  1.0,
+                  1.0
+                ],
+                "translate": [
+                  0.0,
+                  0.0
+                ]
+              },
+              "verticalScrollable": false,
+              "wheelScrollEnabled": true,
+              "zOrderInSiblings": 0
+            }
+          ],
+          "childrenLayout": {
+            "horizontalAlign": "Left",
+            "padding": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "spacing": [
+              0.0,
+              0.0
+            ],
+            "type": "FlowLayout",
+            "verticalAlign": "Top"
+          },
+          "clippingEnabled": false,
+          "components": [
+            {
+              "blendMode": "Normal",
+              "cornerRadius": 10.0,
+              "fillColor": [
+                0,
+                10,
+                20,
+                255
+              ],
+              "fillGradationColor1": {
+                "default": [
+                  0,
+                  20,
+                  40,
+                  255
+                ],
+                "hovered": [
+                  0,
+                  40,
+                  80,
+                  255
+                ],
+                "pressed": [
+                  0,
+                  10,
+                  20,
+                  255
+                ],
+                "smoothTime": 0.1
+              },
+              "fillGradationColor2": {
+                "default": [
+                  0,
+                  10,
+                  20,
+                  255
+                ],
+                "hovered": [
+                  0,
+                  15,
+                  30,
+                  255
+                ],
+                "pressed": [
+                  0,
+                  5,
+                  10,
+                  255
+                ],
+                "smoothTime": 0.1
+              },
+              "fillGradationType": "TopBottom",
+              "outlineColor": [
+                80,
+                160,
+                240,
+                64
+              ],
+              "outlineThicknessInner": 2.0,
+              "outlineThicknessOuter": 0.0,
+              "shadowBlur": 0.0,
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                2.0,
+                2.0
+              ],
+              "shadowSpread": 0.0,
+              "type": "RectRenderer"
+            },
+            {
+              "characterSpacing": [
+                0.0,
+                0.0
+              ],
+              "color": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "fontAssetName": "",
+              "fontSize": 24.0,
+              "horizontalAlign": "Center",
+              "horizontalOverflow": "Wrap",
+              "minFontSize": 1.0,
+              "outlineColor": [
+                0,
+                0,
+                0,
+                128
+              ],
+              "outlineFactorInner": 0.0,
+              "outlineFactorOuter": 0.2,
+              "padding": [
+                0.0,
+                0.0,
+                0.0,
+                4.0
+              ],
+              "shadowColor": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "shadowOffset": [
+                1.0,
+                1.0
+              ],
+              "sizingMode": "Fixed",
+              "text": "決定",
+              "type": "Label",
+              "underlineColor": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "underlineStyle": "None",
+              "underlineThickness": 1.0,
+              "verticalAlign": "Middle",
+              "verticalOverflow": "Overflow"
+            },
+            {
+              "cursorStyle": "Hand",
+              "includingDisabled": false,
+              "recursive": false,
+              "type": "CursorChanger"
+            },
+            {
+              "recursive": false,
+              "tag": "decideClicked",
+              "triggerType": "Click",
+              "type": "EventTrigger"
+            }
+          ],
+          "decelerationRate": 0.2,
+          "dragScrollEnabled": true,
+          "hitPadding": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "horizontalScrollable": false,
+          "inheritChildrenHover": false,
+          "inheritChildrenPress": false,
+          "interactable": true,
+          "interactable_paramRef": "decideButtonEnabled",
+          "isHitTarget": true,
+          "name": "DecideButton",
+          "region": {
+            "anchorMax": [
+              0.5,
+              1.0
+            ],
+            "anchorMin": [
+              0.5,
+              1.0
+            ],
+            "posDelta": [
+              0.0,
+              -20.0
+            ],
+            "sizeDelta": [
+              150.0,
+              40.0
+            ],
+            "sizeDeltaPivot": [
+              0.5,
+              1.0
+            ],
+            "type": "AnchorRegion"
+          },
+          "rubberBandScrollEnabled": true,
+          "styleState": "",
+          "transform": {
+            "color": {
+              "default": [
+                255,
+                255,
+                255,
+                255
+              ],
+              "disabled": [
+                128,
+                128,
+                128,
+                255
+              ],
+              "smoothTime": 0.1
+            },
+            "hitTestAffected": false,
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "rotation": 0.0,
+            "scale": {
+              "default": [
+                1.0,
+                1.0
+              ],
+              "hovered": [
+                1.1,
+                1.1
+              ],
+              "pressed": [
+                0.95,
+                0.95
+              ],
+              "smoothTime": 0.1
+            },
+            "translate": [
+              0.0,
+              0.0
+            ]
+          },
+          "verticalScrollable": false,
+          "wheelScrollEnabled": true,
+          "zOrderInSiblings": 0
+        }
+      ],
+      "childrenLayout": {
+        "horizontalAlign": "Left",
+        "padding": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "spacing": [
+          0.0,
+          0.0
+        ],
+        "type": "FlowLayout",
+        "verticalAlign": "Top"
+      },
+      "clippingEnabled": false,
+      "components": [
+        {
+          "blendMode": "Normal",
+          "cornerRadius": 10.0,
+          "fillColor": [
+            40,
+            45,
+            50,
+            255
+          ],
+          "fillGradationColor1": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "fillGradationColor2": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "fillGradationType": "None",
+          "outlineColor": [
+            80,
+            160,
+            240,
+            64
+          ],
+          "outlineThicknessInner": 2.0,
+          "outlineThicknessOuter": 0.0,
+          "shadowBlur": 20.0,
+          "shadowColor": [
+            0,
+            0,
+            0,
+            64
+          ],
+          "shadowOffset": [
+            5.0,
+            5.0
+          ],
+          "shadowSpread": 10.0,
+          "type": "RectRenderer"
+        },
+        {
+          "active": false,
+          "applyDuringDelay": false,
+          "colorEnabled": false,
+          "colorFrom": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "colorTo": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "delay": 0.0,
+          "duration": 0.6,
+          "easing": "EaseOutBack",
+          "loopDuration": 0.0,
+          "loopType": "None",
+          "manualMode": false,
+          "manualTime": 0.0,
+          "restartOnActive": true,
+          "rotationEnabled": false,
+          "rotationFrom": 0.0,
+          "rotationTo": 0.0,
+          "scaleEnabled": true,
+          "scaleFrom": [
+            0.6,
+            0.6
+          ],
+          "scaleTo": [
+            1.0,
+            1.0
+          ],
+          "tag": "in",
+          "translateEnabled": false,
+          "translateFrom": [
+            0.0,
+            0.0
+          ],
+          "translateTo": [
+            0.0,
+            0.0
+          ],
+          "type": "Tween"
+        },
+        {
+          "active": false,
+          "applyDuringDelay": false,
+          "colorEnabled": true,
+          "colorFrom": [
+            255,
+            255,
+            255,
+            0
+          ],
+          "colorTo": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "delay": 0.0,
+          "duration": 0.6,
+          "easing": "Linear",
+          "loopDuration": 0.0,
+          "loopType": "None",
+          "manualMode": false,
+          "manualTime": 0.0,
+          "restartOnActive": true,
+          "rotationEnabled": false,
+          "rotationFrom": 0.0,
+          "rotationTo": 0.0,
+          "scaleEnabled": false,
+          "scaleFrom": [
+            1.0,
+            1.0
+          ],
+          "scaleTo": [
+            1.0,
+            1.0
+          ],
+          "tag": "in",
+          "translateEnabled": false,
+          "translateFrom": [
+            0.0,
+            0.0
+          ],
+          "translateTo": [
+            0.0,
+            0.0
+          ],
+          "type": "Tween"
+        },
+        {
+          "active": false,
+          "applyDuringDelay": false,
+          "colorEnabled": false,
+          "colorFrom": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "colorTo": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "delay": 0.0,
+          "duration": 0.4,
+          "easing": "EaseInBack",
+          "loopDuration": 0.0,
+          "loopType": "None",
+          "manualMode": false,
+          "manualTime": 0.0,
+          "restartOnActive": true,
+          "rotationEnabled": false,
+          "rotationFrom": 0.0,
+          "rotationTo": 0.0,
+          "scaleEnabled": true,
+          "scaleFrom": [
+            1.0,
+            1.0
+          ],
+          "scaleTo": [
+            0.6,
+            0.6
+          ],
+          "tag": "out",
+          "translateEnabled": false,
+          "translateFrom": [
+            0.0,
+            0.0
+          ],
+          "translateTo": [
+            0.0,
+            0.0
+          ],
+          "type": "Tween"
+        },
+        {
+          "active": false,
+          "applyDuringDelay": false,
+          "colorEnabled": true,
+          "colorFrom": [
+            255,
+            255,
+            255,
+            255
+          ],
+          "colorTo": [
+            255,
+            255,
+            255,
+            0
+          ],
+          "delay": 0.0,
+          "duration": 0.4,
+          "easing": "Linear",
+          "loopDuration": 0.0,
+          "loopType": "None",
+          "manualMode": false,
+          "manualTime": 0.0,
+          "restartOnActive": true,
+          "rotationEnabled": false,
+          "rotationFrom": 0.0,
+          "rotationTo": 0.0,
+          "scaleEnabled": false,
+          "scaleFrom": [
+            1.0,
+            1.0
+          ],
+          "scaleTo": [
+            1.0,
+            1.0
+          ],
+          "tag": "out",
+          "translateEnabled": false,
+          "translateFrom": [
+            0.0,
+            0.0
+          ],
+          "translateTo": [
+            0.0,
+            0.0
+          ],
+          "type": "Tween"
+        }
+      ],
+      "decelerationRate": 0.2,
+      "dragScrollEnabled": true,
+      "hitPadding": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "horizontalScrollable": false,
+      "inheritChildrenHover": false,
+      "inheritChildrenPress": false,
+      "interactable": true,
+      "isHitTarget": true,
+      "name": "Frame",
+      "region": {
+        "anchorMax": [
+          0.5,
+          0.5
+        ],
+        "anchorMin": [
+          0.5,
+          0.5
+        ],
+        "posDelta": [
+          0.0,
+          0.0
+        ],
+        "sizeDelta": [
+          400.0,
+          300.0
+        ],
+        "sizeDeltaPivot": [
+          0.5,
+          0.5
+        ],
+        "type": "AnchorRegion"
+      },
+      "rubberBandScrollEnabled": true,
+      "styleState": "",
+      "transform": {
+        "color": [
+          255,
+          255,
+          255,
+          255
+        ],
+        "hitTestAffected": true,
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "rotation": 0.0,
+        "scale": [
+          1.0,
+          1.0
+        ],
+        "translate": [
+          0.0,
+          0.0
+        ]
+      },
+      "verticalScrollable": false,
+      "wheelScrollEnabled": true,
+      "zOrderInSiblings": 0
+    }
+  ],
+  "childrenLayout": {
+    "horizontalAlign": "Left",
+    "padding": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "spacing": [
+      0.0,
+      0.0
+    ],
+    "type": "FlowLayout",
+    "verticalAlign": "Top"
+  },
+  "params": {
+    "decideButtonEnabled": {
+      "type": "Bool",
+      "value": true
+    },
+    "dialogTitle": {
+      "type": "String",
+      "value": "冒険をはじめる"
+    },
+    "messageText": {
+      "type": "String",
+      "value": "あなたの名前を入力してください"
+    }
+  },
+  "referenceSize": [
+    800.0,
+    600.0
+  ],
+  "serializedVersion": 1,
+  "version": "0.1.0"
+}
