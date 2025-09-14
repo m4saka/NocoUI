@@ -65,16 +65,13 @@ jobs:
         cp -r /usr/local/lib/cmake/Siv3D siv3d-cache/usr/local/lib/cmake/ || true
         cp -r /usr/local/share/Siv3D siv3d-cache/usr/local/share/ || true
         
-    - name: Configure NocoUITests
-      working-directory: tests/NocoUITests
+    - name: Configure NocoUI Project
       run: |
-        mkdir build && cd build
-        cmake -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+        cmake -B build -GNinja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
     - name: Build NocoUITests
-      working-directory: tests/NocoUITests
       run: |
-        cmake --build build -j4
+        cmake --build build --target NocoUITest -j4
 
     - name: Run NocoUITests
       working-directory: tests/NocoUITests
