@@ -584,12 +584,29 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"underlineStyle" }] = PropertyMetadata{
 			.tooltip = U"下線のスタイル",
+			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"Label", U"underlineColor" }] = PropertyMetadata{
 			.tooltip = U"下線の色",
+			.visibilityCondition = [](const ComponentBase& component) -> bool
+			{
+				if (const auto* label = dynamic_cast<const Label*>(&component))
+				{
+					return label->underlineStyle().hasAnyStateEqualTo(LabelUnderlineStyle::Solid);
+				}
+				return false;
+			},
 		};
 		metadata[PropertyKey{ U"Label", U"underlineThickness" }] = PropertyMetadata{
 			.tooltip = U"下線の太さ",
+			.visibilityCondition = [](const ComponentBase& component) -> bool
+			{
+				if (const auto* label = dynamic_cast<const Label*>(&component))
+				{
+					return label->underlineStyle().hasAnyStateEqualTo(LabelUnderlineStyle::Solid);
+				}
+				return false;
+			},
 			.dragValueChangeStep = 1.0,
 		};
 		metadata[PropertyKey{ U"Label", U"outlineColor" }] = PropertyMetadata{
