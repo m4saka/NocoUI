@@ -180,9 +180,6 @@ namespace noco
 
 	void ShapeRenderer::draw(const Node& node) const
 	{
-		const auto region = node.regionRect();
-		const auto center = region.center();
-		
 		const Color& fillColor = m_fillColor.value();
 		const Color& outlineColor = m_outlineColor.value();
 		const double outlineThickness = m_outlineThickness.value();
@@ -219,7 +216,7 @@ namespace noco
 			m_stairCount.value(),
 			m_upStairs.value(),
 			m_squircleQuality.value(),
-			region);
+			node.regionRect());
 		
 		const Shape2D& shapeToRender = m_cache.isScaled ? m_cache.scaledShape : m_cache.baseShape;
 		shapeToRender.draw(fillColor);
