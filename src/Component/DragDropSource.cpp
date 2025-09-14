@@ -51,7 +51,7 @@ namespace noco
 				const auto dropTargetNode = detail::s_canvasUpdateContext.hoveredNode.lock();
 				if (dropTargetNode && dropTargetNode != sourceNode)
 				{
-					if (const auto dropTarget = dropTargetNode->getComponentOrNull<DragDropTarget>())
+					if (const auto dropTarget = dropTargetNode->getComponent<DragDropTarget>())
 					{
 						dropTarget->onDrop(m_draggingNodeList);
 					}

@@ -14,7 +14,7 @@ TEST_CASE("Component system", "[Component]")
 		auto label = node->emplaceComponent<noco::Label>();
 		
 		REQUIRE(label != nullptr);
-		REQUIRE(node->getComponentOrNull<noco::Label>() == label);
+		REQUIRE(node->getComponent<noco::Label>() == label);
 	}
 
 	SECTION("Multiple components")
@@ -23,8 +23,8 @@ TEST_CASE("Component system", "[Component]")
 		auto label = node->emplaceComponent<noco::Label>();
 		auto rect = node->emplaceComponent<noco::RectRenderer>();
 		
-		REQUIRE(node->getComponentOrNull<noco::Label>() == label);
-		REQUIRE(node->getComponentOrNull<noco::RectRenderer>() == rect);
+		REQUIRE(node->getComponent<noco::Label>() == label);
+		REQUIRE(node->getComponent<noco::RectRenderer>() == rect);
 	}
 
 	SECTION("Remove component")
@@ -34,7 +34,7 @@ TEST_CASE("Component system", "[Component]")
 		
 		node->removeComponent(label);
 		
-		REQUIRE(node->getComponentOrNull<noco::Label>() == nullptr);
+		REQUIRE(node->getComponent<noco::Label>() == nullptr);
 	}
 }
 

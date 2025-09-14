@@ -20,7 +20,7 @@ namespace noco
 			m_dropFocused = false;
 			return;
 		}
-		const auto dragDropSource = draggingNode->getComponentOrNull<DragDropSource>();
+		const auto dragDropSource = draggingNode->getComponent<DragDropSource>();
 		if (!dragDropSource)
 		{
 			m_dropFocused = false;

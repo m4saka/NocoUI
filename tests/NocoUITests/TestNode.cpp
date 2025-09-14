@@ -432,7 +432,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 			return std::dynamic_pointer_cast<noco::Label>(c) != nullptr;
 		});
 		REQUIRE(labelCount == 2);
-		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);
+		REQUIRE(node->getComponent<noco::TextBox>() != nullptr);
 		
 		// Labelコンポーネントを全て削除（非再帰）
 		node->removeComponentsAll<noco::Label>(noco::RecursiveYN::No);
@@ -442,7 +442,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 			return std::dynamic_pointer_cast<noco::Label>(c) != nullptr;
 		});
 		REQUIRE(labelCountAfter == 0);
-		REQUIRE(node->getComponentOrNull<noco::TextBox>() != nullptr);  // TextBoxは残っている
+		REQUIRE(node->getComponent<noco::TextBox>() != nullptr);  // TextBoxは残っている
 	}
 	
 	SECTION("Remove specific component type recursively")
@@ -467,23 +467,23 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		child1->emplaceComponent<noco::TextBox>();
 		
 		// 初期状態の確認
-		REQUIRE(parent->getComponentOrNull<noco::Label>() != nullptr);
-		REQUIRE(child1->getComponentOrNull<noco::Label>() != nullptr);
-		REQUIRE(child2->getComponentOrNull<noco::Label>() != nullptr);
-		REQUIRE(grandchild->getComponentOrNull<noco::Label>() != nullptr);
+		REQUIRE(parent->getComponent<noco::Label>() != nullptr);
+		REQUIRE(child1->getComponent<noco::Label>() != nullptr);
+		REQUIRE(child2->getComponent<noco::Label>() != nullptr);
+		REQUIRE(grandchild->getComponent<noco::Label>() != nullptr);
 		
 		// Labelコンポーネントを再帰的に削除
 		parent->removeComponentsAll<noco::Label>(noco::RecursiveYN::Yes);
 		
 		// 削除後の確認
-		REQUIRE(parent->getComponentOrNull<noco::Label>() == nullptr);
-		REQUIRE(child1->getComponentOrNull<noco::Label>() == nullptr);
-		REQUIRE(child2->getComponentOrNull<noco::Label>() == nullptr);
-		REQUIRE(grandchild->getComponentOrNull<noco::Label>() == nullptr);
+		REQUIRE(parent->getComponent<noco::Label>() == nullptr);
+		REQUIRE(child1->getComponent<noco::Label>() == nullptr);
+		REQUIRE(child2->getComponent<noco::Label>() == nullptr);
+		REQUIRE(grandchild->getComponent<noco::Label>() == nullptr);
 		
 		// TextBoxは残っていることを確認
-		REQUIRE(parent->getComponentOrNull<noco::TextBox>() != nullptr);
-		REQUIRE(child1->getComponentOrNull<noco::TextBox>() != nullptr);
+		REQUIRE(parent->getComponent<noco::TextBox>() != nullptr);
+		REQUIRE(child1->getComponent<noco::TextBox>() != nullptr);
 	}
 	
 	SECTION("Remove components when none exist")
@@ -544,7 +544,7 @@ TEST_CASE("Node removeComponentsAll", "[Node][Component]")
 		std::function<void(const std::shared_ptr<noco::Node>&)> countRectRenderers;
 		countRectRenderers = [&rectRendererCount, &countRectRenderers](const std::shared_ptr<noco::Node>& node)
 		{
-			if (node->getComponentOrNull<noco::RectRenderer>())
+			if (node->getComponent<noco::RectRenderer>())
 			{
 				rectRendererCount++;
 			}

@@ -58,7 +58,7 @@ namespace noco::editor
 				}
 				
 				// 次のノードを探す
-				if (auto tabStop = targetNode->getComponentOrNull<TabStop>())
+				if (auto tabStop = targetNode->getComponent<TabStop>())
 				{
 					targetNode = reverse ? tabStop->getPreviousNode() : tabStop->getNextNode();
 				}

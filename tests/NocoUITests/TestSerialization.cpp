@@ -50,7 +50,7 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 		REQUIRE(inlineRegion->flexibleWeight == Approx(1.5));
 		
 		// コンポーネントの確認
-		auto restoredLabel = restoredNode->getComponentOrNull<noco::Label>();
+		auto restoredLabel = restoredNode->getComponent<noco::Label>();
 		REQUIRE(restoredLabel != nullptr);
 		REQUIRE(restoredLabel->text().defaultValue() == U"Test Label");
 	}

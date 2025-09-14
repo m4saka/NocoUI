@@ -330,7 +330,7 @@ namespace noco::editor
 			{
 				// 同じ名前のノードを探してフォーカスを復元
 				auto newFocusNode = m_inspectorRootNode->findByName(focusedNodeName, RecursiveYN::Yes);
-				if (newFocusNode && newFocusNode->getComponentOrNull<TabStop>())
+				if (newFocusNode && newFocusNode->getComponent<TabStop>())
 				{
 					CurrentFrame::SetFocusedNode(newFocusNode);
 				}
@@ -351,7 +351,7 @@ namespace noco::editor
 			// 各ノードのTabStopに次と前のノードを設定
 			for (size_t i = 0; i < tabStopNodes.size(); ++i)
 			{
-				const auto tabStop = tabStopNodes[i]->getComponentOrNull<TabStop>();
+				const auto tabStop = tabStopNodes[i]->getComponent<TabStop>();
 				if (!tabStop)
 				{
 					continue;
@@ -375,7 +375,7 @@ namespace noco::editor
 			}
 			
 			// このノードがTabStopを持っているかチェック
-			if (node->getComponentOrNull<TabStop>())
+			if (node->getComponent<TabStop>())
 			{
 				tabStopNodes.push_back(node);
 			}

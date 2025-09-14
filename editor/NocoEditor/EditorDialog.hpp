@@ -624,11 +624,11 @@ namespace noco::editor
 			{
 			case PropertyEditType::Number:
 			case PropertyEditType::Text:
-				if (const auto textBox = nodeInfo.propertyValueNode->getComponentOrNull<TextBox>(RecursiveYN::Yes))
+				if (const auto textBox = nodeInfo.propertyValueNode->getComponent<TextBox>(RecursiveYN::Yes))
 				{
 					textBox->setText(value);
 				}
-				else if (const auto textArea = nodeInfo.propertyValueNode->getComponentOrNull<TextArea>(RecursiveYN::Yes))
+				else if (const auto textArea = nodeInfo.propertyValueNode->getComponent<TextArea>(RecursiveYN::Yes))
 				{
 					textArea->setText(value);
 				}
@@ -638,7 +638,7 @@ namespace noco::editor
 				}
 				break;
 			case PropertyEditType::Bool:
-				if (const auto checkboxToggler = nodeInfo.propertyValueNode->getComponentOrNull<CheckboxToggler>(RecursiveYN::Yes))
+				if (const auto checkboxToggler = nodeInfo.propertyValueNode->getComponent<CheckboxToggler>(RecursiveYN::Yes))
 				{
 					checkboxToggler->setValue(StringToValueOpt<bool>(value).value_or(false));
 				}
@@ -648,7 +648,7 @@ namespace noco::editor
 				}
 				break;
 			case PropertyEditType::Vec2:
-				if (const auto vec2PropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<Vec2PropertyTextBox>(RecursiveYN::Yes))
+				if (const auto vec2PropertyTextBox = nodeInfo.propertyValueNode->getComponent<Vec2PropertyTextBox>(RecursiveYN::Yes))
 				{
 					vec2PropertyTextBox->setValue(StringToValueOpt<Vec2>(value).value_or(Vec2::Zero()));
 				}
@@ -658,7 +658,7 @@ namespace noco::editor
 				}
 				break;
 			case PropertyEditType::Color:
-				if (const auto colorPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<ColorPropertyTextBox>(RecursiveYN::Yes))
+				if (const auto colorPropertyTextBox = nodeInfo.propertyValueNode->getComponent<ColorPropertyTextBox>(RecursiveYN::Yes))
 				{
 					colorPropertyTextBox->setValue(StringToValueOpt<Color>(value).value_or(Color{}));
 				}
@@ -668,7 +668,7 @@ namespace noco::editor
 				}
 				break;
 			case PropertyEditType::LRTB:
-				if (const auto lrtbPropertyTextBox = nodeInfo.propertyValueNode->getComponentOrNull<LRTBPropertyTextBox>(RecursiveYN::Yes))
+				if (const auto lrtbPropertyTextBox = nodeInfo.propertyValueNode->getComponent<LRTBPropertyTextBox>(RecursiveYN::Yes))
 				{
 					lrtbPropertyTextBox->setValue(StringToValueOpt<LRTB>(value).value_or(LRTB::Zero()));
 				}
@@ -678,7 +678,7 @@ namespace noco::editor
 				}
 				break;
 			case PropertyEditType::Enum:
-				if (const auto comboBox = nodeInfo.propertyValueNode->getComponentOrNull<EnumPropertyComboBox>(RecursiveYN::Yes))
+				if (const auto comboBox = nodeInfo.propertyValueNode->getComponent<EnumPropertyComboBox>(RecursiveYN::Yes))
 				{
 					comboBox->setValue(value);
 				}

@@ -291,10 +291,6 @@ namespace noco
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponentOrNull(RecursiveYN recursive = RecursiveYN::No) const;
-
-		template <class TComponent>
-		[[nodiscard]]
 		Array<std::shared_ptr<TComponent>> getComponents(RecursiveYN recursive = RecursiveYN::No) const;
 
 		template <class TComponent>
@@ -821,27 +817,6 @@ namespace noco
 	[[nodiscard]]
 	std::shared_ptr<TComponent> Node::getComponent(RecursiveYN recursive) const
 	{
-		if (const auto component = getComponentOrNull<TComponent>(RecursiveYN::No))
-		{
-			return component;
-		}
-		if (recursive)
-		{
-			for (const auto& child : m_children)
-			{
-				if (const auto component = child->getComponent<TComponent>(RecursiveYN::Yes))
-				{
-					return component;
-				}
-			}
-		}
-		throw Error{ U"Component not found in node '{}'"_fmt(m_name) };
-	}
-
-	template <class TComponent>
-	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponentOrNull(RecursiveYN recursive) const
-	{
 		for (const auto& component : m_components)
 		{
 			if (auto concreteComponent = std::dynamic_pointer_cast<TComponent>(component))
@@ -853,7 +828,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (const auto component = child->getComponentOrNull<TComponent>(RecursiveYN::Yes))
+				if (const auto component = child->getComponent<TComponent>(RecursiveYN::Yes))
 				{
 					return component;
 				}
@@ -861,6 +836,7 @@ namespace noco
 		}
 		return nullptr;
 	}
+
 
 	template <class TComponent>
 	[[nodiscard]]
@@ -952,7 +928,7 @@ namespace noco
 	template<typename TData>
 	void Node::storeData(const TData& value)
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
+		if (const auto dataStore = getComponent<DataStore<TData>>(RecursiveYN::No))
 		{
 			dataStore->setValue(value);
 		}
@@ -965,7 +941,7 @@ namespace noco
 	template<typename TData>
 	const TData& Node::getStoredData() const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
+		if (const auto dataStore = getComponent<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}
@@ -978,7 +954,7 @@ namespace noco
 	template<typename TData>
 	Optional<TData> Node::getStoredDataOpt() const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
+		if (const auto dataStore = getComponent<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}
@@ -991,7 +967,7 @@ namespace noco
 	template<typename TData>
 	TData Node::getStoredDataOr(const TData& defaultValue) const
 	{
-		if (const auto dataStore = getComponentOrNull<DataStore<TData>>(RecursiveYN::No))
+		if (const auto dataStore = getComponent<DataStore<TData>>(RecursiveYN::No))
 		{
 			return dataStore->value();
 		}
