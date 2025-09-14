@@ -247,7 +247,7 @@ namespace noco
 			{
 				return;
 			}
-			m_propertyValue = PropertyValue<T>::fromJSON(json[m_name]);
+			m_propertyValue = PropertyValue<T>::FromJSON(json[m_name]);
 			
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))
@@ -534,7 +534,7 @@ namespace noco
 			{
 				return;
 			}
-			m_propertyValue = PropertyValue<T>::fromJSON(json[m_name]);
+			m_propertyValue = PropertyValue<T>::FromJSON(json[m_name]);
 			m_smoothing = Smoothing<T>{ m_propertyValue.value(InteractionState::Default, Array<String>{}) };
 			
 			const String paramRefKey = String(m_name) + U"_paramRef";
@@ -809,8 +809,8 @@ namespace noco
 				return;
 			}
 
-			// Propertyが後からPropertyNonInteractiveに変更される場合を考慮して、PropertyValue<T>::fromJSONを使う
-			m_value = PropertyValue<T>::fromJSON(json[m_name]).defaultValue();
+			// Propertyが後からPropertyNonInteractiveに変更される場合を考慮して、PropertyValue<T>::FromJSONを使う
+			m_value = PropertyValue<T>::FromJSON(json[m_name]).defaultValue();
 			
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))
@@ -1108,7 +1108,7 @@ namespace noco
 			{
 				return;
 			}
-			m_propertyValue = PropertyValue<Color>::fromJSON(json[m_name]);
+			m_propertyValue = PropertyValue<Color>::FromJSON(json[m_name]);
 			m_smoothing = Smoothing<ColorF>{ ColorF{ m_propertyValue.value(InteractionState::Default, Array<String>{}) } };
 
 			const String paramRefKey = String{ m_name } + U"_paramRef";

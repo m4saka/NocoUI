@@ -102,28 +102,28 @@ namespace noco
 			switch (m_editType)
 			{
 			case PropertyEditType::Bool:
-				m_propertyValue = PropertyValue<bool>::fromJSON(valueJson, false);
+				m_propertyValue = PropertyValue<bool>::FromJSON(valueJson, false);
 				break;
 				
 			case PropertyEditType::Number:
-				m_propertyValue = PropertyValue<double>::fromJSON(valueJson, 0.0);
+				m_propertyValue = PropertyValue<double>::FromJSON(valueJson, 0.0);
 				break;
 				
 			case PropertyEditType::Text:
 			case PropertyEditType::Enum:
-				m_propertyValue = PropertyValue<String>::fromJSON(valueJson, String{});
+				m_propertyValue = PropertyValue<String>::FromJSON(valueJson, String{});
 				break;
 				
 			case PropertyEditType::Vec2:
-				m_propertyValue = PropertyValue<Vec2>::fromJSON(valueJson, Vec2::Zero());
+				m_propertyValue = PropertyValue<Vec2>::FromJSON(valueJson, Vec2::Zero());
 				break;
 				
 			case PropertyEditType::Color:
-				m_propertyValue = PropertyValue<Color>::fromJSON(valueJson, Color{});
+				m_propertyValue = PropertyValue<Color>::FromJSON(valueJson, Color{});
 				break;
 				
 			case PropertyEditType::LRTB:
-				m_propertyValue = PropertyValue<LRTB>::fromJSON(valueJson, LRTB::Zero());
+				m_propertyValue = PropertyValue<LRTB>::FromJSON(valueJson, LRTB::Zero());
 				break;
 			}
 			

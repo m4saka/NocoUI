@@ -576,7 +576,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static PropertyValue<T> fromJSON(const JSON& json, const T& defaultValue = T{})
+		static PropertyValue<T> FromJSON(const JSON& json, const T& defaultValue = T{})
 		{
 			if constexpr (std::is_enum_v<T>)
 			{
@@ -647,10 +647,10 @@ namespace noco
 				{
 					auto propertyValue = PropertyValue<T>
 					{
-						T::fromJSON(json[U"default"], defaultValue),
-						json.contains(U"hovered") ? T::fromJSON(json[U"hovered"], defaultValue) : Optional<T>{ none },
-						json.contains(U"pressed") ? T::fromJSON(json[U"pressed"], defaultValue) : Optional<T>{ none },
-						json.contains(U"disabled") ? T::fromJSON(json[U"disabled"], defaultValue) : Optional<T>{ none },
+						T::FromJSON(json[U"default"], defaultValue),
+						json.contains(U"hovered") ? T::FromJSON(json[U"hovered"], defaultValue) : Optional<T>{ none },
+						json.contains(U"pressed") ? T::FromJSON(json[U"pressed"], defaultValue) : Optional<T>{ none },
+						json.contains(U"disabled") ? T::FromJSON(json[U"disabled"], defaultValue) : Optional<T>{ none },
 						json.contains(U"smoothTime") ? json[U"smoothTime"].getOr<double>(0.0) : 0.0,
 					};
 					
@@ -669,19 +669,19 @@ namespace noco
 								if (valueJson.isObject() && valueJson.contains(U"default"))
 								{
 									// オブジェクトの場合はInteractionStateごとの値がある
-									PropertyStyleStateValue<T> styleStateValues{ T::fromJSON(valueJson[U"default"], defaultValue) };
+									PropertyStyleStateValue<T> styleStateValues{ T::FromJSON(valueJson[U"default"], defaultValue) };
 									
 									if (valueJson.contains(U"hovered"))
 									{
-										styleStateValues.hoveredValue = T::fromJSON(valueJson[U"hovered"], defaultValue);
+										styleStateValues.hoveredValue = T::FromJSON(valueJson[U"hovered"], defaultValue);
 									}
 									if (valueJson.contains(U"pressed"))
 									{
-										styleStateValues.pressedValue = T::fromJSON(valueJson[U"pressed"], defaultValue);
+										styleStateValues.pressedValue = T::FromJSON(valueJson[U"pressed"], defaultValue);
 									}
 									if (valueJson.contains(U"disabled"))
 									{
-										styleStateValues.disabledValue = T::fromJSON(valueJson[U"disabled"], defaultValue);
+										styleStateValues.disabledValue = T::FromJSON(valueJson[U"disabled"], defaultValue);
 									}
 									
 									(*propertyValue.m_styleStateValues)[state] = styleStateValues;
@@ -689,7 +689,7 @@ namespace noco
 								else
 								{
 									// 文字列の場合はDefaultのみの値
-									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ T::fromJSON(valueJson, defaultValue) };
+									(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ T::FromJSON(valueJson, defaultValue) };
 								}
 							}
 						}
@@ -697,7 +697,7 @@ namespace noco
 					
 					return propertyValue;
 				}
-				return PropertyValue<T>{ T::fromJSON(json, defaultValue) };
+				return PropertyValue<T>{ T::FromJSON(json, defaultValue) };
 			}
 			else
 			{

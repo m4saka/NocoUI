@@ -161,7 +161,7 @@ namespace noco
 	template <class T>
 	concept HasFromJSON = requires()
 	{
-		{ T::fromJSON(JSON{}, T{}) } -> std::convertible_to<T>;
+		{ T::FromJSON(JSON{}, T{}) } -> std::convertible_to<T>;
 	};
 
 	template<typename T>

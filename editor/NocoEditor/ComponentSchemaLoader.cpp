@@ -194,7 +194,7 @@ namespace noco::editor
 			case PropertyEditType::LRTB:
 				if (defaultJson.isArray())
 				{
-					prop.defaultValue = LRTB::fromJSON(defaultJson);
+					prop.defaultValue = LRTB::FromJSON(defaultJson);
 				}
 				else
 				{

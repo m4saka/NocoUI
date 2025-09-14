@@ -548,7 +548,7 @@ namespace noco
 		}
 		if (json.contains(U"hitPadding"))
 		{
-			node->m_hitPadding = LRTB::fromJSON(json[U"hitPadding"]);
+			node->m_hitPadding = LRTB::FromJSON(json[U"hitPadding"]);
 		}
 		if (json.contains(U"inheritChildrenHover"))
 		{

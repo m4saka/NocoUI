@@ -18,7 +18,7 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		static LRTB fromJSON(const JSON& json, const LRTB& defaultValue = Zero())
+		static LRTB FromJSON(const JSON& json, const LRTB& defaultValue = Zero())
 		{
 			if (json.isArray() && json.size() == 4)
 			{
@@ -141,7 +141,7 @@ namespace noco
 	{
 		if (json.isObject() && json.contains(key))
 		{
-			return LRTB::fromJSON(json[key], defaultValue);
+			return LRTB::FromJSON(json[key], defaultValue);
 		}
 		return defaultValue;
 	}
@@ -155,7 +155,7 @@ namespace noco
 			const JSON& valueJson = json[key];
 			if (valueJson.isArray() && valueJson.size() == 4)
 			{
-				return LRTB::fromJSON(valueJson);
+				return LRTB::FromJSON(valueJson);
 			}
 		}
 		return none;
