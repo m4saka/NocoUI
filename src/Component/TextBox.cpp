@@ -288,7 +288,7 @@ namespace noco
 			{
 				deleteSelection();
 			}
-			insertTextAtCursor(clip);
+			insertTextAtCursor(clip.replaced(U"\r\n", U" ").replaced(U"\n", U" "));
 			m_isChanged = true;
 			return;
 		}
