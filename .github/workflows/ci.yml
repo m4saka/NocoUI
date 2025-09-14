@@ -33,7 +33,17 @@ jobs:
       if: steps.cache-siv3d.outputs.cache-hit != 'true'
       run: |
         git clone --depth 1 --branch v0.6.16 https://github.com/Siv3D/OpenSiv3D.git
-        
+
+    - name: Patch Siv3D for GCC 13
+      if: steps.cache-siv3d.outputs.cache-hit != 'true'
+      working-directory: OpenSiv3D
+      run: |
+        # Fix SIMDE redefinition errors in GCC 13
+        sed -i '3439s/^/\/\/ /' Siv3D/include/ThirdParty/simde/x86/sse2.h
+        sed -i '3464s/^/\/\/ /' Siv3D/include/ThirdParty/simde/x86/sse2.h
+        sed -i '3489s/^/\/\/ /' Siv3D/include/ThirdParty/simde/x86/sse2.h
+        sed -i '3514s/^/\/\/ /' Siv3D/include/ThirdParty/simde/x86/sse2.h
+
     - name: Configure Siv3D
       if: steps.cache-siv3d.outputs.cache-hit != 'true'
       working-directory: OpenSiv3D/Linux
