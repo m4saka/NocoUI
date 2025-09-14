@@ -1,5 +1,7 @@
 # NocoUI for Siv3D
 
+[![CI](https://github.com/m4saka/NocoUI/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/m4saka/NocoUI/actions/workflows/ci.yml?query=branch%3Amaster)
+
 > [!WARNING]
 > NocoUIは現在プレビュー版として試験的に公開されています。  
 > 今後のアップデートで大規模な仕様変更が発生する可能性があるため、ご利用の際はご注意ください。
