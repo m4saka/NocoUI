@@ -336,16 +336,6 @@ namespace noco
 			return;
 		}
 
-		// 編集状態に応じてstyleStateをオーバーライド
-		if (m_isEditing)
-		{
-			node->styleStateProperty().setCurrentFrameOverride(U"focused");
-		}
-		else
-		{
-			node->styleStateProperty().setCurrentFrameOverride(U"unfocused");
-		}
-
 		const Vec2 horizontalPadding = m_horizontalPadding.value();
 		const Vec2 verticalPadding = m_verticalPadding.value();
 
@@ -744,6 +734,19 @@ namespace noco
 				--m_scrollOffset;
 				m_fitDirection = FitDirection::Left;
 			}
+		}
+	}
+
+	void TextBox::update(const std::shared_ptr<Node>& node)
+	{
+		// 編集状態に応じてstyleStateをオーバーライド
+		if (m_isEditing)
+		{
+			node->styleStateProperty().setCurrentFrameOverride(U"focused");
+		}
+		else
+		{
+			node->styleStateProperty().setCurrentFrameOverride(U"unfocused");
 		}
 	}
 

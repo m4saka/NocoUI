@@ -150,6 +150,8 @@ namespace noco
 
 		void updateKeyInput(const std::shared_ptr<Node>& node) override;
 
+	void update(const std::shared_ptr<Node>& node) override;
+
 		void draw(const Node& node) const override;
 
 		void onDeactivated(const std::shared_ptr<Node>& node) override;
