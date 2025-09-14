@@ -3411,17 +3411,17 @@ namespace noco::editor
 				case AnchorPreset::StretchTop:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					fnAddChild(U"left", pAnchorRegion->posDelta.x,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorRegion->posDelta.x;
+								double oldLeft = c.posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
 					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
+								double oldRight = -(c.posDelta.x + c.sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
@@ -3434,17 +3434,17 @@ namespace noco::editor
 
 				case AnchorPreset::StretchMiddle:
 					fnAddChild(U"left", pAnchorRegion->posDelta.x,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorRegion->posDelta.x;
+								double oldLeft = c.posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
 					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
+								double oldRight = -(c.posDelta.x + c.sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
@@ -3458,17 +3458,17 @@ namespace noco::editor
 
 				case AnchorPreset::StretchBottom:
 					fnAddChild(U"left", pAnchorRegion->posDelta.x,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorRegion->posDelta.x;
+								double oldLeft = c.posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
 					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
+								double oldRight = -(c.posDelta.x + c.sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
@@ -3482,17 +3482,17 @@ namespace noco::editor
 
 				case AnchorPreset::StretchLeft:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorRegion->posDelta.y;
+								double oldTop = c.posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
 					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
+								double oldBottom = -(c.posDelta.y + c.sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
@@ -3506,17 +3506,17 @@ namespace noco::editor
 
 				case AnchorPreset::StretchCenter:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorRegion->posDelta.y;
+								double oldTop = c.posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
 					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
+								double oldBottom = -(c.posDelta.y + c.sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
@@ -3530,17 +3530,17 @@ namespace noco::editor
 
 				case AnchorPreset::StretchRight:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorRegion->posDelta.y;
+								double oldTop = c.posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
 					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
+								double oldBottom = -(c.posDelta.y + c.sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
@@ -3554,32 +3554,32 @@ namespace noco::editor
 
 				case AnchorPreset::StretchFull:
 					fnAddChild(U"left", pAnchorRegion->posDelta.x,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldLeft = pAnchorRegion->posDelta.x;
+								double oldLeft = c.posDelta.x;
 								double delta = oldLeft - v;
 								c.posDelta.x = v;
 								c.sizeDelta.x += delta;
 							}));
 					fnAddChild(U"right", -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldRight = -(pAnchorRegion->posDelta.x + pAnchorRegion->sizeDelta.x);
+								double oldRight = -(c.posDelta.x + c.sizeDelta.x);
 								double delta = v - oldRight;
 								c.sizeDelta.x -= delta;
 							}));
 					fnAddChild(U"top", pAnchorRegion->posDelta.y,
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldTop = pAnchorRegion->posDelta.y;
+								double oldTop = c.posDelta.y;
 								double delta = oldTop - v;
 								c.posDelta.y = v;
 								c.sizeDelta.y += delta;
 							}));
 					fnAddChild(U"bottom", -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y),
-						setDouble([pAnchorRegion](AnchorRegion& c, double v)
+						setDouble([](AnchorRegion& c, double v)
 							{
-								double oldBottom = -(pAnchorRegion->posDelta.y + pAnchorRegion->sizeDelta.y);
+								double oldBottom = -(c.posDelta.y + c.sizeDelta.y);
 								double delta = v - oldBottom;
 								c.sizeDelta.y -= delta;
 							}));
