@@ -22,7 +22,7 @@ namespace noco
 	template <class T>
 	struct PropertyStyleStateValue
 	{
-		T defaultValue;
+		T defaultValue = T{};
 		Optional<T> hoveredValue = none;
 		Optional<T> pressedValue = none;
 		Optional<T> disabledValue = none;

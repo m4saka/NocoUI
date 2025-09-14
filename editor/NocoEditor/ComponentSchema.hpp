@@ -17,7 +17,7 @@ namespace noco::editor
 			bool,
 			double,
 			String,
-			ColorF,
+			Color,
 			Vec2,
 			LRTB
 		>;

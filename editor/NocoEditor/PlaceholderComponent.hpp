@@ -22,11 +22,21 @@ namespace noco
 		{
 			return PropertyEditType::Number;
 		}
-		else
+		else if (value.isString())
 		{
-			// ほかにVec2、ColorF、LRTBも文字列だが、スキーマがなく型不明の場合は一律でText扱いとする
 			return PropertyEditType::Text;
 		}
+		else if (value.isArray() && value.size() == 2)
+		{
+			return PropertyEditType::Vec2;
+		}
+		else if (value.isArray() && value.size() == 4)
+		{
+			// Colorもあるが、スキーマがなく特定できないため値制限のないLRTB扱いとする
+			return PropertyEditType::LRTB;
+		}
+		Logger << U"[NocoUI warning] Unknown JSON type for property, defaulting to Text";
+		return PropertyEditType::Text;
 	}
 	
 	class PlaceholderProperty : public IProperty
@@ -70,38 +80,7 @@ namespace noco
 		{
 			std::visit([&](const auto& propValue) {
 				using T = std::decay_t<decltype(propValue)>;
-				JSON propJson = propValue.toJSON();
-				
-				// PropertyValueがシンプルな値の場合は適切なJSON型として保存
-				if constexpr (std::is_same_v<T, PropertyValue<bool>>)
-				{
-					if (propJson.isBool())
-					{
-						json[m_name] = propJson.get<bool>();
-					}
-					else
-					{
-						json[m_name] = propJson;  // InteractionState等の情報を含む場合
-					}
-				}
-				else if constexpr (std::is_same_v<T, PropertyValue<double>>)
-				{
-					if (propJson.isNumber())
-					{
-						json[m_name] = propJson.get<double>();
-					}
-					else
-					{
-						json[m_name] = propJson;  // InteractionState等の情報を含む場合
-					}
-				}
-				else
-				{
-					// String, ColorF, Vec2, LRTBの場合
-					// PropertyValueがシンプルな値の場合は文字列として保存される
-					// InteractionState情報がある場合はオブジェクト形式（{default: "...", hovered: "..."}）
-					json[m_name] = propJson;
-				}
+				json[m_name] = propValue.toJSON();
 			}, m_propertyValue);
 			
 			if (!m_paramRef.isEmpty())

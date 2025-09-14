@@ -168,61 +168,37 @@ namespace noco::editor
 				break;
 				
 			case PropertyEditType::Color:
-				if (defaultJson.isString())
+				if (defaultJson.isArray())
 				{
-					if (auto opt = StringToValueOpt<Color>(defaultJson.getString()))
-					{
-						prop.defaultValue = *opt;
-					}
-					else
-					{
-						Logger << U"[NocoUI warning] Invalid color value: {}, using default: (0, 0, 0, 0)"_fmt(defaultJson.getString());
-						prop.defaultValue = Color{};
-					}
+					prop.defaultValue = FromArrayJSON<Color>(defaultJson);
 				}
 				else
 				{
-					Logger << U"[NocoUI warning] defaultValue for Color type must be string, using default: (0, 0, 0, 0)";
+					Logger << U"[NocoUI warning] defaultValue for Color type must be array, using default: (0, 0, 0, 0)";
 					prop.defaultValue = Color{};
 				}
 				break;
 				
 			case PropertyEditType::Vec2:
-				if (defaultJson.isString())
+				if (defaultJson.isArray())
 				{
-					if (auto opt = StringToValueOpt<Vec2>(defaultJson.getString()))
-					{
-						prop.defaultValue = *opt;
-					}
-					else
-					{
-						Logger << U"[NocoUI warning] Invalid Vec2 value: {}, using default: (0, 0)"_fmt(defaultJson.getString());
-						prop.defaultValue = Vec2::Zero();
-					}
+					prop.defaultValue = FromArrayJSON<Vec2>(defaultJson);
 				}
 				else
 				{
-					Logger << U"[NocoUI warning] defaultValue for Vec2 type must be string, using default: (0, 0)";
+					Logger << U"[NocoUI warning] defaultValue for Vec2 type must be array, using default: (0, 0)";
 					prop.defaultValue = Vec2::Zero();
 				}
 				break;
 				
 			case PropertyEditType::LRTB:
-				if (defaultJson.isString())
+				if (defaultJson.isArray())
 				{
-					if (auto opt = StringToValueOpt<LRTB>(defaultJson.getString()))
-					{
-						prop.defaultValue = *opt;
-					}
-					else
-					{
-						Logger << U"[NocoUI warning] Invalid LRTB value: {}, using default: (0, 0, 0, 0)"_fmt(defaultJson.getString());
-						prop.defaultValue = LRTB::Zero();
-					}
+					prop.defaultValue = LRTB::fromJSON(defaultJson);
 				}
 				else
 				{
-					Logger << U"[NocoUI warning] defaultValue for LRTB type must be string, using default: (0, 0, 0, 0)";
+					Logger << U"[NocoUI warning] defaultValue for LRTB type must be array, using default: (0, 0, 0, 0)";
 					prop.defaultValue = LRTB::Zero();
 				}
 				break;

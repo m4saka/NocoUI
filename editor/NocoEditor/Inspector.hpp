@@ -120,17 +120,17 @@ namespace noco::editor
 							{
 								componentJson[prop.name] = value;
 							}
-							else if constexpr (std::is_same_v<T, ColorF>)
+							else if constexpr (std::is_same_v<T, Color>)
 							{
-								componentJson[prop.name] = ValueToString(value);
+								componentJson[prop.name] = Array<int32>{ value.r, value.g, value.b, value.a };
 							}
 							else if constexpr (std::is_same_v<T, Vec2>)
 							{
-								componentJson[prop.name] = ValueToString(value);
+								componentJson[prop.name] = Array<double>{ value.x, value.y };
 							}
 							else if constexpr (std::is_same_v<T, LRTB>)
 							{
-								componentJson[prop.name] = ValueToString(value);
+								componentJson[prop.name] = Array<double>{ value.left, value.right, value.top, value.bottom };
 							}
 						}, prop.defaultValue);
 					}
@@ -4743,7 +4743,7 @@ namespace noco::editor
 							const auto& metadata = it->second;
 							if (metadata.refreshInspectorOnChange)
 							{
-								onChange = [this, property](const ColorF& value)
+								onChange = [this, property](const Color& value)
 								{
 									property->trySetPropertyValueString(Format(value));
 									refreshInspector();
