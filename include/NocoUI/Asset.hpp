@@ -7,10 +7,12 @@ namespace noco
 	{
 		constexpr StringView AssetNamePrefix = U"noco::";
 
+		[[nodiscard]]
 		FilePathView GetBaseDirectoryPath();
 
 		void SetBaseDirectoryPath(FilePathView path);
 
+		[[nodiscard]]
 		Texture GetOrLoadTexture(FilePathView filePath);
 
 		Texture ReloadTexture(FilePathView filePath);
@@ -19,6 +21,7 @@ namespace noco
 
 		void UnloadAllTextures();
 
+		[[nodiscard]]
 		Audio GetOrLoadAudio(FilePathView filePath);
 
 		Audio ReloadAudio(FilePathView filePath);

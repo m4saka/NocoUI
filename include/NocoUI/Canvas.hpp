@@ -702,6 +702,7 @@ namespace noco
 		std::shared_ptr<Node> childAt(size_t index) const override;
 
 		const std::shared_ptr<Node>& addChild(const std::shared_ptr<Node>& node) override;
+
 		void removeChild(const std::shared_ptr<Node>& node) override;
 		
 		void removeChildrenAll() override;

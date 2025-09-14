@@ -11,6 +11,7 @@ namespace noco
 		Disabled,
 	};
 
+	[[nodiscard]]
 	inline InteractionState ApplyOtherInteractionState(InteractionState state, InteractionState otherState, ApplyDisabledStateYN applyDisabledState = ApplyDisabledStateYN::Yes)
 	{
 		if (!applyDisabledState && otherState == InteractionState::Disabled)

@@ -665,6 +665,7 @@ namespace noco
 		[[nodiscard]]	
 		TData getStoredDataOr(const TData& defaultValue) const;
 
+		[[nodiscard]]
 		uint64 instanceId() const
 		{
 			return m_instanceId;

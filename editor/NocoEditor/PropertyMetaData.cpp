@@ -2,6 +2,7 @@
 
 namespace noco::editor
 {
+	[[nodiscard]]
 	HashTable<PropertyKey, PropertyMetadata> InitPropertyMetadata()
 	{
 		HashTable<PropertyKey, PropertyMetadata> metadata;

@@ -16,6 +16,7 @@ namespace noco
 		constexpr Vec2 BottomCenter{ 0.5, 1.0 };
 		constexpr Vec2 BottomRight{ 1.0, 1.0 };
 
+		[[nodiscard]]
 		inline Vec2 FromAlign(HorizontalAlign horizontalAlign, VerticalAlign verticalAlign)
 		{
 			double x;

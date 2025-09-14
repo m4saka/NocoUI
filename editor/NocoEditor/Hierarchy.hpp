@@ -622,6 +622,7 @@ namespace noco::editor
 			};
 		}
 
+		[[nodiscard]]
 		Element* getElementByNode(const std::shared_ptr<Node>& node)
 		{
 			if (node == nullptr)
@@ -637,6 +638,7 @@ namespace noco::editor
 			return &(*it);
 		}
 
+		[[nodiscard]]
 		Element* getElementByHierarchyNode(const std::shared_ptr<Node>& hierarchyNode)
 		{
 			if (hierarchyNode == nullptr)
@@ -955,6 +957,7 @@ namespace noco::editor
 			}
 		}
 
+		[[nodiscard]]
 		bool hasSelection() const
 		{
 			return std::any_of(m_elements.begin(), m_elements.end(), [](const Element& element) { return element.editorSelected(); });
@@ -972,6 +975,7 @@ namespace noco::editor
 			}
 		}
 
+		[[nodiscard]]
 		bool canPaste() const
 		{
 			return !m_copiedNodeJSONs.empty();
@@ -1713,6 +1717,7 @@ namespace noco::editor
 			return refreshNeeded;
 		}
 
+		[[nodiscard]]
 		const std::shared_ptr<Node>& hierarchyFrameNode() const
 		{
 			return m_hierarchyFrameNode;

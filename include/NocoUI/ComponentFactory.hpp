@@ -93,9 +93,10 @@ namespace noco
 			return types;
 		}
 		
+		[[nodiscard]]
 		static ComponentFactory CreateWithBuiltinComponents();
 		
+		[[nodiscard]]
 		static const ComponentFactory& GetBuiltinFactory();
-		
 	};
 }
