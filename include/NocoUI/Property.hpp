@@ -788,6 +788,10 @@ namespace noco
 			{
 				json[m_name] = m_value.toJSON();
 			}
+			else if constexpr (std::same_as<T, Vec2> || std::same_as<T, Color>)
+			{
+				json[m_name] = ToArrayJSON<T>(m_value);
+			}
 			else
 			{
 				json[m_name] = m_value;
