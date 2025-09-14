@@ -11,6 +11,8 @@ NocoUIは、Siv3D向けのUIライブラリです。
 ゲームで利用する複雑なUIのレイアウトを、ビジュアルエディタ（NocoEditor）で直感的に編集できます。  
 作成したUIは、数行のコードを書くだけで簡単に利用可能です。
 
+NocoEditorは[Releasesページ](https://github.com/m4saka/NocoUI/releases)からダウンロードできます。
+
 ![スクリーンショット(エディタ)](./docs/readme_example_editor.png)
 ![スクリーンショット(実行画面)](./docs/readme_example_runtime.gif)
 
@@ -339,7 +341,50 @@ public:
 {
 	"type": "CustomButton",
 	"properties": [
-		// (中略)
+		{
+			"name": "text",
+			"editType": "Text",
+			"defaultValue": "ボタン",
+			"tooltip": "ボタンに表示するテキスト"
+		},
+		{
+			"name": "backgroundColor",
+			"editType": "Color",
+			"defaultValue": [255, 255, 255, 255],
+			"tooltip": "ボタンの背景色"
+		},
+		{
+			"name": "textColor",
+			"editType": "Color",
+			"defaultValue": [0, 0, 0, 255],
+			"tooltip": "テキストの色"
+		},
+		{
+			"name": "padding",
+			"editType": "LRTB",
+			"defaultValue": [2, 2, 2, 2],
+			"tooltip": "内側の余白"
+		},
+		{
+			"name": "fontSize",
+			"editType": "Number",
+			"defaultValue": 16,
+			"tooltip": "テキストのフォントサイズ",
+			"dragValueChangeStep": 1.0
+		},
+		{
+			"name": "enabled",
+			"editType": "Bool",
+			"defaultValue": true,
+			"tooltip": "ボタンが有効かどうか"
+		},
+		{
+			"name": "iconType",
+			"editType": "Enum",
+			"defaultValue": "None",
+			"enumCandidates": ["None", "Home", "Settings", "Search"],
+			"tooltip": "アイコンの種類"
+		}
 	]
 }
 ```
