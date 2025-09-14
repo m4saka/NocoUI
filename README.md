@@ -8,7 +8,7 @@
 
 NocoUIは、Siv3D向けのUIライブラリです。
 
-ゲームで利用する複雑なUIのレイアウトを、ビジュアルエディタ（NocoEditor）で直感的に編集できます。
+ゲームで利用する複雑なUIのレイアウトを、ビジュアルエディタ（NocoEditor）で直感的に編集できます。  
 作成したUIは、数行のコードを書くだけで簡単に利用可能です。
 
 ![スクリーンショット(エディタ)](./docs/readme_example_editor.png)
@@ -47,13 +47,13 @@ void Main()
 
 NocoUIの"Noco"という名前は、以下の2つの特徴に由来します。
 
--   ノーコード (**No** **Co**de)
-    -   UIの見た目をビジュアルエディタで編集できます。
-    -   見た目に関する値（座標、色、画像ファイル名、テキストなど）を、.nocoファイル（JSON形式）として保存することで、ソースコードをシンプルに保てます。
+- ノーコード (**No** **Co**de)
+    - UIの見た目をビジュアルエディタで編集できます。
+    - 見た目に関する値（座標、色、画像ファイル名、テキストなど）を、.nocoファイル（JSON形式）として保存することで、ソースコードをシンプルに保てます。
 
--   ノード＆コンポーネントUI (**No**de & **Co**mponent-based UI)
-    -   ノード（`Node`）: 座標とサイズを持つ要素。複数のコンポーネントを持つことができます。
-    -   コンポーネント（`Component`）: ノードに追加することで、さまざまな処理や描画を実現します。
+- ノード＆コンポーネントUI (**No**de & **Co**mponent-based UI)
+    - ノード（`Node`）: 座標とサイズを持つ要素。複数のコンポーネントを持つことができます。
+    - コンポーネント（`Component`）: ノードに追加することで、さまざまな処理や描画を行うことができます。
 
 ## プロジェクトへの導入方法
 
@@ -107,21 +107,21 @@ NocoUIの"Noco"という名前は、以下の2つの特徴に由来します。
 
 ### 主要なコンポーネント
 
--   `Sprite`: 画像を描画します。9スライス、フレームアニメーション、スクロールアニメーションなどに対応しています。
--   `RectRenderer`: 長方形を描画します。角丸、枠線、グラデーションなどに対応しています。
--   `TextBox`: 1行のテキスト入力ができます。`TextBox`自体は背景を描画しないため、`RectRenderer`と組み合わせて利用します。
--   `Label`: テキストを描画します。フォント指定、下線、水平/垂直方向の配置、フォントサイズの自動縮小、アウトライン、影などに対応しています。
--   `Tween`: 位置、スケール、回転、色をアニメーションさせます。
+- `Sprite`: 画像を描画します。9スライス、フレームアニメーション、スクロールアニメーションなどに対応しています。
+- `RectRenderer`: 長方形を描画します。角丸、枠線、グラデーションなどに対応しています。
+- `TextBox`: 1行のテキスト入力ができます。`TextBox`自体は背景を描画しないため、`RectRenderer`と組み合わせて利用します。
+- `Label`: テキストを描画します。フォント指定、下線、水平/垂直方向の配置、フォントサイズの自動縮小、アウトライン、影などに対応しています。
+- `Tween`: 位置、スケール、回転、色をアニメーションさせます。
 
 ### その他のコンポーネント
 
--   `ShapeRenderer`: Siv3Dの`Shape2D`で定義されている各種図形を描画します。
--   `TextArea`: 複数行のテキスト入力ができます。`TextArea`自体は背景を描画しないため、`RectRenderer`と組み合わせて利用します。
--   `Toggle`: クリックするたびに`value`プロパティ（bool）の値が切り替わります。チェックボックスの実装などに利用できます。
--   `TextureFontLabel`: あらかじめ用意したフォントテクスチャ画像をもとに、テキストを描画します。
--   `EventTrigger`: マウスイベントに応じてイベントを発火します。イベントはプログラム側から取得できます（`Canvas::isEventFiredWithTag`, `Canvas::getFiredEvent(s)WithTag`, `Canvas::getFiredEventsAll`）。
--   `CursorChanger`: ホバー中のマウスカーソルの見た目を変更します。
--   `UISound`: マウスイベントに応じて効果音を再生します。
+- `ShapeRenderer`: Siv3Dの`Shape2D`で定義されている各種図形を描画します。
+- `TextArea`: 複数行のテキスト入力ができます。`TextArea`自体は背景を描画しないため、`RectRenderer`と組み合わせて利用します。
+- `Toggle`: クリックするたびに`value`プロパティ（bool）の値が切り替わります。チェックボックスの実装などに利用できます。
+- `TextureFontLabel`: あらかじめ用意したフォントテクスチャ画像をもとに、テキストを描画します。
+- `EventTrigger`: マウスイベントに応じてイベントを発火します。イベントはプログラム側から取得できます（`Canvas::isEventFiredWithTag`, `Canvas::getFiredEvent(s)WithTag`, `Canvas::getFiredEventsAll`）。
+- `CursorChanger`: ホバー中のマウスカーソルの見た目を変更します。
+- `UISound`: マウスイベントに応じて効果音を再生します。
 
 ## レイアウト (Children Layout)
 
@@ -129,17 +129,17 @@ NocoUIの"Noco"という名前は、以下の2つの特徴に由来します。
 
 以下の3種類があります。
 
--   `FlowLayout`
-    -   子ノードを左上から順番に配置します。
-    -   右端に到達すると、次の行へ折り返します。
+- `FlowLayout`
+    - 子ノードを左上から順番に配置します。
+    - 右端に到達すると、次の行へ折り返します。
 
--   `HorizontalLayout`
-    -   子ノードを左から右へ一列に配置します。
-    -   右端に到達しても折り返しません。
+- `HorizontalLayout`
+    - 子ノードを左から右へ一列に配置します。
+    - 右端に到達しても折り返しません。
 
--   `VerticalLayout`
-    -   子ノードを上から下へ一列に配置します。
-    -   下端に到達しても折り返しません。
+- `VerticalLayout`
+    - 子ノードを上から下へ一列に配置します。
+    - 下端に到達しても折り返しません。
 
 ## リージョン (Region)
 
@@ -147,12 +147,12 @@ Regionは、ノード自身の領域を指定します。
 
 以下の2種類があります。
 
--   `AnchorRegion`
-    -   親ノードの領域を基準に、自身の位置とサイズを決定します。
-    -   親のレイアウト設定は無視されます。
+- `AnchorRegion`
+    - 親ノードの領域を基準に、自身の位置とサイズを決定します。
+    - 親のレイアウト設定は無視されます。
 
--   `InlineRegion`
-    -   親のレイアウト設定に従って、順番に配置されます。
+- `InlineRegion`
+    - 親のレイアウト設定に従って、順番に配置されます。
 
 > [!WARNING]
 > リージョンは`Node::setRegion()`で動的に変更可能ですが、変更のたびにフレームの最後にCanvas全体のレイアウト再計算が発生するため、頻繁な変更は推奨されません。  
@@ -162,12 +162,12 @@ Regionは、ノード自身の領域を指定します。
 
 トランスフォームは、ノードの位置、サイズ、回転、スケール、色を変化させるために使用します。
 
--   `translate`: ノードの位置を変化させます (Vec2)
--   `scale`: ノードのスケールを変化させます (Vec2)
--   `rotation`: ノードの回転を変化させます (double)
--   `pivot`: ノードの回転・スケールの基点を0～1の割合で指定します (Vec2)
--   `color`: ノードの色を変化させます (Color)
--   `hitTestAffected`: ヒットテストの領域にもトランスフォームを適用するかどうか (bool)
+- `translate`: ノードの位置を変化させます (Vec2)
+- `scale`: ノードのスケールを変化させます (Vec2)
+- `rotation`: ノードの回転を変化させます (double)
+- `pivot`: ノードの回転・スケールの基点を0～1の割合で指定します (Vec2)
+- `color`: ノードの色を変化させます (Color)
+- `hitTestAffected`: ヒットテストの領域にもトランスフォームを適用するかどうか (bool)
 
 トランスフォームはノードのレイアウト計算に影響しないため、変更してもレイアウト再計算が発生しません。そのため、アニメーションなどの用途に適しています。
 
@@ -177,10 +177,11 @@ Regionは、ノード自身の領域を指定します。
 
 ノードごとに、以下のプロパティでヒットテストの挙動を制御できます。
 
--   `isHitTarget`: ヒットテストの対象にするかどうか (bool)
-    -   `false`に設定すると、代わりに親ノードのヒットテスト結果を利用します。
--   `hitPadding`: ヒットテスト領域の余白 (LRTB)
-    -   ノードのヒットテスト領域を、指定したピクセル数だけ拡大・縮小します。
+- `isHitTarget`: ヒットテストの対象にするかどうか (bool)
+    - `false`に設定すると、代わりに親ノードのヒットテスト結果を利用します。
+
+- `hitPadding`: ヒットテスト領域の余白 (LRTB)
+    - ノードのヒットテスト領域を、指定したピクセル数だけ拡大・縮小します。
 
 ## ステート
 
@@ -197,17 +198,17 @@ Regionは、ノード自身の領域を指定します。
 
 インタラクションステートは、以下の4種類のうちいずれかの状態を持ちます。
 
--   `Default`: 通常時
--   `Hovered`: マウスホバー中
--   `Pressed`: マウスボタン押下中
--   `Disabled`: 無効状態
+- `Default`: 通常時
+- `Hovered`: マウスホバー中
+- `Pressed`: マウスボタン押下中
+- `Disabled`: 無効状態
 
 ノードの`interactable`プロパティを`false`に設定すると、ノードは`Disabled`ステートになります。
 
 子ノードのインタラクションステートを親に継承させるには、親ノードで以下のプロパティを有効にします。
 
--   `inheritChildrenHover`: 子ノードのホバー状態を親に継承します。
--   `inheritChildrenPress`: 子ノードの押下状態を親に継承します。
+- `inheritChildrenHover`: 子ノードのホバー状態を親に継承します。
+- `inheritChildrenPress`: 子ノードの押下状態を親に継承します。
 
 ### スタイルステート (Style State)
 
@@ -222,12 +223,13 @@ Regionは、ノード自身の領域を指定します。
 
 一部のコンポーネントは、自身の状態に応じてスタイルステートを上書きすることがあります。以下がその例です。
 
--   `TextBox`/`TextArea`コンポーネント
-    -   `"focused"`: フォーカス中に上書きされます。
-    -   `"unfocused"`: フォーカスされていない時に上書きされます。
--   `Toggle`コンポーネント
-    -   `"on"`: `value`プロパティが`true`の時に上書きされます。
-    -   `"off"`: `value`プロパティが`false`の時に上書きされます。
+- `TextBox`/`TextArea`コンポーネント
+    - `"focused"`: フォーカス中に上書きされます。
+    - `"unfocused"`: フォーカスされていない時に上書きされます。
+
+- `Toggle`コンポーネント
+    - `"on"`: `value`プロパティが`true`の時に上書きされます。
+    - `"off"`: `value`プロパティが`false`の時に上書きされます。
 
 これらのスタイルステートに対応するプロパティ値を設定しておくことで、コンポーネントの状態に応じて自動的に見た目を切り替えられます。
 
@@ -238,7 +240,8 @@ Regionは、ノード自身の領域を指定します。
 
 ![パラメータの例](./docs/readme_params.png)
 
-パラメータを利用したい場合、プロパティ名を右クリックして「参照パラメータを選択...」を選択すると、パラメータ参照の設定ができます。
+パラメータを利用したい場合、プロパティ名を右クリックして「参照パラメータを選択...」を選択すると、パラメータ参照の設定ができます。  
+パラメータ参照が設定されたプロパティは、プロパティ名に水色の下線が表示されます。
 
 ![参照パラメータを選択](./docs/readme_param_editor.png)
 
@@ -295,36 +298,37 @@ enum class IconType
 class CustomButton : public noco::SerializableComponentBase
 {
 private:
-    Property<String> m_text{ U"text", U"" };
-    SmoothProperty<Color> m_backgroundColor{ U"backgroundColor", Palette::White };
-    SmoothProperty<Color> m_textColor{ U"textColor", Palette::Black };
-    SmoothProperty<double> m_fontSize{ U"fontSize", 16.0 };
-    Property<bool> m_enabled{ U"enabled", true };
-    Property<IconType> m_iconType{ U"iconType", IconType::None };
+	noco::Property<String> m_text{ U"text", U"" };
+	noco::SmoothProperty<Color> m_backgroundColor{ U"backgroundColor", Palette::White };
+	noco::SmoothProperty<Color> m_textColor{ U"textColor", Palette::Black };
+	noco::SmoothProperty<double> m_fontSize{ U"fontSize", 16.0 };
+	noco::Property<bool> m_enabled{ U"enabled", true };
+	noco::Property<IconType> m_iconType{ U"iconType", IconType::None };
 
 public:
-    CustomButton()
-        : noco::SerializableComponentBase{
-            {
-                m_text,
-                m_backgroundColor,
-                m_textColor,
-                m_fontSize,
-                m_enabled,
-                m_iconType
-            } }
-    {
-    }
+	CustomButton()
+		: noco::SerializableComponentBase{
+			U"CustomButton",
+			{
+				&m_text,
+				&m_backgroundColor,
+				&m_textColor,
+				&m_fontSize,
+				&m_enabled,
+				&m_iconType
+			} }
+	{
+	}
 
-    void update() override
-    {
-        // 更新処理
-    }
+	void update(const std::shared_ptr<noco::Node>&) override
+	{
+		// 更新処理
+	}
 
-    void draw() const override
-    {
-        // 描画処理
-    }
+	void draw(const noco::Node&) const override
+	{
+		// 描画処理
+	}
 };
 ```
 
@@ -347,7 +351,7 @@ public:
 プログラムで独自コンポーネントを利用するには、`ComponentFactory`を取得してコンポーネントを登録し、`Canvas::LoadFromFile`の第2引数に渡します。
 ```cpp
 // 標準コンポーネントを含むComponentFactoryを取得
-ComponentFactory factory = ComponentFactory::GetBuiltinFactory();
+noco::ComponentFactory factory = noco::ComponentFactory::GetBuiltinFactory();
 
 // 独自コンポーネントを登録
 factory.registerComponentType<CustomButton>(U"CustomButton");
@@ -378,12 +382,12 @@ public:
     {
     }
 
-    void update() override
+    void update(const std::shared_ptr<noco::Node>&) override
     {
         // 更新処理
     }
 
-    void draw() const override
+    void draw(const noco::Node&) const override
     {
         // 描画処理
     }
