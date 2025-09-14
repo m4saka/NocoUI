@@ -434,6 +434,47 @@ node->emplaceComponent<CustomButton>(U"OK", Palette::White);
 node->addComponent(std::make_shared<CustomButton>(U"OK", Palette::White));
 ```
 
+## Editor上での独自フォントのプレビュー(高度な使い方)
+
+NocoEditor上で独自フォントをプレビューするには、`Custom/FontAssets`ディレクトリへフォントアセット定義(.json)を配置します。  
+Labelコンポーネント等の`fontAssetName`プロパティに指定することで、エディタ上でフォントをプレビューできます。
+
+なお、これはエディタプレビュー用のアセット定義であり、ユーザープログラム上では自前でSiv3Dの`FontAsset::Register()`を実行してフォントアセットを登録する必要があります。
+
+### フォントファイル(.ttf/.otf)の場合
+
+例えば、`Custom/FontAssets/MyFont.json`と`Custom/FontAssets/MyFont.ttf`を配置し、フォントアセット定義(.json)に下記の内容を記述します。
+
+```json
+{
+  "fontAssetName": "MyFont",
+  "fontSize": 32,
+  "method": "MSDF",
+  "style": "Bold",
+  "source": {
+    "type": "File",
+    "path": "MyFont.ttf"
+  }
+}
+```
+
+### Siv3Dの組み込みフォントの場合
+
+Siv3Dの組み込みフォントを利用する場合は、"`type`"に"`Typeface`"を指定し、"`typeface`"にSiv3DのTypefaceの列挙子名を指定します。
+
+```json
+{
+  "fontAssetName": "MyFont",
+  "fontSize": 32,
+  "method": "MSDF",
+  "style": "Default",
+  "source": {
+    "type": "Typeface",
+    "typeface": "Bold"
+  }
+}
+```
+
 ## ライセンス・外部依存ライブラリ
 
 本ライブラリは MIT License で提供されます。  
