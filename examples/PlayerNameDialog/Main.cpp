@@ -6,7 +6,7 @@ void Main()
 	noco::Init();
 
 	// nocoファイルを読み込む
-	const auto canvas = noco::Canvas::LoadFromFile(U"dialog.noco");
+	const auto canvas = noco::Canvas::LoadFromFile(U"PlayerNameDialog.noco");
 
 	// 必要に応じて文言を変更できる
 	//canvas->setParamValue(U"dialogTitle", U"新たな仲間が参戦！");
