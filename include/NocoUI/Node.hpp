@@ -714,21 +714,29 @@ namespace noco
 		void setTweenActiveAll(bool active, RecursiveYN recursive = RecursiveYN::Yes);
 
 		// タグによるTweenコンポーネントの一括制御
-		void setTweenActiveByTag(const String& tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
+		void setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
 
-		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
+		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す、見つからなければ空文字列）
 		[[nodiscard]]
-		Optional<String> getTextValueByTag(const String& tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		String getTextValueByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+
+		// タグによるTextBox/TextAreaのテキスト取得（Optional版）
+		[[nodiscard]]
+		Optional<String> getTextValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
 
 		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
-		void setTextValueByTag(const String& tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes);
+		void setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes);
 
-		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
+		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す、見つからなければデフォルト値）
 		[[nodiscard]]
-		Optional<bool> getToggleValueByTag(const String& tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		bool getToggleValueByTag(StringView tag, bool defaultValue = false, RecursiveYN recursive = RecursiveYN::Yes) const;
+
+		// タグによるToggleコンポーネントの値取得（Optional版）
+		[[nodiscard]]
+		Optional<bool> getToggleValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
 
 		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
-		void setToggleValueByTag(const String& tag, bool value, RecursiveYN recursive = RecursiveYN::Yes);
+		void setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive = RecursiveYN::Yes);
 
 	};
 

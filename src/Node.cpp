@@ -3034,7 +3034,7 @@ namespace noco
 		}
 	}
 
-	void Node::setTweenActiveByTag(const String& tag, bool active, RecursiveYN recursive)
+	void Node::setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive)
 	{
 		if (tag.isEmpty())
 		{
@@ -3063,7 +3063,13 @@ namespace noco
 		}
 	}
 
-	Optional<String> Node::getTextValueByTag(const String& tag, RecursiveYN recursive) const
+	String Node::getTextValueByTag(StringView tag, RecursiveYN recursive) const
+	{
+		auto result = getTextValueByTagOpt(tag, recursive);
+		return result.value_or(U"");
+	}
+
+	Optional<String> Node::getTextValueByTagOpt(StringView tag, RecursiveYN recursive) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3094,7 +3100,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (auto result = child->getTextValueByTag(tag, RecursiveYN::Yes))
+				if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes))
 				{
 					return result;
 				}
@@ -3104,7 +3110,7 @@ namespace noco
 		return none;
 	}
 
-	void Node::setTextValueByTag(const String& tag, StringView text, RecursiveYN recursive)
+	void Node::setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive)
 	{
 		if (tag.isEmpty())
 		{
@@ -3140,7 +3146,13 @@ namespace noco
 		}
 	}
 
-	Optional<bool> Node::getToggleValueByTag(const String& tag, RecursiveYN recursive) const
+	bool Node::getToggleValueByTag(StringView tag, bool defaultValue, RecursiveYN recursive) const
+	{
+		auto result = getToggleValueByTagOpt(tag, recursive);
+		return result.value_or(defaultValue);
+	}
+
+	Optional<bool> Node::getToggleValueByTagOpt(StringView tag, RecursiveYN recursive) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3164,7 +3176,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (auto result = child->getToggleValueByTag(tag, RecursiveYN::Yes))
+				if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes))
 				{
 					return result;
 				}
@@ -3174,7 +3186,7 @@ namespace noco
 		return none;
 	}
 
-	void Node::setToggleValueByTag(const String& tag, bool value, RecursiveYN recursive)
+	void Node::setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive)
 	{
 		if (tag.isEmpty())
 		{

@@ -751,20 +751,28 @@ namespace noco
 		void setTweenActiveAll(bool active);
 
 		// タグによるTweenコンポーネントの一括制御
-		void setTweenActiveByTag(const String& tag, bool active);
+		void setTweenActiveByTag(StringView tag, bool active);
 
-		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す）
+		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す、見つからなければ空文字列）
 		[[nodiscard]]
-		Optional<String> getTextValueByTag(const String& tag) const;
+		String getTextValueByTag(StringView tag) const;
+
+		// タグによるTextBox/TextAreaのテキスト取得（Optional版）
+		[[nodiscard]]
+		Optional<String> getTextValueByTagOpt(StringView tag) const;
 
 		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
-		void setTextValueByTag(const String& tag, StringView text);
+		void setTextValueByTag(StringView tag, StringView text);
 
-		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す）
+		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す、見つからなければデフォルト値）
 		[[nodiscard]]
-		Optional<bool> getToggleValueByTag(const String& tag) const;
+		bool getToggleValueByTag(StringView tag, bool defaultValue = false) const;
 
-		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
-		void setToggleValueByTag(const String& tag, bool value);
+		// タグによるToggleコンポーネントの値取得（Optional版）
+		[[nodiscard]]
+		Optional<bool> getToggleValueByTagOpt(StringView tag) const;
+
+		// タグによるToggleコンポーネントの値設定（詓当するすべてに設定）
+		void setToggleValueByTag(StringView tag, bool value);
 	};
 }

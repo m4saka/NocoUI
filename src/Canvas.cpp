@@ -1479,7 +1479,7 @@ namespace noco
 		}
 	}
 
-	void Canvas::setTweenActiveByTag(const String& tag, bool active)
+	void Canvas::setTweenActiveByTag(StringView tag, bool active)
 	{
 		if (tag.isEmpty())
 		{
@@ -1492,7 +1492,13 @@ namespace noco
 		}
 	}
 
-	Optional<String> Canvas::getTextValueByTag(const String& tag) const
+	String Canvas::getTextValueByTag(StringView tag) const
+	{
+		auto result = getTextValueByTagOpt(tag);
+		return result.value_or(U"");
+	}
+
+	Optional<String> Canvas::getTextValueByTagOpt(StringView tag) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1501,7 +1507,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (auto result = child->getTextValueByTag(tag, RecursiveYN::Yes))
+			if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes))
 			{
 				return result;
 			}
@@ -1510,7 +1516,7 @@ namespace noco
 		return none;
 	}
 
-	void Canvas::setTextValueByTag(const String& tag, StringView text)
+	void Canvas::setTextValueByTag(StringView tag, StringView text)
 	{
 		if (tag.isEmpty())
 		{
@@ -1523,7 +1529,13 @@ namespace noco
 		}
 	}
 
-	Optional<bool> Canvas::getToggleValueByTag(const String& tag) const
+	bool Canvas::getToggleValueByTag(StringView tag, bool defaultValue) const
+	{
+		auto result = getToggleValueByTagOpt(tag);
+		return result.value_or(defaultValue);
+	}
+
+	Optional<bool> Canvas::getToggleValueByTagOpt(StringView tag) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1532,7 +1544,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (auto result = child->getToggleValueByTag(tag, RecursiveYN::Yes))
+			if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes))
 			{
 				return result;
 			}
@@ -1541,7 +1553,7 @@ namespace noco
 		return none;
 	}
 
-	void Canvas::setToggleValueByTag(const String& tag, bool value)
+	void Canvas::setToggleValueByTag(StringView tag, bool value)
 	{
 		if (tag.isEmpty())
 		{
