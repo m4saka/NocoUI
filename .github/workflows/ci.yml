@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     
     steps:
     - uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: siv3d-cache
-        key: siv3d-v0.6.16-ubuntu-22.04-${{ hashFiles('.github/workflows/ci.yml') }}
+        key: siv3d-v0.6.16-ubuntu-24.04-${{ hashFiles('.github/workflows/ci.yml') }}
         
     - name: Restore Siv3D from cache
       if: steps.cache-siv3d.outputs.cache-hit == 'true'
