@@ -1393,6 +1393,7 @@
                 {
                   "active": {
                     "default": true,
+                    "disabled": false,
                     "hovered": false
                   },
                   "applyDuringDelay": false,
