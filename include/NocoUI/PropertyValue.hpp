@@ -72,7 +72,7 @@ namespace noco
 		T m_defaultValue;
 		std::unique_ptr<PropertyInteractionValues<T>> m_interactionValues;
 		double m_smoothTime = 0.0;
-		
+
 		std::unique_ptr<HashTable<String, PropertyStyleStateValue<T>>> m_styleStateValues;
 
 	public:

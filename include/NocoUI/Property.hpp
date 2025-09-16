@@ -98,9 +98,10 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
-		String m_paramRef;  // パラメータ参照名
+		String m_paramRef; // パラメータ参照名
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
@@ -181,6 +182,10 @@ namespace noco
 			{
 				return *m_currentFrameOverride;
 			}
+			if (m_paramRefOverride.has_value())
+			{
+				return *m_paramRefOverride;
+			}
 			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
 		}
 
@@ -215,8 +220,8 @@ namespace noco
 		{
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
-			
-			// パラメータ参照がある場合（サポートされている型のみ）
+
+			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
@@ -225,9 +230,24 @@ namespace noco
 					{
 						if (auto val = GetParamValueAs<T>(it->second))
 						{
-							setCurrentFrameOverride(*val);
+							m_paramRefOverride = *val;
+						}
+						else
+						{
+							// パラメータの型が合わない場合はクリア
+							m_paramRefOverride.reset();
 						}
 					}
+					else
+					{
+						// パラメータが見つからない場合はクリア
+						m_paramRefOverride.reset();
+					}
+				}
+				else
+				{
+					// パラメータ参照がない場合はクリア
+					m_paramRefOverride.reset();
 				}
 			}
 		}
@@ -374,10 +394,11 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
-		String m_paramRef;  // パラメータ参照名
+		String m_paramRef; // パラメータ参照名
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
+		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
@@ -458,6 +479,10 @@ namespace noco
 			{
 				return *m_currentFrameOverride;
 			}
+			if (m_paramRefOverride.has_value())
+			{
+				return *m_paramRefOverride;
+			}
 			return m_smoothing.currentValue();
 		}
 
@@ -466,7 +491,7 @@ namespace noco
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 
-			// パラメータ参照がある場合（サポートされている型のみ）
+			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
@@ -475,19 +500,38 @@ namespace noco
 					{
 						if (auto val = GetParamValueAs<T>(it->second))
 						{
-							setCurrentFrameOverride(*val);
+							m_paramRefOverride = *val;
+							m_smoothing.setCurrentValue(*val);
+						}
+						else
+						{
+							// パラメータの型が合わない場合はクリア
+							m_paramRefOverride.reset();
 						}
 					}
+					else
+					{
+						// パラメータが見つからない場合はクリア
+						m_paramRefOverride.reset();
+					}
+				}
+				else
+				{
+					// パラメータ参照がない場合はクリア
+					m_paramRefOverride.reset();
 				}
 			}
-			
-			if (skipSmoothing)
+
+			if (!m_paramRefOverride.has_value())
 			{
-				m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
-			}
-			else
-			{
-				m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
+				if (skipSmoothing)
+				{
+					m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
+				}
+				else
+				{
+					m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
+				}
 			}
 		}
 
@@ -651,9 +695,10 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
-		String m_paramRef;  // パラメータ参照名
+		String m_paramRef; // パラメータ参照名
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
@@ -721,6 +766,10 @@ namespace noco
 			{
 				return *m_currentFrameOverride;
 			}
+			if (m_paramRefOverride.has_value())
+			{
+				return *m_paramRefOverride;
+			}
 			return m_value;
 		}
 
@@ -762,7 +811,7 @@ namespace noco
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 
-			// パラメータ参照がある場合（サポートされている型のみ）
+			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
@@ -771,9 +820,24 @@ namespace noco
 					{
 						if (auto val = GetParamValueAs<T>(it->second))
 						{
-							setCurrentFrameOverride(*val);
+							m_paramRefOverride = *val;
+						}
+						else
+						{
+							// パラメータの型が合わない場合はクリア
+							m_paramRefOverride.reset();
 						}
 					}
+					else
+					{
+						// パラメータが見つからない場合はクリア
+						m_paramRefOverride.reset();
+					}
+				}
+				else
+				{
+					// パラメータ参照がない場合はクリア
+					m_paramRefOverride.reset();
 				}
 			}
 		}
@@ -953,7 +1017,8 @@ namespace noco
 		String m_paramRef;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		/*NonSerialized*/ Smoothing<ColorF> m_smoothing;  // ColorFで補間
+		/*NonSerialized*/ Smoothing<ColorF> m_smoothing; // ColorFで補間
+		/*NonSerialized*/ Optional<Color> m_paramRefOverride; // パラメータ参照による値
 		/*NonSerialized*/ Optional<Color> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
@@ -1033,7 +1098,11 @@ namespace noco
 			{
 				return *m_currentFrameOverride;
 			}
-			return Color{ m_smoothing.currentValue() };  // ColorF→Color変換
+			if (m_paramRefOverride.has_value())
+			{
+				return *m_paramRefOverride;
+			}
+			return Color{ m_smoothing.currentValue() };
 		}
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
@@ -1041,28 +1110,47 @@ namespace noco
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 
-			// パラメータ参照処理
+			// パラメータ参照を反映
 			if (!m_paramRef.isEmpty())
 			{
 				if (auto it = params.find(m_paramRef); it != params.end())
 				{
 					if (auto val = GetParamValueAs<Color>(it->second))
 					{
-						setCurrentFrameOverride(*val);
+						m_paramRefOverride = *val;
+						m_smoothing.setCurrentValue(ColorF{ *val });
+					}
+					else
+					{
+						// パラメータの型が合わない場合はクリア
+						m_paramRefOverride.reset();
 					}
 				}
-			}
-
-			const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
-			const ColorF targetColorF{ targetColor };
-
-			if (skipSmoothing)
-			{
-				m_smoothing.setCurrentValue(targetColorF);
+				else
+				{
+					// パラメータが見つからない場合はクリア
+					m_paramRefOverride.reset();
+				}
 			}
 			else
 			{
-				m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
+				// パラメータ参照がない場合はクリア
+				m_paramRefOverride.reset();
+			}
+
+			if (!m_paramRefOverride.has_value())
+			{
+				const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
+				const ColorF targetColorF{ targetColor };
+
+				if (skipSmoothing)
+				{
+					m_smoothing.setCurrentValue(targetColorF);
+				}
+				else
+				{
+					m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
+				}
 			}
 		}
 

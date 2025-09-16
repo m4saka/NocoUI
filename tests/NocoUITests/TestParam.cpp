@@ -340,12 +340,15 @@ TEST_CASE("Parameter edge cases and error handling", "[Param]")
 		
 		// パラメータを削除
 		canvas->removeParam(U"testParam");
-		canvas->update();
-		// パラメータが削除されても、プロパティは最後の値を保持
+		// update()前はまだ前回の値を保持
 		REQUIRE(textProperty->value() == U"Initial");
+
+		canvas->update();
+		// update()後にパラメータが削除されたことが反映され、デフォルト値に戻る
+		REQUIRE(textProperty->value() == U"Default");
 		
-		// 参照がクリアされていることを確認
-		REQUIRE(textProperty->hasParamRef() == true);  // 参照自体は残る
+		// パラメータ参照名は残るが、パラメータ自体は存在しない
+		REQUIRE(textProperty->hasParamRef() == true);  // 参照名自体は残る
 		REQUIRE(canvas->param(U"testParam").has_value() == false);
 	}
 	
