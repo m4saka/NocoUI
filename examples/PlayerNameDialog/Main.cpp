@@ -29,7 +29,7 @@ void Main()
 		{
 			// プレイヤー名が空でない場合のみ決定ボタンを有効化
 			const String playerName = canvas->getTextValueByTag(U"playerName");
-			canvas->setParamValue(U"decideButtonEnabled", playerName);
+			canvas->setParamValue(U"decideButtonEnabled", !playerName.isEmpty());
 
 			// 決定ボタンクリックのイベント発火時
 			if (canvas->isEventFiredWithTag(U"decideClicked") && !playerName.isEmpty())
