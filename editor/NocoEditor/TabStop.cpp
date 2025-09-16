@@ -70,4 +70,85 @@ namespace noco::editor
 			}
 		}
 	}
+
+	void TabStop::LinkAllTabStops(const std::shared_ptr<noco::Node>& rootNode, bool circular)
+	{
+		if (!rootNode)
+		{
+			return;
+		}
+
+		// TabStopコンポーネントを持つすべてのノードを収集
+		Array<std::shared_ptr<noco::Node>> tabStopNodes;
+
+		std::function<void(const std::shared_ptr<noco::Node>&)> collectNodes = [&](const std::shared_ptr<noco::Node>& node)
+		{
+			if (!node)
+			{
+				return;
+			}
+
+			// TabStopを持っているかチェック
+			if (node->getComponent<TabStop>())
+			{
+				// アクティブかつインタラクタブルなノードのみ追加
+				if (node->activeInHierarchy() && node->interactableInHierarchy())
+				{
+					tabStopNodes.push_back(node);
+				}
+			}
+
+			// 子ノードも再帰的に探索
+			for (const auto& child : node->children())
+			{
+				collectNodes(child);
+			}
+		};
+
+		collectNodes(rootNode);
+
+		// 収集したノードをリンク
+		LinkTabStops(tabStopNodes, circular);
+	}
+
+	void TabStop::LinkTabStops(const Array<std::shared_ptr<noco::Node>>& nodes, bool circular)
+	{
+		if (nodes.size() < 2)
+		{
+			// ノードが1つ以下の場合はリンク不要
+			return;
+		}
+
+		// 各ノード間のリンクを設定
+		for (size_t i = 0; i < nodes.size(); ++i)
+		{
+			auto currentTabStop = nodes[i]->getComponent<TabStop>();
+			if (!currentTabStop)
+			{
+				continue;
+			}
+
+			// 次のノードを設定
+			if (i < nodes.size() - 1)
+			{
+				currentTabStop->setNextNode(nodes[i + 1]);
+			}
+			else if (circular)
+			{
+				// 最後のノードの次は最初のノード（循環）
+				currentTabStop->setNextNode(nodes[0]);
+			}
+
+			// 前のノードを設定
+			if (i > 0)
+			{
+				currentTabStop->setPreviousNode(nodes[i - 1]);
+			}
+			else if (circular)
+			{
+				// 最初のノードの前は最後のノード（循環）
+				currentTabStop->setPreviousNode(nodes.back());
+			}
+		}
+	}
 }

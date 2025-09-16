@@ -1,5 +1,6 @@
 ﻿#include "EditorDialog.hpp"
 #include "Inspector.hpp"
+#include "TabStop.hpp"
 
 namespace noco::editor
 {
@@ -234,6 +235,9 @@ namespace noco::editor
 					[this](StringView value) { m_pProperty->trySetSmoothTime(ParseFloatOpt<double>(value).value_or(m_pProperty->smoothTime())); }));
 			propertyNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 		}
+
+		// TabStop間のリンクを設定
+		TabStop::LinkAllTabStops(contentRootNode, true);
 
 		// 初期表示時に正しい値を反映
 		refreshPropertyValues();

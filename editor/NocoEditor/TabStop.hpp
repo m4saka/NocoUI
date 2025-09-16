@@ -41,5 +41,12 @@ namespace noco::editor
 		}
 
 		void updateKeyInput(const std::shared_ptr<noco::Node>& node) override;
+
+		// TabStop間のリンクを設定するユーティリティ関数
+		// rootNode内のすべてのTabStopコンポーネントを持つノードを探して、出現順にリンクを設定
+		static void LinkAllTabStops(const std::shared_ptr<noco::Node>& rootNode, bool circular = true);
+
+		// 指定したノードの配列をTabStopでリンクする
+		static void LinkTabStops(const Array<std::shared_ptr<noco::Node>>& nodes, bool circular = true);
 	};
 }
