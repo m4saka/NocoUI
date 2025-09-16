@@ -11,4 +11,5 @@ namespace noco::editor
 	using AppendsMnemonicKeyTextYN = YesNo<struct AppendsMnemonicKeyText_tag>;
 	using IsDefaultButtonYN = YesNo<struct IsDefaultButtonYN_tag>;
 	using IsCancelButtonYN = YesNo<struct IsCancelButtonYN_tag>;
+	using IsSizeYN = YesNo<struct IsSizeYN_tag>;
 }

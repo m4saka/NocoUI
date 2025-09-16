@@ -718,7 +718,7 @@ namespace noco::editor
 
 
 		[[nodiscard]]
-		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No)
+		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, IsSizeYN isSize = IsSizeYN::No)
 		{
 			String displayName{ propertyName };  // デフォルトは実際のプロパティ名
 			Optional<double> dragStep = none;
@@ -734,7 +734,7 @@ namespace noco::editor
 				dragStep = metadata.dragValueChangeStep;
 			}
 			
-			const auto propertyNode = CreateVec2PropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, dragStep);
+			const auto propertyNode = CreateVec2PropertyNode(displayName, currentValue, std::move(fnSetValue), hasInteractivePropertyValue, hasParameterRef, dragStep, isSize);
 			
 			// メタデータに基づいてツールチップを追加
 			if (const auto it = m_propertyMetadata.find(PropertyKey{ String{ componentName }, String{ propertyName } }); it != m_propertyMetadata.end())
@@ -1166,7 +1166,8 @@ namespace noco::editor
 			std::function<void(const Vec2&)> fnSetValue,
 			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
 			HasParameterRefYN hasParameterRef = HasParameterRefYN::No,
-			Optional<double> dragValueChangeStep = none)
+			Optional<double> dragValueChangeStep = none,
+			IsSizeYN isSize = IsSizeYN::No)
 		{
 			double step = dragValueChangeStep.value_or(1.0);
 			const auto propertyNode = Node::Create(
@@ -1229,7 +1230,7 @@ namespace noco::editor
 					.flexibleWeight = 0,
 				});
 			xLabelNode->emplaceComponent<Label>(
-				U"X", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				isSize ? U"W" : U"X", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
 				HorizontalAlign::Center, VerticalAlign::Middle);
 			// Xラベルに背景を追加（ホバー時のフィードバック用）
 			xLabelNode->emplaceComponent<RectRenderer>(
@@ -1260,7 +1261,7 @@ namespace noco::editor
 					.flexibleWeight = 0,
 				});
 			yLabelNode->emplaceComponent<Label>(
-				U"Y", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
+				isSize ? U"H" : U"Y", U"", 12, ColorF{ 0.8, 0.8, 0.8 },
 				HorizontalAlign::Center, VerticalAlign::Middle);
 			// Yラベルに背景を追加（ホバー時のフィードバック用）
 			yLabelNode->emplaceComponent<RectRenderer>(
@@ -2774,9 +2775,9 @@ namespace noco::editor
 					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddVec2Child =
-				[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
+				[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue, IsSizeYN isSize)
 				{
-					layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+					layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, isSize))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddDoubleChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
@@ -2817,7 +2818,7 @@ namespace noco::editor
 						}
 					});
 				fnAddLRTBChild(U"padding", pFlowLayout->padding, [this](const LRTB& value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.padding = value; m_canvas->setChildrenLayout(newLayout); });
-				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this](const Vec2& value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.spacing = value; m_canvas->setChildrenLayout(newLayout); });
+				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this](const Vec2& value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.spacing = value; m_canvas->setChildrenLayout(newLayout); }, IsSizeYN::No);
 				fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this](HorizontalAlign value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.horizontalAlign = value; m_canvas->setChildrenLayout(newLayout); });
 				fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this](VerticalAlign value) { auto newLayout = *m_canvas->childrenFlowLayout(); newLayout.verticalAlign = value; m_canvas->setChildrenLayout(newLayout); });
 			}
@@ -2921,9 +2922,9 @@ namespace noco::editor
 					layoutNode->addChild(createPropertyNodeWithTooltip(layoutTypeName, name, Format(value), fnSetValue))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddVec2Child =
-				[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
+				[this, &layoutNode, &layoutTypeName](StringView name, const Vec2& currentValue, auto fnSetValue, IsSizeYN isSize)
 				{
-					layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedLayout.getBool());
+					layoutNode->addChild(createVec2PropertyNodeWithTooltip(layoutTypeName, name, currentValue, fnSetValue, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, isSize))->setActive(!m_isFoldedLayout.getBool());
 				};
 			const auto fnAddDoubleChild =
 				[this, &layoutNode, &layoutTypeName](StringView name, double currentValue, auto fnSetValue)
@@ -2963,7 +2964,7 @@ namespace noco::editor
 						}
 					});
 				fnAddLRTBChild(U"padding", pFlowLayout->padding, [this, node](const LRTB& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.padding = value; node->setChildrenLayout(newLayout); });
-				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.spacing = value; node->setChildrenLayout(newLayout); });
+				fnAddVec2Child(U"spacing", pFlowLayout->spacing, [this, node](const Vec2& value) { auto newLayout = *node->childrenFlowLayout(); newLayout.spacing = value; node->setChildrenLayout(newLayout); }, IsSizeYN::No);
 				fnAddEnumChild(U"horizontalAlign", pFlowLayout->horizontalAlign, [this, node](HorizontalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.horizontalAlign = value; node->setChildrenLayout(newLayout); });
 				fnAddEnumChild(U"verticalAlign", pFlowLayout->verticalAlign, [this, node](VerticalAlign value) { auto newLayout = *node->childrenFlowLayout(); newLayout.verticalAlign = value; node->setChildrenLayout(newLayout); });
 			}
@@ -3068,9 +3069,9 @@ namespace noco::editor
 					regionNode->addChild(createEnumPropertyNodeWithTooltip(regionTypeName, name, EnumToString(currentValue), fnSetEnumValue, m_contextMenu, EnumNames<EnumType>()))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddVec2Child =
-				[this, &regionNode, &regionTypeName](StringView name, const Vec2& currentValue, auto fnSetValue)
+				[this, &regionNode, &regionTypeName](StringView name, const Vec2& currentValue, auto fnSetValue, IsSizeYN isSize)
 				{
-					regionNode->addChild(createVec2PropertyNodeWithTooltip(regionTypeName, name, currentValue, fnSetValue))->setActive(!m_isFoldedRegion.getBool());
+					regionNode->addChild(createVec2PropertyNodeWithTooltip(regionTypeName, name, currentValue, fnSetValue, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, isSize))->setActive(!m_isFoldedRegion.getBool());
 				};
 			const auto fnAddLRTBChild =
 				[this, &regionNode, &regionTypeName](StringView name, const LRTB& currentValue, auto fnSetValue)
@@ -3213,8 +3214,8 @@ namespace noco::editor
 							break;
 						}
 					});
-				fnAddVec2Child(U"sizeRatio", pInlineRegion->sizeRatio, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeRatio = value; node->setRegion(newRegion); });
-				fnAddVec2Child(U"sizeDelta", pInlineRegion->sizeDelta, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeDelta = value; node->setRegion(newRegion); });
+				fnAddVec2Child(U"sizeRatio", pInlineRegion->sizeRatio, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeRatio = value; node->setRegion(newRegion); }, IsSizeYN::Yes);
+				fnAddVec2Child(U"sizeDelta", pInlineRegion->sizeDelta, [this, node](const Vec2& value) { auto newRegion = *node->inlineRegion(); newRegion.sizeDelta = value; node->setRegion(newRegion); }, IsSizeYN::Yes);
 				fnAddDoubleChild(U"flexibleWeight", pInlineRegion->flexibleWeight, [this, node](double value) { auto newRegion = *node->inlineRegion(); newRegion.flexibleWeight = value; node->setRegion(newRegion); });
 				fnAddLRTBChild(U"margin", pInlineRegion->margin, [this, node](const LRTB& value) { auto newRegion = *node->inlineRegion(); newRegion.margin = value; node->setRegion(newRegion); });
 				
@@ -3358,54 +3359,54 @@ namespace noco::editor
 				case AnchorPreset::TopLeft:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					break;
 
 				case AnchorPreset::TopCenter:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					fnAddChild(U"xDelta", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
 					break;
 
 				case AnchorPreset::TopRight:
 					fnAddChild(U"top", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					break;
 
 				case AnchorPreset::MiddleLeft:
 					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					fnAddChild(U"yDelta", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					break;
 
 				case AnchorPreset::MiddleCenter:
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
-					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.posDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
+					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.posDelta = v; }), IsSizeYN::No);
 					break;
 
 				case AnchorPreset::MiddleRight:
 					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					fnAddChild(U"yDelta", pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = v; }));
 					break;
 
 				case AnchorPreset::BottomLeft:
 					fnAddChild(U"left", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
 					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					break;
 
 				case AnchorPreset::BottomCenter:
 					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					fnAddChild(U"xDelta", pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = v; }));
 					break;
 
 				case AnchorPreset::BottomRight:
 					fnAddChild(U"right", -pAnchorRegion->posDelta.x, setDouble([](AnchorRegion& c, double v) { c.posDelta.x = -v; }));
 					fnAddChild(U"bottom", -pAnchorRegion->posDelta.y, setDouble([](AnchorRegion& c, double v) { c.posDelta.y = -v; }));
-					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }));
+					fnAddVec2Child(U"size", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& v) { c.sizeDelta = v; }), IsSizeYN::Yes);
 					break;
 
 				case AnchorPreset::StretchTop:
@@ -3594,11 +3595,11 @@ namespace noco::editor
 					break;
 
 				default:
-					fnAddVec2Child(U"anchorMin", pAnchorRegion->anchorMin, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMin = val; }));
-					fnAddVec2Child(U"anchorMax", pAnchorRegion->anchorMax, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMax = val; }));
-					fnAddVec2Child(U"sizeDeltaPivot", pAnchorRegion->sizeDeltaPivot, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDeltaPivot = val; }));
-					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.posDelta = val; }));
-					fnAddVec2Child(U"sizeDelta", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDelta = val; }));
+					fnAddVec2Child(U"anchorMin", pAnchorRegion->anchorMin, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMin = val; }), IsSizeYN::No);
+					fnAddVec2Child(U"anchorMax", pAnchorRegion->anchorMax, setVec2([](AnchorRegion& c, const Vec2& val) { c.anchorMax = val; }), IsSizeYN::No);
+					fnAddVec2Child(U"sizeDeltaPivot", pAnchorRegion->sizeDeltaPivot, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDeltaPivot = val; }), IsSizeYN::No);
+					fnAddVec2Child(U"posDelta", pAnchorRegion->posDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.posDelta = val; }), IsSizeYN::No);
+					fnAddVec2Child(U"sizeDelta", pAnchorRegion->sizeDelta, setVec2([](AnchorRegion& c, const Vec2& val) { c.sizeDelta = val; }), IsSizeYN::Yes);
 					fnAddOptionalDoubleChild(U"minWidth", pAnchorRegion->minWidth, 
 						[this, node](const Optional<double>& v) { auto newRegion = *node->anchorRegion(); newRegion.minWidth = v; node->setRegion(newRegion); });
 					fnAddOptionalDoubleChild(U"minHeight", pAnchorRegion->minHeight, 
@@ -3640,9 +3641,9 @@ namespace noco::editor
 				}));
 
 			const auto fnAddVec2Child =
-				[this, &transformNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue)
+				[this, &transformNode](StringView name, SmoothProperty<Vec2>* pProperty, auto fnSetValue, IsSizeYN isSize)
 				{
-					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue(), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }));
+					const auto propertyNode = transformNode->addChild(createVec2PropertyNodeWithTooltip(U"Transform", name, pProperty->propertyValue().defaultValue(), fnSetValue, HasInteractivePropertyValueYN{ pProperty->hasInteractivePropertyValue() }, HasParameterRefYN{ !pProperty->paramRef().isEmpty() }, isSize));
 					propertyNode->setActive(!m_isFoldedTransform.getBool());
 					
 					Array<MenuElement> menuElements
@@ -3685,9 +3686,9 @@ namespace noco::editor
 					propertyNode->template emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 				};
 			// Note: アクセサからポインタを取得しているので注意が必要
-			fnAddVec2Child(U"translate", &pTransform->translate(), [this, pTransform](const Vec2& value) { pTransform->setTranslate(value); m_canvas->refreshLayoutImmediately(); });
-			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayoutImmediately(); });
-			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayoutImmediately(); });
+			fnAddVec2Child(U"translate", &pTransform->translate(), [this, pTransform](const Vec2& value) { pTransform->setTranslate(value); m_canvas->refreshLayoutImmediately(); }, IsSizeYN::No);
+			fnAddVec2Child(U"scale", &pTransform->scale(), [this, pTransform](const Vec2& value) { pTransform->setScale(value); m_canvas->refreshLayoutImmediately(); }, IsSizeYN::No);
+			fnAddVec2Child(U"pivot", &pTransform->pivot(), [this, pTransform](const Vec2& value) { pTransform->setPivot(value); m_canvas->refreshLayoutImmediately(); }, IsSizeYN::No);
 			
 			// rotation プロパティを追加
 			const auto fnAddDoubleChild =
@@ -4122,7 +4123,11 @@ namespace noco::editor
 						{
 							m_onChangeCanvasSize(prevSize, value);
 						}
-					});
+					},
+					HasInteractivePropertyValueYN::No,
+					HasParameterRefYN::No,
+					none,
+					IsSizeYN::Yes);
 				canvasSettingNode->addChild(referenceSizePropertyNode);
 
 				const auto autoFitModePropertyNode = createEnumPropertyNodeWithTooltip(
@@ -4437,7 +4442,7 @@ namespace noco::editor
 									{
 										placeholderComponent->setPropertyValueString(propName, ValueToString(value));
 									};
-									
+
 									// Placeholderではメタデータを動的に設定
 									const PropertyMetadata tempMetadata
 									{
@@ -4446,7 +4451,7 @@ namespace noco::editor
 										.tooltipDetail = propSchema.tooltipDetail.isEmpty() ? none : Optional<String>{ propSchema.tooltipDetail },
 									};
 									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
-									
+
 									propertyNode = createVec2PropertyNodeWithTooltip(
 										placeholderComponent->originalType(),
 										propSchema.name,
@@ -4706,7 +4711,7 @@ namespace noco::editor
 				case PropertyEditType::Vec2:
 					{
 						std::function<void(const Vec2&)> onChange = [property](const Vec2& value) { property->trySetPropertyValueString(Format(value)); };
-						
+
 						// メタデータに基づいて変更時の処理を設定
 						const PropertyKey propertyKey{ String{ component->type() }, String{ property->name() } };
 						if (const auto it = m_propertyMetadata.find(propertyKey); it != m_propertyMetadata.end())
@@ -4721,7 +4726,7 @@ namespace noco::editor
 								};
 							}
 						}
-						
+
 						propertyNode = componentNode->addChild(
 							createVec2PropertyNodeWithTooltip(
 								component->type(),
