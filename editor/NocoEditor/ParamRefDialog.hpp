@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
 #include "AddParamDialog.hpp"
+#include "EditorColor.hpp"
 #include "TabStop.hpp"
 
 namespace noco::editor
@@ -178,8 +179,8 @@ namespace noco::editor
 					.flexibleWeight = 1.0,
 				});
 			m_comboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::ButtonBorderColorValue(),
 				1.0, 0.0, 4.0);
 			
 			// 現在選択されているパラメータ名を表示
@@ -219,8 +220,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 90, 26 },
 				});
 			newParamButton->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::ButtonBorderColorValue(),
 				1.0, 0.0, 4.0);
 			newParamButton->emplaceComponent<Label>(
 				U"＋ 新規",

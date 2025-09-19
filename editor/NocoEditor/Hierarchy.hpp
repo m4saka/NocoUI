@@ -3,6 +3,7 @@
 #include <NocoUI/detail/Input.hpp>
 #include "ContextMenu.hpp"
 #include "Defaults.hpp"
+#include "EditorColor.hpp"
 #include "EditorYN.hpp"
 #include "EditorEnums.hpp"
 
@@ -711,7 +712,7 @@ namespace noco::editor
 			, m_componentFactory(componentFactory)
 		{
 			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
-			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 0.0, 10.0);
+			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColor, Palette::Black, 0.0, 0.0, 10.0);
 			m_hierarchyInnerFrameNode->emplaceComponent<ContextMenuOpener>(contextMenu,
 				Array<MenuElement>
 				{

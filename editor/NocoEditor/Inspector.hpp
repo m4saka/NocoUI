@@ -16,6 +16,7 @@
 #include "ParamReferencesDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
+#include "EditorColor.hpp"
 
 namespace noco::editor
 {
@@ -278,7 +279,7 @@ namespace noco::editor
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
 			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
-			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, Palette::Black, 0.0, 0.0, 10.0);
+			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColor, Palette::Black, 0.0, 0.0, 10.0);
 			m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
 			m_inspectorRootNode->setVerticalScrollable(true);
 		}
@@ -662,8 +663,8 @@ namespace noco::editor
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 26 },
 				});
-			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
-			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			textBoxNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
+			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(textBox, std::move(fnSetValue)));
 			textBoxNode->emplaceComponent<TabStop>();
@@ -941,8 +942,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				});
-			textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
-			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			textBoxNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
+			const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBox->setText(value, IgnoreIsChangedYN::Yes);
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(
 				textBox,
@@ -1080,8 +1081,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, textAreaHeight },
 					.flexibleWeight = 1,
 				});
-			textAreaNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
-			const auto textArea = textAreaNode->emplaceComponent<TextArea>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, ColorF{ Palette::Orange, 0.5 });
+			textAreaNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
+			const auto textArea = textAreaNode->emplaceComponent<TextArea>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, Palette::White, EditorColor::TextSelectionColor);
 			textArea->setText(value, IgnoreIsChangedYN::Yes);
 			
 			// PropertyTextAreaコンポーネントを追加
@@ -1246,9 +1247,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 6, 0, 0 },
 				});
-			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxXNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxXNode->emplaceComponent<TabStop>();
 			textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
@@ -1277,9 +1278,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxYNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxYNode->emplaceComponent<TabStop>();
 			textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
@@ -1400,9 +1401,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 2, 0, 0 },
 				});
-			textBoxXNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxXNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxX = textBoxXNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxXNode->emplaceComponent<TabStop>();
 			textBoxX->setText(Format(currentValue.x), IgnoreIsChangedYN::Yes);
 
@@ -1415,9 +1416,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 2, 0, 0 },
 				});
-			textBoxYNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxYNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxY = textBoxYNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxYNode->emplaceComponent<TabStop>();
 			textBoxY->setText(Format(currentValue.y), IgnoreIsChangedYN::Yes);
 
@@ -1430,9 +1431,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 2, 0, 0 },
 				});
-			textBoxZNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxZNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxZ = textBoxZNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxZNode->emplaceComponent<TabStop>();
 			textBoxZ->setText(Format(currentValue.z), IgnoreIsChangedYN::Yes);
 
@@ -1445,9 +1446,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 2, 0, 0, 0 },
 				});
-			textBoxWNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxWNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxW = textBoxWNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxWNode->emplaceComponent<TabStop>();
 			textBoxW->setText(Format(currentValue.w), IgnoreIsChangedYN::Yes);
 
@@ -1559,9 +1560,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxLNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxLNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxL = textBoxLNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxLNode->emplaceComponent<TabStop>();
 			textBoxL->setText(Format(currentValue.left), IgnoreIsChangedYN::Yes);
 
@@ -1590,9 +1591,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxRNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxRNode->emplaceComponent<TabStop>();
 			textBoxR->setText(Format(currentValue.right), IgnoreIsChangedYN::Yes);
 
@@ -1667,9 +1668,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxTNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxTNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxT = textBoxTNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxTNode->emplaceComponent<TabStop>();
 			textBoxT->setText(Format(currentValue.top), IgnoreIsChangedYN::Yes);
 
@@ -1698,9 +1699,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxBNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.bottom), IgnoreIsChangedYN::Yes);
 
@@ -1936,9 +1937,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxRNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxRNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxR = textBoxRNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxRNode->emplaceComponent<TabStop>();
 			textBoxR->setText(Format(currentValue.r), IgnoreIsChangedYN::Yes);
 
@@ -1967,9 +1968,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxGNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxGNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxG = textBoxGNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxGNode->emplaceComponent<TabStop>();
 			textBoxG->setText(Format(currentValue.g), IgnoreIsChangedYN::Yes);
 
@@ -1998,9 +1999,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 0, 0, 0 },
 				});
-			textBoxBNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxBNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxB = textBoxBNode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxBNode->emplaceComponent<TabStop>();
 			textBoxB->setText(Format(currentValue.b), IgnoreIsChangedYN::Yes);
 
@@ -2083,9 +2084,9 @@ namespace noco::editor
 					.flexibleWeight = 1,
 					.margin = LRTB{ 0, 4, 0, 0 },
 				});
-			textBoxANode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			textBoxANode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 			const auto textBoxA = textBoxANode->emplaceComponent<TextBox>(
-				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+				U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 			textBoxANode->emplaceComponent<TabStop>();
 			textBoxA->setText(Format(currentValue.a), IgnoreIsChangedYN::Yes);
 
@@ -2239,7 +2240,7 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 0, 26 },
 					.flexibleWeight = 1,
 				});
-			comboBoxNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			comboBoxNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::ButtonBorderColorValue(), 1.0, 0.0, 4.0);
 
 			const auto enumLabel = comboBoxNode->emplaceComponent<Label>(
 				currentValue,
@@ -2292,7 +2293,7 @@ namespace noco::editor
 				},
 				useParentHoverState ? IsHitTargetYN::No : IsHitTargetYN::Yes);
 
-			checkboxNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
+			checkboxNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
 
 			const auto checkLabel = checkboxNode->emplaceComponent<Label>(
 				initialValue ? U"✓" : U"",
@@ -3142,8 +3143,8 @@ namespace noco::editor
 							.sizeDelta = Vec2{ 0, 26 },
 							.flexibleWeight = 1,
 						});
-					textBoxNode->emplaceComponent<RectRenderer>(PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05), PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05), 1.0, 0.0, 4.0);
-					const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, ColorF{ Palette::Orange, 0.5 });
+					textBoxNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColorValue(), EditorColor::TextBoxBorderColorValue(), 1.0, 0.0, 4.0);
+					const auto textBox = textBoxNode->emplaceComponent<TextBox>(U"", 14, Palette::White, Vec2{ 4, 4 }, Vec2{ 2, 2 }, HorizontalAlign::Left, VerticalAlign::Middle, Palette::White, EditorColor::TextSelectionColor);
 					textBox->setText(Format(currentValue.value_or(0.0)), IgnoreIsChangedYN::Yes);
 					textBoxNode->setInteractable(hasValue ? InteractableYN::Yes : InteractableYN::No);
 					

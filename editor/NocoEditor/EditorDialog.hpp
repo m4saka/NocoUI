@@ -7,6 +7,7 @@
 #include "LRTBPropertyTextBox.hpp"
 #include "CheckboxToggler.hpp"
 #include "EditorButton.hpp"
+#include "EditorColor.hpp"
 #include "EditorYN.hpp"
 #include "KeyInputBlocker.hpp"
 
@@ -90,7 +91,7 @@ namespace noco::editor
 			m_screenMaskNode->setChildrenLayout(FlowLayout{ .horizontalAlign = HorizontalAlign::Center, .verticalAlign = VerticalAlign::Middle });
 
 			m_dialogNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 8, 8, 8, 12 } });
-			m_dialogNode->emplaceComponent<RectRenderer>(ColorF{ 0.1, 0.8 }, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
+			m_dialogNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColor, ColorF{ 1.0, 0.3 }, 1.0, 0.0, 3.0, ColorF{ 0.0, 0.3 }, Vec2{ 2, 2 }, 8.0, 4.0);
 
 			const auto buttonParentNode = m_dialogNode->emplaceChild(
 				U"Dialog_ButtonParent",
@@ -326,8 +327,8 @@ namespace noco::editor
 					.margin = LRTB{ 16, 16, 8, 16 },
 				});
 			m_textBoxNode->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(Palette::Skyblue).withStyleState(U"focused", Palette::Orange).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::TextBoxBorderColorValue(),
 				1.0,
 				0.0,
 				4.0);
@@ -340,7 +341,7 @@ namespace noco::editor
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
 				Palette::White,
-				ColorF{ Palette::Orange, 0.5 });
+				EditorColor::TextSelectionColor);
 			textBox->setText(m_defaultValue);
 		
 			// テキストボックスにフォーカスを設定
@@ -456,8 +457,8 @@ namespace noco::editor
 					.flexibleWeight = 1,
 				});
 			m_styleStateComboBox->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withDisabled(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::ButtonBorderColorValue(),
 				1.0,
 				0.0,
 				4.0);
@@ -492,8 +493,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{60, 26},
 				});
 			addButton->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::ButtonBorderColorValue(),
 				1.0,
 				0.0,
 				4.0);
@@ -513,8 +514,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{60, 26},
 				});
 			m_removeButton->emplaceComponent<RectRenderer>(
-				PropertyValue<Color>{ ColorF{ 0.1, 0.8 } }.withHovered(ColorF{ 0.2, 0.8 }).withDisabled(ColorF{ 0.05, 0.8 }).withSmoothTime(0.05),
-				PropertyValue<Color>{ ColorF{ 1.0, 0.4 } }.withHovered(ColorF{ 1.0, 0.6 }).withDisabled(ColorF{ 1.0, 0.2 }).withSmoothTime(0.05),
+				EditorColor::ControlBackgroundColorValue(),
+				EditorColor::ButtonBorderColorValue(),
 				1.0,
 				0.0,
 				4.0);
