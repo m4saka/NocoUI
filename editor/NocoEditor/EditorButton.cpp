@@ -3,7 +3,7 @@
 
 namespace noco::editor
 {
-	std::shared_ptr<Node> CreateButtonNode(StringView text, const RegionVariant& region, std::function<void(const std::shared_ptr<Node>&)> onClick, IsDefaultButtonYN isDefaultButton)
+	std::shared_ptr<Node> CreateButtonNode(StringView text, const RegionVariant& region, std::function<void(const std::shared_ptr<Node>&)> onClick, IsDefaultButtonYN isDefaultButton, double fontSize)
 	{
 		auto buttonNode = Node::Create(
 			U"Button",
@@ -25,7 +25,7 @@ namespace noco::editor
 		labelNode->emplaceComponent<Label>(
 			text,
 			U"",
-			14,
+			fontSize,
 			Palette::White,
 			HorizontalAlign::Center,
 			VerticalAlign::Middle,

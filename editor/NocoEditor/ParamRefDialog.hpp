@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <NocoUI.hpp>
 #include "AddParamDialog.hpp"
+#include "EditorButton.hpp"
 #include "EditorColor.hpp"
 #include "TabStop.hpp"
 
@@ -213,30 +214,15 @@ namespace noco::editor
 			});
 			
 			// 新規パラメータ作成ボタン
-			const auto newParamButton = comboRow->emplaceChild(
-				U"NewParamButton",
+			const auto newParamButton = comboRow->addChild(CreateButtonNode(
+				U"＋ 新規",
 				InlineRegion
 				{
 					.sizeDelta = Vec2{ 90, 26 },
-				});
-			newParamButton->emplaceComponent<RectRenderer>(
-				EditorColor::ControlBackgroundColorValue(),
-				EditorColor::ButtonBorderColorValue(),
-				1.0, 0.0, 4.0);
-			newParamButton->emplaceComponent<Label>(
-				U"＋ 新規",
-				U"",
-				12,
-				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			newParamButton->emplaceComponent<UpdaterComponent>([this](const std::shared_ptr<Node>& node)
-			{
-				if (node->isClicked())
-				{
-					onCreateNewParamButtonClick();
-				}
-			});
+				},
+				[this](const std::shared_ptr<Node>&) { onCreateNewParamButtonClick(); },
+				IsDefaultButtonYN::No,
+				12));
 			
 			// 値表示
 			const auto valueRow = contentRootNode->emplaceChild(

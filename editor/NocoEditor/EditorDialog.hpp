@@ -487,47 +487,25 @@ namespace noco::editor
 			m_styleStateComboBox->addOnClick([this, dialogContextMenu](const std::shared_ptr<Node>&) { onStyleStateComboBoxClick(dialogContextMenu); });
 		
 			// ＋追加ボタン
-			const auto addButton = styleStateNode->emplaceChild(
-				U"AddButton",
+			const auto addButton = styleStateNode->addChild(CreateButtonNode(
+				U"＋ 追加",
 				InlineRegion{
 					.sizeDelta = Vec2{60, 26},
-				});
-			addButton->emplaceComponent<RectRenderer>(
-				EditorColor::ControlBackgroundColorValue(),
-				EditorColor::ButtonBorderColorValue(),
-				1.0,
-				0.0,
-				4.0);
-			addButton->emplaceComponent<Label>(
-				U"＋ 追加",
-				U"",
-				12,
-				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
-			addButton->addOnClick([this](const std::shared_ptr<Node>&) { onAddStyleState(); });
+				},
+				[this](const std::shared_ptr<Node>&) { onAddStyleState(); },
+				IsDefaultButtonYN::No,
+				12));
 		
 			// －削除ボタン
-			m_removeButton = styleStateNode->emplaceChild(
-				U"RemoveButton",
+			m_removeButton = styleStateNode->addChild(CreateButtonNode(
+				U"－ 削除",
 				InlineRegion{
 					.sizeDelta = Vec2{60, 26},
-				});
-			m_removeButton->emplaceComponent<RectRenderer>(
-				EditorColor::ControlBackgroundColorValue(),
-				EditorColor::ButtonBorderColorValue(),
-				1.0,
-				0.0,
-				4.0);
-			m_removeButton->emplaceComponent<Label>(
-				U"－ 削除",
-				U"",
-				12,
-				Palette::White,
-				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				},
+				[this](const std::shared_ptr<Node>&) { onRemoveStyleState(); },
+				IsDefaultButtonYN::No,
+				12));
 			m_removeButton->setInteractable(false); // 初期状態では無効
-			m_removeButton->addOnClick([this](const std::shared_ptr<Node>&) { onRemoveStyleState(); });
 		
 			// 区切り線
 			const auto separatorNode = parentNode->emplaceChild(
