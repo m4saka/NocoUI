@@ -11,6 +11,7 @@ namespace noco
 	using RecursiveYN = YesNo<struct RecursiveYN_tag>;
 	using IsHitTargetYN = YesNo<struct IsHitTargetYN_tag>;
 	using ClippingEnabledYN = YesNo<struct ClippingEnabledYN_tag>;
+	using DrawAfterChildrenYN = YesNo<struct DrawAfterChildrenYN_tag>;
 	using ApplyDisabledStateYN = YesNo<struct ApplyDisabledStateYN_tag>;
 	using FoldedYN = YesNo<struct FoldedYN_tag>;
 	using ClearInputYN = YesNo<struct ClearInputYN_tag>;

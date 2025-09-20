@@ -105,7 +105,7 @@ namespace noco::editor
 		{
 			if (const auto label = child->getComponent<Label>())
 			{
-				const Vec2 contentSize = label->contentSize();
+				const Vec2 contentSize = label->getContentSize();
 				if (const auto* pInlineRegion = child->inlineRegion())
 				{
 					auto newRegion = *pInlineRegion;

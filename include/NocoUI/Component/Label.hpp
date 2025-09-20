@@ -15,7 +15,7 @@ namespace noco
 	{
 		Fixed,
 		AutoShrink,
-		// 将来的にテキストに応じてノード側を自動リサイズするモードが追加されることを想定
+		AutoResize,
 	};
 
 	enum class LabelGradationType : uint8
@@ -124,6 +124,9 @@ namespace noco
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
+		/* NonSerialized */ mutable Cache m_autoResizeCache;
+
+		SizeF getContentSizeForAutoResize() const;
 
 	public:
 		explicit Label(
@@ -168,9 +171,7 @@ namespace noco
 		{
 		}
 
-		void update(const std::shared_ptr<Node>&) override
-		{
-		}
+		void update(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
 
@@ -471,8 +472,8 @@ namespace noco
 			return shared_from_this();
 		}
 
-		SizeF contentSize() const;
+		SizeF getContentSize() const;
 
-		SizeF contentSize(const SizeF& rectSize) const;
+		SizeF getContentSize(const SizeF& rectSize) const;
 	};
 }

@@ -98,13 +98,68 @@ namespace noco
 			offset.x += xAdvance;
 			lineGlyphs.push_back(glyph);
 		}
-		// 残っている文字がある場合のみ最後の行を追加
-		if (!lineGlyphs.empty())
-		{
-			fnPushLine();
-		}
+
+		// 最後の行を追加
+		fnPushLine();
+
 		regionSize = { maxWidth, offset.y - spacing.y };
 		return true;
+	}
+
+	SizeF Label::getContentSizeForAutoResize() const
+	{
+		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
+		auto sizingMode = m_sizingMode.value();
+		if (sizingMode == LabelSizingMode::AutoShrink)
+		{
+			sizingMode = LabelSizingMode::Fixed;
+		}
+
+		m_autoResizeCache.refreshIfDirty(
+			m_text.value(),
+			m_fontOpt,
+			m_fontAssetName.value(),
+			m_fontSize.value(),
+			m_characterSpacing.value(),
+			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
+			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
+			m_autoResizeCache.prevParams.has_value() ? m_autoResizeCache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
+			sizingMode);
+
+		// AutoResizeでは小数点以下を切り上げる
+		// (誤差により右端で折り返しが発生するのを防ぐため)
+		const SizeF regionSize = m_autoResizeCache.regionSize;
+		const SizeF ceiledRegionSize = { Math::Ceil(regionSize.x), Math::Ceil(regionSize.y) };
+
+		// AutoResizeでは余白を加えたサイズを使用
+		const LRTB& padding = m_padding.value();
+		return ceiledRegionSize + Vec2{ padding.totalWidth(), padding.totalHeight() };
+	}
+
+	void Label::update(const std::shared_ptr<Node>& node)
+	{
+		if (m_sizingMode.value() == LabelSizingMode::AutoResize)
+		{
+			const SizeF size = getContentSizeForAutoResize();
+			if (node->regionRect().size != size)
+			{
+				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+				{
+					AnchorRegion newRegion = *pAnchorRegion;
+					newRegion.sizeDelta = size;
+					newRegion.anchorMax = newRegion.anchorMin;
+					node->setRegion(newRegion);
+				}
+				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+				{
+					InlineRegion newRegion = *pInlineRegion;
+					newRegion.sizeDelta = size;
+					newRegion.sizeRatio = Vec2::Zero();
+					newRegion.flexibleWeight = 0.0;
+					node->setRegion(newRegion);
+				}
+			}
+		}
 	}
 
 	void Label::draw(const Node& node) const
@@ -425,8 +480,15 @@ namespace noco
 		}
 	}
 
-	SizeF Label::contentSize() const
+	SizeF Label::getContentSize() const
 	{
+		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
+		auto sizingMode = m_sizingMode.value();
+		if (sizingMode == LabelSizingMode::AutoShrink)
+		{
+			sizingMode = LabelSizingMode::Fixed;
+		}
+
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontOpt,
@@ -435,13 +497,13 @@ namespace noco
 			m_characterSpacing.value(),
 			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
 			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
-			Vec2::Zero(),
-			m_sizingMode.value());
+			m_cache.prevParams.has_value() ? m_cache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
+			sizingMode);
 
 		return m_cache.regionSize;
 	}
 
-	SizeF Label::contentSize(const SizeF& rectSize) const
+	SizeF Label::getContentSize(const SizeF& rectSize) const
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
