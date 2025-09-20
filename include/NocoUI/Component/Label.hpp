@@ -100,6 +100,8 @@ namespace noco
 				Array<Glyph> glyphs;
 				double width = 0.0;
 				double offsetY = 0.0;
+				double minTopT = 0.0;
+				double maxBottomT = 1.0;
 			};
 
 			Array<LineCache> lineCaches;
