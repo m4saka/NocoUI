@@ -541,8 +541,45 @@ namespace noco::editor
 			.tooltip = U"フォントサイズ",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"Label", U"gradationType" }] = PropertyMetadata{
+			.tooltip = U"テキストのグラデーションタイプ",
+			.tooltipDetail = U"None: 単色で描画します\nTopBottom: 上下にグラデーションをかけます\nLeftRight: 左右にグラデーションをかけます",
+			.refreshInspectorOnChange = true,
+		};
 		metadata[PropertyKey{ U"Label", U"color" }] = PropertyMetadata{
 			.tooltip = U"テキスト色",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* label = dynamic_cast<const Label*>(&component))
+				{
+					return label->gradationType().hasAnyStateEqualTo(LabelGradationType::None);
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Label", U"gradationColor1" }] = PropertyMetadata{
+			.tooltip = U"グラデーション色 1",
+			.tooltipDetail = U"TopBottom: 上側の色\nLeftRight: 左側の色",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* label = dynamic_cast<const Label*>(&component))
+				{
+					return !label->gradationType().hasAnyStateEqualTo(LabelGradationType::None);
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Label", U"gradationColor2" }] = PropertyMetadata{
+			.tooltip = U"グラデーション色 2",
+			.tooltipDetail = U"TopBottom: 下側の色\nLeftRight: 右側の色",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* label = dynamic_cast<const Label*>(&component))
+				{
+					return !label->gradationType().hasAnyStateEqualTo(LabelGradationType::None);
+				}
+				return false;
+			},
 		};
 		metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",

@@ -126,6 +126,14 @@ namespace noco
 			-padding.left
 		);
 
+		const LabelGradationType gradationType = m_gradationType.value();
+		const bool useVerticalGradation = (gradationType == LabelGradationType::TopBottom);
+		const bool useHorizontalGradation = (gradationType == LabelGradationType::LeftRight);
+		const bool useGradation = (useVerticalGradation || useHorizontalGradation);
+		const ColorF baseColor{ m_color.value() };
+		const ColorF gradationColor1{ m_gradationColor1.value() };
+		const ColorF gradationColor2{ m_gradationColor2.value() };
+
 		const bool wasUpdated = m_cache.refreshIfDirty(
 			text,
 			m_fontOpt,
@@ -270,6 +278,22 @@ namespace noco
 			}();
 
 		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
+		const double horizontalGradationWidth = (m_cache.regionSize.x <= 0.0) ? 1.0 : m_cache.regionSize.x;
+		const double gradientLeft = [&rect, horizontalAlign, horizontalGradationWidth]()
+		{
+			switch (horizontalAlign)
+			{
+			case HorizontalAlign::Left:
+				return rect.x;
+			case HorizontalAlign::Center:
+				return rect.x + (rect.w - horizontalGradationWidth) / 2;
+			case HorizontalAlign::Right:
+				return rect.x + rect.w - horizontalGradationWidth;
+			default:
+				throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
+			}
+		}();
+		const double lineGradationHeight = (m_cache.lineHeight <= 0.0) ? 1.0 : m_cache.lineHeight;
 
 		const double outlineFactorInner = Max(m_outlineFactorInner.value(), 0.0);
 		const double outlineFactorOuter = Max(m_outlineFactorOuter.value(), 0.0);
@@ -328,6 +352,7 @@ namespace noco
 							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
 						}
 					}();
+				const double lineTop = startY + lineCache.offsetY;
 
 				double x = 0;
 				for (const auto& glyph : lineCache.glyphs)
@@ -337,8 +362,38 @@ namespace noco
 						continue;
 					}
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
-					const ColorF& color = m_color.value();
-					glyph.texture.scaled(m_cache.scale).draw(pos + glyph.getOffset(m_cache.scale), color);
+					const Vec2 drawPos = pos + glyph.getOffset(m_cache.scale);
+					const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.scale;
+					const double glyphHeight = static_cast<double>(glyph.texture.size.y) * m_cache.scale;
+					const auto scaledTexture = glyph.texture.scaled(m_cache.scale);
+
+					if (useGradation)
+					{
+						if (useVerticalGradation)
+						{
+							const double glyphTop = drawPos.y;
+							const double glyphBottom = glyphTop + glyphHeight;
+							const double topT = Clamp((glyphTop - lineTop) / lineGradationHeight, 0.0, 1.0);
+							const double bottomT = Clamp((glyphBottom - lineTop) / lineGradationHeight, 0.0, 1.0);
+							const ColorF topColor = gradationColor1.lerp(gradationColor2, topT);
+							const ColorF bottomColor = gradationColor1.lerp(gradationColor2, bottomT);
+							scaledTexture.draw(drawPos, Arg::top = topColor, Arg::bottom = bottomColor);
+						}
+						else // useHorizontalGradation
+						{
+							const double glyphLeft = drawPos.x;
+							const double glyphRight = glyphLeft + glyphWidth;
+							const double leftT = Clamp((glyphLeft - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
+							const double rightT = Clamp((glyphRight - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
+							const ColorF leftColor = gradationColor1.lerp(gradationColor2, leftT);
+							const ColorF rightColor = gradationColor1.lerp(gradationColor2, rightT);
+							scaledTexture.draw(drawPos, Arg::left = leftColor, Arg::right = rightColor);
+						}
+					}
+					else
+					{
+						scaledTexture.draw(drawPos, baseColor);
+					}
 					x += (glyph.xAdvance * m_cache.scale + characterSpacing.x);
 				}
 			}

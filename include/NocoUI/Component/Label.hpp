@@ -18,13 +18,23 @@ namespace noco
 		// 将来的にテキストに応じてノード側を自動リサイズするモードが追加されることを想定
 	};
 
+	enum class LabelGradationType : uint8
+	{
+		None,
+		TopBottom,
+		LeftRight,
+	};
+
 	class Label : public SerializableComponentBase, public std::enable_shared_from_this<Label>
 	{
 	private:
 		Property<String> m_text;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
+		Property<LabelGradationType> m_gradationType;
 		SmoothProperty<Color> m_color;
+		SmoothProperty<Color> m_gradationColor1;
+		SmoothProperty<Color> m_gradationColor2;
 		Property<LabelSizingMode> m_sizingMode;
 		SmoothProperty<double> m_minFontSize;
 		Property<HorizontalAlign> m_horizontalAlign;
@@ -131,11 +141,14 @@ namespace noco
 			const PropertyValue<Color>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
 			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
+			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
 			, m_text{ U"text", text }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
+			, m_gradationType{ U"gradationType", LabelGradationType::None }
 			, m_color{ U"color", color }
+			, m_gradationColor1{ U"gradationColor1", color }
+			, m_gradationColor2{ U"gradationColor2", color }
 			, m_sizingMode{ U"sizingMode", sizingMode }
 			, m_minFontSize{ U"minFontSize", 1.0 }
 			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
@@ -198,6 +211,18 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const PropertyValue<LabelGradationType>& gradationType() const
+		{
+			return m_gradationType.propertyValue();
+		}
+
+		std::shared_ptr<Label> setGradationType(const PropertyValue<LabelGradationType>& gradationType)
+		{
+			m_gradationType.setPropertyValue(gradationType);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
 		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
@@ -206,6 +231,37 @@ namespace noco
 		std::shared_ptr<Label> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& gradationColor1() const
+		{
+			return m_gradationColor1.propertyValue();
+		}
+
+		std::shared_ptr<Label> setGradationColor1(const PropertyValue<Color>& gradationColor1)
+		{
+			m_gradationColor1.setPropertyValue(gradationColor1);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& gradationColor2() const
+		{
+			return m_gradationColor2.propertyValue();
+		}
+
+		std::shared_ptr<Label> setGradationColor2(const PropertyValue<Color>& gradationColor2)
+		{
+			m_gradationColor2.setPropertyValue(gradationColor2);
+			return shared_from_this();
+		}
+
+		std::shared_ptr<Label> setGradationColors(const PropertyValue<Color>& color1, const PropertyValue<Color>& color2)
+		{
+			m_gradationColor1.setPropertyValue(color1);
+			m_gradationColor2.setPropertyValue(color2);
 			return shared_from_this();
 		}
 
