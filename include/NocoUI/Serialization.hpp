@@ -12,7 +12,7 @@ namespace noco
 
 namespace noco
 {
-	constexpr int32 CurrentSerializedVersion = 1;
+	constexpr int32 CurrentSerializedVersion = 2;
 
 	template <typename T>
 	[[nodiscard]]
