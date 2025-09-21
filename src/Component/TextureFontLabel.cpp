@@ -135,10 +135,8 @@ namespace noco
 			offset.x += charWidth;
 		}
 
-		if (!lineChars.empty())
-		{
-			fnPushLine();
-		}
+		// 最後の行を追加
+		fnPushLine();
 
 		contentSize = { maxWidth, offset.y - characterSpacing.y };
 		return true;
