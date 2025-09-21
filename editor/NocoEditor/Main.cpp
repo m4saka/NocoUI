@@ -1111,7 +1111,6 @@ public:
 			warningMessages.push_back(U"新しいバージョンのNocoEditor({})で作成されたファイルを開きました。\n上書き保存すると、ファイル内容が一部欠損する可能性があります。"_fmt(fileVersion));
 		}
 		
-		m_filePath = filePath;
 		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, WithInstanceIdYN::No))
 		{
 			if (showMessageBoxOnError)
@@ -1120,6 +1119,7 @@ public:
 			}
 			return false;
 		}
+		m_filePath = filePath;
 		const auto clearedParams = m_canvas->removeInvalidParamRefs();
 		refresh();
 		m_inspector.refreshInspector(PreserveScrollYN::No);
