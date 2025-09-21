@@ -604,4 +604,138 @@ namespace noco
 			}
 		}
 	}
+
+	SizeF TextureFontLabel::getContentSizeForAutoResize() const
+	{
+		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
+		auto sizingMode = m_sizingMode.value();
+		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
+		{
+			sizingMode = TextureFontLabelSizingMode::Fixed;
+		}
+
+		m_textureFontCache.refreshIfDirty(
+			m_characterSet.value(),
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value()
+		);
+
+		m_autoResizeCache.refreshIfDirty(
+			m_text.value(),
+			m_characterSet.value(),
+			m_characterSize.value(),
+			m_characterSpacing.value(),
+			sizingMode,
+			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
+			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
+			m_autoResizeCache.prevParams.has_value() ? m_autoResizeCache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value(),
+			m_preserveAspect.value(),
+			m_textureFontCache);
+
+		// AutoResizeでは小数点以下を切り上げる
+		// (誤差により右端で折り返しが発生するのを防ぐため)
+		const SizeF contentSize = m_autoResizeCache.contentSize;
+		const SizeF ceiledContentSize = { Math::Ceil(contentSize.x), Math::Ceil(contentSize.y) };
+
+		// AutoResizeでは余白を加えたサイズを使用
+		const LRTB& padding = m_padding.value();
+		return ceiledContentSize + Vec2{ padding.totalWidth(), padding.totalHeight() };
+	}
+
+	void TextureFontLabel::update(const std::shared_ptr<Node>& node)
+	{
+		if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResize)
+		{
+			const SizeF size = getContentSizeForAutoResize();
+			if (node->regionRect().size != size)
+			{
+				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+				{
+					AnchorRegion newRegion = *pAnchorRegion;
+					newRegion.sizeDelta = size;
+					newRegion.anchorMax = newRegion.anchorMin;
+					node->setRegion(newRegion);
+				}
+				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+				{
+					InlineRegion newRegion = *pInlineRegion;
+					newRegion.sizeDelta = size;
+					newRegion.sizeRatio = Vec2::Zero();
+					newRegion.flexibleWeight = 0.0;
+					node->setRegion(newRegion);
+				}
+			}
+		}
+	}
+
+	SizeF TextureFontLabel::getContentSize() const
+	{
+		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
+		auto sizingMode = m_sizingMode.value();
+		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
+		{
+			sizingMode = TextureFontLabelSizingMode::Fixed;
+		}
+
+		m_textureFontCache.refreshIfDirty(
+			m_characterSet.value(),
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value()
+		);
+
+		m_cache.refreshIfDirty(
+			m_text.value(),
+			m_characterSet.value(),
+			m_characterSize.value(),
+			m_characterSpacing.value(),
+			sizingMode,
+			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
+			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
+			m_cache.prevParams.has_value() ? m_cache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value(),
+			m_preserveAspect.value(),
+			m_textureFontCache);
+
+		return m_cache.contentSize;
+	}
+
+	SizeF TextureFontLabel::getContentSize(const SizeF& rectSize) const
+	{
+		m_textureFontCache.refreshIfDirty(
+			m_characterSet.value(),
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value()
+		);
+
+		m_cache.refreshIfDirty(
+			m_text.value(),
+			m_characterSet.value(),
+			m_characterSize.value(),
+			m_characterSpacing.value(),
+			m_sizingMode.value(),
+			m_horizontalOverflow.value(),
+			m_verticalOverflow.value(),
+			rectSize,
+			m_textureCellSize.value(),
+			m_textureOffset.value(),
+			m_textureGridColumns.value(),
+			m_textureGridRows.value(),
+			m_preserveAspect.value(),
+			m_textureFontCache);
+
+		return m_cache.contentSize;
+	}
 }

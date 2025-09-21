@@ -11,6 +11,7 @@ namespace noco
 		Fixed,
 		AutoShrink,
 		AutoShrinkWidth,
+		AutoResize,
 	};
 
 	class TextureFontLabel : public SerializableComponentBase, public std::enable_shared_from_this<TextureFontLabel>
@@ -242,6 +243,9 @@ namespace noco
 
 		/* NonSerialized */ mutable TextureFontCache m_textureFontCache;
 		/* NonSerialized */ mutable CharacterCache m_cache;
+		/* NonSerialized */ mutable CharacterCache m_autoResizeCache;
+
+		SizeF getContentSizeForAutoResize() const;
 
 	public:
 		explicit TextureFontLabel(
@@ -286,6 +290,8 @@ namespace noco
 			, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
 		{
 		}
+
+		void update(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
 
@@ -552,5 +558,9 @@ namespace noco
 			m_textureAddressMode.setPropertyValue(textureAddressMode);
 			return shared_from_this();
 		}
+
+		SizeF getContentSize() const;
+
+		SizeF getContentSize(const SizeF& rectSize) const;
 	};
 }
