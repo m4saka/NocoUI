@@ -56,14 +56,7 @@ namespace noco
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
-					int32 newTextureGridRows) const
-				{
-					return characterSet != newCharacterSet
-						|| textureCellSize != newTextureCellSize
-						|| textureOffset != newTextureOffset
-						|| textureGridColumns != newTextureGridColumns
-						|| textureGridRows != newTextureGridRows;
-				}
+					int32 newTextureGridRows) const;
 			};
 
 			HashTable<char32, RectF> uvMap;
@@ -74,77 +67,10 @@ namespace noco
 				const Vec2& textureCellSize,
 				const Vec2& textureOffset,
 				int32 textureGridColumns,
-				int32 textureGridRows)
-			{
-				if (prevParams.has_value() && !prevParams->isDirty(
-					characterSet, textureCellSize, textureOffset,
-					textureGridColumns, textureGridRows))
-				{
-					return false;
-				}
-
-				uvMap.clear();
-
-				if (textureGridColumns <= 0 || textureGridRows <= 0)
-				{
-					prevParams = CacheParams{
-						.characterSet = String{ characterSet },
-						.textureCellSize = textureCellSize,
-						.textureOffset = textureOffset,
-						.textureGridColumns = textureGridColumns,
-						.textureGridRows = textureGridRows,
-					};
-					return true;
-				}
-
-				const int32 maxIndex = textureGridColumns * textureGridRows;
-				size_t normalizedIndex = 0;
-
-				for (char32 ch : characterSet)
-				{
-					if (ch == U'\n' || ch == U'\r')
-					{
-						continue;
-					}
-
-					if (static_cast<int32>(normalizedIndex) >= maxIndex)
-					{
-						break;
-					}
-
-					const double gridX = static_cast<double>(normalizedIndex % textureGridColumns);
-					const double gridY = static_cast<double>(normalizedIndex / textureGridColumns);
-
-					uvMap[ch] = RectF{
-						textureOffset.x + gridX * textureCellSize.x,
-						textureOffset.y + gridY * textureCellSize.y,
-						textureCellSize.x,
-						textureCellSize.y
-					};
-
-					++normalizedIndex;
-				}
-
-				prevParams = CacheParams{
-					.characterSet = String{ characterSet },
-					.textureCellSize = textureCellSize,
-					.textureOffset = textureOffset,
-					.textureGridColumns = textureGridColumns,
-					.textureGridRows = textureGridRows,
-				};
-
-				return true;
-			}
+				int32 textureGridRows);
 
 			[[nodiscard]]
-			Optional<RectF> getUV(char32 character) const
-			{
-				if (auto it = uvMap.find(character); it != uvMap.end())
-				{
-					return it->second;
-				}
-				return none;
-			}
+			Optional<RectF> getUV(char32 character) const;
 		};
 
 		struct CharacterCache
@@ -172,63 +98,50 @@ namespace noco
 			struct CacheParams
 			{
 				String text;
-				String characterSet;
 				Vec2 characterSize;
 				Vec2 characterSpacing;
 				TextureFontLabelSizingMode sizingMode;
 				HorizontalOverflow horizontalOverflow;
 				VerticalOverflow verticalOverflow;
 				SizeF rectSize;
+				String characterSet;
 				Vec2 textureCellSize;
 				Vec2 textureOffset;
 				int32 textureGridColumns;
 				int32 textureGridRows;
-				bool preserveAspect;
 
 				[[nodiscard]]
 				bool isDirty(
 					StringView newText,
-					StringView newCharacterSet,
 					const Vec2& newCharacterSize,
 					const Vec2& newCharacterSpacing,
 					TextureFontLabelSizingMode newSizingMode,
 					HorizontalOverflow newHorizontalOverflow,
 					VerticalOverflow newVerticalOverflow,
 					const SizeF& newRectSize,
+					StringView newCharacterSet,
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
-					int32 newTextureGridRows,
-					bool newPreserveAspect) const
-				{
-					return text != newText
-						|| characterSet != newCharacterSet
-						|| characterSize != newCharacterSize
-						|| characterSpacing != newCharacterSpacing
-						|| sizingMode != newSizingMode
-						|| horizontalOverflow != newHorizontalOverflow
-						|| verticalOverflow != newVerticalOverflow
-						|| rectSize != newRectSize
-						|| textureCellSize != newTextureCellSize
-						|| textureOffset != newTextureOffset
-						|| textureGridColumns != newTextureGridColumns
-						|| textureGridRows != newTextureGridRows
-						|| preserveAspect != newPreserveAspect;
-				}
+					int32 newTextureGridRows) const;
 			};
 
 			Optional<CacheParams> prevParams;
 
 			bool refreshIfDirty(
 				StringView text,
-				StringView characterSet,
 				const Vec2& characterSize,
 				const Vec2& characterSpacing,
 				TextureFontLabelSizingMode newSizingMode,
 				HorizontalOverflow horizontalOverflow,
 				VerticalOverflow verticalOverflow,
 				const SizeF& rectSize,
-				const TextureFontCache& textureFontCache);
+				const TextureFontCache& textureFontCache,
+				StringView newCharacterSet,
+				const Vec2& newTextureCellSize,
+				const Vec2& newTextureOffset,
+				int32 newTextureGridColumns,
+				int32 newTextureGridRows);
 		};
 
 		/* NonSerialized */ mutable TextureFontCache m_textureFontCache;
@@ -254,32 +167,7 @@ namespace noco
 			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
-			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow)
-			: SerializableComponentBase{ U"TextureFontLabel", { &m_text, &m_characterSize, &m_sizingMode, &m_color, &m_horizontalAlign, &m_verticalAlign, &m_characterSpacing, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_addColor, &m_blendMode, &m_preserveAspect, &m_textureFilePath, &m_textureAssetName, &m_characterSet, &m_textureCellSize, &m_textureOffset, &m_textureGridColumns, &m_textureGridRows, &m_textureFilter, &m_textureAddressMode } }
-			, m_text{ U"text", text }
-			, m_characterSize{ U"characterSize", characterSize }
-			, m_sizingMode{ U"sizingMode", sizingMode }
-			, m_color{ U"color", Palette::White }
-			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
-			, m_verticalAlign{ U"verticalAlign", verticalAlign }
-			, m_characterSpacing{ U"characterSpacing", characterSpacing }
-			, m_padding{ U"padding", padding }
-			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
-			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
-			, m_addColor{ U"addColor", Color{ 0, 0, 0, 0 } }
-			, m_blendMode{ U"blendMode", BlendMode::Normal }
-			, m_preserveAspect{ U"preserveAspect", true }
-			, m_textureFilePath{ U"textureFilePath", textureFilePath }
-			, m_textureAssetName{ U"textureAssetName", textureAssetName }
-			, m_characterSet{ U"characterSet", characterSet }
-			, m_textureCellSize{ U"textureCellSize", textureCellSize }
-			, m_textureOffset{ U"textureOffset", textureOffset }
-			, m_textureGridColumns{ U"textureGridColumns", textureGridColumns }
-			, m_textureGridRows{ U"textureGridRows", textureGridRows }
-			, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
-			, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
-		{
-		}
+			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow);
 
 		void update(const std::shared_ptr<Node>& node) override;
 
