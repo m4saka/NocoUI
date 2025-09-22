@@ -262,15 +262,11 @@ namespace noco
 
 			while (currentCharacterSize.x >= minSize && currentCharacterSize.y >= minSize)
 			{
-				Vec2 currentCharacterSpacing = characterSpacing;
-				if (characterSize.x > 0)
+				const Vec2 currentCharacterSpacing
 				{
-					currentCharacterSpacing.x *= (currentCharacterSize.x / characterSize.x);
-				}
-				if (characterSize.y > 0)
-				{
-					currentCharacterSpacing.y *= (currentCharacterSize.y / characterSize.y);
-				}
+					characterSize.x > 0.0 ? characterSpacing.x * currentCharacterSize.x / characterSize.x : characterSpacing.x,
+					characterSize.y > 0.0 ? characterSpacing.y * currentCharacterSize.y / characterSize.y : characterSpacing.y
+				};
 
 				const SizeF requiredSize = refreshCacheAndGetRegionSize(currentCharacterSize, currentCharacterSpacing, horizontalOverflow, VerticalOverflow::Overflow);
 
@@ -302,15 +298,11 @@ namespace noco
 			this->effectiveCharacterSize = currentCharacterSize;
 			this->effectiveAutoShrinkWidthScale = 1.0;
 
-			Vec2 finalCharacterSpacing = characterSpacing;
-			if (characterSize.x > 0)
+			const Vec2 finalCharacterSpacing
 			{
-				finalCharacterSpacing.x *= (this->effectiveCharacterSize.x / characterSize.x);
-			}
-			if (characterSize.y > 0)
-			{
-				finalCharacterSpacing.y *= (this->effectiveCharacterSize.y / characterSize.y);
-			}
+				characterSize.x > 0.0 ? characterSpacing.x * this->effectiveCharacterSize.x / characterSize.x : characterSpacing.x,
+				characterSize.y > 0.0 ? characterSpacing.y * this->effectiveCharacterSize.y / characterSize.y : characterSpacing.y
+			};
 			this->regionSize = refreshCacheAndGetRegionSize(this->effectiveCharacterSize, finalCharacterSpacing, horizontalOverflow, verticalOverflow);
 		}
 		else if (newSizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)

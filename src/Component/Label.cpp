@@ -30,17 +30,17 @@ namespace noco
 
 		currentFont = newFont;
 		fontMethod = newFont.method();
-		baseFontSize = newFont.fontSize();
+		assetFontSize = newFont.fontSize();
 
 		auto refreshCacheAndGetRegionSize = [&](double targetFontSize, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
 			{
-				if (baseFontSize == 0)
+				if (assetFontSize == 0)
 				{
-					this->scale = 1.0;
+					this->assetFontSizeScale = 1.0;
 				}
 				else
 				{
-					this->scale = targetFontSize / baseFontSize;
+					this->assetFontSizeScale = targetFontSize / assetFontSize;
 				}
 				this->lineHeight = currentFont.height(targetFontSize);
 
@@ -66,7 +66,7 @@ namespace noco
 						{
 							// AutoShrinkの場合はスケールを適用
 							// (AutoShrinkWidthの場合、通常スケールで計算したサイズとノード幅を元にスケールを決めるため、ここではスケールを適用しない)
-							const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? this->scale : 1.0;
+							const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? targetFontSize / fontSize : 1.0;
 							offset.x -= spacing.x * spacingScale;
 						}
 
@@ -108,9 +108,9 @@ namespace noco
 
 					// AutoShrinkの場合はスケールを適用
 					// (AutoShrinkWidthの場合、通常スケールで計算したサイズとノード幅を元にスケールを決めるため、ここではスケールを適用しない)
-					const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? this->scale : 1.0;
+					const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? targetFontSize / fontSize : 1.0;
 
-					const double xAdvance = glyph.xAdvance * this->scale + spacing.x * spacingScale;
+					const double xAdvance = glyph.xAdvance * this->assetFontSizeScale + spacing.x * spacingScale;
 					if (hov == HorizontalOverflow::Wrap && offset.x + xAdvance > rectSize.x)
 					{
 						if (!fnPushLine())
@@ -388,7 +388,7 @@ namespace noco
 					}
 
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
-					const Vec2 scaleVec{ m_cache.scale * autoShrinkWidthScale, m_cache.scale };
+					const Vec2 scaleVec{ m_cache.assetFontSizeScale * autoShrinkWidthScale, m_cache.assetFontSizeScale };
 					const Vec2 drawPos = pos + glyph.getOffset(scaleVec.y) * Vec2{ autoShrinkWidthScale, 1.0 };
 					const auto scaledTexture = glyph.texture.scaled(scaleVec);
 
@@ -411,7 +411,7 @@ namespace noco
 					case LabelGradationType::LeftRight:
 					{
 						const double glyphLeft = drawPos.x;
-						const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.scale * autoShrinkWidthScale;
+						const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.assetFontSizeScale * autoShrinkWidthScale;
 						const double glyphRight = glyphLeft + glyphWidth;
 						const double leftT = Clamp((glyphLeft - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
 						const double rightT = Clamp((glyphRight - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
@@ -427,9 +427,23 @@ namespace noco
 						break;
 					}
 
-					const double spacingScale = m_sizingMode.value() == LabelSizingMode::AutoShrink ? m_cache.scale :
-						m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth ? autoShrinkWidthScale : 1.0;
-					x += (glyph.xAdvance * m_cache.scale * autoShrinkWidthScale + characterSpacing.x * spacingScale);
+					double spacingScale;
+					switch (m_sizingMode.value())
+					{
+					case LabelSizingMode::AutoShrink:
+						spacingScale = m_cache.effectiveFontSize / m_fontSize.value();
+						break;
+					case LabelSizingMode::AutoShrinkWidth:
+						// 描画時はAutoShrinkWidthもスケール適用
+						spacingScale = autoShrinkWidthScale;
+						break;
+					case LabelSizingMode::Fixed:
+					case LabelSizingMode::AutoResize:
+					default:
+						spacingScale = 1.0;
+						break;
+					}
+					x += (glyph.xAdvance * m_cache.assetFontSizeScale * autoShrinkWidthScale + characterSpacing.x * spacingScale);
 				}
 			}
 		}

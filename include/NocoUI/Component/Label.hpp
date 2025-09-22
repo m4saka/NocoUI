@@ -109,13 +109,13 @@ namespace noco
 			};
 
 			Array<LineCache> lineCaches;
-			double scale = 1.0;
+			double assetFontSizeScale = 1.0;
 			double lineHeight = 0.0;
 			SizeF regionSize = SizeF::Zero();
 			Optional<CacheParams> prevParams = std::nullopt;
 			FontMethod fontMethod = FontMethod::Bitmap;
 			Font currentFont;
-			int32 baseFontSize = 0;
+			int32 assetFontSize = 0;
 
 			// AutoShrink用キャッシュ
 			double effectiveFontSize = 0.0;
