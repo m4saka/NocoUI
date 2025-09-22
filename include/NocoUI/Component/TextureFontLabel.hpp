@@ -85,7 +85,6 @@ namespace noco
 
 				uvMap.clear();
 
-				// columnsまたはrowsが0以下の場合は空のuvMapを返す（描画されない）
 				if (textureGridColumns <= 0 || textureGridRows <= 0)
 				{
 					prevParams = CacheParams{
@@ -108,7 +107,6 @@ namespace noco
 						continue;
 					}
 
-					// インデックスが範囲外の場合はスキップ
 					if (static_cast<int32>(normalizedIndex) >= maxIndex)
 					{
 						break;
@@ -166,13 +164,10 @@ namespace noco
 			};
 
 			Array<LineCache> lineCaches;
-			SizeF contentSize = SizeF::Zero();
-			
-			// AutoShrink用キャッシュ
+			SizeF regionSize = SizeF::Zero();
+
 			Vec2 effectiveCharacterSize = Vec2::Zero();
-			SizeF availableSize = SizeF::Zero();
-			Vec2 originalCharacterSize = Vec2::Zero();
-			TextureFontLabelSizingMode sizingMode = TextureFontLabelSizingMode::Fixed;
+			double effectiveAutoShrinkWidthScale = 1.0;
 
 			struct CacheParams
 			{
@@ -229,15 +224,10 @@ namespace noco
 				StringView characterSet,
 				const Vec2& characterSize,
 				const Vec2& characterSpacing,
-				TextureFontLabelSizingMode sizingMode,
+				TextureFontLabelSizingMode newSizingMode,
 				HorizontalOverflow horizontalOverflow,
 				VerticalOverflow verticalOverflow,
 				const SizeF& rectSize,
-				const Vec2& textureCellSize,
-				const Vec2& textureOffset,
-				int32 textureGridColumns,
-				int32 textureGridRows,
-				bool preserveAspect,
 				const TextureFontCache& textureFontCache);
 		};
 

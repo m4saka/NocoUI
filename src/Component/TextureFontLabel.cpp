@@ -8,7 +8,7 @@ namespace noco
 	namespace
 	{
 		constexpr double ShrinkScaleFactor = 0.95;
-		
+
 		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
 		{
 			if (detail::IsEditorMode())
@@ -38,21 +38,20 @@ namespace noco
 		StringView characterSet,
 		const Vec2& characterSize,
 		const Vec2& characterSpacing,
-		TextureFontLabelSizingMode textureFontSizingMode,
+		TextureFontLabelSizingMode newSizingMode,
 		HorizontalOverflow horizontalOverflow,
 		VerticalOverflow verticalOverflow,
 		const SizeF& rectSize,
-		const Vec2& textureCellSize,
-		const Vec2& textureOffset,
-		int32 textureGridColumns,
-		int32 textureGridRows,
-		bool preserveAspect,
 		const TextureFontCache& textureFontCache)
 	{
-		if (prevParams.has_value() && !prevParams->isDirty(
-			text, characterSet, characterSize, characterSpacing, textureFontSizingMode,
+		// isDirtyに渡すパラメータをメンバーから取得
+		const bool hasPrevParams = prevParams.has_value();
+		const auto& prev = hasPrevParams ? *prevParams : CacheParams{};
+
+		if (hasPrevParams && !prev.isDirty(
+			text, characterSet, characterSize, characterSpacing, newSizingMode,
 			horizontalOverflow, verticalOverflow, rectSize,
-			textureCellSize, textureOffset, textureGridColumns, textureGridRows, preserveAspect))
+			prev.textureCellSize, prev.textureOffset, prev.textureGridColumns, prev.textureGridRows, prev.preserveAspect))
 		{
 			return false;
 		}
@@ -62,98 +61,173 @@ namespace noco
 			.characterSet = String{ characterSet },
 			.characterSize = characterSize,
 			.characterSpacing = characterSpacing,
-			.sizingMode = textureFontSizingMode,
+			.sizingMode = newSizingMode,
 			.horizontalOverflow = horizontalOverflow,
 			.verticalOverflow = verticalOverflow,
 			.rectSize = rectSize,
-			.textureCellSize = textureCellSize,
-			.textureOffset = textureOffset,
-			.textureGridColumns = textureGridColumns,
-			.textureGridRows = textureGridRows,
-			.preserveAspect = preserveAspect,
+			// isDirtyでは使われないが、念のためTextureFontCacheのパラメータも更新
+			.textureCellSize = textureFontCache.prevParams.has_value() ? textureFontCache.prevParams->textureCellSize : Vec2::Zero(),
+			.textureOffset = textureFontCache.prevParams.has_value() ? textureFontCache.prevParams->textureOffset : Vec2::Zero(),
+			.textureGridColumns = textureFontCache.prevParams.has_value() ? textureFontCache.prevParams->textureGridColumns : 0,
+			.textureGridRows = textureFontCache.prevParams.has_value() ? textureFontCache.prevParams->textureGridRows : 0,
+			.preserveAspect = prev.preserveAspect, // isDirtyにpreserveAspectがないため元の値を引き継ぐ
 		};
 
-		effectiveCharacterSize = characterSize;
-		sizingMode = textureFontSizingMode;
-
-		lineCaches.clear();
-
-		// AutoShrinkモード時はcharacterSpacingもスケーリング
-		Vec2 effectiveCharacterSpacing = characterSpacing;
-		if (textureFontSizingMode == TextureFontLabelSizingMode::AutoShrink && originalCharacterSize.x > 0 && originalCharacterSize.y > 0)
-		{
-			const double scale = (characterSize.x / originalCharacterSize.x + characterSize.y / originalCharacterSize.y) * 0.5;
-			effectiveCharacterSpacing *= scale;
-		}
-		else if (textureFontSizingMode == TextureFontLabelSizingMode::AutoShrinkWidth && originalCharacterSize.x > 0)
-		{
-			effectiveCharacterSpacing.x *= characterSize.x / originalCharacterSize.x;
-		}
-
-		double maxWidth = 0.0;
-		Vec2 offset = Vec2::Zero();
-		Array<CharInfo> lineChars;
-		const double lineHeight = characterSize.y;
-
-		const auto fnPushLine = [&]() -> bool
-		{
-			const double currentLineBottom = offset.y + lineHeight;
-
-			if (verticalOverflow == VerticalOverflow::Clip && currentLineBottom > rectSize.y)
+		auto refreshCacheAndGetRegionSize = [&](const Vec2& targetCharacterSize, const Vec2& targetCharacterSpacing, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
 			{
-				return false;
-			}
+				lineCaches.clear();
 
-			if (!lineChars.empty())
-			{
-				offset.x -= effectiveCharacterSpacing.x;
-			}
+				double maxWidth = 0.0;
+				Vec2 offset = Vec2::Zero();
+				Array<CharInfo> lineChars;
+				const double lineHeight = targetCharacterSize.y;
 
-			lineCaches.push_back({ lineChars, offset.x, offset.y });
-			lineChars.clear();
-			maxWidth = Max(maxWidth, offset.x);
-			offset.x = 0;
+				const auto fnPushLine = [&]() -> bool
+					{
+						const double currentLineBottom = offset.y + lineHeight;
 
-			offset.y = currentLineBottom + effectiveCharacterSpacing.y;
-			return true;
-		};
+						if (vov == VerticalOverflow::Clip && currentLineBottom > rectSize.y)
+						{
+							return false;
+						}
 
-		for (const char32 ch : text)
+						if (!lineChars.empty())
+						{
+							offset.x -= targetCharacterSpacing.x;
+						}
+
+						lineCaches.push_back({ lineChars, offset.x, offset.y });
+						lineChars.clear();
+						maxWidth = Max(maxWidth, offset.x);
+						offset.x = 0;
+
+						offset.y = currentLineBottom + targetCharacterSpacing.y;
+						return true;
+					};
+
+				for (const char32 ch : text)
+				{
+					if (ch == U'\n')
+					{
+						if (!fnPushLine())
+						{
+							break;
+						}
+						continue;
+					}
+
+					const double charWidth = targetCharacterSize.x + targetCharacterSpacing.x;
+					if (hov == HorizontalOverflow::Wrap && offset.x + charWidth > rectSize.x)
+					{
+						if (!fnPushLine())
+						{
+							break;
+						}
+					}
+
+					if (auto uvRect = textureFontCache.getUV(ch))
+					{
+						lineChars.push_back(CharInfo{
+							ch,
+							*uvRect,
+							Vec2{ offset.x, 0 },
+							});
+					}
+					offset.x += charWidth;
+				}
+				fnPushLine();
+				return { maxWidth, offset.y - targetCharacterSpacing.y };
+			};
+
+		if (newSizingMode == TextureFontLabelSizingMode::AutoShrink)
 		{
-			if (ch == U'\n')
+			Vec2 currentCharacterSize = characterSize;
+			const double aspectRatio = (characterSize.y > 0) ? (characterSize.x / characterSize.y) : 1.0;
+			const double minSize = 1.0;
+
+			while (currentCharacterSize.x >= minSize && currentCharacterSize.y >= minSize)
 			{
-				if (!fnPushLine())
+				Vec2 currentCharacterSpacing = characterSpacing;
+				if (characterSize.x > 0)
+				{
+					currentCharacterSpacing.x *= (currentCharacterSize.x / characterSize.x);
+				}
+				if (characterSize.y > 0)
+				{
+					currentCharacterSpacing.y *= (currentCharacterSize.y / characterSize.y);
+				}
+
+				const SizeF requiredSize = refreshCacheAndGetRegionSize(currentCharacterSize, currentCharacterSpacing, horizontalOverflow, VerticalOverflow::Overflow);
+
+				if (requiredSize.x <= rectSize.x && requiredSize.y <= rectSize.y)
 				{
 					break;
 				}
-				continue;
-			}
 
-			const double charWidth = characterSize.x + effectiveCharacterSpacing.x;
-			if (horizontalOverflow == HorizontalOverflow::Wrap && offset.x + charWidth > rectSize.x)
-			{
-				if (!fnPushLine())
+				currentCharacterSize *= ShrinkScaleFactor;
+
+				if (currentCharacterSize.x < minSize || currentCharacterSize.y < minSize)
 				{
+					currentCharacterSize.x = Max(currentCharacterSize.x, minSize);
+					currentCharacterSize.y = Max(currentCharacterSize.y, minSize);
+					if (aspectRatio > 0)
+					{
+						if (currentCharacterSize.x / currentCharacterSize.y > aspectRatio)
+						{
+							currentCharacterSize.x = currentCharacterSize.y * aspectRatio;
+						}
+						else
+						{
+							currentCharacterSize.y = currentCharacterSize.x / aspectRatio;
+						}
+					}
 					break;
 				}
 			}
+			this->effectiveCharacterSize = currentCharacterSize;
+			this->effectiveAutoShrinkWidthScale = 1.0;
 
-			if (auto uvRect = textureFontCache.getUV(ch))
+			Vec2 finalCharacterSpacing = characterSpacing;
+			if (characterSize.x > 0)
 			{
-				lineChars.push_back(CharInfo{
-					ch,
-					*uvRect,
-					Vec2{ offset.x, 0 },
-				});
+				finalCharacterSpacing.x *= (this->effectiveCharacterSize.x / characterSize.x);
 			}
-			// 文字がマップに存在しなくても位置は進める
-			offset.x += charWidth;
+			if (characterSize.y > 0)
+			{
+				finalCharacterSpacing.y *= (this->effectiveCharacterSize.y / characterSize.y);
+			}
+			this->regionSize = refreshCacheAndGetRegionSize(this->effectiveCharacterSize, finalCharacterSpacing, horizontalOverflow, verticalOverflow);
+		}
+		else if (newSizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
+		{
+			this->effectiveCharacterSize = characterSize;
+
+			// AutoShrinkWidthでは折り返さないため常にHorizontalOverflow::Overflowとする
+			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, HorizontalOverflow::Overflow, verticalOverflow);
+
+			if (this->regionSize.x > rectSize.x && this->regionSize.x > 0)
+			{
+				this->effectiveAutoShrinkWidthScale = rectSize.x / this->regionSize.x;
+			}
+			else
+			{
+				this->effectiveAutoShrinkWidthScale = 1.0;
+			}
+		}
+		else if (newSizingMode == TextureFontLabelSizingMode::AutoResize)
+		{
+			// AutoResizeではノードサイズの誤差による折り返しやクリップが発生しないよう、両方Overflowとする
+			this->effectiveCharacterSize = characterSize;
+			this->effectiveAutoShrinkWidthScale = 1.0;
+			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, HorizontalOverflow::Overflow, VerticalOverflow::Overflow);
+		}
+		else // Fixed
+		{
+			this->effectiveCharacterSize = characterSize;
+			this->effectiveAutoShrinkWidthScale = 1.0;
+			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, horizontalOverflow, verticalOverflow);
 		}
 
-		// 最後の行を追加
-		fnPushLine();
-
-		contentSize = { maxWidth, offset.y - effectiveCharacterSpacing.y };
 		return true;
 	}
 
@@ -175,7 +249,6 @@ namespace noco
 			return;
 		}
 
-		const Vec2& characterSpacing = m_characterSpacing.value();
 		const LRTB& padding = m_padding.value();
 
 		const RectF rect = node.regionRect().stretched(
@@ -193,248 +266,28 @@ namespace noco
 			m_textureGridRows.value()
 		);
 
-		const bool wasUpdated = m_cache.refreshIfDirty(
+		m_cache.refreshIfDirty(
 			text,
 			m_characterSet.value(),
 			m_characterSize.value(),
-			characterSpacing,
+			m_characterSpacing.value(),
 			m_sizingMode.value(),
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
 			rect.size,
-			m_textureCellSize.value(),
-			m_textureOffset.value(),
-			m_textureGridColumns.value(),
-			m_textureGridRows.value(),
-			m_preserveAspect.value(),
 			m_textureFontCache);
-
-		Vec2 effectiveCharacterSize = m_characterSize.value();
-		
-		if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrink)
-		{
-			const SizeF availableSize = rect.size;
-			
-			constexpr double Epsilon = 1e-2;
-			const bool cacheValid = !wasUpdated &&
-				m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrink &&
-				Abs(m_cache.availableSize.x - availableSize.x) < Epsilon &&
-				Abs(m_cache.availableSize.y - availableSize.y) < Epsilon &&
-				Abs(m_cache.originalCharacterSize.x - m_characterSize.value().x) < Epsilon &&
-				Abs(m_cache.originalCharacterSize.y - m_characterSize.value().y) < Epsilon;
-			
-			if (!cacheValid)
-			{
-				m_cache.sizingMode = TextureFontLabelSizingMode::AutoShrink;
-				m_cache.availableSize = availableSize;
-				m_cache.originalCharacterSize = m_characterSize.value();
-				
-				effectiveCharacterSize = m_characterSize.value();
-				const double aspectRatio = effectiveCharacterSize.x / effectiveCharacterSize.y;
-				const double minSize = 1.0;
-				
-				while (effectiveCharacterSize.x >= minSize && effectiveCharacterSize.y >= minSize)
-				{
-					m_cache.prevParams.reset();
-					m_cache.refreshIfDirty(
-						text,
-						m_characterSet.value(),
-						effectiveCharacterSize,
-						characterSpacing,
-						m_sizingMode.value(),
-						m_horizontalOverflow.value(),
-						VerticalOverflow::Overflow,
-						availableSize,
-						m_textureCellSize.value(),
-						m_textureOffset.value(),
-						m_textureGridColumns.value(),
-						m_textureGridRows.value(),
-						m_preserveAspect.value(),
-						m_textureFontCache);
-
-					if (m_cache.contentSize.x <= availableSize.x &&
-					    m_cache.contentSize.y <= availableSize.y)
-					{
-						break;
-					}
-
-					effectiveCharacterSize *= ShrinkScaleFactor;
-					
-					// 縦横比を維持しながら、いずれかが最小値に達したら停止
-					if (effectiveCharacterSize.x < minSize)
-					{
-						effectiveCharacterSize.x = minSize;
-						effectiveCharacterSize.y = minSize / aspectRatio;
-						m_cache.prevParams.reset();
-						m_cache.refreshIfDirty(
-							text,
-							m_characterSet.value(),
-							effectiveCharacterSize,
-							characterSpacing,
-							m_sizingMode.value(),
-							m_horizontalOverflow.value(),
-							VerticalOverflow::Overflow,
-							availableSize,
-							m_textureCellSize.value(),
-							m_textureOffset.value(),
-							m_textureGridColumns.value(),
-							m_textureGridRows.value(),
-							m_preserveAspect.value(),
-							m_textureFontCache);
-						break;
-					}
-					else if (effectiveCharacterSize.y < minSize)
-					{
-						effectiveCharacterSize.y = minSize;
-						effectiveCharacterSize.x = minSize * aspectRatio;
-						m_cache.prevParams.reset();
-						m_cache.refreshIfDirty(
-							text,
-							m_characterSet.value(),
-							effectiveCharacterSize,
-							characterSpacing,
-							m_sizingMode.value(),
-							m_horizontalOverflow.value(),
-							VerticalOverflow::Overflow,
-							availableSize,
-							m_textureCellSize.value(),
-							m_textureOffset.value(),
-							m_textureGridColumns.value(),
-							m_textureGridRows.value(),
-							m_preserveAspect.value(),
-							m_textureFontCache);
-						break;
-					}
-				}
-
-				if (m_verticalOverflow.value() == VerticalOverflow::Clip)
-				{
-					m_cache.prevParams.reset();
-					m_cache.refreshIfDirty(
-						text,
-						m_characterSet.value(),
-						effectiveCharacterSize,
-						characterSpacing,
-						m_sizingMode.value(),
-						m_horizontalOverflow.value(),
-						m_verticalOverflow.value(),
-						availableSize,
-						m_textureCellSize.value(),
-						m_textureOffset.value(),
-						m_textureGridColumns.value(),
-						m_textureGridRows.value(),
-						m_preserveAspect.value(),
-						m_textureFontCache);
-				}
-			}
-			else
-			{
-				effectiveCharacterSize = m_cache.effectiveCharacterSize;
-			}
-		}
-		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth)
-		{
-			const SizeF availableSize = rect.size;
-
-			constexpr double Epsilon = 1e-2;
-			const bool cacheValid = !wasUpdated &&
-				m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth &&
-				Abs(m_cache.availableSize.x - availableSize.x) < Epsilon &&
-				Abs(m_cache.availableSize.y - availableSize.y) < Epsilon &&
-				Abs(m_cache.originalCharacterSize.x - m_characterSize.value().x) < Epsilon &&
-				Abs(m_cache.originalCharacterSize.y - m_characterSize.value().y) < Epsilon;
-
-			if (!cacheValid)
-			{
-				m_cache.sizingMode = TextureFontLabelSizingMode::AutoShrinkWidth;
-				m_cache.availableSize = availableSize;
-				m_cache.originalCharacterSize = m_characterSize.value();
-
-				// まず、元のサイズでテキストサイズを計算
-				effectiveCharacterSize = m_characterSize.value();
-				m_cache.prevParams.reset();
-				m_cache.refreshIfDirty(
-					text,
-					m_characterSet.value(),
-					effectiveCharacterSize,
-					characterSpacing,
-					m_sizingMode.value(),
-					HorizontalOverflow::Overflow, // AutoShrinkWidthでは常にOverflowとする
-					VerticalOverflow::Overflow,
-					availableSize,
-					m_textureCellSize.value(),
-					m_textureOffset.value(),
-					m_textureGridColumns.value(),
-					m_textureGridRows.value(),
-					m_preserveAspect.value(),
-					m_textureFontCache);
-
-				// ノードの幅に収まるスケールを計算
-				double autoShrinkWidthScale = 1.0;
-				if (m_cache.contentSize.x > availableSize.x)
-				{
-					autoShrinkWidthScale = availableSize.x / m_cache.contentSize.x;
-					effectiveCharacterSize.x = m_characterSize.value().x * autoShrinkWidthScale;
-					// 高さは変更しない
-					effectiveCharacterSize.y = m_characterSize.value().y;
-				}
-				else
-				{
-					effectiveCharacterSize = m_characterSize.value();
-				}
-
-				// 縮小が発生した場合は再計算
-				if (effectiveCharacterSize.x < m_characterSize.value().x)
-				{
-					m_cache.prevParams.reset();
-					m_cache.refreshIfDirty(
-						text,
-						m_characterSet.value(),
-						effectiveCharacterSize,
-						characterSpacing,
-						m_sizingMode.value(),
-						HorizontalOverflow::Overflow,
-						m_verticalOverflow.value(),
-						availableSize,
-						m_textureCellSize.value(),
-						m_textureOffset.value(),
-						m_textureGridColumns.value(),
-						m_textureGridRows.value(),
-						m_preserveAspect.value(),
-						m_textureFontCache);
-				}
-			}
-			else
-			{
-				effectiveCharacterSize = m_cache.effectiveCharacterSize;
-			}
-		}
-		else
-		{
-			if (m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrink || 
-			    m_cache.sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
-			{
-				effectiveCharacterSize = m_characterSize.value();
-			}
-			m_cache.sizingMode = TextureFontLabelSizingMode::Fixed;
-		}
-		
-		// AutoShrink/AutoShrinkWidthモードでは、サイズ探索時にrefreshIfDirtyを呼ぶため、
-		// prevParams->characterSizeが縮小後のサイズで保存される。
-		// 次フレームで元のcharacterSizeと比較されると常に変更ありと判定され、
-		// 毎フレーム再計算が発生してしまう。
-		// これを防ぐため、prevParams->characterSizeを元のサイズに戻す。
-		if (m_cache.prevParams.has_value() && 
-		    (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrink || 
-		     m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth))
-		{
-			m_cache.prevParams->characterSize = m_characterSize.value();
-		}
 
 		const Color& color = m_color.value();
 		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
-		const Vec2& characterSize = effectiveCharacterSize;
+
+		const double autoShrinkWidthScale = m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth
+			? m_cache.effectiveAutoShrinkWidthScale
+			: 1.0;
+
+		Vec2 characterSize = m_cache.effectiveCharacterSize;
+		characterSize.x *= autoShrinkWidthScale;
+
 		const bool preserveAspect = m_preserveAspect.value();
 
 		Optional<ScopedRenderStates2D> blendState;
@@ -468,17 +321,14 @@ namespace noco
 			colorAdd.emplace(addColorValue);
 		}
 
-		// SamplerStateの設定
 		Optional<ScopedRenderStates2D> samplerState;
 		const SpriteTextureFilter filterMode = m_textureFilter.value();
 		const SpriteTextureAddressMode addressMode = m_textureAddressMode.value();
 
 		if (filterMode != SpriteTextureFilter::Default || addressMode != SpriteTextureAddressMode::Default)
 		{
-			// 現在のSamplerStateを取得してベースにする
 			SamplerState currentState = Graphics2D::GetSamplerState(ShaderStage::Pixel, 0);
 
-			// TextureAddressModeの設定
 			if (addressMode != SpriteTextureAddressMode::Default)
 			{
 				TextureAddressMode textureAddressMode;
@@ -505,7 +355,6 @@ namespace noco
 				currentState.addressW = textureAddressMode;
 			}
 
-			// TextureFilterの設定
 			if (filterMode != SpriteTextureFilter::Default)
 			{
 				switch (filterMode)
@@ -542,29 +391,30 @@ namespace noco
 		double contentOffsetY = 0.0;
 		if (vAlign == VerticalAlign::Middle)
 		{
-			contentOffsetY = (rect.h - m_cache.contentSize.y) * 0.5;
+			contentOffsetY = (rect.h - m_cache.regionSize.y) * 0.5;
 		}
 		else if (vAlign == VerticalAlign::Bottom)
 		{
-			contentOffsetY = rect.h - m_cache.contentSize.y;
+			contentOffsetY = rect.h - m_cache.regionSize.y;
 		}
 
 		for (const auto& line : m_cache.lineCaches)
 		{
+			const double effectiveLineWidth = line.width * autoShrinkWidthScale;
 			double lineOffsetX = 0.0;
 			if (hAlign == HorizontalAlign::Center)
 			{
-				lineOffsetX = (rect.w - line.width) * 0.5;
+				lineOffsetX = (rect.w - effectiveLineWidth) * 0.5;
 			}
 			else if (hAlign == HorizontalAlign::Right)
 			{
-				lineOffsetX = rect.w - line.width;
+				lineOffsetX = rect.w - effectiveLineWidth;
 			}
 
 			for (const auto& charInfo : line.characters)
 			{
 				const Vec2 drawPos = rect.pos + Vec2{
-					lineOffsetX + charInfo.position.x,
+					lineOffsetX + charInfo.position.x * autoShrinkWidthScale,
 					contentOffsetY + line.offsetY
 				};
 
@@ -572,7 +422,7 @@ namespace noco
 				{
 					const double aspectRatio = m_textureCellSize.value().x / m_textureCellSize.value().y;
 					const double targetAspectRatio = characterSize.x / characterSize.y;
-					
+
 					Vec2 adjustedSize = characterSize;
 					if (aspectRatio > targetAspectRatio)
 					{
@@ -582,7 +432,7 @@ namespace noco
 					{
 						adjustedSize.x = characterSize.y * aspectRatio;
 					}
-					
+
 					const Vec2 centerOffset = (characterSize - adjustedSize) * 0.5;
 					texture(charInfo.sourceRect).resized(adjustedSize).draw(drawPos + centerOffset, color);
 				}
@@ -596,7 +446,6 @@ namespace noco
 
 	SizeF TextureFontLabel::getContentSizeForAutoResize() const
 	{
-		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
 		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
 		{
@@ -617,22 +466,14 @@ namespace noco
 			m_characterSize.value(),
 			m_characterSpacing.value(),
 			sizingMode,
-			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
-			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
-			m_autoResizeCache.prevParams.has_value() ? m_autoResizeCache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
-			m_textureCellSize.value(),
-			m_textureOffset.value(),
-			m_textureGridColumns.value(),
-			m_textureGridRows.value(),
-			m_preserveAspect.value(),
+			HorizontalOverflow::Overflow,
+			VerticalOverflow::Overflow,
+			m_autoResizeCache.prevParams.has_value() ? m_autoResizeCache.prevParams->rectSize : Vec2::Zero(),
 			m_textureFontCache);
 
-		// AutoResizeでは小数点以下を切り上げる
-		// (誤差により右端で折り返しが発生するのを防ぐため)
-		const SizeF contentSize = m_autoResizeCache.contentSize;
+		const SizeF contentSize = m_autoResizeCache.regionSize;
 		const SizeF ceiledContentSize = { Math::Ceil(contentSize.x), Math::Ceil(contentSize.y) };
 
-		// AutoResizeでは余白を加えたサイズを使用
 		const LRTB& padding = m_padding.value();
 		return ceiledContentSize + Vec2{ padding.totalWidth(), padding.totalHeight() };
 	}
@@ -665,7 +506,6 @@ namespace noco
 
 	SizeF TextureFontLabel::getContentSize() const
 	{
-		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
 		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
 		{
@@ -686,17 +526,12 @@ namespace noco
 			m_characterSize.value(),
 			m_characterSpacing.value(),
 			sizingMode,
-			HorizontalOverflow::Overflow, // rectSize指定なしでのサイズ計算は折り返さないようOverflowで固定
-			VerticalOverflow::Overflow, // rectSize指定なしでのサイズ計算はクリップされないようOverflowで固定
-			m_cache.prevParams.has_value() ? m_cache.prevParams->rectSize : Vec2::Zero(), // rectSizeは使われないので、キャッシュ再更新がなるべく走らないよう前回と同じ値を渡す
-			m_textureCellSize.value(),
-			m_textureOffset.value(),
-			m_textureGridColumns.value(),
-			m_textureGridRows.value(),
-			m_preserveAspect.value(),
+			HorizontalOverflow::Overflow,
+			VerticalOverflow::Overflow,
+			m_cache.prevParams.has_value() ? m_cache.prevParams->rectSize : Vec2::Zero(),
 			m_textureFontCache);
 
-		return m_cache.contentSize;
+		return m_cache.regionSize;
 	}
 
 	SizeF TextureFontLabel::getContentSize(const SizeF& rectSize) const
@@ -718,13 +553,8 @@ namespace noco
 			m_horizontalOverflow.value(),
 			m_verticalOverflow.value(),
 			rectSize,
-			m_textureCellSize.value(),
-			m_textureOffset.value(),
-			m_textureGridColumns.value(),
-			m_textureGridRows.value(),
-			m_preserveAspect.value(),
 			m_textureFontCache);
 
-		return m_cache.contentSize;
+		return m_cache.regionSize;
 	}
 }

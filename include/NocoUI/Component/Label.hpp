@@ -54,12 +54,13 @@ namespace noco
 		SmoothProperty<Vec2> m_shadowOffset;
 
 		/* NonSerialized */ Optional<Font> m_fontOpt;
-		
+
 		struct CacheParams
 		{
 			String text;
 			String fontAssetName;
 			double fontSize;
+			double minFontSize;
 			HorizontalOverflow horizontalOverflow;
 			VerticalOverflow verticalOverflow;
 			Vec2 spacing;
@@ -73,6 +74,7 @@ namespace noco
 				StringView newText,
 				StringView newFontAssetName,
 				double newFontSize,
+				double newMinFontSize,
 				HorizontalOverflow newHorizontalOverflow,
 				VerticalOverflow newVerticalOverflow,
 				const Vec2& newSpacing,
@@ -84,6 +86,7 @@ namespace noco
 				return text != newText
 					|| fontAssetName != newFontAssetName
 					|| fontSize != newFontSize
+					|| minFontSize != newMinFontSize
 					|| horizontalOverflow != newHorizontalOverflow
 					|| verticalOverflow != newVerticalOverflow
 					|| spacing != newSpacing
@@ -111,23 +114,18 @@ namespace noco
 			SizeF regionSize = SizeF::Zero();
 			Optional<CacheParams> prevParams = std::nullopt;
 			FontMethod fontMethod = FontMethod::Bitmap;
-			Font currentFont;  // 現在使用中のフォント
-			int32 baseFontSize = 0;  // ベースフォントサイズ
-			
+			Font currentFont;
+			int32 baseFontSize = 0;
+
 			// AutoShrink用キャッシュ
 			double effectiveFontSize = 0.0;
-			SizeF availableSize = SizeF::Zero();
-			double originalFontSize = 0.0;
-			double minFontSize = 0.0;
-			LabelSizingMode sizingMode = LabelSizingMode::Fixed;
 
 			// AutoShrinkWidth用キャッシュ
 			double effectiveAutoShrinkWidthScale = 1.0;
-			double originalAutoShrinkWidthScale = 1.0;
 
 			Cache() = default;
 
-			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
+			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
