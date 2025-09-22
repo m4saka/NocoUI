@@ -595,20 +595,23 @@ namespace noco
 				if (preserveAspect && m_textureCellSize.value().y > 0.0 && finalSize.y > 0.0)
 				{
 					const double aspectRatio = m_textureCellSize.value().x / m_textureCellSize.value().y;
-					const double targetAspectRatio = finalSize.x / finalSize.y;
-
-					Vec2 adjustedSize = finalSize;
-					if (aspectRatio > targetAspectRatio)
+					if (aspectRatio > 0.0)
 					{
-						adjustedSize.y = finalSize.x / aspectRatio;
-					}
-					else
-					{
-						adjustedSize.x = finalSize.y * aspectRatio;
-					}
+						const double targetAspectRatio = finalSize.x / finalSize.y;
 
-					centerOffset = (finalSize - adjustedSize) * 0.5;
-					finalSize = adjustedSize;
+						Vec2 adjustedSize = finalSize;
+						if (aspectRatio > targetAspectRatio)
+						{
+							adjustedSize.y = finalSize.x / aspectRatio;
+						}
+						else
+						{
+							adjustedSize.x = finalSize.y * aspectRatio;
+						}
+
+						centerOffset = (finalSize - adjustedSize) * 0.5;
+						finalSize = adjustedSize;
+					}
 				}
 
 				finalSize.x *= autoShrinkWidthScale;
