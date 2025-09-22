@@ -461,8 +461,7 @@ namespace noco
 			? m_cache.effectiveAutoShrinkWidthScale
 			: 1.0;
 
-		Vec2 characterSize = m_cache.effectiveCharacterSize;
-		characterSize.x *= autoShrinkWidthScale;
+		const Vec2 characterSize = m_cache.effectiveCharacterSize;
 
 		Optional<ScopedRenderStates2D> blendState;
 		switch (blendModeValue)
@@ -585,33 +584,37 @@ namespace noco
 			{
 				lineOffsetX = rect.w - effectiveLineWidth;
 			}
-
+			
 			for (const auto& charInfo : line.characters)
 			{
 				const Vec2 drawPos = rect.pos + Vec2{ lineOffsetX + charInfo.position.x * autoShrinkWidthScale, contentOffsetY + line.offsetY };
 
-				if (preserveAspect && m_textureCellSize.value().y > 0 && characterSize.y > 0)
+				Vec2 finalSize = characterSize;
+				Vec2 centerOffset = Vec2::Zero();
+
+				if (preserveAspect && m_textureCellSize.value().y > 0.0 && finalSize.y > 0.0)
 				{
 					const double aspectRatio = m_textureCellSize.value().x / m_textureCellSize.value().y;
-					const double targetAspectRatio = characterSize.x / characterSize.y;
+					const double targetAspectRatio = finalSize.x / finalSize.y;
 
-					Vec2 adjustedSize = characterSize;
+					Vec2 adjustedSize = finalSize;
 					if (aspectRatio > targetAspectRatio)
 					{
-						adjustedSize.y = characterSize.x / aspectRatio;
+						adjustedSize.y = finalSize.x / aspectRatio;
 					}
 					else
 					{
-						adjustedSize.x = characterSize.y * aspectRatio;
+						adjustedSize.x = finalSize.y * aspectRatio;
 					}
 
-					const Vec2 centerOffset = (characterSize - adjustedSize) * 0.5;
-					texture(charInfo.sourceRect).resized(adjustedSize).draw(drawPos + centerOffset, color);
+					centerOffset = (finalSize - adjustedSize) * 0.5;
+					finalSize = adjustedSize;
 				}
-				else
-				{
-					texture(charInfo.sourceRect).resized(characterSize).draw(drawPos, color);
-				}
+
+				finalSize.x *= autoShrinkWidthScale;
+				centerOffset.x *= autoShrinkWidthScale;
+
+				texture(charInfo.sourceRect).resized(finalSize).draw(drawPos + centerOffset, color);
 			}
 		}
 	}
