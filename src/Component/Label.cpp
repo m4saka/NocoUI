@@ -72,6 +72,7 @@ namespace noco
 
 						if (minTopT > maxBottomT)
 						{
+							// 行内に文字がない場合
 							minTopT = 0.0;
 							maxBottomT = 1.0;
 						}
@@ -122,9 +123,9 @@ namespace noco
 					offset.x += xAdvance;
 					lineGlyphs.push_back(glyph);
 
-					const double glyphTop = glyph.getOffset().y;
+					const double glyphTop = glyph.getOffset(this->assetFontSizeScale).y;
 					minTopT = Min(minTopT, glyphTop / fontHeight);
-					maxBottomT = Max(maxBottomT, (glyphTop + glyph.texture.size.y) / fontHeight);
+					maxBottomT = Max(maxBottomT, (glyphTop + glyph.texture.size.y * this->assetFontSizeScale) / fontHeight);
 				}
 
 				fnPushLine();
@@ -388,17 +389,16 @@ namespace noco
 					}
 
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
-					const Vec2 scaleVec{ m_cache.assetFontSizeScale * autoShrinkWidthScale, m_cache.assetFontSizeScale };
-					const Vec2 drawPos = pos + glyph.getOffset(scaleVec.y) * Vec2{ autoShrinkWidthScale, 1.0 };
-					const auto scaledTexture = glyph.texture.scaled(scaleVec);
+					const Vec2 drawPos = pos + glyph.getOffset(m_cache.assetFontSizeScale) * Vec2{ autoShrinkWidthScale, 1.0 };
+					const auto scaledTexture = glyph.texture.scaled(m_cache.assetFontSizeScale * autoShrinkWidthScale, m_cache.assetFontSizeScale);
 
 					switch (gradationType)
 					{
 					case LabelGradationType::TopBottom:
 					{
 						const double lineGradationHeight = Max(m_cache.lineHeight, 1e-6);
-						const double topT = Clamp(glyph.getOffset().y / lineGradationHeight, 0.0, 1.0);
-						const double bottomT = Clamp((glyph.getOffset().y + glyph.texture.size.y) / lineGradationHeight, 0.0, 1.0);
+						const double topT = Clamp(glyph.getOffset(m_cache.assetFontSizeScale).y / lineGradationHeight, 0.0, 1.0);
+						const double bottomT = Clamp((glyph.getOffset(m_cache.assetFontSizeScale).y + glyph.texture.size.y * m_cache.assetFontSizeScale) / lineGradationHeight, 0.0, 1.0);
 						const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
 						const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
 						const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
