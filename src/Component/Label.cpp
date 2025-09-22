@@ -64,6 +64,8 @@ namespace noco
 
 						if (!lineGlyphs.empty())
 						{
+							// AutoShrinkの場合はスケールを適用
+							// (AutoShrinkWidthの場合、通常スケールで計算したサイズとノード幅を元にスケールを決めるため、ここではスケールを適用しない)
 							const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? this->scale : 1.0;
 							offset.x -= spacing.x * spacingScale;
 						}
@@ -104,7 +106,10 @@ namespace noco
 						continue;
 					}
 
+					// AutoShrinkの場合はスケールを適用
+					// (AutoShrinkWidthの場合、通常スケールで計算したサイズとノード幅を元にスケールを決めるため、ここではスケールを適用しない)
 					const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? this->scale : 1.0;
+
 					const double xAdvance = glyph.xAdvance * this->scale + spacing.x * spacingScale;
 					if (hov == HorizontalOverflow::Wrap && offset.x + xAdvance > rectSize.x)
 					{
