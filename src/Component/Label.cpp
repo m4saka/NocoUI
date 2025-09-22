@@ -315,6 +315,10 @@ namespace noco
 			}
 		}
 
+		const double autoShrinkWidthScale = m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth
+			? m_cache.effectiveAutoShrinkWidthScale
+			: 1.0;
+
 		{
 			const ScopedCustomShader2D shader{ Font::GetPixelShader(m_cache.fontMethod, textStyle.type) };
 
@@ -352,10 +356,6 @@ namespace noco
 
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double autoShrinkWidthScale = m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth
-					? m_cache.effectiveAutoShrinkWidthScale
-					: 1.0;
-
 				const double effectiveLineWidth = lineCache.width * autoShrinkWidthScale;
 
 				const double startX = [&rect, effectiveLineWidth, horizontalAlign]()
@@ -433,16 +433,17 @@ namespace noco
 		{
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [&rect, &lineCache, horizontalAlign]()
+				const double effectiveLineWidth = lineCache.width * autoShrinkWidthScale;
+				const double startX = [&rect, effectiveLineWidth, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{
 						case HorizontalAlign::Left:
 							return rect.x;
 						case HorizontalAlign::Center:
-							return rect.x + (rect.w - lineCache.width) / 2;
+							return rect.x + (rect.w - effectiveLineWidth) / 2;
 						case HorizontalAlign::Right:
-							return rect.x + rect.w - lineCache.width;
+							return rect.x + rect.w - effectiveLineWidth;
 						default:
 							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
 						}
@@ -450,7 +451,7 @@ namespace noco
 
 				const double thickness = m_underlineThickness.value();
 				const double y = startY + (lineCache.offsetY + m_cache.lineHeight);
-				Line{ startX, y, startX + lineCache.width, y }.draw(thickness, m_underlineColor.value());
+				Line{ startX, y, startX + effectiveLineWidth, y }.draw(thickness, m_underlineColor.value());
 			}
 		}
 	}
