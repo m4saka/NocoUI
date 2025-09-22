@@ -15,6 +15,7 @@ namespace noco
 	{
 		Fixed,
 		AutoShrink,
+		AutoShrinkWidth,
 		AutoResize,
 	};
 
@@ -119,6 +120,10 @@ namespace noco
 			double originalFontSize = 0.0;
 			double minFontSize = 0.0;
 			LabelSizingMode sizingMode = LabelSizingMode::Fixed;
+
+			// AutoShrinkWidth用キャッシュ
+			double effectiveAutoShrinkWidthScale = 1.0;
+			double originalAutoShrinkWidthScale = 1.0;
 
 			Cache() = default;
 

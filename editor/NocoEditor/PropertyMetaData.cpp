@@ -583,7 +583,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"sizingMode" }] = PropertyMetadata{
 			.tooltip = U"サイズに関するモード",
-			.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nAutoShrink: ノードサイズに収まるようフォントサイズを自動縮小します\nAutoResize: テキストの内容に応じてノードサイズを自動でリサイズします\n\n※AutoShrinkとAutoResizeはテキストやその他の値に変化が発生した時の再計算にかかる負荷が高いため、\n　不要な場合はなるべくFixedを指定することを推奨します\n\n※AutoResizeを利用してテキストの周囲や背面に装飾を加えたい場合、paddingを設定してノードサイズが\n　テキストの内容より大きくなるようにして、同じノードのLabelの手前にコンポーネントを追加してください",
+			.tooltipDetail = U"Fixed: 固定フォントサイズで描画します\nAutoShrink: ノードサイズに収まるようフォントサイズを自動縮小します\nAutoShrinkWidth: ノードサイズに収まるよう文字の幅のみを自動縮小します\nAutoResize: テキストの内容に応じてノードサイズを自動でリサイズします\n\n※AutoShrink、AutoShrinkWidth、AutoResizeはテキストやその他の値に変化が発生した時の\n　再計算にかかる負荷が高いため、不要な場合はなるべくFixedを指定することを推奨します\n\n※AutoResizeを利用してテキストの周囲や背面に装飾を加えたい場合、paddingを設定してノードサイズが\n　テキストの内容より大きくなるようにして、同じノードのLabelの手前にコンポーネントを追加してください",
 			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"Label", U"minFontSize" }] = PropertyMetadata{

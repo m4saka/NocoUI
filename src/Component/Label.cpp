@@ -42,6 +42,10 @@ namespace noco
 
 		lineCaches.clear();
 
+		// AutoShrinkWidthモードで幅の縮小率を適用する場合は、呼び出し側で適切にscaleを調整する
+		// refreshIfDirty内では常に1.0として扱う
+		const double autoShrinkWidthScale = 1.0;
+
 		double maxWidth = 0.0;
 		Vec2 offset = Vec2::Zero();
 		Array<Glyph> lineGlyphs;
@@ -63,7 +67,9 @@ namespace noco
 				if (!lineGlyphs.empty())
 				{
 					// 行末文字の右側に余白を入れないため、その分を引く
-					offset.x -= spacing.x;
+					const double spacingScale = sizingMode == LabelSizingMode::AutoShrink ? scale :
+						sizingMode == LabelSizingMode::AutoShrinkWidth ? autoShrinkWidthScale : 1.0;
+					offset.x -= spacing.x * spacingScale;
 				}
 
 				if (minTopT > maxBottomT)
@@ -72,7 +78,7 @@ namespace noco
 					minTopT = 0.0;
 					maxBottomT = 1.0;
 				}
-				
+
 				// 矩形内に収まる行のみキャッシュに追加
 				lineCaches.push_back({
 					.glyphs = lineGlyphs,
@@ -104,7 +110,10 @@ namespace noco
 				continue;
 			}
 
-			const double xAdvance = glyph.xAdvance * scale + spacing.x;
+			// spacingはモードに応じてスケーリング
+			const double spacingScale = sizingMode == LabelSizingMode::AutoShrink ? scale :
+				sizingMode == LabelSizingMode::AutoShrinkWidth ? autoShrinkWidthScale : 1.0;
+			const double xAdvance = glyph.xAdvance * scale * autoShrinkWidthScale + spacing.x * spacingScale;
 			if (horizontalOverflow == HorizontalOverflow::Wrap && offset.x + xAdvance > rectSize.x)
 			{
 				if (!fnPushLine())
@@ -132,7 +141,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == LabelSizingMode::AutoShrink)
+		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth)
 		{
 			sizingMode = LabelSizingMode::Fixed;
 		}
@@ -221,11 +230,11 @@ namespace noco
 			// フォントサイズはSmoothPropertyなので許容誤差を大きめに取る
 			constexpr double Epsilon = 1e-2;
 			const bool cacheValid = !wasUpdated &&
-			                       (m_cache.sizingMode == LabelSizingMode::AutoShrink) &&
-			                       (Abs(m_cache.availableSize.x - availableSize.x) < Epsilon) &&
-			                       (Abs(m_cache.availableSize.y - availableSize.y) < Epsilon) &&
-			                       (Abs(m_cache.originalFontSize - m_fontSize.value()) < Epsilon) &&
-			                       (Abs(m_cache.minFontSize - m_minFontSize.value()) < Epsilon);
+				m_cache.sizingMode == LabelSizingMode::AutoShrink &&
+				Abs(m_cache.availableSize.x - availableSize.x) < Epsilon &&
+				Abs(m_cache.availableSize.y - availableSize.y) < Epsilon &&
+				Abs(m_cache.originalFontSize - m_fontSize.value()) < Epsilon &&
+				Abs(m_cache.minFontSize - m_minFontSize.value()) < Epsilon;
 			
 			if (!cacheValid)
 			{
@@ -236,7 +245,7 @@ namespace noco
 				
 				double effectiveFontSize = m_fontSize.value();
 				const double minFontSize = m_minFontSize.value();
-				
+
 				while (effectiveFontSize >= minFontSize)
 				{
 					// 現在のフォントサイズで収まるかチェック
@@ -248,20 +257,20 @@ namespace noco
 						effectiveFontSize,
 						characterSpacing,
 						m_horizontalOverflow.value(),
-						VerticalOverflow::Overflow,  // AutoShrinkでは常にOverflowとして計算
+						VerticalOverflow::Overflow, // AutoShrinkのフォントサイズ探索では常にOverflowとする
 						availableSize,
 						m_sizingMode.value());
-					
+
 					// 収まっていれば、このサイズで確定
-					if (m_cache.regionSize.x <= availableSize.x && 
+					if (m_cache.regionSize.x <= availableSize.x &&
 					    m_cache.regionSize.y <= availableSize.y)
 					{
 						break;
 					}
-					
+
 					// 収まらない場合、フォントサイズを1下げる
 					effectiveFontSize = effectiveFontSize - 1.0;
-					
+
 					// 最小フォントサイズを下回らないようにする
 					if (effectiveFontSize < minFontSize)
 					{
@@ -275,15 +284,15 @@ namespace noco
 							effectiveFontSize,
 							characterSpacing,
 							m_horizontalOverflow.value(),
-							VerticalOverflow::Overflow,  // AutoShrinkでは常にOverflowとして計算
+							VerticalOverflow::Overflow, // AutoShrinkのフォントサイズ探索では常にOverflowとする
 							availableSize,
 							m_sizingMode.value());
 						break;
 					}
 				}
-				
+
 				m_cache.effectiveFontSize = effectiveFontSize;
-				
+
 				// AutoShrinkの探索ではVerticalOverflow::Overflowで計算したため、
 				// 実際のverticalOverflowプロパティ値で再計算する必要がある
 				if (m_verticalOverflow.value() == VerticalOverflow::Clip)
@@ -310,14 +319,58 @@ namespace noco
 				}
 			}
 		}
+		else if (m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth)
+		{
+			const SizeF availableSize = rect.size;
+
+			constexpr double Epsilon = 1e-2;
+			const bool cacheValid = !wasUpdated &&
+				m_cache.sizingMode == LabelSizingMode::AutoShrinkWidth &&
+				Abs(m_cache.availableSize.x - availableSize.x) < Epsilon &&
+				Abs(m_cache.availableSize.y - availableSize.y) < Epsilon &&
+				Abs(m_cache.originalAutoShrinkWidthScale - 1.0) < Epsilon;
+
+			if (!cacheValid)
+			{
+				m_cache.sizingMode = LabelSizingMode::AutoShrinkWidth;
+				m_cache.availableSize = availableSize;
+				m_cache.originalAutoShrinkWidthScale = 1.0;
+
+				// まず、autoShrinkWidthScale = 1.0でテキストサイズを計算
+				m_cache.prevParams.reset();
+				m_cache.refreshIfDirty(
+					text,
+					m_fontOpt,
+					m_fontAssetName.value(),
+					m_fontSize.value(),
+					characterSpacing,
+					HorizontalOverflow::Overflow, // AutoShrinkWidthでは常にOverflowとする
+					VerticalOverflow::Overflow,
+					availableSize,
+					m_sizingMode.value());
+
+				// ノードの幅に収まるスケールを計算
+				double effectiveAutoShrinkWidthScale = 1.0;
+				if (m_cache.regionSize.x > availableSize.x)
+				{
+					effectiveAutoShrinkWidthScale = availableSize.x / m_cache.regionSize.x;
+				}
+
+				// 計算された縮小率でキャッシュを更新
+				m_cache.effectiveAutoShrinkWidthScale = effectiveAutoShrinkWidthScale;
+			}
+		}
 		else
 		{
 			// Fixedモードに切り替わった場合、スケールを元に戻す
-			if (m_cache.sizingMode == LabelSizingMode::AutoShrink && m_cache.baseFontSize != 0)
+			if ((m_cache.sizingMode == LabelSizingMode::AutoShrink ||
+			     m_cache.sizingMode == LabelSizingMode::AutoShrinkWidth) &&
+			    m_cache.baseFontSize != 0)
 			{
 				m_cache.scale = m_fontSize.value() / m_cache.baseFontSize;
 			}
 			m_cache.sizingMode = LabelSizingMode::Fixed;
+			m_cache.effectiveAutoShrinkWidthScale = 1.0;
 		}
 
 		// AutoShrinkモードでは、フォントサイズ探索時にrefreshIfDirtyを呼ぶため、
@@ -411,22 +464,30 @@ namespace noco
 
 			for (const auto& lineCache : m_cache.lineCaches)
 			{
-				const double startX = [&rect, &lineCache, horizontalAlign]()
+				const double autoShrinkWidthScale = m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth
+					? m_cache.effectiveAutoShrinkWidthScale
+					: 1.0;
+
+				// AutoShrinkWidthモードの場合、lineCache.widthに縮小率を適用
+				const double effectiveLineWidth = lineCache.width * autoShrinkWidthScale;
+
+				const double startX = [&rect, effectiveLineWidth, horizontalAlign]()
 					{
 						switch (horizontalAlign)
 						{
 						case HorizontalAlign::Left:
 							return rect.x;
 						case HorizontalAlign::Center:
-							return rect.x + (rect.w - lineCache.width) / 2;
+							return rect.x + (rect.w - effectiveLineWidth) / 2;
 						case HorizontalAlign::Right:
-							return rect.x + rect.w - lineCache.width;
+							return rect.x + rect.w - effectiveLineWidth;
 						default:
 							throw Error{ U"Invalid HorizontalAlign: {}"_fmt(static_cast<std::underlying_type_t<HorizontalAlign>>(horizontalAlign)) };
 						}
 					}();
 
 				double x = 0;
+
 				for (const auto& glyph : lineCache.glyphs)
 				{
 					if (glyph.codePoint == U'\n')
@@ -435,8 +496,11 @@ namespace noco
 					}
 
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
-					const Vec2 drawPos = pos + glyph.getOffset(m_cache.scale);
-					const auto scaledTexture = glyph.texture.scaled(m_cache.scale);
+					const Vec2 scaleVec = m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth
+						? Vec2{ m_cache.scale * autoShrinkWidthScale, m_cache.scale }
+						: Vec2{ m_cache.scale, m_cache.scale };
+					const Vec2 drawPos = pos + glyph.getOffset(scaleVec.y) * Vec2{ autoShrinkWidthScale, 1.0 };
+					const auto scaledTexture = glyph.texture.scaled(scaleVec);
 
 					switch (gradationType)
 					{
@@ -457,7 +521,7 @@ namespace noco
 					case LabelGradationType::LeftRight:
 					{
 						const double glyphLeft = drawPos.x;
-						const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.scale;
+						const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.scale * autoShrinkWidthScale;
 						const double glyphRight = glyphLeft + glyphWidth;
 						const double leftT = Clamp((glyphLeft - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
 						const double rightT = Clamp((glyphRight - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
@@ -473,7 +537,10 @@ namespace noco
 						break;
 					}
 
-					x += (glyph.xAdvance * m_cache.scale + characterSpacing.x);
+					// AutoShrinkモードではspacingにもフォントサイズ比を適用
+					const double spacingScale = m_sizingMode.value() == LabelSizingMode::AutoShrink ? m_cache.scale :
+						m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth ? autoShrinkWidthScale : 1.0;
+					x += (glyph.xAdvance * m_cache.scale * autoShrinkWidthScale + characterSpacing.x * spacingScale);
 				}
 			}
 		}
@@ -508,7 +575,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == LabelSizingMode::AutoShrink)
+		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth)
 		{
 			sizingMode = LabelSizingMode::Fixed;
 		}
