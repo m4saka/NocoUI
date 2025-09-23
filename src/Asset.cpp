@@ -24,6 +24,11 @@ namespace noco
 				m_table.emplace(filePath, asset);
 			}
 
+			void registerAsset(FilePathView filePath, T&& asset)
+			{
+				m_table.emplace(filePath, std::move(asset));
+			}
+
 			void unregister(FilePathView filePath)
 			{
 				m_table.erase(filePath);
