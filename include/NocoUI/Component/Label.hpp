@@ -71,8 +71,8 @@ namespace noco
 
 			[[nodiscard]]
 			bool isDirty(
-				StringView newText,
-				StringView newFontAssetName,
+				const String& newText,
+				const String& newFontAssetName,
 				double newFontSize,
 				double newMinFontSize,
 				HorizontalOverflow newHorizontalOverflow,
@@ -125,7 +125,7 @@ namespace noco
 
 			Cache() = default;
 
-			bool refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
+			bool refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;

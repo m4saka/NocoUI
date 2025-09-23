@@ -52,7 +52,7 @@ namespace noco
 
 				[[nodiscard]]
 				bool isDirty(
-					StringView newCharacterSet,
+					const String& newCharacterSet,
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
@@ -63,7 +63,7 @@ namespace noco
 			Optional<CacheParams> prevParams;
 
 			bool refreshIfDirty(
-				StringView characterSet,
+				const String& characterSet,
 				const Vec2& textureCellSize,
 				const Vec2& textureOffset,
 				int32 textureGridColumns,
@@ -112,14 +112,14 @@ namespace noco
 
 				[[nodiscard]]
 				bool isDirty(
-					StringView newText,
+					const String& newText,
 					const Vec2& newCharacterSize,
 					const Vec2& newCharacterSpacing,
 					TextureFontLabelSizingMode newSizingMode,
 					HorizontalOverflow newHorizontalOverflow,
 					VerticalOverflow newVerticalOverflow,
 					const SizeF& newRectSize,
-					StringView newCharacterSet,
+					const String& newCharacterSet,
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
@@ -129,7 +129,7 @@ namespace noco
 			Optional<CacheParams> prevParams;
 
 			bool refreshIfDirty(
-				StringView text,
+				const String& text,
 				const Vec2& characterSize,
 				const Vec2& characterSpacing,
 				TextureFontLabelSizingMode newSizingMode,
@@ -137,7 +137,7 @@ namespace noco
 				VerticalOverflow verticalOverflow,
 				const SizeF& rectSize,
 				const TextureFontCache& textureFontCache,
-				StringView newCharacterSet,
+				const String& newCharacterSet,
 				const Vec2& newTextureCellSize,
 				const Vec2& newTextureOffset,
 				int32 newTextureGridColumns,

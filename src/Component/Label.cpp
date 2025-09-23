@@ -3,20 +3,21 @@
 
 namespace noco
 {
-	bool Label::Cache::refreshIfDirty(StringView text, const Optional<Font>& fontOpt, StringView fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
+	bool Label::Cache::refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
 		const bool hasCustomFont = fontOpt.has_value();
 		const Font newFont = hasCustomFont ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
 
-		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
+		if (prevParams.has_value() &&
+			!prevParams->isDirty(text, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
 		{
 			return false;
 		}
 
 		prevParams = CacheParams
 		{
-			.text = String{ text },
-			.fontAssetName = String{ fontAssetName },
+			.text = text,
+			.fontAssetName = fontAssetName,
 			.fontSize = fontSize,
 			.minFontSize = minFontSize,
 			.horizontalOverflow = horizontalOverflow,
@@ -212,8 +213,8 @@ namespace noco
 			sizingMode);
 
 		// AutoResizeでは小数点以下を切り上げたサイズをノードサイズとして使用
-		const SizeF regionSize = m_autoResizeCache.regionSize;
-		const SizeF ceiledRegionSize = { Math::Ceil(regionSize.x), Math::Ceil(regionSize.y) };
+		const SizeF& regionSize = m_autoResizeCache.regionSize;
+		const SizeF ceiledRegionSize{ Math::Ceil(regionSize.x), Math::Ceil(regionSize.y) };
 
 		// AutoResizeでは余白を加えたサイズを使用
 		const LRTB& padding = m_padding.value();
@@ -293,7 +294,7 @@ namespace noco
 				}
 			}();
 
-		const HorizontalAlign& horizontalAlign = m_horizontalAlign.value();
+		const HorizontalAlign horizontalAlign = m_horizontalAlign.value();
 
 		const double outlineFactorInner = Max(m_outlineFactorInner.value(), 0.0);
 		const double outlineFactorOuter = Max(m_outlineFactorOuter.value(), 0.0);

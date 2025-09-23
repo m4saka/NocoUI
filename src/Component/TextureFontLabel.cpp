@@ -34,7 +34,7 @@ namespace noco
 	}
 
 	bool TextureFontLabel::TextureFontCache::CacheParams::isDirty(
-		StringView newCharacterSet, const Vec2& newTextureCellSize, const Vec2& newTextureOffset, int32 newTextureGridColumns, int32 newTextureGridRows) const
+		const String& newCharacterSet, const Vec2& newTextureCellSize, const Vec2& newTextureOffset, int32 newTextureGridColumns, int32 newTextureGridRows) const
 	{
 		return characterSet != newCharacterSet
 			|| textureCellSize != newTextureCellSize
@@ -44,7 +44,7 @@ namespace noco
 	}
 
 	bool TextureFontLabel::TextureFontCache::refreshIfDirty(
-		StringView characterSet, const Vec2& textureCellSize, const Vec2& textureOffset, int32 textureGridColumns, int32 textureGridRows)
+		const String& characterSet, const Vec2& textureCellSize, const Vec2& textureOffset, int32 textureGridColumns, int32 textureGridRows)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(
 			characterSet, textureCellSize, textureOffset,
@@ -116,14 +116,14 @@ namespace noco
 	}
 
 	bool TextureFontLabel::CharacterCache::CacheParams::isDirty(
-		StringView newText,
+		const String& newText,
 		const Vec2& newCharacterSize,
 		const Vec2& newCharacterSpacing,
 		TextureFontLabelSizingMode newSizingMode,
 		HorizontalOverflow newHorizontalOverflow,
 		VerticalOverflow newVerticalOverflow,
 		const SizeF& newRectSize,
-		StringView newCharacterSet,
+		const String& newCharacterSet,
 		const Vec2& newTextureCellSize,
 		const Vec2& newTextureOffset,
 		int32 newTextureGridColumns,
@@ -144,7 +144,7 @@ namespace noco
 	}
 
 	bool TextureFontLabel::CharacterCache::refreshIfDirty(
-		StringView text,
+		const String& text,
 		const Vec2& characterSize,
 		const Vec2& characterSpacing,
 		TextureFontLabelSizingMode newSizingMode,
@@ -152,33 +152,28 @@ namespace noco
 		VerticalOverflow verticalOverflow,
 		const SizeF& rectSize,
 		const TextureFontCache& textureFontCache,
-		StringView newCharacterSet,
+		const String& newCharacterSet,
 		const Vec2& newTextureCellSize,
 		const Vec2& newTextureOffset,
 		int32 newTextureGridColumns,
 		int32 newTextureGridRows)
 	{
-		const bool hasPrevParams = prevParams.has_value();
-		const auto& prev = hasPrevParams ? *prevParams : CacheParams{};
-
-		if (hasPrevParams && !prev.isDirty(
-			text, characterSize, characterSpacing, newSizingMode,
-			horizontalOverflow, verticalOverflow, rectSize,
-			newCharacterSet, newTextureCellSize, newTextureOffset, newTextureGridColumns, newTextureGridRows))
+		if (prevParams.has_value() &&
+			!prevParams->isDirty(text, characterSize, characterSpacing, newSizingMode, horizontalOverflow, verticalOverflow, rectSize, newCharacterSet, newTextureCellSize, newTextureOffset, newTextureGridColumns, newTextureGridRows))
 		{
 			return false;
 		}
 
 		prevParams = CacheParams
 		{
-			.text = String{ text },
+			.text = text,
 			.characterSize = characterSize,
 			.characterSpacing = characterSpacing,
 			.sizingMode = newSizingMode,
 			.horizontalOverflow = horizontalOverflow,
 			.verticalOverflow = verticalOverflow,
 			.rectSize = rectSize,
-			.characterSet = String{ newCharacterSet },
+			.characterSet = newCharacterSet,
 			.textureCellSize = newTextureCellSize,
 			.textureOffset = newTextureOffset,
 			.textureGridColumns = newTextureGridColumns,
@@ -453,7 +448,7 @@ namespace noco
 			? m_cache.effectiveAutoShrinkWidthScale
 			: 1.0;
 
-		const Vec2 characterSize = m_cache.effectiveCharacterSize;
+		const Vec2& characterSize = m_cache.effectiveCharacterSize;
 
 		Optional<ScopedRenderStates2D> blendState;
 		switch (blendModeValue)
@@ -672,8 +667,8 @@ namespace noco
 			m_textureGridRows.value());
 
 		// AutoResizeでは小数点以下を切り上げたサイズをノードサイズとして使用
-		const SizeF contentSize = m_autoResizeCache.regionSize;
-		const SizeF ceiledContentSize = { Math::Ceil(contentSize.x), Math::Ceil(contentSize.y) };
+		const SizeF& contentSize = m_autoResizeCache.regionSize;
+		const SizeF ceiledContentSize{ Math::Ceil(contentSize.x), Math::Ceil(contentSize.y) };
 
 		// AutoResizeでは余白を加えたサイズを使用
 		const LRTB& padding = m_padding.value();
