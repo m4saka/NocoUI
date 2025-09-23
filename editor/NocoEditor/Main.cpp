@@ -1040,6 +1040,7 @@ public:
 				m_filePath = none;
 				m_canvas->clearParams();
 				m_canvas->clearAll();
+				m_scrollScale = 1.0;
 				refresh();
 				m_inspector.refreshInspector(PreserveScrollYN::No);
 				createInitialNode();
@@ -1121,6 +1122,7 @@ public:
 		}
 		m_filePath = filePath;
 		const auto clearedParams = m_canvas->removeInvalidParamRefs();
+		m_scrollScale = 1.0;
 		refresh();
 		m_inspector.refreshInspector(PreserveScrollYN::No);
 		m_historySystem.clear();
