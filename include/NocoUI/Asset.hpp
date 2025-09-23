@@ -8,23 +8,23 @@ namespace noco
 		constexpr StringView AssetNamePrefix = U"noco::";
 
 		[[nodiscard]]
-		FilePathView GetBaseDirectoryPath();
+		const FilePath& GetBaseDirectoryPath();
 
 		void SetBaseDirectoryPath(FilePathView path);
 
 		[[nodiscard]]
-		Texture GetOrLoadTexture(FilePathView filePath);
+		const Texture& GetOrLoadTexture(FilePathView filePath);
 
-		Texture ReloadTexture(FilePathView filePath);
+		const Texture& ReloadTexture(FilePathView filePath);
 
 		bool UnloadTexture(FilePathView filePath);
 
 		void UnloadAllTextures();
 
 		[[nodiscard]]
-		Audio GetOrLoadAudio(FilePathView filePath);
+		const Audio& GetOrLoadAudio(FilePathView filePath);
 
-		Audio ReloadAudio(FilePathView filePath);
+		const Audio& ReloadAudio(FilePathView filePath);
 
 		bool UnloadAudio(FilePathView filePath);
 

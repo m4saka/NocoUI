@@ -677,7 +677,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureAssetName" }] = PropertyMetadata{
 			.tooltip = U"TextureAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でTextureAssetを使用するため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたHashTableでアセットが管理されるため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"characterSet" }] = PropertyMetadata{
 			.tooltip = U"文字セット",
@@ -771,7 +771,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Sprite", U"textureAssetName" }] = PropertyMetadata{
 			.tooltip = U"TextureAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でTextureAssetを使用するため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたHashTableでアセットが管理されるため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
 		metadata[PropertyKey{ U"Sprite", U"color" }] = PropertyMetadata{
 			.tooltip = U"スプライトの色",
@@ -1115,7 +1115,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"UISound", U"audioAssetName" }] = PropertyMetadata{
 			.tooltip = U"AudioAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したAudioAssetの音声を使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたキー名でAudioAssetを使用するため、\n　パフォーマンス上の利点は特にありません。AudioAssetのキー名を手動で管理したい場合のみ使用してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したAudioAssetの音声を使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたHashTableでアセットが管理されるため、\n　パフォーマンス上の利点は特にありません。AudioAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
 		metadata[PropertyKey{ U"UISound", U"triggerType" }] = PropertyMetadata{
 			.tooltip = U"音声を再生する操作の種類",

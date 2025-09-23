@@ -5,9 +5,46 @@ namespace noco
 	namespace
 	{
 		FilePath s_baseDirectoryPath = U"";
+
+		// Siv3DのAssetシステムを直接使うとユーザー側のアセットとの衝突回避用にPrefixを付与する必要が生じてコストがかかるため、別途管理する
+		template <class T>
+		class AssetTable
+		{
+		private:
+			HashTable<AssetName, T> m_table;
+
+		public:
+			bool isRegistered(FilePathView filePath) const
+			{
+				return m_table.contains(filePath);
+			}
+
+			void registerAsset(FilePathView filePath, const T& asset)
+			{
+				m_table.emplace(filePath, asset);
+			}
+
+			void unregister(FilePathView filePath)
+			{
+				m_table.erase(filePath);
+			}
+
+			const T& get(FilePathView filePath) const
+			{
+				return m_table.at(filePath);
+			}
+
+			void clear()
+			{
+				m_table.clear();
+			}
+		};
+
+		AssetTable<Texture> s_textureAssetTable;
+		AssetTable<Audio> s_audioAssetTable;
 	}
 
-	FilePathView Asset::GetBaseDirectoryPath()
+	const FilePath& Asset::GetBaseDirectoryPath()
 	{
 		return s_baseDirectoryPath;
 	}
@@ -19,41 +56,44 @@ namespace noco
 		s_baseDirectoryPath = baseDirectoryPath;
 	}
 
-	Texture Asset::GetOrLoadTexture(FilePathView filePath)
+	const Texture& Asset::GetOrLoadTexture(FilePathView filePath)
 	{
+		static const Texture EmptyTexture{};
+
 		if (filePath.isEmpty())
 		{
-			return Texture{};
+			return EmptyTexture;
 		}
-		const String key = AssetNamePrefix + filePath;
-		if (!TextureAsset::IsRegistered(key))
+
+		if (!s_textureAssetTable.isRegistered(filePath))
 		{
 			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 			if (!FileSystem::IsFile(combinedPath))
 			{
-				return Texture{};
+				return EmptyTexture;
 			}
-			TextureAsset::Register(key, combinedPath);
+			s_textureAssetTable.registerAsset(filePath, Texture{ combinedPath });
 		}
-		return TextureAsset(key);
+
+		return s_textureAssetTable.get(filePath);
 	}
 
-	Texture Asset::ReloadTexture(FilePathView filePath)
+	const Texture& Asset::ReloadTexture(FilePathView filePath)
 	{
-		if (TextureAsset::IsRegistered(AssetNamePrefix + filePath))
+		if (s_textureAssetTable.isRegistered(filePath))
 		{
-			TextureAsset::Release(AssetNamePrefix + filePath);
-			TextureAsset::Load(AssetNamePrefix + filePath);
-			return TextureAsset(AssetNamePrefix + filePath);
+			s_textureAssetTable.unregister(filePath);
+			s_textureAssetTable.registerAsset(filePath, Texture{ FileSystem::PathAppend(s_baseDirectoryPath, filePath) });
+			return s_textureAssetTable.get(filePath);
 		}
 		return Asset::GetOrLoadTexture(filePath);
 	}
 
 	bool Asset::UnloadTexture(FilePathView filePath)
 	{
-		if (TextureAsset::IsRegistered(AssetNamePrefix + filePath))
+		if (s_textureAssetTable.isRegistered(filePath))
 		{
-			TextureAsset::Unregister(AssetNamePrefix + filePath);
+			s_textureAssetTable.unregister(filePath);
 			return true;
 		}
 		return false;
@@ -61,51 +101,45 @@ namespace noco
 
 	void Asset::UnloadAllTextures()
 	{
-		const HashTable<AssetName, AssetInfo> allAssetTable = TextureAsset::Enumerate();
-		for (const auto& [name, assetInfo] : allAssetTable)
-		{
-			if (name.starts_with(AssetNamePrefix))
-			{
-				TextureAsset::Unregister(name);
-			}
-		}
+		s_textureAssetTable.clear();
 	}
 
-	Audio Asset::GetOrLoadAudio(FilePathView filePath)
+	const Audio& Asset::GetOrLoadAudio(FilePathView filePath)
 	{
+		static const Audio EmptyAudio{};
+
 		if (filePath.isEmpty())
 		{
-			return Audio{};
+			return EmptyAudio;
 		}
-		const String key = AssetNamePrefix + filePath;
-		if (!AudioAsset::IsRegistered(key))
+		if (!s_audioAssetTable.isRegistered(filePath))
 		{
 			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
 			if (!FileSystem::IsFile(combinedPath))
 			{
-				return Audio{};
+				return EmptyAudio;
 			}
-			AudioAsset::Register(key, combinedPath);
+			s_audioAssetTable.registerAsset(filePath, Audio{ combinedPath });
 		}
-		return AudioAsset(key);
+		return s_audioAssetTable.get(filePath);
 	}
 
-	Audio Asset::ReloadAudio(FilePathView filePath)
+	const Audio& Asset::ReloadAudio(FilePathView filePath)
 	{
-		if (AudioAsset::IsRegistered(AssetNamePrefix + filePath))
+		if (s_audioAssetTable.isRegistered(filePath))
 		{
-			AudioAsset::Release(AssetNamePrefix + filePath);
-			AudioAsset::Load(AssetNamePrefix + filePath);
-			return AudioAsset(AssetNamePrefix + filePath);
+			s_audioAssetTable.unregister(filePath);
+			s_audioAssetTable.registerAsset(filePath, Audio{ FileSystem::PathAppend(s_baseDirectoryPath, filePath) });
+			return s_audioAssetTable.get(filePath);
 		}
 		return Asset::GetOrLoadAudio(filePath);
 	}
 
 	bool Asset::UnloadAudio(FilePathView filePath)
 	{
-		if (AudioAsset::IsRegistered(AssetNamePrefix + filePath))
+		if (s_audioAssetTable.isRegistered(filePath))
 		{
-			AudioAsset::Unregister(AssetNamePrefix + filePath);
+			s_audioAssetTable.unregister(filePath);
 			return true;
 		}
 		return false;
@@ -113,13 +147,6 @@ namespace noco
 
 	void Asset::UnloadAllAudios()
 	{
-		const HashTable<AssetName, AssetInfo> allAssetTable = AudioAsset::Enumerate();
-		for (const auto& [name, assetInfo] : allAssetTable)
-		{
-			if (name.starts_with(AssetNamePrefix))
-			{
-				AudioAsset::Unregister(name);
-			}
-		}
+		s_audioAssetTable.clear();
 	}
 }

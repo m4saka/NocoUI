@@ -25,7 +25,7 @@
 #include "ComponentSchemaLoader.hpp"
 #include "PlaceholderComponent.hpp"
 
-//#deine MONITOR_FPS
+//#define MONITOR_FPS
 
 using namespace noco;
 using namespace noco::editor;
