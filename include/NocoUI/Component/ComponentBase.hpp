@@ -140,6 +140,7 @@ namespace noco
 			if (withInstanceId && json.contains(U"_instanceId"))
 			{
 				setInstanceId(json[U"_instanceId"].get<uint64>());
+				s_nextInstanceId = Max(s_nextInstanceId.load(), m_instanceId + 1);
 			}
 			
 			return true;

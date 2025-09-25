@@ -593,6 +593,7 @@ namespace noco
 		if (withInstanceId && json.contains(U"_instanceId"))
 		{
 			node->m_instanceId = json[U"_instanceId"].get<uint64>();
+			s_nextInstanceId = Max(s_nextInstanceId.load(), node->m_instanceId + 1);
 		}
 
 		if (json.contains(U"components") && json[U"components"].isArray())
