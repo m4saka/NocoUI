@@ -21,7 +21,7 @@ namespace noco
 		Property<VerticalAlign> m_verticalAlign;
 		SmoothProperty<Color> m_cursorColor;
 		SmoothProperty<Color> m_selectionColor;
-		Property<bool> m_readOnly;
+		PropertyNonInteractive<bool> m_readOnly;
 		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ double m_cursorBlinkTime = 0.0;
@@ -277,14 +277,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<bool>& readOnly() const
+		bool readOnly() const
 		{
-			return m_readOnly.propertyValue();
+			return m_readOnly.value();
 		}
 
-		std::shared_ptr<TextBox> setReadOnly(const PropertyValue<bool>& readOnly)
+		std::shared_ptr<TextBox> setReadOnly(bool readOnly)
 		{
-			m_readOnly.setPropertyValue(readOnly);
+			m_readOnly.setValue(readOnly);
 			return shared_from_this();
 		}
 
