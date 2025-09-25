@@ -221,7 +221,7 @@ namespace noco
 		m_selectionAnchor = m_cursorIndex;
 	}
 
-	void TextBox::handleClipboardShortcut()
+	void TextBox::handleShortcut()
 	{
 		if (!m_isEditing || m_isDragging)
 		{
@@ -580,7 +580,7 @@ namespace noco
 					m_deletePressStopwatch.restart();
 				}
 
-				handleClipboardShortcut();
+				handleShortcut();
 			}
 
 			// CtrlキーまたはAltキーが押されている場合は通常の文字入力を無視

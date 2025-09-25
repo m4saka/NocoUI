@@ -104,7 +104,7 @@ namespace noco
 
 		void insertTextAtCursor(StringView text);
 
-		void handleClipboardShortcut();
+		void handleShortcut();
 
 
 		// IFocusableインタフェースの実装
