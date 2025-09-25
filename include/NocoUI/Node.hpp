@@ -837,7 +837,6 @@ namespace noco
 		return nullptr;
 	}
 
-
 	template <class TComponent>
 	[[nodiscard]]
 	Array<std::shared_ptr<TComponent>> Node::getComponents(RecursiveYN recursive) const

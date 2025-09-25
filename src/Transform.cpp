@@ -176,7 +176,6 @@ namespace noco
 		return count;
 	}
 
-
 	void Transform::clearParamRefs(StringView paramName)
 	{
 		if (paramName.isEmpty())

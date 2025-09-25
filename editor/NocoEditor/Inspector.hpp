@@ -642,7 +642,6 @@ namespace noco::editor
 			return headingNode;
 		}
 
-
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateNodeNameTextboxNode(StringView name, StringView value, std::function<void(StringView)> fnSetValue)
 		{
@@ -716,7 +715,6 @@ namespace noco::editor
 			
 			return propertyNode;
 		}
-
 
 		[[nodiscard]]
 		std::shared_ptr<Node> createVec2PropertyNodeWithTooltip(StringView componentName, StringView propertyName, const Vec2& currentValue, std::function<void(const Vec2&)> fnSetValue, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParameterRef = HasParameterRefYN::No, IsSizeYN isSize = IsSizeYN::No)

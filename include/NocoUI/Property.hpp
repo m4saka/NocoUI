@@ -119,7 +119,6 @@ namespace noco
 		{
 		}
 
-
 		Property(const char32_t* name, StringView defaultValue) requires std::same_as<T, String>
 			: m_name{ name }
 			, m_propertyValue{ String{ defaultValue } }

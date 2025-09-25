@@ -151,7 +151,6 @@ TEST_CASE("Serialization details", "[Serialization]")
 		REQUIRE(canvas->children().size() == 0);
 	}
 
-
 	SECTION("Version fields handling")
 	{
 		auto canvas = noco::Canvas::Create();

@@ -233,7 +233,6 @@ namespace noco
 			return shared_from_this();
 		}
 
-
 		[[nodiscard]]
 		const PropertyValue<Vec2>& startPoint() const
 		{

@@ -938,7 +938,6 @@ namespace noco
 		return m_children.back();
 	}
 
-
 	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json)
 	{
 		auto child = CreateFromJSON(json);
@@ -2273,7 +2272,6 @@ namespace noco
 		}
 	}
 
-
 	bool Node::hasChildren() const
 	{
 		return !m_children.isEmpty();
@@ -2628,7 +2626,6 @@ namespace noco
 	{
 		return m_currentInteractionState;
 	}
-
 
 	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
 	{

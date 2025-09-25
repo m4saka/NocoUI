@@ -106,7 +106,6 @@ namespace noco
 
 		void handleShortcut();
 
-
 		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;
 		void blur(const std::shared_ptr<Node>& node) override;

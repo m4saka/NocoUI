@@ -1057,7 +1057,6 @@ namespace noco
 		return count;
 	}
 
-
 	void Canvas::clearParamRefs(StringView paramName)
 	{
 		if (paramName.isEmpty())

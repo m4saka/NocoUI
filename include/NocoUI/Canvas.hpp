@@ -520,7 +520,6 @@ namespace noco
 		[[nodiscard]]
 		const Array<Event>& getFiredEventsAll() const;
 
-
 		[[nodiscard]]
 		const HashTable<String, ParamValue>& params() const
 		{

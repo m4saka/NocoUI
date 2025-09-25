@@ -114,7 +114,6 @@ namespace noco
 
 		std::tuple<bool, size_t, size_t> handleShortcut();
 
-
 		void updateScrollOffset(const RectF& rect);
 
 		size_t getLineCount() const;
