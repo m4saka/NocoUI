@@ -159,16 +159,84 @@ TEST_CASE("SmoothProperty InteractionState transitions", "[Property]")
 
 TEST_CASE("Property currentFrameOverride", "[Property]")
 {
-	SECTION("SmoothProperty override behavior")
+	SECTION("Override temporarily changes value")
 	{
-		noco::SmoothProperty<Vec2> posProperty{ U"position", Vec2{0,0} };
-		
+		noco::SmoothProperty<Vec2> posProperty{ U"position", Vec2{ 0, 0 } };
+
 		posProperty.update(noco::InteractionState::Default, {}, 0.016, {}, noco::SkipSmoothingYN::No);
-		REQUIRE(posProperty.value() == Vec2{0,0});
-		
+		REQUIRE(posProperty.value() == Vec2{ 0, 0 });
+
 		// overrideにより一時的に値を変更
-		posProperty.setCurrentFrameOverride(Vec2{100,200});
-		REQUIRE(posProperty.value() == Vec2{100,200});
+		posProperty.setCurrentFrameOverride(Vec2{ 100, 200 });
+		REQUIRE(posProperty.value() == Vec2{ 100, 200 });
 		REQUIRE(posProperty.hasCurrentFrameOverride());
+	}
+
+	SECTION("Property::currentFrameOverride() returns value in current frame")
+	{
+		noco::Property<double> property{ U"test", 100.0 };
+
+		// 現在のフレームでオーバーライド設定
+		property.setCurrentFrameOverride(200.0);
+		REQUIRE(property.hasCurrentFrameOverride());
+
+		// currentFrameOverride()が設定した値を返す
+		auto override = property.currentFrameOverride();
+		REQUIRE(override.has_value());
+		REQUIRE(*override == 200.0);
+
+		// 次のフレームに進む
+		System::Update();
+
+		// 次のフレームではnoneを返すべき
+		auto overrideNextFrame = property.currentFrameOverride();
+		REQUIRE_FALSE(overrideNextFrame.has_value());
+		REQUIRE_FALSE(property.hasCurrentFrameOverride());
+	}
+
+	SECTION("SmoothProperty::currentFrameOverride() returns value in current frame")
+	{
+		noco::SmoothProperty<Color> property{ U"color", Color{ 255, 0, 0 } };
+
+		// 現在のフレームでオーバーライド設定
+		property.setCurrentFrameOverride(Color{ 0, 255, 0 });
+		REQUIRE(property.hasCurrentFrameOverride());
+
+		// currentFrameOverride()が設定した値を返す
+		auto override = property.currentFrameOverride();
+		REQUIRE(override.has_value());
+		REQUIRE(*override == Color{ 0, 255, 0 });
+
+		// 次のフレームに進む
+		System::Update();
+
+		// 次のフレームではnoneを返すべき
+		auto overrideNextFrame = property.currentFrameOverride();
+		REQUIRE_FALSE(overrideNextFrame.has_value());
+		REQUIRE_FALSE(property.hasCurrentFrameOverride());
+	}
+
+	SECTION("PropertyNonInteractive::currentFrameOverride() returns value in current frame")
+	{
+		noco::PropertyNonInteractive<bool> property{ U"active", true };
+
+		// 現在のフレームでオーバーライド設定
+		property.setCurrentFrameOverride(false);
+		REQUIRE(property.hasCurrentFrameOverride());
+		REQUIRE(property.value() == false);
+
+		// currentFrameOverride()が設定した値を返す
+		auto override = property.currentFrameOverride();
+		REQUIRE(override.has_value());
+		REQUIRE(*override == false);
+
+		// 次のフレームに進む
+		System::Update();
+
+		// 次のフレームではnoneを返すべき
+		auto overrideNextFrame = property.currentFrameOverride();
+		REQUIRE_FALSE(overrideNextFrame.has_value());
+		REQUIRE_FALSE(property.hasCurrentFrameOverride());
+		REQUIRE(property.value() == true);  // 元の値に戻る
 	}
 }

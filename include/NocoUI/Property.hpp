@@ -191,7 +191,7 @@ namespace noco
 		const Optional<T>& currentFrameOverride() const
 		{
 			static const Optional<T> NoneValue = none;
-			if (hasCurrentFrameOverride())
+			if (!hasCurrentFrameOverride())
 			{
 				return NoneValue;
 			}
@@ -537,7 +537,7 @@ namespace noco
 		const Optional<T>& currentFrameOverride() const
 		{
 			static const Optional<T> NoneValue = none;
-			if (hasCurrentFrameOverride())
+			if (!hasCurrentFrameOverride())
 			{
 				return NoneValue;
 			}
@@ -781,7 +781,7 @@ namespace noco
 		const Optional<T>& currentFrameOverride() const
 		{
 			static const Optional<T> NoneValue = none;
-			if (hasCurrentFrameOverride())
+			if (!hasCurrentFrameOverride())
 			{
 				return NoneValue;
 			}
