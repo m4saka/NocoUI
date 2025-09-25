@@ -263,6 +263,27 @@ TEST_CASE("Node hierarchy advanced operations", "[Node]")
 	}
 }
 
+TEST_CASE("Node activeSelf with parameter reference", "[Node][Param]")
+{
+	auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+	auto node = noco::Node::Create(U"ParamControlledNode");
+	canvas->addChild(node);
+
+	// ノードを非アクティブにしておく
+	node->setActive(noco::ActiveYN::No);
+	REQUIRE(node->activeInHierarchy() == false);
+
+	// パラメータ参照で再アクティブ化
+	canvas->setParamValue(U"nodeEnabled", true);
+	node->setActiveSelfParamRef(U"nodeEnabled");
+
+	canvas->update();
+	REQUIRE(node->activeSelf() == true);
+
+	// パラメータでtrueになった場合、activeInHierarchyも更新される
+	REQUIRE(node->activeInHierarchy() == true);
+}
+
 // Nodeの座標変換
 TEST_CASE("Node coordinate transformations", "[Node]")
 {

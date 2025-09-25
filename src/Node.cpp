@@ -1297,7 +1297,7 @@ namespace noco
 		m_activeSelf.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
 		m_interactable.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
 		m_styleState.update(InteractionState::Default, EmptyStringArray, 0.0, params, SkipSmoothingYN::No);
-		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() &&
+		if (m_prevActiveSelfAfterUpdateNodeParams != m_activeSelf.value() ||
 			m_prevActiveSelfParamOverrideAfterUpdateNodeParams != m_activeSelf.currentFrameOverride())
 		{
 			// パラメータ起因でactiveSelfが変化した場合はレイアウト更新
