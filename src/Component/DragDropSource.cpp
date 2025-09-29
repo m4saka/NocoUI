@@ -39,7 +39,7 @@ namespace noco
 
 				m_isDragging = true;
 			}
-			if (m_isPressed)
+			if (m_isDragging)
 			{
 				detail::s_canvasUpdateContext.draggingNode = sourceNode;
 			}
@@ -59,6 +59,10 @@ namespace noco
 			}
 			m_isPressed = false;
 			m_isDragging = false;
+			if (auto draggingNode = detail::s_canvasUpdateContext.draggingNode.lock(); draggingNode && draggingNode.get() == sourceNode.get())
+			{
+				detail::s_canvasUpdateContext.draggingNode.reset();
+			}
 		}
 
 		if (m_movesTransformTranslate)
