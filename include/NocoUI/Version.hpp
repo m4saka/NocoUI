@@ -3,5 +3,7 @@
 
 namespace noco
 {
-	constexpr s3d::StringView NocoUIVersion = U"0.2.0";
+	constexpr StringView NocoUIVersion = U"0.2.1";
+
+	constexpr int32 CurrentSerializedVersion = 2;
 }

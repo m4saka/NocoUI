@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "YN.hpp"
+#include "Version.hpp"
 #ifndef NOCO_NOINCLUDE_MAGIC_ENUM
 #include "ThirdParty/magic_enum.hpp" // https://github.com/Neargye/magic_enum
 #endif
@@ -12,8 +13,6 @@ namespace noco
 
 namespace noco
 {
-	constexpr int32 CurrentSerializedVersion = 2;
-
 	template <typename T>
 	[[nodiscard]]
 	T StringToEnum(StringView value, T defaultValue) requires std::is_enum_v<T>
