@@ -222,6 +222,132 @@ TEST_CASE("Tween component", "[Tween]")
 		}
 	}
 
+	SECTION("PingPong loop with loopDuration")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(0.0)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::PingPong)
+			->setLoopDuration(2.0)
+			->setApplyDuringDelay(false);
+		node->addComponent(tween);
+
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(0.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(1.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(100.0).margin(0.01));
+
+		tween->setManualTime(1.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(2.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(2.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(3.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(100.0).margin(0.01));
+
+		tween->setManualTime(3.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(4.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+	}
+
+	SECTION("PingPong loop with loopDuration and delay")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(0.5)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::PingPong)
+			->setLoopDuration(3.0)
+			->setApplyDuringDelay(false);
+		node->addComponent(tween);
+
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(0.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(1.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(1.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(100.0).margin(0.01));
+
+		tween->setManualTime(2.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(2.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(3.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(3.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+
+		tween->setManualTime(4.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(4.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(100.0).margin(0.01));
+
+		tween->setManualTime(5.0);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(0.01));
+
+		tween->setManualTime(5.5);
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(0.0).margin(0.01));
+	}
+
 	SECTION("Tween tag and batch control")
 	{
 		auto canvas = noco::Canvas::Create();

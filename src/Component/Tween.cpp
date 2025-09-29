@@ -154,20 +154,18 @@ namespace noco
 		if (m_manualMode.value())
 		{
 			time = m_manualTime.value();
-			// マニュアルモードでloopDurationが設定されている場合、manualTimeを直接fmod
-			if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
-			{
-				time = Math::Fmod(time, loopDuration);
-			}
 		}
 		else
 		{
 			time = m_stopwatch.sF();
-			// 自動モードでloopDurationが設定されている場合
-			if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
-			{
-				time = Math::Fmod(time, loopDuration);
-			}
+		}
+
+		const double originalTime = time;
+
+		// loopDurationが指定されている場合は適用
+		if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
+		{
+			time = Math::Fmod(time, loopDuration);
 		}
 		
 		// delay時間中の処理
@@ -248,6 +246,23 @@ namespace noco
 				if (cycle % 2 == 1)
 				{
 					rawProgress = 1.0 - rawProgress;
+				}
+			}
+		}
+		else if (loopDuration > 0.0 && loopType == TweenLoopType::PingPong)
+		{
+			if (duration > 0.0)
+			{
+				const double pingPongCycleDuration = duration * 2;
+				const double animTimeInCycle = Math::Fmod(animationTime, pingPongCycleDuration);
+
+				if (animTimeInCycle <= duration)
+				{
+					rawProgress = animTimeInCycle / duration;
+				}
+				else
+				{
+					rawProgress = 1.0 - ((animTimeInCycle - duration) / duration);
 				}
 			}
 		}
