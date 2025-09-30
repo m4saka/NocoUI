@@ -49,8 +49,11 @@ namespace noco
 
 		const SizeF regionSize = regionRect.size;
 		const Vec2 center = regionRect.center();
-		const double minDimension = Min(regionSize.x, regionSize.y);
-		const double radius = minDimension / 2.0;
+		const double absX = Abs(regionSize.x);
+		const double absY = Abs(regionSize.y);
+		const double minAbsDimension = Min(absX, absY);
+		const double minDimension = absX < absY ? regionSize.x : regionSize.y;
+		const double radius = minAbsDimension / 2.0;
 
 		switch (shapeType)
 		{
@@ -153,7 +156,7 @@ namespace noco
 			|| shapeType == ShapeType::Heart
 			|| shapeType == ShapeType::Squircle;
 
-		isScaled = !preserveAspect && regionSize.x != regionSize.y && isRadiusBasedShape && Abs(minDimension) > 0.0;
+		isScaled = !preserveAspect && regionSize.x != regionSize.y && isRadiusBasedShape && minAbsDimension > 0.0;
 
 		if (isScaled)
 		{
