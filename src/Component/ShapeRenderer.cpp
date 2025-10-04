@@ -88,12 +88,12 @@ namespace noco
 		case ShapeType::Arrow:
 			{
 				const Vec2 startPoint_px{
-					regionSize.x * startPoint.x,
-					regionSize.y * startPoint.y
+					regionRect.pos.x + regionSize.x * startPoint.x,
+					regionRect.pos.y + regionSize.y * startPoint.y
 				};
 				const Vec2 endPoint_px{
-					regionSize.x * endPoint.x,
-					regionSize.y * endPoint.y
+					regionRect.pos.x + regionSize.x * endPoint.x,
+					regionRect.pos.y + regionSize.y * endPoint.y
 				};
 				baseShape = Shape2D::Arrow(startPoint_px, endPoint_px, thickness, arrowHeadSize);
 			}
@@ -101,12 +101,12 @@ namespace noco
 		case ShapeType::DoubleHeadedArrow:
 			{
 				const Vec2 startPoint_px{
-					regionSize.x * startPoint.x,
-					regionSize.y * startPoint.y
+					regionRect.pos.x + regionSize.x * startPoint.x,
+					regionRect.pos.y + regionSize.y * startPoint.y
 				};
 				const Vec2 endPoint_px{
-					regionSize.x * endPoint.x,
-					regionSize.y * endPoint.y
+					regionRect.pos.x + regionSize.x * endPoint.x,
+					regionRect.pos.y + regionSize.y * endPoint.y
 				};
 				baseShape = Shape2D::DoubleHeadedArrow(startPoint_px, endPoint_px, thickness, arrowHeadSize);
 			}
