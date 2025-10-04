@@ -230,7 +230,7 @@ namespace noco
 
 	RectF FlowLayout::executeChild(const RectF& parentRect, const std::shared_ptr<Node>& child, const MeasureInfo::MeasuredChild& measuredChild, double offsetY, double lineHeight, double* pOffsetX) const
 	{
-		if (const auto pInlineRegion = child->inlineRegion())
+		if (child->inlineRegion())
 		{
 			const double w = measuredChild.size.x;
 			const double h = measuredChild.size.y;

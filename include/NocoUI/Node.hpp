@@ -1109,7 +1109,7 @@ namespace noco
 				}
 				const SizeF& childSize = sizes[i];
 				const LRTB& margin = margins[i];
-				if (const auto pInlineRegion = child->inlineRegion())
+				if (child->inlineRegion())
 				{
 					if (!isFirstInlineRegionChild)
 					{
@@ -1267,7 +1267,7 @@ namespace noco
 				}
 				const SizeF& childSize = sizes[i];
 				const LRTB& margin = margins[i];
-				if (const auto pInlineRegion = child->inlineRegion())
+				if (child->inlineRegion())
 				{
 					if (!isFirstInlineRegionChild)
 					{

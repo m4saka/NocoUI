@@ -160,8 +160,6 @@ namespace noco
 			time = m_stopwatch.sF();
 		}
 
-		const double originalTime = time;
-
 		// loopDurationが指定されている場合は適用
 		if (loopDuration > 0.0 && m_loopType.value() != TweenLoopType::None)
 		{
