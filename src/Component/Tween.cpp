@@ -292,4 +292,19 @@ namespace noco
 			updateColor(node, easedProgress);
 		}
 	}
+
+	std::shared_ptr<Tween> Tween::setActive(const PropertyValue<bool>& active)
+	{
+		bool prevActive = m_active.value();
+
+		m_active.setPropertyValue(active);
+
+		if (m_restartOnActive.value() && !prevActive && m_active.value())
+		{
+			// restartOnActiveが有効の場合、非アクティブ→アクティブに変化した場合は最初からやり直す
+			m_stopwatch.restart();
+		}
+
+		return shared_from_this();
+	}
 }

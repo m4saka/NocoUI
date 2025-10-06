@@ -142,11 +142,7 @@ namespace noco
 			return m_active.propertyValue();
 		}
 
-		std::shared_ptr<Tween> setActive(const PropertyValue<bool>& active)
-		{
-			m_active.setPropertyValue(active);
-			return shared_from_this();
-		}
+		std::shared_ptr<Tween> setActive(const PropertyValue<bool>& active);
 
 		// Translate関連のgetter/setter
 		[[nodiscard]]
