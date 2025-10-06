@@ -543,12 +543,6 @@ namespace noco
 			m_params[name] = MakeParamValue(value);
 		}
 
-		template<typename... Args>
-		void setParamValues(const std::pair<String, Args>&... params)
-		{
-			(setParamValue(params.first, params.second), ...);
-		}
-
 		void setParamValues(std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
 		{
 			for (const auto& [name, value] : params)
