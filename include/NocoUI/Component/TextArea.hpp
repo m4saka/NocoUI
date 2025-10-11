@@ -19,6 +19,8 @@ namespace noco
 		SmoothProperty<Vec2> m_verticalPadding;
 		SmoothProperty<Color> m_cursorColor;
 		SmoothProperty<Color> m_selectionColor;
+		PropertyNonInteractive<String> m_placeholderText;
+		SmoothProperty<Color> m_placeholderColor;
 		PropertyNonInteractive<bool> m_readOnly;
 		PropertyNonInteractive<String> m_tag;
 
@@ -140,7 +142,7 @@ namespace noco
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<Color>>& cursorColor = unspecified,
 			const PropertyValue<Color>& selectionColor = Color{ 0, 26, 77, 128 })
-			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_readOnly, &m_tag } }
+			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_placeholderText, &m_placeholderColor, &m_readOnly, &m_tag } }
 			, m_text{ U"text", U"" }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
@@ -149,6 +151,8 @@ namespace noco
 			, m_verticalPadding{ U"verticalPadding", verticalPadding }
 			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
 			, m_selectionColor{ U"selectionColor", selectionColor }
+			, m_placeholderText{ U"placeholderText", U"" }
+			, m_placeholderColor{ U"placeholderColor", Color{ 0, 0, 0, 96 } }
 			, m_readOnly{ U"readOnly", false }
 			, m_tag{ U"tag", U"" }
 		{
@@ -264,6 +268,30 @@ namespace noco
 		bool isEditing() const override
 		{
 			return m_isEditing;
+		}
+
+		[[nodiscard]]
+		const String& placeholderText() const
+		{
+			return m_placeholderText.value();
+		}
+
+		std::shared_ptr<TextArea> setPlaceholderText(const String& placeholderText)
+		{
+			m_placeholderText.setValue(placeholderText);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& placeholderColor() const
+		{
+			return m_placeholderColor.propertyValue();
+		}
+
+		std::shared_ptr<TextArea> setPlaceholderColor(const PropertyValue<Color>& placeholderColor)
+		{
+			m_placeholderColor.setPropertyValue(placeholderColor);
+			return shared_from_this();
 		}
 
 		[[nodiscard]]

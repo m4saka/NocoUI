@@ -1025,6 +1025,13 @@ namespace noco::editor
 			.tooltipDetail = U"入力されたテキスト内容\n※フォーカス時は要素のstyleStateが\"focused\"へ、フォーカスされていない時は\"unfocused\"へ上書きされます",
 			.refreshesEveryFrame = true,
 		};
+		metadata[PropertyKey{ U"TextBox", U"placeholderText" }] = PropertyMetadata{
+			.tooltip = U"プレースホルダー表示のテキスト",
+			.tooltipDetail = U"テキストが空の場合に表示されるテキスト",
+		};
+		metadata[PropertyKey{ U"TextBox", U"placeholderColor" }] = PropertyMetadata{
+			.tooltip = U"プレースホルダー表示の文字色",
+		};
 		metadata[PropertyKey{ U"TextBox", U"readOnly" }] = PropertyMetadata{
 			.tooltip = U"読み取り専用",
 			.tooltipDetail = U"有効にすると編集不可になりますが、テキストの選択やコピーは可能です",
@@ -1063,6 +1070,13 @@ namespace noco::editor
 			.tooltipDetail = U"入力されたテキスト内容\n※フォーカス時は要素のstyleStateが\"focused\"へ、フォーカスされていない時は\"unfocused\"へ上書きされます",
 			.numTextAreaLines = 3,
 			.refreshesEveryFrame = true,
+		};
+		metadata[PropertyKey{ U"TextArea", U"placeholderText" }] = PropertyMetadata{
+			.tooltip = U"プレースホルダー表示のテキスト",
+			.tooltipDetail = U"テキストが空の場合に表示されるテキスト",
+		};
+		metadata[PropertyKey{ U"TextArea", U"placeholderColor" }] = PropertyMetadata{
+			.tooltip = U"プレースホルダー表示の文字色",
 		};
 		metadata[PropertyKey{ U"TextArea", U"readOnly" }] = PropertyMetadata{
 			.tooltip = U"読み取り専用",

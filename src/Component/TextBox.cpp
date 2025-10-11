@@ -272,7 +272,7 @@ namespace noco
 		{
 			return;
 		}
-
+		
 		// Ctrl+C
 		if (KeyC.down())
 		{
@@ -282,7 +282,7 @@ namespace noco
 			}
 			return;
 		}
-		
+
 		// Ctrl+A
 		if (KeyA.down())
 		{
@@ -863,6 +863,36 @@ namespace noco
 					pos.x += glyph.xAdvance * m_cache.scale;
 
 					if (pos.x > rect.br().x)
+					{
+						break;
+					}
+				}
+			}
+
+			if (!m_isEditing && m_text.value().isEmpty() && !m_placeholderText.value().isEmpty())
+			{
+				const Font font = (!m_fontAssetName.value().empty() && FontAsset::IsRegistered(m_fontAssetName.value()))
+					? FontAsset(m_fontAssetName.value())
+					: SimpleGUI::GetFont();
+
+				const int32 baseFontSize = font.fontSize();
+				const double scale = (baseFontSize == 0) ? 1.0 : (m_fontSize.value() / baseFontSize);
+				const Array<Glyph> placeholderGlyphs = font.getGlyphs(m_placeholderText.value());
+
+				Vec2 placeholderPos = offset;
+				const ScopedCustomShader2D shader{ Font::GetPixelShader(font.method()) };
+				for (const auto& glyph : placeholderGlyphs)
+				{
+					if (placeholderPos.x + glyph.xAdvance * scale > rect.x && placeholderPos.x < rect.br().x)
+					{
+						glyph.texture.scaled(scale).draw(
+							placeholderPos + glyph.getOffset(scale),
+							m_placeholderColor.value()
+						);
+					}
+					placeholderPos.x += glyph.xAdvance * scale;
+
+					if (placeholderPos.x > rect.br().x)
 					{
 						break;
 					}

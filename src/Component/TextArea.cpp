@@ -1070,6 +1070,53 @@ namespace noco
 				}
 			}
 
+			if (!m_isEditing && m_text.value().isEmpty() && !m_placeholderText.value().isEmpty())
+			{
+				const Font font = (!m_fontAssetName.value().empty() && FontAsset::IsRegistered(m_fontAssetName.value()))
+					? FontAsset(m_fontAssetName.value())
+					: SimpleGUI::GetFont();
+
+				const int32 baseFontSize = font.fontSize();
+				const double scale = (baseFontSize == 0) ? 1.0 : (m_fontSize.value() / baseFontSize);
+				const Array<Glyph> placeholderGlyphs = font.getGlyphs(m_placeholderText.value());
+				const double lineHeight = font.height(m_fontSize.value());
+
+				Vec2 placeholderPos = rect.pos;
+				{
+					const ScopedCustomShader2D shader{ Font::GetPixelShader(font.method()) };
+					for (const auto& glyph : placeholderGlyphs)
+					{
+						if (glyph.codePoint == U'\n')
+						{
+							placeholderPos.x = rect.x;
+							placeholderPos.y += lineHeight;
+							if (placeholderPos.y > rect.br().y)
+							{
+								break;
+							}
+							continue;
+						}
+
+						if (placeholderPos.x + glyph.xAdvance * scale > rect.x && placeholderPos.x < rect.br().x)
+						{
+							if (placeholderPos.y >= rect.y && placeholderPos.y < rect.br().y)
+							{
+								glyph.texture.scaled(scale).draw(
+									placeholderPos + glyph.getOffset(scale),
+									m_placeholderColor.value()
+								);
+							}
+						}
+						placeholderPos.x += glyph.xAdvance * scale;
+
+						if (placeholderPos.x > rect.br().x)
+						{
+							break;
+						}
+					}
+				}
+			}
+
 			// カーソルを描画
 			if (m_isEditing && m_cursorBlinkTime < 0.5)
 			{
