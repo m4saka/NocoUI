@@ -379,6 +379,7 @@ namespace noco
 		Array<std::shared_ptr<Node>> m_children;
 		AutoFitMode m_autoFitMode = AutoFitMode::None;
 		HashTable<String, ParamValue> m_params;
+		String m_defaultFontAssetName = U"";
 		/* NonSerialized */ SizeF m_size = DefaultSize;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
@@ -773,5 +774,17 @@ namespace noco
 
 		// タグによるToggleコンポーネントの値設定（詓当するすべてに設定）
 		void setToggleValueByTag(StringView tag, bool value);
+
+		[[nodiscard]]
+		const String& defaultFontAssetName() const
+		{
+			return m_defaultFontAssetName;
+		}
+
+		std::shared_ptr<Canvas> setDefaultFontAssetName(StringView fontAssetName)
+		{
+			m_defaultFontAssetName = fontAssetName;
+			return shared_from_this();
+		}
 	};
 }

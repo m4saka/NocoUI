@@ -4143,6 +4143,18 @@ namespace noco::editor
 					m_contextMenu,
 					EnumNames<AutoFitMode>());
 				canvasSettingNode->addChild(autoFitModePropertyNode);
+
+				const auto defaultFontAssetNamePropertyNode = createPropertyNodeWithTooltip(
+					U"Canvas",
+					U"defaultFontAssetName",
+					m_canvas->defaultFontAssetName(),
+					[this](StringView value)
+					{
+						m_canvas->setDefaultFontAssetName(String{ value });
+					},
+					HasInteractivePropertyValueYN::No,
+					HasParameterRefYN::No);
+				canvasSettingNode->addChild(defaultFontAssetNamePropertyNode);
 			}
 
 			canvasSettingNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);

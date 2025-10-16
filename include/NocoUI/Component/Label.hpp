@@ -125,13 +125,13 @@ namespace noco
 
 			Cache() = default;
 
-			bool refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
+			bool refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
 		/* NonSerialized */ mutable Cache m_autoResizeCache;
 
-		SizeF getContentSizeForAutoResize() const;
+		SizeF getContentSizeForAutoResize(const String& canvasDefaultFontAssetName = U"") const;
 
 	public:
 		explicit Label(
@@ -477,8 +477,8 @@ namespace noco
 			return shared_from_this();
 		}
 
-		SizeF getContentSize() const;
+		SizeF getContentSize(const String& canvasDefaultFontAssetName = U"") const;
 
-		SizeF getContentSize(const SizeF& rectSize) const;
+		SizeF getContentSize(const SizeF& rectSize, const String& canvasDefaultFontAssetName = U"") const;
 	};
 }

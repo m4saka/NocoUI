@@ -1,12 +1,21 @@
 ﻿#include "NocoUI/Component/Label.hpp"
 #include "NocoUI/Node.hpp"
+#include "NocoUI/Canvas.hpp"
 
 namespace noco
 {
-	bool Label::Cache::refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
+	namespace
+	{
+		static const String EmptyString = U"";
+	}
+
+	bool Label::Cache::refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
 		const bool hasCustomFont = fontOpt.has_value();
-		const Font newFont = hasCustomFont ? *fontOpt : ((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont());
+		const Font newFont = hasCustomFont ? *fontOpt :
+			((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) :
+			((!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName)) ? FontAsset(canvasDefaultFontAssetName) :
+			SimpleGUI::GetFont()));
 
 		if (prevParams.has_value() &&
 			!prevParams->isDirty(text, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
@@ -191,7 +200,7 @@ namespace noco
 		return true;
 	}
 
-	SizeF Label::getContentSizeForAutoResize() const
+	SizeF Label::getContentSizeForAutoResize(const String& canvasDefaultFontAssetName) const
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
@@ -204,6 +213,7 @@ namespace noco
 			m_text.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			m_minFontSize.value(),
 			m_characterSpacing.value(),
@@ -225,7 +235,15 @@ namespace noco
 	{
 		if (m_sizingMode.value() == LabelSizingMode::AutoResize)
 		{
-			const SizeF size = getContentSizeForAutoResize();
+			const String& canvasDefaultFontAssetName = [&node]() -> const String&
+				{
+					if (const auto canvas = node->containedCanvas())
+					{
+						return canvas->defaultFontAssetName();
+					}
+					return EmptyString;
+				}();
+			const SizeF size = getContentSizeForAutoResize(canvasDefaultFontAssetName);
 			if (node->regionRect().size != size)
 			{
 				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
@@ -266,10 +284,20 @@ namespace noco
 			-padding.left
 		);
 
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (const auto canvas = node.containedCanvas())
+				{
+					return canvas->defaultFontAssetName();
+				}
+				return EmptyString;
+			}();
+
 		m_cache.refreshIfDirty(
 			text,
 			m_fontOpt,
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			m_minFontSize.value(),
 			characterSpacing,
@@ -476,7 +504,7 @@ namespace noco
 		}
 	}
 
-	SizeF Label::getContentSize() const
+	SizeF Label::getContentSize(const String& canvasDefaultFontAssetName) const
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
@@ -489,6 +517,7 @@ namespace noco
 			m_text.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			m_minFontSize.value(),
 			m_characterSpacing.value(),
@@ -500,12 +529,13 @@ namespace noco
 		return m_cache.regionSize;
 	}
 
-	SizeF Label::getContentSize(const SizeF& rectSize) const
+	SizeF Label::getContentSize(const SizeF& rectSize, const String& canvasDefaultFontAssetName) const
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			m_minFontSize.value(),
 			m_characterSpacing.value(),

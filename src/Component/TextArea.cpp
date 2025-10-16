@@ -4,7 +4,12 @@
 #include "NocoUI/detail/Input.hpp"
 namespace noco
 {
-	void TextArea::Cache::refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize)
+	namespace
+	{
+		static const String EmptyString = U"";
+	}
+
+	void TextArea::Cache::refreshIfDirty(StringView text, StringView fontAssetName, StringView canvasDefaultFontAssetName, double fontSize, const SizeF& rectSize)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, rectSize))
 		{
@@ -18,7 +23,9 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont();
+		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) :
+			((!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName)) ? FontAsset(canvasDefaultFontAssetName) :
+			SimpleGUI::GetFont());
 		fontMethod = font.method();
 		const Array<Glyph> allGlyphs = font.getGlyphs(text);
 		const int32 baseFontSize = font.fontSize();
@@ -177,9 +184,22 @@ namespace noco
 
 	std::pair<size_t, size_t> TextArea::moveCursorToMousePos(const RectF& rect, const std::shared_ptr<Node>& node)
 	{
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (node)
+				{
+					if (const auto canvas = node->containedCanvas())
+					{
+						return canvas->defaultFontAssetName();
+					}
+				}
+				return EmptyString;
+			}();
+
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 		
@@ -316,11 +336,12 @@ namespace noco
 		return { false, 0, 0 };
 	}
 
-	void TextArea::updateScrollOffset(const RectF& rect)
+	void TextArea::updateScrollOffset(const RectF& rect, const String& canvasDefaultFontAssetName)
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -422,6 +443,15 @@ namespace noco
 			return;
 		}
 
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (const auto canvas = node->containedCanvas())
+				{
+					return canvas->defaultFontAssetName();
+				}
+				return EmptyString;
+			}();
+
 		const Vec2 horizontalPadding = m_horizontalPadding.value();
 		const Vec2 verticalPadding = m_verticalPadding.value();
 
@@ -431,6 +461,7 @@ namespace noco
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -535,7 +566,7 @@ namespace noco
 					m_cursorLine = line;
 					m_cursorColumn = column;
 				}
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 			else
 			{
@@ -582,7 +613,7 @@ namespace noco
 				}
 				m_isEditing = true;
 				CurrentFrame::SetFocusedNode(node);
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 			else if (node->isRightMouseDown())
 			{
@@ -806,6 +837,7 @@ namespace noco
 					m_cache.refreshIfDirty(
 						m_text.value(),
 						m_fontAssetName.value(),
+						canvasDefaultFontAssetName,
 						m_fontSize.value(),
 						rect.size);
 
@@ -825,6 +857,7 @@ namespace noco
 					m_cache.refreshIfDirty(
 						m_text.value(),
 						m_fontAssetName.value(),
+						canvasDefaultFontAssetName,
 						m_fontSize.value(),
 						rect.size);
 
@@ -868,6 +901,7 @@ namespace noco
 					m_cache.refreshIfDirty(
 						m_text.value(),
 						m_fontAssetName.value(),
+						canvasDefaultFontAssetName,
 						m_fontSize.value(),
 						rect.size);
 
@@ -886,7 +920,7 @@ namespace noco
 					m_selectionAnchorLine = m_cursorLine;
 					m_selectionAnchorColumn = m_cursorColumn;
 				}
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 
 			m_cursorBlinkTime += Scene::DeltaTime();
@@ -929,13 +963,23 @@ namespace noco
 
 		// stretchedはtop,right,bottom,leftの順
 		const RectF rect = node.regionRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
-		
+
 		// クリッピング用の矩形（Transformer2DがScissorRectに効かないため）
 		const RectF clipRect = node.unrotatedTransformedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (const auto canvas = node.containedCanvas())
+				{
+					return canvas->defaultFontAssetName();
+				}
+				return EmptyString;
+			}();
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -1028,6 +1072,7 @@ namespace noco
 				m_editingCache.refreshIfDirty(
 					editingText,
 					m_fontAssetName.value(),
+					canvasDefaultFontAssetName,
 					m_fontSize.value(),
 					SizeF{ std::numeric_limits<double>::max(), std::numeric_limits<double>::max() }); // 折り返しが必要ないため、適当な大きい値を指定
 

@@ -5,7 +5,11 @@
 
 namespace noco
 {
-	void TextBox::Cache::refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize)
+	namespace
+	{
+		static const String EmptyString = U"";
+	}
+	void TextBox::Cache::refreshIfDirty(StringView text, StringView fontAssetName, StringView canvasDefaultFontAssetName, double fontSize, const SizeF& rectSize)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(text, fontAssetName, fontSize, rectSize))
 		{
@@ -19,7 +23,9 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) : SimpleGUI::GetFont();
+		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) :
+			((!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName)) ? FontAsset(canvasDefaultFontAssetName) :
+			SimpleGUI::GetFont());
 		fontMethod = font.method();
 		glyphs = font.getGlyphs(text);
 		const int32 baseFontSize = font.fontSize();
@@ -160,9 +166,22 @@ namespace noco
 
 	size_t TextBox::moveCursorToMousePos(const RectF& rect, const std::shared_ptr<Node>& node)
 	{
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (node)
+				{
+					if (const auto canvas = node->containedCanvas())
+					{
+						return canvas->defaultFontAssetName();
+					}
+				}
+				return EmptyString;
+			}();
+
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -336,6 +355,15 @@ namespace noco
 			return;
 		}
 
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (const auto canvas = node->containedCanvas())
+				{
+					return canvas->defaultFontAssetName();
+				}
+				return EmptyString;
+			}();
+
 		const Vec2 horizontalPadding = m_horizontalPadding.value();
 		const Vec2 verticalPadding = m_verticalPadding.value();
 
@@ -383,6 +411,7 @@ namespace noco
 						m_cache.refreshIfDirty(
 							m_text.value(),
 							m_fontAssetName.value(),
+							canvasDefaultFontAssetName,
 							m_fontSize.value(),
 							rect.size);
 						const size_t rightMostCursorIndex = m_cache.getCursorIndex(getDrawOffsetX(), m_scrollOffset, rect.w);
@@ -400,7 +429,7 @@ namespace noco
 					m_cursorIndex = moveCursorToMousePos(rect, node);
 				}
 
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 			else
 			{
@@ -451,7 +480,7 @@ namespace noco
 				}
 				m_isEditing = true;
 				CurrentFrame::SetFocusedNode(node);
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 			else if (node->isRightMouseDown())
 			{
@@ -621,7 +650,7 @@ namespace noco
 					// Shiftを離した状態で矢印キーを押した場合は選択解除
 					m_selectionAnchor = m_cursorIndex;
 				}
-				updateScrollOffset(rect);
+				updateScrollOffset(rect, canvasDefaultFontAssetName);
 			}
 
 			// カーソル点滅
@@ -645,11 +674,12 @@ namespace noco
 		}
 	}
 
-	void TextBox::updateScrollOffset(const RectF& rect)
+	void TextBox::updateScrollOffset(const RectF& rect, const String& canvasDefaultFontAssetName)
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -757,13 +787,23 @@ namespace noco
 
 		// stretchedはtop,right,bottom,leftの順
 		const RectF rect = node.regionRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
-		
+
 		// クリッピング用の矩形（Transformer2DがScissorRectに効かないため）
 		const RectF clipRect = node.unrotatedTransformedRect().stretched(-verticalPadding.x, -horizontalPadding.y, -verticalPadding.y, -horizontalPadding.x);
+
+		const String& canvasDefaultFontAssetName = [&node]() -> const String&
+			{
+				if (const auto canvas = node.containedCanvas())
+				{
+					return canvas->defaultFontAssetName();
+				}
+				return EmptyString;
+			}();
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
 			m_fontAssetName.value(),
+			canvasDefaultFontAssetName,
 			m_fontSize.value(),
 			rect.size);
 
@@ -832,6 +872,7 @@ namespace noco
 				m_editingCache.refreshIfDirty(
 					editingText,
 					m_fontAssetName.value(),
+					canvasDefaultFontAssetName,
 					m_fontSize.value(),
 					rect.size);
 

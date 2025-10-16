@@ -344,6 +344,8 @@ namespace noco
 			json[U"params"] = paramsObj;
 		}
 
+		json[U"defaultFontAssetName"] = m_defaultFontAssetName;
+
 		return json;
 	}
 	
@@ -453,6 +455,11 @@ namespace noco
 			}
 		}
 
+		if (json.contains(U"defaultFontAssetName"))
+		{
+			canvas->m_defaultFontAssetName = json[U"defaultFontAssetName"].get<String>();
+		}
+
 		canvas->markLayoutAsDirty();
 
 		return canvas;
@@ -546,6 +553,15 @@ namespace noco
 			{
 				m_autoFitMode = *modeOpt;
 			}
+		}
+
+		if (json.contains(U"defaultFontAssetName"))
+		{
+			m_defaultFontAssetName = json[U"defaultFontAssetName"].get<String>();
+		}
+		else
+		{
+			m_defaultFontAssetName = U"";
 		}
 
 		// childrenLayoutの読み込み

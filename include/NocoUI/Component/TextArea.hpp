@@ -82,7 +82,7 @@ namespace noco
 			Optional<CacheParams> prevParams = std::nullopt;
 			FontMethod fontMethod = FontMethod::Bitmap;
 
-			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize);
+			void refreshIfDirty(StringView text, StringView fontAssetName, StringView canvasDefaultFontAssetName, double fontSize, const SizeF& rectSize);
 
 			[[nodiscard]]
 			Vec2 getCursorPos(size_t line, size_t column, size_t scrollOffsetX, size_t scrollOffsetY) const;
@@ -114,7 +114,7 @@ namespace noco
 
 		std::tuple<bool, size_t, size_t> handleShortcut();
 
-		void updateScrollOffset(const RectF& rect);
+		void updateScrollOffset(const RectF& rect, const String& canvasDefaultFontAssetName);
 
 		size_t getLineCount() const;
 

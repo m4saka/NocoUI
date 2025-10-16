@@ -76,7 +76,7 @@ namespace noco
 			Optional<CacheParams> prevParams = std::nullopt;
 			FontMethod fontMethod = FontMethod::Bitmap;
 
-			void refreshIfDirty(StringView text, StringView fontAssetName, double fontSize, const SizeF& rectSize);
+			void refreshIfDirty(StringView text, StringView fontAssetName, StringView canvasDefaultFontAssetName, double fontSize, const SizeF& rectSize);
 
 			[[nodiscard]]
 			double getCursorPosX(double drawOffsetX, size_t scrollOffset, size_t cursorIndex) const;
@@ -141,7 +141,7 @@ namespace noco
 
 	void update(const std::shared_ptr<Node>& node) override;
 
-		void updateScrollOffset(const RectF& rect);
+		void updateScrollOffset(const RectF& rect, const String& canvasDefaultFontAssetName);
 
 		void draw(const Node& node) const override;
 
