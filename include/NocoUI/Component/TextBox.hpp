@@ -2,11 +2,12 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "ITextBox.hpp"
+#include "IFontCachedComponent.hpp"
 #include "../Enums.hpp"
 
 namespace noco
 {
-	class TextBox : public SerializableComponentBase, public ITextBox, public std::enable_shared_from_this<TextBox>
+	class TextBox : public SerializableComponentBase, public ITextBox, public detail::IFontCachedComponent, public std::enable_shared_from_this<TextBox>
 	{
 	private:
 		static constexpr double CursorWidth = 1.5;
@@ -105,6 +106,12 @@ namespace noco
 		void insertTextAtCursor(StringView text);
 
 		void handleShortcut();
+
+		void clearFontCache() override
+		{
+			m_cache.prevParams.reset();
+			m_editingCache.prevParams.reset();
+		}
 
 		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;

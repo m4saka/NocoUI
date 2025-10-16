@@ -158,6 +158,9 @@
     <ClInclude Include="include\NocoUI\Component\HotKeyInputHandler.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\Component\IFontCachedComponent.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\Component\Sprite.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>

@@ -160,6 +160,7 @@
     <ClInclude Include="include\NocoUI\Component\DrawerComponent.hpp" />
     <ClInclude Include="include\NocoUI\Component\EventTrigger.hpp" />
     <ClInclude Include="include\NocoUI\Component\HotKeyInputHandler.hpp" />
+    <ClInclude Include="include\NocoUI\Component\IFontCachedComponent.hpp" />
     <ClInclude Include="include\NocoUI\Component\KeyInputUpdaterComponent.hpp" />
     <ClInclude Include="include\NocoUI\Component\ITextBox.hpp" />
     <ClInclude Include="include\NocoUI\Component\Label.hpp" />

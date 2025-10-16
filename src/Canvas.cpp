@@ -4,6 +4,7 @@
 #include "NocoUI/ParamUtils.hpp"
 #include "NocoUI/Serialization.hpp"
 #include "NocoUI/Version.hpp"
+#include "NocoUI/Component/IFontCachedComponent.hpp"
 #include <cassert>
 
 namespace noco
@@ -1578,6 +1579,18 @@ namespace noco
 		for (auto& child : m_children)
 		{
 			child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
+		}
+	}
+
+	void Canvas::clearFontCache()
+	{
+		for (const auto& child : m_children)
+		{
+			auto fontCachedComponents = child->getComponents<detail::IFontCachedComponent>(RecursiveYN::Yes);
+			for (const auto& component : fontCachedComponents)
+			{
+				component->clearFontCache();
+			}
 		}
 	}
 }

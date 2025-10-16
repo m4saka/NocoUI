@@ -2,10 +2,11 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "ITextBox.hpp"
+#include "IFontCachedComponent.hpp"
 
 namespace noco
 {
-	class TextArea : public SerializableComponentBase, public ITextBox, public std::enable_shared_from_this<TextArea>
+	class TextArea : public SerializableComponentBase, public ITextBox, public detail::IFontCachedComponent, public std::enable_shared_from_this<TextArea>
 	{
 	private:
 		static constexpr double CursorWidth = 1.5;
@@ -119,6 +120,12 @@ namespace noco
 		size_t getLineCount() const;
 
 		size_t getColumnCount(size_t line) const;
+
+		void clearFontCache() override
+		{
+			m_cache.prevParams.reset();
+			m_editingCache.prevParams.reset();
+		}
 
 		// IFocusableインタフェースの実装
 		void focus(const std::shared_ptr<Node>& node) override;

@@ -784,7 +784,11 @@ namespace noco
 		std::shared_ptr<Canvas> setDefaultFontAssetName(StringView fontAssetName)
 		{
 			m_defaultFontAssetName = fontAssetName;
+			clearFontCache();
 			return shared_from_this();
 		}
+
+		// Canvas内のコンポーネントのフォントキャッシュをクリア
+		void clearFontCache();
 	};
 }

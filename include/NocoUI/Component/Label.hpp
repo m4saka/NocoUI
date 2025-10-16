@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "IFontCachedComponent.hpp"
 #include "../Enums.hpp"
 
 namespace noco
@@ -26,7 +27,7 @@ namespace noco
 		LeftRight,
 	};
 
-	class Label : public SerializableComponentBase, public std::enable_shared_from_this<Label>
+	class Label : public SerializableComponentBase, public detail::IFontCachedComponent, public std::enable_shared_from_this<Label>
 	{
 	private:
 		Property<String> m_text;
@@ -132,6 +133,12 @@ namespace noco
 		/* NonSerialized */ mutable Cache m_autoResizeCache;
 
 		SizeF getContentSizeForAutoResize(const String& canvasDefaultFontAssetName = U"") const;
+
+		void clearFontCache() override
+		{
+			m_cache.prevParams.reset();
+			m_autoResizeCache.prevParams.reset();
+		}
 
 	public:
 		explicit Label(
