@@ -1,6 +1,7 @@
 ﻿#include "NocoUI/Component/Label.hpp"
 #include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
+#include "NocoUI/DefaultFont.hpp"
 
 namespace noco
 {
@@ -12,10 +13,29 @@ namespace noco
 	bool Label::Cache::refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
 		const bool hasCustomFont = fontOpt.has_value();
-		const Font newFont = hasCustomFont ? *fontOpt :
-			((!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) :
-			((!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName)) ? FontAsset(canvasDefaultFontAssetName) :
-			SimpleGUI::GetFont()));
+		const Font newFont = [&]() -> Font {
+			if (hasCustomFont)
+			{
+				return *fontOpt;
+			}
+
+			if (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName))
+			{
+				return FontAsset(fontAssetName);
+			}
+
+			if (!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName))
+			{
+				return FontAsset(canvasDefaultFontAssetName);
+			}
+
+			if (auto globalFont = noco::detail::GetGlobalDefaultFont())
+			{
+				return *globalFont;
+			}
+
+			return SimpleGUI::GetFont();
+		}();
 
 		if (prevParams.has_value() &&
 			!prevParams->isDirty(text, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))

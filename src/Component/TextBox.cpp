@@ -1,5 +1,6 @@
 ﻿#include "NocoUI/Component/TextBox.hpp"
 #include "NocoUI/Canvas.hpp"
+#include "NocoUI/DefaultFont.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 #include "NocoUI/detail/Input.hpp"
 
@@ -23,9 +24,24 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName)) ? FontAsset(fontAssetName) :
-			((!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName)) ? FontAsset(canvasDefaultFontAssetName) :
-			SimpleGUI::GetFont());
+		const Font font = [&]() -> Font {
+			if (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName))
+			{
+				return FontAsset(fontAssetName);
+			}
+
+			if (!canvasDefaultFontAssetName.empty() && FontAsset::IsRegistered(canvasDefaultFontAssetName))
+			{
+				return FontAsset(canvasDefaultFontAssetName);
+			}
+
+			if (auto globalFont = noco::detail::GetGlobalDefaultFont())
+			{
+				return *globalFont;
+			}
+
+			return SimpleGUI::GetFont();
+		}();
 		fontMethod = font.method();
 		glyphs = font.getGlyphs(text);
 		const int32 baseFontSize = font.fontSize();
