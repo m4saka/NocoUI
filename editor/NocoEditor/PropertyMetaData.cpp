@@ -1074,6 +1074,7 @@ namespace noco::editor
 		metadata[PropertyKey{ U"TextArea", U"placeholderText" }] = PropertyMetadata{
 			.tooltip = U"プレースホルダー表示のテキスト",
 			.tooltipDetail = U"テキストが空の場合に表示されるテキスト",
+			.numTextAreaLines = 3,
 		};
 		metadata[PropertyKey{ U"TextArea", U"placeholderColor" }] = PropertyMetadata{
 			.tooltip = U"プレースホルダー表示の文字色",

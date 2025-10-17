@@ -1097,7 +1097,20 @@ namespace noco
 							continue;
 						}
 
-						if (placeholderPos.x + glyph.xAdvance * scale > rect.x && placeholderPos.x < rect.br().x)
+						// 行末の折り返しチェック
+						const double glyphWidth = glyph.xAdvance * scale;
+						if (placeholderPos.x + glyphWidth > rect.br().x && placeholderPos.x > rect.x)
+						{
+							// 折り返し
+							placeholderPos.x = rect.x;
+							placeholderPos.y += lineHeight;
+							if (placeholderPos.y > rect.br().y)
+							{
+								break;
+							}
+						}
+
+						if (placeholderPos.x + glyphWidth > rect.x && placeholderPos.x < rect.br().x)
 						{
 							if (placeholderPos.y >= rect.y && placeholderPos.y < rect.br().y)
 							{
@@ -1107,12 +1120,7 @@ namespace noco
 								);
 							}
 						}
-						placeholderPos.x += glyph.xAdvance * scale;
-
-						if (placeholderPos.x > rect.br().x)
-						{
-							break;
-						}
+						placeholderPos.x += glyphWidth;
 					}
 				}
 			}
