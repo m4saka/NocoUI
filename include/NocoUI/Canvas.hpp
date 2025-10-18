@@ -546,8 +546,10 @@ namespace noco
 
 		void setParamValues(std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
 		{
-			for (const auto& [name, value] : params)
+			for (const auto& pair : params)
 			{
+				const auto& name = pair.first;
+				const auto& value = pair.second;
 				std::visit([this, &name](const auto& v) {
 					if constexpr (std::is_same_v<std::decay_t<decltype(v)>, const char32_t*>)
 					{
