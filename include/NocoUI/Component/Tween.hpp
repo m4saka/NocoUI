@@ -144,6 +144,9 @@ namespace noco
 
 		std::shared_ptr<Tween> setActive(const PropertyValue<bool>& active);
 
+		[[nodiscard]]
+		bool isPlaying() const;
+
 		// Translate関連のgetter/setter
 		[[nodiscard]]
 		bool translateEnabled() const

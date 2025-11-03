@@ -712,6 +712,10 @@ namespace noco
 		// タグによるTweenコンポーネントの一括制御
 		void setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
 
+		// タグによるTweenの再生状態取得（ループ時は常にtrue、delay中もtrue）
+		[[nodiscard]]
+		bool isTweenPlayingByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+
 		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す、見つからなければ空文字列）
 		[[nodiscard]]
 		String getTextValueByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;

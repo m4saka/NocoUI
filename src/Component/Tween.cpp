@@ -307,4 +307,26 @@ namespace noco
 
 		return shared_from_this();
 	}
+
+	bool Tween::isPlaying() const
+	{
+		if (!m_active.value())
+		{
+			return false;
+		}
+
+		const auto loopType = m_loopType.value();
+
+		// ループが有効な場合は常にtrue
+		if (loopType != TweenLoopType::None)
+		{
+			return true;
+		}
+
+		// ループしない場合は、delay + duration以内かチェック
+		const double time = m_manualMode.value() ? m_manualTime.value() : m_stopwatch.sF();
+		const double totalTime = m_delay.value() + m_duration.value();
+
+		return time < totalTime;
+	}
 }

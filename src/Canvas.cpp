@@ -1508,6 +1508,24 @@ namespace noco
 		}
 	}
 
+	bool Canvas::isTweenPlayingByTag(StringView tag) const
+	{
+		if (tag.isEmpty())
+		{
+			return false;
+		}
+
+		for (const auto& child : m_children)
+		{
+			if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	String Canvas::getTextValueByTag(StringView tag) const
 	{
 		auto result = getTextValueByTagOpt(tag);

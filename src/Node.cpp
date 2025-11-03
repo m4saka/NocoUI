@@ -3061,6 +3061,40 @@ namespace noco
 		}
 	}
 
+	bool Node::isTweenPlayingByTag(StringView tag, RecursiveYN recursive) const
+	{
+		if (tag.isEmpty())
+		{
+			return false;
+		}
+
+		// 自身のTweenコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto tween = std::dynamic_pointer_cast<Tween>(component))
+			{
+				if (tween->tag() == tag && tween->isPlaying())
+				{
+					return true;
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	String Node::getTextValueByTag(StringView tag, RecursiveYN recursive) const
 	{
 		auto result = getTextValueByTagOpt(tag, recursive);

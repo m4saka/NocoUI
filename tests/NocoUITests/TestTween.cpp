@@ -528,4 +528,344 @@ TEST_CASE("Tween component", "[Tween]")
 		CHECK(childTween2->active().defaultValue() == true);
 		CHECK(grandChildTween->active().defaultValue() == true);
 	}
+
+	SECTION("Tween isPlaying - non-loop")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(1.0)
+			->setDuration(2.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		// t=0.0: delay中、再生中
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// t=0.5: delay中、再生中
+		tween->setManualTime(0.5);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// t=1.0: delay終了、アニメーション開始、再生中
+		tween->setManualTime(1.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// t=2.0: アニメーション途中、再生中
+		tween->setManualTime(2.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// t=2.99: delay + duration直前、再生中
+		tween->setManualTime(2.99);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// t=3.0: delay + duration = 3.0、完了、再生終了
+		tween->setManualTime(3.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// t=4.0: 完了後、再生終了
+		tween->setManualTime(4.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// activeをfalseに設定
+		tween->setActive(false);
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+	}
+
+	SECTION("Tween isPlaying - loop")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(1.0)
+			->setDuration(2.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::Loop);
+		node->addComponent(tween);
+
+		// ループが有効な場合、常にtrue
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(1.5);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(3.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(10.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(100.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// activeをfalseにすると再生終了
+		tween->setActive(false);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+	}
+
+	SECTION("Tween isPlaying - PingPong loop")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(0.5)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::PingPong);
+		node->addComponent(tween);
+
+		// PingPongループも常にtrue
+		tween->setManualTime(0.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(1.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		tween->setManualTime(5.0);
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("Canvas isTweenPlayingByTag")
+	{
+		auto canvas = noco::Canvas::Create();
+
+		// ノード1: tag="fade_in"のTween
+		auto node1 = noco::Node::Create();
+		auto tween1 = std::make_shared<noco::Tween>();
+		tween1->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(0.0)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None)
+			->setTag(U"fade_in");
+		node1->addComponent(tween1);
+
+		// ノード2: tag="fade_out"のTween（ループ）
+		auto node2 = noco::Node::Create();
+		auto tween2 = std::make_shared<noco::Tween>();
+		tween2->setManualMode(true)
+			->setActive(true)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 100.0, 100.0 })
+			->setTranslateTo(Vec2{ 0.0, 0.0 })
+			->setDelay(0.0)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::Loop)
+			->setTag(U"fade_out");
+		node2->addComponent(tween2);
+
+		// ノード3: tag="other"のTween（非アクティブ）
+		auto node3 = noco::Node::Create();
+		auto tween3 = std::make_shared<noco::Tween>();
+		tween3->setManualMode(true)
+			->setActive(false)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 50.0, 50.0 })
+			->setDelay(0.0)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None)
+			->setTag(U"other");
+		node3->addComponent(tween3);
+
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+		canvas->addChild(node3);
+
+		// t=0.0: fade_inは再生中、fade_outはループで常に再生中、otherは非アクティブ
+		tween1->setManualTime(0.0);
+		tween2->setManualTime(0.0);
+		tween3->setManualTime(0.0);
+		canvas->update();
+
+		CHECK(canvas->isTweenPlayingByTag(U"fade_in") == true);
+		CHECK(canvas->isTweenPlayingByTag(U"fade_out") == true);
+		CHECK(canvas->isTweenPlayingByTag(U"other") == false);
+		CHECK(canvas->isTweenPlayingByTag(U"nonexistent") == false);
+
+		// t=0.5: fade_inは再生中
+		tween1->setManualTime(0.5);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"fade_in") == true);
+
+		// t=0.99: fade_inは再生中
+		tween1->setManualTime(0.99);
+		tween2->setManualTime(0.99);
+		tween3->setManualTime(0.99);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"fade_in") == true);
+
+		// t=1.0: fade_inは完了、再生終了
+		tween1->setManualTime(1.0);
+		tween2->setManualTime(1.0);
+		tween3->setManualTime(1.0);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"fade_in") == false);
+
+		// fade_outはループなので常にtrue
+		tween1->setManualTime(5.0);
+		tween2->setManualTime(5.0);
+		tween3->setManualTime(5.0);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"fade_out") == true);
+
+		// otherをアクティブにする
+		tween3->setActive(true);
+		tween1->setManualTime(0.5);
+		tween2->setManualTime(0.5);
+		tween3->setManualTime(0.5);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"other") == true);
+
+		// otherはまだ再生中
+		tween1->setManualTime(0.99);
+		tween2->setManualTime(0.99);
+		tween3->setManualTime(0.99);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"other") == true);
+
+		// otherを完了させる
+		tween1->setManualTime(1.0);
+		tween2->setManualTime(1.0);
+		tween3->setManualTime(1.0);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"other") == false);
+	}
+
+	SECTION("Node isTweenPlayingByTag with nested nodes")
+	{
+		auto canvas = noco::Canvas::Create();
+
+		// 親ノード
+		auto parentNode = noco::Node::Create();
+		auto parentTween = std::make_shared<noco::Tween>();
+		parentTween->setManualMode(true)
+			->setActive(true)
+			->setDelay(0.0)
+			->setDuration(1.0)
+			->setLoopType(noco::TweenLoopType::None)
+			->setTag(U"test");
+		parentNode->addComponent(parentTween);
+
+		// 子ノード
+		auto childNode = noco::Node::Create();
+		auto childTween = std::make_shared<noco::Tween>();
+		childTween->setManualMode(true)
+			->setActive(true)
+			->setDelay(0.0)
+			->setDuration(2.0)
+			->setLoopType(noco::TweenLoopType::None)
+			->setTag(U"test");
+		childNode->addComponent(childTween);
+
+		parentNode->addChild(childNode);
+		canvas->addChild(parentNode);
+
+		// t=0.0: 両方再生中
+		parentTween->setManualTime(0.0);
+		childTween->setManualTime(0.0);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"test") == true);
+
+		// t=1.5: 親は完了、子は再生中
+		parentTween->setManualTime(1.5);
+		childTween->setManualTime(1.5);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"test") == true);  // 子が再生中なのでtrue
+
+		// t=2.0: 両方完了
+		parentTween->setManualTime(2.0);
+		childTween->setManualTime(2.0);
+		canvas->update();
+		CHECK(canvas->isTweenPlayingByTag(U"test") == false);
+
+		// 非再帰チェック（親ノードのみ）
+		parentTween->setManualTime(0.5);
+		childTween->setManualTime(0.5);
+		canvas->update();
+		CHECK(parentNode->isTweenPlayingByTag(U"test", noco::RecursiveYN::No) == true);  // 親のみチェック
+
+		parentTween->setManualTime(1.5);
+		childTween->setManualTime(0.5);
+		canvas->update();
+		CHECK(parentNode->isTweenPlayingByTag(U"test", noco::RecursiveYN::No) == false);  // 親は完了
+
+		// 再帰チェック（親と子）
+		CHECK(parentNode->isTweenPlayingByTag(U"test", noco::RecursiveYN::Yes) == true);  // 子が再生中
+	}
+
+	SECTION("isTweenPlayingByTag without canvas update after setTweenActiveByTag")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setActive(false)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 0.0, 0.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDelay(0.5)
+			->setDuration(1.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None)
+			->setTag(U"test");
+		node->addComponent(tween);
+
+		// 最初はfalse
+		CHECK(canvas->isTweenPlayingByTag(U"test") == false);
+
+		// タグ経由でactive=trueに設定
+		canvas->setTweenActiveByTag(U"test", true);
+
+		// canvas->update()を呼ばずにチェック
+		CHECK(canvas->isTweenPlayingByTag(U"test") == true);
+	}
 }
