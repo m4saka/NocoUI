@@ -1384,6 +1384,7 @@ namespace noco::editor
 		metadata[PropertyKey{ U"SubCanvas", U"paramsJSON" }] = PropertyMetadata{
 			.tooltip = U"子Canvasに渡すパラメータ(JSON形式)",
 			.tooltipDetail = U"子Canvasに渡すパラメータをJSON形式で指定します\n例: {\"title\": \"タイトル\", \"count\": 10}",
+			.visibilityCondition = [](const ComponentBase&) { return false; },
 			.numTextAreaLines = 5,
 		};
 		metadata[PropertyKey{ U"SubCanvas", U"tag" }] = PropertyMetadata{

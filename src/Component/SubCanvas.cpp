@@ -5,30 +5,6 @@
 
 namespace noco
 {
-	int32 SubCanvas::calculateNestLevel(const std::shared_ptr<Node>& node) const
-	{
-		int32 level = 0;
-		auto current = node;
-
-		while (current && level < MaxNestLevel)
-		{
-			// 親Nodeのコンポーネントを確認
-			for (const auto& component : current->components())
-			{
-				if (std::dynamic_pointer_cast<SubCanvas>(component))
-				{
-					level++;
-					break;
-				}
-			}
-
-			// 親Nodeへ
-			current = current->parentNode();
-		}
-
-		return level;
-	}
-
 	void SubCanvas::loadCanvasInternal(const std::shared_ptr<Node>& node)
 	{
 		const String& path = m_canvasPath.value();
@@ -58,16 +34,6 @@ namespace noco
 		// ファイルが存在しない場合はスキップ
 		const FilePath fullPath = FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), path);
 		if (!FileSystem::Exists(fullPath))
-		{
-			m_canvas.reset();
-			m_loadedPath.clear();
-			return;
-		}
-
-		// ネストレベルが上限を超えていたら読み込まない
-		// (無限ループ対策のため)
-		const int32 nestLevel = calculateNestLevel(node);
-		if (nestLevel >= MaxNestLevel)
 		{
 			m_canvas.reset();
 			m_loadedPath.clear();

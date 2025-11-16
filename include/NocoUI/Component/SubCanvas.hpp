@@ -13,27 +13,19 @@ namespace noco
 	private:
 		Property<String> m_canvasPath;
 		Property<bool> m_propagateEvents;
-		Property<String> m_paramsJSON;
+		PropertyNonInteractive<String> m_paramsJSON;
 		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
 		/* NonSerialized */ String m_loadedPath;
 		/* NonSerialized */ String m_appliedParamsJSON;
 
-		/// @brief 親Nodeを辿ってSubCanvasのネストレベルを計算
-		/// @param node 基準となるNode
-		/// @return ネストレベル(0始まり)
-		[[nodiscard]]
-		int32 calculateNestLevel(const std::shared_ptr<Node>& node) const;
-
 		/// @brief Canvasファイルを読み込む
 		/// @param node このコンポーネントが属するNode
 		void loadCanvasInternal(const std::shared_ptr<Node>& node);
 
 	public:
-		static constexpr int32 MaxNestLevel = 16;
-
-		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"", const PropertyValue<bool>& propagateEvents = true, const PropertyValue<String>& paramsJSON = U"{}", StringView tag = U"")
+		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"", const PropertyValue<bool>& propagateEvents = true, StringView paramsJSON = U"{}", StringView tag = U"")
 			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_paramsJSON, &m_tag } }
 			, m_canvasPath{ U"canvasPath", canvasPath }
 			, m_propagateEvents{ U"propagateEvents", propagateEvents }
@@ -75,14 +67,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<String>& paramsJSON() const
+		const String& paramsJSON() const
 		{
-			return m_paramsJSON.propertyValue();
+			return m_paramsJSON.value();
 		}
 
-		std::shared_ptr<SubCanvas> setParamsJSON(const PropertyValue<String>& paramsJSON)
+		std::shared_ptr<SubCanvas> setParamsJSON(const String& paramsJSON)
 		{
-			m_paramsJSON.setPropertyValue(paramsJSON);
+			m_paramsJSON.setValue(paramsJSON);
 			return shared_from_this();
 		}
 

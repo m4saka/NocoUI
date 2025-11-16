@@ -4989,8 +4989,9 @@ namespace noco::editor
 						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
-							.sizeDelta = Vec2{ 0, 24 },
+							.sizeDelta = Vec2{ -24, 24 },
 							.margin = LRTB{ 12, 12, 4, 0 },
+							.maxWidth = 360,
 						},
 						[this, sprite](const std::shared_ptr<Node>&)
 						{
@@ -5013,8 +5014,9 @@ namespace noco::editor
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, 24 },
+						.sizeDelta = Vec2{ -24, 24 },
 						.margin = LRTB{ 12, 12, 4, 0 },
+						.maxWidth = 360,
 					},
 					[this, sprite, node](const std::shared_ptr<Node>&)
 					{
@@ -5036,8 +5038,9 @@ namespace noco::editor
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, 24 },
+						.sizeDelta = Vec2{ -24, 24 },
 						.margin = LRTB{ 12, 12, 4, 0 },
+						.maxWidth = 360,
 					},
 					[this, textureFontLabel](const std::shared_ptr<Node>&)
 					{
@@ -5055,16 +5058,187 @@ namespace noco::editor
 				}
 			}
 
-			// SubCanvasコンポーネントの場合、paramsJSON編集ボタンとスナップボタンを追加
+			// SubCanvasコンポーネントの場合、Canvasパラメータ一覧表示、パラメータ設定ボタン、スナップボタンを追加
 			if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 			{
-				auto editParamsButton = componentNode->addChild(CreateButtonNode(
-					U"paramsJSONを編集...",
+				// パラメータ表示エリア全体を囲むコンテナ
+				auto paramsContainerNode = componentNode->emplaceChild(
+					U"ParamsContainer",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ -24, 0 },
+						.margin = LRTB{ 12, 12, 4, 10 },
+					});
+				paramsContainerNode->setChildrenLayout(VerticalLayout{ .horizontalAlign = HorizontalAlign::Center });
+
+				// 枠線と背景
+				paramsContainerNode->emplaceComponent<RectRenderer>(
+					ColorF{ 0.0, 0.0 },
+					ColorF{ 1.0, 0.3 },
+					1.0,
+					0.0,
+					3.0);
+
+				// Canvas Params見出し
+				auto headingNode = paramsContainerNode->emplaceChild(
+					U"CanvasParamsHeading",
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
 						.sizeDelta = Vec2{ 0, 24 },
-						.margin = LRTB{ 12, 12, 4, 0 },
+						.margin = LRTB{ 0, 0, 0, 0 },
+					});
+				headingNode->emplaceComponent<RectRenderer>(
+					ColorF{ 0.3, 0.5, 0.6, 0.8 },
+					Palette::Black,
+					0.0,
+					0.0,
+					3.0);
+				headingNode->emplaceComponent<Label>(
+					U"Canvas Params",
+					U"",
+					14,
+					Palette::White,
+					HorizontalAlign::Left,
+					VerticalAlign::Middle,
+					LRTB{ 8, 8, 0, 0 });
+
+				// パラメータ一覧のタイトル
+				auto paramsListLabelNode = paramsContainerNode->emplaceChild(
+					U"ParamsListLabel",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ -24, 24 },
+						.margin = LRTB{ 12, 12, 6, 0 },
+					});
+				paramsListLabelNode->emplaceComponent<Label>(
+					U"設定中のCanvasパラメータ:",
+					U"",
+					14,
+					Palette::White,
+					HorizontalAlign::Left,
+					VerticalAlign::Middle);
+
+				if (isFolded)
+				{
+					paramsContainerNode->setActive(false);
+				}
+
+				// 現在設定されているパラメータを表示
+				const String& paramsJSONString = subCanvas->paramsJSON();
+				bool hasParams = false;
+
+				if (!paramsJSONString.isEmpty() && paramsJSONString != U"{}")
+				{
+					const JSON paramsJSON = JSON::Parse(paramsJSONString);
+					if (paramsJSON.isObject() && !paramsJSON.isEmpty())
+					{
+						hasParams = true;
+
+						// 各パラメータを表示
+						for (const auto& item : paramsJSON)
+						{
+							const String& key = item.key;
+							const JSON& value = item.value;
+
+							String valueStr = value.formatMinimum();
+							// 長すぎる場合は省略
+							if (valueStr.length() > 50)
+							{
+								valueStr = valueStr.substr(0, 47) + U"...";
+							}
+
+							auto paramNode = paramsContainerNode->emplaceChild(
+								U"ParamItem_{}"_fmt(key),
+								InlineRegion
+								{
+									.sizeRatio = Vec2{ 1, 0 },
+									.sizeDelta = Vec2{ -24, 24 },
+									.margin = LRTB{ 12, 12, 3, 0 },
+								});
+							paramNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
+
+							// ホバー時の背景色
+							paramNode->emplaceComponent<RectRenderer>(
+								PropertyValue<Color>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+								Palette::Black,
+								0.0,
+								0.0,
+								3.0);
+
+							// キー部分（固定幅150px、AutoShrink）
+							auto keyNode = paramNode->emplaceChild(
+								U"Key",
+								InlineRegion
+								{
+									.sizeRatio = Vec2{ 0, 1 },
+									.sizeDelta = Vec2{ 150, 0 },
+								},
+								IsHitTargetYN::No);
+							keyNode->emplaceComponent<Label>(
+								U"{}:"_fmt(key),
+								U"",
+								13,
+								Palette::White,
+								HorizontalAlign::Left,
+								VerticalAlign::Middle)
+								->setSizingMode(LabelSizingMode::AutoShrink);
+
+							// 値部分（可変幅、AutoShrink）
+							auto valueNode = paramNode->emplaceChild(
+								U"Value",
+								InlineRegion
+								{
+									.sizeRatio = Vec2{ 0, 1 },
+									.flexibleWeight = 1.0,
+								},
+								IsHitTargetYN::No);
+							valueNode->emplaceComponent<Label>(
+								valueStr,
+								U"",
+								13,
+								Palette::White,
+								HorizontalAlign::Left,
+								VerticalAlign::Middle)
+								->setSizingMode(LabelSizingMode::AutoShrink);
+
+							if (isFolded)
+							{
+								paramNode->setActive(false);
+							}
+						}
+					}
+				}
+
+				// パラメータが設定されていない場合
+				if (!hasParams)
+				{
+					auto noParamsNode = paramsContainerNode->emplaceChild(
+						U"NoParams",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ 0, 24 },
+							.margin = LRTB{ 12, 12, 4, 0 },
+						});
+					noParamsNode->emplaceComponent<Label>(
+						U"(設定なし)",
+						U"",
+						13,
+						ColorF{ 0.7, 0.7, 0.7 },
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+				}
+
+				auto editParamsButton = paramsContainerNode->addChild(CreateButtonNode(
+					U"Canvasパラメータを設定...",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 0, 0 },
+						.sizeDelta = Vec2{ 240, 24 },
+						.margin = LRTB{ 0, 0, 4, 8 },
 					},
 					[this, subCanvas](const std::shared_ptr<Node>&)
 					{
@@ -5077,18 +5251,17 @@ namespace noco::editor
 						);
 					}));
 
-				if (isFolded)
-				{
-					editParamsButton->setActive(false);
-				}
+				// コンテナの高さを子要素に合わせる
+				paramsContainerNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
 				auto snapButton = componentNode->addChild(CreateButtonNode(
 					U"Canvasサイズへスナップ",
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ 0, 24 },
+						.sizeDelta = Vec2{ -24, 24 },
 						.margin = LRTB{ 12, 12, 4, 0 },
+						.maxWidth = 360,
 					},
 					[this, subCanvas, node](const std::shared_ptr<Node>&)
 					{
