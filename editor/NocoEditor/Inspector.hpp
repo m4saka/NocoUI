@@ -14,6 +14,7 @@
 #include "AddParamDialog.hpp"
 #include "ParamRefDialog.hpp"
 #include "ParamReferencesDialog.hpp"
+#include "SpriteGridDivisionInputDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "EditorColor.hpp"
@@ -4978,6 +4979,33 @@ namespace noco::editor
 			// TODO: コンポーネント毎のカスタムInspectorを追加するための仕組みを整備する
 			if (auto sprite = std::dynamic_pointer_cast<Sprite>(component))
 			{
+				// Gridモードの場合のみ、分割数入力ボタンを追加
+				if (sprite->textureRegionMode().defaultValue() == TextureRegionMode::Grid)
+				{
+					auto gridDivisionButton = componentNode->addChild(CreateButtonNode(
+						U"Gridの値を分割数で入力...",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ 0, 24 },
+							.margin = LRTB{ 12, 12, 4, 0 },
+						},
+						[this, sprite](const std::shared_ptr<Node>&)
+						{
+							m_dialogOpener->openDialog(
+								std::make_shared<SpriteGridDivisionInputDialog>(
+									sprite,
+									[this] { refreshInspector(); }
+								)
+							);
+						}));
+
+					if (isFolded)
+					{
+						gridDivisionButton->setActive(false);
+					}
+				}
+
 				auto snapButton = componentNode->addChild(CreateButtonNode(
 					U"テクスチャサイズへスナップ",
 					InlineRegion
