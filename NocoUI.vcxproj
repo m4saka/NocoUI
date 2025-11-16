@@ -129,6 +129,7 @@
     <ClCompile Include="src\Component\RectRenderer.cpp" />
     <ClCompile Include="src\Component\ShapeRenderer.cpp" />
     <ClCompile Include="src\Component\Sprite.cpp" />
+    <ClCompile Include="src\Component\SubCanvas.cpp" />
     <ClCompile Include="src\Component\TextArea.cpp" />
     <ClCompile Include="src\Component\TextBox.cpp" />
     <ClCompile Include="src\Component\Toggle.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="src\Layout\HorizontalLayout.cpp" />
     <ClCompile Include="src\Layout\VerticalLayout.cpp" />
     <ClCompile Include="src\Node.cpp" />
+    <ClCompile Include="src\Param.cpp" />
     <ClCompile Include="src\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +169,7 @@
     <ClInclude Include="include\NocoUI\Component\RectRenderer.hpp" />
     <ClInclude Include="include\NocoUI\Component\ShapeRenderer.hpp" />
     <ClInclude Include="include\NocoUI\Component\Sprite.hpp" />
+    <ClInclude Include="include\NocoUI\Component\SubCanvas.hpp" />
     <ClInclude Include="include\NocoUI\Component\TextArea.hpp" />
     <ClInclude Include="include\NocoUI\Component\TextBox.hpp" />
     <ClInclude Include="include\NocoUI\Component\Toggle.hpp" />

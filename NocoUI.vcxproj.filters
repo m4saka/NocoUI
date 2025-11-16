@@ -63,6 +63,9 @@
     <ClCompile Include="src\Component\Sprite.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
+    <ClCompile Include="src\Component\SubCanvas.cpp">
+      <Filter>Source Files\Component</Filter>
+    </ClCompile>
     <ClCompile Include="src\Component\TextArea.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
@@ -88,6 +91,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Param.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Transform.cpp">
@@ -162,6 +168,9 @@
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\Sprite.hpp">
+      <Filter>Header Files\NocoUI\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\Component\SubCanvas.hpp">
       <Filter>Header Files\NocoUI\Component</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\Component\TextArea.hpp">
