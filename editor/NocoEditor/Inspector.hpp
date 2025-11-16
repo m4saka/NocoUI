@@ -16,6 +16,7 @@
 #include "ParamReferencesDialog.hpp"
 #include "SpriteGridDivisionInputDialog.hpp"
 #include "TextureFontLabelGridDivisionInputDialog.hpp"
+#include "SubCanvasParamsEditDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "EditorColor.hpp"
@@ -5054,9 +5055,33 @@ namespace noco::editor
 				}
 			}
 
-			// SubCanvasコンポーネントの場合、スナップボタンを追加
+			// SubCanvasコンポーネントの場合、paramsJSON編集ボタンとスナップボタンを追加
 			if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 			{
+				auto editParamsButton = componentNode->addChild(CreateButtonNode(
+					U"paramsJSONを編集...",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 24 },
+						.margin = LRTB{ 12, 12, 4, 0 },
+					},
+					[this, subCanvas](const std::shared_ptr<Node>&)
+					{
+						m_dialogOpener->openDialog(
+							std::make_shared<SubCanvasParamsEditDialog>(
+								subCanvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							)
+						);
+					}));
+
+				if (isFolded)
+				{
+					editParamsButton->setActive(false);
+				}
+
 				auto snapButton = componentNode->addChild(CreateButtonNode(
 					U"Canvasサイズへスナップ",
 					InlineRegion

@@ -249,6 +249,10 @@ namespace noco
 	[[nodiscard]]
 	JSON ParamValueToParamObjectJSON(const ParamValue& value);
 
+	// ParamValueをJSON値に変換
+	[[nodiscard]]
+	JSON ParamValueToJSONValue(const ParamValue& value);
+
 	// 型を指定してJSONの値をParamValueに変換
 	[[nodiscard]]
 	Optional<ParamValue> ParamValueFromJSONValue(const JSON& json, ParamType type);

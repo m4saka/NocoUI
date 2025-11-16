@@ -2,44 +2,51 @@
 
 namespace noco
 {
-	JSON ParamValueToParamObjectJSON(const ParamValue& value)
+	JSON ParamValueToJSONValue(const ParamValue& value)
 	{
 		return std::visit([](const auto& v) -> JSON {
 			using T = std::decay_t<decltype(v)>;
 
-			JSON json;
-			json[U"type"] = ParamTypeToString(GetParamType(ParamValue{v}));
-
+			// 注意: JSONは波括弧初期化だとinitializer_list扱いで配列になってしまうため、必ず丸括弧初期化でないといけない
 			if constexpr (std::is_same_v<T, bool>)
 			{
-				json[U"value"] = v;
+				return JSON(v);
 			}
 			else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 			{
-				json[U"value"] = static_cast<double>(v);
+				return JSON(static_cast<double>(v));
 			}
 			else if constexpr (std::is_same_v<T, String>)
 			{
-				json[U"value"] = v;
+				return JSON(v);
 			}
 			else if constexpr (std::is_same_v<T, Color>)
 			{
 				// Colorは配列形式で保存 [r, g, b, a]
-				json[U"value"] = Array<int32>{ v.r, v.g, v.b, v.a };
+				return JSON(Array<int32>{ v.r, v.g, v.b, v.a });
 			}
 			else if constexpr (std::is_same_v<T, Vec2>)
 			{
 				// Vec2は配列形式で保存 [x, y]
-				json[U"value"] = Array<double>{ v.x, v.y };
+				return JSON(Array<double>{ v.x, v.y });
 			}
 			else if constexpr (std::is_same_v<T, LRTB>)
 			{
 				// LRTBは配列形式で保存 [left, right, top, bottom]
-				json[U"value"] = Array<double>{ v.left, v.right, v.top, v.bottom };
+				return JSON(Array<double>{ v.left, v.right, v.top, v.bottom });
 			}
 
-			return json;
+			return JSON{};
 		}, value);
+	}
+
+	JSON ParamValueToParamObjectJSON(const ParamValue& value)
+	{
+		return JSON
+		{
+			{ U"type", ParamTypeToString(GetParamType(value)) },
+			{ U"value", ParamValueToJSONValue(value) },
+		};
 	}
 
 	Optional<ParamValue> ParamValueFromJSONValue(const JSON& json, ParamType type)
