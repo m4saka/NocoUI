@@ -227,24 +227,41 @@ namespace noco::editor
 
 		void doSnapNodeSizeToTexture(const std::shared_ptr<Sprite>& sprite, const std::shared_ptr<Node>& node)
 		{
-			const String texturePath = sprite->textureFilePath().defaultValue();
-			if (texturePath.isEmpty())
+			Vec2 targetSize;
+
+			const auto regionMode = sprite->textureRegionMode().defaultValue();
+			if (regionMode == TextureRegionMode::Grid)
 			{
-				return;
+				// Gridモードの場合はセルサイズを使用
+				targetSize = sprite->textureGridCellSize().defaultValue();
+			}
+			else if (regionMode == TextureRegionMode::OffsetSize)
+			{
+				// OffsetSizeモードの場合はtextureSizeを使用
+				targetSize = sprite->textureSize().defaultValue();
+			}
+			else
+			{
+				// Fullモードの場合はテクスチャ全体のサイズを使用
+				const String texturePath = sprite->textureFilePath().defaultValue();
+				if (texturePath.isEmpty())
+				{
+					return;
+				}
+
+				Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
+				if (!texture)
+				{
+					return;
+				}
+
+				targetSize = Vec2{ texture.size() };
 			}
 
-			Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
-			if (!texture)
-			{
-				return;
-			}
-
-			const Vec2 textureSize{ texture.size() };
-			
 			if (const auto* pInlineRegion = node->inlineRegion())
 			{
 				InlineRegion newRegion = *pInlineRegion;
-				newRegion.sizeDelta = textureSize;
+				newRegion.sizeDelta = targetSize;
 				newRegion.sizeRatio = Vec2::Zero();
 				newRegion.flexibleWeight = 0.0;
 				node->setRegion(newRegion);
@@ -252,7 +269,7 @@ namespace noco::editor
 			else if (const auto* pAnchorRegion = node->anchorRegion())
 			{
 				AnchorRegion newRegion = *pAnchorRegion;
-				newRegion.sizeDelta = textureSize;
+				newRegion.sizeDelta = targetSize;
 				newRegion.anchorMin = noco::Anchor::MiddleCenter;
 				newRegion.anchorMax = noco::Anchor::MiddleCenter;
 				node->setRegion(newRegion);
