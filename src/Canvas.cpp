@@ -332,7 +332,7 @@ namespace noco
 
 		if (!m_params.empty())
 		{
-			JSON paramsObj = JSON{};
+			JSON paramObjectDictJSON = JSON{};
 			for (const auto& [name, value] : m_params)
 			{
 				if (!IsValidParameterName(name))
@@ -340,9 +340,9 @@ namespace noco
 					Logger << U"[NocoUI warning] Invalid parameter name '{}' found during save. Skipping."_fmt(name);
 					continue;
 				}
-				paramsObj[name] = ParamValueToJSON(value);
+				paramObjectDictJSON[name] = ParamValueToParamObjectJSON(value);
 			}
-			json[U"params"] = paramsObj;
+			json[U"params"] = paramObjectDictJSON;
 		}
 
 		json[U"defaultFontAssetName"] = m_defaultFontAssetName;
@@ -439,8 +439,8 @@ namespace noco
 						Logger << U"[NocoUI warning] Invalid parameter name '{}' found in JSON. Skipping."_fmt(name);
 						continue;
 					}
-					const auto& paramJson = member.value;
-					if (auto value = ParamValueFromJSON(paramJson))
+					const auto& paramObjectJSON = member.value;
+					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON))
 					{
 						canvas->m_params[name] = *value;
 					}
@@ -539,8 +539,8 @@ namespace noco
 						Logger << U"[NocoUI warning] Invalid parameter name '{}' found in JSON. Skipping."_fmt(name);
 						continue;
 					}
-					const auto& paramJson = member.value;
-					if (auto value = ParamValueFromJSON(paramJson))
+					const auto& paramObjectJSON = member.value;
+					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON))
 					{
 						m_params[name] = *value;
 					}
@@ -1002,41 +1002,9 @@ namespace noco
 			if (auto it = m_params.find(key); it != m_params.end())
 			{
 				const ParamType type = GetParamType(it->second);
-
-				// JSONの値を既存パラメータの型に合わせて変換
-				if (type == ParamType::Bool && value.isBool())
+				if (auto paramValue = ParamValueFromJSONValue(value, type))
 				{
-					m_params[key] = value.get<bool>();
-				}
-				else if (type == ParamType::Number && value.isNumber())
-				{
-					m_params[key] = value.get<double>();
-				}
-				else if (type == ParamType::String && value.isString())
-				{
-					m_params[key] = value.getString();
-				}
-				else if (type == ParamType::Color && value.isArray() && value.size() == 4)
-				{
-					const int32 r = value[0].get<int32>();
-					const int32 g = value[1].get<int32>();
-					const int32 b = value[2].get<int32>();
-					const int32 a = value[3].get<int32>();
-					m_params[key] = Color{ static_cast<uint8>(Clamp(r, 0, 255)), static_cast<uint8>(Clamp(g, 0, 255)), static_cast<uint8>(Clamp(b, 0, 255)), static_cast<uint8>(Clamp(a, 0, 255)) };
-				}
-				else if (type == ParamType::Vec2 && value.isArray() && value.size() == 2)
-				{
-					const double x = value[0].get<double>();
-					const double y = value[1].get<double>();
-					m_params[key] = Vec2{ x, y };
-				}
-				else if (type == ParamType::LRTB && value.isArray() && value.size() == 4)
-				{
-					const double left = value[0].get<double>();
-					const double right = value[1].get<double>();
-					const double top = value[2].get<double>();
-					const double bottom = value[3].get<double>();
-					m_params[key] = LRTB{ left, right, top, bottom };
+					m_params[key] = *paramValue;
 				}
 			}
 		}

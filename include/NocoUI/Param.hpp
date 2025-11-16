@@ -245,9 +245,9 @@ namespace noco
 		return none;
 	}
 	
-	// ParamValueをJSONに変換
+	// ParamValueを{"type": "...", "value": ...}形式のJSONに変換
 	[[nodiscard]]
-	inline JSON ParamValueToJSON(const ParamValue& value)
+	inline JSON ParamValueToParamObjectJSON(const ParamValue& value)
 	{
 		return std::visit([](const auto& v) -> JSON {
 			using T = std::decay_t<decltype(v)>;
@@ -286,10 +286,51 @@ namespace noco
 			return json;
 		}, value);
 	}
-	
-	// JSONからParamValueを作成
+
+	// 型を指定してJSONの値をParamValueに変換
 	[[nodiscard]]
-	inline Optional<ParamValue> ParamValueFromJSON(const JSON& json)
+	inline Optional<ParamValue> ParamValueFromJSONValue(const JSON& json, ParamType type)
+	{
+		if (type == ParamType::Bool && json.isBool())
+		{
+			return ParamValue{ json.get<bool>() };
+		}
+		else if (type == ParamType::Number && json.isNumber())
+		{
+			return ParamValue{ json.get<double>() };
+		}
+		else if (type == ParamType::String && json.isString())
+		{
+			return ParamValue{ json.getString() };
+		}
+		else if (type == ParamType::Color && json.isArray() && json.size() == 4)
+		{
+			const int32 r = json[0].get<int32>();
+			const int32 g = json[1].get<int32>();
+			const int32 b = json[2].get<int32>();
+			const int32 a = json[3].get<int32>();
+			return ParamValue{ Color{ static_cast<uint8>(Clamp(r, 0, 255)), static_cast<uint8>(Clamp(g, 0, 255)), static_cast<uint8>(Clamp(b, 0, 255)), static_cast<uint8>(Clamp(a, 0, 255)) } };
+		}
+		else if (type == ParamType::Vec2 && json.isArray() && json.size() == 2)
+		{
+			const double x = json[0].get<double>();
+			const double y = json[1].get<double>();
+			return ParamValue{ Vec2{ x, y } };
+		}
+		else if (type == ParamType::LRTB && json.isArray() && json.size() == 4)
+		{
+			const double left = json[0].get<double>();
+			const double right = json[1].get<double>();
+			const double top = json[2].get<double>();
+			const double bottom = json[3].get<double>();
+			return ParamValue{ LRTB{ left, right, top, bottom } };
+		}
+		return none;
+	}
+
+	// {"type": "...", "value": ...}形式のJSONからParamValueを作成
+	[[nodiscard]]
+	inline Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json)
 	{
 		if (!json.contains(U"type") || !json.contains(U"value"))
 		{

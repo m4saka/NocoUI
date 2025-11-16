@@ -588,7 +588,7 @@ TEST_CASE("Parameter name validation", "[Param]")
 	}
 }
 
-TEST_CASE("ParamValueFromJSON type checking", "[Param]")
+TEST_CASE("ParamValueFromParamObjectJSON type checking", "[Param]")
 {
 	SECTION("Bool type rejects string values")
 	{
@@ -596,7 +596,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Bool";
 		json[U"value"] = U"true";  // 文字列
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
 	}
 	
@@ -606,7 +606,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Bool";
 		json[U"value"] = true;  // 正しいbool型
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Bool);
 		REQUIRE(GetParamValueAs<bool>(*result).value_or(false) == true);
@@ -618,7 +618,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Number";
 		json[U"value"] = U"42";  // 文字列
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
 	}
 	
@@ -628,7 +628,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Number";
 		json[U"value"] = 42.5;  // 正しい数値型
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Number);
 		REQUIRE(GetParamValueAs<double>(*result).value_or(0.0) == 42.5);
@@ -640,7 +640,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"String";
 		json[U"value"] = 123;  // 数値
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
 	}
 	
@@ -650,7 +650,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"String";
 		json[U"value"] = U"test";  // 正しい文字列型
 		
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::String);
 		REQUIRE(GetParamValueAs<String>(*result).value_or(U"") == U"test");
@@ -662,7 +662,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Color";
 		json[U"value"] = Array<int32>{ 255, 0, 0, 255 };  // 配列形式
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Color);
 
@@ -680,7 +680,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Color";
 		json[U"value"] = U"#FF0000FF";  // 文字列形式はエラー
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Color);
 
@@ -699,7 +699,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Vec2";
 		json[U"value"] = Array<double>{ 100, 200 };  // 配列形式
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Vec2);
 
@@ -715,7 +715,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"Vec2";
 		json[U"value"] = U"(100, 200)";  // 文字列形式はエラー
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::Vec2);
 
@@ -732,7 +732,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"LRTB";
 		json[U"value"] = Array<double>{ 10, 20, 30, 40 };  // 配列形式
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::LRTB);
 
@@ -750,7 +750,7 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		json[U"type"] = U"LRTB";
 		json[U"value"] = U"(10, 20, 30, 40)";  // 文字列形式はエラー
 
-		auto result = ParamValueFromJSON(json);
+		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
 		REQUIRE(GetParamType(*result) == ParamType::LRTB);
 
@@ -768,18 +768,18 @@ TEST_CASE("ParamValueFromJSON type checking", "[Param]")
 		// typeフィールドがない場合
 		JSON noType;
 		noType[U"value"] = 42;
-		auto resultNoType = ParamValueFromJSON(noType);
+		auto resultNoType = ParamValueFromParamObjectJSON(noType);
 		REQUIRE(!resultNoType.has_value());
 
 		// valueフィールドがない場合
 		JSON noValue;
 		noValue[U"type"] = U"Number";
-		auto resultNoValue = ParamValueFromJSON(noValue);
+		auto resultNoValue = ParamValueFromParamObjectJSON(noValue);
 		REQUIRE(!resultNoValue.has_value());
 
 		// 両方のフィールドがない場合
 		JSON empty;
-		auto resultEmpty = ParamValueFromJSON(empty);
+		auto resultEmpty = ParamValueFromParamObjectJSON(empty);
 		REQUIRE(!resultEmpty.has_value());
 	}
 
