@@ -15,6 +15,7 @@
 #include "ParamRefDialog.hpp"
 #include "ParamReferencesDialog.hpp"
 #include "SpriteGridDivisionInputDialog.hpp"
+#include "TextureFontLabelGridDivisionInputDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "EditorColor.hpp"
@@ -5023,6 +5024,33 @@ namespace noco::editor
 				if (isFolded)
 				{
 					snapButton->setActive(false);
+				}
+			}
+
+			// TextureFontLabelコンポーネントの場合、分割数入力ボタンを追加
+			if (auto textureFontLabel = std::dynamic_pointer_cast<TextureFontLabel>(component))
+			{
+				auto gridDivisionButton = componentNode->addChild(CreateButtonNode(
+					U"Gridの値を分割数で入力...",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 24 },
+						.margin = LRTB{ 12, 12, 4, 0 },
+					},
+					[this, textureFontLabel](const std::shared_ptr<Node>&)
+					{
+						m_dialogOpener->openDialog(
+							std::make_shared<TextureFontLabelGridDivisionInputDialog>(
+								textureFontLabel,
+								[this] { refreshInspector(); }
+							)
+						);
+					}));
+
+				if (isFolded)
+				{
+					gridDivisionButton->setActive(false);
 				}
 			}
 
