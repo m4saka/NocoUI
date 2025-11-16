@@ -375,6 +375,33 @@ namespace noco
 			const Array<Event>& getFiredEventsAll() const;
 		};
 
+		class HitTestEnabledGuard
+		{
+		private:
+			Optional<HitTestEnabledYN>* m_target;
+
+		public:
+			HitTestEnabledGuard(Optional<HitTestEnabledYN>* target, HitTestEnabledYN value)
+				: m_target{ target }
+			{
+				if (m_target)
+				{
+					*m_target = value;
+				}
+			}
+
+			~HitTestEnabledGuard()
+			{
+				if (m_target)
+				{
+					m_target->reset();
+				}
+			}
+
+			HitTestEnabledGuard(const HitTestEnabledGuard&) = delete;
+			HitTestEnabledGuard& operator=(const HitTestEnabledGuard&) = delete;
+		};
+
 		SizeF m_referenceSize = DefaultSize;
 		LayoutVariant m_childrenLayout = FlowLayout{};
 		Array<std::shared_ptr<Node>> m_children;
@@ -393,6 +420,7 @@ namespace noco
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
 		/* NonSerialized */ InteractableYN m_interactable = InteractableYN::Yes;
 		/* NonSerialized */ std::weak_ptr<SubCanvas> m_containedSubCanvas; // このCanvasを含むSubCanvas
+		/* NonSerialized */ Optional<HitTestEnabledYN> m_hitTestEnabledForCurrentUpdate; // 現在のupdate中のヒットテスト有効状態
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のCanvasのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 
 		[[nodiscard]]
@@ -684,6 +712,12 @@ namespace noco
 		std::weak_ptr<SubCanvas> containedSubCanvas() const
 		{
 			return m_containedSubCanvas;
+		}
+
+		[[nodiscard]]
+		Optional<HitTestEnabledYN> hitTestEnabledForCurrentUpdate() const
+		{
+			return m_hitTestEnabledForCurrentUpdate;
 		}
 
 		[[nodiscard]]

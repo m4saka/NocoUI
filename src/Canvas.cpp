@@ -607,6 +607,8 @@ namespace noco
 	{
 		static const Array<String> EmptyStringArray{};
 
+		const HitTestEnabledGuard hitTestGuard{ &m_hitTestEnabledForCurrentUpdate, hitTestEnabled };
+
 		m_eventRegistry.clear();
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
@@ -833,7 +835,7 @@ namespace noco
 			scrollableHoveredNode->m_dragThresholdExceeded = false; // 閾値フラグを初期化
 			detail::s_canvasUpdateContext.dragScrollingNode = scrollableHoveredNode;
 		}
-		
+
 		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
 	}
 	

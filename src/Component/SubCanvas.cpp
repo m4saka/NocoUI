@@ -160,7 +160,20 @@ namespace noco
 				m_appliedParamsJSON = currentParamsJSON;
 			}
 
-			m_canvas->update(node->regionRect().size);
+			// 親のinteractableを子Canvasに伝播
+			m_canvas->setInteractable(node->interactable());
+
+			// Canvas::updateに指定されたhitTestEnabledを子Canvasに伝播
+			HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes;
+			if (auto parentCanvas = node->containedCanvas())
+			{
+				if (auto enabled = parentCanvas->hitTestEnabledForCurrentUpdate())
+				{
+					hitTestEnabled = *enabled;
+				}
+			}
+
+			m_canvas->update(node->regionRect().size, hitTestEnabled);
 
 			// イベント伝播が有効な場合、子Canvasのイベントを親Canvasに伝播
 			if (m_propagateEvents.value())
