@@ -323,6 +323,13 @@ namespace noco
 			this->effectiveAutoShrinkWidthScale = 1.0;
 			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, HorizontalOverflow::Overflow, VerticalOverflow::Overflow);
 		}
+		else if (newSizingMode == TextureFontLabelSizingMode::AutoResizeHeight)
+		{
+			// AutoResizeHeightでは幅は固定し、HorizontalOverflowの設定に従って折り返し、高さのみOverflowとする
+			this->effectiveCharacterSize = characterSize;
+			this->effectiveAutoShrinkWidthScale = 1.0;
+			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, horizontalOverflow, VerticalOverflow::Overflow);
+		}
 		else // TextureFontLabelSizingMode::Fixed
 		{
 			this->effectiveCharacterSize = characterSize;
@@ -633,6 +640,42 @@ namespace noco
 				}
 			}
 		}
+		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResizeHeight)
+		{
+			const LRTB& padding = m_padding.value();
+			const RectF paddedRect = node->regionRect().stretched(
+				-padding.top,
+				-padding.right,
+				-padding.bottom,
+				-padding.left
+			);
+
+			// 現在のノード幅を使ってコンテンツサイズを計算
+			const SizeF contentSize = getContentSize(paddedRect.size);
+
+			// 高さのみを切り上げてpaddingを加算
+			const double newHeight = Math::Ceil(contentSize.y) + padding.totalHeight();
+
+			if (node->regionRect().h != newHeight)
+			{
+				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+				{
+					AnchorRegion newRegion = *pAnchorRegion;
+					// 高さのみを更新(幅のsizeDeltaは維持)
+					newRegion.sizeDelta.y = newHeight;
+					newRegion.anchorMax.y = newRegion.anchorMin.y;
+					node->setRegion(newRegion);
+				}
+				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+				{
+					InlineRegion newRegion = *pInlineRegion;
+					newRegion.sizeDelta.y = newHeight;
+					newRegion.sizeRatio.y = 0.0;
+					// 幅に関する設定は維持
+					node->setRegion(newRegion);
+				}
+			}
+		}
 	}
 
 	SizeF TextureFontLabel::getContentSizeForAutoResize() const
@@ -677,9 +720,9 @@ namespace noco
 
 	SizeF TextureFontLabel::getContentSize() const
 	{
-		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
+		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrink/AutoShrinkWidth/AutoResizeHeightはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
+		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth || sizingMode == TextureFontLabelSizingMode::AutoResizeHeight)
 		{
 			sizingMode = TextureFontLabelSizingMode::Fixed;
 		}

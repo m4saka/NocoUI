@@ -18,6 +18,7 @@ namespace noco
 		AutoShrink,
 		AutoShrinkWidth,
 		AutoResize,
+		AutoResizeHeight,
 	};
 
 	enum class LabelGradationType : uint8

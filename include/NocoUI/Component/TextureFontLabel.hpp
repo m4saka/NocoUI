@@ -12,6 +12,7 @@ namespace noco
 		AutoShrink,
 		AutoShrinkWidth,
 		AutoResize,
+		AutoResizeHeight,
 	};
 
 	class TextureFontLabel : public SerializableComponentBase, public std::enable_shared_from_this<TextureFontLabel>
