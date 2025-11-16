@@ -147,16 +147,18 @@ namespace noco::editor
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = SizeF{ 0, 100 },
+						.sizeDelta = SizeF{ 0, 0 },
 						.margin = LRTB{ 0, 0, 16, 16 },
 					});
-				messageNode->emplaceComponent<Label>(
+				const auto msgLabel = messageNode->emplaceComponent<Label>(
 					U"Canvasが存在しません",
 					U"",
 					16,
 					Palette::White,
 					HorizontalAlign::Center,
-					VerticalAlign::Middle);
+					VerticalAlign::Middle)
+					->setSizingMode(LabelSizingMode::AutoResizeHeight);
+				msgLabel->refreshAutoResizeImmediately(messageNode);
 				return;
 			}
 
@@ -167,16 +169,18 @@ namespace noco::editor
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = SizeF{ 0, 100 },
+						.sizeDelta = SizeF{ 0, 0 },
 						.margin = LRTB{ 0, 0, 16, 16 },
 					});
-				messageNode->emplaceComponent<Label>(
+				const auto msgLabel = messageNode->emplaceComponent<Label>(
 					U"Canvasにパラメータがありません",
 					U"",
 					16,
 					Palette::White,
 					HorizontalAlign::Center,
-					VerticalAlign::Middle);
+					VerticalAlign::Middle)
+					->setSizingMode(LabelSizingMode::AutoResizeHeight);
+				msgLabel->refreshAutoResizeImmediately(messageNode);
 				return;
 			}
 
@@ -186,16 +190,18 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ 0, 32 },
+					.sizeDelta = Vec2{ 0, 0 },
 					.margin = LRTB{ 0, 0, 8, 8 },
 				});
-			titleNode->emplaceComponent<Label>(
+			const auto titleLabel = titleNode->emplaceComponent<Label>(
 				U"パラメータ編集",
 				U"",
 				16,
 				Palette::White,
 				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				VerticalAlign::Middle)
+				->setSizingMode(LabelSizingMode::AutoResizeHeight);
+			titleLabel->refreshAutoResizeImmediately(titleNode);
 
 			// パラメータリストコンテナ
 			const auto paramsListNode = contentRootNode->emplaceChild(

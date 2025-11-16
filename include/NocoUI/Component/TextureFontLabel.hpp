@@ -441,5 +441,7 @@ namespace noco
 		SizeF getContentSize() const;
 
 		SizeF getContentSize(const SizeF& rectSize) const;
+
+		void refreshAutoResizeImmediately(const std::shared_ptr<Node>& node);
 	};
 }

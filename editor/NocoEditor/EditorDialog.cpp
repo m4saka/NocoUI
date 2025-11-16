@@ -16,16 +16,18 @@ namespace noco::editor
 			InlineRegion
 			{
 				.sizeRatio = Vec2{ 1, 0 },
-				.sizeDelta = SizeF{ 0, 36 },
+				.sizeDelta = SizeF{ 0, 0 },
 				.margin = LRTB{ 0, 0, 0, 8 },
 			});
-		labelNode->emplaceComponent<Label>(
+		const auto label = labelNode->emplaceComponent<Label>(
 			m_pProperty->name(),
 			U"",
 			14,
 			Palette::White,
 			HorizontalAlign::Center,
-			VerticalAlign::Middle);
+			VerticalAlign::Middle)
+			->setSizingMode(LabelSizingMode::AutoResizeHeight);
+		label->refreshAutoResizeImmediately(labelNode);
 
 		createStyleStateSection(contentRootNode, dialogContextMenu);
 

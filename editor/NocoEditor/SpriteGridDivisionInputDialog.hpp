@@ -89,16 +89,18 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = Vec2{ 0, 32 },
+					.sizeDelta = Vec2{ 0, 0 },
 					.margin = LRTB{ 0, 0, 8, 8 },
 				});
-			descNode->emplaceComponent<Label>(
+			const auto descLabel = descNode->emplaceComponent<Label>(
 				U"テクスチャの縦横の分割数を入力してください",
 				U"",
 				14,
 				Palette::White,
 				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				VerticalAlign::Middle)
+				->setSizingMode(LabelSizingMode::AutoResizeHeight);
+			descLabel->refreshAutoResizeImmediately(descNode);
 
 			const auto texSizeNode = contentRootNode->emplaceChild(
 				U"TextureSize",

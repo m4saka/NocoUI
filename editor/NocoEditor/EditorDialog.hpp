@@ -251,16 +251,18 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = SizeF{ 0, 48 },
+					.sizeDelta = SizeF{ 0, 0 },
 					.margin = LRTB{ 0, 0, 16, 16 },
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto label = labelNode->emplaceComponent<Label>(
 				m_text,
 				U"",
 				14,
 				Palette::White,
 				HorizontalAlign::Center,
-				VerticalAlign::Middle);
+				VerticalAlign::Middle)
+				->setSizingMode(LabelSizingMode::AutoResizeHeight);
+			label->refreshAutoResizeImmediately(labelNode);
 		}
 
 		void onResult(StringView resultButtonText) override
@@ -307,16 +309,18 @@ namespace noco::editor
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
-					.sizeDelta = SizeF{ 0, 24 },
+					.sizeDelta = SizeF{ 0, 0 },
 					.margin = LRTB{ 16, 16, 16, 8 },
 				});
-			labelNode->emplaceComponent<Label>(
+			const auto label = labelNode->emplaceComponent<Label>(
 				m_labelText,
 				U"",
 				14,
 				Palette::White,
 				HorizontalAlign::Left,
-				VerticalAlign::Middle);
+				VerticalAlign::Middle)
+				->setSizingMode(LabelSizingMode::AutoResizeHeight);
+			label->refreshAutoResizeImmediately(labelNode);
 
 			m_textBoxNode = contentRootNode->emplaceChild(
 				U"TextBox",

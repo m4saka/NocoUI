@@ -488,5 +488,7 @@ namespace noco
 		SizeF getContentSize(const String& canvasDefaultFontAssetName = U"") const;
 
 		SizeF getContentSize(const SizeF& rectSize, const String& canvasDefaultFontAssetName = U"") const;
+
+		void refreshAutoResizeImmediately(const std::shared_ptr<Node>& node);
 	};
 }

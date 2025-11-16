@@ -618,64 +618,7 @@ namespace noco
 
 	void TextureFontLabel::update(const std::shared_ptr<Node>& node)
 	{
-		if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResize)
-		{
-			const SizeF size = getContentSizeForAutoResize();
-			if (node->regionRect().size != size)
-			{
-				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
-				{
-					AnchorRegion newRegion = *pAnchorRegion;
-					newRegion.sizeDelta = size;
-					newRegion.anchorMax = newRegion.anchorMin;
-					node->setRegion(newRegion);
-				}
-				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
-				{
-					InlineRegion newRegion = *pInlineRegion;
-					newRegion.sizeDelta = size;
-					newRegion.sizeRatio = Vec2::Zero();
-					newRegion.flexibleWeight = 0.0;
-					node->setRegion(newRegion);
-				}
-			}
-		}
-		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResizeHeight)
-		{
-			const LRTB& padding = m_padding.value();
-			const RectF paddedRect = node->regionRect().stretched(
-				-padding.top,
-				-padding.right,
-				-padding.bottom,
-				-padding.left
-			);
-
-			// 現在のノード幅を使ってコンテンツサイズを計算
-			const SizeF contentSize = getContentSize(paddedRect.size);
-
-			// 高さのみを切り上げてpaddingを加算
-			const double newHeight = Math::Ceil(contentSize.y) + padding.totalHeight();
-
-			if (node->regionRect().h != newHeight)
-			{
-				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
-				{
-					AnchorRegion newRegion = *pAnchorRegion;
-					// 高さのみを更新(幅のsizeDeltaは維持)
-					newRegion.sizeDelta.y = newHeight;
-					newRegion.anchorMax.y = newRegion.anchorMin.y;
-					node->setRegion(newRegion);
-				}
-				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
-				{
-					InlineRegion newRegion = *pInlineRegion;
-					newRegion.sizeDelta.y = newHeight;
-					newRegion.sizeRatio.y = 0.0;
-					// 幅に関する設定は維持
-					node->setRegion(newRegion);
-				}
-			}
-		}
+		refreshAutoResizeImmediately(node);
 	}
 
 	SizeF TextureFontLabel::getContentSizeForAutoResize() const
@@ -777,5 +720,70 @@ namespace noco
 			m_textureGridRows.value());
 
 		return m_cache.regionSize;
+	}
+
+	void TextureFontLabel::refreshAutoResizeImmediately(const std::shared_ptr<Node>& node)
+	{
+		if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResize)
+		{
+			const SizeF size = getContentSizeForAutoResize();
+			if (node->regionRect().size != size)
+			{
+				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+				{
+					AnchorRegion newRegion = *pAnchorRegion;
+					newRegion.sizeDelta = size;
+					newRegion.anchorMax = newRegion.anchorMin;
+					node->setRegion(newRegion);
+				}
+				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+				{
+					InlineRegion newRegion = *pInlineRegion;
+					newRegion.sizeDelta = size;
+					newRegion.sizeRatio = Vec2::Zero();
+					newRegion.flexibleWeight = 0.0;
+					node->setRegion(newRegion);
+				}
+			}
+		}
+		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResizeHeight)
+		{
+			// AutoResizeHeightはAnchorやsizeRatioによる幅をあらかじめ確定させておく必要があるため、事前にレイアウト更新
+			node->refreshContainedCanvasLayoutImmediately();
+
+			const LRTB& padding = m_padding.value();
+			const RectF paddedRect = node->regionRect().stretched(
+				-padding.top,
+				-padding.right,
+				-padding.bottom,
+				-padding.left
+			);
+
+			// 現在のノード幅を使ってコンテンツサイズを計算
+			const SizeF contentSize = getContentSize(paddedRect.size);
+
+			// 高さのみを切り上げてpaddingを加算
+			const double newHeight = Math::Ceil(contentSize.y) + padding.totalHeight();
+
+			if (node->regionRect().h != newHeight)
+			{
+				if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+				{
+					AnchorRegion newRegion = *pAnchorRegion;
+					// 高さのみを更新(幅のsizeDeltaは維持)
+					newRegion.sizeDelta.y = newHeight;
+					newRegion.anchorMax.y = newRegion.anchorMin.y;
+					node->setRegion(newRegion);
+				}
+				else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+				{
+					InlineRegion newRegion = *pInlineRegion;
+					newRegion.sizeDelta.y = newHeight;
+					newRegion.sizeRatio.y = 0.0;
+					// 幅に関する設定は維持
+					node->setRegion(newRegion);
+				}
+			}
+		}
 	}
 }
