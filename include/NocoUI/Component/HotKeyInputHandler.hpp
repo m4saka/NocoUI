@@ -23,6 +23,7 @@ namespace noco
 		HotKeyTarget m_target;
 		EnabledWhileTextEditingYN m_enabledWhileTextEditing;
 		ClearInputYN m_clearInput;
+		bool m_prevEditingTextExists = false;
 
 		[[nodiscard]]
 		bool getModifiersPressed() const
@@ -64,6 +65,15 @@ namespace noco
 
 		void updateKeyInput(const std::shared_ptr<Node>& node) override
 		{
+			// 未変換テキストがある場合はHotKeyを反応させない(Enterによる確定時は空なので、前フレームも見る)
+			const bool editingTextExists = !TextInput::GetEditingText().empty();
+			if (editingTextExists || m_prevEditingTextExists)
+			{
+				m_prevEditingTextExists = editingTextExists;
+				return;
+			}
+			m_prevEditingTextExists = editingTextExists;
+
 			if (!m_enabledWhileTextEditing && IsEditingTextBox())
 			{
 				// テキストボックス編集中はキーを無視

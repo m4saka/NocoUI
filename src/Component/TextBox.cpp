@@ -531,7 +531,7 @@ namespace noco
 			bool keyMoveTried = false;
 
 			const bool editingTextExists = !TextInput::GetEditingText().empty();
-			if (!m_prevEditingTextExists && !editingTextExists && !m_isDragging) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Windows環境だとEnterによる確定時は空なので、前フレームも見る)、ドラッグ中もキー操作を無効化
+			if (!m_prevEditingTextExists && !editingTextExists && !m_isDragging) // 未変換テキストがある場合はテキスト編集・カーソル移動しない(Enterによる確定時は空なので、前フレームも見る)、ドラッグ中もキー操作を無効化
 			{
 				if (KeyLeft.down() || (KeyLeft.pressedDuration() > 0.4s && m_leftPressStopwatch.elapsed() > 0.03s))
 				{
