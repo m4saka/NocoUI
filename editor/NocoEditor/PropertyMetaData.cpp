@@ -1371,7 +1371,26 @@ namespace noco::editor
 			.tooltip = U"自動リサイズモード",
 			.tooltipDetail = U"シーンサイズに応じた自動リサイズを設定します\n\nNone: リサイズしない\nMatchSceneSize: シーンサイズに合わせる\n\n※AutoScaleModeとは異なり、Canvasのサイズ自体が変更されます\n※エディタ上のプレビューには反映されません",
 		};
-		
+
+		// SubCanvasのプロパティ
+		metadata[PropertyKey{ U"SubCanvas", U"canvasPath" }] = PropertyMetadata{
+			.tooltip = U"読み込むCanvasファイルのパス",
+			.tooltipDetail = U"読み込む.nocoファイルの相対パスを指定します\n絶対パスは無視されます\n最大ネストレベルは16です",
+		};
+		metadata[PropertyKey{ U"SubCanvas", U"propagateEvents" }] = PropertyMetadata{
+			.tooltip = U"イベントを親Canvasに伝播するかどうか",
+			.tooltipDetail = U"有効にすると、子Canvas内で発火したイベントを親Canvasに伝播します\nCanvas::getFiredEventsAll()などで取得できるようになります",
+		};
+		metadata[PropertyKey{ U"SubCanvas", U"paramsJSON" }] = PropertyMetadata{
+			.tooltip = U"子Canvasに渡すパラメータ(JSON形式)",
+			.tooltipDetail = U"子Canvasに渡すパラメータをJSON形式で指定します\n例: {\"title\": \"タイトル\", \"count\": 10}",
+			.numTextAreaLines = 5,
+		};
+		metadata[PropertyKey{ U"SubCanvas", U"tag" }] = PropertyMetadata{
+			.tooltip = U"プログラムから参照する際のタグ名",
+			.tooltipDetail = U"以下の関数で利用できます.\n・Canvas::getSubCanvasByTag: タグでSubCanvasを取得\n・Canvas::setSubCanvasParamByTag: 子Canvasのパラメータを設定\n・Canvas::setSubCanvasParamsByTag: 子Canvasのパラメータを一括設定",
+		};
+
 		return metadata;
 	}
 }

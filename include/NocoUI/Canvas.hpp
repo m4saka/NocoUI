@@ -386,7 +386,7 @@ namespace noco
 		/* NonSerialized */ double m_rotation = 0.0;
 		/* NonSerialized */ EventRegistry m_eventRegistry;
 		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
-		/* NonSerialized */ Optional<SizeF> m_lastSceneSize;
+		/* NonSerialized */ Optional<SizeF> m_lastAutoFitSceneSize;
 		/* NonSerialized */ bool m_isEditorPreview = false;
 		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
@@ -396,7 +396,7 @@ namespace noco
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
 
-		void updateAutoFitIfNeeded();
+		void updateAutoFitIfNeeded(const SizeF& sceneSize, bool force = false);
 
 		// ノードツリー内でinstanceIdによるノード検索（再帰）
 		[[nodiscard]]
@@ -442,6 +442,8 @@ namespace noco
 		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
 
 		void update(HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
+
+		void update(const SizeF& customSceneSize, HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
 		[[nodiscard]]
 		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
@@ -566,6 +568,10 @@ namespace noco
 				}, value);
 			}
 		}
+
+		/// @brief JSONからパラメータを一括設定
+		/// @param json パラメータのJSON (オブジェクト形式)
+		void setParamsByJSON(const JSON& json);
 
 		[[nodiscard]]
 		Optional<ParamValue> param(const String& name) const;
@@ -748,6 +754,16 @@ namespace noco
 		// instanceIdによるノード検索
 		[[nodiscard]]
 		std::shared_ptr<Node> findNodeByInstanceId(uint64 instanceId) const;
+
+		// タグによるSubCanvas取得
+		[[nodiscard]]
+		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag) const;
+
+		// タグによるSubCanvasのパラメータ設定
+		void setSubCanvasParamByTag(StringView tag, const String& paramName, const ParamValue& value);
+
+		// タグによるSubCanvasのパラメータ一括設定
+		void setSubCanvasParamsByTag(StringView tag, const HashTable<String, ParamValue>& params);
 
 		// すべてのTweenコンポーネントの一括制御
 		void setTweenActiveAll(bool active);

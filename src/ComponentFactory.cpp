@@ -19,6 +19,7 @@ namespace noco
 		factory.registerComponentType<CursorChanger>(U"CursorChanger");
 		factory.registerComponentType<UISound>(U"UISound");
 		factory.registerComponentType<Tween>(U"Tween");
+		factory.registerComponentType<SubCanvas>(U"SubCanvas");
 
 		return factory;
 	}

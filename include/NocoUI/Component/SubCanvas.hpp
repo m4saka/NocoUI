@@ -1,0 +1,109 @@
+﻿#pragma once
+#include <Siv3D.hpp>
+#include "ComponentBase.hpp"
+#include "../Property.hpp"
+
+namespace noco
+{
+	class Canvas;
+
+	/// @brief 入れ子でCanvas利用できるようにするためのコンポーネント
+	class SubCanvas : public SerializableComponentBase, public std::enable_shared_from_this<SubCanvas>
+	{
+	private:
+		Property<String> m_canvasPath;
+		Property<bool> m_propagateEvents;
+		Property<String> m_paramsJSON;
+		PropertyNonInteractive<String> m_tag;
+
+		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
+		/* NonSerialized */ String m_loadedPath;
+		/* NonSerialized */ String m_appliedParamsJSON;
+
+		/// @brief 親Nodeを辿ってSubCanvasのネストレベルを計算
+		/// @param node 基準となるNode
+		/// @return ネストレベル(0始まり)
+		[[nodiscard]]
+		int32 calculateNestLevel(const std::shared_ptr<Node>& node) const;
+
+		/// @brief Canvasファイルを読み込む
+		/// @param node このコンポーネントが属するNode
+		void loadCanvasInternal(const std::shared_ptr<Node>& node);
+
+	public:
+		static constexpr int32 MaxNestLevel = 16;
+
+		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"", const PropertyValue<bool>& propagateEvents = true, const PropertyValue<String>& paramsJSON = U"{}", StringView tag = U"")
+			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_paramsJSON, &m_tag } }
+			, m_canvasPath{ U"canvasPath", canvasPath }
+			, m_propagateEvents{ U"propagateEvents", propagateEvents }
+			, m_paramsJSON{ U"paramsJSON", paramsJSON }
+			, m_tag{ U"tag", tag }
+		{
+		}
+
+		void update(const std::shared_ptr<Node>& node) override;
+
+		void draw(const Node& node) const override;
+
+		/// @brief Canvasファイルを再読み込み
+		/// @param node このコンポーネントが属するNode
+		void reloadCanvasFile(const std::shared_ptr<Node>& node);
+
+		[[nodiscard]]
+		const PropertyValue<String>& canvasPath() const
+		{
+			return m_canvasPath.propertyValue();
+		}
+
+		std::shared_ptr<SubCanvas> setCanvasPath(const PropertyValue<String>& canvasPath)
+		{
+			m_canvasPath.setPropertyValue(canvasPath);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<bool>& propagateEvents() const
+		{
+			return m_propagateEvents.propertyValue();
+		}
+
+		std::shared_ptr<SubCanvas> setPropagateEvents(const PropertyValue<bool>& propagateEvents)
+		{
+			m_propagateEvents.setPropertyValue(propagateEvents);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<String>& paramsJSON() const
+		{
+			return m_paramsJSON.propertyValue();
+		}
+
+		std::shared_ptr<SubCanvas> setParamsJSON(const PropertyValue<String>& paramsJSON)
+		{
+			m_paramsJSON.setPropertyValue(paramsJSON);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& tag() const
+		{
+			return m_tag.value();
+		}
+
+		std::shared_ptr<SubCanvas> setTag(const String& tag)
+		{
+			m_tag.setValue(tag);
+			return shared_from_this();
+		}
+
+		/// @brief 内部のCanvasにアクセス
+		/// @return Canvasのshared_ptr(読み込まれていない場合はnullptr)
+		[[nodiscard]]
+		std::shared_ptr<Canvas> canvas() const
+		{
+			return m_canvas;
+		}
+	};
+}

@@ -20,3 +20,4 @@
 #include "UISound.hpp"
 #include "Tween.hpp"
 #include "Toggle.hpp"
+#include "SubCanvas.hpp"

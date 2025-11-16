@@ -5,6 +5,7 @@
 #include "NocoUI/Serialization.hpp"
 #include "NocoUI/Version.hpp"
 #include "NocoUI/Component/IFontCachedComponent.hpp"
+#include "NocoUI/Component/SubCanvas.hpp"
 #include <cassert>
 
 namespace noco
@@ -90,17 +91,16 @@ namespace noco
 		return m_events;
 	}
 
-	void Canvas::updateAutoFitIfNeeded()
+	void Canvas::updateAutoFitIfNeeded(const SizeF& sceneSize, bool force)
 	{
-		const SizeF sceneSize = Scene::Size();
 		if (m_autoFitMode == AutoFitMode::None || m_isEditorPreview)
 		{
-			m_lastSceneSize = sceneSize;
+			m_lastAutoFitSceneSize = sceneSize;
 			return;
 		}
-		
-		// シーンサイズが変わっていなければ処理不要
-		if (m_lastSceneSize == sceneSize)
+
+		// シーンサイズが変わっていなければ処理不要(forceの場合は強制実行)
+		if (!force && m_lastAutoFitSceneSize == sceneSize)
 		{
 			return;
 		}
@@ -108,7 +108,7 @@ namespace noco
 		// ゼロ除算を防ぐ
 		if (m_referenceSize.x <= 0 || m_referenceSize.y <= 0)
 		{
-			m_lastSceneSize = sceneSize;
+			m_lastAutoFitSceneSize = sceneSize;
 			return;
 		}
 		
@@ -195,7 +195,7 @@ namespace noco
 			refreshLayoutImmediately(OnlyIfDirtyYN::No);
 		}
 		
-		m_lastSceneSize = sceneSize;
+		m_lastAutoFitSceneSize = sceneSize;
 	}
 
 	Mat3x2 Canvas::rootPosScaleMat() const
@@ -600,6 +600,11 @@ namespace noco
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
 	{
+		update(Scene::Size(), hitTestEnabled);
+	}
+
+	void Canvas::update(const SizeF& sceneSize, HitTestEnabledYN hitTestEnabled)
+	{
 		static const Array<String> EmptyStringArray{};
 
 		m_eventRegistry.clear();
@@ -810,7 +815,7 @@ namespace noco
 		}
 
 		// AutoFitModeによるサイズ・スケールの更新
-		updateAutoFitIfNeeded();
+		updateAutoFitIfNeeded(sceneSize);
 
 		// 同一フレーム内でのレイアウト更新はまとめて1回遅延実行
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
@@ -982,6 +987,59 @@ namespace noco
 	const Array<Event>& Canvas::getFiredEventsAll() const
 	{
 		return m_eventRegistry.getFiredEventsAll();
+	}
+
+	void Canvas::setParamsByJSON(const JSON& json)
+	{
+		if (!json.isObject())
+		{
+			return;
+		}
+
+		for (const auto& [key, value] : json)
+		{
+			// 既存のパラメータが存在する場合、その型を使って値を変換
+			if (auto it = m_params.find(key); it != m_params.end())
+			{
+				const ParamType type = GetParamType(it->second);
+
+				// JSONの値を既存パラメータの型に合わせて変換
+				if (type == ParamType::Bool && value.isBool())
+				{
+					m_params[key] = value.get<bool>();
+				}
+				else if (type == ParamType::Number && value.isNumber())
+				{
+					m_params[key] = value.get<double>();
+				}
+				else if (type == ParamType::String && value.isString())
+				{
+					m_params[key] = value.getString();
+				}
+				else if (type == ParamType::Color && value.isArray() && value.size() == 4)
+				{
+					const int32 r = value[0].get<int32>();
+					const int32 g = value[1].get<int32>();
+					const int32 b = value[2].get<int32>();
+					const int32 a = value[3].get<int32>();
+					m_params[key] = Color{ static_cast<uint8>(Clamp(r, 0, 255)), static_cast<uint8>(Clamp(g, 0, 255)), static_cast<uint8>(Clamp(b, 0, 255)), static_cast<uint8>(Clamp(a, 0, 255)) };
+				}
+				else if (type == ParamType::Vec2 && value.isArray() && value.size() == 2)
+				{
+					const double x = value[0].get<double>();
+					const double y = value[1].get<double>();
+					m_params[key] = Vec2{ x, y };
+				}
+				else if (type == ParamType::LRTB && value.isArray() && value.size() == 4)
+				{
+					const double left = value[0].get<double>();
+					const double right = value[1].get<double>();
+					const double top = value[2].get<double>();
+					const double bottom = value[3].get<double>();
+					m_params[key] = LRTB{ left, right, top, bottom };
+				}
+			}
+		}
 	}
 
 	Optional<ParamValue> Canvas::param(const String& name) const
@@ -1366,6 +1424,66 @@ namespace noco
 		return nullptr;
 	}
 
+	std::shared_ptr<SubCanvas> Canvas::getSubCanvasByTag(StringView tag) const
+	{
+		if (tag.isEmpty())
+		{
+			return nullptr;
+		}
+
+		for (const auto& child : m_children)
+		{
+			for (const auto& component : child->components())
+			{
+				if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
+				{
+					if (subCanvas->tag() == tag)
+					{
+						return subCanvas;
+					}
+				}
+			}
+
+			for (const auto& grandChild : child->children())
+			{
+				if (auto canvas = grandChild->containedCanvas())
+				{
+					if (auto found = canvas->getSubCanvasByTag(tag))
+					{
+						return found;
+					}
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	void Canvas::setSubCanvasParamByTag(StringView tag, const String& paramName, const ParamValue& value)
+	{
+		if (auto subCanvas = getSubCanvasByTag(tag))
+		{
+			if (auto canvas = subCanvas->canvas())
+			{
+				canvas->setParamValue(paramName, value);
+			}
+		}
+	}
+
+	void Canvas::setSubCanvasParamsByTag(StringView tag, const HashTable<String, ParamValue>& params)
+	{
+		if (auto subCanvas = getSubCanvasByTag(tag))
+		{
+			if (auto canvas = subCanvas->canvas())
+			{
+				for (const auto& [key, value] : params)
+				{
+					canvas->setParamValue(key, value);
+				}
+			}
+		}
+	}
+
 	Quad Canvas::quad() const
 	{
 		const RectF rect{ 0, 0, m_size.x, m_size.y };
@@ -1403,10 +1521,7 @@ namespace noco
 			return shared_from_this();
 		}
 		m_autoFitMode = mode;
-
-		m_lastSceneSize = none; // 再計算
-		updateAutoFitIfNeeded();
-
+		updateAutoFitIfNeeded(m_lastAutoFitSceneSize.value_or(Scene::Size()), true);
 		return shared_from_this();
 	}
 
@@ -1474,10 +1589,9 @@ namespace noco
 		// AutoFitModeが有効な場合は再計算
 		if (m_autoFitMode != AutoFitMode::None)
 		{
-			m_lastSceneSize = none; // 再計算を強制
-			updateAutoFitIfNeeded();
+			updateAutoFitIfNeeded(m_lastAutoFitSceneSize.value_or(Scene::Size()), true);
 		}
-		
+
 		return shared_from_this();
 	}
 

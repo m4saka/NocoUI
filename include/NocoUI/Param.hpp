@@ -147,7 +147,13 @@ namespace noco
 			return value;
 		}
 	}
-	
+
+	// ParamValue自体を受け取る場合はそのまま返す
+	inline ParamValue MakeParamValue(const ParamValue& value)
+	{
+		return value;
+	}
+
 	// ParamValueから型安全に値を取得
 	template<typename T>
 	[[nodiscard]]

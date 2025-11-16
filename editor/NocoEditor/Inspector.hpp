@@ -193,6 +193,38 @@ namespace noco::editor
 			}
 		}
 		
+		void doSnapNodeSizeToCanvasReferenceSize(const std::shared_ptr<SubCanvas>& subCanvas, const std::shared_ptr<Node>& node)
+		{
+			auto canvas = subCanvas->canvas();
+			if (!canvas)
+			{
+				return;
+			}
+
+			const Vec2 canvasSize = canvas->referenceSize();
+
+			if (const auto* pInlineRegion = node->inlineRegion())
+			{
+				InlineRegion newRegion = *pInlineRegion;
+				newRegion.sizeDelta = canvasSize;
+				newRegion.sizeRatio = Vec2::Zero();
+				newRegion.flexibleWeight = 0.0;
+				node->setRegion(newRegion);
+			}
+			else if (const auto* pAnchorRegion = node->anchorRegion())
+			{
+				AnchorRegion newRegion = *pAnchorRegion;
+				newRegion.sizeDelta = canvasSize;
+				newRegion.anchorMin = noco::Anchor::MiddleCenter;
+				newRegion.anchorMax = noco::Anchor::MiddleCenter;
+				node->setRegion(newRegion);
+			}
+			else
+			{
+				throw Error{ U"Unknown region type" };
+			}
+		}
+
 		void doSnapNodeSizeToTexture(const std::shared_ptr<Sprite>& sprite, const std::shared_ptr<Node>& node)
 		{
 			const String texturePath = sprite->textureFilePath().defaultValue();
@@ -200,13 +232,13 @@ namespace noco::editor
 			{
 				return;
 			}
-			
+
 			Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
 			if (!texture)
 			{
 				return;
 			}
-			
+
 			const Vec2 textureSize{ texture.size() };
 			
 			if (const auto* pInlineRegion = node->inlineRegion())
@@ -459,6 +491,7 @@ namespace noco::editor
 					MenuItem{ U"CursorChanger を追加", U"", KeyC, [this] { onClickAddComponent<CursorChanger>(); } },
 					MenuItem{ U"UISound を追加", U"", KeyU, [this] { onClickAddComponent<UISound>(); } },
 					MenuItem{ U"Tween を追加", U"", KeyW, [this] { onClickAddComponent<Tween>(); } },
+					MenuItem{ U"SubCanvas を追加", U"", Input{}, [this] { onClickAddComponent<SubCanvas>(); } },
 				};
 				
 				// カスタムコンポーネントをメニューに追加
@@ -4941,7 +4974,30 @@ namespace noco::editor
 						doSnapNodeSizeToTexture(sprite, node);
 						refreshInspector();
 					}));
-				
+
+				if (isFolded)
+				{
+					snapButton->setActive(false);
+				}
+			}
+
+			// SubCanvasコンポーネントの場合、スナップボタンを追加
+			if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
+			{
+				auto snapButton = componentNode->addChild(CreateButtonNode(
+					U"Canvasサイズへスナップ",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ 0, 24 },
+						.margin = LRTB{ 12, 12, 4, 0 },
+					},
+					[this, subCanvas, node](const std::shared_ptr<Node>&)
+					{
+						doSnapNodeSizeToCanvasReferenceSize(subCanvas, node);
+						refreshInspector();
+					}));
+
 				if (isFolded)
 				{
 					snapButton->setActive(false);
