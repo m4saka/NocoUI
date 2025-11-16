@@ -12,6 +12,12 @@ namespace noco
 
 		void SetBaseDirectoryPath(FilePathView path);
 
+		/// @brief 絶対パス/相対パスをアセットのフルパスに変換
+		/// @param filePath 入力パス(絶対または相対)
+		/// @return アセットのフルパス(絶対パスならそのまま、相対パスならベースディレクトリと結合)
+		[[nodiscard]]
+		FilePath GetFullPath(FilePathView filePath);
+
 		[[nodiscard]]
 		const Texture& GetOrLoadTexture(FilePathView filePath);
 

@@ -29,26 +29,16 @@ namespace noco
 			return;
 		}
 
-		// 絶対パスの場合は無視
-		if (path.starts_with(U'/') || path.starts_with(U'\\') || path.contains(U':'))
-		{
-			if (m_canvas)
-			{
-				m_canvas->setContainedSubCanvas({});
-			}
-			m_canvas.reset();
-			m_loadedPath.clear();
-			return;
-		}
-
 		// 既に同じパスが処理済みの場合はスキップ
 		if (m_loadedPath == path)
 		{
 			return;
 		}
 
+		// 絶対パス/相対パスをフルパスに変換
+		const FilePath fullPath = noco::Asset::GetFullPath(path);
+
 		// ファイルが存在しない場合はスキップ
-		const FilePath fullPath = FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), path);
 		if (!FileSystem::Exists(fullPath))
 		{
 			if (m_canvas)
@@ -90,8 +80,8 @@ namespace noco
 					const String& parentPath = parentSubCanvas->loadedPath();
 					if (!parentPath.isEmpty())
 					{
-						const FilePath parentFullPath = FileSystem::FullPath(
-							FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), parentPath));
+						// 親のパスをフルパスに変換して正規化
+						const FilePath parentFullPath = FileSystem::FullPath(noco::Asset::GetFullPath(parentPath));
 
 						if (loadingPaths.contains(parentFullPath))
 						{

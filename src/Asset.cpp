@@ -1,10 +1,25 @@
 ﻿#include "NocoUI/Asset.hpp"
+#include <filesystem>
 
 namespace noco
 {
 	namespace
 	{
 		FilePath s_baseDirectoryPath = U"";
+
+		/// @brief パスが絶対パスかどうかを判定
+		/// @param path 判定するパス
+		/// @return 絶対パスの場合true
+		[[nodiscard]]
+		bool IsAbsolutePath(FilePathView path) noexcept
+		{
+			if (path.isEmpty())
+			{
+				return false;
+			}
+
+			return std::filesystem::path(path.toUTF8()).is_absolute();
+		}
 
 		// Siv3DのAssetシステムを直接使うとユーザー側のアセットとの衝突回避用にPrefixを付与する必要が生じてコストがかかるため、別途管理する
 		template <class T>
@@ -61,6 +76,13 @@ namespace noco
 		s_baseDirectoryPath = baseDirectoryPath;
 	}
 
+	FilePath Asset::GetFullPath(FilePathView filePath)
+	{
+		return IsAbsolutePath(filePath)
+			? FilePath{ filePath }
+			: FileSystem::PathAppend(s_baseDirectoryPath, filePath);
+	}
+
 	const Texture& Asset::GetOrLoadTexture(FilePathView filePath)
 	{
 		static const Texture EmptyTexture{};
@@ -72,12 +94,12 @@ namespace noco
 
 		if (!s_textureAssetTable.isRegistered(filePath))
 		{
-			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
-			if (!FileSystem::IsFile(combinedPath))
+			const FilePath fullPath = GetFullPath(filePath);
+			if (!FileSystem::IsFile(fullPath))
 			{
 				return EmptyTexture;
 			}
-			s_textureAssetTable.registerAsset(filePath, Texture{ combinedPath });
+			s_textureAssetTable.registerAsset(filePath, Texture{ fullPath });
 		}
 
 		return s_textureAssetTable.get(filePath);
@@ -88,7 +110,8 @@ namespace noco
 		if (s_textureAssetTable.isRegistered(filePath))
 		{
 			s_textureAssetTable.unregister(filePath);
-			s_textureAssetTable.registerAsset(filePath, Texture{ FileSystem::PathAppend(s_baseDirectoryPath, filePath) });
+			const FilePath fullPath = GetFullPath(filePath);
+			s_textureAssetTable.registerAsset(filePath, Texture{ fullPath });
 			return s_textureAssetTable.get(filePath);
 		}
 		return Asset::GetOrLoadTexture(filePath);
@@ -119,12 +142,12 @@ namespace noco
 		}
 		if (!s_audioAssetTable.isRegistered(filePath))
 		{
-			const String combinedPath = FileSystem::PathAppend(s_baseDirectoryPath, filePath);
-			if (!FileSystem::IsFile(combinedPath))
+			const FilePath fullPath = GetFullPath(filePath);
+			if (!FileSystem::IsFile(fullPath))
 			{
 				return EmptyAudio;
 			}
-			s_audioAssetTable.registerAsset(filePath, Audio{ combinedPath });
+			s_audioAssetTable.registerAsset(filePath, Audio{ fullPath });
 		}
 		return s_audioAssetTable.get(filePath);
 	}
@@ -134,7 +157,8 @@ namespace noco
 		if (s_audioAssetTable.isRegistered(filePath))
 		{
 			s_audioAssetTable.unregister(filePath);
-			s_audioAssetTable.registerAsset(filePath, Audio{ FileSystem::PathAppend(s_baseDirectoryPath, filePath) });
+			const FilePath fullPath = GetFullPath(filePath);
+			s_audioAssetTable.registerAsset(filePath, Audio{ fullPath });
 			return s_audioAssetTable.get(filePath);
 		}
 		return Asset::GetOrLoadAudio(filePath);
