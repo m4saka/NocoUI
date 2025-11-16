@@ -5,6 +5,14 @@
 
 namespace noco
 {
+	SubCanvas::~SubCanvas()
+	{
+		if (m_canvas)
+		{
+			m_canvas->setContainedSubCanvas({});
+		}
+	}
+
 	void SubCanvas::loadCanvasInternal(const std::shared_ptr<Node>& node)
 	{
 		const String& path = m_canvasPath.value();
@@ -12,6 +20,10 @@ namespace noco
 		// 空のパスの場合は何もしない
 		if (path.isEmpty())
 		{
+			if (m_canvas)
+			{
+				m_canvas->setContainedSubCanvas({});
+			}
 			m_canvas.reset();
 			m_loadedPath.clear();
 			return;
@@ -20,6 +32,10 @@ namespace noco
 		// 絶対パスの場合は無視
 		if (path.starts_with(U'/') || path.starts_with(U'\\') || path.contains(U':'))
 		{
+			if (m_canvas)
+			{
+				m_canvas->setContainedSubCanvas({});
+			}
 			m_canvas.reset();
 			m_loadedPath.clear();
 			return;
@@ -35,9 +51,71 @@ namespace noco
 		const FilePath fullPath = FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), path);
 		if (!FileSystem::Exists(fullPath))
 		{
+			if (m_canvas)
+			{
+				m_canvas->setContainedSubCanvas({});
+			}
 			m_canvas.reset();
 			m_loadedPath.clear();
 			return;
+		}
+
+		// 親方向に辿って循環参照を確認
+		const FilePath normalizedFullPath = FileSystem::FullPath(fullPath);
+		HashSet<FilePath> loadingPaths;
+		loadingPaths.insert(normalizedFullPath);
+
+		auto currentNode = node;
+		constexpr int32 kMaxNestLevel = 10;
+		int32 nestLevel = 0;
+
+		while (currentNode)
+		{
+			if (++nestLevel > kMaxNestLevel)
+			{
+				Logger << U"[NocoUI error] SubCanvas: Max nest level exceeded: " << path;
+				if (m_canvas)
+				{
+					m_canvas->setContainedSubCanvas({});
+				}
+				m_canvas.reset();
+				m_loadedPath.clear();
+				return;
+			}
+
+			if (auto parentCanvas = currentNode->containedCanvas())
+			{
+				if (auto parentSubCanvas = parentCanvas->containedSubCanvas().lock())
+				{
+					const String& parentPath = parentSubCanvas->loadedPath();
+					if (!parentPath.isEmpty())
+					{
+						const FilePath parentFullPath = FileSystem::FullPath(
+							FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), parentPath));
+
+						if (loadingPaths.contains(parentFullPath))
+						{
+							Logger << U"[NocoUI error] SubCanvas: Circular reference detected: " << path;
+							if (m_canvas)
+							{
+								m_canvas->setContainedSubCanvas({});
+							}
+							m_canvas.reset();
+							m_loadedPath.clear();
+							return;
+						}
+						loadingPaths.insert(parentFullPath);
+					}
+				}
+			}
+
+			currentNode = currentNode->parentNode();
+		}
+
+		// 古いCanvasの参照をクリア
+		if (m_canvas)
+		{
+			m_canvas->setContainedSubCanvas({});
 		}
 
 		// Canvasを読み込み
@@ -48,6 +126,9 @@ namespace noco
 			m_loadedPath = path;
 			return;
 		}
+
+		// このCanvasを含むSubCanvasとして自身を設定
+		canvas->setContainedSubCanvas(weak_from_this());
 
 		m_canvas = canvas;
 		m_loadedPath = path;

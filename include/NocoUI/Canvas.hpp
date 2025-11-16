@@ -11,6 +11,7 @@ namespace noco
 	class ITextBox;
 	class IFocusable;
 	class ComponentFactory;
+	class SubCanvas;
 
 	struct CanvasUpdateContext
 	{
@@ -391,6 +392,7 @@ namespace noco
 		/* NonSerialized */ int32 m_serializedVersion = CurrentSerializedVersion; // これは読み込んだバージョンで、シリアライズ時はこの変数の値ではなくCurrentSerializedVersionが固定で出力される
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
 		/* NonSerialized */ InteractableYN m_interactable = InteractableYN::Yes;
+		/* NonSerialized */ std::weak_ptr<SubCanvas> m_containedSubCanvas; // このCanvasを含むSubCanvas
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のCanvasのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 
 		[[nodiscard]]
@@ -674,6 +676,14 @@ namespace noco
 		std::shared_ptr<Canvas> setInteractable(bool interactable)
 		{
 			return setInteractable(InteractableYN{ interactable });
+		}
+
+		void setContainedSubCanvas(const std::weak_ptr<SubCanvas>& subCanvas);
+
+		[[nodiscard]]
+		std::weak_ptr<SubCanvas> containedSubCanvas() const
+		{
+			return m_containedSubCanvas;
 		}
 
 		[[nodiscard]]

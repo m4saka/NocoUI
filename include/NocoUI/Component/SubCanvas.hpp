@@ -34,6 +34,8 @@ namespace noco
 		{
 		}
 
+		~SubCanvas();
+
 		void update(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
@@ -96,6 +98,14 @@ namespace noco
 		std::shared_ptr<Canvas> canvas() const
 		{
 			return m_canvas;
+		}
+
+		/// @brief 読み込まれたCanvasのパスを取得
+		/// @return 読み込まれたパス(読み込まれていない場合は空文字列)
+		[[nodiscard]]
+		const String& loadedPath() const
+		{
+			return m_loadedPath;
 		}
 	};
 }
