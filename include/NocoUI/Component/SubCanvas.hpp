@@ -21,8 +21,17 @@ namespace noco
 		/* NonSerialized */ String m_appliedParamsJSON;
 
 		/// @brief Canvasファイルを読み込む
-		/// @param node このコンポーネントが属するNode
-		void loadCanvasInternal(const std::shared_ptr<Node>& node);
+		void loadCanvasInternal();
+
+		bool tryReadFromJSONOverrideInternal(const JSON& json, detail::WithInstanceIdYN withInstanceId) override
+		{
+			if (!SerializableComponentBase::tryReadFromJSONOverrideInternal(json, withInstanceId))
+			{
+				return false;
+			}
+			loadCanvasInternal();
+			return true;
+		}
 
 	public:
 		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"", const PropertyValue<bool>& propagateEvents = true, StringView paramsJSON = U"{}", StringView tag = U"")
@@ -32,17 +41,15 @@ namespace noco
 			, m_paramsJSON{ U"paramsJSON", paramsJSON }
 			, m_tag{ U"tag", tag }
 		{
+			loadCanvasInternal();
 		}
-
-		~SubCanvas();
 
 		void update(const std::shared_ptr<Node>& node) override;
 
 		void draw(const Node& node) const override;
 
 		/// @brief Canvasファイルを再読み込み
-		/// @param node このコンポーネントが属するNode
-		void reloadCanvasFile(const std::shared_ptr<Node>& node);
+		void reloadCanvasFile();
 
 		[[nodiscard]]
 		const PropertyValue<String>& canvasPath() const
@@ -53,6 +60,7 @@ namespace noco
 		std::shared_ptr<SubCanvas> setCanvasPath(const PropertyValue<String>& canvasPath)
 		{
 			m_canvasPath.setPropertyValue(canvasPath);
+			loadCanvasInternal();
 			return shared_from_this();
 		}
 
