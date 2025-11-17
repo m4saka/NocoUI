@@ -43,11 +43,15 @@ namespace noco
 		{
 			m_canvas.reset();
 			m_loadedPath.clear();
+			m_loadedAssetBasePath.clear();
 			return;
 		}
 
+		// アセットベースパスを取得
+		const FilePath currentBasePath = noco::Asset::GetBaseDirectoryPath();
+
 		// 既に同じパスが処理済みの場合はスキップ
-		if (m_loadedPath == path)
+		if (m_loadedPath == path && m_loadedAssetBasePath == currentBasePath)
 		{
 			return;
 		}
@@ -60,6 +64,7 @@ namespace noco
 		{
 			m_canvas.reset();
 			m_loadedPath.clear();
+			m_loadedAssetBasePath.clear();
 			return;
 		}
 
@@ -73,6 +78,7 @@ namespace noco
 			Logger << U"[NocoUI error] SubCanvas load aborted due to exceeding maximum nest level ({}): {}"_fmt(kMaxNestLevel, path);
 			m_canvas.reset();
 			m_loadedPath = path; // 再読み込みさせないため、既に読み込み済み扱いとする
+			m_loadedAssetBasePath = currentBasePath;
 			return;
 		}
 
@@ -82,6 +88,7 @@ namespace noco
 			Logger << U"[NocoUI error] SubCanvas load aborted due to circular reference detected: {}"_fmt(path);
 			m_canvas.reset();
 			m_loadedPath = path; // 再読み込みさせないため、既に読み込み済み扱いとする
+			m_loadedAssetBasePath = currentBasePath;
 			return;
 		}
 
@@ -92,6 +99,7 @@ namespace noco
 		{
 			m_canvas.reset();
 			m_loadedPath = path;
+			m_loadedAssetBasePath = currentBasePath;
 			return;
 		}
 
@@ -100,11 +108,13 @@ namespace noco
 		{
 			m_canvas.reset();
 			m_loadedPath = path;
+			m_loadedAssetBasePath = currentBasePath;
 			return;
 		}
 
 		m_canvas = canvas;
 		m_loadedPath = path;
+		m_loadedAssetBasePath = currentBasePath;
 	}
 
 	void SubCanvas::update(const std::shared_ptr<Node>& node)

@@ -18,6 +18,7 @@ namespace noco
 
 		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
 		/* NonSerialized */ String m_loadedPath;
+		/* NonSerialized */ String m_loadedAssetBasePath;
 		/* NonSerialized */ String m_appliedParamsJSON;
 
 		/// @brief Canvasファイルを読み込む
