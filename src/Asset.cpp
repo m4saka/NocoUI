@@ -62,6 +62,7 @@ namespace noco
 
 		AssetTable<Texture> s_textureAssetTable;
 		AssetTable<Audio> s_audioAssetTable;
+		AssetTable<JSON> s_jsonAssetTable;
 	}
 
 	const FilePath& Asset::GetBaseDirectoryPath()
@@ -73,6 +74,7 @@ namespace noco
 	{
 		UnloadAllTextures();
 		UnloadAllAudios();
+		UnloadAllJSONs();
 		s_baseDirectoryPath = baseDirectoryPath;
 	}
 
@@ -177,5 +179,60 @@ namespace noco
 	void Asset::UnloadAllAudios()
 	{
 		s_audioAssetTable.clear();
+	}
+
+	const JSON& Asset::GetOrLoadJSON(FilePathView filePath)
+	{
+		static const JSON EmptyJSON{};
+
+		if (filePath.isEmpty())
+		{
+			return EmptyJSON;
+		}
+
+		if (!s_jsonAssetTable.isRegistered(filePath))
+		{
+			const FilePath fullPath = GetFullPath(filePath);
+			if (!FileSystem::IsFile(fullPath))
+			{
+				return EmptyJSON;
+			}
+			const JSON json = JSON::Load(fullPath);
+			if (!json)
+			{
+				return EmptyJSON;
+			}
+			s_jsonAssetTable.registerAsset(filePath, json);
+		}
+
+		return s_jsonAssetTable.get(filePath);
+	}
+
+	const JSON& Asset::ReloadJSON(FilePathView filePath)
+	{
+		if (s_jsonAssetTable.isRegistered(filePath))
+		{
+			s_jsonAssetTable.unregister(filePath);
+			const FilePath fullPath = GetFullPath(filePath);
+			const JSON json = JSON::Load(fullPath);
+			s_jsonAssetTable.registerAsset(filePath, json);
+			return s_jsonAssetTable.get(filePath);
+		}
+		return Asset::GetOrLoadJSON(filePath);
+	}
+
+	bool Asset::UnloadJSON(FilePathView filePath)
+	{
+		if (s_jsonAssetTable.isRegistered(filePath))
+		{
+			s_jsonAssetTable.unregister(filePath);
+			return true;
+		}
+		return false;
+	}
+
+	void Asset::UnloadAllJSONs()
+	{
+		s_jsonAssetTable.clear();
 	}
 }

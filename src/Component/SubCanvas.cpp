@@ -87,8 +87,15 @@ namespace noco
 
 		const LoadingPathGuard guard{ normalizedFullPath };
 
-		// Canvasを読み込み
-		auto canvas = Canvas::LoadFromFile(fullPath);
+		const JSON& json = noco::Asset::GetOrLoadJSON(path);
+		if (!json)
+		{
+			m_canvas.reset();
+			m_loadedPath = path;
+			return;
+		}
+
+		auto canvas = Canvas::CreateFromJSON(json);
 		if (!canvas)
 		{
 			m_canvas.reset();
@@ -173,6 +180,10 @@ namespace noco
 
 	void SubCanvas::reloadCanvasFile()
 	{
+		if (!m_canvasPath.value().isEmpty())
+		{
+			noco::Asset::ReloadJSON(m_canvasPath.value());
+		}
 		m_loadedPath.clear();
 		loadCanvasInternal();
 	}

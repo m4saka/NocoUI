@@ -35,5 +35,14 @@ namespace noco
 		bool UnloadAudio(FilePathView filePath);
 
 		void UnloadAllAudios();
+
+		[[nodiscard]]
+		const JSON& GetOrLoadJSON(FilePathView filePath);
+
+		const JSON& ReloadJSON(FilePathView filePath);
+
+		bool UnloadJSON(FilePathView filePath);
+
+		void UnloadAllJSONs();
 	}
 }
