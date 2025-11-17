@@ -1403,33 +1403,16 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			for (const auto& component : child->components())
+			if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes))
 			{
-				if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
-				{
-					if (subCanvas->tag() == tag)
-					{
-						return subCanvas;
-					}
-				}
-			}
-
-			for (const auto& grandChild : child->children())
-			{
-				if (auto canvas = grandChild->containedCanvas())
-				{
-					if (auto found = canvas->getSubCanvasByTag(tag))
-					{
-						return found;
-					}
-				}
+				return result;
 			}
 		}
 
 		return nullptr;
 	}
 
-	void Canvas::setSubCanvasParamByTag(StringView tag, const String& paramName, const ParamValue& value)
+	void Canvas::setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value)
 	{
 		if (auto subCanvas = getSubCanvasByTag(tag))
 		{
@@ -1440,15 +1423,30 @@ namespace noco
 		}
 	}
 
-	void Canvas::setSubCanvasParamsByTag(StringView tag, const HashTable<String, ParamValue>& params)
+	void Canvas::setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
 	{
 		if (auto subCanvas = getSubCanvasByTag(tag))
 		{
 			if (auto canvas = subCanvas->canvas())
 			{
-				for (const auto& [key, value] : params)
+				for (const auto& pair : params)
 				{
-					canvas->setParamValue(key, value);
+					const auto& name = pair.first;
+					const auto& value = pair.second;
+					std::visit([&canvas, &name](const auto& v) {
+						if constexpr (std::is_same_v<std::decay_t<decltype(v)>, const char32_t*>)
+						{
+							canvas->setParamValue(name, String{ v });
+						}
+						else if constexpr (std::is_same_v<std::decay_t<decltype(v)>, ColorF>)
+						{
+							canvas->setParamValue(name, Color{ v });
+						}
+						else
+						{
+							canvas->setParamValue(name, v);
+						}
+					}, value);
 				}
 			}
 		}

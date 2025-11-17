@@ -804,10 +804,10 @@ namespace noco
 		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag) const;
 
 		// タグによるSubCanvasのパラメータ設定
-		void setSubCanvasParamByTag(StringView tag, const String& paramName, const ParamValue& value);
+		void setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value);
 
 		// タグによるSubCanvasのパラメータ一括設定
-		void setSubCanvasParamsByTag(StringView tag, const HashTable<String, ParamValue>& params);
+		void setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params);
 
 		// すべてのTweenコンポーネントの一括制御
 		void setTweenActiveAll(bool active);

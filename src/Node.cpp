@@ -7,6 +7,7 @@
 #include "NocoUI/Component/TextBox.hpp"
 #include "NocoUI/Component/TextArea.hpp"
 #include "NocoUI/Component/Toggle.hpp"
+#include "NocoUI/Component/SubCanvas.hpp"
 #include "NocoUI/detail/ScopedScissorRect.hpp"
 
 namespace noco
@@ -3245,5 +3246,39 @@ namespace noco
 				child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
 			}
 		}
+	}
+
+	std::shared_ptr<SubCanvas> Node::getSubCanvasByTag(StringView tag, RecursiveYN recursive) const
+	{
+		if (tag.isEmpty())
+		{
+			return nullptr;
+		}
+
+		// 自身のSubCanvasコンポーネントをチェック
+		for (const auto& component : m_components)
+		{
+			if (auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
+			{
+				if (subCanvas->tag() == tag)
+				{
+					return subCanvas;
+				}
+			}
+		}
+
+		// 再帰的に子ノードを処理
+		if (recursive)
+		{
+			for (const auto& child : m_children)
+			{
+				if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes))
+				{
+					return result;
+				}
+			}
+		}
+
+		return nullptr;
 	}
 }

@@ -738,6 +738,10 @@ namespace noco
 		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
 		void setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive = RecursiveYN::Yes);
 
+		// タグによるSubCanvas取得（最初に見つかったものを返す、見つからなければnullptr）
+		[[nodiscard]]
+		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+
 	};
 
 	template <typename TComponent>
