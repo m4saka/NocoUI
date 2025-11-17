@@ -590,11 +590,14 @@ namespace noco
 		}
 
 		markLayoutAsDirty();
-		
+
 		for (const auto& child : m_children)
 		{
 			child->resetScrollOffset(RecursiveYN::Yes);
 		}
+
+		m_lastAutoFitSceneSize = none;
+
 		return true;
 	}
 	
