@@ -47,10 +47,8 @@ namespace noco
 			return;
 		}
 
-		// アセットベースパスを取得
-		const FilePath currentBasePath = noco::Asset::GetBaseDirectoryPath();
-
 		// 既に同じパスが処理済みの場合はスキップ
+		const FilePath& currentBasePath = noco::Asset::GetBaseDirectoryPath();
 		if (m_loadedPath == path && m_loadedAssetBasePath == currentBasePath)
 		{
 			return;
@@ -120,7 +118,7 @@ namespace noco
 	void SubCanvas::update(const std::shared_ptr<Node>& node)
 	{
 		// パスが変更されていたら再読み込み
-		if (m_loadedPath != m_canvasPath.value())
+		if (m_loadedPath != m_canvasPath.value() || m_loadedAssetBasePath != noco::Asset::GetBaseDirectoryPath())
 		{
 			loadCanvasInternal();
 		}

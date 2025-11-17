@@ -26,7 +26,8 @@ namespace noco
 		class AssetTable
 		{
 		private:
-			HashTable<AssetName, T> m_table;
+			// get関数が返すTの参照がregisterAsset関数の呼び出しによるHashTableのメモリ再配置で無効にならないよう、Tは直接持たずshared_ptr<T>で持つ
+			HashTable<AssetName, std::shared_ptr<T>> m_table;
 
 		public:
 			bool isRegistered(FilePathView filePath) const
@@ -36,12 +37,12 @@ namespace noco
 
 			void registerAsset(FilePathView filePath, const T& asset)
 			{
-				m_table.emplace(filePath, asset);
+				m_table.emplace(filePath, std::make_shared<T>(asset));
 			}
 
 			void registerAsset(FilePathView filePath, T&& asset)
 			{
-				m_table.emplace(filePath, std::move(asset));
+				m_table.emplace(filePath, std::make_shared<T>(std::move(asset)));
 			}
 
 			void unregister(FilePathView filePath)
@@ -51,7 +52,7 @@ namespace noco
 
 			const T& get(FilePathView filePath) const
 			{
-				return m_table.at(filePath);
+				return *m_table.at(filePath);
 			}
 
 			void clear()
