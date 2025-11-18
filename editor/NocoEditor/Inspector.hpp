@@ -5127,7 +5127,7 @@ namespace noco::editor
 				}
 
 				// 現在設定されているパラメータを表示
-				const String& paramsJSONString = subCanvas->paramsJSON();
+				const String& paramsJSONString = subCanvas->serializedParamsJSON();
 				bool hasParams = false;
 
 				if (!paramsJSONString.isEmpty() && paramsJSONString != U"{}")

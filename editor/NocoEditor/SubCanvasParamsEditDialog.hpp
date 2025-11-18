@@ -76,7 +76,7 @@ namespace noco::editor
 			}
 
 			// 現在のparamsJSONをパース
-			const String paramsJSONString = m_subCanvas->paramsJSON();
+			const String paramsJSONString = m_subCanvas->serializedParamsJSON();
 			if (!paramsJSONString.isEmpty())
 			{
 				m_currentParamsJSON = JSON::Parse(paramsJSONString);
@@ -277,7 +277,7 @@ namespace noco::editor
 
 				// JSONを文字列化してSubCanvasに設定
 				const String paramsJSONString = paramsJSON.formatMinimum();
-				m_subCanvas->setParamsJSON(paramsJSONString);
+				m_subCanvas->setSerializedParamsJSON(paramsJSONString);
 
 				if (m_onComplete)
 				{

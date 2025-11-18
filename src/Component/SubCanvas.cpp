@@ -126,19 +126,19 @@ namespace noco
 		// Canvasを更新
 		if (m_canvas)
 		{
-			// paramsJSONが変更されていたらパースして適用
-			const String& currentParamsJSON = m_paramsJSON.value();
-			if (m_appliedParamsJSON != currentParamsJSON)
+			// serializedParamsJSONが変更されていたらパースして適用
+			const String& currentSerializedParamsJSON = m_serializedParamsJSON.value();
+			if (m_appliedSerializedParamsJSON != currentSerializedParamsJSON)
 			{
-				if (!currentParamsJSON.isEmpty() && currentParamsJSON != U"{}")
+				if (!currentSerializedParamsJSON.isEmpty() && currentSerializedParamsJSON != U"{}")
 				{
-					const JSON json = JSON::Parse(currentParamsJSON);
+					const JSON json = JSON::Parse(currentSerializedParamsJSON);
 					if (json.isObject())
 					{
 						m_canvas->setParamsByJSON(json);
 					}
 				}
-				m_appliedParamsJSON = currentParamsJSON;
+				m_appliedSerializedParamsJSON = currentSerializedParamsJSON;
 			}
 
 			// 親のinteractableを子Canvasに伝播

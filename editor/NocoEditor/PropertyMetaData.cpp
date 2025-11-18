@@ -1395,7 +1395,7 @@ namespace noco::editor
 			.tooltip = U"イベントを親Canvasに伝播するかどうか",
 			.tooltipDetail = U"有効にすると、子Canvas内で発火したイベントを親Canvasに伝播します\nCanvas::getFiredEventsAll()などで取得できるようになります",
 		};
-		metadata[PropertyKey{ U"SubCanvas", U"paramsJSON" }] = PropertyMetadata{
+		metadata[PropertyKey{ U"SubCanvas", U"serializedParamsJSON" }] = PropertyMetadata{
 			.tooltip = U"子Canvasに渡すパラメータ(JSON形式)",
 			.tooltipDetail = U"子Canvasに渡すパラメータをJSON形式で指定します\n例: {\"title\": \"タイトル\", \"count\": 10}",
 			.visibilityCondition = [](const ComponentBase&) { return false; },
