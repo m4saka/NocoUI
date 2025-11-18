@@ -40,6 +40,8 @@ namespace noco
 		Property<int32> m_textureGridRows;
 		Property<SpriteTextureFilter> m_textureFilter;
 		Property<SpriteTextureAddressMode> m_textureAddressMode;
+		Property<LRTB> m_textureCellTrim;
+		PropertyNonInteractive<String> m_textureCellTrimByCharacterJSON;
 
 		struct TextureFontCache
 		{
@@ -50,6 +52,8 @@ namespace noco
 				Vec2 textureOffset;
 				int32 textureGridColumns;
 				int32 textureGridRows;
+				LRTB textureCellTrim;
+				String textureCellTrimByCharacterJSON;
 
 				[[nodiscard]]
 				bool isDirty(
@@ -57,10 +61,19 @@ namespace noco
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
-					int32 newTextureGridRows) const;
+					int32 newTextureGridRows,
+					const LRTB& newTextureCellTrim,
+					const String& newCharTextureCellTrimJSON) const;
+			};
+
+			struct CharacterMetrics
+			{
+				LRTB trim;
+				Vec2 effectiveSize;
 			};
 
 			HashTable<char32, RectF> uvMap;
+			HashTable<char32, CharacterMetrics> metricsMap;
 			Optional<CacheParams> prevParams;
 
 			bool refreshIfDirty(
@@ -68,7 +81,9 @@ namespace noco
 				const Vec2& textureCellSize,
 				const Vec2& textureOffset,
 				int32 textureGridColumns,
-				int32 textureGridRows);
+				int32 textureGridRows,
+				const LRTB& textureCellTrim,
+				const String& textureCellTrimByCharacterJSON);
 
 			[[nodiscard]]
 			Optional<RectF> getUV(char32 character) const;
@@ -110,6 +125,8 @@ namespace noco
 				Vec2 textureOffset;
 				int32 textureGridColumns;
 				int32 textureGridRows;
+				LRTB textureCellTrim;
+				String textureCellTrimByCharacterJSON;
 
 				[[nodiscard]]
 				bool isDirty(
@@ -124,7 +141,9 @@ namespace noco
 					const Vec2& newTextureCellSize,
 					const Vec2& newTextureOffset,
 					int32 newTextureGridColumns,
-					int32 newTextureGridRows) const;
+					int32 newTextureGridRows,
+					const LRTB& newTextureCellTrim,
+					const String& newCharTextureCellTrimJSON) const;
 			};
 
 			Optional<CacheParams> prevParams;
@@ -142,7 +161,9 @@ namespace noco
 				const Vec2& newTextureCellSize,
 				const Vec2& newTextureOffset,
 				int32 newTextureGridColumns,
-				int32 newTextureGridRows);
+				int32 newTextureGridRows,
+				const LRTB& newTextureCellTrim,
+				const String& newCharTextureCellTrimJSON);
 		};
 
 		/* NonSerialized */ mutable TextureFontCache m_textureFontCache;
@@ -168,7 +189,8 @@ namespace noco
 			const PropertyValue<Vec2>& characterSpacing = Vec2::Zero(),
 			const PropertyValue<LRTB>& padding = LRTB::Zero(),
 			const PropertyValue<HorizontalOverflow>& horizontalOverflow = HorizontalOverflow::Wrap,
-			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow);
+			const PropertyValue<VerticalOverflow>& verticalOverflow = VerticalOverflow::Overflow,
+			const PropertyValue<LRTB>& textureCellTrim = LRTB::Zero());
 
 		void update(const std::shared_ptr<Node>& node) override;
 
@@ -437,6 +459,26 @@ namespace noco
 			m_textureAddressMode.setPropertyValue(textureAddressMode);
 			return shared_from_this();
 		}
+
+		[[nodiscard]]
+		const PropertyValue<LRTB>& textureCellTrim() const
+		{
+			return m_textureCellTrim.propertyValue();
+		}
+
+		std::shared_ptr<TextureFontLabel> setTextureCellTrim(const PropertyValue<LRTB>& textureCellTrim)
+		{
+			m_textureCellTrim.setPropertyValue(textureCellTrim);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& textureCellTrimByCharacterJSON() const
+		{
+			return m_textureCellTrimByCharacterJSON.value();
+		}
+
+		std::shared_ptr<TextureFontLabel> setTextureCellTrimByCharacter(const HashTable<char32, LRTB>& trimMap);
 
 		SizeF getContentSize() const;
 

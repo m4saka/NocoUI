@@ -704,6 +704,15 @@ namespace noco::editor
 			.tooltipDetail = U"テクスチャグリッドの縦方向の文字数",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellTrim" }] = PropertyMetadata{
+			.tooltip = U"文字セルのトリミング量 (ピクセル)",
+			.tooltipDetail = U"全ての文字に適用される上下左右のトリミング量\n個別指定がない文字に適用されます\n\nテクスチャ内の隣接セルの色がにじむ場合や、プロポーショナルフォント表示に利用できます",
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellTrimByCharacterJSON" }] = PropertyMetadata{
+			.tooltip = U"文字毎のトリミング量 (JSON)",
+			.tooltipDetail = U"文字毎に個別のトリミング量を指定します\n形式: {\"1\": [10, 8, 0, 0], \"2\": [4, 5, 0, 0]}\n配列は [left, right, top, bottom] の順\n\nプロポーショナルフォント表示に利用できます",
+			.numTextAreaLines = 3,
+		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"text" }] = PropertyMetadata{
 			.tooltip = U"表示するテキスト",
 			.numTextAreaLines = 3,

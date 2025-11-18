@@ -34,26 +34,29 @@ namespace noco
 	}
 
 	bool TextureFontLabel::TextureFontCache::CacheParams::isDirty(
-		const String& newCharacterSet, const Vec2& newTextureCellSize, const Vec2& newTextureOffset, int32 newTextureGridColumns, int32 newTextureGridRows) const
+		const String& newCharacterSet, const Vec2& newTextureCellSize, const Vec2& newTextureOffset, int32 newTextureGridColumns, int32 newTextureGridRows, const LRTB& newTextureCellTrim, const String& newCharTextureCellTrimJSON) const
 	{
 		return characterSet != newCharacterSet
 			|| textureCellSize != newTextureCellSize
 			|| textureOffset != newTextureOffset
 			|| textureGridColumns != newTextureGridColumns
-			|| textureGridRows != newTextureGridRows;
+			|| textureGridRows != newTextureGridRows
+			|| textureCellTrim != newTextureCellTrim
+			|| textureCellTrimByCharacterJSON != newCharTextureCellTrimJSON;
 	}
 
 	bool TextureFontLabel::TextureFontCache::refreshIfDirty(
-		const String& characterSet, const Vec2& textureCellSize, const Vec2& textureOffset, int32 textureGridColumns, int32 textureGridRows)
+		const String& characterSet, const Vec2& textureCellSize, const Vec2& textureOffset, int32 textureGridColumns, int32 textureGridRows, const LRTB& textureCellTrim, const String& textureCellTrimByCharacterJSON)
 	{
 		if (prevParams.has_value() && !prevParams->isDirty(
 			characterSet, textureCellSize, textureOffset,
-			textureGridColumns, textureGridRows))
+			textureGridColumns, textureGridRows, textureCellTrim, textureCellTrimByCharacterJSON))
 		{
 			return false;
 		}
 
 		uvMap.clear();
+		metricsMap.clear();
 
 		if (textureGridColumns <= 0 || textureGridRows <= 0)
 		{
@@ -63,8 +66,45 @@ namespace noco
 				.textureOffset = textureOffset,
 				.textureGridColumns = textureGridColumns,
 				.textureGridRows = textureGridRows,
+				.textureCellTrim = textureCellTrim,
+				.textureCellTrimByCharacterJSON = String{ textureCellTrimByCharacterJSON },
 			};
 			return true;
+		}
+
+		// JSON���� Parse
+		HashTable<char32, LRTB> charTrimMap;
+		if (!textureCellTrimByCharacterJSON.isEmpty())
+		{
+			try
+			{
+				const JSON json = JSON::Parse(textureCellTrimByCharacterJSON);
+				if (json.isObject())
+				{
+					// JSONオブジェクトの各キーをイテレート
+					for (const auto& ch : characterSet)
+					{
+						const String key{ ch };
+						if (json.hasElement(key))
+						{
+							const auto& value = json[key];
+							if (value.isArray() && value.size() == 4)
+							{
+								charTrimMap[ch] = LRTB{
+									value[0].get<double>(),
+									value[1].get<double>(),
+									value[2].get<double>(),
+									value[3].get<double>(),
+								};
+							}
+						}
+					}
+				}
+			}
+			catch (...)
+			{
+				// JSON parsing failed, ignore
+			}
 		}
 
 		const int32 maxIndex = textureGridColumns * textureGridRows;
@@ -85,11 +125,30 @@ namespace noco
 			const double gridX = static_cast<double>(normalizedIndex % textureGridColumns);
 			const double gridY = static_cast<double>(normalizedIndex / textureGridColumns);
 
-			uvMap[ch] = RectF{
+			// このキャラクタのトリム量を決定(JSON指定があればそれを、なければ共通値を使用)
+			const LRTB trim = charTrimMap.contains(ch) ? charTrimMap[ch] : textureCellTrim;
+
+			// UV座標とサイズを計算(トリムを考慮)
+			const RectF baseRect{
 				textureOffset.x + gridX * textureCellSize.x,
 				textureOffset.y + gridY * textureCellSize.y,
 				textureCellSize.x,
 				textureCellSize.y
+			};
+
+			uvMap[ch] = RectF{
+				baseRect.x + trim.left,
+				baseRect.y + trim.top,
+				baseRect.w - trim.left - trim.right,
+				baseRect.h - trim.top - trim.bottom
+			};
+
+			metricsMap[ch] = CharacterMetrics{
+				.trim = trim,
+				.effectiveSize = Vec2{
+					textureCellSize.x - trim.left - trim.right,
+					textureCellSize.y - trim.top - trim.bottom
+				},
 			};
 
 			++normalizedIndex;
@@ -101,6 +160,8 @@ namespace noco
 			.textureOffset = textureOffset,
 			.textureGridColumns = textureGridColumns,
 			.textureGridRows = textureGridRows,
+			.textureCellTrim = textureCellTrim,
+			.textureCellTrimByCharacterJSON = String{ textureCellTrimByCharacterJSON },
 		};
 
 		return true;
@@ -127,7 +188,9 @@ namespace noco
 		const Vec2& newTextureCellSize,
 		const Vec2& newTextureOffset,
 		int32 newTextureGridColumns,
-		int32 newTextureGridRows) const
+		int32 newTextureGridRows,
+		const LRTB& newTextureCellTrim,
+		const String& newCharTextureCellTrimJSON) const
 	{
 		return text != newText
 			|| characterSize != newCharacterSize
@@ -140,7 +203,9 @@ namespace noco
 			|| textureCellSize != newTextureCellSize
 			|| textureOffset != newTextureOffset
 			|| textureGridColumns != newTextureGridColumns
-			|| textureGridRows != newTextureGridRows;
+			|| textureGridRows != newTextureGridRows
+			|| textureCellTrim != newTextureCellTrim
+			|| textureCellTrimByCharacterJSON != newCharTextureCellTrimJSON;
 	}
 
 	bool TextureFontLabel::CharacterCache::refreshIfDirty(
@@ -156,10 +221,12 @@ namespace noco
 		const Vec2& newTextureCellSize,
 		const Vec2& newTextureOffset,
 		int32 newTextureGridColumns,
-		int32 newTextureGridRows)
+		int32 newTextureGridRows,
+		const LRTB& newTextureCellTrim,
+		const String& newCharTextureCellTrimJSON)
 	{
 		if (prevParams.has_value() &&
-			!prevParams->isDirty(text, characterSize, characterSpacing, newSizingMode, horizontalOverflow, verticalOverflow, rectSize, newCharacterSet, newTextureCellSize, newTextureOffset, newTextureGridColumns, newTextureGridRows))
+			!prevParams->isDirty(text, characterSize, characterSpacing, newSizingMode, horizontalOverflow, verticalOverflow, rectSize, newCharacterSet, newTextureCellSize, newTextureOffset, newTextureGridColumns, newTextureGridRows, newTextureCellTrim, newCharTextureCellTrimJSON))
 		{
 			return false;
 		}
@@ -178,6 +245,8 @@ namespace noco
 			.textureOffset = newTextureOffset,
 			.textureGridColumns = newTextureGridColumns,
 			.textureGridRows = newTextureGridRows,
+			.textureCellTrim = newTextureCellTrim,
+			.textureCellTrimByCharacterJSON = newCharTextureCellTrimJSON,
 		};
 
 		auto refreshCacheAndGetRegionSize = [&](const Vec2& targetCharacterSize, const Vec2& targetCharacterSpacing, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
@@ -224,7 +293,14 @@ namespace noco
 						continue;
 					}
 
-					const double charWidth = targetCharacterSize.x + targetCharacterSpacing.x;
+					// 個別のトリミング指定があれば適用、なければ共通の幅を使用
+					double charWidth = targetCharacterSize.x + targetCharacterSpacing.x;
+					if (auto it = textureFontCache.metricsMap.find(ch); it != textureFontCache.metricsMap.end())
+					{
+						const double widthRatio = it->second.effectiveSize.x / newTextureCellSize.x;
+						charWidth = targetCharacterSize.x * widthRatio + targetCharacterSpacing.x;
+					}
+
 					if (hov == HorizontalOverflow::Wrap && offset.x + charWidth > rectSize.x)
 					{
 						if (!fnPushLine())
@@ -356,7 +432,8 @@ namespace noco
 		const PropertyValue<Vec2>& characterSpacing,
 		const PropertyValue<LRTB>& padding,
 		const PropertyValue<HorizontalOverflow>& horizontalOverflow,
-		const PropertyValue<VerticalOverflow>& verticalOverflow)
+		const PropertyValue<VerticalOverflow>& verticalOverflow,
+		const PropertyValue<LRTB>& textureCellTrim)
 		: SerializableComponentBase{
 			U"TextureFontLabel",
 			{
@@ -382,6 +459,8 @@ namespace noco
 				&m_textureGridRows,
 				&m_textureFilter,
 				&m_textureAddressMode,
+				&m_textureCellTrim,
+				&m_textureCellTrimByCharacterJSON,
 			} }
 		, m_text{ U"text", text }
 		, m_characterSize{ U"characterSize", characterSize }
@@ -405,7 +484,23 @@ namespace noco
 		, m_textureGridRows{ U"textureGridRows", textureGridRows }
 		, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
 		, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
+		, m_textureCellTrim{ U"textureCellTrim", textureCellTrim }
+		, m_textureCellTrimByCharacterJSON{ U"textureCellTrimByCharacterJSON", U"{}" }
 	{
+	}
+
+	std::shared_ptr<TextureFontLabel> TextureFontLabel::setTextureCellTrimByCharacter(const HashTable<char32, LRTB>& trimMap)
+	{
+		// Convert HashTable to JSON format
+		JSON json;
+		for (const auto& [ch, trim] : trimMap)
+		{
+			const String key{ ch };
+			json[key] = Array<double>{ trim.left, trim.right, trim.top, trim.bottom };
+		}
+
+		m_textureCellTrimByCharacterJSON.setValue(json.formatMinimum());
+		return shared_from_this();
 	}
 
 	void TextureFontLabel::draw(const Node& node) const
@@ -430,7 +525,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		m_cache.refreshIfDirty(
 			text,
@@ -445,7 +542,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		const Color& color = m_color.value();
 		const Color& addColorValue = m_addColor.value();
@@ -583,11 +682,26 @@ namespace noco
 			{
 				const Vec2 drawPos = rect.pos + Vec2{ lineOffsetX + charInfo.position.x * autoShrinkWidthScale, contentOffsetY + line.offsetY };
 
+				// 個別のトリミング指定があれば適用、なければ通常のサイズを使用
 				Vec2 finalSize = characterSize;
-				Vec2 centerOffset = Vec2::Zero();
+				if (auto it = m_textureFontCache.metricsMap.find(charInfo.character); it != m_textureFontCache.metricsMap.end())
+				{
+					const Vec2& effectiveSize = it->second.effectiveSize;
+					const Vec2& cellSize = m_textureCellSize.value();
+					if (cellSize.x != 0.0 && cellSize.y != 0.0)
+					{
+						finalSize.x = characterSize.x * effectiveSize.x / cellSize.x;
+						finalSize.y = characterSize.y * effectiveSize.y / cellSize.y;
+					}
+				}
+
+				// 行の固定高さ内で垂直方向に中央揃え
+				const double verticalCenterOffset = (characterSize.y - finalSize.y) * 0.5;
+				Vec2 centerOffset{ 0.0, verticalCenterOffset };
 
 				if (preserveAspect && m_textureCellSize.value().y > 0.0 && finalSize.y > 0.0)
 				{
+					// トリミング前のセルサイズのアスペクト比を使用
 					const double aspectRatio = m_textureCellSize.value().x / m_textureCellSize.value().y;
 					if (aspectRatio > 0.0)
 					{
@@ -604,6 +718,7 @@ namespace noco
 						}
 
 						centerOffset = (finalSize - adjustedSize) * 0.5;
+						centerOffset.y += verticalCenterOffset;
 						finalSize = adjustedSize;
 					}
 				}
@@ -635,7 +750,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		m_autoResizeCache.refreshIfDirty(
 			m_text.value(),
@@ -650,7 +767,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		// AutoResizeでは小数点以下を切り上げたサイズをノードサイズとして使用
 		const SizeF& contentSize = m_autoResizeCache.regionSize;
@@ -675,7 +794,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
@@ -690,7 +811,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		return m_cache.regionSize;
 	}
@@ -702,7 +825,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
@@ -717,7 +842,9 @@ namespace noco
 			m_textureCellSize.value(),
 			m_textureOffset.value(),
 			m_textureGridColumns.value(),
-			m_textureGridRows.value());
+			m_textureGridRows.value(),
+			m_textureCellTrim.value(),
+			m_textureCellTrimByCharacterJSON.value());
 
 		return m_cache.regionSize;
 	}
