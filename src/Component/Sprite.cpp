@@ -530,30 +530,72 @@ namespace noco
 			
 			const int32 gridX = index % columns;
 			const int32 gridY = index / columns;
-			
+
 			const Vec2& offset = m_textureOffset.value();
 			const Vec2& cellSize = m_textureGridCellSize.value();
-			
+			const LRTB& trim = m_textureGridCellTrim.value();
+
+			// トリミングを適用したテクスチャ領域
 			const RectF textureRect{
-				offset.x + gridX * cellSize.x,
-				offset.y + gridY * cellSize.y,
-				cellSize.x,
-				cellSize.y
+				offset.x + gridX * cellSize.x + trim.left,
+				offset.y + gridY * cellSize.y + trim.top,
+				cellSize.x - trim.left - trim.right,
+				cellSize.y - trim.top - trim.bottom
 			};
-			
+
+			// トリミング後の有効サイズを計算
+			const Vec2 effectiveSize{
+				cellSize.x - trim.left - trim.right,
+				cellSize.y - trim.top - trim.bottom
+			};
+
 			TextureRegion region = texture(textureRect);
-			
+
 			if (m_nineSliceEnabled.value())
 			{
 				drawNineSliceFromRegion(texture, textureRect, rect, color);
 			}
 			else if (m_preserveAspect.value())
 			{
-				region.fitted(rect.size).drawAt(rect.center(), color);
+				// トリミング前のセルサイズでアスペクト比固定のスケールを計算
+				const double cellAspect = cellSize.y != 0.0 ? cellSize.x / cellSize.y : 1.0;
+				const double rectAspect = rect.h != 0.0 ? rect.w / rect.h : 1.0;
+
+				Vec2 fittedSize = rect.size;
+				if (cellAspect > rectAspect)
+				{
+					fittedSize.y = rect.w / cellAspect;
+				}
+				else
+				{
+					fittedSize.x = rect.h * cellAspect;
+				}
+
+				// トリミング後のサイズに変換
+				Vec2 drawSize = fittedSize;
+				if (cellSize.x != 0.0 && cellSize.y != 0.0)
+				{
+					drawSize.x = fittedSize.x * effectiveSize.x / cellSize.x;
+					drawSize.y = fittedSize.y * effectiveSize.y / cellSize.y;
+				}
+
+				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
+				region.resized(drawSize).draw(drawPos, color);
 			}
 			else
 			{
-				region.resized(rect.size).draw(rect.pos, color);
+				// トリミング後のサイズに基づいて描画サイズを計算
+				Vec2 drawSize = rect.size;
+				if (cellSize.x != 0.0 && cellSize.y != 0.0)
+				{
+					drawSize.x = rect.w * effectiveSize.x / cellSize.x;
+					drawSize.y = rect.h * effectiveSize.y / cellSize.y;
+				}
+
+				// 中央揃え
+				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
+
+				region.resized(drawSize).draw(drawPos, color);
 			}
 		}
 		else

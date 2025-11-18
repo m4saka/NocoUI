@@ -909,7 +909,12 @@ namespace noco::editor
 			.visibilityCondition = gridRegionNoAnimationVisibilityCondition,
 			.dragValueChangeStep = 1.0,
 		};
-		
+		metadata[PropertyKey{ U"Sprite", U"textureGridCellTrim" }] = PropertyMetadata{
+			.tooltip = U"グリッドセルのトリミング量 (ピクセル)",
+			.tooltipDetail = U"各セルの上下左右から切り取るピクセル数を指定します\n切り取った領域は描画から除外され、サイズも縮小されます\n\nテクスチャ内の隣接セルの色がにじむ場合に利用できます",
+			.visibilityCondition = gridRegionVisibilityCondition,
+		};
+
 		// アニメーション有効時のみ表示する条件
 		const auto gridAnimationEnabledVisibilityCondition = [](const ComponentBase& component) -> bool
 		{

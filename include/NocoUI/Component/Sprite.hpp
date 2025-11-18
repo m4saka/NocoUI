@@ -31,6 +31,7 @@ namespace noco
 		Property<int32> m_textureGridColumns;
 		Property<int32> m_textureGridRows;
 		Property<int32> m_textureGridIndex;
+		Property<LRTB> m_textureGridCellTrim;
 		Property<SpriteGridAnimationType> m_gridAnimationType;
 		PropertyNonInteractive<double> m_gridAnimationFPS;
 		PropertyNonInteractive<int32> m_gridAnimationStartIndex;
@@ -51,7 +52,7 @@ namespace noco
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<Color>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_textureAddressMode } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_textureAddressMode } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -74,6 +75,7 @@ namespace noco
 			, m_textureGridColumns{ U"textureGridColumns", 1 }
 			, m_textureGridRows{ U"textureGridRows", 1 }
 			, m_textureGridIndex{ U"textureGridIndex", 0 }
+			, m_textureGridCellTrim{ U"textureGridCellTrim", LRTB::Zero() }
 			, m_gridAnimationType{ U"gridAnimationType", SpriteGridAnimationType::None }
 			, m_gridAnimationFPS{ U"gridAnimationFPS", 10.0 }
 			, m_gridAnimationStartIndex{ U"gridAnimationStartIndex", 0 }
@@ -352,7 +354,19 @@ namespace noco
 			m_textureGridIndex.setPropertyValue(textureGridIndex);
 			return shared_from_this();
 		}
-		
+
+		[[nodiscard]]
+		const PropertyValue<LRTB>& textureGridCellTrim() const
+		{
+			return m_textureGridCellTrim.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setTextureGridCellTrim(const PropertyValue<LRTB>& textureGridCellTrim)
+		{
+			m_textureGridCellTrim.setPropertyValue(textureGridCellTrim);
+			return shared_from_this();
+		}
+
 		std::shared_ptr<Sprite> setTexture(const Texture& texture)
 		{
 			m_textureOpt = texture;
