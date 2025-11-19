@@ -712,6 +712,7 @@ namespace noco::editor
 			.tooltip = U"文字毎のトリミング量 (JSON)",
 			.tooltipDetail = U"文字毎に個別のトリミング量を指定します\n形式: {\"1\": [10, 8, 0, 0], \"2\": [4, 5, 0, 0]}\n配列は [left, right, top, bottom] の順\n\nプロポーショナルフォント表示に利用できます",
 			.numTextAreaLines = 3,
+			.visibilityCondition = [](const ComponentBase&) { return false; },  // 常に非表示
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"text" }] = PropertyMetadata{
 			.tooltip = U"表示するテキスト",

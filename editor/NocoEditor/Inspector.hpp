@@ -16,6 +16,7 @@
 #include "ParamReferencesDialog.hpp"
 #include "SpriteGridDivisionInputDialog.hpp"
 #include "TextureFontLabelGridDivisionInputDialog.hpp"
+#include "TextureFontLabelCellTrimEditDialog.hpp"
 #include "SubCanvasParamsEditDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
@@ -4981,7 +4982,7 @@ namespace noco::editor
 			// TODO: コンポーネント毎のカスタムInspectorを追加するための仕組みを整備する
 			if (auto sprite = std::dynamic_pointer_cast<Sprite>(component))
 			{
-				// Gridモードの場合のみ、分割数入力ボタンを追加
+				// Gridモードの場合のみ、Grid編集ボタンを追加
 				if (sprite->textureRegionMode().defaultValue() == TextureRegionMode::Grid)
 				{
 					auto gridDivisionButton = componentNode->addChild(CreateButtonNode(
@@ -4990,7 +4991,7 @@ namespace noco::editor
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ -24, 24 },
-							.margin = LRTB{ 12, 12, 4, 0 },
+							.margin = LRTB{ 12, 12, 12, 0 },
 							.maxWidth = 360,
 						},
 						[this, sprite](const std::shared_ptr<Node>&)
@@ -5030,16 +5031,53 @@ namespace noco::editor
 				}
 			}
 
-			// TextureFontLabelコンポーネントの場合、分割数入力ボタンを追加
+			// TextureFontLabelコンポーネントの場合、ボタンを追加
 			if (auto textureFontLabel = std::dynamic_pointer_cast<TextureFontLabel>(component))
 			{
+				// 文字毎のトリミング設定ボタンを追加
+				const auto cellTrimButtonContainer = componentNode->emplaceChild(
+					U"CellTrimButtonContainer",
+					InlineRegion{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ -24, 20 },
+						.margin = LRTB{ 12, 12, 0, 4 },
+						.maxWidth = 360,
+					});
+				cellTrimButtonContainer->setChildrenLayout(HorizontalLayout{
+					.horizontalAlign = HorizontalAlign::Right,
+				});
+
+				auto cellTrimButton = cellTrimButtonContainer->addChild(CreateButtonNode(
+					U"文字毎に指定...",
+					InlineRegion{
+						.sizeDelta = Vec2{ 110, 20 },
+					},
+					[this, textureFontLabel](const std::shared_ptr<Node>&)
+					{
+						m_dialogOpener->openDialog(
+							std::make_shared<TextureFontLabelCellTrimEditDialog>(
+								textureFontLabel,
+								[this] { refreshInspector(); },
+								m_dialogOpener
+							)
+						);
+					},
+					IsDefaultButtonYN::No,
+					11));
+
+				if (isFolded)
+				{
+					cellTrimButton->setActive(false);
+				}
+
+				// Grid編集ボタンを追加
 				auto gridDivisionButton = componentNode->addChild(CreateButtonNode(
 					U"Gridの値を分割数で入力...",
 					InlineRegion
 					{
 						.sizeRatio = Vec2{ 1, 0 },
 						.sizeDelta = Vec2{ -24, 24 },
-						.margin = LRTB{ 12, 12, 4, 0 },
+						.margin = LRTB{ 12, 12, 12, 0 },
 						.maxWidth = 360,
 					},
 					[this, textureFontLabel](const std::shared_ptr<Node>&)

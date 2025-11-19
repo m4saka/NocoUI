@@ -123,6 +123,7 @@
     <ClCompile Include="ResizableHandle.cpp" />
     <ClCompile Include="SubCanvasParamsEditDialog.cpp" />
     <ClCompile Include="TabStop.cpp" />
+    <ClCompile Include="TextureFontLabelCellTrimEditDialog.cpp" />
     <ClCompile Include="HistorySystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Tooltip.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="SpriteGridDivisionInputDialog.hpp" />
     <ClInclude Include="SubCanvasParamsEditDialog.hpp" />
     <ClInclude Include="TabStop.hpp" />
+    <ClInclude Include="TextureFontLabelCellTrimEditDialog.hpp" />
     <ClInclude Include="TextureFontLabelGridDivisionInputDialog.hpp" />
     <ClInclude Include="Toolbar.hpp" />
     <ClInclude Include="HistorySystem.hpp" />

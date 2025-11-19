@@ -87,6 +87,9 @@
     <ClCompile Include="TabStop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TextureFontLabelCellTrimEditDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="EditorButton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -495,6 +498,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SubCanvasParamsEditDialog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureFontLabelCellTrimEditDialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextureFontLabelGridDivisionInputDialog.hpp">
