@@ -81,4 +81,10 @@ namespace noco
 		Clamp,
 		BorderColor,
 	};
+
+	enum class ScrollBarType : uint8
+	{
+		Hidden,
+		Overlay,
+	};
 }

@@ -424,6 +424,7 @@ namespace noco
 			{ U"dragScrollEnabled", dragScrollEnabled() },
 			{ U"decelerationRate", m_decelerationRate },
 			{ U"rubberBandScrollEnabled", m_rubberBandScrollEnabled.getBool() },
+			{ U"scrollBarType", EnumToString(m_scrollBarType) },
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 		};
 		
@@ -544,6 +545,10 @@ namespace noco
 		if (json.contains(U"rubberBandScrollEnabled"))
 		{
 			node->setRubberBandScrollEnabled(RubberBandScrollEnabledYN{ json[U"rubberBandScrollEnabled"].getOr<bool>(false) });
+		}
+		if (json.contains(U"scrollBarType"))
+		{
+			node->setScrollBarType(StringToEnum<ScrollBarType>(json[U"scrollBarType"].getOr<String>(U"Overlay"), ScrollBarType::Overlay));
 		}
 		if (json.contains(U"clippingEnabled"))
 		{
@@ -2008,7 +2013,7 @@ namespace noco
 		}
 
 		// スクロールバー描画
-		if (m_scrollBarAlpha.currentValue() > 0.0)
+		if (m_scrollBarType == ScrollBarType::Overlay && m_scrollBarAlpha.currentValue() > 0.0)
 		{
 			// スクロールバーは回転を適用
 			Optional<Transformer2D> transformer;
@@ -2625,13 +2630,24 @@ namespace noco
 		return setRubberBandScrollEnabled(rubberBandScrollEnabled ? RubberBandScrollEnabledYN::Yes : RubberBandScrollEnabledYN::No);
 	}
 
+	ScrollBarType Node::scrollBarType() const
+	{
+		return m_scrollBarType;
+	}
+
+	std::shared_ptr<Node> Node::setScrollBarType(ScrollBarType scrollBarType)
+	{
+		m_scrollBarType = scrollBarType;
+		return shared_from_this();
+	}
+
 	void Node::preventDragScroll()
 	{
 		if (!MouseL.pressed())
 		{
 			return;
 		}
-		
+
 		m_preventDragScroll = true;
 		
 		// 親ノードにも再帰的に適用

@@ -46,6 +46,7 @@ namespace noco
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
+		ScrollBarType m_scrollBarType = ScrollBarType::Overlay;
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		PropertyNonInteractive<bool> m_activeSelf{ U"activeSelf", true };
 		Property<int32> m_zOrderInSiblings{ U"zOrderInSiblings", 0 };
@@ -534,6 +535,11 @@ namespace noco
 		std::shared_ptr<Node> setRubberBandScrollEnabled(RubberBandScrollEnabledYN rubberBandScrollEnabled);
 
 		std::shared_ptr<Node> setRubberBandScrollEnabled(bool rubberBandScrollEnabled);
+
+		[[nodiscard]]
+		ScrollBarType scrollBarType() const;
+
+		std::shared_ptr<Node> setScrollBarType(ScrollBarType scrollBarType);
 
 		// ドラッグスクロール阻止
 		void preventDragScroll();
