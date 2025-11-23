@@ -940,6 +940,28 @@ namespace noco
 		return m_children.back();
 	}
 
+	const std::shared_ptr<Node>& Node::addSubCanvasNodeAsChild(
+		StringView canvasPath,
+		std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
+	{
+		auto node = Node::Create(U"SubCanvasNode", InlineRegion{});
+		auto subCanvasComponent = node->emplaceComponent<SubCanvas>(String{ canvasPath });
+
+		if (auto canvas = subCanvasComponent->canvas())
+		{
+			// ノードサイズをSubCanvasのreferenceSizeと同じに設定
+			const SizeF referenceSize = canvas->referenceSize();
+			node->setRegion(InlineRegion{ .sizeDelta = referenceSize });
+
+			if (params.size() > 0)
+			{
+				canvas->setParamValues(params);
+			}
+		}
+
+		return addChild(node);
+	}
+
 	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json)
 	{
 		auto child = CreateFromJSON(json);

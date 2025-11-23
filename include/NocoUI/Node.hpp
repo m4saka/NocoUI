@@ -271,6 +271,15 @@ namespace noco
 
 		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index) override;
 
+		/// @brief SubCanvasを持つノードを子として追加
+		/// @param canvasPath SubCanvasファイルのパス
+		/// @param params SubCanvasに設定するパラメータ
+		/// @return 追加されたノード
+		/// @remark 作成されるノードはInlineRegionでSubCanvasのreferenceSizeと同じサイズになる
+		const std::shared_ptr<Node>& addSubCanvasNodeAsChild(
+			StringView canvasPath,
+			std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params = {});
+
 		void removeChild(const std::shared_ptr<Node>& child) override;
 
 		[[nodiscard]]
