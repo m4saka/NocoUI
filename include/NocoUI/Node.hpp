@@ -118,9 +118,6 @@ namespace noco
 
 		void clampScrollOffset();
 
-		[[nodiscard]]
-		std::pair<Vec2, Vec2> getValidScrollRange() const;
-
 		static void SortByZOrderInSiblings(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No);
 
 	public:
@@ -359,6 +356,9 @@ namespace noco
 		Vec2 scrollOffset() const;
 
 		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No);
+
+		[[nodiscard]]
+		std::pair<Vec2, Vec2> validScrollRange() const;
 
 		// パラメータ参照を置換
 		void replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive = RecursiveYN::Yes);

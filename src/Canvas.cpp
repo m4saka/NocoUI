@@ -690,7 +690,7 @@ namespace noco
 					// ラバーバンドスクロールが有効な場合、範囲外での抵抗を適用
 					if (dragScrollingNode->rubberBandScrollEnabled())
 					{
-						const auto [minScroll, maxScroll] = dragScrollingNode->getValidScrollRange();
+						const auto [minScroll, maxScroll] = dragScrollingNode->validScrollRange();
 						constexpr double RubberBandResistance = 0.3; // 抵抗係数（0.0～1.0、小さいほど抵抗が強い）
 						
 						// X軸の抵抗

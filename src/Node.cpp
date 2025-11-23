@@ -282,45 +282,6 @@ namespace noco
 		}
 	}
 
-	std::pair<Vec2, Vec2> Node::getValidScrollRange() const
-	{
-		Vec2 minScroll = Vec2::Zero();
-		Vec2 maxScroll = Vec2::Zero();
-
-		if (!m_children.empty())
-		{
-			const bool horizontalScrollableValue = horizontalScrollable();
-			const bool verticalScrollableValue = verticalScrollable();
-			
-			if (horizontalScrollableValue || verticalScrollableValue)
-			{
-				const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding();
-				if (contentRectOpt)
-				{
-					const RectF& contentRect = *contentRectOpt;
-					const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
-					const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
-					
-					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
-					
-					if (horizontalScrollableValue)
-					{
-						minScroll.x = -maxScrollX * scrollOffsetAnchor.x;
-						maxScroll.x = maxScrollX * (1.0 - scrollOffsetAnchor.x);
-					}
-					
-					if (verticalScrollableValue)
-					{
-						minScroll.y = -maxScrollY * scrollOffsetAnchor.y;
-						maxScroll.y = maxScrollY * (1.0 - scrollOffsetAnchor.y);
-					}
-				}
-			}
-		}
-		
-		return { minScroll, maxScroll };
-	}
-
 	void Node::SortByZOrderInSiblings(Array<std::shared_ptr<Node>>& nodes, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
 	{
 		if (nodes.size() <= 1)
@@ -1472,7 +1433,7 @@ namespace noco
 					m_scrollVelocity *= Math::Pow(m_decelerationRate, deltaTime);
 
 					// 範囲外に到達した場合は慣性を消す
-					const auto [minScroll, maxScroll] = getValidScrollRange();
+					const auto [minScroll, maxScroll] = validScrollRange();
 					if ((m_scrollOffset.x <= minScroll.x && m_scrollVelocity.x < 0) ||
 						(m_scrollOffset.x >= maxScroll.x && m_scrollVelocity.x > 0))
 					{
@@ -1500,7 +1461,7 @@ namespace noco
 		// ラバーバンドスクロール処理(ドラッグしていない時に範囲外なら戻す)
 		if (m_rubberBandScrollEnabled && !m_dragStartPos.has_value())
 		{
-			const auto [minScroll, maxScroll] = getValidScrollRange();
+			const auto [minScroll, maxScroll] = validScrollRange();
 			Vec2 targetOffset = m_scrollOffset;
 			bool needsRubberBand = false;
 
@@ -1881,6 +1842,45 @@ namespace noco
 				child->resetScrollOffset(RecursiveYN::Yes);
 			}
 		}
+	}
+
+	std::pair<Vec2, Vec2> Node::validScrollRange() const
+	{
+		Vec2 minScroll = Vec2::Zero();
+		Vec2 maxScroll = Vec2::Zero();
+
+		if (!m_children.empty())
+		{
+			const bool horizontalScrollableValue = horizontalScrollable();
+			const bool verticalScrollableValue = verticalScrollable();
+
+			if (horizontalScrollableValue || verticalScrollableValue)
+			{
+				const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding();
+				if (contentRectOpt)
+				{
+					const RectF& contentRect = *contentRectOpt;
+					const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
+					const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
+
+					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
+
+					if (horizontalScrollableValue)
+					{
+						minScroll.x = -maxScrollX * scrollOffsetAnchor.x;
+						maxScroll.x = maxScrollX * (1.0 - scrollOffsetAnchor.x);
+					}
+
+					if (verticalScrollableValue)
+					{
+						minScroll.y = -maxScrollY * scrollOffsetAnchor.y;
+						maxScroll.y = maxScrollY * (1.0 - scrollOffsetAnchor.y);
+					}
+				}
+			}
+		}
+
+		return { minScroll, maxScroll };
 	}
 
 	void Node::replaceParamRefs(const String& oldName, const String& newName, RecursiveYN recursive)
