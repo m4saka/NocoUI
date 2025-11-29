@@ -760,18 +760,18 @@ namespace noco
 									}
 									else
 									{
-										styleStateValues.defaultValue = valueJson[U"default"].get<T>();
+										styleStateValues.defaultValue = valueJson[U"default"].template get<T>();
 										if (valueJson.contains(U"hovered"))
 										{
-											styleStateValues.hoveredValue = valueJson[U"hovered"].get<T>();
+											styleStateValues.hoveredValue = valueJson[U"hovered"].template get<T>();
 										}
 										if (valueJson.contains(U"pressed"))
 										{
-											styleStateValues.pressedValue = valueJson[U"pressed"].get<T>();
+											styleStateValues.pressedValue = valueJson[U"pressed"].template get<T>();
 										}
 										if (valueJson.contains(U"disabled"))
 										{
-											styleStateValues.disabledValue = valueJson[U"disabled"].get<T>();
+											styleStateValues.disabledValue = valueJson[U"disabled"].template get<T>();
 										}
 									}
 									(*propertyValue.m_styleStateValues)[state] = styleStateValues;
@@ -784,7 +784,7 @@ namespace noco
 									}
 									else
 									{
-										(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.get<T>() };
+										(*propertyValue.m_styleStateValues)[state] = PropertyStyleStateValue<T>{ valueJson.template get<T>() };
 									}
 								}
 							}

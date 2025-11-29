@@ -376,7 +376,7 @@ namespace noco::editor
 		// L
 		const auto lNode = valuesNode->emplaceChild(
 			U"L",
-			InlineRegion{ .sizeDelta = Vec2{ 50, 0 }, .sizeRatio = Vec2{ 0, 1 } });
+			InlineRegion{ .sizeRatio = Vec2{ 0, 1 }, .sizeDelta = Vec2{ 50, 0 } });
 		lNode->emplaceComponent<Label>(
 			U"L:{}"_fmt(info.trim.left),
 			U"", 12, ColorF{ 0.9 },
@@ -385,7 +385,7 @@ namespace noco::editor
 		// R
 		const auto rNode = valuesNode->emplaceChild(
 			U"R",
-			InlineRegion{ .sizeDelta = Vec2{ 50, 0 }, .sizeRatio = Vec2{ 0, 1 } });
+			InlineRegion{ .sizeRatio = Vec2{ 0, 1 }, .sizeDelta = Vec2{ 50, 0 } });
 		rNode->emplaceComponent<Label>(
 			U"R:{}"_fmt(info.trim.right),
 			U"", 12, ColorF{ 0.9 },
@@ -394,7 +394,7 @@ namespace noco::editor
 		// T
 		const auto tNode = valuesNode->emplaceChild(
 			U"T",
-			InlineRegion{ .sizeDelta = Vec2{ 50, 0 }, .sizeRatio = Vec2{ 0, 1 } });
+			InlineRegion{ .sizeRatio = Vec2{ 0, 1 }, .sizeDelta = Vec2{ 50, 0 } });
 		tNode->emplaceComponent<Label>(
 			U"T:{}"_fmt(info.trim.top),
 			U"", 12, ColorF{ 0.9 },
@@ -403,7 +403,7 @@ namespace noco::editor
 		// B
 		const auto bNode = valuesNode->emplaceChild(
 			U"B",
-			InlineRegion{ .sizeDelta = Vec2{ 50, 0 }, .sizeRatio = Vec2{ 0, 1 } });
+			InlineRegion{ .sizeRatio = Vec2{ 0, 1 }, .sizeDelta = Vec2{ 50, 0 } });
 		bNode->emplaceComponent<Label>(
 			U"B:{}"_fmt(info.trim.bottom),
 			U"", 12, ColorF{ 0.9 },
