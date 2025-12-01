@@ -550,7 +550,11 @@ public:
 
 		// ユーザー操作があった場合、状態を記録
 		const auto userActionFlags = System::GetUserActions();
-		const bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
+		bool hasUserInput = userActionFlags & UserAction::AnyKeyOrMouseDown;
+#ifndef _WIN32
+		// OpenSiv3D 0.6.16でmacOS・Linuxの場合にMouseButtonDownがフラグとして立たない現象の回避のため、マウスボタン押下を手動で加味する
+		hasUserInput = hasUserInput || MouseL.down() || MouseR.down();
+#endif
 		if (hasUserInput)
 		{
 			m_historySystem.recordStateIfNeeded(m_canvas->toJSON(WithInstanceIdYN::Yes));
