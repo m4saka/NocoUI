@@ -142,11 +142,10 @@ namespace noco
 			{
 				return;
 			}
-			
-			// 既存のフォーカスがある場合はblurを呼ぶ
+
+			// 既存のフォーカスがあった場合は外れるためコンポーネントのblurを呼ぶ
 			if (currentFocused)
 			{
-				// ITextBoxがIFocusableを継承しているので、TextBoxを取得してblurを呼ぶ
 				for (const auto& component : currentFocused->components())
 				{
 					if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
@@ -155,14 +154,13 @@ namespace noco
 					}
 				}
 			}
-			
+
 			// 新しいフォーカスを設定
 			detail::s_canvasUpdateContext.focusedNode = node;
-			
-			// 新しいノードがある場合はfocusを呼ぶ
+
+			// フォーカスした場合はコンポーネントのfocusを呼ぶ
 			if (node)
 			{
-				// ITextBoxがIFocusableを継承しているので、TextBoxを取得してfocusを呼ぶ
 				for (const auto& component : node->components())
 				{
 					if (auto focusable = std::dynamic_pointer_cast<IFocusable>(component))
