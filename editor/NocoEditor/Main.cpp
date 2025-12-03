@@ -1276,6 +1276,21 @@ public:
 
 		const JSON nodeJSON = selectedNode->toJSON();
 		exportCanvas->addChildFromJSON(nodeJSON, *m_componentFactory);
+
+		// 書き出し先のルートノードのRegionとTransformは初期化
+		// （書き出し元Canvas側にもTransformがあるため二重になるのを防ぐ）
+		if (auto exportedRootNode = exportCanvas->children().front())
+		{
+			exportedRootNode->transform().clear();
+			exportedRootNode->setRegion(AnchorRegion{
+				.anchorMin = Anchor::MiddleCenter,
+				.anchorMax = Anchor::MiddleCenter,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = nodeSize,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
+			});
+		}
+
 		exportCanvas->refreshLayoutImmediately();
 
 		// Canvasをファイルに保存
@@ -1306,14 +1321,6 @@ public:
 			subCanvas->setSerializedParamsJSON(paramsJSON.formatMinimum());
 		}
 		selectedNode->addComponent(subCanvas);
-
-		selectedNode->setRegion(AnchorRegion{
-			.anchorMin = Anchor::MiddleCenter,
-			.anchorMax = Anchor::MiddleCenter,
-			.posDelta = Vec2{ 0, 0 },
-			.sizeDelta = nodeSize,
-			.sizeDeltaPivot = Anchor::MiddleCenter,
-		});
 
 		m_canvas->refreshLayoutImmediately();
 		m_hierarchy.refreshNodeList();
