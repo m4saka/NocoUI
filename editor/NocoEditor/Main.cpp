@@ -1308,21 +1308,8 @@ public:
 		selectedNode->removeChildrenAll();
 		selectedNode->removeComponentsAll(RecursiveYN::No);
 
-		// SubCanvasコンポーネントを作成し、パラメータ値を設定
-		auto subCanvas = std::make_shared<SubCanvas>(subCanvasPath);
-		if (!usedParamRefs.empty())
-		{
-			JSON paramsJSON;
-			for (const auto& paramName : usedParamRefs)
-			{
-				if (auto paramValue = m_canvas->param(paramName))
-				{
-					paramsJSON[paramName] = ParamValueToJSONValue(*paramValue);
-				}
-			}
-			subCanvas->setSerializedParamsJSON(paramsJSON.formatMinimum());
-		}
-		selectedNode->addComponent(subCanvas);
+		// SubCanvasコンポーネントを作成（パラメータは書き出し先Canvasのデフォルト値を使用）
+		selectedNode->emplaceComponent<SubCanvas>(subCanvasPath);
 
 		m_canvas->refreshLayoutImmediately();
 		m_hierarchy.refreshNodeList();
