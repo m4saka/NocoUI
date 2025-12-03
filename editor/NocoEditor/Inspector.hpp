@@ -5359,11 +5359,14 @@ namespace noco::editor
 										node->removeComponent(subCanvas);
 
 										m_canvas->refreshLayoutImmediately();
+										// 無効なパラメータ参照を解除
+										const auto clearedParams = m_canvas->removeInvalidParamRefs();
 										if (m_onRefreshNodeList)
 										{
 											m_onRefreshNodeList();
 										}
 										refreshInspector();
+										ShowClearedParamRefsDialog(m_dialogOpener, clearedParams);
 									}
 								},
 								Array<DialogButtonDesc>

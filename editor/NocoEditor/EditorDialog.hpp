@@ -858,4 +858,37 @@ namespace noco::editor
 			openDialogOKMultipleRecursive(messages, index + 1, onComplete);
 		});
 	}
+
+	inline void ShowClearedParamRefsDialog(const std::shared_ptr<DialogOpener>& dialogOpener, const Array<String>& clearedParams)
+	{
+		if (clearedParams.empty())
+		{
+			return;
+		}
+
+		// アルファベット順でソート
+		Array<String> sortedParams = clearedParams;
+		sortedParams.sort();
+
+		// 最大10件まで表示
+		String paramList;
+		const size_t displayCount = Min(sortedParams.size(), size_t(10));
+		for (size_t i = 0; i < displayCount; ++i)
+		{
+			if (i > 0)
+			{
+				paramList += U"\n";
+			}
+			paramList += U"・" + sortedParams[i];
+		}
+
+		// 10件を超える場合は合計数を表示
+		if (sortedParams.size() > 10)
+		{
+			paramList += U"\n... (全" + Format(sortedParams.size()) + U"件)";
+		}
+
+		// ダイアログを表示
+		dialogOpener->openDialogOK(U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList);
+	}
 }

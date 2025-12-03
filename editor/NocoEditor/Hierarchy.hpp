@@ -1186,39 +1186,6 @@ namespace noco::editor
 			selectNodes(newNodes);
 		}
 
-		void showClearedParamRefsDialog(const Array<String>& clearedParams)
-		{
-			if (clearedParams.empty())
-			{
-				return;
-			}
-			
-			// アルファベット順でソート
-			Array<String> sortedParams = clearedParams;
-			sortedParams.sort();
-			
-			// 最大10件まで表示
-			String paramList;
-			const size_t displayCount = Min(sortedParams.size(), size_t(10));
-			for (size_t i = 0; i < displayCount; ++i)
-			{
-				if (i > 0)
-				{
-					paramList += U"\n";
-				}
-				paramList += U"・" + sortedParams[i];
-			}
-			
-			// 10件を超える場合は合計数を表示
-			if (sortedParams.size() > 10)
-			{
-				paramList += U"\n... (全" + Format(sortedParams.size()) + U"件)";
-			}
-			
-			// ダイアログを表示
-			m_dialogOpener->openDialogOK(U"以下のパラメータ参照は利用できないため解除されました。\n\n" + paramList);
-		}
-
 		void onClickPaste()
 		{
 			// 最後に選択したノードの兄弟として貼り付け
@@ -1258,7 +1225,7 @@ namespace noco::editor
 			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
-			showClearedParamRefsDialog(clearedParams);
+			ShowClearedParamRefsDialog(m_dialogOpener, clearedParams);
 		}
 
 		void onClickPaste(std::shared_ptr<Node> parentNode, Optional<size_t> index = none)
@@ -1296,7 +1263,7 @@ namespace noco::editor
 			const auto clearedParams = m_canvas->removeInvalidParamRefs();
 			refreshNodeList();
 			selectNodes(newNodes);
-			showClearedParamRefsDialog(clearedParams);
+			ShowClearedParamRefsDialog(m_dialogOpener, clearedParams);
 		}
 
 		void onClickCreateEmptyParent()
