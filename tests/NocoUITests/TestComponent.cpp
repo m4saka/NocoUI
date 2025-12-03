@@ -141,6 +141,63 @@ TEST_CASE("Component lifecycle callbacks", "[Component][Lifecycle]")
 		REQUIRE(testComponent->deactivatedCount == 2);
 	}
 
+	SECTION("removeComponents triggers onDeactivated")
+	{
+		class TestComponent : public noco::ComponentBase
+		{
+		public:
+			int32 deactivatedCount = 0;
+			TestComponent() : ComponentBase{ {} } {}
+			void onDeactivated(const std::shared_ptr<noco::Node>&) override
+			{
+				deactivatedCount++;
+			}
+		};
+
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = canvas->emplaceChild(U"TestNode");
+
+		auto comp1 = std::make_shared<TestComponent>();
+		auto comp2 = std::make_shared<TestComponent>();
+		node->addComponent(comp1);
+		node->addComponent(comp2);
+		node->emplaceComponent<noco::Label>();
+
+		node->removeComponents<TestComponent>(noco::RecursiveYN::No);
+
+		REQUIRE(comp1->deactivatedCount == 1);
+		REQUIRE(comp2->deactivatedCount == 1);
+		REQUIRE(node->components().size() == 1);
+	}
+
+	SECTION("removeComponentsAll triggers onDeactivated")
+	{
+		class TestComponent : public noco::ComponentBase
+		{
+		public:
+			int32 deactivatedCount = 0;
+			TestComponent() : ComponentBase{ {} } {}
+			void onDeactivated(const std::shared_ptr<noco::Node>&) override
+			{
+				deactivatedCount++;
+			}
+		};
+
+		auto canvas = noco::Canvas::Create(SizeF{ 800, 600 });
+		auto node = canvas->emplaceChild(U"TestNode");
+
+		auto comp1 = std::make_shared<TestComponent>();
+		auto comp2 = std::make_shared<TestComponent>();
+		node->addComponent(comp1);
+		node->addComponent(comp2);
+
+		node->removeComponentsAll(noco::RecursiveYN::No);
+
+		REQUIRE(comp1->deactivatedCount == 1);
+		REQUIRE(comp2->deactivatedCount == 1);
+		REQUIRE(node->components().size() == 0);
+	}
+
 	SECTION("Canvas removal triggers onDeactivated")
 	{
 		class TestComponent : public noco::ComponentBase, public std::enable_shared_from_this<TestComponent>

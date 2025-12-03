@@ -243,6 +243,8 @@ namespace noco
 		}
 
 		template <typename TComponent>
+		void removeComponents(RecursiveYN recursive);
+
 		void removeComponentsAll(RecursiveYN recursive);
 
 		template <class TComponent, class... Args>
@@ -1000,12 +1002,20 @@ namespace noco
 	}
 
 	template <typename TComponent>
-	void Node::removeComponentsAll(RecursiveYN recursive)
+	void Node::removeComponents(RecursiveYN recursive)
 	{
 		// 自身のコンポーネントから指定された型のものを削除
-		m_components.remove_if([](const std::shared_ptr<ComponentBase>& component)
+		m_components.remove_if([this](const std::shared_ptr<ComponentBase>& component)
 		{
-			return std::dynamic_pointer_cast<TComponent>(component) != nullptr;
+			if (std::dynamic_pointer_cast<TComponent>(component) != nullptr)
+			{
+				if (m_activeInHierarchy)
+				{
+					component->onDeactivated(shared_from_this());
+				}
+				return true;
+			}
+			return false;
 		});
 
 		// 再帰的に処理する場合は子ノードも処理
@@ -1013,7 +1023,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->removeComponentsAll<TComponent>(RecursiveYN::Yes);
+				child->removeComponents<TComponent>(RecursiveYN::Yes);
 			}
 		}
 	}

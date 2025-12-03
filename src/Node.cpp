@@ -814,6 +814,26 @@ namespace noco
 		m_components.remove(component);
 	}
 
+	void Node::removeComponentsAll(RecursiveYN recursive)
+	{
+		if (m_activeInHierarchy)
+		{
+			for (const auto& component : m_components)
+			{
+				component->onDeactivated(shared_from_this());
+			}
+		}
+		m_components.clear();
+
+		if (recursive == RecursiveYN::Yes)
+		{
+			for (const auto& child : m_children)
+			{
+				child->removeComponentsAll(RecursiveYN::Yes);
+			}
+		}
+	}
+
 	bool Node::moveComponentUp(const std::shared_ptr<ComponentBase>& component)
 	{
 		const auto it = std::find(m_components.begin(), m_components.end(), component);
