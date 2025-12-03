@@ -40,6 +40,7 @@ namespace noco::editor
 		std::function<void()> m_onChangeNodeName;
 		std::function<void()> m_onChangeNodeActive;
 		std::function<void(const SizeF&, const SizeF&)> m_onChangeCanvasSize;
+		std::function<void()> m_onRefreshNodeList;
 		std::shared_ptr<ComponentFactory> m_componentFactory;
 		
 		void renameParam(const String& oldName, const String& newName)
@@ -285,7 +286,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive, std::function<void(const SizeF&, const SizeF&)> onChangeCanvasSize = nullptr)
+		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive, std::function<void(const SizeF&, const SizeF&)> onChangeCanvasSize, std::function<void()> onRefreshNodeList)
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
@@ -328,6 +329,7 @@ namespace noco::editor
 			, m_onChangeNodeName(std::move(onChangeNodeName))
 			, m_onChangeNodeActive(std::move(onChangeNodeActive))
 			, m_onChangeCanvasSize(std::move(onChangeCanvasSize))
+			, m_onRefreshNodeList(std::move(onRefreshNodeList))
 			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
@@ -5310,6 +5312,80 @@ namespace noco::editor
 				if (isFolded)
 				{
 					snapButton->setActive(false);
+				}
+
+				auto expandButton = componentNode->addChild(CreateButtonNode(
+					U"ノードとして展開...",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ -24, 24 },
+						.margin = LRTB{ 12, 12, 4, 0 },
+						.maxWidth = 360,
+					},
+					[this, subCanvas, node](const std::shared_ptr<Node>&)
+					{
+						const String& canvasPath = subCanvas->canvasPath().defaultValue();
+						const FilePath fullPath = noco::Asset::GetFullPath(canvasPath);
+
+						if (canvasPath.isEmpty() || !FileSystem::Exists(fullPath))
+						{
+							m_dialogOpener->openDialogOK(U"nocoファイルが見つかりません。");
+							return;
+						}
+
+						m_dialogOpener->openDialog(
+							std::make_shared<SimpleDialog>(
+								U"SubCanvasをノードとして展開します。\nよろしいですか？",
+								[this, subCanvas, node, fullPath](StringView resultButtonText)
+								{
+									if (resultButtonText == U"はい")
+									{
+										const JSON canvasJSON = JSON::Load(fullPath);
+										if (!canvasJSON)
+										{
+											m_dialogOpener->openDialogOK(U"nocoファイルの読み込みに失敗しました。");
+											return;
+										}
+
+										if (canvasJSON.contains(U"children") && canvasJSON[U"children"].isArray())
+										{
+											for (const auto& childJSON : canvasJSON[U"children"].arrayView())
+											{
+												node->addChildFromJSON(childJSON, *m_componentFactory);
+											}
+										}
+
+										node->removeComponent(subCanvas);
+
+										m_canvas->refreshLayoutImmediately();
+										if (m_onRefreshNodeList)
+										{
+											m_onRefreshNodeList();
+										}
+										refreshInspector();
+									}
+								},
+								Array<DialogButtonDesc>
+								{
+									DialogButtonDesc
+									{
+										.text = U"はい",
+										.mnemonicInput = KeyY,
+										.isDefaultButton = IsDefaultButtonYN::Yes,
+									},
+									DialogButtonDesc
+									{
+										.text = U"いいえ",
+										.mnemonicInput = KeyN,
+										.isCancelButton = IsCancelButtonYN::Yes,
+									},
+								}));
+					}));
+
+				if (isFolded)
+				{
+					expandButton->setActive(false);
 				}
 			}
 

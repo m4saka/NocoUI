@@ -108,7 +108,7 @@ public:
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
 		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this](const std::shared_ptr<Node>& node) { onExportAsSubCanvas(node); })
-		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); })
+		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); }, [this] { m_hierarchy.refreshNodeList(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
