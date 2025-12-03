@@ -320,6 +320,16 @@ namespace noco
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
 
+	void Transform::clear()
+	{
+		m_translate.setPropertyValue(Vec2::Zero());
+		m_scale.setPropertyValue(Vec2::One());
+		m_pivot.setPropertyValue(Vec2{ 0.5, 0.5 });
+		m_rotation.setPropertyValue(0.0);
+		m_hitTestAffected.setPropertyValue(true);
+		m_color.setPropertyValue(Palette::White);
+	}
+
 	void Transform::clearCurrentFrameOverride()
 	{
 		m_translate.clearCurrentFrameOverride();

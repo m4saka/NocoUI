@@ -92,6 +92,8 @@ namespace noco
 
 		void populateParamRefs(HashSet<String>* pParamRefs) const;
 
+		void clear();
+
 		void clearCurrentFrameOverride();
 	};
 }
