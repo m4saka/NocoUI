@@ -107,7 +107,7 @@ public:
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
 		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory)
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this](const std::shared_ptr<Node>& node) { onExportAsSubCanvas(node); })
 		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
@@ -1210,6 +1210,83 @@ public:
 				System::MessageBoxOK(U"エラー", U"保存に失敗しました", MessageBoxStyle::Error);
 			}
 		}
+	}
+
+	// 保存パスをアセットルートパスからの相対パスに変換
+	[[nodiscard]]
+	String computeRelativePathForSubCanvas(const FilePath& savePath) const
+	{
+		const FilePath& assetBasePath = noco::Asset::GetBaseDirectoryPath();
+
+		// 書き出し元ファイルが未保存の場合はファイル名のみ
+		if (assetBasePath.isEmpty())
+		{
+			return FileSystem::FileName(savePath);
+		}
+
+		const FilePath normalizedSavePath = FileSystem::FullPath(savePath);
+		const FilePath normalizedBasePath = FileSystem::FullPath(assetBasePath);
+
+		// アセットルートパス配下の場合は相対パスを返す
+		if (normalizedSavePath.starts_with(normalizedBasePath))
+		{
+			size_t baseLen = normalizedBasePath.length();
+			if (!normalizedBasePath.ends_with(U'/') && !normalizedBasePath.ends_with(U'\\'))
+			{
+				baseLen += 1;
+			}
+			return normalizedSavePath.substr(baseLen);
+		}
+
+		// アセットルートパス外の場合はファイル名のみ
+		return FileSystem::FileName(savePath);
+	}
+
+	// ノードをSubCanvasファイルとして書き出し、元のノードにSubCanvasコンポーネントを挿入
+	void onExportAsSubCanvas(const std::shared_ptr<Node>& selectedNode)
+	{
+		if (!selectedNode)
+		{
+			return;
+		}
+
+		const auto savePathOpt = Dialog::SaveFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } } });
+		if (!savePathOpt)
+		{
+			return;
+		}
+		const FilePath savePath = *savePathOpt;
+
+		// 新規Canvasを作成し、選択ノードをクローンして追加
+		const SizeF nodeSize = selectedNode->regionRect().size;
+		auto exportCanvas = Canvas::Create(nodeSize);
+		const JSON nodeJSON = selectedNode->toJSON();
+		exportCanvas->addChildFromJSON(nodeJSON, *m_componentFactory);
+		exportCanvas->refreshLayoutImmediately();
+
+		// Canvasをファイルに保存
+		const JSON exportJSON = exportCanvas->toJSON();
+		if (!exportJSON.save(savePath))
+		{
+			System::MessageBoxOK(U"エラー", U"SubCanvasの保存に失敗しました", MessageBoxStyle::Error);
+			return;
+		}
+
+		// 元のノードをSubCanvasコンポーネントに置き換え
+		const String subCanvasPath = computeRelativePathForSubCanvas(savePath);
+		selectedNode->removeChildrenAll();
+		selectedNode->removeComponentsAll(RecursiveYN::No);
+		selectedNode->addComponent(std::make_shared<SubCanvas>(subCanvasPath));
+		selectedNode->setRegion(AnchorRegion{
+			.anchorMin = Anchor::MiddleCenter,
+			.anchorMax = Anchor::MiddleCenter,
+			.posDelta = Vec2{ 0, 0 },
+			.sizeDelta = nodeSize,
+			.sizeDeltaPivot = Anchor::MiddleCenter,
+		});
+
+		m_canvas->refreshLayoutImmediately();
+		m_hierarchy.refreshNodeList();
 	}
 
 	void onClickMenuFileExit()

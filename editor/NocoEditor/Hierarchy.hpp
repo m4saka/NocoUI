@@ -29,6 +29,7 @@ namespace noco::editor
 		std::shared_ptr<Defaults> m_defaults;
 		std::shared_ptr<DialogOpener> m_dialogOpener;
 		std::shared_ptr<ComponentFactory> m_componentFactory;
+		std::function<void(const std::shared_ptr<Node>&)> m_onExportAsSubCanvas;
 
 		struct ElementDetail
 		{
@@ -214,6 +215,8 @@ namespace noco::editor
 					MenuItem{ U"下に移動", U"Alt+Down", KeyD, [this] { onClickMoveDown(); } },
 					MenuSeparator{},
 					MenuItem{ U"空の親ノードを作成", U"", KeyM, [this] { onClickCreateEmptyParent(); } },
+					MenuSeparator{},
+					MenuItem{ U"SubCanvasとして書き出し...", U"", KeyX, [this, node] { if (m_onExportAsSubCanvas) { m_onExportAsSubCanvas(node); } }, [this] { return isSingleNodeSelected(); } },
 				},
 				[this, nodeWeak = std::weak_ptr{ node }]
 				{
@@ -671,7 +674,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory)
+		explicit Hierarchy(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void(const std::shared_ptr<Node>&)> onExportAsSubCanvas)
 			: m_canvas(canvas)
 			, m_hierarchyFrameNode(editorCanvas->emplaceChild(
 				U"HierarchyFrame",
@@ -710,6 +713,7 @@ namespace noco::editor
 			, m_defaults(defaults)
 			, m_dialogOpener(dialogOpener)
 			, m_componentFactory(componentFactory)
+			, m_onExportAsSubCanvas(std::move(onExportAsSubCanvas))
 		{
 			m_hierarchyFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
 			m_hierarchyInnerFrameNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColor, Palette::Black, 0.0, 0.0, 10.0);
@@ -980,6 +984,24 @@ namespace noco::editor
 		bool canPaste() const
 		{
 			return !m_copiedNodeJSONs.empty();
+		}
+
+		[[nodiscard]]
+		bool isSingleNodeSelected() const
+		{
+			size_t selectedCount = 0;
+			for (const auto& element : m_elements)
+			{
+				if (element.editorSelected())
+				{
+					++selectedCount;
+					if (selectedCount > 1)
+					{
+						return false;
+					}
+				}
+			}
+			return selectedCount == 1;
 		}
 
 		[[nodiscard]]
