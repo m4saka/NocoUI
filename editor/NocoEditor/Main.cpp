@@ -1274,6 +1274,8 @@ public:
 			}
 		}
 
+		exportCanvas->setDefaultFontAssetName(m_canvas->defaultFontAssetName());
+
 		const JSON nodeJSON = selectedNode->toJSON();
 		exportCanvas->addChildFromJSON(nodeJSON, *m_componentFactory);
 
