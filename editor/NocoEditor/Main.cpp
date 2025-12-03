@@ -1317,6 +1317,8 @@ public:
 
 		m_canvas->refreshLayoutImmediately();
 		m_hierarchy.refreshNodeList();
+		m_hierarchy.selectNodes({ selectedNode });
+		m_inspector.setTargetNode(selectedNode); // 選択ノードはそのままでコンポーネントのみ変わるため明示的にInspector更新
 	}
 
 	void onClickMenuFileExit()
