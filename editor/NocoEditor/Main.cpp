@@ -1315,6 +1315,57 @@ public:
 		m_hierarchy.refreshNodeList();
 		m_hierarchy.selectNodes({ selectedNode });
 		m_inspector.setTargetNode(selectedNode); // 選択ノードはそのままでコンポーネントのみ変わるため明示的にInspector更新
+
+		// 書き出しによって不使用になったパラメータを検出
+		HashSet<String> currentUsedParamRefs;
+		m_canvas->populateParamRefs(&currentUsedParamRefs);
+
+		Array<String> unusedParams;
+		for (const auto& paramName : usedParamRefs)
+		{
+			if (!currentUsedParamRefs.contains(paramName))
+			{
+				unusedParams.push_back(paramName);
+			}
+		}
+
+		if (!unusedParams.empty())
+		{
+			unusedParams.sort();
+			String paramList;
+			for (const auto& paramName : unusedParams)
+			{
+				paramList += U"・" + paramName + U"\n";
+			}
+
+			m_dialogOpener->openDialog(std::make_unique<SimpleDialog>(
+				U"書き出し元のCanvasにおいて、以下のパラメータは\n参照されなくなりました。\nこれらのパラメータを削除しますか？\n\n" + paramList,
+				[this, unusedParams, paramList](StringView resultButtonText)
+				{
+					if (resultButtonText == U"はい")
+					{
+						for (const auto& paramName : unusedParams)
+						{
+							m_canvas->removeParam(paramName);
+						}
+						m_dialogOpener->openDialogOK(U"書き出し元のCanvasから以下のパラメータを削除しました。\n\n" + paramList);
+					}
+				},
+				Array<DialogButtonDesc>
+				{
+					DialogButtonDesc
+					{
+						.text = U"はい",
+						.mnemonicInput = KeyY,
+						.isDefaultButton = IsDefaultButtonYN::Yes,
+					},
+					DialogButtonDesc
+					{
+						.text = U"いいえ",
+						.mnemonicInput = KeyN,
+					},
+				}));
+		}
 	}
 
 	void onClickMenuFileExit()

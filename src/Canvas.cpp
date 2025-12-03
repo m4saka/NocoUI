@@ -1200,6 +1200,14 @@ namespace noco
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
 
+	void Canvas::populateParamRefs(HashSet<String>* pParamRefs) const
+	{
+		for (const auto& child : m_children)
+		{
+			child->populateParamRefs(pParamRefs);
+		}
+	}
+
 	std::shared_ptr<Node> Canvas::childAt(size_t index) const
 	{
 		if (index >= m_children.size())

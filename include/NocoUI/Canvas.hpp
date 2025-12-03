@@ -632,6 +632,8 @@ namespace noco
 
 		Array<String> removeInvalidParamRefs();
 
+		void populateParamRefs(HashSet<String>* pParamRefs) const;
+
 		void setSize(double width, double height)
 		{
 			m_size = SizeF{ width, height };
