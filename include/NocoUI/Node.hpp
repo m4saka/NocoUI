@@ -173,6 +173,8 @@ namespace noco
 		[[nodiscard]]
 		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
 
+		void populateParamRefs(HashSet<String>* pParamRefs) const;
+
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 

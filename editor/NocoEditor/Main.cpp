@@ -1257,9 +1257,23 @@ public:
 		}
 		const FilePath savePath = *savePathOpt;
 
+		// 選択ノードで使用されているパラメータ参照を収集
+		HashSet<String> usedParamRefs;
+		selectedNode->populateParamRefs(&usedParamRefs);
+
 		// 新規Canvasを作成し、選択ノードをクローンして追加
 		const SizeF nodeSize = selectedNode->regionRect().size;
 		auto exportCanvas = Canvas::Create(nodeSize);
+
+		// 使用中パラメータを書き出し先Canvasに追加
+		for (const auto& paramName : usedParamRefs)
+		{
+			if (auto paramValue = m_canvas->param(paramName))
+			{
+				exportCanvas->setParamValue(paramName, *paramValue);
+			}
+		}
+
 		const JSON nodeJSON = selectedNode->toJSON();
 		exportCanvas->addChildFromJSON(nodeJSON, *m_componentFactory);
 		exportCanvas->refreshLayoutImmediately();
@@ -1276,7 +1290,23 @@ public:
 		const String subCanvasPath = computeRelativePathForSubCanvas(savePath);
 		selectedNode->removeChildrenAll();
 		selectedNode->removeComponentsAll(RecursiveYN::No);
-		selectedNode->addComponent(std::make_shared<SubCanvas>(subCanvasPath));
+
+		// SubCanvasコンポーネントを作成し、パラメータ値を設定
+		auto subCanvas = std::make_shared<SubCanvas>(subCanvasPath);
+		if (!usedParamRefs.empty())
+		{
+			JSON paramsJSON;
+			for (const auto& paramName : usedParamRefs)
+			{
+				if (auto paramValue = m_canvas->param(paramName))
+				{
+					paramsJSON[paramName] = ParamValueToJSONValue(*paramValue);
+				}
+			}
+			subCanvas->setSerializedParamsJSON(paramsJSON.formatMinimum());
+		}
+		selectedNode->addComponent(subCanvas);
+
 		selectedNode->setRegion(AnchorRegion{
 			.anchorMin = Anchor::MiddleCenter,
 			.anchorMax = Anchor::MiddleCenter,

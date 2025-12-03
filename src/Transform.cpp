@@ -243,6 +243,34 @@ namespace noco
 		}
 	}
 
+	void Transform::populateParamRefs(HashSet<String>* pParamRefs) const
+	{
+		if (!m_translate.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_translate.paramRef());
+		}
+		if (!m_scale.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_scale.paramRef());
+		}
+		if (!m_pivot.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_pivot.paramRef());
+		}
+		if (!m_rotation.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_rotation.paramRef());
+		}
+		if (!m_hitTestAffected.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_hitTestAffected.paramRef());
+		}
+		if (!m_color.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_color.paramRef());
+		}
+	}
+
 	Array<String> Transform::removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams)
 	{
 		HashSet<String> clearedParamsSet;

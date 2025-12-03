@@ -90,6 +90,8 @@ namespace noco
 
 		Array<String> removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams);
 
+		void populateParamRefs(HashSet<String>* pParamRefs) const;
+
 		void clearCurrentFrameOverride();
 	};
 }

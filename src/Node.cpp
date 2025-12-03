@@ -449,6 +449,44 @@ namespace noco
 		return result;
 	}
 
+	void Node::populateParamRefs(HashSet<String>* pParamRefs) const
+	{
+		if (!m_activeSelf.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_activeSelf.paramRef());
+		}
+		if (!m_interactable.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_interactable.paramRef());
+		}
+		if (!m_styleState.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_styleState.paramRef());
+		}
+		if (!m_zOrderInSiblings.paramRef().isEmpty())
+		{
+			pParamRefs->insert(m_zOrderInSiblings.paramRef());
+		}
+
+		m_transform.populateParamRefs(pParamRefs);
+
+		for (const auto& component : m_components)
+		{
+			for (const auto* property : component->properties())
+			{
+				if (!property->paramRef().isEmpty())
+				{
+					pParamRefs->insert(property->paramRef());
+				}
+			}
+		}
+
+		for (const auto& child : m_children)
+		{
+			child->populateParamRefs(pParamRefs);
+		}
+	}
+
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
 		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
