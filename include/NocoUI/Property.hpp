@@ -92,6 +92,28 @@ namespace noco
 		}
 	}
 
+	[[nodiscard]]
+	inline bool IsParamTypeCompatibleWith(ParamType paramType, PropertyEditType editType)
+	{
+		switch (editType)
+		{
+		case PropertyEditType::Bool:
+			return paramType == ParamType::Bool;
+		case PropertyEditType::Number:
+			return paramType == ParamType::Number;
+		case PropertyEditType::Text:
+		case PropertyEditType::Enum:
+			return paramType == ParamType::String;
+		case PropertyEditType::Color:
+			return paramType == ParamType::Color;
+		case PropertyEditType::Vec2:
+			return paramType == ParamType::Vec2;
+		case PropertyEditType::LRTB:
+			return paramType == ParamType::LRTB;
+		}
+		return false;
+	}
+
 	template <class T>
 	class Property : public IProperty
 	{
@@ -158,16 +180,22 @@ namespace noco
 		{
 			m_paramRef = paramRef;
 		}
-		
+
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
 		}
-		
+
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			if (m_paramRef.isEmpty())
+			{
+				return;
+			}
+
+			const auto it = validParams.find(m_paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
@@ -455,16 +483,22 @@ namespace noco
 		{
 			m_paramRef = paramRef;
 		}
-		
+
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
 		}
-		
+
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			if (m_paramRef.isEmpty())
+			{
+				return;
+			}
+
+			const auto it = validParams.find(m_paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
@@ -742,16 +776,22 @@ namespace noco
 		{
 			m_paramRef = paramRef;
 		}
-		
+
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
 			return !m_paramRef.isEmpty();
 		}
-		
+
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			if (m_paramRef.isEmpty())
+			{
+				return;
+			}
+
+			const auto it = validParams.find(m_paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
@@ -1083,7 +1123,13 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			if (m_paramRef.isEmpty())
+			{
+				return;
+			}
+
+			const auto it = validParams.find(m_paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";

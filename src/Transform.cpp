@@ -274,49 +274,28 @@ namespace noco
 	Array<String> Transform::removeInvalidParamRefs(const HashTable<String, ParamValue>& validParams)
 	{
 		HashSet<String> clearedParamsSet;
-		
-		// translateの参照をチェック
-		if (!m_translate.paramRef().isEmpty() && !validParams.contains(m_translate.paramRef()))
+
+		const auto fnCheckAndClear = [&](auto& prop, PropertyEditType expectedType)
 		{
-			clearedParamsSet.insert(m_translate.paramRef());
-			m_translate.setParamRef(U"");
-		}
-		
-		// scaleの参照をチェック
-		if (!m_scale.paramRef().isEmpty() && !validParams.contains(m_scale.paramRef()))
-		{
-			clearedParamsSet.insert(m_scale.paramRef());
-			m_scale.setParamRef(U"");
-		}
-		
-		// pivotの参照をチェック
-		if (!m_pivot.paramRef().isEmpty() && !validParams.contains(m_pivot.paramRef()))
-		{
-			clearedParamsSet.insert(m_pivot.paramRef());
-			m_pivot.setParamRef(U"");
-		}
-		
-		// rotationの参照をチェック
-		if (!m_rotation.paramRef().isEmpty() && !validParams.contains(m_rotation.paramRef()))
-		{
-			clearedParamsSet.insert(m_rotation.paramRef());
-			m_rotation.setParamRef(U"");
-		}
-		
-		// hitTestAffectedの参照をチェック
-		if (!m_hitTestAffected.paramRef().isEmpty() && !validParams.contains(m_hitTestAffected.paramRef()))
-		{
-			clearedParamsSet.insert(m_hitTestAffected.paramRef());
-			m_hitTestAffected.setParamRef(U"");
-		}
-		
-		// colorの参照をチェック
-		if (!m_color.paramRef().isEmpty() && !validParams.contains(m_color.paramRef()))
-		{
-			clearedParamsSet.insert(m_color.paramRef());
-			m_color.setParamRef(U"");
-		}
-		
+			if (prop.paramRef().isEmpty())
+			{
+				return;
+			}
+			const auto it = validParams.find(prop.paramRef());
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), expectedType))
+			{
+				clearedParamsSet.insert(prop.paramRef());
+				prop.setParamRef(U"");
+			}
+		};
+
+		fnCheckAndClear(m_translate, PropertyEditType::Vec2);
+		fnCheckAndClear(m_scale, PropertyEditType::Vec2);
+		fnCheckAndClear(m_pivot, PropertyEditType::Vec2);
+		fnCheckAndClear(m_rotation, PropertyEditType::Number);
+		fnCheckAndClear(m_hitTestAffected, PropertyEditType::Bool);
+		fnCheckAndClear(m_color, PropertyEditType::Color);
+
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
 

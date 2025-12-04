@@ -264,10 +264,16 @@ namespace noco
 		{
 			return !m_paramRef.isEmpty();
 		}
-		
+
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (!m_paramRef.isEmpty() && !validParams.contains(m_paramRef))
+			if (m_paramRef.isEmpty())
+			{
+				return;
+			}
+
+			const auto it = validParams.find(m_paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), m_editType))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef.clear();
