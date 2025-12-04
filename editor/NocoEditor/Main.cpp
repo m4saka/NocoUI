@@ -225,6 +225,8 @@ public:
 						U"Ctrl+A",
 					#endif
 					KeyA, [this] { m_hierarchy.selectAll(); } },
+				MenuSeparator{},
+				MenuItem{ U"ファイルから貼り付け...", U"", KeyF, [this] { onClickMenuEditPasteFromFile(); } },
 			});
 		m_menuBar.addMenuCategory(
 			U"View",
@@ -1406,7 +1408,52 @@ public:
 	{
 		m_hierarchy.selectAll();
 	}
-	
+
+	void onClickMenuEditPasteFromFile()
+	{
+		const auto filePathOpt = Dialog::OpenFile({ FileFilter{ U"NocoUI Canvas", { U"noco" } } });
+		if (!filePathOpt)
+		{
+			return;
+		}
+
+		const JSON canvasJSON = JSON::Load(*filePathOpt);
+		if (!canvasJSON || !canvasJSON.contains(U"children") || !canvasJSON[U"children"].isArray())
+		{
+			m_dialogOpener->openDialogOK(U"nocoファイルの読み込みに失敗しました。");
+			return;
+		}
+
+		// ファイルのreferenceSizeを取得
+		const SizeF size = canvasJSON.contains(U"referenceSize")
+			? FromArrayJSON<Vec2>(canvasJSON[U"referenceSize"], Canvas::DefaultSize)
+			: Canvas::DefaultSize;
+
+		auto wrapperNode = m_canvas->emplaceChild(
+			FileSystem::BaseName(*filePathOpt),
+			AnchorRegion
+			{
+				.anchorMin = Anchor::MiddleCenter,
+				.anchorMax = Anchor::MiddleCenter,
+				.posDelta = Vec2{ 0, 0 },
+				.sizeDelta = size,
+				.sizeDeltaPivot = Anchor::MiddleCenter,
+			});
+
+		// childrenを新規ノードの子として追加
+		for (const auto& childJSON : canvasJSON[U"children"].arrayView())
+		{
+			wrapperNode->addChildFromJSON(childJSON, *m_componentFactory);
+		}
+
+		m_canvas->refreshLayoutImmediately();
+		// 無効なパラメータ参照を解除
+		const auto clearedParams = m_canvas->removeInvalidParamRefs();
+		m_hierarchy.refreshNodeList();
+		m_hierarchy.selectNodes({ wrapperNode });
+		ShowClearedParamRefsDialog(m_dialogOpener, clearedParams);
+	}
+
 	void onClickMenuEditUndo()
 	{
 		if (const auto undoState = m_historySystem.undo(m_canvas->toJSON(WithInstanceIdYN::Yes)))
