@@ -34,8 +34,8 @@ namespace noco::editor
 
 	void CharTrimInputDialog::createDialogContent(
 		const std::shared_ptr<Node>& contentRootNode,
-		const std::shared_ptr<ContextMenu>& dialogContextMenu,
-		std::function<void()> fnRefreshLayoutForContent)
+		const std::shared_ptr<ContextMenu>&,
+		std::function<void()>)
 	{
 		contentRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 16 } });
 
@@ -147,8 +147,8 @@ namespace noco::editor
 
 	void TextureFontLabelCellTrimEditDialog::createDialogContent(
 		const std::shared_ptr<Node>& contentRootNode,
-		const std::shared_ptr<ContextMenu>& dialogContextMenu,
-		std::function<void()> fnRefreshLayoutForContent)
+		const std::shared_ptr<ContextMenu>&,
+		std::function<void()>)
 	{
 		contentRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 16 } });
 

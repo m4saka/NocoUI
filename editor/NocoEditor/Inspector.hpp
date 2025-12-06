@@ -5121,7 +5121,7 @@ namespace noco::editor
 					3.0);
 
 				// Canvas Params見出し
-				auto headingNode = paramsContainerNode->emplaceChild(
+				auto paramsHeadingNode = paramsContainerNode->emplaceChild(
 					U"CanvasParamsHeading",
 					InlineRegion
 					{
@@ -5129,13 +5129,13 @@ namespace noco::editor
 						.sizeDelta = Vec2{ 0, 24 },
 						.margin = LRTB{ 0, 0, 0, 0 },
 					});
-				headingNode->emplaceComponent<RectRenderer>(
+				paramsHeadingNode->emplaceComponent<RectRenderer>(
 					ColorF{ 0.3, 0.5, 0.6, 0.8 },
 					Palette::Black,
 					0.0,
 					0.0,
 					3.0);
-				headingNode->emplaceComponent<Label>(
+				paramsHeadingNode->emplaceComponent<Label>(
 					U"Canvas Params",
 					U"",
 					14,

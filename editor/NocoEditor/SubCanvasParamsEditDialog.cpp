@@ -19,7 +19,7 @@ namespace noco::editor
 		info.rowNode = rowNode;
 
 		// 型に応じた入力コントロール
-		info.valueInputNode = rowNode->addChild(createValueInputNode(rowNode, index));
+		info.valueInputNode = rowNode->addChild(createValueInputNode(index));
 
 		// チェックボックスを先頭に挿入
 		info.checkboxNode = rowNode->addChildAtIndex(
@@ -39,30 +39,30 @@ namespace noco::editor
 		updateParamRowInteractable(index);
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createValueInputNode(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createValueInputNode(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
 		switch (info.paramType)
 		{
 		case ParamType::Bool:
-			return createBoolInput(parentNode, index);
+			return createBoolInput(index);
 		case ParamType::Number:
-			return createNumberInput(parentNode, index);
+			return createNumberInput(index);
 		case ParamType::String:
-			return createStringInput(parentNode, index);
+			return createStringInput(index);
 		case ParamType::Color:
-			return createColorInput(parentNode, index);
+			return createColorInput(index);
 		case ParamType::Vec2:
-			return createVec2Input(parentNode, index);
+			return createVec2Input(index);
 		case ParamType::LRTB:
-			return createLRTBInput(parentNode, index);
+			return createLRTBInput(index);
 		default:
-			return createStringInput(parentNode, index);
+			return createStringInput(index);
 		}
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createBoolInput(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createBoolInput(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
@@ -78,7 +78,7 @@ namespace noco::editor
 			});
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createNumberInput(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createNumberInput(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
@@ -91,7 +91,7 @@ namespace noco::editor
 			});
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createStringInput(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createStringInput(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
@@ -106,7 +106,7 @@ namespace noco::editor
 			3);
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createColorInput(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createColorInput(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
@@ -122,7 +122,7 @@ namespace noco::editor
 			});
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createVec2Input(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createVec2Input(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 
@@ -138,7 +138,7 @@ namespace noco::editor
 			});
 	}
 
-	std::shared_ptr<Node> SubCanvasParamsEditDialog::createLRTBInput(const std::shared_ptr<Node>& parentNode, size_t index)
+	std::shared_ptr<Node> SubCanvasParamsEditDialog::createLRTBInput(size_t index)
 	{
 		auto& info = m_paramNodes[index];
 

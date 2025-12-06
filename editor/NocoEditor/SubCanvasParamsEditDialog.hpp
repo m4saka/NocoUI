@@ -228,19 +228,19 @@ namespace noco::editor
 
 		void createParamRow(const std::shared_ptr<Node>& parentNode, size_t index);
 
-		std::shared_ptr<Node> createValueInputNode(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createValueInputNode(size_t index);
 
-		std::shared_ptr<Node> createBoolInput(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createBoolInput(size_t index);
 
-		std::shared_ptr<Node> createNumberInput(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createNumberInput(size_t index);
 
-		std::shared_ptr<Node> createStringInput(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createStringInput(size_t index);
 
-		std::shared_ptr<Node> createColorInput(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createColorInput(size_t index);
 
-		std::shared_ptr<Node> createVec2Input(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createVec2Input(size_t index);
 
-		std::shared_ptr<Node> createLRTBInput(const std::shared_ptr<Node>& parentNode, size_t index);
+		std::shared_ptr<Node> createLRTBInput(size_t index);
 
 		void updateParamRowInteractable(size_t index)
 		{
