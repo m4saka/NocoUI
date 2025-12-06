@@ -1362,27 +1362,6 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<Node> Node::findContainedScrollableNode()
-	{
-		if (horizontalScrollable() || verticalScrollable())
-		{
-			if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
-			{
-				const RectF& contentRectLocal = *contentRectOpt;
-				if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
-					(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
-				{
-					return shared_from_this();
-				}
-			}
-		}
-		if (const auto parent = m_parent.lock())
-		{
-			return parent->findContainedScrollableNode();
-		}
-		return nullptr;
-	}
-
 	void Node::updateNodeParams(const HashTable<String, ParamValue>& params)
 	{
 		// パラメータ参照をもとに値を更新

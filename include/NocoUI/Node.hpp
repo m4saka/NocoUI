@@ -339,9 +339,6 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<const Node> hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
 
-		[[nodiscard]]
-		std::shared_ptr<Node> findContainedScrollableNode();
-
 		void updateNodeParams(const HashTable<String, ParamValue>& params);
 
 		void updateNodeStates(detail::UpdateInteractionStateYN updateInteractionState, const std::shared_ptr<Node>& hoveredNode, double deltaTime, InteractableYN parentInteractable, InteractionState parentInteractionState, InteractionState parentInteractionStateRight, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params, const Array<String>& parentActiveStyleStates);
