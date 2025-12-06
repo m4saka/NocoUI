@@ -1264,6 +1264,15 @@ namespace noco
 				}
 			}
 			m_tempChildrenBuffer.clear();
+
+			// コンポーネント側でのhitTestを実行(SubCanvas等)
+			for (const auto& component : m_components)
+			{
+				if (auto result = component->hitTest(shared_from_this(), point, usePrevZOrderInSiblings))
+				{
+					return result;
+				}
+			}
 		}
 
 		// 自身のヒットテスト実行

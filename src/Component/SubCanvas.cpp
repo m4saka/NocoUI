@@ -144,24 +144,15 @@ namespace noco
 			// 親のinteractableを子Canvasに伝播
 			m_canvas->setInteractable(node->interactable());
 
-			// Canvas::updateに指定されたhitTestEnabledを子Canvasに伝播
-			HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes;
-			if (auto parentCanvas = node->containedCanvas())
-			{
-				if (auto enabled = parentCanvas->hitTestEnabledForCurrentUpdate())
-				{
-					hitTestEnabled = *enabled;
-				}
-			}
-
 			// 親ノードの変換行列を子Canvasに伝播
 			// transformMatInHierarchyにはregionRect.posが含まれていないため、別途加算する
+			// hitTestはコンポーネントのhitTestで別途実行されるためNoを指定
 			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos);
 			m_canvas->update(
 				node->regionRect().size,
 				posTranslate * node->transformMatInHierarchy(),
 				posTranslate * node->hitTestMatInHierarchy(),
-				hitTestEnabled);
+				HitTestEnabledYN::No);
 
 			// イベント伝播が有効な場合、子Canvasのイベントを親Canvasに伝播
 			if (m_propagateEvents.value())
@@ -191,6 +182,18 @@ namespace noco
 			const Transformer2D transform{ Mat3x2::Identity(), Transformer2D::Target::SetLocal };
 			m_canvas->draw();
 		}
+	}
+
+	std::shared_ptr<Node> SubCanvas::hitTest(
+		const std::shared_ptr<Node>&,
+		const Vec2& point,
+		detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
+	{
+		if (m_canvas)
+		{
+			return m_canvas->hitTest(point, usePrevZOrderInSiblings);
+		}
+		return nullptr;
 	}
 
 	void SubCanvas::reloadCanvasFile()

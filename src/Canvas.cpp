@@ -636,13 +636,22 @@ namespace noco
 		if (canHover)
 		{
 			// hoveredNodeを決める時点では今回フレームのzOrderInSiblingsのステート毎の値が確定しないため、前回フレームのzOrderInSiblingsがあれば使用する
-			// (siblingIndexにHovered等の値を設定した場合の挙動用)
+			// (siblingIndexにHovered等のステート毎の値を設定した場合の挙動用)
 			// なお、ライブラリユーザーがCanvasのupdate呼び出しの手前でパラメータやsetZOrderInSiblings等を経由してzOrderInSiblingsを変更した場合であっても、hoveredNode決定用のヒットテストに対しては次フレームからの反映となる。これは正常動作。
 			hoveredNode = hitTest(Cursor::PosF(), detail::UsePrevZOrderInSiblingsYN::Yes);
+			if (hoveredNode)
+			{
+				detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
+			}
 		}
-		if (hoveredNode)
+		else
 		{
-			detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
+			// SubCanvas経由の場合は親Canvas側のhitTestで既にホバー扱いになっているため、現在フレームで他Canvasで処理済みのホバー中ノードも取得
+			const auto alreadyHoveredNode = CurrentFrame::GetHoveredNode();
+			if (alreadyHoveredNode && alreadyHoveredNode->containedCanvas().get() == this) // このCanvas内にあるノードのみ対象
+			{
+				hoveredNode = alreadyHoveredNode;
+			}
 		}
 
 		// スクロール可能なホバー中ノード取得

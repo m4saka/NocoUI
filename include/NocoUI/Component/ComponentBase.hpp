@@ -58,6 +58,14 @@ namespace noco
 		{
 		}
 
+		virtual std::shared_ptr<Node> hitTest(
+			const std::shared_ptr<Node>&,
+			const Vec2&,
+			detail::UsePrevZOrderInSiblingsYN)
+		{
+			return nullptr;
+		}
+
 		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 
 		[[nodiscard]]
