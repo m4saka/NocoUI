@@ -184,9 +184,14 @@ namespace noco
 		}
 		
 		// シーンサイズが変わったので必ず変換行列を更新
-		for (const auto& child : m_children)
+		if (!m_children.isEmpty())
 		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 		
 		// サイズが変更された場合はレイアウトを再計算
@@ -279,11 +284,16 @@ namespace noco
 						child->m_regionRect = rect;
 					});
 			}, m_childrenLayout);
-		
-		for (const auto& child : m_children)
+
+		if (!m_children.isEmpty())
 		{
-			child->refreshChildrenLayout();
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshChildrenLayout();
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 	}
 	
@@ -624,6 +634,10 @@ namespace noco
 			return;
 		}
 
+		// 親の変換行列をレイアウト更新時用に保持
+		m_parentTransformMat = parentTransformMat;
+		m_parentHitTestMat = parentHitTestMat;
+
 		// 親の変換行列とCanvas自身の変換行列を合成
 		const Mat3x2 rootMat = rootPosScaleMat();
 		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
@@ -925,13 +939,18 @@ namespace noco
 		}
 		
 		m_position = position;
-		for (const auto& child : m_children)
+		if (!m_children.isEmpty())
 		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 		return shared_from_this();
 	}
-	
+
 	std::shared_ptr<Canvas> Canvas::setScale(const Vec2& scale)
 	{
 		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
@@ -939,15 +958,20 @@ namespace noco
 			// AutoFitModeが有効な間はsetScaleは無視
 			return shared_from_this();
 		}
-		
+
 		m_scale = scale;
-		for (const auto& child : m_children)
+		if (!m_children.isEmpty())
 		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 		return shared_from_this();
 	}
-	
+
 	std::shared_ptr<Canvas> Canvas::setPositionScale(const Vec2& position, const Vec2& scale)
 	{
 		if (m_autoFitMode != AutoFitMode::None && !m_isEditorPreview)
@@ -955,13 +979,17 @@ namespace noco
 			// AutoFitModeが有効な間はsetPositionScaleは無視
 			return shared_from_this();
 		}
-		
+
 		m_position = position;
 		m_scale = scale;
-		
-		for (const auto& child : m_children)
+		if (!m_children.isEmpty())
 		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 		return shared_from_this();
 	}
@@ -969,9 +997,14 @@ namespace noco
 	std::shared_ptr<Canvas> Canvas::setRotation(double rotation)
 	{
 		m_rotation = rotation;
-		for (const auto& child : m_children)
+		if (!m_children.isEmpty())
 		{
-			child->refreshTransformMat(RecursiveYN::Yes, rootPosScaleMat(), rootPosScaleMat(), m_params);
+			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			for (const auto& child : m_children)
+			{
+				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+			}
 		}
 		return shared_from_this();
 	}

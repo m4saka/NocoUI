@@ -391,7 +391,8 @@ namespace noco
 		/* NonSerialized */ bool m_isLayoutDirty = false; // レイアウト更新が必要かどうか
 		/* NonSerialized */ InteractableYN m_interactable = InteractableYN::Yes;
 		/* NonSerialized */ std::weak_ptr<SubCanvas> m_containedSubCanvas; // このCanvasを含むSubCanvas
-		/* NonSerialized */ Optional<HitTestEnabledYN> m_hitTestEnabledForCurrentUpdate; // 現在のupdate中のヒットテスト有効状態
+		/* NonSerialized */ Mat3x2 m_parentTransformMat = Mat3x2::Identity(); // 親Transformの変換行列(SubCanvas用)
+		/* NonSerialized */ Mat3x2 m_parentHitTestMat = Mat3x2::Identity(); // 親Transformのヒットテスト用変換行列(SubCanvas用)
 		/* NonSerialized */ mutable Array<std::shared_ptr<Node>> m_tempChildrenBuffer; // 子ノードの一時バッファ(update内で別のCanvasのupdateが呼ばれる場合があるためthread_local staticにはできない。drawで呼ぶためmutableだが、drawはシングルスレッド前提なのでロック不要)
 
 		[[nodiscard]]
