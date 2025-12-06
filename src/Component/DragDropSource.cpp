@@ -25,6 +25,9 @@ namespace noco
 			{
 				m_dragStartPosition = Cursor::PosF();
 				m_isPressed = true;
+
+				// ドラッグスクロールをキャンセル
+				sourceNode->preventDragScroll();
 			}
 			if (m_isPressed && !m_isDragging && (Cursor::PosF() - m_dragStartPosition).length() > m_dragThreshold)
 			{
