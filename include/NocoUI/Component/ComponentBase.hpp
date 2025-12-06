@@ -67,6 +67,14 @@ namespace noco
 			return nullptr;
 		}
 
+		/// @brief コンポーネントが管理する子ノードを取得(SubCanvasなど、子Nodeを持つコンポーネントで使用)
+		[[nodiscard]]
+		virtual const Array<std::shared_ptr<Node>>& subCanvasChildren() const
+		{
+			static const Array<std::shared_ptr<Node>> empty;
+			return empty;
+		}
+
 		void updateProperties(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing);
 
 		[[nodiscard]]

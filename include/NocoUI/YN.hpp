@@ -28,6 +28,7 @@ namespace noco
 	using OnlyIfDirtyYN = YesNo<struct OnlyIfDirtyYN_tag>;
 	using SkipSmoothingYN = YesNo<struct SkipSmoothingYN_tag>;
 	using OnlyScrollableYN = YesNo<struct OnlyScrollableYN_tag>;
+	using IncludeSubCanvasYN = YesNo<struct IncludeSubCanvasYN_tag>;
 
 	namespace detail
 	{

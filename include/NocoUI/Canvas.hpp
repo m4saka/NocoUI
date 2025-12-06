@@ -729,7 +729,8 @@ namespace noco
 		[[nodiscard]]
 		bool containsChild(
 			const std::shared_ptr<Node>& child,
-			RecursiveYN recursive = RecursiveYN::No) const override;
+			RecursiveYN recursive = RecursiveYN::No,
+			IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const override;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> findByName(

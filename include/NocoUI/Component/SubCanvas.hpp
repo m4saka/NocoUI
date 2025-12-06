@@ -56,6 +56,9 @@ namespace noco
 			OnlyScrollableYN onlyScrollable,
 			detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const override;
 
+		[[nodiscard]]
+		const Array<std::shared_ptr<Node>>& subCanvasChildren() const override;
+
 		/// @brief Canvasファイルを再読み込み
 		void reloadCanvasFile();
 

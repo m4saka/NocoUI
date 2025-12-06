@@ -285,7 +285,7 @@ namespace noco
 		void removeChild(const std::shared_ptr<Node>& child) override;
 
 		[[nodiscard]]
-		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No) const override;
+		bool containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive = RecursiveYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const override;
 
 		template <class Fty>
 		[[nodiscard]]

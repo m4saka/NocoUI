@@ -669,10 +669,10 @@ namespace noco
 		else
 		{
 			// SubCanvas経由の場合は親Canvas側のhitTestで既にホバー扱いになっているため、現在フレームで他Canvasで処理済みのホバー中ノードも取得
-			const auto alreadyHoveredNode = CurrentFrame::GetHoveredNode();
-			if (alreadyHoveredNode && alreadyHoveredNode->containedCanvas().get() == this) // このCanvas内にあるノードのみ対象
+			const auto globalHoveredNode = CurrentFrame::GetHoveredNode();
+			if (globalHoveredNode && globalHoveredNode->containedCanvas().get() == this) // このCanvas内にあるノードのみ対象
 			{
-				hoveredNode = alreadyHoveredNode;
+				hoveredNode = globalHoveredNode;
 			}
 		}
 
@@ -681,6 +681,19 @@ namespace noco
 		if (!CurrentFrame::AnyScrollableNodeHovered())
 		{
 			scrollableHoveredNode = hitTest(Cursor::PosF(), OnlyScrollableYN::Yes, detail::UsePrevZOrderInSiblingsYN::Yes);
+
+			// ホバー中ノードがscrollableHoveredNodeの子孫(SubCanvas含む)でない場合はスクロール対象としない
+			const auto globalHoveredNode = CurrentFrame::GetHoveredNode(); // 他Canvasも含むためグローバルのものを取得
+			if (scrollableHoveredNode && globalHoveredNode)
+			{
+				const bool isHoveredNodeDescendant = scrollableHoveredNode.get() == globalHoveredNode.get() ||
+					scrollableHoveredNode->containsChild(globalHoveredNode, RecursiveYN::Yes, IncludeSubCanvasYN::Yes);
+				if (!isHoveredNodeDescendant)
+				{
+					scrollableHoveredNode = nullptr;
+				}
+			}
+
 			if (scrollableHoveredNode)
 			{
 				detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
@@ -1414,7 +1427,7 @@ namespace noco
 		return m_children[index];
 	}
 
-	bool Canvas::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
+	bool Canvas::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (m_children.contains(child))
 		{
@@ -1424,7 +1437,7 @@ namespace noco
 		{
 			for (const auto& myChild : m_children)
 			{
-				if (myChild->containsChild(child, recursive))
+				if (myChild->containsChild(child, recursive, includeSubCanvas))
 				{
 					return true;
 				}

@@ -46,7 +46,8 @@ namespace noco
 		[[nodiscard]]
 		virtual bool containsChild(
 			const std::shared_ptr<Node>& child,
-			RecursiveYN recursive = RecursiveYN::No) const = 0;
+			RecursiveYN recursive = RecursiveYN::No,
+			IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const = 0;
 
 		[[nodiscard]]
 		virtual std::shared_ptr<Node> findByName(

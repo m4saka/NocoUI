@@ -1086,7 +1086,7 @@ namespace noco
 		markLayoutAsDirty();
 	}
 
-	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive) const
+	bool Node::containsChild(const std::shared_ptr<Node>& child, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (m_children.contains(child))
 		{
@@ -1096,9 +1096,30 @@ namespace noco
 		{
 			for (const auto& c : m_children)
 			{
-				if (c->containsChild(child, RecursiveYN::Yes))
+				if (c->containsChild(child, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return true;
+				}
+			}
+		}
+		if (includeSubCanvas)
+		{
+			for (const auto& component : m_components)
+			{
+				const auto& subCanvasChildren = component->subCanvasChildren();
+				if (subCanvasChildren.contains(child))
+				{
+					return true;
+				}
+				if (recursive)
+				{
+					for (const auto& c : subCanvasChildren)
+					{
+						if (c->containsChild(child, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return true;
+						}
+					}
 				}
 			}
 		}

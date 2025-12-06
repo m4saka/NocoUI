@@ -198,6 +198,16 @@ namespace noco
 		return nullptr;
 	}
 
+	const Array<std::shared_ptr<Node>>& SubCanvas::subCanvasChildren() const
+	{
+		if (m_canvas)
+		{
+			return m_canvas->children();
+		}
+		static const Array<std::shared_ptr<Node>> empty;
+		return empty;
+	}
+
 	void SubCanvas::reloadCanvasFile()
 	{
 		if (!m_canvasPath.value().isEmpty())
