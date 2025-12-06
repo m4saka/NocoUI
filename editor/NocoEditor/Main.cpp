@@ -1044,7 +1044,6 @@ public:
 			[this]
 			{
 				m_filePath = none;
-				m_canvas->clearParams();
 				m_canvas->clearAll();
 				m_historySystem.clear();
 				m_scrollScale = 1.0;

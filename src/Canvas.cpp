@@ -564,6 +564,14 @@ namespace noco
 			{
 				m_autoFitMode = *modeOpt;
 			}
+			else
+			{
+				m_autoFitMode = AutoFitMode::None;
+			}
+		}
+		else
+		{
+			m_autoFitMode = AutoFitMode::None;
 		}
 
 		if (json.contains(U"defaultFontAssetName"))
@@ -575,7 +583,6 @@ namespace noco
 			m_defaultFontAssetName = U"";
 		}
 
-		// childrenLayoutの読み込み
 		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
 			const auto type = json[U"childrenLayout"][U"type"].getString();
@@ -593,10 +600,13 @@ namespace noco
 			}
 			else
 			{
-				// 不明な場合はFlowLayout扱いにする
 				Logger << U"[NocoUI warning] Unknown children layout type: '{}'"_fmt(type);
 				m_childrenLayout = FlowLayout{};
 			}
+		}
+		else
+		{
+			m_childrenLayout = FlowLayout{};
 		}
 
 		markLayoutAsDirty();
@@ -927,7 +937,10 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
+		m_autoFitMode = AutoFitMode::None;
+		m_defaultFontAssetName = U"";
 		m_params.clear();
+		m_childrenLayout = FlowLayout{};
 	}
 
 	std::shared_ptr<Canvas> Canvas::setPosition(const Vec2& position)
