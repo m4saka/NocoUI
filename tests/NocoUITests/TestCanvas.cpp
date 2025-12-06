@@ -1124,3 +1124,60 @@ TEST_CASE("Canvas top-level nodes zOrderInSiblings with parameter reference", "[
 		REQUIRE(node->zOrderInSiblings() == 1);  // デフォルト値
 	}
 }
+
+TEST_CASE("Canvas includeSubCanvas parameter", "[Canvas][SubCanvas]")
+{
+	// subCanvasChildren()を実装したテスト用コンポーネント
+	class ComponentWithSubCanvasChildren : public noco::ComponentBase
+	{
+	public:
+		Array<std::shared_ptr<noco::Node>> m_children;
+
+		ComponentWithSubCanvasChildren() : ComponentBase{ {} } {}
+
+		[[nodiscard]]
+		const Array<std::shared_ptr<noco::Node>>& subCanvasChildren() const override
+		{
+			return m_children;
+		}
+	};
+
+	auto canvas = noco::Canvas::Create();
+	auto parent = canvas->emplaceChild(U"Parent");
+
+	// SubCanvas内のノードを再現
+	auto subCanvasChild = noco::Node::Create(U"SubCanvasChild");
+	auto subCanvasGrandchild = subCanvasChild->emplaceChild(U"SubCanvasGrandchild");
+
+	auto component = std::make_shared<ComponentWithSubCanvasChildren>();
+	component->m_children.push_back(subCanvasChild);
+	parent->addComponent(component);
+
+	SECTION("Canvas::findByName with includeSubCanvas")
+	{
+		// IncludeSubCanvasYN::Noでは見つからない
+		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == nullptr);
+
+		// IncludeSubCanvasYN::Yesで見つかる
+		// recursive=NoでもSubCanvasのトップレベルノードは見つかる（子ノードと同等に扱う）
+		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == subCanvasChild);
+		// recursive=Noでは孫は見つからない
+		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == nullptr);
+		// recursive=Yesで孫も見つかる
+		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == subCanvasGrandchild);
+	}
+
+	SECTION("Canvas::containsChild with includeSubCanvas")
+	{
+		// IncludeSubCanvasYN::Noでは含まれない
+		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == false);
+
+		// IncludeSubCanvasYN::Yesで含まれる
+		// recursive=NoでもSubCanvasのトップレベルノードは含まれる（子ノードと同等に扱う）
+		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == true);
+		// recursive=Noでは孫は含まれない
+		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == false);
+		// recursive=Yesで孫も含まれる
+		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == true);
+	}
+}

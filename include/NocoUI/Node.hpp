@@ -245,9 +245,9 @@ namespace noco
 		}
 
 		template <typename TComponent>
-		void removeComponents(RecursiveYN recursive);
+		void removeComponents(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
-		void removeComponentsAll(RecursiveYN recursive);
+		void removeComponentsAll(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		template <class TComponent, class... Args>
 		std::shared_ptr<TComponent> emplaceComponent(Args&&... args)
@@ -298,26 +298,26 @@ namespace noco
 
 		template <class TComponent>
 		[[nodiscard]]
-		std::shared_ptr<TComponent> getComponent(RecursiveYN recursive = RecursiveYN::No) const;
+		std::shared_ptr<TComponent> getComponent(RecursiveYN recursive = RecursiveYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		template <class TComponent>
 		[[nodiscard]]
-		Array<std::shared_ptr<TComponent>> getComponents(RecursiveYN recursive = RecursiveYN::No) const;
+		Array<std::shared_ptr<TComponent>> getComponents(RecursiveYN recursive = RecursiveYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		template <class TComponent>
-		void getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::No, AppendYN append = AppendYN::No) const;
+		void getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No, AppendYN append = AppendYN::No) const;
 
 		template <class TComponent, class Fty>
 		[[nodiscard]]
-		Array<std::shared_ptr<TComponent>> findComponentsAll(Fty&& predicate, RecursiveYN recursive = RecursiveYN::Yes)
+		Array<std::shared_ptr<TComponent>> findComponentsAll(Fty&& predicate, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No)
 			requires std::invocable<Fty, const std::shared_ptr<TComponent>&>;
 
 		template <class TComponent, class Fty>
-		void findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::Yes, AppendYN append = AppendYN::No)
+		void findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No, AppendYN append = AppendYN::No)
 			requires std::invocable<Fty, const std::shared_ptr<TComponent>&>;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> findByName(StringView name, RecursiveYN recursive = RecursiveYN::Yes) override;
+		std::shared_ptr<Node> findByName(StringView name, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) override;
 
 		void refreshChildrenLayout();
 
@@ -357,7 +357,7 @@ namespace noco
 
 		Vec2 scrollOffset() const;
 
-		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No);
+		void resetScrollOffset(RecursiveYN recursive = RecursiveYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		[[nodiscard]]
 		std::pair<Vec2, Vec2> validScrollRange() const;
@@ -589,37 +589,37 @@ namespace noco
 		const PropertyNonInteractive<String>& styleStateProperty() const { return m_styleState; }
 
 		[[nodiscard]]
-		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isHovered(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightPressed(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isRightPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightPressedHover(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isRightMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightMouseDown(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightClicked(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
-		bool isRightClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No) const;
+		bool isRightClickRequested(RecursiveYN recursive = RecursiveYN::No, IncludingDisabledYN includingDisabled = IncludingDisabledYN::No, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		void removeChildrenAll() override;
 
@@ -723,40 +723,40 @@ namespace noco
 		const Property<int32>& zOrderInSiblingsProperty() const { return m_zOrderInSiblings; }
 
 		// すべてのTweenコンポーネントの一括制御
-		void setTweenActiveAll(bool active, RecursiveYN recursive = RecursiveYN::Yes);
+		void setTweenActiveAll(bool active, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるTweenコンポーネントの一括制御
-		void setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive = RecursiveYN::Yes);
+		void setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるTweenの再生状態取得（ループ時は常にtrue、delay中もtrue）
 		[[nodiscard]]
-		bool isTweenPlayingByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		bool isTweenPlayingByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す、見つからなければ空文字列）
 		[[nodiscard]]
-		String getTextValueByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		String getTextValueByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト取得（Optional版）
 		[[nodiscard]]
-		Optional<String> getTextValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		Optional<String> getTextValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
-		void setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes);
+		void setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す、見つからなければデフォルト値）
 		[[nodiscard]]
-		bool getToggleValueByTag(StringView tag, bool defaultValue = false, RecursiveYN recursive = RecursiveYN::Yes) const;
+		bool getToggleValueByTag(StringView tag, bool defaultValue = false, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるToggleコンポーネントの値取得（Optional版）
 		[[nodiscard]]
-		Optional<bool> getToggleValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		Optional<bool> getToggleValueByTagOpt(StringView tag, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
-		void setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive = RecursiveYN::Yes);
+		void setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるSubCanvas取得（最初に見つかったものを返す、見つからなければnullptr）
 		[[nodiscard]]
-		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes) const;
+		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 	};
 
@@ -839,7 +839,7 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	std::shared_ptr<TComponent> Node::getComponent(RecursiveYN recursive) const
+	std::shared_ptr<TComponent> Node::getComponent(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		for (const auto& component : m_components)
 		{
@@ -852,9 +852,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (const auto component = child->getComponent<TComponent>(RecursiveYN::Yes))
+				if (const auto component = child->getComponent<TComponent>(RecursiveYN::Yes, includeSubCanvas))
 				{
 					return component;
+				}
+			}
+
+			// SubCanvas内のコンポーネントも収集
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						if (const auto found = child->getComponent<TComponent>(RecursiveYN::Yes, includeSubCanvas))
+						{
+							return found;
+						}
+					}
 				}
 			}
 		}
@@ -863,15 +878,15 @@ namespace noco
 
 	template <class TComponent>
 	[[nodiscard]]
-	Array<std::shared_ptr<TComponent>> Node::getComponents(RecursiveYN recursive) const
+	Array<std::shared_ptr<TComponent>> Node::getComponents(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		Array<std::shared_ptr<TComponent>> result;
-		getComponents(&result, recursive, AppendYN::No);
+		getComponents(&result, recursive, includeSubCanvas, AppendYN::No);
 		return result;
 	}
 
 	template <class TComponent>
-	void Node::getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, AppendYN append) const
+	void Node::getComponents(Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas, AppendYN append) const
 	{
 		if (pResults == nullptr)
 		{
@@ -897,23 +912,35 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->getComponents<TComponent>(pResults, RecursiveYN::Yes, AppendYN::Yes);
+				child->getComponents<TComponent>(pResults, RecursiveYN::Yes, includeSubCanvas, AppendYN::Yes);
+			}
+
+			// SubCanvas内のコンポーネントも収集
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						child->getComponents<TComponent>(pResults, RecursiveYN::Yes, includeSubCanvas, AppendYN::Yes);
+					}
+				}
 			}
 		}
 	}
 
 	template <class TComponent, class Fty>
 	[[nodiscard]]
-	Array<std::shared_ptr<TComponent>> Node::findComponentsAll(Fty&& predicate, RecursiveYN recursive)
+	Array<std::shared_ptr<TComponent>> Node::findComponentsAll(Fty&& predicate, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 		requires std::invocable<Fty, const std::shared_ptr<TComponent>&>
 	{
 		Array<std::shared_ptr<TComponent>> result;
-		findComponentsAll<TComponent>(std::forward<Fty>(predicate), &result, recursive, AppendYN::No);
+		findComponentsAll<TComponent>(std::forward<Fty>(predicate), &result, recursive, includeSubCanvas, AppendYN::No);
 		return result;
 	}
 
 	template <class TComponent, class Fty>
-	void Node::findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, AppendYN append)
+	void Node::findComponentsAll(Fty&& predicate, Array<std::shared_ptr<TComponent>>* pResults, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas, AppendYN append)
 		requires std::invocable<Fty, const std::shared_ptr<TComponent>&>
 	{
 		if (pResults == nullptr)
@@ -943,7 +970,19 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->findComponentsAll<TComponent>(std::forward<Fty>(predicate), pResults, RecursiveYN::Yes, AppendYN::Yes);
+				child->findComponentsAll<TComponent>(std::forward<Fty>(predicate), pResults, RecursiveYN::Yes, includeSubCanvas, AppendYN::Yes);
+			}
+
+			// SubCanvas内のコンポーネントも収集
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						child->findComponentsAll<TComponent>(std::forward<Fty>(predicate), pResults, RecursiveYN::Yes, includeSubCanvas, AppendYN::Yes);
+					}
+				}
 			}
 		}
 	}
@@ -1001,8 +1040,20 @@ namespace noco
 	}
 
 	template <typename TComponent>
-	void Node::removeComponents(RecursiveYN recursive)
+	void Node::removeComponents(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
+		// SubCanvasの子を先に処理（m_componentsから削除する前に行う必要がある）
+		if (recursive == RecursiveYN::Yes && includeSubCanvas)
+		{
+			for (const auto& component : m_components)
+			{
+				for (const auto& subCanvasChild : component->subCanvasChildren())
+				{
+					subCanvasChild->removeComponents<TComponent>(RecursiveYN::Yes, includeSubCanvas);
+				}
+			}
+		}
+
 		// 自身のコンポーネントから指定された型のものを削除
 		m_components.remove_if([this](const std::shared_ptr<ComponentBase>& component)
 		{
@@ -1022,7 +1073,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->removeComponents<TComponent>(RecursiveYN::Yes);
+				child->removeComponents<TComponent>(RecursiveYN::Yes, includeSubCanvas);
 			}
 		}
 	}

@@ -52,7 +52,8 @@ namespace noco
 		[[nodiscard]]
 		virtual std::shared_ptr<Node> findByName(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::Yes) = 0;
+			RecursiveYN recursive = RecursiveYN::Yes,
+			IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) = 0;
 
 		[[nodiscard]]
 		virtual Optional<size_t> indexOfChildOpt(

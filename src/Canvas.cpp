@@ -297,7 +297,7 @@ namespace noco
 		}
 	}
 	
-	std::shared_ptr<Node> Canvas::findByName(StringView nodeName, RecursiveYN recursive) const
+	std::shared_ptr<Node> Canvas::findByName(StringView nodeName, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		for (const auto& child : m_children)
 		{
@@ -307,9 +307,35 @@ namespace noco
 			}
 			if (recursive)
 			{
-				if (auto found = child->findByName(nodeName, RecursiveYN::Yes))
+				if (auto found = child->findByName(nodeName, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return found;
+				}
+			}
+
+			// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
+			if (includeSubCanvas)
+			{
+				for (const auto& component : child->components())
+				{
+					const auto& subCanvasChildren = component->subCanvasChildren();
+					for (const auto& subCanvasChild : subCanvasChildren)
+					{
+						if (subCanvasChild->name() == nodeName)
+						{
+							return subCanvasChild;
+						}
+					}
+					if (recursive)
+					{
+						for (const auto& subCanvasChild : subCanvasChildren)
+						{
+							if (auto found = subCanvasChild->findByName(nodeName, RecursiveYN::Yes, includeSubCanvas))
+							{
+								return found;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1036,11 +1062,11 @@ namespace noco
 		return shared_from_this();
 	}
 
-	void Canvas::resetScrollOffsetRecursive()
+	void Canvas::resetScrollOffsetRecursive(IncludeSubCanvasYN includeSubCanvas)
 	{
 		for (const auto& child : m_children)
 		{
-			child->resetScrollOffset(RecursiveYN::Yes);
+			child->resetScrollOffset(RecursiveYN::Yes, includeSubCanvas);
 		}
 		markLayoutAsDirty();
 	}
@@ -1435,18 +1461,44 @@ namespace noco
 		}
 		if (recursive)
 		{
-			for (const auto& myChild : m_children)
+			for (const auto& c : m_children)
 			{
-				if (myChild->containsChild(child, recursive, includeSubCanvas))
+				if (c->containsChild(child, recursive, includeSubCanvas))
 				{
 					return true;
+				}
+			}
+		}
+
+		// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
+		if (includeSubCanvas)
+		{
+			for (const auto& c : m_children)
+			{
+				for (const auto& component : c->components())
+				{
+					const auto& subCanvasChildren = component->subCanvasChildren();
+					if (subCanvasChildren.contains(child))
+					{
+						return true;
+					}
+					if (recursive)
+					{
+						for (const auto& subCanvasChild : subCanvasChildren)
+						{
+							if (subCanvasChild->containsChild(child, RecursiveYN::Yes, includeSubCanvas))
+							{
+								return true;
+							}
+						}
+					}
 				}
 			}
 		}
 		return false;
 	}
 
-	std::shared_ptr<Node> Canvas::findByName(StringView name, RecursiveYN recursive)
+	std::shared_ptr<Node> Canvas::findByName(StringView name, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		for (const auto& child : m_children)
 		{
@@ -1456,9 +1508,35 @@ namespace noco
 			}
 			if (recursive)
 			{
-				if (auto found = child->findByName(name, recursive))
+				if (auto found = child->findByName(name, recursive, includeSubCanvas))
 				{
 					return found;
+				}
+			}
+
+			// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
+			if (includeSubCanvas)
+			{
+				for (const auto& component : child->components())
+				{
+					const auto& subCanvasChildren = component->subCanvasChildren();
+					for (const auto& subCanvasChild : subCanvasChildren)
+					{
+						if (subCanvasChild->name() == name)
+						{
+							return subCanvasChild;
+						}
+					}
+					if (recursive)
+					{
+						for (const auto& subCanvasChild : subCanvasChildren)
+						{
+							if (auto found = subCanvasChild->findByName(name, RecursiveYN::Yes, includeSubCanvas))
+							{
+								return found;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1503,7 +1581,7 @@ namespace noco
 		return nullptr;
 	}
 
-	std::shared_ptr<SubCanvas> Canvas::getSubCanvasByTag(StringView tag) const
+	std::shared_ptr<SubCanvas> Canvas::getSubCanvasByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1512,7 +1590,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes))
+			if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes, includeSubCanvas))
 			{
 				return result;
 			}
@@ -1521,9 +1599,9 @@ namespace noco
 		return nullptr;
 	}
 
-	void Canvas::setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value)
+	void Canvas::setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value, IncludeSubCanvasYN includeSubCanvas)
 	{
-		if (auto subCanvas = getSubCanvasByTag(tag))
+		if (auto subCanvas = getSubCanvasByTag(tag, includeSubCanvas))
 		{
 			if (auto canvas = subCanvas->canvas())
 			{
@@ -1532,9 +1610,9 @@ namespace noco
 		}
 	}
 
-	void Canvas::setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params)
+	void Canvas::setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params, IncludeSubCanvasYN includeSubCanvas)
 	{
-		if (auto subCanvas = getSubCanvasByTag(tag))
+		if (auto subCanvas = getSubCanvasByTag(tag, includeSubCanvas))
 		{
 			if (auto canvas = subCanvas->canvas())
 			{
@@ -1678,15 +1756,15 @@ namespace noco
 		return shared_from_this();
 	}
 
-	void Canvas::setTweenActiveAll(bool active)
+	void Canvas::setTweenActiveAll(bool active, IncludeSubCanvasYN includeSubCanvas)
 	{
 		for (auto& child : m_children)
 		{
-			child->setTweenActiveAll(active, RecursiveYN::Yes);
+			child->setTweenActiveAll(active, RecursiveYN::Yes, includeSubCanvas);
 		}
 	}
 
-	void Canvas::setTweenActiveByTag(StringView tag, bool active)
+	void Canvas::setTweenActiveByTag(StringView tag, bool active, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -1695,11 +1773,11 @@ namespace noco
 
 		for (auto& child : m_children)
 		{
-			child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
+			child->setTweenActiveByTag(tag, active, RecursiveYN::Yes, includeSubCanvas);
 		}
 	}
 
-	bool Canvas::isTweenPlayingByTag(StringView tag) const
+	bool Canvas::isTweenPlayingByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1708,7 +1786,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes))
+			if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes, includeSubCanvas))
 			{
 				return true;
 			}
@@ -1717,13 +1795,13 @@ namespace noco
 		return false;
 	}
 
-	String Canvas::getTextValueByTag(StringView tag) const
+	String Canvas::getTextValueByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		auto result = getTextValueByTagOpt(tag);
+		auto result = getTextValueByTagOpt(tag, includeSubCanvas);
 		return result.value_or(U"");
 	}
 
-	Optional<String> Canvas::getTextValueByTagOpt(StringView tag) const
+	Optional<String> Canvas::getTextValueByTagOpt(StringView tag, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1732,7 +1810,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes))
+			if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
 			{
 				return result;
 			}
@@ -1741,7 +1819,7 @@ namespace noco
 		return none;
 	}
 
-	void Canvas::setTextValueByTag(StringView tag, StringView text)
+	void Canvas::setTextValueByTag(StringView tag, StringView text, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -1750,17 +1828,17 @@ namespace noco
 
 		for (auto& child : m_children)
 		{
-			child->setTextValueByTag(tag, text, RecursiveYN::Yes);
+			child->setTextValueByTag(tag, text, RecursiveYN::Yes, includeSubCanvas);
 		}
 	}
 
-	bool Canvas::getToggleValueByTag(StringView tag, bool defaultValue) const
+	bool Canvas::getToggleValueByTag(StringView tag, bool defaultValue, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		auto result = getToggleValueByTagOpt(tag);
+		auto result = getToggleValueByTagOpt(tag, includeSubCanvas);
 		return result.value_or(defaultValue);
 	}
 
-	Optional<bool> Canvas::getToggleValueByTagOpt(StringView tag) const
+	Optional<bool> Canvas::getToggleValueByTagOpt(StringView tag, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -1769,7 +1847,7 @@ namespace noco
 
 		for (const auto& child : m_children)
 		{
-			if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes))
+			if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
 			{
 				return result;
 			}
@@ -1778,7 +1856,7 @@ namespace noco
 		return none;
 	}
 
-	void Canvas::setToggleValueByTag(StringView tag, bool value)
+	void Canvas::setToggleValueByTag(StringView tag, bool value, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -1787,7 +1865,7 @@ namespace noco
 
 		for (auto& child : m_children)
 		{
-			child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
+			child->setToggleValueByTag(tag, value, RecursiveYN::Yes, includeSubCanvas);
 		}
 	}
 

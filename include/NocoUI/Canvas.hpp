@@ -421,7 +421,7 @@ namespace noco
 		void markLayoutAsDirty() { m_isLayoutDirty = true; }
 
 		[[nodiscard]]
-		std::shared_ptr<Node> findByName(StringView nodeName, RecursiveYN recursive = RecursiveYN::Yes) const;
+		std::shared_ptr<Node> findByName(StringView nodeName, RecursiveYN recursive = RecursiveYN::Yes, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		[[nodiscard]]
 		JSON toJSON(detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No) const;
@@ -510,7 +510,7 @@ namespace noco
 			return m_rotation;
 		}
 
-		void resetScrollOffsetRecursive();
+		void resetScrollOffsetRecursive(IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		void fireEvent(const Event& event);
 
@@ -735,7 +735,8 @@ namespace noco
 		[[nodiscard]]
 		std::shared_ptr<Node> findByName(
 			StringView name,
-			RecursiveYN recursive = RecursiveYN::Yes) override;
+			RecursiveYN recursive = RecursiveYN::Yes,
+			IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) override;
 		
 		[[nodiscard]]
 		Optional<size_t> indexOfChildOpt(
@@ -772,45 +773,45 @@ namespace noco
 
 		// タグによるSubCanvas取得
 		[[nodiscard]]
-		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag) const;
+		std::shared_ptr<class SubCanvas> getSubCanvasByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるSubCanvasのパラメータ設定
-		void setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value);
+		void setSubCanvasParamValueByTag(StringView tag, const String& paramName, const ParamValue& value, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるSubCanvasのパラメータ一括設定
-		void setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params);
+		void setSubCanvasParamValuesByTag(StringView tag, std::initializer_list<std::pair<String, std::variant<bool, int32, double, const char32_t*, String, Color, ColorF, Vec2, LRTB>>> params, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// すべてのTweenコンポーネントの一括制御
-		void setTweenActiveAll(bool active);
+		void setTweenActiveAll(bool active, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるTweenコンポーネントの一括制御
-		void setTweenActiveByTag(StringView tag, bool active);
+		void setTweenActiveByTag(StringView tag, bool active, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるTweenの再生状態取得（ループ時は常にtrue、delay中もtrue）
 		[[nodiscard]]
-		bool isTweenPlayingByTag(StringView tag) const;
+		bool isTweenPlayingByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト取得（最初に見つかったものを返す、見つからなければ空文字列）
 		[[nodiscard]]
-		String getTextValueByTag(StringView tag) const;
+		String getTextValueByTag(StringView tag, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト取得（Optional版）
 		[[nodiscard]]
-		Optional<String> getTextValueByTagOpt(StringView tag) const;
+		Optional<String> getTextValueByTagOpt(StringView tag, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるTextBox/TextAreaのテキスト設定（該当するすべてに設定）
-		void setTextValueByTag(StringView tag, StringView text);
+		void setTextValueByTag(StringView tag, StringView text, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		// タグによるToggleコンポーネントの値取得（最初に見つかったものを返す、見つからなければデフォルト値）
 		[[nodiscard]]
-		bool getToggleValueByTag(StringView tag, bool defaultValue = false) const;
+		bool getToggleValueByTag(StringView tag, bool defaultValue = false, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
 		// タグによるToggleコンポーネントの値取得（Optional版）
 		[[nodiscard]]
-		Optional<bool> getToggleValueByTagOpt(StringView tag) const;
+		Optional<bool> getToggleValueByTagOpt(StringView tag, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) const;
 
-		// タグによるToggleコンポーネントの値設定（詓当するすべてに設定）
-		void setToggleValueByTag(StringView tag, bool value);
+		// タグによるToggleコンポーネントの値設定（該当するすべてに設定）
+		void setToggleValueByTag(StringView tag, bool value, IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No);
 
 		[[nodiscard]]
 		const String& defaultFontAssetName() const

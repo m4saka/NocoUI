@@ -852,8 +852,20 @@ namespace noco
 		m_components.remove(component);
 	}
 
-	void Node::removeComponentsAll(RecursiveYN recursive)
+	void Node::removeComponentsAll(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
+		// SubCanvasの子を先に処理（m_components.clear()の前に行う必要がある）
+		if (recursive == RecursiveYN::Yes && includeSubCanvas)
+		{
+			for (const auto& component : m_components)
+			{
+				for (const auto& subCanvasChild : component->subCanvasChildren())
+				{
+					subCanvasChild->removeComponentsAll(RecursiveYN::Yes, includeSubCanvas);
+				}
+			}
+		}
+
 		if (m_activeInHierarchy)
 		{
 			for (const auto& component : m_components)
@@ -867,7 +879,7 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->removeComponentsAll(RecursiveYN::Yes);
+				child->removeComponentsAll(RecursiveYN::Yes, includeSubCanvas);
 			}
 		}
 	}
@@ -1102,6 +1114,8 @@ namespace noco
 				}
 			}
 		}
+
+		// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
 		if (includeSubCanvas)
 		{
 			for (const auto& component : m_components)
@@ -1126,7 +1140,7 @@ namespace noco
 		return false;
 	}
 
-	std::shared_ptr<Node> Node::findByName(StringView name, RecursiveYN recursive)
+	std::shared_ptr<Node> Node::findByName(StringView name, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		for (const auto& child : m_children)
 		{
@@ -1139,9 +1153,35 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (const auto found = child->findByName(name, RecursiveYN::Yes))
+				if (const auto found = child->findByName(name, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return found;
+				}
+			}
+		}
+
+		// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
+		if (includeSubCanvas)
+		{
+			for (const auto& component : m_components)
+			{
+				const auto& subCanvasChildren = component->subCanvasChildren();
+				for (const auto& child : subCanvasChildren)
+				{
+					if (child->m_name == name)
+					{
+						return child;
+					}
+				}
+				if (recursive)
+				{
+					for (const auto& child : subCanvasChildren)
+					{
+						if (const auto found = child->findByName(name, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return found;
+						}
+					}
 				}
 			}
 		}
@@ -1929,7 +1969,7 @@ namespace noco
 		return m_scrollOffset;
 	}
 
-	void Node::resetScrollOffset(RecursiveYN recursive)
+	void Node::resetScrollOffset(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (m_children.empty())
 		{
@@ -1949,7 +1989,17 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->resetScrollOffset(RecursiveYN::Yes);
+				child->resetScrollOffset(RecursiveYN::Yes, includeSubCanvas);
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						subCanvasChild->resetScrollOffset(RecursiveYN::Yes, includeSubCanvas);
+					}
+				}
 			}
 		}
 	}
@@ -2782,7 +2832,7 @@ namespace noco
 		return m_currentInteractionState;
 	}
 
-	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2794,12 +2844,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isHovered(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isHovered(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isHovered(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2811,12 +2877,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isPressed(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isPressed(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isPressed(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2828,12 +2910,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isPressedHover(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isPressedHover(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isPressedHover(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2845,12 +2943,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isMouseDown(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isMouseDown(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isMouseDown(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2862,12 +2976,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isClicked(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isClicked(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isClicked(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2879,12 +3009,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isClickRequested(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isClickRequested(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isClickRequested(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isRightPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isRightPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2896,12 +3042,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isRightPressed(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isRightPressed(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isRightPressed(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isRightPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isRightPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2913,12 +3075,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isRightPressedHover(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isRightPressedHover(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isRightPressedHover(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isRightMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isRightMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2930,12 +3108,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isRightMouseDown(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isRightMouseDown(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isRightMouseDown(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isRightClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isRightClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2947,12 +3141,28 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isRightClicked(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isRightClicked(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isRightClicked(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
 
-	bool Node::isRightClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled) const
+	bool Node::isRightClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
 		{
@@ -2964,7 +3174,23 @@ namespace noco
 		}
 		if (recursive)
 		{
-			return m_children.any([includingDisabled](const auto& child) { return child->isRightClickRequested(RecursiveYN::Yes, includingDisabled); });
+			if (m_children.any([includingDisabled, includeSubCanvas](const auto& child) { return child->isRightClickRequested(RecursiveYN::Yes, includingDisabled, includeSubCanvas); }))
+			{
+				return true;
+			}
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						if (subCanvasChild->isRightClickRequested(RecursiveYN::Yes, includingDisabled, includeSubCanvas))
+						{
+							return true;
+						}
+					}
+				}
+			}
 		}
 		return false;
 	}
@@ -3165,7 +3391,7 @@ namespace noco
 		}
 	}
 
-	void Node::setTweenActiveAll(bool active, RecursiveYN recursive)
+	void Node::setTweenActiveAll(bool active, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		// 自身のTweenコンポーネントをすべて制御
 		for (const auto& component : m_components)
@@ -3181,12 +3407,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->setTweenActiveAll(active, RecursiveYN::Yes);
+				child->setTweenActiveAll(active, RecursiveYN::Yes, includeSubCanvas);
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						subCanvasChild->setTweenActiveAll(active, RecursiveYN::Yes, includeSubCanvas);
+					}
+				}
 			}
 		}
 	}
 
-	void Node::setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive)
+	void Node::setTweenActiveByTag(StringView tag, bool active, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -3210,12 +3448,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->setTweenActiveByTag(tag, active, RecursiveYN::Yes);
+				child->setTweenActiveByTag(tag, active, RecursiveYN::Yes, includeSubCanvas);
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& subCanvasChild : component->subCanvasChildren())
+					{
+						subCanvasChild->setTweenActiveByTag(tag, active, RecursiveYN::Yes, includeSubCanvas);
+					}
+				}
 			}
 		}
 	}
 
-	bool Node::isTweenPlayingByTag(StringView tag, RecursiveYN recursive) const
+	bool Node::isTweenPlayingByTag(StringView tag, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3239,9 +3489,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes))
+				if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return true;
+				}
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						if (child->isTweenPlayingByTag(tag, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return true;
+						}
+					}
 				}
 			}
 		}
@@ -3249,13 +3514,13 @@ namespace noco
 		return false;
 	}
 
-	String Node::getTextValueByTag(StringView tag, RecursiveYN recursive) const
+	String Node::getTextValueByTag(StringView tag, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		auto result = getTextValueByTagOpt(tag, recursive);
+		auto result = getTextValueByTagOpt(tag, recursive, includeSubCanvas);
 		return result.value_or(U"");
 	}
 
-	Optional<String> Node::getTextValueByTagOpt(StringView tag, RecursiveYN recursive) const
+	Optional<String> Node::getTextValueByTagOpt(StringView tag, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3286,9 +3551,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes))
+				if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return result;
+				}
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						if (auto result = child->getTextValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return result;
+						}
+					}
 				}
 			}
 		}
@@ -3296,7 +3576,7 @@ namespace noco
 		return none;
 	}
 
-	void Node::setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive)
+	void Node::setTextValueByTag(StringView tag, StringView text, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -3327,18 +3607,30 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->setTextValueByTag(tag, text, RecursiveYN::Yes);
+				child->setTextValueByTag(tag, text, RecursiveYN::Yes, includeSubCanvas);
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						child->setTextValueByTag(tag, text, RecursiveYN::Yes, includeSubCanvas);
+					}
+				}
 			}
 		}
 	}
 
-	bool Node::getToggleValueByTag(StringView tag, bool defaultValue, RecursiveYN recursive) const
+	bool Node::getToggleValueByTag(StringView tag, bool defaultValue, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		auto result = getToggleValueByTagOpt(tag, recursive);
+		auto result = getToggleValueByTagOpt(tag, recursive, includeSubCanvas);
 		return result.value_or(defaultValue);
 	}
 
-	Optional<bool> Node::getToggleValueByTagOpt(StringView tag, RecursiveYN recursive) const
+	Optional<bool> Node::getToggleValueByTagOpt(StringView tag, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3362,9 +3654,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes))
+				if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return result;
+				}
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						if (auto result = child->getToggleValueByTagOpt(tag, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return result;
+						}
+					}
 				}
 			}
 		}
@@ -3372,7 +3679,7 @@ namespace noco
 		return none;
 	}
 
-	void Node::setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive)
+	void Node::setToggleValueByTag(StringView tag, bool value, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (tag.isEmpty())
 		{
@@ -3396,12 +3703,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				child->setToggleValueByTag(tag, value, RecursiveYN::Yes);
+				child->setToggleValueByTag(tag, value, RecursiveYN::Yes, includeSubCanvas);
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						child->setToggleValueByTag(tag, value, RecursiveYN::Yes, includeSubCanvas);
+					}
+				}
 			}
 		}
 	}
 
-	std::shared_ptr<SubCanvas> Node::getSubCanvasByTag(StringView tag, RecursiveYN recursive) const
+	std::shared_ptr<SubCanvas> Node::getSubCanvasByTag(StringView tag, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
 		if (tag.isEmpty())
 		{
@@ -3425,9 +3744,24 @@ namespace noco
 		{
 			for (const auto& child : m_children)
 			{
-				if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes))
+				if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes, includeSubCanvas))
 				{
 					return result;
+				}
+			}
+
+			// SubCanvas内も処理
+			if (includeSubCanvas)
+			{
+				for (const auto& component : m_components)
+				{
+					for (const auto& child : component->subCanvasChildren())
+					{
+						if (auto result = child->getSubCanvasByTag(tag, RecursiveYN::Yes, includeSubCanvas))
+						{
+							return result;
+						}
+					}
 				}
 			}
 		}
