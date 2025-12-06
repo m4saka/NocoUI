@@ -147,7 +147,8 @@ namespace noco
 			// 親ノードの変換行列を子Canvasに伝播
 			// transformMatInHierarchyにはregionRect.posが含まれていないため、別途加算する
 			// hitTestはコンポーネントのhitTestで別途実行されるためNoを指定
-			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos);
+			const Vec2 centerOffset = (node->regionRect().size - m_canvas->size() * m_canvas->scale()) / 2.0;
+			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos + centerOffset);
 			m_canvas->update(
 				node->regionRect().size,
 				posTranslate * node->transformMatInHierarchy(),
