@@ -328,16 +328,16 @@ namespace noco
 		Optional<RectF> getChildrenContentRectWithPadding() const;
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hoveredNodeRecursive(detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No);
+		std::shared_ptr<Node> hoveredNodeRecursive(OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No);
+		std::shared_ptr<Node> hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No);
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hoveredNodeRecursive(detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
+		std::shared_ptr<const Node> hoveredNodeRecursive(OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
 
 		[[nodiscard]]
-		std::shared_ptr<const Node> hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
+		std::shared_ptr<const Node> hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
 
 		[[nodiscard]]
 		std::shared_ptr<Node> findContainedScrollableNode();

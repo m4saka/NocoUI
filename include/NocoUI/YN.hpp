@@ -27,6 +27,7 @@ namespace noco
 	using WithPaddingYN = YesNo<struct WithPaddingYN_tag>;
 	using OnlyIfDirtyYN = YesNo<struct OnlyIfDirtyYN_tag>;
 	using SkipSmoothingYN = YesNo<struct SkipSmoothingYN_tag>;
+	using OnlyScrollableYN = YesNo<struct OnlyScrollableYN_tag>;
 
 	namespace detail
 	{

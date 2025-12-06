@@ -660,7 +660,7 @@ namespace noco
 			// hoveredNodeを決める時点では今回フレームのzOrderInSiblingsのステート毎の値が確定しないため、前回フレームのzOrderInSiblingsがあれば使用する
 			// (siblingIndexにHovered等のステート毎の値を設定した場合の挙動用)
 			// なお、ライブラリユーザーがCanvasのupdate呼び出しの手前でパラメータやsetZOrderInSiblings等を経由してzOrderInSiblingsを変更した場合であっても、hoveredNode決定用のヒットテストに対しては次フレームからの反映となる。これは正常動作。
-			hoveredNode = hitTest(Cursor::PosF(), detail::UsePrevZOrderInSiblingsYN::Yes);
+			hoveredNode = hitTest(Cursor::PosF(), OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN::Yes);
 			if (hoveredNode)
 			{
 				detail::s_canvasUpdateContext.hoveredNode = hoveredNode;
@@ -677,31 +677,30 @@ namespace noco
 		}
 
 		// スクロール可能なホバー中ノード取得
-		auto scrollableHoveredNode = hoveredNode ? hoveredNode->findContainedScrollableNode() : nullptr;
-		if (scrollableHoveredNode && !scrollableHoveredNode->hitQuad().mouseOver())
+		std::shared_ptr<Node> scrollableHoveredNode = nullptr;
+		if (!CurrentFrame::AnyScrollableNodeHovered())
 		{
-			// 子がホバー中でもスクロール可能ノード自身にマウスカーソルが重なっていない場合はスクロールしない
-			scrollableHoveredNode = nullptr;
-		}
-		if (scrollableHoveredNode)
-		{
-			detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
-		}
-
-		// ホイールスクロール実行
-		if (scrollableHoveredNode && scrollableHoveredNode->wheelScrollEnabled())
-		{
-			const double wheel = Mouse::Wheel();
-			const double wheelH = Mouse::WheelH();
-			if (wheel != 0.0 || wheelH != 0.0)
+			scrollableHoveredNode = hitTest(Cursor::PosF(), OnlyScrollableYN::Yes, detail::UsePrevZOrderInSiblingsYN::Yes);
+			if (scrollableHoveredNode)
 			{
-				scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
+				detail::s_canvasUpdateContext.scrollableHoveredNode = scrollableHoveredNode;
+			}
+
+			// ホイールスクロール実行
+			if (scrollableHoveredNode && scrollableHoveredNode->wheelScrollEnabled())
+			{
+				const double wheel = Mouse::Wheel();
+				const double wheelH = Mouse::WheelH();
+				if (wheel != 0.0 || wheelH != 0.0)
+				{
+					scrollableHoveredNode->scroll(Vec2{ wheelH * 50, wheel * 50 });
+				}
 			}
 		}
 		
 		// ドラッグスクロール中の処理
 		const auto dragScrollingNode = detail::s_canvasUpdateContext.dragScrollingNode.lock();
-		if (dragScrollingNode && dragScrollingNode->dragScrollEnabled() && MouseL.pressed())
+		if (dragScrollingNode && dragScrollingNode->containedCanvas().get() == this && dragScrollingNode->dragScrollEnabled() && MouseL.pressed())
 		{
 			if (dragScrollingNode->m_dragStartPos)
 			{
@@ -882,7 +881,7 @@ namespace noco
 		m_prevDragScrollingWithThresholdExceeded = currentDragScrollingWithThreshold;
 	}
 	
-	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
+	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
 		// hitTestはzOrder降順で実行(手前から奥へ)
 		m_tempChildrenBuffer.clear();
@@ -891,7 +890,7 @@ namespace noco
 		SortByZOrderInSiblings(m_tempChildrenBuffer);
 		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 		{
-			if (const auto hoveredNode = (*it)->hitTest(point, usePrevZOrderInSiblings))
+			if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 			{
 				m_tempChildrenBuffer.clear();
 				return hoveredNode;

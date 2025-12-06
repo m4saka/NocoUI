@@ -1233,12 +1233,12 @@ namespace noco
 		return RectF{ contentRect.x - padding.left, contentRect.y - padding.top, contentRect.w + padding.left + padding.right, contentRect.h + padding.top + padding.bottom };
 	}
 
-	std::shared_ptr<Node> Node::hoveredNodeRecursive(detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
+	std::shared_ptr<Node> Node::hoveredNodeRecursive(OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
 	{
-		return hitTest(Cursor::PosF(), usePrevZOrderInSiblings);
+		return hitTest(Cursor::PosF(), onlyScrollable, usePrevZOrderInSiblings);
 	}
 
-	std::shared_ptr<Node> Node::hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
+	std::shared_ptr<Node> Node::hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1258,7 +1258,7 @@ namespace noco
 			// hitTestはzOrder降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point, usePrevZOrderInSiblings))
+				if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 				{
 					return hoveredNode;
 				}
@@ -1268,7 +1268,7 @@ namespace noco
 			// コンポーネント側でのhitTestを実行(SubCanvas等)
 			for (const auto& component : m_components)
 			{
-				if (auto result = component->hitTest(shared_from_this(), point, usePrevZOrderInSiblings))
+				if (auto result = component->hitTest(shared_from_this(), point, onlyScrollable, usePrevZOrderInSiblings))
 				{
 					return result;
 				}
@@ -1276,19 +1276,38 @@ namespace noco
 		}
 
 		// 自身のヒットテスト実行
-		if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
+		if (onlyScrollable)
 		{
-			return shared_from_this();
+			// スクロール可能なノードのみを対象とする場合
+			if ((horizontalScrollable() || verticalScrollable()) && m_hitQuad.contains(point))
+			{
+				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+				{
+					const RectF& contentRectLocal = *contentRectOpt;
+					if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
+						(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
+					{
+						return shared_from_this();
+					}
+				}
+			}
+		}
+		else
+		{
+			if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
+			{
+				return shared_from_this();
+			}
 		}
 		return nullptr;
 	}
 
-	std::shared_ptr<const Node> Node::hoveredNodeRecursive(detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
+	std::shared_ptr<const Node> Node::hoveredNodeRecursive(OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
-		return hitTest(Cursor::PosF(), usePrevZOrderInSiblings);
+		return hitTest(Cursor::PosF(), onlyScrollable, usePrevZOrderInSiblings);
 	}
 
-	std::shared_ptr<const Node> Node::hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
+	std::shared_ptr<const Node> Node::hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
 		// interactableはチェック不要(無効時も裏側をクリック不可にするためにホバー扱いにする必要があるため)
 		if (!m_activeSelf.value())
@@ -1308,7 +1327,7 @@ namespace noco
 			// hitTestはzOrder降順で実行(手前から奥へ)
 			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
 			{
-				if (const auto hoveredNode = (*it)->hitTest(point, usePrevZOrderInSiblings))
+				if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 				{
 					return hoveredNode;
 				}
@@ -1317,9 +1336,28 @@ namespace noco
 		}
 
 		// 自身のヒットテスト実行
-		if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
+		if (onlyScrollable)
 		{
-			return shared_from_this();
+			// スクロール可能なノードのみを対象とする場合
+			if ((horizontalScrollable() || verticalScrollable()) && m_hitQuad.contains(point))
+			{
+				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
+				{
+					const RectF& contentRectLocal = *contentRectOpt;
+					if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
+						(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
+					{
+						return shared_from_this();
+					}
+				}
+			}
+		}
+		else
+		{
+			if (m_isHitTarget && m_hitQuadWithPadding.contains(point))
+			{
+				return shared_from_this();
+			}
 		}
 		return nullptr;
 	}

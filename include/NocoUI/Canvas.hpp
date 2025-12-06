@@ -449,7 +449,7 @@ namespace noco
 		void update(const SizeF& customSceneSize, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
 		[[nodiscard]]
-		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
+		std::shared_ptr<Node> hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable = OnlyScrollableYN::No, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
 
 		void draw() const;
 

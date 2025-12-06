@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "../YN.hpp"
 #include "../Property.hpp"
 
 namespace noco
@@ -52,6 +53,7 @@ namespace noco
 		std::shared_ptr<Node> hitTest(
 			const std::shared_ptr<Node>& node,
 			const Vec2& point,
+			OnlyScrollableYN onlyScrollable,
 			detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const override;
 
 		/// @brief Canvasファイルを再読み込み

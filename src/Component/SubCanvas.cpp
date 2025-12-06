@@ -187,11 +187,12 @@ namespace noco
 	std::shared_ptr<Node> SubCanvas::hitTest(
 		const std::shared_ptr<Node>&,
 		const Vec2& point,
+		OnlyScrollableYN onlyScrollable,
 		detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
 		if (m_canvas)
 		{
-			return m_canvas->hitTest(point, usePrevZOrderInSiblings);
+			return m_canvas->hitTest(point, onlyScrollable, usePrevZOrderInSiblings);
 		}
 		return nullptr;
 	}
