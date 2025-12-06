@@ -937,6 +937,8 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
+		m_referenceSize = DefaultSize;
+		m_size = DefaultSize;
 		m_autoFitMode = AutoFitMode::None;
 		m_defaultFontAssetName = U"";
 		m_params.clear();
