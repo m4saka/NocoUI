@@ -154,7 +154,14 @@ namespace noco
 				}
 			}
 
-			m_canvas->update(node->regionRect().size, hitTestEnabled);
+			// 親ノードの変換行列を子Canvasに伝播
+			// transformMatInHierarchyにはregionRect.posが含まれていないため、別途加算する
+			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos);
+			m_canvas->update(
+				node->regionRect().size,
+				posTranslate * node->transformMatInHierarchy(),
+				posTranslate * node->hitTestMatInHierarchy(),
+				hitTestEnabled);
 
 			// イベント伝播が有効な場合、子Canvasのイベントを親Canvasに伝播
 			if (m_propagateEvents.value())
@@ -177,11 +184,11 @@ namespace noco
 		}
 	}
 
-	void SubCanvas::draw(const Node& node) const
+	void SubCanvas::draw(const Node&) const
 	{
 		if (m_canvas)
 		{
-			const Transformer2D transformer{ Mat3x2::Translate(node.regionRect().pos) };
+			const Transformer2D transform{ Mat3x2::Identity(), Transformer2D::Target::SetLocal };
 			m_canvas->draw();
 		}
 	}

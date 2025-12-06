@@ -473,6 +473,8 @@ namespace noco
 
 		void update(const SizeF& customSceneSize, HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
 
+		void update(const SizeF& customSceneSize, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, HitTestEnabledYN hitTestEnabled = HitTestEnabledYN::Yes);
+
 		[[nodiscard]]
 		std::shared_ptr<Node> hitTest(const Vec2& point, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings = detail::UsePrevZOrderInSiblingsYN::No) const;
 

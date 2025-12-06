@@ -608,6 +608,11 @@ namespace noco
 
 	void Canvas::update(const SizeF& sceneSize, HitTestEnabledYN hitTestEnabled)
 	{
+		update(sceneSize, Mat3x2::Identity(), Mat3x2::Identity(), hitTestEnabled);
+	}
+
+	void Canvas::update(const SizeF& sceneSize, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, HitTestEnabledYN hitTestEnabled)
+	{
 		static const Array<String> EmptyStringArray{};
 
 		const HitTestEnabledGuard hitTestGuard{ &m_hitTestEnabledForCurrentUpdate, hitTestEnabled };
@@ -620,7 +625,12 @@ namespace noco
 		{
 			return;
 		}
-		
+
+		// 親の変換行列とCanvas自身の変換行列を合成
+		const Mat3x2 rootMat = rootPosScaleMat();
+		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
+		const Mat3x2 combinedHitTestMat = rootMat * parentHitTestMat;
+
 		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused;
 		std::shared_ptr<Node> hoveredNode = nullptr;
 		if (canHover)
@@ -795,11 +805,10 @@ namespace noco
 		
 		// update・lateUpdate・postLateUpdateはzOrderに関係なく順番に実行(そのため元の順番で上書きが必要)
 		// ユーザーコード内でのaddChild等の呼び出しでイテレータ破壊が起きないよう、ここでは一時バッファの使用が必須
-		const Mat3x2 rootMat = rootPosScaleMat();
 		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
 		for (const auto& child : m_tempChildrenBuffer)
 		{
-			child->update(scrollableHoveredNode, Scene::DeltaTime(), rootMat, rootMat, m_params);
+			child->update(scrollableHoveredNode, Scene::DeltaTime(), combinedTransformMat, combinedHitTestMat, m_params);
 		}
 		for (const auto& child : m_tempChildrenBuffer)
 		{
@@ -816,7 +825,7 @@ namespace noco
 
 		for (const auto& child : m_tempChildrenBuffer)
 		{
-			child->postLateUpdate(Scene::DeltaTime(), rootMat, rootMat, m_params);
+			child->postLateUpdate(Scene::DeltaTime(), combinedTransformMat, combinedHitTestMat, m_params);
 		}
 
 		// AutoFitModeによるサイズ・スケールの更新
@@ -959,7 +968,7 @@ namespace noco
 		}
 		return shared_from_this();
 	}
-	
+
 	void Canvas::resetScrollOffsetRecursive()
 	{
 		for (const auto& child : m_children)
