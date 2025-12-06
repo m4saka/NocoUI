@@ -2716,7 +2716,17 @@ namespace noco
 		}
 
 		m_preventDragScroll = true;
-		
+
+		// ノードがドラッグスクロール中であればキャンセル
+		if (detail::s_canvasUpdateContext.dragScrollingNode.lock().get() == this)
+		{
+			m_dragStartPos.reset();
+			m_dragVelocityStopwatch.reset();
+			m_dragThresholdExceeded = false;
+			m_scrollVelocity = Vec2::Zero();
+			detail::s_canvasUpdateContext.dragScrollingNode.reset();
+		}
+
 		// 親ノードにも再帰的に適用
 		if (const auto parentNode = m_parent.lock())
 		{
