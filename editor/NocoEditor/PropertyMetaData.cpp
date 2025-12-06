@@ -1390,7 +1390,7 @@ namespace noco::editor
 		// SubCanvasのプロパティ
 		metadata[PropertyKey{ U"SubCanvas", U"canvasPath" }] = PropertyMetadata{
 			.tooltip = U"読み込むCanvasファイルのパス",
-			.tooltipDetail = U"読み込む.nocoファイルの相対パスを指定します\n絶対パスは無視されます\n最大ネストレベルは16です",
+			.tooltipDetail = U"読み込む.nocoファイルのパスを指定します",
 		};
 		metadata[PropertyKey{ U"SubCanvas", U"propagateEvents" }] = PropertyMetadata{
 			.tooltip = U"イベントを親Canvasに伝播するかどうか",
