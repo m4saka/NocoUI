@@ -1582,11 +1582,6 @@ namespace noco
 		return shared_from_this();
 	}
 
-	void Canvas::setContainedSubCanvas(const std::weak_ptr<SubCanvas>& subCanvas)
-	{
-		m_containedSubCanvas = subCanvas;
-	}
-
 	std::shared_ptr<Canvas> Canvas::setInteractable(InteractableYN interactable)
 	{
 		const bool prevValue = m_interactable.getBool();
