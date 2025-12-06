@@ -52,7 +52,7 @@ namespace noco
 		std::shared_ptr<Node> hitTest(
 			const std::shared_ptr<Node>& node,
 			const Vec2& point,
-			detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) override;
+			detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const override;
 
 		/// @brief Canvasファイルを再読み込み
 		void reloadCanvasFile();

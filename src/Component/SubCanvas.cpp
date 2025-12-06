@@ -187,7 +187,7 @@ namespace noco
 	std::shared_ptr<Node> SubCanvas::hitTest(
 		const std::shared_ptr<Node>&,
 		const Vec2& point,
-		detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings)
+		detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
 		if (m_canvas)
 		{

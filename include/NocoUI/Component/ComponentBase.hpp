@@ -61,7 +61,7 @@ namespace noco
 		virtual std::shared_ptr<Node> hitTest(
 			const std::shared_ptr<Node>&,
 			const Vec2&,
-			detail::UsePrevZOrderInSiblingsYN)
+			detail::UsePrevZOrderInSiblingsYN) const
 		{
 			return nullptr;
 		}
