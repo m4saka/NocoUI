@@ -1158,12 +1158,11 @@ TEST_CASE("Canvas includeSubCanvas parameter", "[Canvas][SubCanvas]")
 		// IncludeSubCanvasYN::Noでは見つからない
 		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == nullptr);
 
+		// RecursiveYN::NoではCanvasの直接の子のみ検索（SubCanvas内は検索しない）
+		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == nullptr);
+
 		// IncludeSubCanvasYN::Yesで見つかる
-		// recursive=NoでもSubCanvasのトップレベルノードは見つかる（子ノードと同等に扱う）
-		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == subCanvasChild);
-		// recursive=Noでは孫は見つからない
-		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == nullptr);
-		// recursive=Yesで孫も見つかる
+		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == subCanvasChild);
 		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == subCanvasGrandchild);
 	}
 
@@ -1172,12 +1171,11 @@ TEST_CASE("Canvas includeSubCanvas parameter", "[Canvas][SubCanvas]")
 		// IncludeSubCanvasYN::Noでは含まれない
 		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == false);
 
+		// RecursiveYN::NoではCanvasの直接の子のみチェック（SubCanvas内はチェックしない）
+		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == false);
+
 		// IncludeSubCanvasYN::Yesで含まれる
-		// recursive=NoでもSubCanvasのトップレベルノードは含まれる（子ノードと同等に扱う）
-		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == true);
-		// recursive=Noでは孫は含まれない
-		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == false);
-		// recursive=Yesで孫も含まれる
+		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == true);
 		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == true);
 	}
 }

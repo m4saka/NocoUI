@@ -972,20 +972,6 @@ TEST_CASE("Node includeSubCanvas parameter", "[Node][SubCanvas]")
 	component->m_children.push_back(subCanvasChild);
 	parent->addComponent(component);
 
-	SECTION("findByName with includeSubCanvas")
-	{
-		// IncludeSubCanvasYN::Noでは見つからない
-		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == nullptr);
-
-		// IncludeSubCanvasYN::Yesで見つかる
-		// recursive=NoでもSubCanvasのトップレベルノードは見つかる（子ノードと同等に扱う）
-		REQUIRE(canvas->findByName(U"SubCanvasChild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == subCanvasChild);
-		// recursive=Noでは孫は見つからない
-		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == nullptr);
-		// recursive=Yesで孫も見つかる
-		REQUIRE(canvas->findByName(U"SubCanvasGrandchild", noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == subCanvasGrandchild);
-	}
-
 	SECTION("getComponent/getComponents with includeSubCanvas")
 	{
 		// IncludeSubCanvasYN::Noでは親にコンポーネントがないため見つからない
@@ -1008,19 +994,5 @@ TEST_CASE("Node includeSubCanvas parameter", "[Node][SubCanvas]")
 		parent->removeComponents<noco::Label>(noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes);
 		REQUIRE(subCanvasChild->getComponent<noco::Label>() == nullptr);
 		REQUIRE(subCanvasGrandchild->getComponent<noco::Label>() == nullptr);
-	}
-
-	SECTION("containsChild with includeSubCanvas")
-	{
-		// IncludeSubCanvasYN::Noでは含まれない
-		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::No) == false);
-
-		// IncludeSubCanvasYN::Yesで含まれる
-		// recursive=NoでもSubCanvasのトップレベルノードは含まれる（子ノードと同等に扱う）
-		REQUIRE(canvas->containsChild(subCanvasChild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == true);
-		// recursive=Noでは孫は含まれない
-		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::No, noco::IncludeSubCanvasYN::Yes) == false);
-		// recursive=Yesで孫も含まれる
-		REQUIRE(canvas->containsChild(subCanvasGrandchild, noco::RecursiveYN::Yes, noco::IncludeSubCanvasYN::Yes) == true);
 	}
 }
