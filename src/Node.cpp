@@ -3204,9 +3204,8 @@ namespace noco
 			child->refreshActiveInHierarchy();
 		}
 		m_children.clear();
-		{
-			markLayoutAsDirty();
-		}
+
+		markLayoutAsDirty();
 	}
 
 	void Node::swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2)
@@ -3218,9 +3217,8 @@ namespace noco
 			throw Error{ U"swapChildren: Child node not found in node '{}'"_fmt(m_name) };
 		}
 		std::iter_swap(it1, it2);
-		{
-			markLayoutAsDirty();
-		}
+
+		markLayoutAsDirty();
 	}
 
 	void Node::swapChildren(size_t index1, size_t index2)

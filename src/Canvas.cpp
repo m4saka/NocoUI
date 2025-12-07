@@ -1333,6 +1333,19 @@ namespace noco
 
 		markLayoutAsDirty();
 	}
+
+	void Canvas::swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2)
+	{
+		const auto it1 = std::find(m_children.begin(), m_children.end(), child1);
+		const auto it2 = std::find(m_children.begin(), m_children.end(), child2);
+		if (it1 == m_children.end() || it2 == m_children.end())
+		{
+			throw Error{ U"swapChildren: Child node not found in canvas" };
+		}
+		std::iter_swap(it1, it2);
+
+		markLayoutAsDirty();
+	}
 	
 	void Canvas::swapChildren(size_t index1, size_t index2)
 	{

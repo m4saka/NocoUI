@@ -1009,7 +1009,10 @@ namespace noco
 		/// @note indexが範囲外の場合は末尾に追加される
 		const std::shared_ptr<Node>& addChildAtIndex(const std::shared_ptr<Node>& child, size_t index) override;
 
-		// TODO: swapChildrenのノード指定版も検討
+		/// @brief 指定した子ノード同士を入れ替える
+		/// @param child1 子ノード1
+		/// @param child2 子ノード2
+		void swapChildren(const std::shared_ptr<Node>& child1, const std::shared_ptr<Node>& child2);
 
 		/// @brief 指定したインデックスの子ノード同士を入れ替える
 		/// @param index1 子ノード1のインデックス
