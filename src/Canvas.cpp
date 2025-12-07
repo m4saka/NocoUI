@@ -6,7 +6,6 @@
 #include "NocoUI/Version.hpp"
 #include "NocoUI/Component/IFontCachedComponent.hpp"
 #include "NocoUI/Component/SubCanvas.hpp"
-#include <cassert>
 
 namespace noco
 {
