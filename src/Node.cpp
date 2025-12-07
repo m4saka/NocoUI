@@ -158,19 +158,19 @@ namespace noco
 		if (!effectiveInteractable.getBool())
 		{
 			// interactableがfalseならDisabled
-			m_currentInteractionState = InteractionState::Disabled;
+			m_interactionStateInHierarchy = InteractionState::Disabled;
 		}
-		else if (m_currentInteractionState == InteractionState::Disabled)
+		else if (m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			// Disabledから復帰する場合はDefault
-			m_currentInteractionState = InteractionState::Default;
+			m_interactionStateInHierarchy = InteractionState::Default;
 		}
 
 		// deltaTime=0でプロパティを即座に更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipSmoothing);
+		m_transform.update(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, skipSmoothing);
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, skipSmoothing);
+			component->updateProperties(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, skipSmoothing);
 		}
 
 		// 自身がDisabledなら子もDisabledにする必要がある
@@ -193,18 +193,18 @@ namespace noco
 			// InteractionStateを更新
 			if (!effectiveInteractable.getBool())
 			{
-				child->m_currentInteractionState = InteractionState::Disabled;
+				child->m_interactionStateInHierarchy = InteractionState::Disabled;
 			}
-			else if (child->m_currentInteractionState == InteractionState::Disabled)
+			else if (child->m_interactionStateInHierarchy == InteractionState::Disabled)
 			{
-				child->m_currentInteractionState = InteractionState::Default;
+				child->m_interactionStateInHierarchy = InteractionState::Default;
 			}
 
 			// 子ノードのプロパティをdeltaTime=0で再更新
-			child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipSmoothing);
+			child->m_transform.update(child->m_interactionStateInHierarchy, child->m_activeStyleStates, 0.0, params, skipSmoothing);
 			for (const auto& component : child->m_components)
 			{
-				component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, params, skipSmoothing);
+				component->updateProperties(child->m_interactionStateInHierarchy, child->m_activeStyleStates, 0.0, params, skipSmoothing);
 			}
 
 			// 再帰的に子ノードの子も更新
@@ -1469,12 +1469,12 @@ namespace noco
 		// interactionStateを確定
 		if (updateInteractionState)
 		{
-			m_currentInteractionState = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
+			m_interactionStateInHierarchy = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
 			m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
 			if (!m_isHitTarget)
 			{
 				// HitTargetでない場合は親のinteractionStateを引き継ぐ
-				m_currentInteractionState = ApplyOtherInteractionState(m_currentInteractionState, parentInteractionState);
+				m_interactionStateInHierarchy = ApplyOtherInteractionState(m_interactionStateInHierarchy, parentInteractionState);
 				m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
 			}
 		}
@@ -1490,16 +1490,16 @@ namespace noco
 		}
 
 		// siblingIndexはステート毎の値の反映も必要であるため、他プロパティ(interactable, activeSelf)とは別でステート確定後に更新が必要
-		m_zOrderInSiblings.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
+		m_zOrderInSiblings.update(m_interactionStateInHierarchy, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 
 		// Transformのプロパティ値更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
+		m_transform.update(m_interactionStateInHierarchy, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 
 		// コンポーネントのプロパティ値をdeltaTime=0で更新
 		// (コンポーネントのupdate等でのsetCurrentFrameOverrideの上書き値の反映が必要なため、実際に時間を進めるのはここではなくpostLateUpdateのタイミングで行う)
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+			component->updateProperties(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		}
 
 		if (!m_children.empty())
@@ -1508,7 +1508,7 @@ namespace noco
 			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateNodeStates(updateInteractionState, hoveredNode, deltaTime, interactable, m_currentInteractionState, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
+				child->updateNodeStates(updateInteractionState, hoveredNode, deltaTime, interactable, m_interactionStateInHierarchy, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
 			}
 		}
 	}
@@ -1788,12 +1788,12 @@ namespace noco
 
 		// コンポーネントのupdate・lateUpdateでパラメータ値の変更があった場合用にdeltaTime=0でプロパティを再更新
 		refreshTransformMat(RecursiveYN::No, parentTransformMat, parentHitTestMat, params);
-		m_interactable.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
-		m_activeSelf.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
-		m_zOrderInSiblings.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_interactable.update(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_activeSelf.update(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_zOrderInSiblings.update(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		for (const auto& component : m_components)
 		{
-			component->updateProperties(m_currentInteractionState, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
+			component->updateProperties(m_interactionStateInHierarchy, m_activeStyleStates, deltaTime, params, SkipSmoothingYN::No);
 		}
 
 		// 子ノードのpostLateUpdate実行
@@ -1806,7 +1806,7 @@ namespace noco
 	void Node::refreshTransformMat(RecursiveYN recursive, const Mat3x2& parentTransformMat, const Mat3x2& parentHitTestMat, const HashTable<String, ParamValue>& params)
 	{
 		// deltaTime=0でプロパティを即座に更新
-		m_transform.update(m_currentInteractionState, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
+		m_transform.update(m_interactionStateInHierarchy, m_activeStyleStates, 0.0, params, SkipSmoothingYN::No);
 		
 		const Vec2& scale = m_transform.scale().value();
 		const Vec2& pivot = m_transform.pivot().value();
@@ -2523,7 +2523,7 @@ namespace noco
 
 	bool Node::interactableInHierarchy() const
 	{
-		return m_currentInteractionState != InteractionState::Disabled;
+		return m_interactionStateInHierarchy != InteractionState::Disabled;
 	}
 
 	bool Node::activeSelf() const
@@ -2827,14 +2827,14 @@ namespace noco
 		return m_mouseLTracker.interactionStateSelf();
 	}
 
-	InteractionState Node::currentInteractionState() const
+	InteractionState Node::interactionStateInHierarchy() const
 	{
-		return m_currentInteractionState;
+		return m_interactionStateInHierarchy;
 	}
 
 	bool Node::isHovered(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2867,7 +2867,7 @@ namespace noco
 
 	bool Node::isPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2900,7 +2900,7 @@ namespace noco
 
 	bool Node::isPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2933,7 +2933,7 @@ namespace noco
 
 	bool Node::isMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2966,7 +2966,7 @@ namespace noco
 
 	bool Node::isClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -2999,7 +2999,7 @@ namespace noco
 
 	bool Node::isClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -3032,7 +3032,7 @@ namespace noco
 
 	bool Node::isRightPressed(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -3065,7 +3065,7 @@ namespace noco
 
 	bool Node::isRightPressedHover(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -3098,7 +3098,7 @@ namespace noco
 
 	bool Node::isRightMouseDown(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -3131,7 +3131,7 @@ namespace noco
 
 	bool Node::isRightClicked(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}
@@ -3164,7 +3164,7 @@ namespace noco
 
 	bool Node::isRightClickRequested(RecursiveYN recursive, IncludingDisabledYN includingDisabled, IncludeSubCanvasYN includeSubCanvas) const
 	{
-		if (!includingDisabled && m_currentInteractionState == InteractionState::Disabled)
+		if (!includingDisabled && m_interactionStateInHierarchy == InteractionState::Disabled)
 		{
 			return false;
 		}

@@ -1635,18 +1635,18 @@ namespace noco
 				// InteractionStateを更新
 				if (!effectiveInteractable.getBool())
 				{
-					child->m_currentInteractionState = InteractionState::Disabled;
+					child->m_interactionStateInHierarchy = InteractionState::Disabled;
 				}
-				else if (child->m_currentInteractionState == InteractionState::Disabled)
+				else if (child->m_interactionStateInHierarchy == InteractionState::Disabled)
 				{
-					child->m_currentInteractionState = InteractionState::Default;
+					child->m_interactionStateInHierarchy = InteractionState::Default;
 				}
 				
 				// 子ノードのプロパティを更新
-				child->m_transform.update(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
+				child->m_transform.update(child->m_interactionStateInHierarchy, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
 				for (const auto& component : child->m_components)
 				{
-					component->updateProperties(child->m_currentInteractionState, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
+					component->updateProperties(child->m_interactionStateInHierarchy, child->m_activeStyleStates, 0.0, m_params, SkipSmoothingYN::No);
 				}
 				
 				// 子ノードの子孫も更新

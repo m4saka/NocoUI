@@ -65,7 +65,7 @@ namespace noco
 		/* NonSerialized */ ActiveYN m_activeInHierarchyForLifecycle = ActiveYN::No;
 		/* NonSerialized */ PropertyNonInteractive<String> m_styleState{ U"styleState", U"" };
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
-		/* NonSerialized */ InteractionState m_currentInteractionState = InteractionState::Default;
+		/* NonSerialized */ InteractionState m_interactionStateInHierarchy = InteractionState::Default;
 		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
 		/* NonSerialized */ bool m_rightClickRequested = false;
@@ -1003,10 +1003,10 @@ namespace noco
 		[[nodiscard]]
 		InteractionState interactionStateSelf() const;
 
-		/// @brief ノードの現在のインタラクションステートを取得
+		/// @brief ノードのインタラクションステートを祖先ノードのインタラクション可能かどうかを加味して取得
 		/// @return インタラクションステート
 		[[nodiscard]]
-		InteractionState currentInteractionState() const; // TODO: interactionStateInHierarchyにリネーム検討
+		InteractionState interactionStateInHierarchy() const;
 
 		/// @brief ノードのスタイルステート名を取得
 		/// @return スタイルステート名
