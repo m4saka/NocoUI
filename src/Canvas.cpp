@@ -316,32 +316,6 @@ namespace noco
 					return found;
 				}
 			}
-
-			// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
-			if (includeSubCanvas)
-			{
-				for (const auto& component : child->components())
-				{
-					const auto& subCanvasChildren = component->subCanvasChildren();
-					for (const auto& subCanvasChild : subCanvasChildren)
-					{
-						if (subCanvasChild->name() == nodeName)
-						{
-							return subCanvasChild;
-						}
-					}
-					if (recursive)
-					{
-						for (const auto& subCanvasChild : subCanvasChildren)
-						{
-							if (auto found = subCanvasChild->findByName(nodeName, RecursiveYN::Yes, includeSubCanvas))
-							{
-								return found;
-							}
-						}
-					}
-				}
-			}
 		}
 		return nullptr;
 	}
@@ -1473,32 +1447,6 @@ namespace noco
 				}
 			}
 		}
-
-		// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
-		if (includeSubCanvas)
-		{
-			for (const auto& c : m_children)
-			{
-				for (const auto& component : c->components())
-				{
-					const auto& subCanvasChildren = component->subCanvasChildren();
-					if (subCanvasChildren.contains(child))
-					{
-						return true;
-					}
-					if (recursive)
-					{
-						for (const auto& subCanvasChild : subCanvasChildren)
-						{
-							if (subCanvasChild->containsChild(child, RecursiveYN::Yes, includeSubCanvas))
-							{
-								return true;
-							}
-						}
-					}
-				}
-			}
-		}
 		return false;
 	}
 
@@ -1515,32 +1463,6 @@ namespace noco
 				if (auto found = child->findByName(name, recursive, includeSubCanvas))
 				{
 					return found;
-				}
-			}
-
-			// subCanvasChildrenは子ノードと同等に扱うためrecursive=Noでも見る
-			if (includeSubCanvas)
-			{
-				for (const auto& component : child->components())
-				{
-					const auto& subCanvasChildren = component->subCanvasChildren();
-					for (const auto& subCanvasChild : subCanvasChildren)
-					{
-						if (subCanvasChild->name() == name)
-						{
-							return subCanvasChild;
-						}
-					}
-					if (recursive)
-					{
-						for (const auto& subCanvasChild : subCanvasChildren)
-						{
-							if (auto found = subCanvasChild->findByName(name, RecursiveYN::Yes, includeSubCanvas))
-							{
-								return found;
-							}
-						}
-					}
 				}
 			}
 		}
