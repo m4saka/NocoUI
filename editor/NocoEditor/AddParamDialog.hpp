@@ -73,7 +73,7 @@ namespace noco::editor
 			constexpr StringView DefaultName = U"param";
 			int32 suffixNum = 1;
 			String initialName = U"{}{}"_fmt(DefaultName, suffixNum);
-			while (m_canvas->param(initialName).has_value())
+			while (m_canvas->paramValueOpt(initialName).has_value())
 			{
 				suffixNum++;
 				initialName = U"{}{}"_fmt(DefaultName, suffixNum);
@@ -293,7 +293,7 @@ namespace noco::editor
 					return;
 				}
 				
-				if (m_canvas->param(name).has_value())
+				if (m_canvas->paramValueOpt(name).has_value())
 				{
 					return;
 				}

@@ -50,7 +50,7 @@ namespace noco::editor
 				return;
 			}
 			
-			const auto paramValue = m_canvas->param(oldName);
+			const auto paramValue = m_canvas->paramValueOpt(oldName);
 			if (!paramValue)
 			{
 				return;
@@ -3950,7 +3950,7 @@ namespace noco::editor
 						HasInteractivePropertyValueYN::No,
 						HasParameterRefYN::No,
 						[this, paramName]() -> String { 
-							if (auto p = m_canvas->param(paramName))
+							if (auto p = m_canvas->paramValueOpt(paramName))
 							{
 								return Format(GetParamValueAs<double>(*p).value_or(0.0));
 							}

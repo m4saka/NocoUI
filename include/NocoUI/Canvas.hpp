@@ -787,7 +787,7 @@ namespace noco
 		/// @param name パラメータ名
 		/// @return パラメータの値。存在しない場合はnoneを返す
 		[[nodiscard]]
-		Optional<ParamValue> param(const String& name) const; // TODO: paramValueOptに名前変更検討
+		Optional<ParamValue> paramValueOpt(const String& name) const;
 
 		/// @brief パラメータの値を型指定で取得
 		/// @tparam T パラメータの型
@@ -795,9 +795,9 @@ namespace noco
 		/// @return パラメータの値。存在しない場合はnoneを返す
 		template <typename T>
 		[[nodiscard]]
-		Optional<T> paramValueOpt(const String& name) const // TODO: paramValueAsOptに名前変更検討
+		Optional<T> paramValueAsOpt(const String& name) const
 		{
-			if (auto p = param(name))
+			if (auto p = paramValueOpt(name))
 			{
 				return GetParamValueAs<T>(*p);
 			}

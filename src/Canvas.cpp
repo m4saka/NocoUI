@@ -1095,7 +1095,7 @@ namespace noco
 		}
 	}
 
-	Optional<ParamValue> Canvas::param(const String& name) const
+	Optional<ParamValue> Canvas::paramValueOpt(const String& name) const
 	{
 		if (auto it = m_params.find(name); it != m_params.end())
 		{

@@ -1269,7 +1269,7 @@ public:
 		// 使用中パラメータを書き出し先Canvasに追加
 		for (const auto& paramName : usedParamRefs)
 		{
-			if (auto paramValue = m_canvas->param(paramName))
+			if (auto paramValue = m_canvas->paramValueOpt(paramName))
 			{
 				exportCanvas->setParamValue(paramName, *paramValue);
 			}

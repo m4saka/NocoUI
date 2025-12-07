@@ -263,7 +263,7 @@ namespace noco::editor
 			String valueText = U"";
 			if (!m_selectedParamName.isEmpty())
 			{
-				if (const auto param = m_canvas->param(m_selectedParamName))
+				if (const auto param = m_canvas->paramValueOpt(m_selectedParamName))
 				{
 					valueText = getParamValueString(*param);
 				}
@@ -345,7 +345,7 @@ namespace noco::editor
 			String valueText = U"";
 			if (!paramName.isEmpty())
 			{
-				if (const auto param = m_canvas->param(paramName))
+				if (const auto param = m_canvas->paramValueOpt(paramName))
 				{
 					valueText = getParamValueString(*param);
 				}
