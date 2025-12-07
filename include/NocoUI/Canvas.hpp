@@ -1041,7 +1041,12 @@ namespace noco
 			RecursiveYN recursive = RecursiveYN::Yes,
 			IncludeSubCanvasYN includeSubCanvas = IncludeSubCanvasYN::No) override;
 
-		// TODO: indexOfChildも検討
+		/// @brief 指定した子ノードのインデックスを取得する
+		/// @param child 子ノード
+		/// @return 子ノードのインデックス
+		/// @throws Error 見つからない場合は例外を送出する
+		[[nodiscard]]
+		size_t indexOfChild(const std::shared_ptr<Node>& child) const;
 
 		/// @brief 指定した子ノードのインデックスを取得する(Optional版)
 		/// @param child 子ノード

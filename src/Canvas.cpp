@@ -1482,6 +1482,16 @@ namespace noco
 		return nullptr;
 	}
 
+	size_t Canvas::indexOfChild(const std::shared_ptr<Node>& child) const
+	{
+		const auto it = std::find(m_children.begin(), m_children.end(), child);
+		if (it == m_children.end())
+		{
+			throw Error{ U"indexOfChild: Child node not found in canvas" };
+		}
+		return static_cast<size_t>(std::distance(m_children.begin(), it));
+	}
+
 	Optional<size_t> Canvas::indexOfChildOpt(const std::shared_ptr<Node>& child) const
 	{
 		const auto it = std::find(m_children.begin(), m_children.end(), child);
