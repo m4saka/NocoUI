@@ -880,12 +880,12 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		
 		// デフォルトはinteractable=true
 		REQUIRE(canvas->interactable() == true);
-		REQUIRE(node->currentInteractionState() != noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() != noco::InteractionState::Disabled);
 		
 		// Canvasをdisableすると子ノードも即座にdisabledになる
 		canvas->setInteractable(false);
 		REQUIRE(canvas->interactable() == false);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// プロパティ値も即座に更新される（deltaTime=0で適用）
 		auto* fillColorProp = dynamic_cast<noco::SmoothProperty<Color>*>(rectRenderer->getPropertyByName(U"fillColor"));
@@ -895,7 +895,7 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		// Canvasを再度enableすると子ノードもenabledになる
 		canvas->setInteractable(true);
 		REQUIRE(canvas->interactable() == true);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Default);
 		REQUIRE(fillColorProp->value() == Color{ Palette::White });
 	}
 	
@@ -911,22 +911,22 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		child->addChild(grandchild);
 		
 		// 全てenabledな状態
-		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Default);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Default);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(parent->interactionStateInHierarchy() == noco::InteractionState::Default);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Default);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Default);
 		
 		// Canvasをdisableすると全ての子孫がdisabledになる
 		canvas->setInteractable(false);
-		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// 中間ノードをdisableしてからCanvasをenableしても、中間ノード以下はdisabledのまま
 		child->setInteractable(false);
 		canvas->setInteractable(true);
-		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Default);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() == noco::InteractionState::Default);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 	}
 	
 	SECTION("Canvas interactable preserves hover/pressed state")
@@ -936,10 +936,10 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		canvas->addChild(node);
 		
 		canvas->setInteractable(false);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		canvas->setInteractable(true);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Default);
 	}
 	
 	SECTION("Node setInteractable considers Canvas state")
@@ -951,16 +951,16 @@ TEST_CASE("Canvas interactable property", "[Canvas]")
 		// Canvasがdisabledの状態でノードをenableしても、ノードはdisabledのまま
 		canvas->setInteractable(false);
 		node->setInteractable(true);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		canvas->setInteractable(true);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Default);
 		
 		// ノードをdisableしてからCanvasをdisable→enableしても、ノードはdisabledのまま
 		node->setInteractable(false);
 		canvas->setInteractable(false);
 		canvas->setInteractable(true);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 	}
 }
 

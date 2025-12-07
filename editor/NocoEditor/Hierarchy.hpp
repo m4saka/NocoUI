@@ -1552,7 +1552,7 @@ namespace noco::editor
 					}
 					else
 					{
-						const InteractionState interactionState = element.node()->currentInteractionState();
+						const InteractionState interactionState = element.node()->interactionStateInHierarchy();
 						const String& styleState = element.node()->styleState();
 						const String interactionStateStr = EnumToString(interactionState);
 					

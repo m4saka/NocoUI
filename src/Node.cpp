@@ -1470,12 +1470,12 @@ namespace noco
 		if (updateInteractionState)
 		{
 			m_interactionStateInHierarchy = updateForCurrentInteractionState(hoveredNode, parentInteractable, isAncestorScrolling, params);
-			m_currentInteractionStateRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
+			m_interactionStateInHierarchyRight = updateForCurrentInteractionStateRight(hoveredNode, parentInteractable, isAncestorScrolling, params);
 			if (!m_isHitTarget)
 			{
 				// HitTargetでない場合は親のinteractionStateを引き継ぐ
 				m_interactionStateInHierarchy = ApplyOtherInteractionState(m_interactionStateInHierarchy, parentInteractionState);
-				m_currentInteractionStateRight = ApplyOtherInteractionState(m_currentInteractionStateRight, parentInteractionStateRight);
+				m_interactionStateInHierarchyRight = ApplyOtherInteractionState(m_interactionStateInHierarchyRight, parentInteractionStateRight);
 			}
 		}
 
@@ -1508,7 +1508,7 @@ namespace noco
 			const InteractableYN interactable{ m_interactable.value() && parentInteractable };
 			for (const auto& child : m_children)
 			{
-				child->updateNodeStates(updateInteractionState, hoveredNode, deltaTime, interactable, m_interactionStateInHierarchy, m_currentInteractionStateRight, isAncestorScrolling, params, m_activeStyleStates);
+				child->updateNodeStates(updateInteractionState, hoveredNode, deltaTime, interactable, m_interactionStateInHierarchy, m_interactionStateInHierarchyRight, isAncestorScrolling, params, m_activeStyleStates);
 			}
 		}
 	}

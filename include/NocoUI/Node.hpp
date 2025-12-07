@@ -66,7 +66,7 @@ namespace noco
 		/* NonSerialized */ PropertyNonInteractive<String> m_styleState{ U"styleState", U"" };
 		/* NonSerialized */ Array<String> m_activeStyleStates;  // 現在のactiveStyleStates（親から受け取ったもの + 自身）
 		/* NonSerialized */ InteractionState m_interactionStateInHierarchy = InteractionState::Default;
-		/* NonSerialized */ InteractionState m_currentInteractionStateRight = InteractionState::Default;
+		/* NonSerialized */ InteractionState m_interactionStateInHierarchyRight = InteractionState::Default;
 		/* NonSerialized */ bool m_clickRequested = false;
 		/* NonSerialized */ bool m_rightClickRequested = false;
 		/* NonSerialized */ bool m_prevClickRequested = false;

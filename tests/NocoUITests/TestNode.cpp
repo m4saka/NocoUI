@@ -139,7 +139,7 @@ TEST_CASE("Node properties and state management", "[Node]")
 		auto node = noco::Node::Create();
 		
 		// デフォルトの状態
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Default);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Default);
 		
 		// styleStateの設定
 		node->setStyleState(U"focused");
@@ -626,25 +626,25 @@ TEST_CASE("Node interactable immediate property update", "[Node]")
 		canvas->update();
 		REQUIRE(node->interactable() == true);
 		// updateInteractionStateが呼ばれてHovered状態になる可能性があるので、Disabledでないことを確認
-		REQUIRE(node->currentInteractionState() != noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() != noco::InteractionState::Disabled);
 		
 		// interactableをfalseに設定
 		node->setInteractable(false);
 		
 		// updateを呼ばなくてもinteractionStateが即座にDisabledになることを確認
 		REQUIRE(node->interactable() == false);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// updateを呼んでも状態が維持されることを確認
 		canvas->update();
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// interactableをtrueに戻す
 		node->setInteractable(true);
 		
 		// 即座にDisabledでなくなることを確認
 		REQUIRE(node->interactable() == true);
-		REQUIRE(node->currentInteractionState() != noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() != noco::InteractionState::Disabled);
 	}
 	
 	SECTION("setInteractable with no change does not affect state")
@@ -663,12 +663,12 @@ TEST_CASE("Node interactable immediate property update", "[Node]")
 		// falseに変更
 		node->setInteractable(false);
 		REQUIRE(node->interactable() == false);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// 再度同じ値でsetInteractableを呼ぶ
 		node->setInteractable(false);
 		REQUIRE(node->interactable() == false);
-		REQUIRE(node->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(node->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 	}
 	
 	SECTION("Parent interactable affects child interaction state")
@@ -686,42 +686,42 @@ TEST_CASE("Node interactable immediate property update", "[Node]")
 		
 		// 初期状態の確認
 		canvas->update();
-		REQUIRE(parent->currentInteractionState() != noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() != noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() != noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() != noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() != noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() != noco::InteractionState::Disabled);
 		
 		// 親のinteractableをfalseにする
 		parent->setInteractable(false);
 		
 		// 親と全ての子孫がDisabled状態になることを確認
-		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// 親のinteractableをtrueに戻す
 		parent->setInteractable(true);
 		
 		// 全てDisabledでなくなることを確認
-		REQUIRE(parent->currentInteractionState() != noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() != noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() != noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() != noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() != noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() != noco::InteractionState::Disabled);
 		
 		// 子ノードのみinteractableをfalseにする
 		child->setInteractable(false);
 		
 		// 親は影響を受けず、子と孫がDisabled状態になることを確認
-		REQUIRE(parent->currentInteractionState() != noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() != noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 		
 		// 子をtrueに戻しても、親がfalseだと子もDisabledのまま
 		parent->setInteractable(false);
 		child->setInteractable(true);
 		
 		// 親がfalseなので、子は個別設定がtrueでもDisabled
-		REQUIRE(parent->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(child->currentInteractionState() == noco::InteractionState::Disabled);
-		REQUIRE(grandchild->currentInteractionState() == noco::InteractionState::Disabled);
+		REQUIRE(parent->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(child->interactionStateInHierarchy() == noco::InteractionState::Disabled);
+		REQUIRE(grandchild->interactionStateInHierarchy() == noco::InteractionState::Disabled);
 	}
 }
 
