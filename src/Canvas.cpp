@@ -295,6 +295,11 @@ namespace noco
 			}
 		}
 	}
+
+	void Canvas::markLayoutAsDirty()
+	{
+		m_isLayoutDirty = true;
+	}
 	
 	std::shared_ptr<Node> Canvas::findByName(StringView nodeName, RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas) const
 	{
