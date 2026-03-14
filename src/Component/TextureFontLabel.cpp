@@ -383,7 +383,22 @@ namespace noco
 			// AutoShrinkWidthでは折り返さないため常にHorizontalOverflow::Overflowとする
 			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, HorizontalOverflow::Overflow, verticalOverflow);
 
-			if (this->regionSize.x > rectSize.x && this->regionSize.x > 0)
+			if (this->regionSize.x > rectSize.x && this->regionSize.x > 0.0)
+			{
+				this->effectiveAutoShrinkWidthScale = rectSize.x / this->regionSize.x;
+			}
+			else
+			{
+				this->effectiveAutoShrinkWidthScale = 1.0;
+			}
+		}
+		else if (newSizingMode == TextureFontLabelSizingMode::AutoShrinkWidthResizeHeight)
+		{
+			this->effectiveCharacterSize = characterSize;
+
+			// 折り返さないためHorizontalOverflow::Overflow、高さはリサイズするためVerticalOverflow::Overflow
+			this->regionSize = refreshCacheAndGetRegionSize(characterSize, characterSpacing, HorizontalOverflow::Overflow, VerticalOverflow::Overflow);
+			if (this->regionSize.x > rectSize.x && this->regionSize.x > 0.0)
 			{
 				this->effectiveAutoShrinkWidthScale = rectSize.x / this->regionSize.x;
 			}
@@ -550,7 +565,7 @@ namespace noco
 		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 
-		const double autoShrinkWidthScale = m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth
+		const double autoShrinkWidthScale = (m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidth || m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidthResizeHeight)
 			? m_cache.effectiveAutoShrinkWidthScale
 			: 1.0;
 
@@ -740,7 +755,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth)
+		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			sizingMode = TextureFontLabelSizingMode::Fixed;
 		}
@@ -784,7 +799,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrink/AutoShrinkWidth/AutoResizeHeightはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth || sizingMode == TextureFontLabelSizingMode::AutoResizeHeight)
+		if (sizingMode == TextureFontLabelSizingMode::AutoShrink || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidth || sizingMode == TextureFontLabelSizingMode::AutoResizeHeight || sizingMode == TextureFontLabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			sizingMode = TextureFontLabelSizingMode::Fixed;
 		}
@@ -873,7 +888,7 @@ namespace noco
 				}
 			}
 		}
-		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResizeHeight)
+		else if (m_sizingMode.value() == TextureFontLabelSizingMode::AutoResizeHeight || m_sizingMode.value() == TextureFontLabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			// AutoResizeHeightはAnchorやsizeRatioによる幅をあらかじめ確定させておく必要があるため、事前にレイアウト更新
 			node->refreshContainedCanvasLayoutImmediately();

@@ -203,6 +203,21 @@ namespace noco
 				this->effectiveAutoShrinkWidthScale = 1.0;
 			}
 		}
+		else if (newSizingMode == LabelSizingMode::AutoShrinkWidthResizeHeight)
+		{
+			this->effectiveFontSize = fontSize;
+
+			// 折り返さないためHorizontalOverflow::Overflow、高さはリサイズするためVerticalOverflow::Overflow
+			this->regionSize = refreshCacheAndGetRegionSize(fontSize, HorizontalOverflow::Overflow, VerticalOverflow::Overflow);
+			if (this->regionSize.x > rectSize.x && this->regionSize.x > 0.0)
+			{
+				this->effectiveAutoShrinkWidthScale = rectSize.x / this->regionSize.x;
+			}
+			else
+			{
+				this->effectiveAutoShrinkWidthScale = 1.0;
+			}
+		}
 		else if (newSizingMode == LabelSizingMode::AutoResize)
 		{
 			// AutoResizeではノードサイズの誤差による折り返しやクリップが発生しないよう、両方Overflowとする
@@ -231,7 +246,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrinkはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth)
+		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth || sizingMode == LabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			sizingMode = LabelSizingMode::Fixed;
 		}
@@ -348,7 +363,7 @@ namespace noco
 			}
 		}
 
-		const double autoShrinkWidthScale = m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth
+		const double autoShrinkWidthScale = (m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth || m_sizingMode.value() == LabelSizingMode::AutoShrinkWidthResizeHeight)
 			? m_cache.effectiveAutoShrinkWidthScale
 			: 1.0;
 
@@ -461,6 +476,7 @@ namespace noco
 						spacingScale = m_cache.effectiveFontSize / m_fontSize.value();
 						break;
 					case LabelSizingMode::AutoShrinkWidth:
+					case LabelSizingMode::AutoShrinkWidthResizeHeight:
 						// 描画時はAutoShrinkWidthもスケール適用
 						spacingScale = autoShrinkWidthScale;
 						break;
@@ -506,7 +522,7 @@ namespace noco
 	{
 		// rectSize指定なしでのサイズ計算は縮小されないようAutoShrink/AutoShrinkWidth/AutoResizeHeightはFixedとして扱う
 		auto sizingMode = m_sizingMode.value();
-		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth || sizingMode == LabelSizingMode::AutoResizeHeight)
+		if (sizingMode == LabelSizingMode::AutoShrink || sizingMode == LabelSizingMode::AutoShrinkWidth || sizingMode == LabelSizingMode::AutoResizeHeight || sizingMode == LabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			sizingMode = LabelSizingMode::Fixed;
 		}
@@ -577,7 +593,7 @@ namespace noco
 				}
 			}
 		}
-		else if (m_sizingMode.value() == LabelSizingMode::AutoResizeHeight)
+		else if (m_sizingMode.value() == LabelSizingMode::AutoResizeHeight || m_sizingMode.value() == LabelSizingMode::AutoShrinkWidthResizeHeight)
 		{
 			// AutoResizeHeightはAnchorやsizeRatioによる幅をあらかじめ確定させておく必要があるため、事前にレイアウト更新
 			node->refreshContainedCanvasLayoutImmediately();
