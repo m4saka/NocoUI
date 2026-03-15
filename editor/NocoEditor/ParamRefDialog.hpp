@@ -193,8 +193,9 @@ namespace noco::editor
 				Palette::White,
 				HorizontalAlign::Left,
 				VerticalAlign::Middle,
-				LRTB{ 8, 25, 0, 0 });
-			
+				LRTB{ 8, 25, 0, 0 })
+				->setSizingMode(LabelSizingMode::AutoShrink);
+
 			// 下三角アイコンを追加
 			m_comboBox->emplaceComponent<Label>(
 				U"▼",
