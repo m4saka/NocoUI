@@ -472,6 +472,15 @@ namespace noco
 			samplerState.emplace(currentState);
 		}
 
+		Optional<ScopedCustomShader2D> customShader;
+		{
+			const String& psAssetName = m_pixelShaderAssetName.value();
+			if (!psAssetName.empty())
+			{
+				customShader.emplace(PixelShaderAsset(psAssetName));
+			}
+		}
+
 		// 空のテクスチャ(黄色になる)の場合はそのまま描画
 		if (!texture)
 		{

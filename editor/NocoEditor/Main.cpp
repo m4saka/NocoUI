@@ -130,6 +130,13 @@ public:
 		{
 			loadFontAssetsFromDirectory(customFontAssetsDir);
 		}
+
+		const FilePath customPixelShadersDir = FileSystem::PathAppend(FileSystem::PathAppend(FileSystem::ParentPath(FileSystem::ModulePath()), U"Custom"), U"PixelShaders");
+		if (FileSystem::IsDirectory(customPixelShadersDir))
+		{
+			loadPixelShaderAssetsFromDirectory(customPixelShadersDir);
+		}
+
 		m_menuBar.addMenuCategory(
 			U"File",
 			U"ファイル",
@@ -1036,6 +1043,150 @@ public:
 			const Typeface typeface = ConvertToS3dTypeface(typefaceType);
 			FontAsset::Register(fontAssetName, method, fontSize, typeface, style);
 		}
+	}
+
+	void loadPixelShaderAssetsFromDirectory(const FilePath& directory)
+	{
+		for (const FilePath& path : FileSystem::DirectoryContents(directory, Recursive::Yes))
+		{
+			if (FileSystem::Extension(path) == U"json")
+			{
+				loadPixelShaderAssetFromFile(path);
+			}
+		}
+	}
+
+	void loadPixelShaderAssetFromFile(const FilePath& path)
+	{
+		const JSON json = JSON::Load(path);
+		if (not json)
+		{
+			Logger << U"[NocoEditor warning] Failed to load pixel shader asset JSON: " << path;
+			return;
+		}
+
+		const String pixelShaderAssetName = json[U"pixelShaderAssetName"].getString();
+		if (pixelShaderAssetName.isEmpty())
+		{
+			Logger << U"[NocoEditor warning] pixelShaderAssetName is empty in: " << path;
+			return;
+		}
+
+		const FilePath parentDir = FileSystem::ParentPath(path);
+		Optional<HLSL> hlsl;
+		Optional<GLSL> glsl;
+		Optional<MSL> msl;
+		Optional<ESSL> essl;
+		Optional<WGSL> wgsl;
+
+		if (json.contains(U"hlsl"))
+		{
+			const JSON& h = json[U"hlsl"];
+			hlsl = HLSL{
+				FilePath{ FileSystem::PathAppend(parentDir, h[U"path"].getString()) },
+				h.contains(U"entryPoint") ? h[U"entryPoint"].getString() : String{ U"PS" },
+			};
+		}
+
+		if (json.contains(U"glsl"))
+		{
+			const JSON& g = json[U"glsl"];
+			Array<ConstantBufferBinding> bindings;
+			if (g.contains(U"bindings"))
+			{
+				for (const auto& b : g[U"bindings"].arrayView())
+				{
+					bindings.push_back(ConstantBufferBinding{
+						b[U"name"].getString(),
+						b[U"index"].get<uint32>(),
+					});
+				}
+			}
+			glsl = GLSL{
+				FilePath{ FileSystem::PathAppend(parentDir, g[U"path"].getString()) },
+				bindings,
+			};
+		}
+
+		if (json.contains(U"msl"))
+		{
+			const JSON& m = json[U"msl"];
+			if (m.contains(U"path"))
+			{
+				msl = MSL{
+					FilePath{ FileSystem::PathAppend(parentDir, m[U"path"].getString()) },
+					m[U"entryPoint"].getString(),
+				};
+			}
+			else
+			{
+				msl = MSL{ m[U"entryPoint"].getString() };
+			}
+		}
+
+		if (json.contains(U"essl"))
+		{
+			const JSON& e = json[U"essl"];
+			Array<ConstantBufferBinding> bindings;
+			if (e.contains(U"bindings"))
+			{
+				for (const auto& b : e[U"bindings"].arrayView())
+				{
+					bindings.push_back(ConstantBufferBinding{
+						b[U"name"].getString(),
+						b[U"index"].get<uint32>(),
+					});
+				}
+			}
+			essl = ESSL{
+				FilePath{ FileSystem::PathAppend(parentDir, e[U"path"].getString()) },
+				bindings,
+			};
+		}
+
+		if (json.contains(U"wgsl"))
+		{
+			const JSON& w = json[U"wgsl"];
+			Array<ConstantBufferBinding> bindings;
+			if (w.contains(U"bindings"))
+			{
+				for (const auto& b : w[U"bindings"].arrayView())
+				{
+					bindings.push_back(ConstantBufferBinding{
+						b[U"name"].getString(),
+						b[U"index"].get<uint32>(),
+					});
+				}
+			}
+			wgsl = WGSL{
+				FilePath{ FileSystem::PathAppend(parentDir, w[U"path"].getString()) },
+				bindings,
+			};
+		}
+
+		ShaderGroup shaderGroup;
+		if (hlsl)
+		{
+			shaderGroup = shaderGroup | *hlsl;
+		}
+		if (glsl)
+		{
+			shaderGroup = shaderGroup | *glsl;
+		}
+		if (msl)
+		{
+			shaderGroup = shaderGroup | *msl;
+		}
+		if (essl)
+		{
+			shaderGroup = shaderGroup | *essl;
+		}
+		if (wgsl)
+		{
+			shaderGroup = shaderGroup | *wgsl;
+		}
+
+		PixelShaderAsset::Register(pixelShaderAssetName, shaderGroup);
 	}
 
 	void onClickMenuFileNew()

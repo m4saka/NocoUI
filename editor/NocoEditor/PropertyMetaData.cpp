@@ -1004,7 +1004,12 @@ namespace noco::editor
 			.tooltip = U"テクスチャアドレスモード",
 			.tooltipDetail = U"テクスチャ座標が範囲外の時の動作\nDefault: 現在の設定を使用\nRepeat: 繰り返し\nMirror: ミラー繰り返し\nClamp: 端の色で埋める\nBorderColor: 境界色で埋める",
 		};
-		
+
+		metadata[PropertyKey{ U"Sprite", U"pixelShaderAssetName" }] = PropertyMetadata{
+			.tooltip = U"PixelShaderAssetのキー名 (任意)",
+			.tooltipDetail = U"指定されている場合、描画時にこのキー名をもとに取得したPixelShaderAssetのシェーダーを適用します\n※エディタ上でプレビューするには、Custom/PixelShaders内にJSONファイルを作成してください",
+		};
+
 		// TextBox
 		metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",

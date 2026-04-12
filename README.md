@@ -500,6 +500,37 @@ Siv3Dの組み込みフォントを利用する場合は、`"type"`に`"Typeface
 }
 ```
 
+## Editor上でのカスタムシェーダーのプレビュー (高度な使い方)
+
+NocoEditorでカスタムピクセルシェーダーをプレビューするには、`Custom/PixelShaders`ディレクトリにシェーダーアセット定義（.json）を配置します。  
+これにより、`Sprite`コンポーネントの`pixelShaderAssetName`プロパティで指定したシェーダーが、エディタ上でプレビューできるようになります。
+
+これはあくまでエディタでのプレビュー用のアセット定義です。実際のプログラムで利用するには、別途Siv3Dの`PixelShaderAsset::Register()`でシェーダーアセットを登録する必要があります。
+
+例えば、`Custom/PixelShaders/MyShader.json`とシェーダーファイルを配置し、シェーダーアセット定義（.json）に下記の内容を記述します。
+
+```json
+{
+  "pixelShaderAssetName": "MyShader",
+  "hlsl": {
+    "path": "MyShader.hlsl",
+    "entryPoint": "PS"
+  },
+  "glsl": {
+    "path": "MyShader.frag",
+    "bindings": [
+      { "name": "PSConstants2D", "index": 0 }
+    ]
+  },
+  "msl": {
+    "entryPoint": "psMyShader"
+  }
+}
+```
+
+各プラットフォームのセクション（`hlsl`、`glsl`、`msl`、`essl`、`wgsl`）はそれぞれ任意です。現在のプラットフォームに対応するセクションのみが使用されます。  
+`path`はJSONファイルからの相対パスです。
+
 ## ライセンス・外部依存ライブラリ
 
 本ライブラリはMIT Licenseで提供されます。  
