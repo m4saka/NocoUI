@@ -1,4 +1,4 @@
-#include "NocoUI/Asset.hpp"
+﻿#include "NocoUI/Asset.hpp"
 #include <filesystem>
 
 namespace noco
