@@ -799,6 +799,10 @@ namespace noco::editor
 			.tooltip = U"アスペクト比を保持",
 			.tooltipDetail = U"有効にすると、テクスチャの縦横比を保持してノードの領域内に収まるように描画されます",
 		};
+		metadata[PropertyKey{ U"Sprite", U"hideIfTextureEmpty" }] = PropertyMetadata{
+			.tooltip = U"テクスチャが空の場合に非表示にするか",
+			.tooltipDetail = U"有効の場合、テクスチャ未設定または読み込み失敗時のダミーテクスチャ(黄色)を表示しません\n※Spriteのダミーテクスチャが描画されなくなるのみで、要素自体の有効状態には影響しません",
+		};
 		metadata[PropertyKey{ U"Sprite", U"nineSliceEnabled" }] = PropertyMetadata{
 			.tooltip = U"9スライス機能を有効にするか",
 			.tooltipDetail = U"画像を9つの領域に分割し、角を固定サイズで表示しながら辺と中央を伸縮させます",

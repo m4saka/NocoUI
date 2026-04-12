@@ -481,9 +481,13 @@ namespace noco
 			}
 		}
 
-		// 空のテクスチャ(黄色になる)の場合はそのまま描画
 		if (!texture)
 		{
+			if (m_hideIfTextureEmpty.value())
+			{
+				return;
+			}
+			// 空のテクスチャ(黄色になる)をそのまま描画
 			texture.resized(rect.size).draw(rect.pos, color);
 			return;
 		}
