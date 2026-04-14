@@ -4978,6 +4978,48 @@ namespace noco::editor
 					stateMenuElements,
 					nullptr,
 					RecursiveYN::Yes);
+
+				// textureCellTrimByCharacterJSONの直後に文字毎のトリミング設定ボタンを挿入
+				if (component->type() == U"TextureFontLabel" && property->name() == U"textureCellTrimByCharacterJSON")
+				{
+					if (auto textureFontLabel = std::dynamic_pointer_cast<TextureFontLabel>(component))
+					{
+						const auto cellTrimButtonContainer = componentNode->emplaceChild(
+							U"CellTrimButtonContainer",
+							InlineRegion{
+								.sizeRatio = Vec2{ 1, 0 },
+								.sizeDelta = Vec2{ -24, 20 },
+								.margin = LRTB{ 12, 12, 0, 4 },
+								.maxWidth = 360,
+							});
+						cellTrimButtonContainer->setChildrenLayout(HorizontalLayout{
+							.horizontalAlign = HorizontalAlign::Right,
+						});
+
+						auto cellTrimButton = cellTrimButtonContainer->addChild(CreateButtonNode(
+							U"文字毎に指定...",
+							InlineRegion{
+								.sizeDelta = Vec2{ 110, 20 },
+							},
+							[this, textureFontLabel](const std::shared_ptr<Node>&)
+							{
+								m_dialogOpener->openDialog(
+									std::make_shared<TextureFontLabelCellTrimEditDialog>(
+										textureFontLabel,
+										[this] { refreshInspector(); },
+										m_dialogOpener
+									)
+								);
+							},
+							IsDefaultButtonYN::No,
+							11));
+
+						if (isFolded)
+						{
+							cellTrimButton->setActive(false);
+						}
+					}
+				}
 			}
 
 			// Spriteコンポーネントの場合、スナップボタンを追加
@@ -5033,46 +5075,9 @@ namespace noco::editor
 				}
 			}
 
-			// TextureFontLabelコンポーネントの場合、ボタンを追加
+			// TextureFontLabelコンポーネントの場合、Grid編集ボタンを追加
 			if (auto textureFontLabel = std::dynamic_pointer_cast<TextureFontLabel>(component))
 			{
-				// 文字毎のトリミング設定ボタンを追加
-				const auto cellTrimButtonContainer = componentNode->emplaceChild(
-					U"CellTrimButtonContainer",
-					InlineRegion{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ -24, 20 },
-						.margin = LRTB{ 12, 12, 0, 4 },
-						.maxWidth = 360,
-					});
-				cellTrimButtonContainer->setChildrenLayout(HorizontalLayout{
-					.horizontalAlign = HorizontalAlign::Right,
-				});
-
-				auto cellTrimButton = cellTrimButtonContainer->addChild(CreateButtonNode(
-					U"文字毎に指定...",
-					InlineRegion{
-						.sizeDelta = Vec2{ 110, 20 },
-					},
-					[this, textureFontLabel](const std::shared_ptr<Node>&)
-					{
-						m_dialogOpener->openDialog(
-							std::make_shared<TextureFontLabelCellTrimEditDialog>(
-								textureFontLabel,
-								[this] { refreshInspector(); },
-								m_dialogOpener
-							)
-						);
-					},
-					IsDefaultButtonYN::No,
-					11));
-
-				if (isFolded)
-				{
-					cellTrimButton->setActive(false);
-				}
-
-				// Grid編集ボタンを追加
 				auto gridDivisionButton = componentNode->addChild(CreateButtonNode(
 					U"Gridの値を分割数で入力...",
 					InlineRegion

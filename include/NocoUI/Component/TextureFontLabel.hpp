@@ -43,6 +43,7 @@ namespace noco
 		Property<SpriteTextureAddressMode> m_textureAddressMode;
 		Property<LRTB> m_textureCellTrim;
 		PropertyNonInteractive<String> m_textureCellTrimByCharacterJSON;
+		Property<bool> m_textureCellTrimClip;
 
 		struct TextureFontCache
 		{
@@ -55,6 +56,7 @@ namespace noco
 				int32 textureGridRows;
 				LRTB textureCellTrim;
 				String textureCellTrimByCharacterJSON;
+				bool textureCellTrimClip;
 
 				[[nodiscard]]
 				bool isDirty(
@@ -64,7 +66,8 @@ namespace noco
 					int32 newTextureGridColumns,
 					int32 newTextureGridRows,
 					const LRTB& newTextureCellTrim,
-					const String& newCharTextureCellTrimJSON) const;
+					const String& newCharTextureCellTrimJSON,
+					bool newTextureCellTrimClip) const;
 			};
 
 			struct CharacterMetrics
@@ -84,7 +87,8 @@ namespace noco
 				int32 textureGridColumns,
 				int32 textureGridRows,
 				const LRTB& textureCellTrim,
-				const String& textureCellTrimByCharacterJSON);
+				const String& textureCellTrimByCharacterJSON,
+				bool textureCellTrimClip);
 
 			[[nodiscard]]
 			Optional<RectF> getUV(char32 character) const;
@@ -128,6 +132,7 @@ namespace noco
 				int32 textureGridRows;
 				LRTB textureCellTrim;
 				String textureCellTrimByCharacterJSON;
+				bool textureCellTrimClip;
 
 				[[nodiscard]]
 				bool isDirty(
@@ -144,7 +149,8 @@ namespace noco
 					int32 newTextureGridColumns,
 					int32 newTextureGridRows,
 					const LRTB& newTextureCellTrim,
-					const String& newCharTextureCellTrimJSON) const;
+					const String& newCharTextureCellTrimJSON,
+					bool newTextureCellTrimClip) const;
 			};
 
 			Optional<CacheParams> prevParams;
@@ -164,7 +170,8 @@ namespace noco
 				int32 newTextureGridColumns,
 				int32 newTextureGridRows,
 				const LRTB& newTextureCellTrim,
-				const String& newCharTextureCellTrimJSON);
+				const String& newCharTextureCellTrimJSON,
+				bool newTextureCellTrimClip);
 		};
 
 		/* NonSerialized */ mutable TextureFontCache m_textureFontCache;
@@ -480,6 +487,18 @@ namespace noco
 		}
 
 		std::shared_ptr<TextureFontLabel> setTextureCellTrimByCharacter(const HashTable<char32, LRTB>& trimMap);
+
+		[[nodiscard]]
+		const PropertyValue<bool>& textureCellTrimClip() const
+		{
+			return m_textureCellTrimClip.propertyValue();
+		}
+
+		std::shared_ptr<TextureFontLabel> setTextureCellTrimClip(const PropertyValue<bool>& textureCellTrimClip)
+		{
+			m_textureCellTrimClip.setPropertyValue(textureCellTrimClip);
+			return shared_from_this();
+		}
 
 		SizeF getContentSize() const;
 

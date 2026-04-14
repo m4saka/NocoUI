@@ -706,13 +706,17 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellTrim" }] = PropertyMetadata{
 			.tooltip = U"文字セルのトリミング量 (ピクセル)",
-			.tooltipDetail = U"全ての文字に適用される上下左右のトリミング量\n個別指定がない文字に適用されます\n\nテクスチャ内の隣接セルの色がにじむ場合や、プロポーショナルフォント表示に利用できます",
+			.tooltipDetail = U"全ての文字に適用される上下左右のトリミング量\n個別指定がない文字に適用されます\n\nテクスチャ内の隣接セルの色がにじむ場合や、プロポーショナルフォント表示に利用できます\n\n※セルをクリッピングするかどうかはtextureCellTrimClipで指定します",
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellTrimByCharacterJSON" }] = PropertyMetadata{
 			.tooltip = U"文字毎のトリミング量 (JSON)",
-			.tooltipDetail = U"文字毎に個別のトリミング量を指定します\n形式: {\"1\": [10, 8, 0, 0], \"2\": [4, 5, 0, 0]}\n配列は [left, right, top, bottom] の順\n\nプロポーショナルフォント表示に利用できます",
+			.tooltipDetail = U"文字毎に個別のトリミング量を指定します\n形式: {\"1\": [10, 8, 0, 0], \"2\": [4, 5, 0, 0]}\n配列は [left, right, top, bottom] の順\n\nプロポーショナルフォント表示に利用できます\n\n※セルをクリッピングするかどうかはtextureCellTrimClipで指定します",
 			.visibilityCondition = [](const ComponentBase&) { return false; },  // 常に非表示
 			.numTextAreaLines = 3,
+		};
+		metadata[PropertyKey{ U"TextureFontLabel", U"textureCellTrimClip" }] = PropertyMetadata{
+			.tooltip = U"トリミング時のクリッピングの有効/無効",
+			.tooltipDetail = U"有効の場合、トリミング量に応じてセルがクリッピングされます\n無効の場合、文字間隔のみ詰めてクリッピングは行いません",
 		};
 		metadata[PropertyKey{ U"TextureFontLabel", U"text" }] = PropertyMetadata{
 			.tooltip = U"表示するテキスト",
