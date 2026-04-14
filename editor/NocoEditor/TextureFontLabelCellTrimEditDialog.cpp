@@ -194,6 +194,8 @@ namespace noco::editor
 			ColorF{ 0.1, 0.15 },
 			ColorF{ 0.4, 0.5 },
 			1.0, 0.0, 4.0);
+		listContainer->setVerticalScrollable(true);
+		listContainer->setClippingEnabled(true);
 
 		// リスト
 		m_listNode = listContainer->emplaceChild(
