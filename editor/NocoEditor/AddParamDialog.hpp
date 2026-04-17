@@ -28,7 +28,8 @@ namespace noco::editor
 		std::variant<bool, double, String, Color, Vec2, LRTB> m_value = 0.0;
 		
 		Optional<ParamType> m_fixedType;
-		
+		Optional<String> m_initialName;
+
 	public:
 		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete)
 			: m_canvas(canvas)
@@ -43,12 +44,13 @@ namespace noco::editor
 		{
 		}
 		
-		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated, const std::shared_ptr<DialogOpener>& dialogOpener)
+		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated, const std::shared_ptr<DialogOpener>& dialogOpener, const Optional<String>& initialName = none)
 			: m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
 			, m_onParamCreated(std::move(onParamCreated))
 			, m_dialogOpener(dialogOpener)
 			, m_fixedType(fixedType)
+			, m_initialName(initialName)
 		{
 			m_selectedType = ParamTypeToString(fixedType);
 			m_value = StringToParamValue(currentValueString, fixedType);
@@ -70,13 +72,30 @@ namespace noco::editor
 		void createDialogContent(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu, std::function<void()>) override
 		{
 			// 既存のパラメータ名から重複しない初期名を生成
-			constexpr StringView DefaultName = U"param";
-			int32 suffixNum = 1;
-			String initialName = U"{}{}"_fmt(DefaultName, suffixNum);
-			while (m_canvas->paramValueOpt(initialName).has_value())
+			String initialName;
+			if (m_initialName.has_value())
 			{
-				suffixNum++;
+				initialName = *m_initialName;
+				if (m_canvas->paramValueOpt(initialName).has_value())
+				{
+					int32 suffixNum = 2;
+					while (m_canvas->paramValueOpt(U"{}_{}"_fmt(initialName, suffixNum)).has_value())
+					{
+						suffixNum++;
+					}
+					initialName = U"{}_{}"_fmt(*m_initialName, suffixNum);
+				}
+			}
+			else
+			{
+				constexpr StringView DefaultName = U"param";
+				int32 suffixNum = 1;
 				initialName = U"{}{}"_fmt(DefaultName, suffixNum);
+				while (m_canvas->paramValueOpt(initialName).has_value())
+				{
+					suffixNum++;
+					initialName = U"{}{}"_fmt(DefaultName, suffixNum);
+				}
 			}
 			// タイトル
 			const auto titleNode = contentRootNode->emplaceChild(

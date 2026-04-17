@@ -15,12 +15,15 @@ namespace noco
 		Property<String> m_canvasPath;
 		Property<bool> m_propagateEvents;
 		PropertyNonInteractive<String> m_serializedParamsJSON;
+		PropertyNonInteractive<String> m_serializedParamBindingsJSON;
 		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
 		/* NonSerialized */ String m_loadedPath;
 		/* NonSerialized */ String m_loadedAssetBasePath;
 		/* NonSerialized */ String m_appliedSerializedParamsJSON;
+		/* NonSerialized */ String m_appliedSerializedParamBindingsJSON;
+		/* NonSerialized */ HashTable<String, String> m_paramBindings;
 
 		/// @brief Canvasファイルを読み込む
 		void loadCanvasInternal();
@@ -37,10 +40,11 @@ namespace noco
 
 	public:
 		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"")
-			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_tag } }
+			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_tag } }
 			, m_canvasPath{ U"canvasPath", canvasPath }
 			, m_propagateEvents{ U"propagateEvents", true }
 			, m_serializedParamsJSON{ U"serializedParamsJSON", U"{}" }
+			, m_serializedParamBindingsJSON{ U"serializedParamBindingsJSON", U"{}" }
 			, m_tag{ U"tag", U"" }
 		{
 			loadCanvasInternal();
@@ -96,6 +100,18 @@ namespace noco
 		std::shared_ptr<SubCanvas> setSerializedParamsJSON(const String& serializedParamsJSON)
 		{
 			m_serializedParamsJSON.setValue(serializedParamsJSON);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& serializedParamBindingsJSON() const
+		{
+			return m_serializedParamBindingsJSON.value();
+		}
+
+		std::shared_ptr<SubCanvas> setSerializedParamBindingsJSON(const String& serializedParamBindingsJSON)
+		{
+			m_serializedParamBindingsJSON.setValue(serializedParamBindingsJSON);
 			return shared_from_this();
 		}
 

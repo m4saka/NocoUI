@@ -57,7 +57,7 @@ namespace noco::editor
 			}
 
 			// Canvasを読み込み
-			const FilePath fullPath = FileSystem::PathAppend(noco::Asset::GetBaseDirectoryPath(), canvasPath);
+			const FilePath fullPath = noco::Asset::GetFullPath(canvasPath);
 			m_targetCanvas = Canvas::LoadFromFile(fullPath, AllowExceptions::No);
 
 			if (!m_targetCanvas)

@@ -141,6 +141,57 @@ namespace noco
 				m_appliedSerializedParamsJSON = currentSerializedParamsJSON;
 			}
 
+			// serializedParamBindingsJSONが変更されていたらパースしてキャッシュを更新
+			const String& currentParamBindingsJSON = m_serializedParamBindingsJSON.value();
+			if (m_appliedSerializedParamBindingsJSON != currentParamBindingsJSON)
+			{
+				m_paramBindings.clear();
+				if (!currentParamBindingsJSON.isEmpty() && currentParamBindingsJSON != U"{}")
+				{
+					const JSON json = JSON::Parse(currentParamBindingsJSON);
+					if (json.isObject())
+					{
+						for (const auto& [childParamName, parentParamNameJSON] : json)
+						{
+							if (parentParamNameJSON.isString())
+							{
+								m_paramBindings[childParamName] = parentParamNameJSON.getString();
+							}
+						}
+					}
+				}
+				m_appliedSerializedParamBindingsJSON = currentParamBindingsJSON;
+			}
+
+			// serializedParamBindingsJSONに従って親Canvasのパラメータを子Canvasに毎フレーム適用
+			if (!m_paramBindings.empty())
+			{
+				if (auto parentCanvas = node->containedCanvas())
+				{
+					const auto& parentParams = parentCanvas->params();
+					const auto& childParams = m_canvas->params();
+					for (const auto& [childParamName, parentParamName] : m_paramBindings)
+					{
+						const auto parentIt = parentParams.find(parentParamName);
+						if (parentIt == parentParams.end())
+						{
+							continue;
+						}
+						const auto childIt = childParams.find(childParamName);
+						if (childIt == childParams.end())
+						{
+							continue;
+						}
+						// 型不一致の場合は子paramの型を壊さないようスキップ
+						if (GetParamType(parentIt->second) != GetParamType(childIt->second))
+						{
+							continue;
+						}
+						m_canvas->setParamValue(childParamName, parentIt->second);
+					}
+				}
+			}
+
 			// 親のinteractableを子Canvasに伝播
 			m_canvas->setInteractable(node->interactable());
 

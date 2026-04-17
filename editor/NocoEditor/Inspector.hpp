@@ -18,6 +18,7 @@
 #include "TextureFontLabelGridDivisionInputDialog.hpp"
 #include "TextureFontLabelCellTrimEditDialog.hpp"
 #include "SubCanvasParamsEditDialog.hpp"
+#include "SubCanvasParamBindingsEditDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "EditorColor.hpp"
@@ -5171,6 +5172,24 @@ namespace noco::editor
 					paramsContainerNode->setActive(false);
 				}
 
+				// serializedParamBindingsJSONをパース
+				HashSet<String> boundParamNames;
+				const String& bindingsJSONString = subCanvas->serializedParamBindingsJSON();
+				JSON bindingsJSON;
+				bool hasValidBindingsJSON = false;
+				if (!bindingsJSONString.isEmpty() && bindingsJSONString != U"{}")
+				{
+					bindingsJSON = JSON::Parse(bindingsJSONString);
+					if (bindingsJSON.isObject())
+					{
+						hasValidBindingsJSON = true;
+						for (const auto& [key, value] : bindingsJSON)
+						{
+							boundParamNames.insert(key);
+						}
+					}
+				}
+
 				// 現在設定されているパラメータを表示
 				const String& paramsJSONString = subCanvas->serializedParamsJSON();
 				bool hasParams = false;
@@ -5253,6 +5272,34 @@ namespace noco::editor
 							{
 								paramNode->setActive(false);
 							}
+
+							// serializedParamBindingsJSONとの重複注意
+							if (boundParamNames.contains(key))
+							{
+								// AutoResizeHeightを使うとパネル幅変更後にparamsContainerNodeがリフィットされず余白が残るため固定高
+								auto warningNode = paramsContainerNode->emplaceChild(
+									U"ParamWarning_{}"_fmt(key),
+									InlineRegion
+									{
+										.sizeRatio = Vec2{ 1, 0 },
+										.sizeDelta = Vec2{ -24, 18 },
+										.margin = LRTB{ 12, 12, 0, 0 },
+									});
+								warningNode->emplaceComponent<Label>(
+									U"※ パラメータ紐付けにより上書きされます",
+									U"",
+									12,
+									ColorF{ 1.0, 1.0, 0.7 },
+									HorizontalAlign::Left,
+									VerticalAlign::Middle,
+									LRTB{ 24, 0, 0, 0 })
+									->setSizingMode(LabelSizingMode::AutoShrink);
+
+								if (isFolded)
+								{
+									warningNode->setActive(false);
+								}
+							}
 						}
 					}
 				}
@@ -5294,6 +5341,196 @@ namespace noco::editor
 								m_dialogOpener
 							)
 						);
+					}));
+
+				// パラメータ紐付け一覧のタイトル
+				auto bindingsListLabelNode = paramsContainerNode->emplaceChild(
+					U"BindingsListLabel",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 1, 0 },
+						.sizeDelta = Vec2{ -24, 24 },
+						.margin = LRTB{ 12, 12, 6, 0 },
+					});
+				bindingsListLabelNode->emplaceComponent<Label>(
+					U"設定中のパラメータ紐付け:",
+					U"",
+					14,
+					Palette::White,
+					HorizontalAlign::Left,
+					VerticalAlign::Middle);
+
+				if (isFolded)
+				{
+					bindingsListLabelNode->setActive(false);
+				}
+
+				// パラメータ紐付け一覧を表示
+				bool hasBindings = false;
+
+				if (hasValidBindingsJSON && !bindingsJSON.isEmpty())
+				{
+					// 列見出し
+					auto bindingsHeaderNode = paramsContainerNode->emplaceChild(
+						U"BindingsHeader",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ -24, 18 },
+							.margin = LRTB{ 12, 12, 2, 0 },
+						},
+						IsHitTargetYN::No);
+					bindingsHeaderNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
+
+					auto childHeaderNode = bindingsHeaderNode->emplaceChild(
+						U"ChildHeader",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 0, 1 },
+							.sizeDelta = Vec2{ 150, 0 },
+						},
+						IsHitTargetYN::No);
+					childHeaderNode->emplaceComponent<Label>(
+						U"子Canvasパラメータ",
+						U"",
+						11,
+						ColorF{ 0.6, 0.6, 0.6 },
+						HorizontalAlign::Left,
+						VerticalAlign::Middle)
+						->setSizingMode(LabelSizingMode::AutoShrink);
+
+					auto parentHeaderNode = bindingsHeaderNode->emplaceChild(
+						U"ParentHeader",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 0, 1 },
+							.flexibleWeight = 1.0,
+						},
+						IsHitTargetYN::No);
+					parentHeaderNode->emplaceComponent<Label>(
+						U"紐付け先",
+						U"",
+						11,
+						ColorF{ 0.6, 0.6, 0.6 },
+						HorizontalAlign::Left,
+						VerticalAlign::Middle)
+						->setSizingMode(LabelSizingMode::AutoShrink);
+
+					if (isFolded)
+					{
+						bindingsHeaderNode->setActive(false);
+					}
+
+					for (const auto& item : bindingsJSON)
+					{
+						if (!item.value.isString())
+						{
+							continue;
+						}
+						const String& childKey = item.key;
+						const String parentKey = item.value.getString();
+
+						if (!hasBindings)
+						{
+							hasBindings = true;
+						}
+
+						auto bindingNode = paramsContainerNode->emplaceChild(
+							U"BindingItem_{}"_fmt(childKey),
+							InlineRegion
+							{
+								.sizeRatio = Vec2{ 1, 0 },
+								.sizeDelta = Vec2{ -24, 24 },
+								.margin = LRTB{ 12, 12, 0, 0 },
+							});
+						bindingNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
+
+						bindingNode->emplaceComponent<RectRenderer>(
+							PropertyValue<Color>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
+							Palette::Black,
+							0.0,
+							0.0,
+							3.0);
+
+						// 子パラメータ名
+						auto childKeyNode = bindingNode->emplaceChild(
+							U"ChildKey",
+							InlineRegion
+							{
+								.sizeRatio = Vec2{ 0, 1 },
+								.sizeDelta = Vec2{ 150, 0 },
+							},
+							IsHitTargetYN::No);
+						childKeyNode->emplaceComponent<Label>(
+							childKey,
+							U"",
+							13,
+							Palette::White,
+							HorizontalAlign::Left,
+							VerticalAlign::Middle)
+							->setSizingMode(LabelSizingMode::AutoShrink);
+
+						// 親パラメータ名(paramRef同様にシアンで参照であることを示す)
+						auto parentKeyNode = bindingNode->emplaceChild(
+							U"ParentKey",
+							InlineRegion
+							{
+								.sizeRatio = Vec2{ 0, 1 },
+								.flexibleWeight = 1.0,
+							},
+							IsHitTargetYN::No);
+						parentKeyNode->emplaceComponent<Label>(
+							parentKey,
+							U"",
+							13,
+							ColorF{ Palette::Cyan, 0.9 },
+							HorizontalAlign::Left,
+							VerticalAlign::Middle)
+							->setSizingMode(LabelSizingMode::AutoShrink);
+
+						if (isFolded)
+						{
+							bindingNode->setActive(false);
+						}
+					}
+				}
+
+				// パラメータ紐付けが設定されていない場合
+				if (!hasBindings)
+				{
+					auto noBindingsNode = paramsContainerNode->emplaceChild(
+						U"NoBindings",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ 0, 24 },
+							.margin = LRTB{ 12, 12, 4, 0 },
+						});
+					noBindingsNode->emplaceComponent<Label>(
+						U"(設定なし)",
+						U"",
+						13,
+						ColorF{ 0.7, 0.7, 0.7 },
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+				}
+
+				auto editBindingsButton = paramsContainerNode->addChild(CreateButtonNode(
+					U"パラメータ紐付けを設定...",
+					InlineRegion
+					{
+						.sizeRatio = Vec2{ 0, 0 },
+						.sizeDelta = Vec2{ 280, 24 },
+						.margin = LRTB{ 0, 0, 4, 8 },
+					},
+					[this, subCanvas](const std::shared_ptr<Node>&)
+					{
+						m_dialogOpener->openDialog(
+							std::make_shared<SubCanvasParamBindingsEditDialog>(
+								subCanvas,
+								m_canvas,
+								[this] { refreshInspector(); },
+								m_dialogOpener));
 					}));
 
 				// コンテナの高さを子要素に合わせる
