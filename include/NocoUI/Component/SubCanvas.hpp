@@ -38,6 +38,9 @@ namespace noco
 			return true;
 		}
 
+	protected:
+		void replaceAdditionalParamRefsInternal(StringView oldName, StringView newName) override;
+
 	public:
 		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"")
 			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_tag } }
@@ -142,5 +145,35 @@ namespace noco
 		{
 			return m_loadedPath;
 		}
+
+		/// @brief 指定したパラメータ名を参照している紐付け数を取得
+		/// @param paramName パラメータ名
+		/// @return 参照している数
+		[[nodiscard]]
+		size_t countBindingParamRefs(StringView paramName) const;
+
+		/// @brief 指定したパラメータ名を参照している紐付けをすべて削除
+		/// @param paramName パラメータ名
+		void clearBindingParamRefs(StringView paramName);
+
+		/// @brief 紐付けで参照しているパラメータ名を置換
+		/// @param oldName 置換対象のパラメータ参照名
+		/// @param newName 新しいパラメータ参照名
+		void replaceBindingParamRefs(StringView oldName, StringView newName);
+
+		/// @brief 有効なパラメータに含まれないパラメータ名を参照している紐付けをすべて削除
+		/// @param validParams 有効なパラメータのハッシュテーブル
+		/// @return 削除したパラメータ参照の名前の配列
+		Array<String> removeInvalidBindingParamRefs(const HashTable<String, ParamValue>& validParams);
+
+		/// @brief 紐付けで参照しているパラメータ名を列挙
+		/// @param pParamRefs 挿入先のハッシュセットのポインタ
+		void populateBindingParamRefs(HashSet<String>* pParamRefs) const;
+
+		/// @brief 指定したパラメータ名を参照している子Canvasのパラメータ名一覧を取得
+		/// @param parentParamName 親Canvasのパラメータ名
+		/// @return 紐付けで参照している子Canvasのパラメータ名の配列
+		[[nodiscard]]
+		Array<String> listChildParamsBoundTo(StringView parentParamName) const;
 	};
 }

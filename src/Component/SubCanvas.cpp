@@ -32,6 +32,22 @@ namespace noco
 			LoadingPathGuard(const LoadingPathGuard&) = delete;
 			LoadingPathGuard& operator=(const LoadingPathGuard&) = delete;
 		};
+
+		/// @brief 紐付けJSON文字列をオブジェクトJSONにパース(失敗時は空オブジェクト)
+		[[nodiscard]]
+		JSON ParseBindingsJSON(const String& bindingsJSONString)
+		{
+			if (bindingsJSONString.isEmpty() || bindingsJSONString == U"{}")
+			{
+				return JSON{};
+			}
+			const JSON json = JSON::Parse(bindingsJSONString);
+			if (!json.isObject())
+			{
+				return JSON{};
+			}
+			return json;
+		}
 	}
 
 	void SubCanvas::loadCanvasInternal()
@@ -267,5 +283,170 @@ namespace noco
 		}
 		m_loadedPath.clear();
 		loadCanvasInternal();
+	}
+
+	size_t SubCanvas::countBindingParamRefs(StringView paramName) const
+	{
+		if (paramName.isEmpty())
+		{
+			return 0;
+		}
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return 0;
+		}
+		size_t count = 0;
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == paramName)
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	void SubCanvas::clearBindingParamRefs(StringView paramName)
+	{
+		if (paramName.isEmpty())
+		{
+			return;
+		}
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return;
+		}
+		JSON newJSON = JSON::Parse(U"{}");
+		bool changed = false;
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == paramName)
+			{
+				changed = true;
+				continue;
+			}
+			newJSON[childParamName] = parentParamNameJSON;
+		}
+		if (changed)
+		{
+			setSerializedParamBindingsJSON(newJSON.formatMinimum());
+		}
+	}
+
+	void SubCanvas::replaceBindingParamRefs(StringView oldName, StringView newName)
+	{
+		if (oldName.isEmpty())
+		{
+			return;
+		}
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return;
+		}
+		JSON newJSON = JSON::Parse(U"{}");
+		bool changed = false;
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == oldName)
+			{
+				newJSON[childParamName] = String{ newName };
+				changed = true;
+			}
+			else
+			{
+				newJSON[childParamName] = parentParamNameJSON;
+			}
+		}
+		if (changed)
+		{
+			setSerializedParamBindingsJSON(newJSON.formatMinimum());
+		}
+	}
+
+	Array<String> SubCanvas::removeInvalidBindingParamRefs(const HashTable<String, ParamValue>& validParams)
+	{
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return {};
+		}
+		HashSet<String> clearedParamsSet;
+		JSON newJSON = JSON::Parse(U"{}");
+		bool changed = false;
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (!parentParamNameJSON.isString())
+			{
+				changed = true;
+				continue;
+			}
+			const String parentParamName = parentParamNameJSON.getString();
+			if (!validParams.contains(parentParamName))
+			{
+				clearedParamsSet.insert(parentParamName);
+				changed = true;
+				continue;
+			}
+			newJSON[childParamName] = parentParamNameJSON;
+		}
+		if (changed)
+		{
+			setSerializedParamBindingsJSON(newJSON.formatMinimum());
+		}
+		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
+	}
+
+	void SubCanvas::populateBindingParamRefs(HashSet<String>* pParamRefs) const
+	{
+		if (pParamRefs == nullptr)
+		{
+			return;
+		}
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return;
+		}
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (parentParamNameJSON.isString())
+			{
+				const String parentParamName = parentParamNameJSON.getString();
+				if (!parentParamName.isEmpty())
+				{
+					pParamRefs->insert(parentParamName);
+				}
+			}
+		}
+	}
+
+	Array<String> SubCanvas::listChildParamsBoundTo(StringView parentParamName) const
+	{
+		if (parentParamName.isEmpty())
+		{
+			return {};
+		}
+		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (json.isEmpty())
+		{
+			return {};
+		}
+		Array<String> result;
+		for (const auto& [childParamName, parentParamNameJSON] : json)
+		{
+			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == parentParamName)
+			{
+				result.push_back(childParamName);
+			}
+		}
+		return result;
+	}
+
+	void SubCanvas::replaceAdditionalParamRefsInternal(StringView oldName, StringView newName)
+	{
+		replaceBindingParamRefs(oldName, newName);
 	}
 }

@@ -265,8 +265,16 @@ namespace noco::editor
 							{
 								componentName = serializableComponent->type();
 							}
-							
+
 							references.emplace_back(nodeName, componentName, String{ property->name() });
+						}
+					}
+					// SubCanvasの紐付けをチェック
+					if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
+					{
+						for (const auto& childParamName : subCanvas->listChildParamsBoundTo(paramName))
+						{
+							references.emplace_back(nodeName, U"SubCanvas", U"binding({})"_fmt(childParamName));
 						}
 					}
 				}

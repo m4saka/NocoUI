@@ -479,6 +479,12 @@ namespace noco
 					pParamRefs->insert(property->paramRef());
 				}
 			}
+
+			// SubCanvasの紐付けが参照しているパラメータ名を列挙
+			if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
+			{
+				subCanvas->populateBindingParamRefs(pParamRefs);
+			}
 		}
 
 		for (const auto& child : m_children)

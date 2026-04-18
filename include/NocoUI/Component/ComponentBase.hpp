@@ -210,7 +210,12 @@ namespace noco
 					property->setParamRef(String{ newName });
 				}
 			}
+			replaceAdditionalParamRefsInternal(oldName, newName);
 		}
+
+	protected:
+		/// @brief replaceParamRefsの末尾に呼ばれる追加処理フック(派生側でプロパティ以外の参照を置換する場合に実装)
+		virtual void replaceAdditionalParamRefsInternal(StringView /*oldName*/, StringView /*newName*/) {}
 	};
 
 	inline SerializableComponentBase::~SerializableComponentBase() = default;
