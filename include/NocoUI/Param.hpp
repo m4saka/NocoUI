@@ -14,9 +14,9 @@ namespace noco
 	{
 		Unknown,
 		Bool,
-		Number,  // 数値は全てdouble型で保持
+		Number, // 数値は全てdouble型で保持
 		String,
-		Color,   // 色は全てColor型で保持
+		Color, // 色は全てColor型で保持
 		Vec2,
 		LRTB,
 	};
@@ -260,4 +260,199 @@ namespace noco
 	// {"type": "...", "value": ...}形式のJSONからParamValueを作成
 	[[nodiscard]]
 	Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json);
+
+	/// @brief パラメータ参照モード(全型共通。型ごとに有効なモードが異なり、AvailableParamRefModesFor<T>()で取得可能)
+	enum class ParamRefMode : uint8
+	{
+		Normal,
+		Inverted, // Bool用
+		Add, // Number/Color/Vec2/LRTB用
+		Subtract, // Number/Color/Vec2/LRTB用
+		Multiply, // Number/Color/Vec2/LRTB用
+		Format, // String用
+	};
+
+	/// @brief paramRefモードのUI表示用文字列
+	[[nodiscard]]
+	inline StringView ParamRefModeToDisplayString(ParamRefMode mode)
+	{
+		switch (mode)
+		{
+		case ParamRefMode::Normal:
+			return U"通常反映(値を上書き)";
+		case ParamRefMode::Inverted:
+			return U"反転して反映(値を上書き)";
+		case ParamRefMode::Add:
+			return U"加算値として反映";
+		case ParamRefMode::Subtract:
+			return U"減算値として反映";
+		case ParamRefMode::Multiply:
+			return U"乗算値として反映";
+		case ParamRefMode::Format:
+			return U"フォーマット文字列に適用して反映";
+		}
+		return U"";
+	}
+
+	/// @brief 型Tで利用可能なparamRefモード一覧
+	template<typename T>
+	[[nodiscard]]
+	inline Array<ParamRefMode> AvailableParamRefModesFor()
+	{
+		if constexpr (std::is_same_v<T, bool>)
+		{
+			return { ParamRefMode::Normal, ParamRefMode::Inverted };
+		}
+		else if constexpr (std::is_enum_v<T>)
+		{
+			return { ParamRefMode::Normal };
+		}
+		else if constexpr (std::is_same_v<T, String>)
+		{
+			return { ParamRefMode::Normal, ParamRefMode::Format };
+		}
+		else
+		{
+			// Number(arithmetic)/Color/Vec2/LRTB
+			return { ParamRefMode::Normal, ParamRefMode::Add, ParamRefMode::Subtract, ParamRefMode::Multiply };
+		}
+	}
+
+	/// @brief 指定paramRefモードが型に対応しない場合、警告を出してNormalを返す(JSON読込時用)
+	inline ParamRefMode ValidateParamRefModeFromJSON(ParamRefMode mode, const Array<ParamRefMode>& available, StringView propertyName)
+	{
+		if (!available.contains(mode))
+		{
+			Logger << U"[NocoUI warning] Unknown paramRef mode '{}' for property '{}'. Using default Normal."_fmt(EnumToString(mode), propertyName);
+			return ParamRefMode::Normal;
+		}
+		return mode;
+	}
+
+	/// @brief paramRef値にモードを適用
+	template<typename T>
+	[[nodiscard]]
+	inline Optional<T> ApplyParamMode(const T& base, const ParamValue& paramValue, ParamRefMode mode)
+	{
+		if constexpr (std::same_as<T, bool>)
+		{
+			auto v = GetParamValueAs<bool>(paramValue);
+			if (!v)
+			{
+				return none;
+			}
+			switch (mode)
+			{
+			case ParamRefMode::Inverted:
+				return !*v;
+			case ParamRefMode::Normal:
+			default:
+				return *v;
+			}
+		}
+		else if constexpr (std::same_as<T, String>)
+		{
+			if (mode == ParamRefMode::Format)
+			{
+				return std::visit([&](const auto& v) -> Optional<String>
+					{
+						using V = std::decay_t<decltype(v)>;
+						try
+						{
+							if constexpr (std::same_as<V, bool> || std::same_as<V, double> || std::same_as<V, String>)
+							{
+								return Fmt(base)(v);
+							}
+							else
+							{
+								return Fmt(base)(Format(v));
+							}
+						}
+						catch (const std::exception&)
+						{
+							return base;
+						}
+					}, paramValue);
+			}
+			return std::visit([](const auto& v) -> Optional<String>
+				{
+					using V = std::decay_t<decltype(v)>;
+					if constexpr (std::same_as<V, String>)
+					{
+						return v;
+					}
+					else
+					{
+						return Format(v);
+					}
+				}, paramValue);
+		}
+		else if constexpr (std::is_enum_v<T>)
+		{
+			if (auto v = GetParamValueAs<T>(paramValue))
+			{
+				return *v;
+			}
+			return none;
+		}
+		else if constexpr (std::same_as<T, Color>)
+		{
+			auto v = GetParamValueAs<Color>(paramValue);
+			if (!v)
+			{
+				return none;
+			}
+			if (mode == ParamRefMode::Normal)
+			{
+				return *v;
+			}
+			const ColorF bf{ base };
+			const ColorF vf{ *v };
+			ColorF result = bf;
+			switch (mode)
+			{
+			case ParamRefMode::Add:
+				result = ColorF{ bf.r + vf.r, bf.g + vf.g, bf.b + vf.b, bf.a + vf.a };
+				break;
+			case ParamRefMode::Subtract:
+				result = ColorF{ bf.r - vf.r, bf.g - vf.g, bf.b - vf.b, bf.a - vf.a };
+				break;
+			case ParamRefMode::Multiply:
+				result = ColorF{ bf.r * vf.r, bf.g * vf.g, bf.b * vf.b, bf.a * vf.a };
+				break;
+			default:
+				return *v;
+			}
+			return ColorF{
+				Math::Saturate(result.r),
+				Math::Saturate(result.g),
+				Math::Saturate(result.b),
+				Math::Saturate(result.a),
+			}.toColor();
+		}
+		else if constexpr (std::is_arithmetic_v<T> || std::same_as<T, Vec2> || std::same_as<T, LRTB>)
+		{
+			auto v = GetParamValueAs<T>(paramValue);
+			if (!v)
+			{
+				return none;
+			}
+			switch (mode)
+			{
+			case ParamRefMode::Add:
+				return static_cast<T>(base + *v);
+			case ParamRefMode::Subtract:
+				return static_cast<T>(base - *v);
+			case ParamRefMode::Multiply:
+				return static_cast<T>(base * *v);
+			case ParamRefMode::Normal:
+			default:
+				return *v;
+			}
+		}
+		else
+		{
+			return none;
+		}
+	}
 }

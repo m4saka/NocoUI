@@ -18,9 +18,13 @@ namespace noco::editor
 		std::shared_ptr<Node> m_comboBox;
 		std::shared_ptr<Label> m_comboLabel;
 		std::shared_ptr<Label> m_valueLabel;
+		std::shared_ptr<Label> m_appliedValueLabel;
 		std::shared_ptr<Node> m_warningNode;
-		
+		std::shared_ptr<Node> m_modeComboBox;
+		std::shared_ptr<Label> m_modeComboLabel;
+
 		String m_selectedParamName;
+		ParamRefMode m_selectedMode = ParamRefMode::Normal;
 		Array<std::pair<String, ParamValue>> m_availableParams;
 		
 		// ダイアログ管理
@@ -47,9 +51,12 @@ namespace noco::editor
 				return;
 			}
 			
+			// String型は任意の型のパラメータを受け付ける
+			const bool acceptAnyType = *propertyType == ParamType::String;
+
 			for (const auto& [name, value] : m_canvas->params())
 			{
-				if (GetParamType(value) == *propertyType)
+				if (acceptAnyType || GetParamType(value) == *propertyType)
 				{
 					m_availableParams.push_back({name, value});
 				}
@@ -78,13 +85,14 @@ namespace noco::editor
 			, m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
 			, m_selectedParamName(m_pProperty->paramRef())
+			, m_selectedMode(m_pProperty->paramRefMode())
 			, m_dialogOpener(dialogOpener)
 		{
 		}
 		
 		double dialogWidth() const override
 		{
-			return 400;
+			return 480;
 		}
 		
 		Array<DialogButtonDesc> buttonDescs() const override
@@ -161,7 +169,7 @@ namespace noco::editor
 				U"ComboLabel",
 				InlineRegion
 				{
-					.sizeDelta = Vec2{ 100, 32 },
+					.sizeDelta = Vec2{ 130, 32 },
 				});
 			comboLabelNode->emplaceComponent<Label>(
 				U"パラメータ:",
@@ -225,31 +233,107 @@ namespace noco::editor
 				IsDefaultButtonYN::No,
 				12));
 			
-			// 値表示
+			// モード選択コンボボックス
+			const auto modeRow = contentRootNode->emplaceChild(
+				U"ModeRow",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 32 },
+					.margin = LRTB{ 0, 0, 4, 4 },
+				});
+			modeRow->setChildrenLayout(HorizontalLayout{ .spacing = 8 });
+
+			const auto modeLabelNode = modeRow->emplaceChild(
+				U"ModeLabel",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 130, 32 },
+				});
+			modeLabelNode->emplaceComponent<Label>(
+				U"反映モード:",
+				U"",
+				14,
+				Palette::White,
+				HorizontalAlign::Right,
+				VerticalAlign::Middle);
+
+			m_modeComboBox = modeRow->emplaceChild(
+				U"ModeComboBox",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ 0, 26 },
+					.flexibleWeight = 1.0,
+				});
+
+			// 選択肢が1つ以下の場合は変更不可なのでグレーアウト
+			const bool modeSelectable = m_pProperty && m_pProperty->availableParamRefModes().size() > 1;
+			if (!modeSelectable)
+			{
+				m_modeComboBox->setInteractable(false);
+			}
+
+			m_modeComboBox->emplaceComponent<RectRenderer>(
+				PropertyValue<Color>{ Color{ 26, 26, 26, 204 } }.withDisabled(Color{ 51, 51, 51, 204 }).withSmoothTime(0.05),
+				PropertyValue<Color>{ Color{ 255, 255, 255, 102 } }.withHovered(Color{ 255, 255, 255, 153 }).withSmoothTime(0.05),
+				1.0, 0.0, 4.0);
+
+			m_modeComboLabel = m_modeComboBox->emplaceComponent<Label>(
+				String{ ParamRefModeToDisplayString(m_selectedMode) },
+				U"",
+				14,
+				PropertyValue<Color>{ Palette::White }.withDisabled(Color{ 153, 153, 153 }),
+				HorizontalAlign::Left,
+				VerticalAlign::Middle,
+				LRTB{ 8, 25, 0, 0 })
+				->setSizingMode(LabelSizingMode::AutoShrink);
+
+			if (modeSelectable)
+			{
+				m_modeComboBox->emplaceComponent<Label>(
+					U"▼",
+					U"",
+					10,
+					Palette::White,
+					HorizontalAlign::Right,
+					VerticalAlign::Middle,
+					LRTB{ 5, 7, 5, 5 });
+
+				m_modeComboBox->emplaceComponent<UpdaterComponent>([this, dialogContextMenu](const std::shared_ptr<Node>& node)
+				{
+					if (node->isClicked())
+					{
+						onModeComboBoxClick(dialogContextMenu);
+					}
+				});
+			}
+
+			// パラメータの値表示
 			const auto valueRow = contentRootNode->emplaceChild(
 				U"ValueRow",
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 1, 0 },
 					.sizeDelta = Vec2{ 0, 32 },
-					.margin = LRTB{ 0, 0, 4, 8 },
+					.margin = LRTB{ 0, 0, 4, 4 },
 				});
 			valueRow->setChildrenLayout(HorizontalLayout{ .spacing = 8 });
-			
+
 			const auto valueLabelNode = valueRow->emplaceChild(
 				U"ValueLabel",
 				InlineRegion
 				{
-					.sizeDelta = Vec2{ 100, 32 },
+					.sizeDelta = Vec2{ 130, 32 },
 				});
 			valueLabelNode->emplaceComponent<Label>(
-				U"現在の値:",
+				U"パラメータの値:",
 				U"",
 				14,
 				Palette::White,
 				HorizontalAlign::Right,
 				VerticalAlign::Middle);
-			
+
 			const auto valueDisplayNode = valueRow->emplaceChild(
 				U"ValueDisplay",
 				InlineRegion
@@ -259,23 +343,63 @@ namespace noco::editor
 					.flexibleWeight = 1.0,
 				});
 			valueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.05, 0.8 }, ColorF{ 0.5, 0.4 }, 1.0, 0.0, 4.0);
-			
-			// 現在選択されているパラメータの値を表示
-			String valueText = U"";
-			if (!m_selectedParamName.isEmpty())
-			{
-				if (const auto param = m_canvas->paramValueOpt(m_selectedParamName))
-				{
-					valueText = getParamValueString(*param);
-				}
-			}
+
 			m_valueLabel = valueDisplayNode->emplaceComponent<Label>(
-				valueText,
+				U"",
 				U"",
 				14,
 				ColorF{ 0.9, 0.9, 0.9 },
 				HorizontalAlign::Center,
+				VerticalAlign::Middle,
+				LRTB{ 4, 4, 0, 0 })
+				->setSizingMode(LabelSizingMode::AutoShrink);
+
+			// 反映後の値表示
+			const auto appliedValueRow = contentRootNode->emplaceChild(
+				U"AppliedValueRow",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 1, 0 },
+					.sizeDelta = Vec2{ 0, 32 },
+					.margin = LRTB{ 0, 0, 4, 8 },
+				});
+			appliedValueRow->setChildrenLayout(HorizontalLayout{ .spacing = 8 });
+
+			const auto appliedValueLabelNode = appliedValueRow->emplaceChild(
+				U"AppliedValueLabel",
+				InlineRegion
+				{
+					.sizeDelta = Vec2{ 130, 32 },
+				});
+			appliedValueLabelNode->emplaceComponent<Label>(
+				U"反映後の値:",
+				U"",
+				14,
+				Palette::White,
+				HorizontalAlign::Right,
 				VerticalAlign::Middle);
+
+			const auto appliedValueDisplayNode = appliedValueRow->emplaceChild(
+				U"AppliedValueDisplay",
+				InlineRegion
+				{
+					.sizeRatio = Vec2{ 0, 0 },
+					.sizeDelta = Vec2{ 0, 26 },
+					.flexibleWeight = 1.0,
+				});
+			appliedValueDisplayNode->emplaceComponent<RectRenderer>(ColorF{ 0.05, 0.8 }, ColorF{ 0.5, 0.4 }, 1.0, 0.0, 4.0);
+
+			m_appliedValueLabel = appliedValueDisplayNode->emplaceComponent<Label>(
+				U"",
+				U"",
+				14,
+				ColorF{ 0.9, 0.9, 0.9 },
+				HorizontalAlign::Center,
+				VerticalAlign::Middle,
+				LRTB{ 4, 4, 0, 0 })
+				->setSizingMode(LabelSizingMode::AutoShrink);
+
+			updateValueLabels();
 			
 			// 利用可能なパラメータがない場合の警告
 			m_warningNode = contentRootNode->emplaceChild(
@@ -337,21 +461,68 @@ namespace noco::editor
 		void selectParam(const String& paramName)
 		{
 			m_selectedParamName = paramName;
-			
+
 			// コンボボックスの表示を更新
 			const String displayText = paramName.isEmpty() ? U"(なし)" : paramName;
 			m_comboLabel->setText(displayText);
-			
-			// 値表示を更新
-			String valueText = U"";
-			if (!paramName.isEmpty())
+
+			updateValueLabels();
+		}
+
+		void updateValueLabels()
+		{
+			if (m_selectedParamName.isEmpty())
 			{
-				if (const auto param = m_canvas->paramValueOpt(paramName))
-				{
-					valueText = getParamValueString(*param);
-				}
+				m_valueLabel->setText(U"");
+				m_appliedValueLabel->setText(U"");
+				return;
 			}
-			m_valueLabel->setText(valueText);
+			const auto param = m_canvas->paramValueOpt(m_selectedParamName);
+			if (!param)
+			{
+				m_valueLabel->setText(U"");
+				m_appliedValueLabel->setText(U"");
+				return;
+			}
+			m_valueLabel->setText(getParamValueString(*param));
+
+			if (m_pProperty)
+			{
+				const auto applied = m_pProperty->previewParamRefAppliedString(*param, m_selectedMode);
+				m_appliedValueLabel->setText(applied.value_or(U"(適用不可)"));
+			}
+			else
+			{
+				m_appliedValueLabel->setText(U"");
+			}
+		}
+
+		void onModeComboBoxClick(const std::shared_ptr<ContextMenu>& dialogContextMenu)
+		{
+			if (!m_pProperty)
+			{
+				return;
+			}
+			const Array<ParamRefMode> candidates = m_pProperty->availableParamRefModes();
+			Array<MenuElement> menuElements;
+			for (const auto mode : candidates)
+			{
+				const ParamRefMode modeCopy = mode;
+				menuElements.push_back(MenuItem{
+					.text = String{ ParamRefModeToDisplayString(mode) },
+					.hotKeyText = U"",
+					.mnemonicInput = none,
+					.onClick = [this, modeCopy]() { selectMode(modeCopy); }
+				});
+			}
+			dialogContextMenu->show(m_modeComboBox->regionRect().bl(), menuElements);
+		}
+
+		void selectMode(ParamRefMode mode)
+		{
+			m_selectedMode = mode;
+			m_modeComboLabel->setText(String{ ParamRefModeToDisplayString(mode) });
+			updateValueLabels();
 		}
 		
 		void onCreateNewParamButtonClick()
@@ -387,7 +558,11 @@ namespace noco::editor
 			if (resultButtonText == U"OK")
 			{
 				SetPropertyParamRef(m_pProperty, m_selectedParamName);
-				
+				if (!m_selectedParamName.isEmpty())
+				{
+					SetPropertyParamRefMode(m_pProperty, m_selectedMode);
+				}
+
 				if (m_onComplete)
 				{
 					m_onComplete();

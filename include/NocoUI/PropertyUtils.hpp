@@ -49,8 +49,19 @@ namespace noco
 		{
 			return false;
 		}
-		
+
 		prop->setParamRef(paramRef);
+		return true;
+	}
+
+	/// @brief IPropertyのparamRefモードを設定
+	inline bool SetPropertyParamRefMode(IProperty* prop, ParamRefMode mode)
+	{
+		if (!prop)
+		{
+			return false;
+		}
+		prop->setParamRefMode(mode);
 		return true;
 	}
 

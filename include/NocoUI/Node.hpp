@@ -770,7 +770,7 @@ namespace noco
 			m_interactable.setParamRef(paramRef);
 			return shared_from_this();
 		}
-		
+
 		/// @brief インタラクション可能かどうかのプロパティの参照を取得
 		/// @return プロパティの参照
 		[[nodiscard]]
@@ -814,7 +814,7 @@ namespace noco
 			m_activeSelf.setParamRef(paramRef);
 			return shared_from_this();
 		}
-		
+
 		/// @brief ノードがアクティブ(表示状態)かどうかのプロパティの参照を取得
 		/// @return プロパティの参照
 		[[nodiscard]]
@@ -1042,7 +1042,7 @@ namespace noco
 			m_styleState.setParamRef(paramRef);
 			return shared_from_this();
 		}
-		
+
 		/// @brief スタイルステート名のプロパティの参照を取得
 		/// @return プロパティの参照
 		[[nodiscard]]

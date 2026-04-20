@@ -968,3 +968,196 @@ TEST_CASE("ParamValueFromParamObjectJSON type checking", "[Param]")
 		REQUIRE(scaleValue[1].get<double>() == Approx(2.0));
 	}
 }
+
+TEST_CASE("Parameter reference modes", "[Param]")
+{
+	SECTION("Bool Inverted")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		canvas->setParamValue(U"visible", true);
+		auto& prop = node->activeSelfProperty();
+		prop.setParamRef(U"visible");
+		prop.setParamRefMode(ParamRefMode::Inverted);
+
+		canvas->update();
+		REQUIRE(prop.value() == false);
+
+		canvas->setParamValue(U"visible", false);
+		canvas->update();
+		REQUIRE(prop.value() == true);
+	}
+
+	SECTION("Number Add/Subtract/Multiply")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"Text");
+		label->setFontSize(20.0);
+		auto* prop = dynamic_cast<SmoothProperty<double>*>(label->getPropertyByName(U"fontSize"));
+		REQUIRE(prop != nullptr);
+		canvas->setParamValue(U"delta", 5.0);
+		prop->setParamRef(U"delta");
+
+		prop->setParamRefMode(ParamRefMode::Add);
+		canvas->update();
+		REQUIRE(prop->value() == Approx(25.0));
+
+		prop->setParamRefMode(ParamRefMode::Subtract);
+		canvas->update();
+		REQUIRE(prop->value() == Approx(15.0));
+
+		prop->setParamRefMode(ParamRefMode::Multiply);
+		canvas->update();
+		REQUIRE(prop->value() == Approx(100.0));
+
+		prop->setParamRefMode(ParamRefMode::Normal);
+		canvas->update();
+		REQUIRE(prop->value() == Approx(5.0));
+	}
+
+	SECTION("Color Multiply clamps to 0-1")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto rect = node->emplaceComponent<RectRenderer>();
+		rect->setFillColor(Color{ 200, 100, 50, 255 });
+		auto* prop = dynamic_cast<SmoothProperty<Color>*>(rect->getPropertyByName(U"fillColor"));
+		REQUIRE(prop != nullptr);
+
+		canvas->setParamValue(U"tint", Color{ 128, 128, 255, 255 });
+		prop->setParamRef(U"tint");
+		prop->setParamRefMode(ParamRefMode::Multiply);
+
+		canvas->update();
+		const Color result = prop->value();
+		// 0-1空間で要素ごと乗算 → 255空間に戻す
+		// R: 200/255 * 128/255 ≒ 0.3936 → 100
+		// G: 100/255 * 128/255 ≒ 0.1968 → 50
+		// B: 50/255 * 255/255  = 0.196  → 50
+		REQUIRE(result.r == 100);
+		REQUIRE(result.g == 50);
+		REQUIRE(result.b == 50);
+	}
+
+	SECTION("Vec2 Add")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		node->transform().setTranslate(Vec2{ 10, 20 });
+		canvas->setParamValue(U"offset", Vec2{ 5, 7 });
+		node->transform().translate().setParamRef(U"offset");
+		node->transform().translate().setParamRefMode(ParamRefMode::Add);
+
+		canvas->update();
+		REQUIRE(node->transform().translate().value() == Vec2{ 15, 27 });
+	}
+
+	SECTION("String Format")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"HP: {}");
+		auto* prop = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(prop != nullptr);
+
+		canvas->setParamValue(U"hp", U"100");
+		prop->setParamRef(U"hp");
+		prop->setParamRefMode(ParamRefMode::Format);
+
+		canvas->update();
+		REQUIRE(prop->value() == U"HP: 100");
+
+		// プレースホルダーが無い場合もエラーにならずbaseを返す
+		prop->setPropertyValue(PropertyValue<String>{ U"no placeholder" });
+		canvas->update();
+		REQUIRE(prop->value() == U"no placeholder");
+	}
+
+	SECTION("String Format numbered placeholder")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"{0} / {0}");
+		auto* prop = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(prop != nullptr);
+
+		canvas->setParamValue(U"v", U"X");
+		prop->setParamRef(U"v");
+		prop->setParamRefMode(ParamRefMode::Format);
+
+		canvas->update();
+		REQUIRE(prop->value() == U"X / X");
+	}
+
+	SECTION("Mode serializes and restores")
+	{
+		auto canvas1 = Canvas::Create();
+		auto node1 = Node::Create();
+		canvas1->addChild(node1);
+
+		auto label = node1->emplaceComponent<Label>(U"HP: {}");
+		auto* textProp = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(textProp != nullptr);
+		canvas1->setParamValue(U"hp", U"50");
+		textProp->setParamRef(U"hp");
+		textProp->setParamRefMode(ParamRefMode::Format);
+
+		const JSON json = canvas1->toJSON();
+
+		auto canvas2 = Canvas::Create();
+		canvas2->tryReadFromJSON(json);
+		canvas2->update();
+
+		auto restoredNode = canvas2->children()[0];
+		auto restoredLabel = restoredNode->getComponent<Label>();
+		REQUIRE(restoredLabel != nullptr);
+		auto* restoredProp = dynamic_cast<Property<String>*>(restoredLabel->getPropertyByName(U"text"));
+		REQUIRE(restoredProp != nullptr);
+		REQUIRE(restoredProp->paramRef() == U"hp");
+		REQUIRE(restoredProp->paramRefMode() == ParamRefMode::Format);
+		REQUIRE(restoredProp->value() == U"HP: 50");
+	}
+
+	SECTION("String Normal accepts non-String params via Format()")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"default");
+		auto* prop = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(prop != nullptr);
+
+		// Number型パラメータをStringプロパティへNormalモードで参照
+		canvas->setParamValue(U"score", 42.0);
+		prop->setParamRef(U"score");
+		prop->setParamRefMode(ParamRefMode::Normal);
+		canvas->update();
+		REQUIRE(prop->value() == Format(42.0));
+
+		// Vec2型でも文字列化される
+		canvas->setParamValue(U"pos", Vec2{ 1.5, 2.5 });
+		prop->setParamRef(U"pos");
+		canvas->update();
+		REQUIRE(prop->value() == Format(Vec2{ 1.5, 2.5 }));
+
+		// Bool型でも文字列化される
+		canvas->setParamValue(U"flag", true);
+		prop->setParamRef(U"flag");
+		canvas->update();
+		REQUIRE(prop->value() == Format(true));
+	}
+}

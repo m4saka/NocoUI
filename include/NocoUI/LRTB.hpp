@@ -121,7 +121,31 @@ namespace noco
 				.bottom = bottom + other.bottom,
 			};
 		}
-		
+
+		[[nodiscard]]
+		LRTB operator-(const LRTB& other) const
+		{
+			return LRTB
+			{
+				.left = left - other.left,
+				.right = right - other.right,
+				.top = top - other.top,
+				.bottom = bottom - other.bottom,
+			};
+		}
+
+		[[nodiscard]]
+		LRTB operator*(const LRTB& other) const
+		{
+			return LRTB
+			{
+				.left = left * other.left,
+				.right = right * other.right,
+				.top = top * other.top,
+				.bottom = bottom * other.bottom,
+			};
+		}
+
 		[[nodiscard]]
 		LRTB operator*(double weight) const
 		{

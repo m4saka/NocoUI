@@ -55,6 +55,7 @@ namespace noco
 		PropertyEditType m_editType;
 		PropertyVariant m_propertyValue;
 		String m_paramRef;
+		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
 
 	public:
 		PlaceholderProperty(const String& name, PropertyEditType editType = PropertyEditType::Text)
@@ -82,10 +83,14 @@ namespace noco
 				using T = std::decay_t<decltype(propValue)>;
 				json[m_name] = propValue.toJSON();
 			}, m_propertyValue);
-			
+
 			if (!m_paramRef.isEmpty())
 			{
 				json[U"{}_paramRef"_fmt(m_name)] = m_paramRef;
+				if (m_paramRefMode != ParamRefMode::Normal)
+				{
+					json[m_name + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+				}
 			}
 		}
 
@@ -131,6 +136,22 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+			}
+			const String paramRefModeKey = m_name + U"_paramRefMode";
+			if (json.contains(paramRefModeKey))
+			{
+				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
+				{
+					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, availableParamRefModes(), m_name);
+				}
+				else
+				{
+					m_paramRefMode = ParamRefMode::Normal;
+				}
+			}
+			else
+			{
+				m_paramRefMode = ParamRefMode::Normal;
 			}
 		}
 
@@ -277,7 +298,59 @@ namespace noco
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef.clear();
+				m_paramRefMode = ParamRefMode::Normal;
 			}
+		}
+
+		[[nodiscard]]
+		ParamRefMode paramRefMode() const override
+		{
+			return m_paramRefMode;
+		}
+
+		void setParamRefMode(ParamRefMode mode) override
+		{
+			m_paramRefMode = mode;
+		}
+
+		[[nodiscard]]
+		Array<ParamRefMode> availableParamRefModes() const override
+		{
+			switch (m_editType)
+			{
+			case PropertyEditType::Bool:
+				return AvailableParamRefModesFor<bool>();
+			case PropertyEditType::Number:
+				return AvailableParamRefModesFor<double>();
+			case PropertyEditType::Text:
+			case PropertyEditType::Enum:
+				return AvailableParamRefModesFor<String>();
+			case PropertyEditType::Color:
+				return AvailableParamRefModesFor<Color>();
+			case PropertyEditType::Vec2:
+				return AvailableParamRefModesFor<Vec2>();
+			case PropertyEditType::LRTB:
+				return AvailableParamRefModesFor<LRTB>();
+			}
+			return { ParamRefMode::Normal };
+		}
+
+		[[nodiscard]]
+		Optional<String> previewParamRefAppliedString(const ParamValue& paramValue, ParamRefMode mode) const override
+		{
+			return std::visit([&](const auto& propValue) -> Optional<String>
+				{
+					using T = std::decay_t<decltype(propValue.defaultValue())>;
+					if constexpr (IsParamSupportedType<T>())
+					{
+						const T base = propValue.defaultValue();
+						if (auto resolved = ApplyParamMode<T>(base, paramValue, mode))
+						{
+							return Format(*resolved);
+						}
+					}
+					return none;
+				}, m_propertyValue);
 		}
 
 		void clearCurrentFrameOverride() override
@@ -340,9 +413,9 @@ namespace noco
 						continue;
 					}
 					
-					if (keyStr.ends_with(U"_paramRef"))
+					if (keyStr.ends_with(U"_paramRef") || keyStr.ends_with(U"_paramRefMode"))
 					{
-						// パラメータ参照はreadFromJSON側で処理されるためスキップ
+						// パラメータ参照とparamRefモードはreadFromJSON側で処理されるためスキップ
 						continue;
 					}
 					
@@ -471,9 +544,9 @@ namespace noco
 						continue;
 					}
 					
-					if (keyStr.ends_with(U"_paramRef"))
+					if (keyStr.ends_with(U"_paramRef") || keyStr.ends_with(U"_paramRefMode"))
 					{
-						// パラメータ参照はreadFromJSON側で処理されるためスキップ
+						// パラメータ参照とparamRefモードはreadFromJSON側で処理されるためスキップ
 						continue;
 					}
 					
