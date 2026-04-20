@@ -272,9 +272,9 @@ namespace noco::editor
 					// SubCanvasの紐付けをチェック
 					if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 					{
-						for (const auto& childParamName : subCanvas->listChildParamsBoundTo(paramName))
+						for (const auto& subCanvasParamName : subCanvas->getSubCanvasParamsBoundTo(paramName))
 						{
-							references.emplace_back(nodeName, U"SubCanvas", U"binding({})"_fmt(childParamName));
+							references.emplace_back(nodeName, U"SubCanvas", U"binding({})"_fmt(subCanvasParamName));
 						}
 					}
 				}

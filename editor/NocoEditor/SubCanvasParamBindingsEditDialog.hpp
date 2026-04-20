@@ -25,8 +25,8 @@ namespace noco::editor
 
 		struct BindingInfo
 		{
-			String childParamName;
-			ParamType childParamType;
+			String subCanvasParamName;
+			ParamType subCanvasParamType;
 			std::shared_ptr<Node> rowNode;
 			std::shared_ptr<Node> comboBoxNode;
 			std::shared_ptr<Label> comboLabel;
@@ -65,9 +65,9 @@ namespace noco::editor
 				return;
 			}
 
-			const auto& childParams = m_targetCanvas->params();
+			const auto& subCanvasParams = m_targetCanvas->params();
 
-			if (childParams.empty())
+			if (subCanvasParams.empty())
 			{
 				m_dialogState = DialogState::NoParams;
 				return;
@@ -81,26 +81,26 @@ namespace noco::editor
 			}
 
 			// 子Canvasのパラメータ一覧をソート
-			Array<std::pair<String, ParamValue>> sortedChildParams;
-			for (const auto& [name, value] : childParams)
+			Array<std::pair<String, ParamValue>> sortedSubCanvasParams;
+			for (const auto& [name, value] : subCanvasParams)
 			{
-				sortedChildParams.emplace_back(name, value);
+				sortedSubCanvasParams.emplace_back(name, value);
 			}
-			sortedChildParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
+			sortedSubCanvasParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 
 			// 親Canvasのパラメータ
 			const auto& parentParams = m_parentCanvas->params();
 
-			for (const auto& [name, value] : sortedChildParams)
+			for (const auto& [name, value] : sortedSubCanvasParams)
 			{
 				BindingInfo info;
-				info.childParamName = name;
-				info.childParamType = GetParamType(value);
+				info.subCanvasParamName = name;
+				info.subCanvasParamType = GetParamType(value);
 
 				// 型フィルタリングで利用可能な親パラメータを収集
 				for (const auto& [parentName, parentValue] : parentParams)
 				{
-					if (GetParamType(parentValue) == info.childParamType)
+					if (GetParamType(parentValue) == info.subCanvasParamType)
 					{
 						info.availableParentParams.push_back({ parentName, parentValue });
 					}
@@ -212,15 +212,15 @@ namespace noco::editor
 				});
 			headerRowNode->setChildrenLayout(HorizontalLayout{ .spacing = 8, .padding = LRTB{ 8, 0, 0, 0 } });
 
-			const auto childHeaderNode = headerRowNode->emplaceChild(
-				U"ChildHeader",
+			const auto subCanvasHeaderNode = headerRowNode->emplaceChild(
+				U"SubCanvasHeader",
 				InlineRegion
 				{
 					.sizeRatio = Vec2{ 0, 1 },
 					.sizeDelta = Vec2{ 200, 0 },
 				},
 				IsHitTargetYN::No);
-			childHeaderNode->emplaceComponent<Label>(
+			subCanvasHeaderNode->emplaceComponent<Label>(
 				U"子Canvasのパラメータ",
 				U"",
 				13,
@@ -287,7 +287,7 @@ namespace noco::editor
 				{
 					if (!info.selectedParentParamName.isEmpty())
 					{
-						bindingsJSON[info.childParamName] = info.selectedParentParamName;
+						bindingsJSON[info.subCanvasParamName] = info.selectedParentParamName;
 					}
 				}
 

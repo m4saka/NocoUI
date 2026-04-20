@@ -5382,15 +5382,15 @@ namespace noco::editor
 						IsHitTargetYN::No);
 					bindingsHeaderNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
 
-					auto childHeaderNode = bindingsHeaderNode->emplaceChild(
-						U"ChildHeader",
+					auto subCanvasHeaderNode = bindingsHeaderNode->emplaceChild(
+						U"SubCanvasHeader",
 						InlineRegion
 						{
 							.sizeRatio = Vec2{ 0, 1 },
 							.sizeDelta = Vec2{ 150, 0 },
 						},
 						IsHitTargetYN::No);
-					childHeaderNode->emplaceComponent<Label>(
+					subCanvasHeaderNode->emplaceComponent<Label>(
 						U"子Canvasパラメータ",
 						U"",
 						11,

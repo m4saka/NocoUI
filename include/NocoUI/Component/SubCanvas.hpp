@@ -174,6 +174,6 @@ namespace noco
 		/// @param parentParamName 親Canvasのパラメータ名
 		/// @return 紐付けで参照している子Canvasのパラメータ名の配列
 		[[nodiscard]]
-		Array<String> listChildParamsBoundTo(StringView parentParamName) const;
+		Array<String> getSubCanvasParamsBoundTo(StringView parentParamName) const;
 	};
 }

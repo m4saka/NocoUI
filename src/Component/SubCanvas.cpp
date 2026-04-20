@@ -167,11 +167,11 @@ namespace noco
 					const JSON json = JSON::Parse(currentParamBindingsJSON);
 					if (json.isObject())
 					{
-						for (const auto& [childParamName, parentParamNameJSON] : json)
+						for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 						{
 							if (parentParamNameJSON.isString())
 							{
-								m_paramBindings[childParamName] = parentParamNameJSON.getString();
+								m_paramBindings[subCanvasParamName] = parentParamNameJSON.getString();
 							}
 						}
 					}
@@ -185,25 +185,25 @@ namespace noco
 				if (auto parentCanvas = node->containedCanvas())
 				{
 					const auto& parentParams = parentCanvas->params();
-					const auto& childParams = m_canvas->params();
-					for (const auto& [childParamName, parentParamName] : m_paramBindings)
+					const auto& subCanvasParams = m_canvas->params();
+					for (const auto& [subCanvasParamName, parentParamName] : m_paramBindings)
 					{
 						const auto parentIt = parentParams.find(parentParamName);
 						if (parentIt == parentParams.end())
 						{
 							continue;
 						}
-						const auto childIt = childParams.find(childParamName);
-						if (childIt == childParams.end())
+						const auto subCanvasIt = subCanvasParams.find(subCanvasParamName);
+						if (subCanvasIt == subCanvasParams.end())
 						{
 							continue;
 						}
 						// 型不一致の場合は子paramの型を壊さないようスキップ
-						if (GetParamType(parentIt->second) != GetParamType(childIt->second))
+						if (GetParamType(parentIt->second) != GetParamType(subCanvasIt->second))
 						{
 							continue;
 						}
-						m_canvas->setParamValue(childParamName, parentIt->second);
+						m_canvas->setParamValue(subCanvasParamName, parentIt->second);
 					}
 				}
 			}
@@ -297,7 +297,7 @@ namespace noco
 			return 0;
 		}
 		size_t count = 0;
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == paramName)
 			{
@@ -320,14 +320,14 @@ namespace noco
 		}
 		JSON newJSON = JSON::Parse(U"{}");
 		bool changed = false;
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == paramName)
 			{
 				changed = true;
 				continue;
 			}
-			newJSON[childParamName] = parentParamNameJSON;
+			newJSON[subCanvasParamName] = parentParamNameJSON;
 		}
 		if (changed)
 		{
@@ -348,16 +348,16 @@ namespace noco
 		}
 		JSON newJSON = JSON::Parse(U"{}");
 		bool changed = false;
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == oldName)
 			{
-				newJSON[childParamName] = String{ newName };
+				newJSON[subCanvasParamName] = String{ newName };
 				changed = true;
 			}
 			else
 			{
-				newJSON[childParamName] = parentParamNameJSON;
+				newJSON[subCanvasParamName] = parentParamNameJSON;
 			}
 		}
 		if (changed)
@@ -376,7 +376,7 @@ namespace noco
 		HashSet<String> clearedParamsSet;
 		JSON newJSON = JSON::Parse(U"{}");
 		bool changed = false;
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (!parentParamNameJSON.isString())
 			{
@@ -390,7 +390,7 @@ namespace noco
 				changed = true;
 				continue;
 			}
-			newJSON[childParamName] = parentParamNameJSON;
+			newJSON[subCanvasParamName] = parentParamNameJSON;
 		}
 		if (changed)
 		{
@@ -410,7 +410,7 @@ namespace noco
 		{
 			return;
 		}
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (parentParamNameJSON.isString())
 			{
@@ -423,7 +423,7 @@ namespace noco
 		}
 	}
 
-	Array<String> SubCanvas::listChildParamsBoundTo(StringView parentParamName) const
+	Array<String> SubCanvas::getSubCanvasParamsBoundTo(StringView parentParamName) const
 	{
 		if (parentParamName.isEmpty())
 		{
@@ -435,11 +435,11 @@ namespace noco
 			return {};
 		}
 		Array<String> result;
-		for (const auto& [childParamName, parentParamNameJSON] : json)
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
 			if (parentParamNameJSON.isString() && parentParamNameJSON.getString() == parentParamName)
 			{
-				result.push_back(childParamName);
+				result.push_back(subCanvasParamName);
 			}
 		}
 		return result;

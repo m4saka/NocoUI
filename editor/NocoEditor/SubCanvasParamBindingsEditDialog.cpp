@@ -36,7 +36,7 @@ namespace noco::editor
 			},
 			IsHitTargetYN::No);
 		labelNode->emplaceComponent<Label>(
-			U"{} [{}]"_fmt(info.childParamName, ParamTypeToString(info.childParamType)),
+			U"{} [{}]"_fmt(info.subCanvasParamName, ParamTypeToString(info.subCanvasParamType)),
 			U"",
 			14,
 			Palette::White,
@@ -135,7 +135,7 @@ namespace noco::editor
 					std::make_shared<AddParamDialog>(
 						m_parentCanvas,
 						std::function<void()>{},
-						bindingInfo.childParamType,
+						bindingInfo.subCanvasParamType,
 						U"",
 						[this, index](const String& createdParamName)
 						{
@@ -151,7 +151,7 @@ namespace noco::editor
 							selectParentParam(index, createdParamName);
 						},
 						m_dialogOpener,
-						bindingInfo.childParamName));
+						bindingInfo.subCanvasParamName));
 			},
 		});
 
