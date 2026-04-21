@@ -23,7 +23,7 @@ namespace noco
 		/* NonSerialized */ String m_loadedAssetBasePath;
 		/* NonSerialized */ String m_appliedSerializedParamsJSON;
 		/* NonSerialized */ String m_appliedSerializedParamBindingsJSON;
-		/* NonSerialized */ HashTable<String, String> m_paramBindings;
+		/* NonSerialized */ HashTable<String, String> m_paramBindingMappingCache;
 
 		/// @brief Canvasファイルを読み込む
 		void loadCanvasInternal();

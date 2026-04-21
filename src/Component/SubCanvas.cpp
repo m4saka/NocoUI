@@ -129,6 +129,10 @@ namespace noco
 		m_canvas = canvas;
 		m_loadedPath = path;
 		m_loadedAssetBasePath = currentBasePath;
+
+		// Canvas読み込み後はパラメータ再反映が必要なのでクリア
+		m_appliedSerializedParamsJSON.clear();
+		m_appliedSerializedParamBindingsJSON.clear();
 	}
 
 	void SubCanvas::update(const std::shared_ptr<Node>& node)
@@ -161,7 +165,7 @@ namespace noco
 			const String& currentParamBindingsJSON = m_serializedParamBindingsJSON.value();
 			if (m_appliedSerializedParamBindingsJSON != currentParamBindingsJSON)
 			{
-				m_paramBindings.clear();
+				m_paramBindingMappingCache.clear();
 				if (!currentParamBindingsJSON.isEmpty() && currentParamBindingsJSON != U"{}")
 				{
 					const JSON json = JSON::Parse(currentParamBindingsJSON);
@@ -171,7 +175,7 @@ namespace noco
 						{
 							if (parentParamNameJSON.isString())
 							{
-								m_paramBindings[subCanvasParamName] = parentParamNameJSON.getString();
+								m_paramBindingMappingCache[subCanvasParamName] = parentParamNameJSON.getString();
 							}
 						}
 					}
@@ -180,13 +184,13 @@ namespace noco
 			}
 
 			// serializedParamBindingsJSONに従って親Canvasのパラメータを子Canvasに毎フレーム適用
-			if (!m_paramBindings.empty())
+			if (!m_paramBindingMappingCache.empty())
 			{
 				if (auto parentCanvas = node->containedCanvas())
 				{
 					const auto& parentParams = parentCanvas->params();
 					const auto& subCanvasParams = m_canvas->params();
-					for (const auto& [subCanvasParamName, parentParamName] : m_paramBindings)
+					for (const auto& [subCanvasParamName, parentParamName] : m_paramBindingMappingCache)
 					{
 						const auto parentIt = parentParams.find(parentParamName);
 						if (parentIt == parentParams.end())
