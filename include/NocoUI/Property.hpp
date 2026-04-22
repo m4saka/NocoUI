@@ -629,18 +629,26 @@ namespace noco
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 
-			// パラメータ参照を反映
+			// スムージング適用
+			if (skipSmoothing)
+			{
+				m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
+			}
+			else
+			{
+				m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
+			}
+
+			// パラメータ参照適用
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
-						if (auto resolved = ApplyParamMode<T>(base, it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamMode<T>(m_smoothing.currentValue(), it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = *resolved;
-							m_smoothing.setCurrentValue(*resolved);
 						}
 						else
 						{
@@ -658,18 +666,6 @@ namespace noco
 				{
 					// パラメータ参照がない場合はクリア
 					m_paramRefOverride.reset();
-				}
-			}
-
-			if (!m_paramRefOverride.has_value())
-			{
-				if (skipSmoothing)
-				{
-					m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
-				}
-				else
-				{
-					m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
 				}
 			}
 		}
@@ -1362,16 +1358,26 @@ namespace noco
 			m_interactionState = interactionState;
 			m_activeStyleStates = activeStyleStates;
 
-			// パラメータ参照を反映
+			// スムージング適用
+			const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
+			const ColorF targetColorF{ targetColor };
+			if (skipSmoothing)
+			{
+				m_smoothing.setCurrentValue(targetColorF);
+			}
+			else
+			{
+				m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
+			}
+
+			// パラメータ参照適用
 			if (!m_paramRef.isEmpty())
 			{
 				if (auto it = params.find(m_paramRef); it != params.end())
 				{
-					const Color base = m_propertyValue.value(interactionState, activeStyleStates);
-					if (auto applied = ApplyParamMode<Color>(base, it->second, m_paramRefMode))
+					if (auto applied = ApplyParamMode<Color>(Color{ m_smoothing.currentValue() }, it->second, m_paramRefMode))
 					{
 						m_paramRefOverride = *applied;
-						m_smoothing.setCurrentValue(ColorF{ *applied });
 					}
 					else
 					{
@@ -1389,21 +1395,6 @@ namespace noco
 			{
 				// パラメータ参照がない場合はクリア
 				m_paramRefOverride.reset();
-			}
-
-			if (!m_paramRefOverride.has_value())
-			{
-				const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
-				const ColorF targetColorF{ targetColor };
-
-				if (skipSmoothing)
-				{
-					m_smoothing.setCurrentValue(targetColorF);
-				}
-				else
-				{
-					m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
-				}
 			}
 		}
 
