@@ -7,6 +7,7 @@
 namespace noco
 {
 	class Canvas;
+	class Node;
 
 	/// @brief 入れ子でCanvas利用できるようにするためのコンポーネント
 	class SubCanvas : public SerializableComponentBase, public std::enable_shared_from_this<SubCanvas>
@@ -162,9 +163,9 @@ namespace noco
 		void replaceParamBindingRefs(StringView oldName, StringView newName);
 
 		/// @brief 有効なパラメータに含まれないパラメータ名を参照している紐付けをすべて削除
-		/// @param validParams 有効なパラメータのハッシュテーブル
+		/// @param node このコンポーネントが所属するノード(親Canvasのパラメータ取得に使用)
 		/// @return 削除したパラメータ参照の名前の配列
-		Array<String> removeInvalidParamBindingRefs(const HashTable<String, ParamValue>& validParams);
+		Array<String> removeInvalidParamBindingRefs(const Node& node);
 
 		/// @brief 紐付けで参照しているパラメータ名を列挙
 		/// @param pParamRefs 挿入先のハッシュセットのポインタ

@@ -1293,7 +1293,7 @@ namespace noco
 				// SubCanvasの無効な紐付けを解除
 				if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 				{
-					const auto clearedFromBindings = subCanvas->removeInvalidParamBindingRefs(m_params);
+					const auto clearedFromBindings = subCanvas->removeInvalidParamBindingRefs(*node);
 					for (const auto& paramName : clearedFromBindings)
 					{
 						clearedParamsSet.insert(paramName);

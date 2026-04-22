@@ -370,13 +370,19 @@ namespace noco
 		}
 	}
 
-	Array<String> SubCanvas::removeInvalidParamBindingRefs(const HashTable<String, ParamValue>& validParams)
+	Array<String> SubCanvas::removeInvalidParamBindingRefs(const Node& node)
 	{
+		const auto parentCanvas = node.containedCanvas();
+		if (!parentCanvas)
+		{
+			return {};
+		}
 		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
 		if (json.isEmpty())
 		{
 			return {};
 		}
+		const auto& validParams = parentCanvas->params();
 		HashSet<String> clearedParamsSet;
 		JSON newJSON = JSON::Parse(U"{}");
 		bool changed = false;
