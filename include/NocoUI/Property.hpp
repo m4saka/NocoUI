@@ -13,7 +13,8 @@ namespace noco
 	{
 		Text,
 		Bool,
-		Number,
+		Int,
+		Double,
 		Enum,
 		Vec2,
 		Color,
@@ -85,10 +86,15 @@ namespace noco
 		{
 			return PropertyEditType::LRTB;
 		}
-		else if constexpr (std::is_arithmetic_v<T> && !std::same_as<T, bool>)
+		else if constexpr (std::is_integral_v<T> && !std::same_as<T, bool>)
 		{
-			// int32, uint32, double等の数値型
-			return PropertyEditType::Number;
+			// int32, uint32等の整数型
+			return PropertyEditType::Int;
+		}
+		else if constexpr (std::is_floating_point_v<T>)
+		{
+			// float, double等の浮動小数点型
+			return PropertyEditType::Double;
 		}
 		else
 		{
@@ -104,8 +110,10 @@ namespace noco
 		{
 		case PropertyEditType::Bool:
 			return paramType == ParamType::Bool;
-		case PropertyEditType::Number:
-			return paramType == ParamType::Number;
+		case PropertyEditType::Int:
+		case PropertyEditType::Double:
+			// Int/Doubleプロパティは相互に受け付ける
+			return paramType == ParamType::Int || paramType == ParamType::Double;
 		case PropertyEditType::Text:
 			// Stringプロパティは任意の型をFormat()で文字列化して受け入れる
 			return paramType != ParamType::Unknown;

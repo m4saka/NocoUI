@@ -292,7 +292,7 @@ namespace noco
 		fnCheckAndClear(m_translate, PropertyEditType::Vec2);
 		fnCheckAndClear(m_scale, PropertyEditType::Vec2);
 		fnCheckAndClear(m_pivot, PropertyEditType::Vec2);
-		fnCheckAndClear(m_rotation, PropertyEditType::Number);
+		fnCheckAndClear(m_rotation, PropertyEditType::Double);
 		fnCheckAndClear(m_hitTestAffected, PropertyEditType::Bool);
 		fnCheckAndClear(m_color, PropertyEditType::Color);
 

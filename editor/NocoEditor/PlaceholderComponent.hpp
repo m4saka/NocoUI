@@ -20,7 +20,7 @@ namespace noco
 		}
 		else if (value.isNumber())
 		{
-			return PropertyEditType::Number;
+			return PropertyEditType::Double;
 		}
 		else if (value.isString())
 		{
@@ -44,6 +44,7 @@ namespace noco
 	private:
 		using PropertyVariant = std::variant<
 			PropertyValue<bool>,
+			PropertyValue<int32>,
 			PropertyValue<double>,
 			PropertyValue<String>,
 			PropertyValue<Color>,
@@ -110,7 +111,11 @@ namespace noco
 				m_propertyValue = PropertyValue<bool>::FromJSON(valueJson, false);
 				break;
 				
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+				m_propertyValue = PropertyValue<int32>::FromJSON(valueJson, 0);
+				break;
+
+			case PropertyEditType::Double:
 				m_propertyValue = PropertyValue<double>::FromJSON(valueJson, 0.0);
 				break;
 				
@@ -320,7 +325,9 @@ namespace noco
 			{
 			case PropertyEditType::Bool:
 				return AvailableParamRefModesFor<bool>();
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+				return AvailableParamRefModesFor<int32>();
+			case PropertyEditType::Double:
 				return AvailableParamRefModesFor<double>();
 			case PropertyEditType::Text:
 			case PropertyEditType::Enum:
@@ -366,7 +373,9 @@ namespace noco
 			{
 			case PropertyEditType::Bool:
 				return PropertyValue<bool>{ false };
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+				return PropertyValue<int32>{ 0 };
+			case PropertyEditType::Double:
 				return PropertyValue<double>{ 0.0 };
 			case PropertyEditType::Text:
 			case PropertyEditType::Enum:

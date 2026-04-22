@@ -15,6 +15,7 @@ namespace noco::editor
 		using PropertyDefaultValue = std::variant<
 			std::monostate,  // 値なし
 			bool,
+			int32,
 			double,
 			String,
 			Color,

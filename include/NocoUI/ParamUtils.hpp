@@ -46,7 +46,9 @@ namespace noco
 		{
 		case ParamType::Bool:
 			return StringToValueOr<bool>(value, false);
-		case ParamType::Number:
+		case ParamType::Int:
+			return StringToValueOr<int32>(value, int32{ 0 });
+		case ParamType::Double:
 			return StringToValueOr<double>(value, 0.0);
 		case ParamType::String:
 			return StringToValueOr<String>(value, String{});

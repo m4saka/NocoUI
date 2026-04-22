@@ -7,14 +7,15 @@
 namespace noco
 {
 	// パラメータ値の型定義
-	using ParamValue = std::variant<bool, double, String, Color, Vec2, LRTB>;
-	
+	using ParamValue = std::variant<bool, int32, double, String, Color, Vec2, LRTB>;
+
 	// UI表示用の型列挙
 	enum class ParamType : uint8
 	{
 		Unknown,
 		Bool,
-		Number, // 数値は全てdouble型で保持
+		Int, // 整数は全てint32型で保持
+		Double, // 浮動小数点は全てdouble型で保持
 		String,
 		Color, // 色は全てColor型で保持
 		Vec2,
@@ -28,8 +29,10 @@ namespace noco
 		{
 		case ParamType::Bool:
 			return U"Bool";
-		case ParamType::Number:
-			return U"Number";
+		case ParamType::Int:
+			return U"Int";
+		case ParamType::Double:
+			return U"Double";
 		case ParamType::String:
 			return U"String";
 		case ParamType::Color:
@@ -43,7 +46,7 @@ namespace noco
 			return U"Unknown";
 		}
 	}
-	
+
 	// ParamValueから型情報を取得
 	[[nodiscard]]
 	inline ParamType GetParamType(const ParamValue& value)
@@ -55,9 +58,13 @@ namespace noco
 				{
 					return ParamType::Bool;
 				}
-				else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+				else if constexpr (std::is_same_v<T, int32>)
 				{
-					return ParamType::Number;
+					return ParamType::Int;
+				}
+				else if constexpr (std::is_same_v<T, double>)
+				{
+					return ParamType::Double;
 				}
 				else if constexpr (std::is_same_v<T, String>)
 				{
@@ -81,7 +88,7 @@ namespace noco
 				}
 			}, value);
 	}
-	
+
 	// 型からParamTypeを取得
 	template<typename T>
 	constexpr ParamType GetParamTypeOf()
@@ -90,9 +97,13 @@ namespace noco
 		{
 			return ParamType::Bool;
 		}
-		else if constexpr (std::is_arithmetic_v<T>)
+		else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 		{
-			return ParamType::Number;
+			return ParamType::Int;
+		}
+		else if constexpr (std::is_floating_point_v<T>)
+		{
+			return ParamType::Double;
 		}
 		else if constexpr (std::is_same_v<T, String>)
 		{
@@ -133,9 +144,17 @@ namespace noco
 	template<typename T>
 	inline ParamValue MakeParamValue(const T& value)
 	{
-		if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+		if constexpr (std::is_same_v<T, bool>)
 		{
-			return static_cast<double>(value); // 全ての数値型はdoubleとして保持
+			return value;
+		}
+		else if constexpr (std::is_integral_v<T>)
+		{
+			return static_cast<int32>(value);
+		}
+		else if constexpr (std::is_floating_point_v<T>)
+		{
+			return static_cast<double>(value);
 		}
 		// Colorは直接保持するため変換不要
 		else if constexpr (std::is_same_v<T, const char32_t*>)
@@ -154,25 +173,33 @@ namespace noco
 		return value;
 	}
 
-	// ParamValueから型安全に値を取得
+	// ParamValueから指定型で値を取得
 	template<typename T>
 	[[nodiscard]]
 	inline Optional<T> GetParamValueAs(const ParamValue& value)
 	{
 		if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
 		{
-			// 全ての数値型はdoubleで保持している
+			// 数値型はint32/doubleの両方で取得可能
+			const auto convertFrom = [](auto v) -> Optional<T>
+				{
+					if constexpr (std::is_unsigned_v<T>)
+					{
+						if (v < 0)
+						{
+							// unsignedの場合、負の値は0に丸める
+							return T{ 0 };
+						}
+					}
+					return static_cast<T>(v);
+				};
+			if (auto* ptr = std::get_if<int32>(&value))
+			{
+				return convertFrom(*ptr);
+			}
 			if (auto* ptr = std::get_if<double>(&value))
 			{
-				if constexpr (std::is_unsigned_v<T>)
-				{
-					if (*ptr < 0)
-					{
-						// unsignedの場合、負の値は0に丸める
-						return T{ 0 };
-					}
-				}
-				return static_cast<T>(*ptr);
+				return convertFrom(*ptr);
 			}
 		}
 		// Colorは直接保持しているため変換不要
@@ -212,7 +239,13 @@ namespace noco
 				return ParamValue{ *opt };
 			}
 			break;
-		case ParamType::Number:
+		case ParamType::Int:
+			if (auto opt = StringToValueOpt<int32>(str))
+			{
+				return ParamValue{ *opt };
+			}
+			break;
+		case ParamType::Double:
 			if (auto opt = StringToValueOpt<double>(str))
 			{
 				return ParamValue{ *opt };
@@ -258,17 +291,18 @@ namespace noco
 	Optional<ParamValue> ParamValueFromJSONValue(const JSON& json, ParamType type);
 
 	// {"type": "...", "value": ...}形式のJSONからParamValueを作成
+	// serializedVersionは読み込み元ファイルの版(旧バージョンの"Number"型の警告判定に使用)
 	[[nodiscard]]
-	Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json);
+	Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json, int32 serializedVersion = CurrentSerializedVersion);
 
 	/// @brief パラメータ参照モード(全型共通。型ごとに有効なモードが異なり、AvailableParamRefModesFor<T>()で取得可能)
 	enum class ParamRefMode : uint8
 	{
 		Normal,
 		Inverted, // Bool用
-		Add, // Number/Color/Vec2/LRTB用
-		Subtract, // Number/Color/Vec2/LRTB用
-		Multiply, // Number/Color/Vec2/LRTB用
+		Add, // Int/Double/Color/Vec2/LRTB用
+		Subtract, // Int/Double/Color/Vec2/LRTB用
+		Multiply, // Int/Double/Color/Vec2/LRTB用
 		Format, // String用
 	};
 
@@ -313,7 +347,7 @@ namespace noco
 		}
 		else
 		{
-			// Number(arithmetic)/Color/Vec2/LRTB
+			// Int/Double/Color/Vec2/LRTB
 			return { ParamRefMode::Normal, ParamRefMode::Add, ParamRefMode::Subtract, ParamRefMode::Multiply };
 		}
 	}
@@ -359,7 +393,7 @@ namespace noco
 						using V = std::decay_t<decltype(v)>;
 						try
 						{
-							if constexpr (std::same_as<V, bool> || std::same_as<V, double> || std::same_as<V, String>)
+							if constexpr (std::same_as<V, bool> || std::same_as<V, int32> || std::same_as<V, double> || std::same_as<V, String>)
 							{
 								return Fmt(base)(v);
 							}

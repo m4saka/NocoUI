@@ -605,7 +605,8 @@ namespace noco::editor
 			// 各プロパティタイプに応じて表示を更新
 			switch (m_pProperty->editType())
 			{
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+			case PropertyEditType::Double:
 			case PropertyEditType::Text:
 				if (const auto textBox = nodeInfo.propertyValueNode->getComponent<TextBox>(RecursiveYN::Yes))
 				{

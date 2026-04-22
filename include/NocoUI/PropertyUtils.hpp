@@ -13,8 +13,10 @@ namespace noco
 		{
 		case PropertyEditType::Bool:
 			return ParamType::Bool;
-		case PropertyEditType::Number:
-			return ParamType::Number;
+		case PropertyEditType::Int:
+			return ParamType::Int;
+		case PropertyEditType::Double:
+			return ParamType::Double;
 		case PropertyEditType::Text:
 		case PropertyEditType::Enum:
 			return ParamType::String;
@@ -80,8 +82,10 @@ namespace noco
 		{
 		case PropertyEditType::Bool:
 			return visitor(PropertyEditType::Bool);
-		case PropertyEditType::Number:
-			return visitor(PropertyEditType::Number);
+		case PropertyEditType::Int:
+			return visitor(PropertyEditType::Int);
+		case PropertyEditType::Double:
+			return visitor(PropertyEditType::Double);
 		case PropertyEditType::Text:
 			return visitor(PropertyEditType::Text);
 		case PropertyEditType::Enum:

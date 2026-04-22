@@ -24,8 +24,8 @@ namespace noco::editor
 		std::shared_ptr<Node> m_typeComboBox;
 		std::shared_ptr<Label> m_typeLabel;
 		
-		String m_selectedType = U"Number";
-		std::variant<bool, double, String, Color, Vec2, LRTB> m_value = 0.0;
+		String m_selectedType = U"Double";
+		std::variant<bool, int32, double, String, Color, Vec2, LRTB> m_value = 0.0;
 		
 		Optional<ParamType> m_fixedType;
 		Optional<String> m_initialName;
@@ -241,7 +241,8 @@ namespace noco::editor
 			
 			const Array<String> types = {
 				U"Bool",
-				U"Number",
+				U"Int",
+				U"Double",
 				U"String",
 				U"Color",
 				U"Vec2",
@@ -271,7 +272,11 @@ namespace noco::editor
 			{
 				m_value = false;
 			}
-			else if (type == U"Number")
+			else if (type == U"Int")
+			{
+				m_value = int32{ 0 };
+			}
+			else if (type == U"Double")
 			{
 				m_value = 0.0;
 			}
@@ -321,7 +326,11 @@ namespace noco::editor
 				{
 					m_canvas->setParamValue(name, std::get<bool>(m_value));
 				}
-				else if (m_selectedType == U"Number")
+				else if (m_selectedType == U"Int")
+				{
+					m_canvas->setParamValue(name, std::get<int32>(m_value));
+				}
+				else if (m_selectedType == U"Double")
 				{
 					m_canvas->setParamValue(name, std::get<double>(m_value));
 				}

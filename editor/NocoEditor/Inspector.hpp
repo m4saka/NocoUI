@@ -3935,14 +3935,41 @@ namespace noco::editor
 				}
 				break;
 				
-			case ParamType::Number:
+			case ParamType::Int:
+				{
+					const int32 currentValue = GetParamValueAs<int32>(value).value_or(0);
+					propertyNode = CreatePropertyNode(
+						labelText,
+						Format(currentValue),
+						[this, paramName](StringView text)
+						{
+							if (const auto val = ParseOpt<int32>(text))
+							{
+								m_canvas->setParamValue(paramName, *val);
+							}
+						},
+						HasInteractivePropertyValueYN::No,
+						HasParameterRefYN::No,
+						[this, paramName]() -> String {
+							if (auto p = m_canvas->paramValueOpt(paramName))
+							{
+								return Format(GetParamValueAs<int32>(*p).value_or(0));
+							}
+							return U"0";
+						},
+						1.0  // 整数用ドラッグステップ
+					);
+				}
+				break;
+
+			case ParamType::Double:
 				{
 					const double currentValue = GetParamValueAs<double>(value).value_or(0.0);
 					propertyNode = CreatePropertyNode(
 						labelText,
 						Format(currentValue),
-						[this, paramName](StringView text) 
-						{ 
+						[this, paramName](StringView text)
+						{
 							if (const auto val = ParseOpt<double>(text))
 							{
 								m_canvas->setParamValue(paramName, *val);
@@ -3950,7 +3977,7 @@ namespace noco::editor
 						},
 						HasInteractivePropertyValueYN::No,
 						HasParameterRefYN::No,
-						[this, paramName]() -> String { 
+						[this, paramName]() -> String {
 							if (auto p = m_canvas->paramValueOpt(paramName))
 							{
 								return Format(GetParamValueAs<double>(*p).value_or(0.0));
@@ -4449,13 +4476,14 @@ namespace noco::editor
 								}
 								break;
 								
-							case PropertyEditType::Number:
+							case PropertyEditType::Int:
+							case PropertyEditType::Double:
 								{
 									auto onChange = [placeholderComponent, propName = propSchema.name](StringView value)
 									{
 										placeholderComponent->setPropertyValueString(propName, String{ value });
 									};
-									
+
 									// Placeholderではメタデータを動的に設定
 									const PropertyMetadata tempMetadata
 									{
@@ -4465,7 +4493,7 @@ namespace noco::editor
 										.dragValueChangeStep = propSchema.dragValueChangeStep,
 									};
 									m_propertyMetadata[PropertyKey{ placeholderComponent->originalType(), propSchema.name }] = tempMetadata;
-									
+
 									propertyNode = createPropertyNodeWithTooltip(
 										placeholderComponent->originalType(),
 										propSchema.name,
@@ -4703,7 +4731,8 @@ namespace noco::editor
 				std::shared_ptr<Node> propertyNode;
 				switch (editType)
 				{
-				case PropertyEditType::Number:
+				case PropertyEditType::Int:
+				case PropertyEditType::Double:
 				case PropertyEditType::Text:
 					{
 						std::function<void(StringView)> onChange = [property](StringView value) { property->trySetPropertyValueString(value); };

@@ -379,7 +379,7 @@ public:
 		},
 		{
 			"name": "fontSize",
-			"editType": "Number",
+			"editType": "Int",
 			"defaultValue": 16,
 			"tooltip": "テキストのフォントサイズ",
 			"dragValueChangeStep": 1.0

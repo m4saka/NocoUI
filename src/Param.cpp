@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Param.hpp"
+#include "NocoUI/Version.hpp"
 
 namespace noco
 {
@@ -12,9 +13,13 @@ namespace noco
 			{
 				return JSON(v);
 			}
-			else if constexpr (std::is_arithmetic_v<T> && !std::is_same_v<T, bool>)
+			else if constexpr (std::is_same_v<T, int32>)
 			{
-				return JSON(static_cast<double>(v));
+				return JSON(v);
+			}
+			else if constexpr (std::is_same_v<T, double>)
+			{
+				return JSON(v);
 			}
 			else if constexpr (std::is_same_v<T, String>)
 			{
@@ -55,7 +60,11 @@ namespace noco
 		{
 			return ParamValue{ json.get<bool>() };
 		}
-		else if (type == ParamType::Number && json.isNumber())
+		else if (type == ParamType::Int && json.isNumber())
+		{
+			return ParamValue{ json.get<int32>() };
+		}
+		else if (type == ParamType::Double && json.isNumber())
 		{
 			return ParamValue{ json.get<double>() };
 		}
@@ -88,7 +97,7 @@ namespace noco
 		return none;
 	}
 
-	Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json)
+	Optional<ParamValue> ParamValueFromParamObjectJSON(const JSON& json, int32 serializedVersion)
 	{
 		if (!json.contains(U"type") || !json.contains(U"value"))
 		{
@@ -117,8 +126,36 @@ namespace noco
 				return none;
 			}
 		}
+		else if (typeStr == U"Int")
+		{
+			if (valueJson.isNumber())
+			{
+				return ParamValue{ valueJson.get<int32>() };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Parameter value for Int type is not a number. Skipping.";
+				return none;
+			}
+		}
+		else if (typeStr == U"Double")
+		{
+			if (valueJson.isNumber())
+			{
+				return ParamValue{ valueJson.get<double>() };
+			}
+			else
+			{
+				Logger << U"[NocoUI warning] Parameter value for Double type is not a number. Skipping.";
+				return none;
+			}
+		}
 		else if (typeStr == U"Number")
 		{
+			if (serializedVersion >= SerializedVersion_IntDoubleParamType)
+			{
+				Logger << U"[NocoUI warning] Legacy parameter type 'Number' encountered in serializedVersion {} (expected Int/Double). Treating as Double."_fmt(serializedVersion);
+			}
 			if (valueJson.isNumber())
 			{
 				return ParamValue{ valueJson.get<double>() };

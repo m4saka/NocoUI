@@ -47,7 +47,8 @@ namespace noco::editor
 		{
 		case ParamType::Bool:
 			return createBoolInput(index);
-		case ParamType::Number:
+		case ParamType::Int:
+		case ParamType::Double:
 			return createNumberInput(index);
 		case ParamType::String:
 			return createStringInput(index);

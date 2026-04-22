@@ -5,5 +5,8 @@ namespace noco
 {
 	constexpr StringView NocoUIVersion = U"0.3.3";
 
-	constexpr int32 CurrentSerializedVersion = 7;
+	constexpr int32 CurrentSerializedVersion = 8;
+
+	/// @brief Number型を廃止してInt/Double型を導入したserializedVersion
+	constexpr int32 SerializedVersion_IntDoubleParamType = 8;
 }

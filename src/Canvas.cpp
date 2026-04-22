@@ -454,7 +454,7 @@ namespace noco
 						continue;
 					}
 					const auto& paramObjectJSON = member.value;
-					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON))
+					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON, canvas->m_serializedVersion))
 					{
 						canvas->m_params[name] = *value;
 					}
@@ -507,19 +507,34 @@ namespace noco
 	
 	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
+		if (!json.contains(U"serializedVersion"))
+		{
+			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'serializedVersion'";
+			return false;
+		}
+
 		if (!json.contains(U"referenceSize"))
 		{
 			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'referenceSize'";
 			return false;
 		}
-		
+
 		if (!json.contains(U"children"))
 		{
 			Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Missing required field 'children'";
 			return false;
 		}
+
+		// 旧バージョンの互換性対応に使うためserializedVersionは先に読み込む
+		m_serializedVersion = json[U"serializedVersion"].get<int32>();
+		if (m_serializedVersion > CurrentSerializedVersion)
+		{
+			const String version = json.contains(U"version") ? json[U"version"].get<String>() : U"unknown";
+			Logger << U"[NocoUI warning] Opening file created with newer NocoUI version (version: {}, serializedVersion: {}). Current serializedVersion: {}"_fmt(
+				version, m_serializedVersion, CurrentSerializedVersion);
+		}
 		
-		// referenceSizeの読み込み（必須フィールド）
+		// referenceSizeの読み込み(必須フィールド)
 		const SizeF referenceSize = FromArrayJSON<Vec2>(json[U"referenceSize"], SizeF{ 800, 600 });
 		m_referenceSize = referenceSize;
 		m_size = referenceSize;  // 初期サイズとしても使用
@@ -554,7 +569,7 @@ namespace noco
 						continue;
 					}
 					const auto& paramObjectJSON = member.value;
-					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON))
+					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON, m_serializedVersion))
 					{
 						m_params[name] = *value;
 					}

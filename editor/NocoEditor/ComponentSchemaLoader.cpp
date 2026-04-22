@@ -117,7 +117,17 @@ namespace noco::editor
 		
 		if (json.contains(U"editType"))
 		{
-			prop.editType = StringToEnum<PropertyEditType>(json[U"editType"].getString(), PropertyEditType::Text);
+			const String editTypeStr = json[U"editType"].getString();
+			if (editTypeStr == U"Number")
+			{
+				// 旧editType"Number"はDoubleに読み替える
+				Logger << U"[NocoUI warning] Legacy editType 'Number' in property '{}'. Treating as 'Double'."_fmt(prop.name);
+				prop.editType = PropertyEditType::Double;
+			}
+			else
+			{
+				prop.editType = StringToEnum<PropertyEditType>(editTypeStr, PropertyEditType::Text);
+			}
 		}
 		else
 		{
@@ -142,14 +152,26 @@ namespace noco::editor
 				}
 				break;
 				
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+				if (defaultJson.isNumber())
+				{
+					prop.defaultValue = defaultJson.get<int32>();
+				}
+				else
+				{
+					Logger << U"[NocoUI warning] defaultValue for Int type must be number, using default: 0";
+					prop.defaultValue = int32{ 0 };
+				}
+				break;
+
+			case PropertyEditType::Double:
 				if (defaultJson.isNumber())
 				{
 					prop.defaultValue = defaultJson.get<double>();
 				}
 				else
 				{
-					Logger << U"[NocoUI warning] defaultValue for Number type must be number, using default: 0.0";
+					Logger << U"[NocoUI warning] defaultValue for Double type must be number, using default: 0.0";
 					prop.defaultValue = 0.0;
 				}
 				break;
@@ -230,7 +252,20 @@ namespace noco::editor
 		
 		if (json.contains(U"dragValueChangeStep"))
 		{
-			prop.dragValueChangeStep = json[U"dragValueChangeStep"].get<double>();
+			const double step = json[U"dragValueChangeStep"].get<double>();
+			if (prop.editType == PropertyEditType::Int)
+			{
+				const double rounded = Max(Math::Round(step), 1.0);
+				if (Math::Abs(step - rounded) > 1e-9)
+				{
+					Logger << U"[NocoUI warning] dragValueChangeStep for Int property '{}' must be a positive integer (got {}). Using {}."_fmt(prop.name, step, rounded);
+				}
+				prop.dragValueChangeStep = rounded;
+			}
+			else
+			{
+				prop.dragValueChangeStep = step;
+			}
 		}
 		
 		if (json.contains(U"refreshInspectorOnChange"))

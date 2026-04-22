@@ -16,10 +16,15 @@ TEST_CASE("Parameter values", "[Param]")
 		REQUIRE(GetParamType(boolParam) == ParamType::Bool);
 		REQUIRE(GetParamValueAs<bool>(boolParam).value_or(false) == true);
 		
-		// number型
-		ParamValue numberParam = MakeParamValue(42);
-		REQUIRE(GetParamType(numberParam) == ParamType::Number);
-		REQUIRE(GetParamValueAs<int32>(numberParam).value_or(0) == 42);
+		// int型
+		ParamValue intParam = MakeParamValue(42);
+		REQUIRE(GetParamType(intParam) == ParamType::Int);
+		REQUIRE(GetParamValueAs<int32>(intParam).value_or(0) == 42);
+
+		// double型
+		ParamValue doubleParam = MakeParamValue(3.14);
+		REQUIRE(GetParamType(doubleParam) == ParamType::Double);
+		REQUIRE(GetParamValueAs<double>(doubleParam).value_or(0.0) == Approx(3.14));
 		
 		// string型
 		ParamValue stringParam = MakeParamValue(U"test");
@@ -49,15 +54,22 @@ TEST_CASE("Parameter values", "[Param]")
 		REQUIRE(lrtbValue->left == 10);
 	}
 	
-	SECTION("Number conversions")
+	SECTION("Numeric conversions")
 	{
-		// 各種数値型のテスト
+		// Int型からの各種数値型への変換
 		ParamValue intParam = MakeParamValue(42);
+		REQUIRE(GetParamType(intParam) == ParamType::Int);
 		REQUIRE(GetParamValueAs<int32>(intParam).value_or(0) == 42);
 		REQUIRE(GetParamValueAs<uint32>(intParam).value_or(0) == 42);
 		REQUIRE(GetParamValueAs<float>(intParam).value_or(0.0f) == 42.0f);
 		REQUIRE(GetParamValueAs<double>(intParam).value_or(0.0) == 42.0);
-		
+
+		// Double型からの各種数値型への変換
+		ParamValue dParam = MakeParamValue(42.7);
+		REQUIRE(GetParamType(dParam) == ParamType::Double);
+		REQUIRE(GetParamValueAs<int32>(dParam).value_or(0) == 42); // 切り捨て
+		REQUIRE(GetParamValueAs<double>(dParam).value_or(0.0) == Approx(42.7));
+
 		// 負の値
 		ParamValue negativeParam = MakeParamValue(-50);
 		REQUIRE(GetParamValueAs<int32>(negativeParam).value_or(0) == -50);
@@ -90,7 +102,7 @@ TEST_CASE("Canvas parameter management", "[Param]")
 		
 		auto retrievedInt = canvas->paramValueOpt(U"testInt");
 		REQUIRE(retrievedInt.has_value());
-		REQUIRE(GetParamType(*retrievedInt) == ParamType::Number);
+		REQUIRE(GetParamType(*retrievedInt) == ParamType::Int);
 		
 		auto intValue = canvas->paramValueAsOpt<int32>(U"testInt");
 		REQUIRE(intValue.has_value());
@@ -498,23 +510,23 @@ TEST_CASE("Parameter name validation", "[Param]")
 		json[U"children"] = Array<JSON>{}; // Canvas作成に必要
 		json[U"params"] = JSON{};
 		json[U"params"][U"validParam"] = JSON{};
-		json[U"params"][U"validParam"][U"type"] = U"Number";
+		json[U"params"][U"validParam"][U"type"] = U"Int";
 		json[U"params"][U"validParam"][U"value"] = 100;
 		
 		json[U"params"][U"123invalid"] = JSON{}; // 数字で始まる
-		json[U"params"][U"123invalid"][U"type"] = U"Number";
+		json[U"params"][U"123invalid"][U"type"] = U"Int";
 		json[U"params"][U"123invalid"][U"value"] = 200;
 		
 		json[U"params"][U"invalid-name"] = JSON{};
-		json[U"params"][U"invalid-name"][U"type"] = U"Number";
+		json[U"params"][U"invalid-name"][U"type"] = U"Int";
 		json[U"params"][U"invalid-name"][U"value"] = 300;
 		
 		json[U"params"][U"日本語"] = JSON{}; // 日本語
-		json[U"params"][U"日本語"][U"type"] = U"Number";
+		json[U"params"][U"日本語"][U"type"] = U"Int";
 		json[U"params"][U"日本語"][U"value"] = 400;
 		
 		json[U"params"][U"_validParam"] = JSON{};
-		json[U"params"][U"_validParam"][U"type"] = U"Number";
+		json[U"params"][U"_validParam"][U"type"] = U"Int";
 		json[U"params"][U"_validParam"][U"value"] = 500;
 		
 		auto canvas = Canvas::Create();
@@ -612,25 +624,60 @@ TEST_CASE("ParamValueFromParamObjectJSON type checking", "[Param]")
 		REQUIRE(GetParamValueAs<bool>(*result).value_or(false) == true);
 	}
 	
-	SECTION("Number type rejects string values")
+	SECTION("Int type rejects string values")
 	{
 		JSON json;
-		json[U"type"] = U"Number";
+		json[U"type"] = U"Int";
 		json[U"value"] = U"42";  // 文字列
-		
+
 		auto result = ParamValueFromParamObjectJSON(json);
-		REQUIRE(!result.has_value());  // 型不一致でnoneを返す
+		REQUIRE(!result.has_value());
 	}
-	
-	SECTION("Number type accepts numeric values")
+
+	SECTION("Int type accepts numeric values")
 	{
 		JSON json;
-		json[U"type"] = U"Number";
-		json[U"value"] = 42.5;  // 正しい数値型
-		
+		json[U"type"] = U"Int";
+		json[U"value"] = 42;
+
 		auto result = ParamValueFromParamObjectJSON(json);
 		REQUIRE(result.has_value());
-		REQUIRE(GetParamType(*result) == ParamType::Number);
+		REQUIRE(GetParamType(*result) == ParamType::Int);
+		REQUIRE(GetParamValueAs<int32>(*result).value_or(0) == 42);
+	}
+
+	SECTION("Double type rejects string values")
+	{
+		JSON json;
+		json[U"type"] = U"Double";
+		json[U"value"] = U"42";
+
+		auto result = ParamValueFromParamObjectJSON(json);
+		REQUIRE(!result.has_value());
+	}
+
+	SECTION("Double type accepts numeric values")
+	{
+		JSON json;
+		json[U"type"] = U"Double";
+		json[U"value"] = 42.5;
+
+		auto result = ParamValueFromParamObjectJSON(json);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Double);
+		REQUIRE(GetParamValueAs<double>(*result).value_or(0.0) == 42.5);
+	}
+
+	SECTION("Legacy 'Number' type is read as Double")
+	{
+		JSON json;
+		json[U"type"] = U"Number";
+		json[U"value"] = 42.5;
+
+		// 旧フォーマット(SerializedVersion < 8)では警告なしでDouble扱い
+		auto result = ParamValueFromParamObjectJSON(json, SerializedVersion_IntDoubleParamType - 1);
+		REQUIRE(result.has_value());
+		REQUIRE(GetParamType(*result) == ParamType::Double);
 		REQUIRE(GetParamValueAs<double>(*result).value_or(0.0) == 42.5);
 	}
 	
@@ -791,7 +838,7 @@ TEST_CASE("ParamValueFromParamObjectJSON type checking", "[Param]")
 		canvas->setParamValue(U"testVec2", Vec2{100.5, 200.25});
 		canvas->setParamValue(U"testLRTB", LRTB{10.1, 20.2, 30.3, 40.4});
 		canvas->setParamValue(U"testBool", true);
-		canvas->setParamValue(U"testNumber", 42.5);
+		canvas->setParamValue(U"testDouble", 42.5);
 		canvas->setParamValue(U"testString", U"test value");
 
 		// JSON形式で保存
@@ -840,11 +887,11 @@ TEST_CASE("ParamValueFromParamObjectJSON type checking", "[Param]")
 		REQUIRE(params[U"testBool"][U"value"].isBool());
 		REQUIRE(params[U"testBool"][U"value"].get<bool>() == true);
 
-		// numberは直接double値として保存
-		REQUIRE(params.contains(U"testNumber"));
-		REQUIRE(params[U"testNumber"][U"type"].getString() == U"Number");
-		REQUIRE(params[U"testNumber"][U"value"].isNumber());
-		REQUIRE(params[U"testNumber"][U"value"].get<double>() == Approx(42.5));
+		// doubleはDouble型として保存
+		REQUIRE(params.contains(U"testDouble"));
+		REQUIRE(params[U"testDouble"][U"type"].getString() == U"Double");
+		REQUIRE(params[U"testDouble"][U"value"].isNumber());
+		REQUIRE(params[U"testDouble"][U"value"].get<double>() == Approx(42.5));
 
 		// stringは直接文字列として保存
 		REQUIRE(params.contains(U"testString"));

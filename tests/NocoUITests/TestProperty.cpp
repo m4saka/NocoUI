@@ -240,3 +240,106 @@ TEST_CASE("Property currentFrameOverride", "[Property]")
 		REQUIRE(property.value() == true);  // 元の値に戻る
 	}
 }
+
+TEST_CASE("IsParamTypeCompatibleWith matrix", "[Property][Param]")
+{
+	using noco::IsParamTypeCompatibleWith;
+	using noco::ParamType;
+	using noco::PropertyEditType;
+
+	SECTION("Bool editType accepts only Bool")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Bool));
+	}
+
+	SECTION("Int editType accepts Int and Double")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Int));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Int));
+	}
+
+	SECTION("Double editType accepts Int and Double")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Double));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Double));
+	}
+
+	SECTION("Text editType accepts any type except Unknown")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Text));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Text));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Text));
+	}
+
+	SECTION("Enum editType accepts only String")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Enum));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Enum));
+	}
+
+	SECTION("Color editType accepts only Color")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Color));
+	}
+
+	SECTION("Vec2 editType accepts only Vec2")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::Vec2));
+	}
+
+	SECTION("LRTB editType accepts only LRTB")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::LRTB, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::LRTB));
+	}
+}

@@ -44,24 +44,21 @@ namespace noco::editor
 		void filterAvailableParams()
 		{
 			m_availableParams.clear();
-			
-			const auto propertyType = getPropertyParamType();
-			if (!propertyType)
+
+			if (!m_pProperty)
 			{
 				return;
 			}
-			
-			// String型は任意の型のパラメータを受け付ける
-			const bool acceptAnyType = *propertyType == ParamType::String;
+			const PropertyEditType editType = m_pProperty->editType();
 
 			for (const auto& [name, value] : m_canvas->params())
 			{
-				if (acceptAnyType || GetParamType(value) == *propertyType)
+				if (IsParamTypeCompatibleWith(GetParamType(value), editType))
 				{
-					m_availableParams.push_back({name, value});
+					m_availableParams.push_back({ name, value });
 				}
 			}
-			
+
 			m_availableParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 
 			if (m_warningNode)

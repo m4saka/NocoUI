@@ -54,7 +54,8 @@ namespace noco::editor
 			std::shared_ptr<Node> propertyValueNode;
 			switch (m_pProperty->editType())
 			{
-			case PropertyEditType::Number:
+			case PropertyEditType::Int:
+			case PropertyEditType::Double:
 			case PropertyEditType::Text:
 				propertyValueNode = propertyNode->addChild(
 					Inspector::CreatePropertyNode(
