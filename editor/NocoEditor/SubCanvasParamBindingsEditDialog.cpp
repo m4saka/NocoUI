@@ -1,4 +1,4 @@
-#include "SubCanvasParamBindingsEditDialog.hpp"
+﻿#include "SubCanvasParamBindingsEditDialog.hpp"
 #include "Inspector.hpp"
 
 namespace noco::editor
@@ -17,7 +17,12 @@ namespace noco::editor
 			},
 			IsHitTargetYN::Yes,
 			InheritChildrenStateFlags::Hovered);
-		rowNode->setChildrenLayout(HorizontalLayout{ .spacing = 8, .padding = LRTB{ 8, 0, 0, 0 } });
+		rowNode->setChildrenLayout(
+			HorizontalLayout
+			{
+				.padding = LRTB{ 8, 0, 0, 0 },
+				.spacing = 8,
+			});
 		rowNode->emplaceComponent<RectRenderer>(
 			PropertyValue<Color>{ ColorF{ 1.0, 0.0 } }.withHovered(ColorF{ 1.0, 0.1 }),
 			Palette::Black,

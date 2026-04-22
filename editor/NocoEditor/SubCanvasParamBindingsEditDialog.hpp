@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <NocoUI.hpp>
 #include "EditorDialog.hpp"
 #include "EditorColor.hpp"
@@ -14,7 +14,7 @@ namespace noco::editor
 		std::function<void()> m_onComplete;
 		std::shared_ptr<DialogOpener> m_dialogOpener;
 		std::shared_ptr<Canvas> m_targetCanvas;
-
+		
 		enum class DialogState
 		{
 			Normal,
@@ -210,7 +210,12 @@ namespace noco::editor
 					.sizeDelta = SizeF{ -20, 20 },
 					.margin = LRTB{ 0, 0, 0, 4 },
 				});
-			headerRowNode->setChildrenLayout(HorizontalLayout{ .spacing = 8, .padding = LRTB{ 8, 0, 0, 0 } });
+			headerRowNode->setChildrenLayout(
+				HorizontalLayout
+				{
+					.padding = LRTB{ 8, 0, 0, 0 },
+					.spacing = 8,
+				});
 
 			const auto subCanvasHeaderNode = headerRowNode->emplaceChild(
 				U"SubCanvasHeader",
