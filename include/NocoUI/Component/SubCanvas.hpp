@@ -150,25 +150,25 @@ namespace noco
 		/// @param paramName パラメータ名
 		/// @return 参照している数
 		[[nodiscard]]
-		size_t countBindingParamRefs(StringView paramName) const;
+		size_t countParamBindingRefs(StringView paramName) const;
 
 		/// @brief 指定したパラメータ名を参照している紐付けをすべて削除
 		/// @param paramName パラメータ名
-		void clearBindingParamRefs(StringView paramName);
+		void clearParamBindingRefs(StringView paramName);
 
 		/// @brief 紐付けで参照しているパラメータ名を置換
 		/// @param oldName 置換対象のパラメータ参照名
 		/// @param newName 新しいパラメータ参照名
-		void replaceBindingParamRefs(StringView oldName, StringView newName);
+		void replaceParamBindingRefs(StringView oldName, StringView newName);
 
 		/// @brief 有効なパラメータに含まれないパラメータ名を参照している紐付けをすべて削除
 		/// @param validParams 有効なパラメータのハッシュテーブル
 		/// @return 削除したパラメータ参照の名前の配列
-		Array<String> removeInvalidBindingParamRefs(const HashTable<String, ParamValue>& validParams);
+		Array<String> removeInvalidParamBindingRefs(const HashTable<String, ParamValue>& validParams);
 
 		/// @brief 紐付けで参照しているパラメータ名を列挙
 		/// @param pParamRefs 挿入先のハッシュセットのポインタ
-		void populateBindingParamRefs(HashSet<String>* pParamRefs) const;
+		void populateParamBindingRefs(HashSet<String>* pParamRefs) const;
 
 		/// @brief 指定したパラメータ名を参照している子Canvasのパラメータ名一覧を取得
 		/// @param parentParamName 親Canvasのパラメータ名

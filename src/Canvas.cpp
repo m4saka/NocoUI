@@ -1188,7 +1188,7 @@ namespace noco
 				// SubCanvasの紐付けをチェック
 				if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 				{
-					count += subCanvas->countBindingParamRefs(paramName);
+					count += subCanvas->countParamBindingRefs(paramName);
 				}
 			}
 
@@ -1248,7 +1248,7 @@ namespace noco
 				// SubCanvasの紐付けを解除
 				if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 				{
-					subCanvas->clearBindingParamRefs(paramName);
+					subCanvas->clearParamBindingRefs(paramName);
 				}
 			}
 
@@ -1293,7 +1293,7 @@ namespace noco
 				// SubCanvasの無効な紐付けを解除
 				if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 				{
-					const auto clearedFromBindings = subCanvas->removeInvalidBindingParamRefs(m_params);
+					const auto clearedFromBindings = subCanvas->removeInvalidParamBindingRefs(m_params);
 					for (const auto& paramName : clearedFromBindings)
 					{
 						clearedParamsSet.insert(paramName);

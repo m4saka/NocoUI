@@ -483,7 +483,7 @@ namespace noco
 			// SubCanvasの紐付けが参照しているパラメータ名を列挙
 			if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 			{
-				subCanvas->populateBindingParamRefs(pParamRefs);
+				subCanvas->populateParamBindingRefs(pParamRefs);
 			}
 		}
 

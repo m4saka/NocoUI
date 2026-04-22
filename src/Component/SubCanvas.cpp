@@ -289,7 +289,7 @@ namespace noco
 		loadCanvasInternal();
 	}
 
-	size_t SubCanvas::countBindingParamRefs(StringView paramName) const
+	size_t SubCanvas::countParamBindingRefs(StringView paramName) const
 	{
 		if (paramName.isEmpty())
 		{
@@ -311,7 +311,7 @@ namespace noco
 		return count;
 	}
 
-	void SubCanvas::clearBindingParamRefs(StringView paramName)
+	void SubCanvas::clearParamBindingRefs(StringView paramName)
 	{
 		if (paramName.isEmpty())
 		{
@@ -339,7 +339,7 @@ namespace noco
 		}
 	}
 
-	void SubCanvas::replaceBindingParamRefs(StringView oldName, StringView newName)
+	void SubCanvas::replaceParamBindingRefs(StringView oldName, StringView newName)
 	{
 		if (oldName.isEmpty())
 		{
@@ -370,7 +370,7 @@ namespace noco
 		}
 	}
 
-	Array<String> SubCanvas::removeInvalidBindingParamRefs(const HashTable<String, ParamValue>& validParams)
+	Array<String> SubCanvas::removeInvalidParamBindingRefs(const HashTable<String, ParamValue>& validParams)
 	{
 		const JSON json = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
 		if (json.isEmpty())
@@ -403,7 +403,7 @@ namespace noco
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}
 
-	void SubCanvas::populateBindingParamRefs(HashSet<String>* pParamRefs) const
+	void SubCanvas::populateParamBindingRefs(HashSet<String>* pParamRefs) const
 	{
 		if (pParamRefs == nullptr)
 		{
@@ -451,6 +451,6 @@ namespace noco
 
 	void SubCanvas::replaceAdditionalParamRefsInternal(StringView oldName, StringView newName)
 	{
-		replaceBindingParamRefs(oldName, newName);
+		replaceParamBindingRefs(oldName, newName);
 	}
 }
