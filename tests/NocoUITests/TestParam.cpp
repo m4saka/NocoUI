@@ -1264,6 +1264,54 @@ TEST_CASE("ParamRefMode helpers", "[Param][ParamRefMode]")
 	}
 }
 
+TEST_CASE("IsParamTypeCompatibleWith(ParamType, ParamType) matrix", "[Param][ParamBinding]")
+{
+	using noco::IsParamTypeCompatibleWith;
+	using noco::ParamType;
+
+	SECTION("Unknown always incompatible")
+	{
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, ParamType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, ParamType::Unknown));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, ParamType::Unknown));
+	}
+
+	SECTION("String child accepts any non-Unknown parent")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::String, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Color, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Vec2, ParamType::String));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::LRTB, ParamType::String));
+	}
+
+	SECTION("Int/Double accept each other")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, ParamType::Int));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, ParamType::Int));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Int, ParamType::Double));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Double, ParamType::Double));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, ParamType::Int));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, ParamType::Double));
+	}
+
+	SECTION("Bool/Color/Vec2/LRTB require exact match")
+	{
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, ParamType::Bool));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, ParamType::Bool));
+
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Color, ParamType::Color));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, ParamType::Color));
+
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Vec2, ParamType::Vec2));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, ParamType::Vec2));
+
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::LRTB, ParamType::LRTB));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, ParamType::LRTB));
+	}
+}
 
 TEST_CASE("SubCanvas serializedParamBindingModesJSON getter/setter", "[Param][SubCanvas]")
 {

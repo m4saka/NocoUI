@@ -354,7 +354,7 @@ namespace noco
 						}
 						// 型不一致の場合は子paramの型を壊さないようスキップ
 						const ParamType type = GetParamType(subCanvasIt->second);
-						if (GetParamType(parentIt->second) != type)
+						if (!IsParamTypeCompatibleWith(GetParamType(parentIt->second), type))
 						{
 							continue;
 						}
@@ -573,11 +573,25 @@ namespace noco
 				continue;
 			}
 			const String parentParamName = parentParamNameJSON.getString();
-			if (!validParams.contains(parentParamName))
+			const auto parentIt = validParams.find(parentParamName);
+			if (parentIt == validParams.end())
 			{
 				clearedParamsSet.insert(parentParamName);
 				changed = true;
 				continue;
+			}
+			// 子paramが存在し、かつ型が非互換の場合はクリア
+			if (m_canvas)
+			{
+				const auto& subCanvasParams = m_canvas->params();
+				if (const auto childIt = subCanvasParams.find(subCanvasParamName);
+					childIt != subCanvasParams.end()
+					&& !IsParamTypeCompatibleWith(GetParamType(parentIt->second), GetParamType(childIt->second)))
+				{
+					clearedParamsSet.insert(parentParamName);
+					changed = true;
+					continue;
+				}
 			}
 			newJSON[subCanvasParamName] = parentParamNameJSON;
 			keepKeys.insert(subCanvasParamName);

@@ -47,6 +47,30 @@ namespace noco
 		}
 	}
 
+	/// @brief 紐付け元のparam型を紐付け先のparam型に適用可能か判定
+	/// @param sourceType 紐付け元のParamType
+	/// @param targetType 紐付け先のParamType
+	[[nodiscard]]
+	inline bool IsParamTypeCompatibleWith(ParamType sourceType, ParamType targetType)
+	{
+		if (sourceType == ParamType::Unknown || targetType == ParamType::Unknown)
+		{
+			return false;
+		}
+		switch (targetType)
+		{
+		case ParamType::String:
+			// String型は任意の型をFormat()/文字列化して受け入れる
+			return true;
+		case ParamType::Int:
+		case ParamType::Double:
+			// Int/Double相互は受け入れる(GetParamValueAsが変換する)
+			return sourceType == ParamType::Int || sourceType == ParamType::Double;
+		default:
+			return sourceType == targetType;
+		}
+	}
+
 	// ParamValueから型情報を取得
 	[[nodiscard]]
 	inline ParamType GetParamType(const ParamValue& value)

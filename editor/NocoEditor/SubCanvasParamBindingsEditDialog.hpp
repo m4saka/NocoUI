@@ -112,7 +112,7 @@ namespace noco::editor
 				// 型フィルタリングで利用可能な親パラメータを収集
 				for (const auto& [parentName, parentValue] : parentParams)
 				{
-					if (GetParamType(parentValue) == info.subCanvasParamType)
+					if (IsParamTypeCompatibleWith(GetParamType(parentValue), info.subCanvasParamType))
 					{
 						info.availableParentParams.push_back({ parentName, parentValue });
 					}
