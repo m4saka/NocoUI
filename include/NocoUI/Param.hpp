@@ -328,6 +328,44 @@ namespace noco
 		return U"";
 	}
 
+	/// @brief paramRefモードの短縮表示用文字列
+	[[nodiscard]]
+	inline StringView ParamRefModeToShortDisplayString(ParamRefMode mode)
+	{
+		switch (mode)
+		{
+		case ParamRefMode::Normal:
+			return U"通常";
+		case ParamRefMode::Inverted:
+			return U"反転";
+		case ParamRefMode::Add:
+			return U"加算";
+		case ParamRefMode::Subtract:
+			return U"減算";
+		case ParamRefMode::Multiply:
+			return U"乗算";
+		case ParamRefMode::Format:
+			return U"フォーマット";
+		}
+		return U"";
+	}
+
+	/// @brief paramRefモードが元となる上書き値を必要とするか判定
+	[[nodiscard]]
+	constexpr bool ParamRefModeRequiresBaseValue(ParamRefMode mode) noexcept
+	{
+		switch (mode)
+		{
+		case ParamRefMode::Add:
+		case ParamRefMode::Subtract:
+		case ParamRefMode::Multiply:
+		case ParamRefMode::Format:
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	/// @brief 型Tで利用可能なparamRefモード一覧
 	template<typename T>
 	[[nodiscard]]
@@ -349,6 +387,32 @@ namespace noco
 		{
 			// Int/Double/Color/Vec2/LRTB
 			return { ParamRefMode::Normal, ParamRefMode::Add, ParamRefMode::Subtract, ParamRefMode::Multiply };
+		}
+	}
+
+	/// @brief ParamTypeに対して利用可能なparamRefモード一覧
+	[[nodiscard]]
+	inline Array<ParamRefMode> AvailableParamRefModesFor(ParamType type)
+	{
+		switch (type)
+		{
+		case ParamType::Bool:
+			return AvailableParamRefModesFor<bool>();
+		case ParamType::Int:
+			return AvailableParamRefModesFor<int32>();
+		case ParamType::Double:
+			return AvailableParamRefModesFor<double>();
+		case ParamType::String:
+			return AvailableParamRefModesFor<String>();
+		case ParamType::Color:
+			return AvailableParamRefModesFor<Color>();
+		case ParamType::Vec2:
+			return AvailableParamRefModesFor<Vec2>();
+		case ParamType::LRTB:
+			return AvailableParamRefModesFor<LRTB>();
+		case ParamType::Unknown:
+		default:
+			return { ParamRefMode::Normal };
 		}
 	}
 

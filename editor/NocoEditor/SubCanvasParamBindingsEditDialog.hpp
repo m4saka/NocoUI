@@ -32,10 +32,15 @@ namespace noco::editor
 			std::shared_ptr<Label> comboLabel;
 			String selectedParentParamName;
 			Array<std::pair<String, ParamValue>> availableParentParams;
+			ParamRefMode selectedMode = ParamRefMode::Normal;
+			Array<ParamRefMode> availableModes;
+			std::shared_ptr<Node> modeComboBoxNode;
+			std::shared_ptr<Label> modeComboLabel;
 		};
 		Array<BindingInfo> m_bindings;
 
 		JSON m_currentBindingsJSON;
+		JSON m_currentBindingModesJSON;
 
 	public:
 		explicit SubCanvasParamBindingsEditDialog(
@@ -80,6 +85,13 @@ namespace noco::editor
 				m_currentBindingsJSON = JSON::Parse(bindingsJSONString);
 			}
 
+			// 既存のserializedParamBindingModesJSONをパース
+			const String bindingModesJSONString = m_subCanvas->serializedParamBindingModesJSON();
+			if (!bindingModesJSONString.isEmpty())
+			{
+				m_currentBindingModesJSON = JSON::Parse(bindingModesJSONString);
+			}
+
 			// 子Canvasのパラメータ一覧をソート
 			Array<std::pair<String, ParamValue>> sortedSubCanvasParams;
 			for (const auto& [name, value] : subCanvasParams)
@@ -107,6 +119,9 @@ namespace noco::editor
 				}
 				info.availableParentParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 
+				// 型に応じたモード候補
+				info.availableModes = AvailableParamRefModesFor(info.subCanvasParamType);
+
 				// 既存のserializedParamBindingsJSONから初期値を取得
 				if (m_currentBindingsJSON.isObject() && m_currentBindingsJSON.hasElement(name))
 				{
@@ -114,6 +129,22 @@ namespace noco::editor
 					if (bindingValue.isString())
 					{
 						info.selectedParentParamName = bindingValue.getString();
+					}
+				}
+
+				// 既存のserializedParamBindingModesJSONから初期モードを取得
+				if (m_currentBindingModesJSON.isObject() && m_currentBindingModesJSON.hasElement(name))
+				{
+					const auto& modeValue = m_currentBindingModesJSON[name];
+					if (modeValue.isString())
+					{
+						if (auto opt = StringToEnumOpt<ParamRefMode>(modeValue.getString()))
+						{
+							if (info.availableModes.contains(*opt))
+							{
+								info.selectedMode = *opt;
+							}
+						}
 					}
 				}
 
@@ -277,6 +308,10 @@ namespace noco::editor
 
 		void selectParentParam(size_t index, const String& paramName);
 
+		void onModeComboBoxClick(size_t index, const std::shared_ptr<ContextMenu>& dialogContextMenu);
+
+		void selectMode(size_t index, ParamRefMode mode);
+
 		void onResult(StringView resultButtonText) override
 		{
 			if (resultButtonText == U"OK")
@@ -287,17 +322,25 @@ namespace noco::editor
 				}
 
 				JSON bindingsJSON = JSON::Parse(U"{}");
+				JSON bindingModesJSON = JSON::Parse(U"{}");
 
 				for (const auto& info : m_bindings)
 				{
-					if (!info.selectedParentParamName.isEmpty())
+					if (info.selectedParentParamName.isEmpty())
 					{
-						bindingsJSON[info.subCanvasParamName] = info.selectedParentParamName;
+						continue;
+					}
+					bindingsJSON[info.subCanvasParamName] = info.selectedParentParamName;
+
+					// Normalはデフォルトなので省略
+					if (info.selectedMode != ParamRefMode::Normal)
+					{
+						bindingModesJSON[info.subCanvasParamName] = EnumToString(info.selectedMode);
 					}
 				}
 
-				const String bindingsJSONString = bindingsJSON.formatMinimum();
-				m_subCanvas->setSerializedParamBindingsJSON(bindingsJSONString);
+				m_subCanvas->setSerializedParamBindingsJSON(bindingsJSON.formatMinimum());
+				m_subCanvas->setSerializedParamBindingModesJSON(bindingModesJSON.formatMinimum());
 
 				if (m_onComplete)
 				{

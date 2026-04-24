@@ -48,6 +48,91 @@ namespace noco
 			}
 			return json;
 		}
+
+		/// @brief 反映モードJSONから、紐付けに残っていないキーのエントリを取り除く
+		/// @return 変更があった場合の最小化JSON文字列、なければnone
+		[[nodiscard]]
+		Optional<String> RemoveOrphanedParamBindingModes(const String& modesJSONString, const HashSet<String>& keepKeys)
+		{
+			const JSON modesJSON = ParseBindingsJSON(modesJSONString);
+			if (modesJSON.isEmpty())
+			{
+				return none;
+			}
+			JSON newJSON = JSON::Parse(U"{}");
+			bool changed = false;
+			for (const auto& [key, value] : modesJSON)
+			{
+				if (keepKeys.contains(key))
+				{
+					newJSON[key] = value;
+				}
+				else
+				{
+					changed = true;
+				}
+			}
+			if (!changed)
+			{
+				return none;
+			}
+			return newJSON.formatMinimum();
+		}
+
+		/// @brief ApplyParamMode<T>をParamTypeで型分岐して呼び出し、結果をParamValueとして返す
+		[[nodiscard]]
+		Optional<ParamValue> ApplyParamMode(const ParamValue& base, const ParamValue& paramValue, ParamRefMode mode, ParamType type)
+		{
+			switch (type)
+			{
+			case ParamType::Bool:
+				if (auto result = ApplyParamMode<bool>(GetParamValueAs<bool>(base).value_or(false), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::Int:
+				if (auto result = ApplyParamMode<int32>(GetParamValueAs<int32>(base).value_or(0), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::Double:
+				if (auto result = ApplyParamMode<double>(GetParamValueAs<double>(base).value_or(0.0), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::String:
+				if (auto result = ApplyParamMode<String>(GetParamValueAs<String>(base).value_or(String{}), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::Color:
+				if (auto result = ApplyParamMode<Color>(GetParamValueAs<Color>(base).value_or(Palette::White), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::Vec2:
+				if (auto result = ApplyParamMode<Vec2>(GetParamValueAs<Vec2>(base).value_or(Vec2::Zero()), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::LRTB:
+				if (auto result = ApplyParamMode<LRTB>(GetParamValueAs<LRTB>(base).value_or(LRTB::Zero()), paramValue, mode))
+				{
+					return ParamValue{ *result };
+				}
+				break;
+			case ParamType::Unknown:
+			default:
+				break;
+			}
+			return none;
+		}
 	}
 
 	void SubCanvas::loadCanvasInternal()
@@ -133,6 +218,7 @@ namespace noco
 		// Canvas読み込み後はパラメータ再反映が必要なのでクリア
 		m_appliedSerializedParamsJSON.clear();
 		m_appliedSerializedParamBindingsJSON.clear();
+		m_appliedSerializedParamBindingModesJSON.clear();
 	}
 
 	void SubCanvas::update(const std::shared_ptr<Node>& node)
@@ -148,14 +234,32 @@ namespace noco
 		{
 			// serializedParamsJSONが変更されていたらパースして適用
 			const String& currentSerializedParamsJSON = m_serializedParamsJSON.value();
-			if (m_appliedSerializedParamsJSON != currentSerializedParamsJSON)
+			const bool paramOverrideCacheChanged = (m_appliedSerializedParamsJSON != currentSerializedParamsJSON);
+			if (paramOverrideCacheChanged)
 			{
+				m_paramOverrideCache.clear();
 				if (!currentSerializedParamsJSON.isEmpty() && currentSerializedParamsJSON != U"{}")
 				{
 					const JSON json = JSON::Parse(currentSerializedParamsJSON);
 					if (json.isObject())
 					{
 						m_canvas->setParamsByJSON(json);
+
+						// 元となる上書き値が必要なモードで使う静的な値キャッシュを構築
+						const auto& subCanvasParams = m_canvas->params();
+						for (const auto& [key, valueJSON] : json)
+						{
+							const auto it = subCanvasParams.find(key);
+							if (it == subCanvasParams.end())
+							{
+								continue;
+							}
+							const ParamType type = GetParamType(it->second);
+							if (auto pv = ParamValueFromJSONValue(valueJSON, type))
+							{
+								m_paramOverrideCache[key] = *pv;
+							}
+						}
 					}
 				}
 				m_appliedSerializedParamsJSON = currentSerializedParamsJSON;
@@ -183,6 +287,52 @@ namespace noco
 				m_appliedSerializedParamBindingsJSON = currentParamBindingsJSON;
 			}
 
+			// serializedParamBindingModesJSONまたは上書き値キャッシュが変わった場合はモードキャッシュを再構築
+			const String& currentParamBindingModesJSON = m_serializedParamBindingModesJSON.value();
+			if (m_appliedSerializedParamBindingModesJSON != currentParamBindingModesJSON || paramOverrideCacheChanged)
+			{
+				m_paramBindingModeCache.clear();
+				if (!currentParamBindingModesJSON.isEmpty() && currentParamBindingModesJSON != U"{}")
+				{
+					const JSON json = JSON::Parse(currentParamBindingModesJSON);
+					if (json.isObject())
+					{
+						const auto& subCanvasParams = m_canvas->params();
+						for (const auto& [subCanvasParamName, modeJSON] : json)
+						{
+							if (!modeJSON.isString())
+							{
+								continue;
+							}
+							const auto opt = StringToEnumOpt<ParamRefMode>(modeJSON.getString());
+							if (!opt)
+							{
+								Logger << U"[NocoUI warning] Unknown ParamRefMode '{}' for SubCanvas binding '{}'"_fmt(modeJSON.getString(), subCanvasParamName);
+								continue;
+							}
+							// 紐付け対象のparamが子Canvasに無い場合はスキップ
+							const auto it = subCanvasParams.find(subCanvasParamName);
+							if (it == subCanvasParams.end())
+							{
+								continue;
+							}
+							const ParamType type = GetParamType(it->second);
+							const ParamRefMode mode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesFor(type), subCanvasParamName);
+
+							// 元となる上書き値が必要なモードで上書きが無い場合はNormal相当にフォールバック
+							if (ParamRefModeRequiresBaseValue(mode) && !m_paramOverrideCache.contains(subCanvasParamName))
+							{
+								Logger << U"[NocoUI warning] SubCanvas param binding mode '{}' for '{}' requires a value override but none is set. Falling back to Normal."_fmt(EnumToString(mode), subCanvasParamName);
+								continue;
+							}
+
+							m_paramBindingModeCache[subCanvasParamName] = mode;
+						}
+					}
+				}
+				m_appliedSerializedParamBindingModesJSON = currentParamBindingModesJSON;
+			}
+
 			// serializedParamBindingsJSONに従って親Canvasのパラメータを子Canvasに毎フレーム適用
 			if (!m_paramBindingMappingCache.empty())
 			{
@@ -203,11 +353,33 @@ namespace noco
 							continue;
 						}
 						// 型不一致の場合は子paramの型を壊さないようスキップ
-						if (GetParamType(parentIt->second) != GetParamType(subCanvasIt->second))
+						const ParamType type = GetParamType(subCanvasIt->second);
+						if (GetParamType(parentIt->second) != type)
 						{
 							continue;
 						}
-						m_canvas->setParamValue(subCanvasParamName, parentIt->second);
+
+						ParamRefMode mode = ParamRefMode::Normal;
+						if (auto modeIt = m_paramBindingModeCache.find(subCanvasParamName); modeIt != m_paramBindingModeCache.end())
+						{
+							mode = modeIt->second;
+						}
+
+						// 元となる上書き値が必要なモードではキャッシュから取得
+						// 上書きが無い場合はキャッシュ構築時にNormal相当へフォールバック済み
+						ParamValue base = subCanvasIt->second;
+						if (ParamRefModeRequiresBaseValue(mode))
+						{
+							if (auto overrideIt = m_paramOverrideCache.find(subCanvasParamName); overrideIt != m_paramOverrideCache.end())
+							{
+								base = overrideIt->second;
+							}
+						}
+
+						if (auto result = ApplyParamMode(base, parentIt->second, mode, type))
+						{
+							m_canvas->setParamValue(subCanvasParamName, *result);
+						}
 					}
 				}
 			}
@@ -323,6 +495,7 @@ namespace noco
 			return;
 		}
 		JSON newJSON = JSON::Parse(U"{}");
+		HashSet<String> keepKeys;
 		bool changed = false;
 		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
 		{
@@ -332,10 +505,15 @@ namespace noco
 				continue;
 			}
 			newJSON[subCanvasParamName] = parentParamNameJSON;
+			keepKeys.insert(subCanvasParamName);
 		}
 		if (changed)
 		{
 			setSerializedParamBindingsJSON(newJSON.formatMinimum());
+			if (auto newModes = RemoveOrphanedParamBindingModes(m_serializedParamBindingModesJSON.value(), keepKeys))
+			{
+				setSerializedParamBindingModesJSON(*newModes);
+			}
 		}
 	}
 
@@ -384,6 +562,7 @@ namespace noco
 		}
 		const auto& validParams = parentCanvas->params();
 		HashSet<String> clearedParamsSet;
+		HashSet<String> keepKeys;
 		JSON newJSON = JSON::Parse(U"{}");
 		bool changed = false;
 		for (const auto& [subCanvasParamName, parentParamNameJSON] : json)
@@ -401,10 +580,15 @@ namespace noco
 				continue;
 			}
 			newJSON[subCanvasParamName] = parentParamNameJSON;
+			keepKeys.insert(subCanvasParamName);
 		}
 		if (changed)
 		{
 			setSerializedParamBindingsJSON(newJSON.formatMinimum());
+			if (auto newModes = RemoveOrphanedParamBindingModes(m_serializedParamBindingModesJSON.value(), keepKeys))
+			{
+				setSerializedParamBindingModesJSON(*newModes);
+			}
 		}
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}

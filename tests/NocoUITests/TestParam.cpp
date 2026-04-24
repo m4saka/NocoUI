@@ -1208,3 +1208,110 @@ TEST_CASE("Parameter reference modes", "[Param]")
 		REQUIRE(prop->value() == Format(true));
 	}
 }
+
+// ========================================
+// ParamRefModeヘルパのテスト
+// ========================================
+
+TEST_CASE("ParamRefMode helpers", "[Param][ParamRefMode]")
+{
+	SECTION("ParamRefModeToShortDisplayString")
+	{
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Normal) == U"通常");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Inverted) == U"反転");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Add) == U"加算");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Subtract) == U"減算");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Multiply) == U"乗算");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Format) == U"フォーマット");
+	}
+
+	SECTION("ParamRefModeRequiresBaseValue")
+	{
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Normal) == false);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Inverted) == false);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Add) == true);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Subtract) == true);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Multiply) == true);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Format) == true);
+	}
+
+	SECTION("AvailableParamRefModesFor(ParamType) runtime dispatch")
+	{
+		const auto boolModes = AvailableParamRefModesFor(ParamType::Bool);
+		REQUIRE(boolModes.contains(ParamRefMode::Normal));
+		REQUIRE(boolModes.contains(ParamRefMode::Inverted));
+		REQUIRE_FALSE(boolModes.contains(ParamRefMode::Add));
+
+		const auto intModes = AvailableParamRefModesFor(ParamType::Int);
+		REQUIRE(intModes.contains(ParamRefMode::Normal));
+		REQUIRE(intModes.contains(ParamRefMode::Add));
+		REQUIRE(intModes.contains(ParamRefMode::Subtract));
+		REQUIRE(intModes.contains(ParamRefMode::Multiply));
+		REQUIRE_FALSE(intModes.contains(ParamRefMode::Format));
+
+		const auto strModes = AvailableParamRefModesFor(ParamType::String);
+		REQUIRE(strModes.contains(ParamRefMode::Normal));
+		REQUIRE(strModes.contains(ParamRefMode::Format));
+		REQUIRE_FALSE(strModes.contains(ParamRefMode::Add));
+
+		const auto colorModes = AvailableParamRefModesFor(ParamType::Color);
+		REQUIRE(colorModes.contains(ParamRefMode::Add));
+		REQUIRE(colorModes.contains(ParamRefMode::Multiply));
+
+		const auto unknownModes = AvailableParamRefModesFor(ParamType::Unknown);
+		REQUIRE(unknownModes.size() == 1);
+		REQUIRE(unknownModes.contains(ParamRefMode::Normal));
+	}
+}
+
+
+TEST_CASE("SubCanvas serializedParamBindingModesJSON getter/setter", "[Param][SubCanvas]")
+{
+	auto subCanvas = std::make_shared<SubCanvas>();
+
+	SECTION("Default value is empty object")
+	{
+		REQUIRE(subCanvas->serializedParamBindingModesJSON() == U"{}");
+	}
+
+	SECTION("Set and get roundtrip")
+	{
+		subCanvas->setSerializedParamBindingModesJSON(U"{\"p1\":\"Add\",\"p2\":\"Format\"}");
+		const JSON parsed = JSON::Parse(subCanvas->serializedParamBindingModesJSON());
+		REQUIRE(parsed.isObject());
+		REQUIRE(parsed[U"p1"].getString() == U"Add");
+		REQUIRE(parsed[U"p2"].getString() == U"Format");
+	}
+
+	SECTION("Serialized JSON roundtrip via toJSON")
+	{
+		subCanvas->setSerializedParamBindingsJSON(U"{\"childA\":\"parentA\"}");
+		subCanvas->setSerializedParamBindingModesJSON(U"{\"childA\":\"Add\"}");
+
+		const JSON json = subCanvas->toJSON();
+		REQUIRE(json.hasElement(U"serializedParamBindingsJSON"));
+		REQUIRE(json.hasElement(U"serializedParamBindingModesJSON"));
+
+		auto restored = std::make_shared<SubCanvas>();
+		REQUIRE(restored->tryReadFromJSON(json));
+		REQUIRE(restored->serializedParamBindingsJSON() == subCanvas->serializedParamBindingsJSON());
+		REQUIRE(restored->serializedParamBindingModesJSON() == subCanvas->serializedParamBindingModesJSON());
+	}
+
+	SECTION("Legacy JSON without modes field still loads with default empty modes")
+	{
+		// serializedParamBindingModesJSONフィールドが無い旧JSONでも読み込める
+		const JSON legacyJson = JSON::Parse(UR"({
+			"type": "SubCanvas",
+			"canvasPath": "",
+			"propagateEvents": true,
+			"serializedParamsJSON": "{}",
+			"serializedParamBindingsJSON": "{\"childA\":\"parentA\"}",
+			"tag": ""
+		})");
+		auto restored = std::make_shared<SubCanvas>();
+		REQUIRE(restored->tryReadFromJSON(legacyJson));
+		REQUIRE(restored->serializedParamBindingsJSON() == U"{\"childA\":\"parentA\"}");
+		REQUIRE(restored->serializedParamBindingModesJSON() == U"{}");
+	}
+}

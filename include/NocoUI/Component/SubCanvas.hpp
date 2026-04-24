@@ -2,6 +2,7 @@
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
 #include "../YN.hpp"
+#include "../Param.hpp"
 #include "../Property.hpp"
 
 namespace noco
@@ -17,6 +18,7 @@ namespace noco
 		Property<bool> m_propagateEvents;
 		PropertyNonInteractive<String> m_serializedParamsJSON;
 		PropertyNonInteractive<String> m_serializedParamBindingsJSON;
+		PropertyNonInteractive<String> m_serializedParamBindingModesJSON;
 		PropertyNonInteractive<String> m_tag;
 
 		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
@@ -24,7 +26,10 @@ namespace noco
 		/* NonSerialized */ String m_loadedAssetBasePath;
 		/* NonSerialized */ String m_appliedSerializedParamsJSON;
 		/* NonSerialized */ String m_appliedSerializedParamBindingsJSON;
+		/* NonSerialized */ String m_appliedSerializedParamBindingModesJSON;
 		/* NonSerialized */ HashTable<String, String> m_paramBindingMappingCache;
+		/* NonSerialized */ HashTable<String, ParamRefMode> m_paramBindingModeCache;
+		/* NonSerialized */ HashTable<String, ParamValue> m_paramOverrideCache;
 
 		/// @brief Canvasファイルを読み込む
 		void loadCanvasInternal();
@@ -44,11 +49,12 @@ namespace noco
 
 	public:
 		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"")
-			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_tag } }
+			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_serializedParamBindingModesJSON, &m_tag } }
 			, m_canvasPath{ U"canvasPath", canvasPath }
 			, m_propagateEvents{ U"propagateEvents", true }
 			, m_serializedParamsJSON{ U"serializedParamsJSON", U"{}" }
 			, m_serializedParamBindingsJSON{ U"serializedParamBindingsJSON", U"{}" }
+			, m_serializedParamBindingModesJSON{ U"serializedParamBindingModesJSON", U"{}" }
 			, m_tag{ U"tag", U"" }
 		{
 			loadCanvasInternal();
@@ -116,6 +122,18 @@ namespace noco
 		std::shared_ptr<SubCanvas> setSerializedParamBindingsJSON(const String& serializedParamBindingsJSON)
 		{
 			m_serializedParamBindingsJSON.setValue(serializedParamBindingsJSON);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const String& serializedParamBindingModesJSON() const
+		{
+			return m_serializedParamBindingModesJSON.value();
+		}
+
+		std::shared_ptr<SubCanvas> setSerializedParamBindingModesJSON(const String& serializedParamBindingModesJSON)
+		{
+			m_serializedParamBindingModesJSON.setValue(serializedParamBindingModesJSON);
 			return shared_from_this();
 		}
 

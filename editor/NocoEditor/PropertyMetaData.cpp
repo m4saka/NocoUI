@@ -1420,6 +1420,11 @@ namespace noco::editor
 			.tooltipDetail = U"親Canvasのパラメータを子Canvasのパラメータに紐付けます\n例: {\"subCanvasParam\": \"parentParam\"}",
 			.visibilityCondition = [](const ComponentBase&) { return false; },
 		};
+		metadata[PropertyKey{ U"SubCanvas", U"serializedParamBindingModesJSON" }] = PropertyMetadata{
+			.tooltip = U"パラメータ紐付けの反映モード(JSON形式)",
+			.tooltipDetail = U"各紐付けの反映モードを指定します\n例: {\"subCanvasParam\": \"Add\"}",
+			.visibilityCondition = [](const ComponentBase&) { return false; },
+		};
 		metadata[PropertyKey{ U"SubCanvas", U"tag" }] = PropertyMetadata{
 			.tooltip = U"プログラムから参照する際のタグ名",
 			.tooltipDetail = U"以下の関数で利用できます.\n・Canvas::getSubCanvasByTag: タグでSubCanvasを取得\n・Canvas::setSubCanvasParamValueByTag: 子Canvasのパラメータを設定\n・Canvas::setSubCanvasParamValuesByTag: 子Canvasのパラメータを一括設定",

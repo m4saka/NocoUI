@@ -5223,6 +5223,27 @@ namespace noco::editor
 					}
 				}
 
+				// serializedParamBindingModesJSONをパース
+				HashTable<String, ParamRefMode> boundParamModes;
+				const String& bindingModesJSONString = subCanvas->serializedParamBindingModesJSON();
+				if (!bindingModesJSONString.isEmpty() && bindingModesJSONString != U"{}")
+				{
+					const JSON bindingModesJSON = JSON::Parse(bindingModesJSONString);
+					if (bindingModesJSON.isObject())
+					{
+						for (const auto& [key, value] : bindingModesJSON)
+						{
+							if (value.isString())
+							{
+								if (auto opt = StringToEnumOpt<ParamRefMode>(value.getString()))
+								{
+									boundParamModes[key] = *opt;
+								}
+							}
+						}
+					}
+				}
+
 				std::shared_ptr<Canvas> targetCanvas = subCanvas->canvas();
 				m_subCanvasLastLoadedCanvases.emplace_back(subCanvas, targetCanvas);
 
@@ -5316,12 +5337,17 @@ namespace noco::editor
 					for (const auto& [name, defaultValue] : sortedParams)
 					{
 						const ParamType type = GetParamType(defaultValue);
-						const bool isEnabled = currentParamsJSON.hasElement(name);
-						const HasInteractivePropertyValueYN hasInteractivePropertyValue{ boundParamNames.contains(name) };
+						const bool hasBinding = boundParamNames.contains(name);
+						const HasInteractivePropertyValueYN hasInteractivePropertyValue{ hasBinding };
+
+						// 紐付けがあり元となる上書き値が必要なモードの場合、チェックボックスを自動でONにしてグレーアウト
+						const auto modeIt = boundParamModes.find(name);
+						const bool autoEnabled = hasBinding && modeIt != boundParamModes.end() && ParamRefModeRequiresBaseValue(modeIt->second);
+						const bool isEnabled = autoEnabled || currentParamsJSON.hasElement(name);
 
 						// 現在値を決定(JSONに値があればそれ、なければデフォルト値)
 						ParamValue initialValue = defaultValue;
-						if (isEnabled)
+						if (currentParamsJSON.hasElement(name))
 						{
 							if (auto pv = ParamValueFromJSONValue(currentParamsJSON[name], type))
 							{
@@ -5462,26 +5488,40 @@ namespace noco::editor
 						rowNode->addChild(valueInputNode);
 						valueInputNode->setInteractable(isEnabled);
 
-						rowNode->addChildAtIndex(
-							CreateCheckboxNode(
-								isEnabled,
-								[paramNameCopy, type, currentValueString, enabledState, updateParamsJSON, valueInputNode](bool checked)
+						// 元となる上書き値が必要なモードで上書きが無かった場合、初期値を自動でJSONに追加
+						if (autoEnabled && !currentParamsJSON.hasElement(name))
+						{
+							updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
+						}
+
+						auto checkboxNode = CreateCheckboxNode(
+							isEnabled,
+							[paramNameCopy, type, currentValueString, enabledState, updateParamsJSON, valueInputNode](bool checked)
+							{
+								*enabledState = checked;
+								if (valueInputNode)
 								{
-									*enabledState = checked;
-									if (valueInputNode)
-									{
-										valueInputNode->setInteractable(checked);
-									}
-									if (checked)
-									{
-										updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
-									}
-									else
-									{
-										updateParamsJSON(paramNameCopy, false, none);
-									}
-								}),
-							0);
+									valueInputNode->setInteractable(checked);
+								}
+								if (checked)
+								{
+									updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
+								}
+								else
+								{
+									updateParamsJSON(paramNameCopy, false, none);
+								}
+							});
+
+						if (autoEnabled)
+						{
+							checkboxNode->setInteractable(false);
+							checkboxNode->emplaceComponent<TooltipOpener>(
+								m_editorOverlayCanvas,
+								U"反映モード`{}`は元となる上書き値が必要なため常にONです"_fmt(ParamRefModeToShortDisplayString(modeIt->second)));
+						}
+
+						rowNode->addChildAtIndex(checkboxNode, 0);
 
 						rowNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
@@ -5620,6 +5660,16 @@ namespace noco::editor
 							->setSizingMode(LabelSizingMode::AutoShrink);
 
 						// 親パラメータ名(paramRef同様にシアンで参照であることを示す)
+						// Normal以外のモードは親名の後にinline表示
+						ParamRefMode displayMode = ParamRefMode::Normal;
+						if (auto it = boundParamModes.find(childKey); it != boundParamModes.end())
+						{
+							displayMode = it->second;
+						}
+						const String parentKeyDisplay = displayMode == ParamRefMode::Normal
+							? parentKey
+							: U"{} [{}]"_fmt(parentKey, ParamRefModeToShortDisplayString(displayMode));
+
 						auto parentKeyNode = bindingNode->emplaceChild(
 							U"ParentKey",
 							InlineRegion
@@ -5629,7 +5679,7 @@ namespace noco::editor
 							},
 							IsHitTargetYN::No);
 						parentKeyNode->emplaceComponent<Label>(
-							parentKey,
+							parentKeyDisplay,
 							U"",
 							13,
 							ColorF{ Palette::Cyan, 0.9 },

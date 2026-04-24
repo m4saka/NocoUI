@@ -49,7 +49,7 @@ namespace noco::editor
 			VerticalAlign::Middle)
 			->setSizingMode(LabelSizingMode::AutoShrink);
 
-		// コンボボックス
+		// コンボボックス(紐付け先親パラメータ)
 		info.comboBoxNode = rowNode->emplaceChild(
 			U"ComboBox",
 			InlineRegion
@@ -93,6 +93,56 @@ namespace noco::editor
 				onComboBoxClick(index, dialogContextMenu);
 			}
 		});
+
+		// モード選択コンボボックス
+		info.modeComboBoxNode = rowNode->emplaceChild(
+			U"ModeComboBox",
+			InlineRegion
+			{
+				.sizeRatio = Vec2{ 0, 1 },
+				.sizeDelta = Vec2{ 120, 0 },
+			});
+
+		const bool modeSelectable = info.availableModes.size() > 1;
+		if (!modeSelectable)
+		{
+			info.modeComboBoxNode->setInteractable(false);
+		}
+
+		info.modeComboBoxNode->emplaceComponent<RectRenderer>(
+			PropertyValue<Color>{ Color{ 26, 26, 26, 204 } }.withDisabled(Color{ 51, 51, 51, 204 }).withSmoothTime(0.05),
+			PropertyValue<Color>{ Color{ 255, 255, 255, 102 } }.withHovered(Color{ 255, 255, 255, 153 }).withSmoothTime(0.05),
+			1.0, 0.0, 4.0);
+
+		info.modeComboLabel = info.modeComboBoxNode->emplaceComponent<Label>(
+			String{ ParamRefModeToShortDisplayString(info.selectedMode) },
+			U"",
+			14,
+			PropertyValue<Color>{ Palette::White }.withDisabled(Color{ 153, 153, 153 }),
+			HorizontalAlign::Left,
+			VerticalAlign::Middle,
+			LRTB{ 8, 25, 0, 0 })
+			->setSizingMode(LabelSizingMode::AutoShrink);
+
+		if (modeSelectable)
+		{
+			info.modeComboBoxNode->emplaceComponent<Label>(
+				U"▼",
+				U"",
+				10,
+				Palette::White,
+				HorizontalAlign::Right,
+				VerticalAlign::Middle,
+				LRTB{ 5, 7, 5, 5 });
+
+			info.modeComboBoxNode->emplaceComponent<UpdaterComponent>([this, index, dialogContextMenu](const std::shared_ptr<Node>& node)
+			{
+				if (node->isClicked())
+				{
+					onModeComboBoxClick(index, dialogContextMenu);
+				}
+			});
+		}
 	}
 
 	void SubCanvasParamBindingsEditDialog::onComboBoxClick(size_t index, const std::shared_ptr<ContextMenu>& dialogContextMenu)
@@ -170,5 +220,30 @@ namespace noco::editor
 
 		const String displayText = paramName.isEmpty() ? U"(なし)" : paramName;
 		info.comboLabel->setText(displayText);
+	}
+
+	void SubCanvasParamBindingsEditDialog::onModeComboBoxClick(size_t index, const std::shared_ptr<ContextMenu>& dialogContextMenu)
+	{
+		auto& info = m_bindings[index];
+
+		Array<MenuElement> menuElements;
+		for (const auto mode : info.availableModes)
+		{
+			menuElements.push_back(MenuItem{
+				.text = String{ ParamRefModeToShortDisplayString(mode) },
+				.hotKeyText = U"",
+				.mnemonicInput = none,
+				.onClick = [this, index, mode]() { selectMode(index, mode); },
+			});
+		}
+
+		dialogContextMenu->show(info.modeComboBoxNode->regionRect().bl(), menuElements);
+	}
+
+	void SubCanvasParamBindingsEditDialog::selectMode(size_t index, ParamRefMode mode)
+	{
+		auto& info = m_bindings[index];
+		info.selectedMode = mode;
+		info.modeComboLabel->setText(String{ ParamRefModeToShortDisplayString(mode) });
 	}
 }
