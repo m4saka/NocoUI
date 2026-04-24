@@ -5317,6 +5317,7 @@ namespace noco::editor
 					{
 						const ParamType type = GetParamType(defaultValue);
 						const bool isEnabled = currentParamsJSON.hasElement(name);
+						const HasInteractivePropertyValueYN hasInteractivePropertyValue{ boundParamNames.contains(name) };
 
 						// 現在値を決定(JSONに値があればそれ、なければデフォルト値)
 						ParamValue initialValue = defaultValue;
@@ -5352,7 +5353,8 @@ namespace noco::editor
 										{
 											updateParamsJSON(paramNameCopy, true, ParamValue{ v });
 										}
-									});
+									},
+									hasInteractivePropertyValue);
 							}
 							break;
 						case ParamType::Int:
@@ -5368,7 +5370,8 @@ namespace noco::editor
 										{
 											updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
 										}
-									});
+									},
+									hasInteractivePropertyValue);
 							}
 							break;
 						case ParamType::String:
@@ -5384,7 +5387,7 @@ namespace noco::editor
 											updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
 										}
 									},
-									HasInteractivePropertyValueYN::No,
+									hasInteractivePropertyValue,
 									3);
 							}
 							break;
@@ -5401,7 +5404,8 @@ namespace noco::editor
 										{
 											updateParamsJSON(paramNameCopy, true, ParamValue{ c });
 										}
-									});
+									},
+									hasInteractivePropertyValue);
 							}
 							break;
 						case ParamType::Vec2:
@@ -5417,7 +5421,8 @@ namespace noco::editor
 										{
 											updateParamsJSON(paramNameCopy, true, ParamValue{ v });
 										}
-									});
+									},
+									hasInteractivePropertyValue);
 							}
 							break;
 						case ParamType::LRTB:
@@ -5433,7 +5438,8 @@ namespace noco::editor
 										{
 											updateParamsJSON(paramNameCopy, true, ParamValue{ l });
 										}
-									});
+									},
+									hasInteractivePropertyValue);
 							}
 							break;
 						case ParamType::Unknown:
@@ -5482,33 +5488,6 @@ namespace noco::editor
 						if (isFolded)
 						{
 							rowNode->setActive(false);
-						}
-
-						// 紐付けによる上書き警告
-						if (boundParamNames.contains(name))
-						{
-							auto warningNode = paramsContainerNode->emplaceChild(
-								U"ParamWarning_{}"_fmt(name),
-								InlineRegion
-								{
-									.sizeRatio = Vec2{ 1, 0 },
-									.sizeDelta = Vec2{ -24, 18 },
-									.margin = LRTB{ 12, 12, 0, 0 },
-								});
-							warningNode->emplaceComponent<Label>(
-								U"※ パラメータ紐付けにより上書きされます",
-								U"",
-								12,
-								ColorF{ 1.0, 1.0, 0.7 },
-								HorizontalAlign::Left,
-								VerticalAlign::Middle,
-								LRTB{ 24, 0, 0, 0 })
-								->setSizingMode(LabelSizingMode::AutoShrink);
-
-							if (isFolded)
-							{
-								warningNode->setActive(false);
-							}
 						}
 					}
 				}
