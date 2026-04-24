@@ -84,9 +84,6 @@
     <ClCompile Include="SubCanvasParamBindingsEditDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SubCanvasParamsEditDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TabStop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -501,9 +498,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SubCanvasParamBindingsEditDialog.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SubCanvasParamsEditDialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextureFontLabelCellTrimEditDialog.hpp">

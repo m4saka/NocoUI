@@ -17,7 +17,6 @@
 #include "SpriteGridDivisionInputDialog.hpp"
 #include "TextureFontLabelGridDivisionInputDialog.hpp"
 #include "TextureFontLabelCellTrimEditDialog.hpp"
-#include "SubCanvasParamsEditDialog.hpp"
 #include "SubCanvasParamBindingsEditDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
@@ -71,6 +70,9 @@ namespace noco::editor
 		IsFoldedYN m_isFoldedCanvasSetting = IsFoldedYN::No;  // Canvas Settingセクションの折り畳み状態
 		IsFoldedYN m_isFoldedParams = IsFoldedYN::No;  // Paramsセクションの折り畳み状態
 		Array<std::weak_ptr<ComponentBase>> m_foldedComponents;
+
+		/// @brief Canvasロード発生検知用
+		Array<std::pair<std::weak_ptr<SubCanvas>, std::weak_ptr<Canvas>>> m_subCanvasLastLoadedCanvases;
 
 		std::shared_ptr<Defaults> m_defaults;
 		
@@ -453,6 +455,8 @@ namespace noco::editor
 			}
 
 			m_targetNode = targetNode;
+
+			m_subCanvasLastLoadedCanvases.clear();
 
 			m_inspectorRootNode->removeChildrenAll();
 
@@ -5219,158 +5223,295 @@ namespace noco::editor
 					}
 				}
 
-				// 現在設定されているパラメータを表示
-				const String& paramsJSONString = subCanvas->serializedParamsJSON();
-				bool hasParams = false;
+				std::shared_ptr<Canvas> targetCanvas = subCanvas->canvas();
+				m_subCanvasLastLoadedCanvases.emplace_back(subCanvas, targetCanvas);
 
-				if (!paramsJSONString.isEmpty() && paramsJSONString != U"{}")
+				// 現在のserializedParamsJSONをパース
+				JSON currentParamsJSON;
 				{
-					const JSON paramsJSON = JSON::Parse(paramsJSONString);
-					if (paramsJSON.isObject() && !paramsJSON.isEmpty())
+					const String& paramsJSONString = subCanvas->serializedParamsJSON();
+					if (!paramsJSONString.isEmpty())
 					{
-						hasParams = true;
-
-						// 各パラメータを表示
-						for (const auto& item : paramsJSON)
-						{
-							const String& key = item.key;
-							const JSON& value = item.value;
-
-							String valueStr = value.formatMinimum();
-							// 長すぎる場合は省略
-							if (valueStr.length() > 50)
-							{
-								valueStr = valueStr.substr(0, 47) + U"...";
-							}
-
-							auto paramNode = paramsContainerNode->emplaceChild(
-								U"ParamItem_{}"_fmt(key),
-								InlineRegion
-								{
-									.sizeRatio = Vec2{ 1, 0 },
-									.sizeDelta = Vec2{ -24, 24 },
-									.margin = LRTB{ 12, 12, 3, 0 },
-								});
-							paramNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
-
-							// ホバー時の背景色
-							paramNode->emplaceComponent<RectRenderer>(
-								PropertyValue<Color>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-								Palette::Black,
-								0.0,
-								0.0,
-								3.0);
-
-							// キー部分（固定幅150px、AutoShrink）
-							auto keyNode = paramNode->emplaceChild(
-								U"Key",
-								InlineRegion
-								{
-									.sizeRatio = Vec2{ 0, 1 },
-									.sizeDelta = Vec2{ 150, 0 },
-								},
-								IsHitTargetYN::No);
-							keyNode->emplaceComponent<Label>(
-								U"{}:"_fmt(key),
-								U"",
-								13,
-								Palette::White,
-								HorizontalAlign::Left,
-								VerticalAlign::Middle)
-								->setSizingMode(LabelSizingMode::AutoShrink);
-
-							// 値部分（可変幅、AutoShrink）
-							auto valueNode = paramNode->emplaceChild(
-								U"Value",
-								InlineRegion
-								{
-									.sizeRatio = Vec2{ 0, 1 },
-									.flexibleWeight = 1.0,
-								},
-								IsHitTargetYN::No);
-							valueNode->emplaceComponent<Label>(
-								valueStr,
-								U"",
-								13,
-								Palette::White,
-								HorizontalAlign::Left,
-								VerticalAlign::Middle)
-								->setSizingMode(LabelSizingMode::AutoShrink);
-
-							if (isFolded)
-							{
-								paramNode->setActive(false);
-							}
-
-							// serializedParamBindingsJSONとの重複注意
-							if (boundParamNames.contains(key))
-							{
-								// AutoResizeHeightを使うとパネル幅変更後にparamsContainerNodeがリフィットされず余白が残るため固定高
-								auto warningNode = paramsContainerNode->emplaceChild(
-									U"ParamWarning_{}"_fmt(key),
-									InlineRegion
-									{
-										.sizeRatio = Vec2{ 1, 0 },
-										.sizeDelta = Vec2{ -24, 18 },
-										.margin = LRTB{ 12, 12, 0, 0 },
-									});
-								warningNode->emplaceComponent<Label>(
-									U"※ パラメータ紐付けにより上書きされます",
-									U"",
-									12,
-									ColorF{ 1.0, 1.0, 0.7 },
-									HorizontalAlign::Left,
-									VerticalAlign::Middle,
-									LRTB{ 24, 0, 0, 0 })
-									->setSizingMode(LabelSizingMode::AutoShrink);
-
-								if (isFolded)
-								{
-									warningNode->setActive(false);
-								}
-							}
-						}
+						currentParamsJSON = JSON::Parse(paramsJSONString);
+					}
+					if (!currentParamsJSON.isObject())
+					{
+						currentParamsJSON = JSON::Parse(U"{}");
 					}
 				}
 
-				// パラメータが設定されていない場合
-				if (!hasParams)
+				if (!targetCanvas)
 				{
-					auto noParamsNode = paramsContainerNode->emplaceChild(
-						U"NoParams",
+					auto msgNode = paramsContainerNode->emplaceChild(
+						U"NoCanvas",
 						InlineRegion
 						{
 							.sizeRatio = Vec2{ 1, 0 },
 							.sizeDelta = Vec2{ 0, 24 },
-							.margin = LRTB{ 12, 12, 4, 0 },
+							.margin = LRTB{ 12, 12, 4, 8 },
 						});
-					noParamsNode->emplaceComponent<Label>(
-						U"(設定なし)",
+					msgNode->emplaceComponent<Label>(
+						U"(Canvasが存在しません)",
 						U"",
 						13,
 						ColorF{ 0.7, 0.7, 0.7 },
 						HorizontalAlign::Center,
 						VerticalAlign::Middle);
+					if (isFolded)
+					{
+						msgNode->setActive(false);
+					}
 				}
+				else if (targetCanvas->params().empty())
+				{
+					auto msgNode = paramsContainerNode->emplaceChild(
+						U"NoParams",
+						InlineRegion
+						{
+							.sizeRatio = Vec2{ 1, 0 },
+							.sizeDelta = Vec2{ 0, 24 },
+							.margin = LRTB{ 12, 12, 4, 8 },
+						});
+					msgNode->emplaceComponent<Label>(
+						U"(Canvasにパラメータがありません)",
+						U"",
+						13,
+						ColorF{ 0.7, 0.7, 0.7 },
+						HorizontalAlign::Center,
+						VerticalAlign::Middle);
+					if (isFolded)
+					{
+						msgNode->setActive(false);
+					}
+				}
+				else
+				{
+					// パラメータ一覧をソート
+					Array<std::pair<String, ParamValue>> sortedParams;
+					for (const auto& [paramName, paramValue] : targetCanvas->params())
+					{
+						sortedParams.emplace_back(paramName, paramValue);
+					}
+					sortedParams.sort_by([](const auto& a, const auto& b) { return a.first < b.first; });
 
-				auto editParamsButton = paramsContainerNode->addChild(CreateButtonNode(
-					U"Canvasパラメータを設定...",
-					InlineRegion
+					// serializedParamsJSONを更新する共通ヘルパ
+					auto updateParamsJSON = [subCanvas](const String& name, bool enabled, Optional<ParamValue> value)
 					{
-						.sizeRatio = Vec2{ 0, 0 },
-						.sizeDelta = Vec2{ 240, 24 },
-						.margin = LRTB{ 0, 0, 4, 8 },
-					},
-					[this, subCanvas](const std::shared_ptr<Node>&)
+						JSON json = JSON::Parse(subCanvas->serializedParamsJSON());
+						if (!json.isObject())
+						{
+							json = JSON::Parse(U"{}");
+						}
+						if (enabled && value)
+						{
+							json[name] = ParamValueToJSONValue(*value);
+						}
+						else
+						{
+							json.erase(name);
+						}
+						subCanvas->setSerializedParamsJSON(json.formatMinimum());
+					};
+
+					for (const auto& [name, defaultValue] : sortedParams)
 					{
-						m_dialogOpener->openDialog(
-							std::make_shared<SubCanvasParamsEditDialog>(
-								subCanvas,
-								[this] { refreshInspector(); },
-								m_dialogOpener
-							)
-						);
-					}));
+						const ParamType type = GetParamType(defaultValue);
+						const bool isEnabled = currentParamsJSON.hasElement(name);
+
+						// 現在値を決定(JSONに値があればそれ、なければデフォルト値)
+						ParamValue initialValue = defaultValue;
+						if (isEnabled)
+						{
+							if (auto pv = ParamValueFromJSONValue(currentParamsJSON[name], type))
+							{
+								initialValue = *pv;
+							}
+						}
+
+						// 状態保持(コールバック間で共有)
+						auto currentValueString = std::make_shared<String>(ParamValueToString(initialValue));
+						auto enabledState = std::make_shared<bool>(isEnabled);
+
+						// 値入力ノードを構築
+						std::shared_ptr<Node> valueInputNode;
+						const String propertyLabel = U"{} [{}]"_fmt(name, ParamTypeToString(type));
+						const String paramNameCopy = name;
+
+						switch (type)
+						{
+						case ParamType::Bool:
+							{
+								const bool initBool = GetParamValueAs<bool>(initialValue).value_or(false);
+								valueInputNode = CreateBoolPropertyNode(
+									propertyLabel,
+									initBool,
+									[paramNameCopy, currentValueString, enabledState, updateParamsJSON](bool v)
+									{
+										*currentValueString = v ? U"true" : U"false";
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValue{ v });
+										}
+									});
+							}
+							break;
+						case ParamType::Int:
+						case ParamType::Double:
+							{
+								valueInputNode = CreatePropertyNode(
+									propertyLabel,
+									*currentValueString,
+									[paramNameCopy, type, currentValueString, enabledState, updateParamsJSON](StringView text)
+									{
+										*currentValueString = String{ text };
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
+										}
+									});
+							}
+							break;
+						case ParamType::String:
+							{
+								valueInputNode = CreatePropertyNodeWithTextArea(
+									propertyLabel,
+									*currentValueString,
+									[paramNameCopy, type, currentValueString, enabledState, updateParamsJSON](StringView text)
+									{
+										*currentValueString = String{ text };
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
+										}
+									},
+									HasInteractivePropertyValueYN::No,
+									3);
+							}
+							break;
+						case ParamType::Color:
+							{
+								const Color initColor = GetParamValueAs<Color>(initialValue).value_or(Palette::White);
+								valueInputNode = CreateColorPropertyNode(
+									propertyLabel,
+									initColor,
+									[paramNameCopy, currentValueString, enabledState, updateParamsJSON](const Color& c)
+									{
+										*currentValueString = ValueToString(c);
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValue{ c });
+										}
+									});
+							}
+							break;
+						case ParamType::Vec2:
+							{
+								const Vec2 initVec = GetParamValueAs<Vec2>(initialValue).value_or(Vec2::Zero());
+								valueInputNode = CreateVec2PropertyNode(
+									propertyLabel,
+									initVec,
+									[paramNameCopy, currentValueString, enabledState, updateParamsJSON](const Vec2& v)
+									{
+										*currentValueString = ValueToString(v);
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValue{ v });
+										}
+									});
+							}
+							break;
+						case ParamType::LRTB:
+							{
+								const LRTB initLrtb = GetParamValueAs<LRTB>(initialValue).value_or(LRTB::Zero());
+								valueInputNode = CreateLRTBPropertyNode(
+									propertyLabel,
+									initLrtb,
+									[paramNameCopy, currentValueString, enabledState, updateParamsJSON](const LRTB& l)
+									{
+										*currentValueString = ValueToString(l);
+										if (*enabledState)
+										{
+											updateParamsJSON(paramNameCopy, true, ParamValue{ l });
+										}
+									});
+							}
+							break;
+						case ParamType::Unknown:
+						default:
+							continue;
+						}
+
+						// 行コンテナ(チェックボックス+値入力)
+						auto rowNode = paramsContainerNode->emplaceChild(
+							U"ParamRow_{}"_fmt(name),
+							InlineRegion
+							{
+								.sizeRatio = Vec2{ 1, 0 },
+								.sizeDelta = SizeF{ -20, 0 },
+								.margin = LRTB{ 0, 0, 0, 0 },
+							});
+						rowNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 8, 0, 0, 0 } });
+
+						// 値入力を追加してからチェックボックスを先頭に挿入
+						rowNode->addChild(valueInputNode);
+						valueInputNode->setInteractable(isEnabled);
+
+						rowNode->addChildAtIndex(
+							CreateCheckboxNode(
+								isEnabled,
+								[paramNameCopy, type, currentValueString, enabledState, updateParamsJSON, valueInputNode](bool checked)
+								{
+									*enabledState = checked;
+									if (valueInputNode)
+									{
+										valueInputNode->setInteractable(checked);
+									}
+									if (checked)
+									{
+										updateParamsJSON(paramNameCopy, true, ParamValueFromString(type, *currentValueString));
+									}
+									else
+									{
+										updateParamsJSON(paramNameCopy, false, none);
+									}
+								}),
+							0);
+
+						rowNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
+
+						if (isFolded)
+						{
+							rowNode->setActive(false);
+						}
+
+						// 紐付けによる上書き警告
+						if (boundParamNames.contains(name))
+						{
+							auto warningNode = paramsContainerNode->emplaceChild(
+								U"ParamWarning_{}"_fmt(name),
+								InlineRegion
+								{
+									.sizeRatio = Vec2{ 1, 0 },
+									.sizeDelta = Vec2{ -24, 18 },
+									.margin = LRTB{ 12, 12, 0, 0 },
+								});
+							warningNode->emplaceComponent<Label>(
+								U"※ パラメータ紐付けにより上書きされます",
+								U"",
+								12,
+								ColorF{ 1.0, 1.0, 0.7 },
+								HorizontalAlign::Left,
+								VerticalAlign::Middle,
+								LRTB{ 24, 0, 0, 0 })
+								->setSizingMode(LabelSizingMode::AutoShrink);
+
+							if (isFolded)
+							{
+								warningNode->setActive(false);
+							}
+						}
+					}
+				}
 
 				// パラメータ紐付け一覧のタイトル
 				auto bindingsListLabelNode = paramsContainerNode->emplaceChild(
@@ -5675,6 +5816,20 @@ namespace noco::editor
 
 		void update()
 		{
+			// Canvasがロードされたらパラメータ一覧を更新
+			for (const auto& [subCanvasWeak, lastLoadedCanvasWeak] : m_subCanvasLastLoadedCanvases)
+			{
+				const auto subCanvas = subCanvasWeak.lock();
+				if (!subCanvas)
+				{
+					continue;
+				}
+				if (subCanvas->canvas() != lastLoadedCanvasWeak.lock())
+				{
+					refreshInspector();
+					break;
+				}
+			}
 		}
 
 		[[nodiscard]]
