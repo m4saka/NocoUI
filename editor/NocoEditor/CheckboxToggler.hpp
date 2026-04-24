@@ -12,9 +12,6 @@ namespace noco::editor
 		std::function<bool()> m_fnGetValue;
 		std::shared_ptr<Label> m_checkLabel;
 		bool m_useParentHoverState;
-		std::weak_ptr<Label> m_propertyLabelWeak;
-		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 	public:
 		CheckboxToggler(
@@ -22,9 +19,6 @@ namespace noco::editor
 			std::function<void(bool)> fnSetValue,
 			const std::shared_ptr<Label>& checkLabel,
 			bool useParentHoverState,
-			std::weak_ptr<Label> propertyLabelWeak = {},
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParamRef = HasParameterRefYN::No,
 			std::function<bool()> fnGetValue = nullptr)
 			: ComponentBase{ {} }
 			, m_value(initialValue)
@@ -32,9 +26,6 @@ namespace noco::editor
 			, m_fnGetValue(std::move(fnGetValue))
 			, m_checkLabel(checkLabel)
 			, m_useParentHoverState(useParentHoverState)
-			, m_propertyLabelWeak(propertyLabelWeak)
-			, m_hasInteractivePropertyValue(hasInteractivePropertyValue)
-			, m_hasParamRef(hasParamRef)
 		{
 		}
 
@@ -77,16 +68,6 @@ namespace noco::editor
 			}
 			if (isClicked)
 			{
-				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
-				if (m_hasInteractivePropertyValue && !m_hasParamRef)
-				{
-					if (const auto label = m_propertyLabelWeak.lock())
-					{
-						label->setUnderlineStyle(LabelUnderlineStyle::None);
-					}
-					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-				}
-
 				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
 				m_value = !m_value;
 				m_checkLabel->setText(m_value ? U"✓" : U"");

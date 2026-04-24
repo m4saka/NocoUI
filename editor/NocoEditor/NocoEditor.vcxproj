@@ -121,7 +121,6 @@
     <ClCompile Include="PropertyLabelDragger.cpp" />
     <ClCompile Include="PropertyMetaData.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />
-    <ClCompile Include="SubCanvasParamBindingsEditDialog.cpp" />
     <ClCompile Include="TabStop.cpp" />
     <ClCompile Include="TextureFontLabelCellTrimEditDialog.cpp" />
     <ClCompile Include="HistorySystem.cpp" />
@@ -263,7 +262,7 @@
     <ClInclude Include="PropertyTextBox.hpp" />
     <ClInclude Include="ResizableHandle.hpp" />
     <ClInclude Include="SpriteGridDivisionInputDialog.hpp" />
-    <ClInclude Include="SubCanvasParamBindingsEditDialog.hpp" />
+    <ClInclude Include="SubCanvasParamBindingDialog.hpp" />
     <ClInclude Include="TabStop.hpp" />
     <ClInclude Include="TextureFontLabelCellTrimEditDialog.hpp" />
     <ClInclude Include="TextureFontLabelGridDivisionInputDialog.hpp" />

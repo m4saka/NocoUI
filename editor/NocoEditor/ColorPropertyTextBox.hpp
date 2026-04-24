@@ -14,9 +14,6 @@ namespace noco::editor
 		std::shared_ptr<RectRenderer> m_previewRect;
 		std::function<void(const Color&)> m_fnOnValueChanged;
 		Color m_value;
-		std::weak_ptr<Label> m_propertyLabelWeak;
-		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 	public:
 		ColorPropertyTextBox(
@@ -26,10 +23,7 @@ namespace noco::editor
 			const std::shared_ptr<TextBox>& a,
 			const std::shared_ptr<RectRenderer>& previewRect,
 			std::function<void(const Color&)> fnOnValueChanged,
-			const Color& initialValue,
-			std::weak_ptr<Label> propertyLabelWeak = {},
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
+			const Color& initialValue)
 			: ComponentBase{ {} }
 			, m_textBoxR(r)
 			, m_textBoxG(g)
@@ -38,9 +32,6 @@ namespace noco::editor
 			, m_previewRect(previewRect)
 			, m_fnOnValueChanged(std::move(fnOnValueChanged))
 			, m_value(initialValue)
-			, m_propertyLabelWeak(propertyLabelWeak)
-			, m_hasInteractivePropertyValue(hasInteractivePropertyValue)
-			, m_hasParamRef(hasParamRef)
 		{
 		}
 
@@ -54,16 +45,6 @@ namespace noco::editor
 			const Color newColor{ static_cast<uint8>(r), static_cast<uint8>(g), static_cast<uint8>(b), static_cast<uint8>(a) };
 			if (newColor != m_value)
 			{
-				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
-				if (m_hasInteractivePropertyValue && !m_hasParamRef)
-				{
-					if (const auto label = m_propertyLabelWeak.lock())
-					{
-						label->setUnderlineStyle(LabelUnderlineStyle::None);
-					}
-					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-				}
-				
 				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
 				m_value = newColor;
 				m_previewRect->setFillColor(newColor);

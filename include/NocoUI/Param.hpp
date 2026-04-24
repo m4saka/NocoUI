@@ -577,4 +577,59 @@ namespace noco
 			return none;
 		}
 	}
+
+	/// @brief ApplyParamMode<T>をParamTypeで型分岐して呼び出し、結果をParamValueとして返す
+	[[nodiscard]]
+	inline Optional<ParamValue> ApplyParamMode(const ParamValue& base, const ParamValue& paramValue, ParamRefMode mode, ParamType type)
+	{
+		switch (type)
+		{
+		case ParamType::Bool:
+			if (auto result = ApplyParamMode<bool>(GetParamValueAs<bool>(base).value_or(false), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::Int:
+			if (auto result = ApplyParamMode<int32>(GetParamValueAs<int32>(base).value_or(0), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::Double:
+			if (auto result = ApplyParamMode<double>(GetParamValueAs<double>(base).value_or(0.0), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::String:
+			if (auto result = ApplyParamMode<String>(GetParamValueAs<String>(base).value_or(String{}), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::Color:
+			if (auto result = ApplyParamMode<Color>(GetParamValueAs<Color>(base).value_or(Palette::White), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::Vec2:
+			if (auto result = ApplyParamMode<Vec2>(GetParamValueAs<Vec2>(base).value_or(Vec2::Zero()), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::LRTB:
+			if (auto result = ApplyParamMode<LRTB>(GetParamValueAs<LRTB>(base).value_or(LRTB::Zero()), paramValue, mode))
+			{
+				return ParamValue{ *result };
+			}
+			break;
+		case ParamType::Unknown:
+		default:
+			break;
+		}
+		return none;
+	}
 }

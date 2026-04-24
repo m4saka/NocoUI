@@ -17,7 +17,7 @@
 #include "SpriteGridDivisionInputDialog.hpp"
 #include "TextureFontLabelGridDivisionInputDialog.hpp"
 #include "TextureFontLabelCellTrimEditDialog.hpp"
-#include "SubCanvasParamBindingsEditDialog.hpp"
+#include "SubCanvasParamBindingDialog.hpp"
 #include "ComponentSchema.hpp"
 #include "ComponentSchemaLoader.hpp"
 #include "EditorColor.hpp"
@@ -1007,10 +1007,7 @@ namespace noco::editor
 			textBoxNode->addComponent(std::make_shared<PropertyTextBox>(
 				textBox,
 				fnSetValue,
-				fnGetValue,
-				std::weak_ptr<Label>{ labelComponent },
-				hasInteractivePropertyValue,
-				hasParameterRef));
+				fnGetValue));
 			textBoxNode->emplaceComponent<TabStop>();
 			
 			// dragValueChangeStepが設定されている場合、ラベルにPropertyLabelDraggerを追加
@@ -1018,16 +1015,15 @@ namespace noco::editor
 			{
 				// textBoxへの参照を取得してラムダでキャプチャ
 				const auto textBoxWeak = std::weak_ptr<TextBox>(textBox);
-				const auto labelComponentWeak = std::weak_ptr<Label>{ labelComponent };
-				
+
 				// fnGetValueがある場合はそれを使い、ない場合はtextBoxから直接取得
 				if (fnGetValue)
 				{
 					// 初期値を記録
 					double initialValue = ParseOpt<double>(fnGetValue()).value_or(0.0);
-					
+
 					labelNode->emplaceComponent<PropertyLabelDragger>(
-						[fnSetValue, textBoxWeak, labelComponentWeak, initialValue, hasInteractivePropertyValue, hasParameterRef](double newValue) mutable {
+						[fnSetValue, textBoxWeak, initialValue](double newValue) mutable {
 							// 値が実際に変更された場合のみ更新
 							if (std::abs(newValue - initialValue) > 0.0001)  // 浮動小数点の誤差を考慮
 							{
@@ -1035,14 +1031,6 @@ namespace noco::editor
 								if (const auto tb = textBoxWeak.lock())
 								{
 									tb->setText(Format(newValue));
-								}
-								// インタラクティブ値があった場合は下線を消す（パラメータ参照がある場合は緑の下線を維持）
-								if (hasInteractivePropertyValue && !hasParameterRef)
-								{
-									if (const auto label = labelComponentWeak.lock())
-									{
-										label->setUnderlineStyle(LabelUnderlineStyle::None);
-									}
 								}
 								initialValue = newValue;
 							}
@@ -1054,14 +1042,14 @@ namespace noco::editor
 				else
 				{
 					labelNode->emplaceComponent<PropertyLabelDragger>(
-						[fnSetValue, textBoxWeak, labelComponentWeak, hasInteractivePropertyValue, hasParameterRef](double newValue) {
+						[fnSetValue, textBoxWeak](double newValue) {
 							// 現在の値を取得
 							double currentValue = 0.0;
 							if (const auto tb = textBoxWeak.lock())
 							{
 								currentValue = ParseOpt<double>(tb->text()).value_or(0.0);
 							}
-							
+
 							// 値が実際に変更された場合のみ更新
 							if (std::abs(newValue - currentValue) > 0.0001)  // 浮動小数点の誤差を考慮
 							{
@@ -1070,17 +1058,9 @@ namespace noco::editor
 								{
 									tb->setText(Format(newValue));
 								}
-								// インタラクティブ値があった場合は下線を消す（パラメータ参照がある場合は緑の下線を維持）
-								if (hasInteractivePropertyValue && !hasParameterRef)
-								{
-									if (const auto label = labelComponentWeak.lock())
-									{
-										label->setUnderlineStyle(LabelUnderlineStyle::None);
-									}
-								}
 							}
 						},
-						[textBoxWeak]() { 
+						[textBoxWeak]() {
 							if (const auto tb = textBoxWeak.lock())
 							{
 								return ParseOpt<double>(tb->text()).value_or(0.0);
@@ -1152,20 +1132,14 @@ namespace noco::editor
 				std::function<void(StringView)> m_fnSetValue;
 				std::function<String()> m_fnGetValue;
 				String m_prevExternalValue;
-				std::weak_ptr<Label> m_propertyLabelWeak;
-				HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-				HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 			public:
-				PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr, std::weak_ptr<Label> propertyLabelWeak = {}, HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No, HasParameterRefYN hasParamRef = HasParameterRefYN::No)
+				PropertyTextArea(const std::shared_ptr<TextArea>& textArea, std::function<void(StringView)> fnSetValue, std::function<String()> fnGetValue = nullptr)
 					: ComponentBase{ {} }
 					, m_textArea{ textArea }
 					, m_fnSetValue{ std::move(fnSetValue) }
 					, m_fnGetValue{ std::move(fnGetValue) }
 					, m_prevExternalValue{ m_fnGetValue ? String{ m_fnGetValue() } : U"" }
-					, m_propertyLabelWeak{ propertyLabelWeak }
-					, m_hasInteractivePropertyValue{ hasInteractivePropertyValue }
-					, m_hasParamRef{ hasParamRef }
 				{
 				}
 
@@ -1185,36 +1159,24 @@ namespace noco::editor
 					// ユーザーによる変更をチェック
 					if (m_textArea->isChanged())
 					{
-						// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
-						if (m_hasInteractivePropertyValue && !m_hasParamRef)
+						if (m_fnGetValue)
 						{
-							if (const auto label = m_propertyLabelWeak.lock())
-							{
-								label->setUnderlineStyle(LabelUnderlineStyle::None);
-							}
-							m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
+							m_prevExternalValue = m_textArea->text();
 						}
-						
+
 						// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
 						if (m_fnSetValue)
 						{
 							m_fnSetValue(m_textArea->text());
 						}
-						if (m_fnGetValue)
-						{
-							m_prevExternalValue = String{ m_fnGetValue() };
-						}
 					}
 				}
 			};
-			
+
 			textAreaNode->addComponent(std::make_shared<PropertyTextArea>(
 				textArea,
 				std::move(fnSetValue),
-				std::move(fnGetValue),
-				std::weak_ptr<Label>{ propertyLabel },
-				hasInteractivePropertyValue,
-				hasParameterRef));
+				std::move(fnGetValue)));
 			textAreaNode->emplaceComponent<TabStop>();
 			return propertyNode;
 		}
@@ -1347,10 +1309,7 @@ namespace noco::editor
 				textBoxX,
 				textBoxY,
 				fnSetValue,
-				currentValue,
-				std::weak_ptr<Label>{ vec2Label },
-				hasInteractivePropertyValue,
-				hasParameterRef);
+				currentValue);
 			propertyNode->addComponent(vec2PropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -1770,10 +1729,7 @@ namespace noco::editor
 				textBoxT,
 				textBoxB,
 				fnSetValue,
-				currentValue,
-				std::weak_ptr<Label>{ lrtbLabel },
-				hasInteractivePropertyValue,
-				hasParameterRef);
+				currentValue);
 			propertyNode->addComponent(lrtbPropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -2166,10 +2122,7 @@ namespace noco::editor
 				textBoxA,
 				previewRectRenderer,
 				fnSetValue,
-				currentValue,
-				std::weak_ptr<Label>{ colorLabel },
-				hasInteractivePropertyValue,
-				hasParameterRef);
+				currentValue);
 			propertyNode->addComponent(colorPropertyTextBox);
 
 			// PropertyLabelDraggerを追加
@@ -2316,10 +2269,7 @@ namespace noco::editor
 				fnSetValue,
 				enumLabel,
 				contextMenu,
-				enumCandidates,
-				std::weak_ptr<Label>{ enumPropLabel },
-				hasInteractivePropertyValue,
-				hasParameterRef));
+				enumCandidates));
 
 			comboBoxNode->emplaceComponent<Label>(
 				U"▼",
@@ -2333,14 +2283,26 @@ namespace noco::editor
 			return propertyNode;
 		}
 
+		/// @brief 自身または子孫のうちTextBox/TextArea/PropertyLabelDragger/CheckboxTogglerが直接付いているノードのみ有効/無効を切り替える
+		static void SetValueInputWidgetsInteractable(const std::shared_ptr<Node>& node, bool interactable)
+		{
+			if (node->getComponent<TextBox>() || node->getComponent<TextArea>()
+				|| node->getComponent<PropertyLabelDragger>() || node->getComponent<CheckboxToggler>())
+			{
+				node->setInteractable(interactable);
+				node->setIsHitTarget(interactable ? IsHitTargetYN::Yes : IsHitTargetYN::No);
+			}
+			for (const auto& child : node->children())
+			{
+				SetValueInputWidgetsInteractable(child, interactable);
+			}
+		}
+
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateCheckboxNode(
 			bool initialValue,
 			std::function<void(bool)> fnSetValue,
 			bool useParentHoverState = false,
-			std::weak_ptr<Label> propertyLabelWeak = {},
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParamRef = HasParameterRefYN::No,
 			std::function<bool()> fnGetValue = nullptr)
 		{
 			auto checkboxNode = Node::Create(
@@ -2367,9 +2329,6 @@ namespace noco::editor
 				std::move(fnSetValue),
 				checkLabel,
 				useParentHoverState,
-				propertyLabelWeak,
-				hasInteractivePropertyValue,
-				hasParamRef,
 				std::move(fnGetValue)));
 
 			return checkboxNode;
@@ -2435,9 +2394,6 @@ namespace noco::editor
 				currentValue,
 				fnSetValue,
 				true,
-				std::weak_ptr<Label>{ boolPropLabel },
-				hasInteractivePropertyValue,
-				hasParameterRef,
 				fnGetValue);
 			checkboxNode->setRegion(
 				AnchorRegion
@@ -5207,18 +5163,17 @@ namespace noco::editor
 
 				// serializedParamBindingsJSONをパース
 				HashSet<String> boundParamNames;
-				const String& bindingsJSONString = subCanvas->serializedParamBindingsJSON();
-				JSON bindingsJSON;
-				bool hasValidBindingsJSON = false;
-				if (!bindingsJSONString.isEmpty() && bindingsJSONString != U"{}")
 				{
-					bindingsJSON = JSON::Parse(bindingsJSONString);
-					if (bindingsJSON.isObject())
+					const String& bindingsJSONString = subCanvas->serializedParamBindingsJSON();
+					if (!bindingsJSONString.isEmpty() && bindingsJSONString != U"{}")
 					{
-						hasValidBindingsJSON = true;
-						for (const auto& [key, value] : bindingsJSON)
+						const JSON bindingsJSON = JSON::Parse(bindingsJSONString);
+						if (bindingsJSON.isObject())
 						{
-							boundParamNames.insert(key);
+							for (const auto& [key, value] : bindingsJSON)
+							{
+								boundParamNames.insert(key);
+							}
 						}
 					}
 				}
@@ -5486,7 +5441,7 @@ namespace noco::editor
 
 						// 値入力を追加してからチェックボックスを先頭に挿入
 						rowNode->addChild(valueInputNode);
-						valueInputNode->setInteractable(isEnabled);
+						SetValueInputWidgetsInteractable(valueInputNode, isEnabled);
 
 						// 元となる上書き値が必要なモードで上書きが無かった場合、初期値を自動でJSONに追加
 						if (autoEnabled && !currentParamsJSON.hasElement(name))
@@ -5501,7 +5456,7 @@ namespace noco::editor
 								*enabledState = checked;
 								if (valueInputNode)
 								{
-									valueInputNode->setInteractable(checked);
+									SetValueInputWidgetsInteractable(valueInputNode, checked);
 								}
 								if (checked)
 								{
@@ -5525,212 +5480,84 @@ namespace noco::editor
 
 						rowNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);
 
+						// 紐付け編集用のコンテキストメニュー
+						{
+							const String childNameCopy = name;
+							const ParamType childTypeCopy = type;
+							const ParamValue childDefaultCopy = defaultValue;
+							Array<MenuElement> bindingMenuElements
+							{
+								MenuItem
+								{
+									.text = U"紐付けるパラメータを選択...",
+									.mnemonicInput = KeyP,
+									.onClick = [this, subCanvas, childNameCopy, childTypeCopy, childDefaultCopy]
+									{
+										m_dialogOpener->openDialog(std::make_shared<SubCanvasParamBindingDialog>(
+											subCanvas,
+											childNameCopy,
+											childTypeCopy,
+											childDefaultCopy,
+											m_canvas,
+											[this] { refreshInspector(); },
+											m_dialogOpener));
+									},
+								},
+								MenuItem
+								{
+									.text = U"パラメータ紐付けをクリア",
+									.mnemonicInput = KeyL,
+									.onClick = [this, subCanvas, childNameCopy]
+									{
+										// serializedParamBindingsJSONから該当エントリを削除
+										JSON bindingsJSON;
+										{
+											const String s = subCanvas->serializedParamBindingsJSON();
+											bindingsJSON = (s.isEmpty() || s == U"{}") ? JSON::Parse(U"{}") : JSON::Parse(s);
+											if (!bindingsJSON.isObject())
+											{
+												bindingsJSON = JSON::Parse(U"{}");
+											}
+										}
+										bindingsJSON.erase(childNameCopy);
+										subCanvas->setSerializedParamBindingsJSON(bindingsJSON.formatMinimum());
+
+										// serializedParamBindingModesJSONから該当エントリを削除
+										JSON modesJSON;
+										{
+											const String s = subCanvas->serializedParamBindingModesJSON();
+											modesJSON = (s.isEmpty() || s == U"{}") ? JSON::Parse(U"{}") : JSON::Parse(s);
+											if (!modesJSON.isObject())
+											{
+												modesJSON = JSON::Parse(U"{}");
+											}
+										}
+										modesJSON.erase(childNameCopy);
+										subCanvas->setSerializedParamBindingModesJSON(modesJSON.formatMinimum());
+
+										refreshInspector();
+									},
+									.fnIsEnabled = [subCanvas, childNameCopy]
+									{
+										const String s = subCanvas->serializedParamBindingsJSON();
+										if (s.isEmpty() || s == U"{}")
+										{
+											return false;
+										}
+										const JSON j = JSON::Parse(s);
+										return j.isObject() && j.hasElement(childNameCopy);
+									},
+								},
+							};
+							rowNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, bindingMenuElements, nullptr, RecursiveYN::Yes);
+						}
+
 						if (isFolded)
 						{
 							rowNode->setActive(false);
 						}
 					}
 				}
-
-				// パラメータ紐付け一覧のタイトル
-				auto bindingsListLabelNode = paramsContainerNode->emplaceChild(
-					U"BindingsListLabel",
-					InlineRegion
-					{
-						.sizeRatio = Vec2{ 1, 0 },
-						.sizeDelta = Vec2{ -24, 24 },
-						.margin = LRTB{ 12, 12, 6, 0 },
-					});
-				bindingsListLabelNode->emplaceComponent<Label>(
-					U"設定中のパラメータ紐付け:",
-					U"",
-					14,
-					Palette::White,
-					HorizontalAlign::Left,
-					VerticalAlign::Middle);
-
-				if (isFolded)
-				{
-					bindingsListLabelNode->setActive(false);
-				}
-
-				// パラメータ紐付け一覧を表示
-				bool hasBindings = false;
-
-				if (hasValidBindingsJSON && !bindingsJSON.isEmpty())
-				{
-					// 列見出し
-					auto bindingsHeaderNode = paramsContainerNode->emplaceChild(
-						U"BindingsHeader",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 1, 0 },
-							.sizeDelta = Vec2{ -24, 18 },
-							.margin = LRTB{ 12, 12, 2, 0 },
-						},
-						IsHitTargetYN::No);
-					bindingsHeaderNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
-
-					auto subCanvasHeaderNode = bindingsHeaderNode->emplaceChild(
-						U"SubCanvasHeader",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 0, 1 },
-							.sizeDelta = Vec2{ 150, 0 },
-						},
-						IsHitTargetYN::No);
-					subCanvasHeaderNode->emplaceComponent<Label>(
-						U"子Canvasパラメータ",
-						U"",
-						11,
-						ColorF{ 0.6, 0.6, 0.6 },
-						HorizontalAlign::Left,
-						VerticalAlign::Middle)
-						->setSizingMode(LabelSizingMode::AutoShrink);
-
-					auto parentHeaderNode = bindingsHeaderNode->emplaceChild(
-						U"ParentHeader",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 0, 1 },
-							.flexibleWeight = 1.0,
-						},
-						IsHitTargetYN::No);
-					parentHeaderNode->emplaceComponent<Label>(
-						U"紐付け先",
-						U"",
-						11,
-						ColorF{ 0.6, 0.6, 0.6 },
-						HorizontalAlign::Left,
-						VerticalAlign::Middle)
-						->setSizingMode(LabelSizingMode::AutoShrink);
-
-					if (isFolded)
-					{
-						bindingsHeaderNode->setActive(false);
-					}
-
-					for (const auto& item : bindingsJSON)
-					{
-						if (!item.value.isString())
-						{
-							continue;
-						}
-						const String& childKey = item.key;
-						const String parentKey = item.value.getString();
-
-						if (!hasBindings)
-						{
-							hasBindings = true;
-						}
-
-						auto bindingNode = paramsContainerNode->emplaceChild(
-							U"BindingItem_{}"_fmt(childKey),
-							InlineRegion
-							{
-								.sizeRatio = Vec2{ 1, 0 },
-								.sizeDelta = Vec2{ -24, 24 },
-								.margin = LRTB{ 12, 12, 0, 0 },
-							});
-						bindingNode->setChildrenLayout(HorizontalLayout{ .padding = LRTB{ 12, 16, 0, 0 } });
-
-						bindingNode->emplaceComponent<RectRenderer>(
-							PropertyValue<Color>(ColorF{ 1.0, 0.0 }).withHovered(ColorF{ 1.0, 0.1 }),
-							Palette::Black,
-							0.0,
-							0.0,
-							3.0);
-
-						// 子パラメータ名
-						auto childKeyNode = bindingNode->emplaceChild(
-							U"ChildKey",
-							InlineRegion
-							{
-								.sizeRatio = Vec2{ 0, 1 },
-								.sizeDelta = Vec2{ 150, 0 },
-							},
-							IsHitTargetYN::No);
-						childKeyNode->emplaceComponent<Label>(
-							childKey,
-							U"",
-							13,
-							Palette::White,
-							HorizontalAlign::Left,
-							VerticalAlign::Middle)
-							->setSizingMode(LabelSizingMode::AutoShrink);
-
-						// 親パラメータ名(paramRef同様にシアンで参照であることを示す)
-						// Normal以外のモードは親名の後にinline表示
-						ParamRefMode displayMode = ParamRefMode::Normal;
-						if (auto it = boundParamModes.find(childKey); it != boundParamModes.end())
-						{
-							displayMode = it->second;
-						}
-						const String parentKeyDisplay = displayMode == ParamRefMode::Normal
-							? parentKey
-							: U"{} [{}]"_fmt(parentKey, ParamRefModeToShortDisplayString(displayMode));
-
-						auto parentKeyNode = bindingNode->emplaceChild(
-							U"ParentKey",
-							InlineRegion
-							{
-								.sizeRatio = Vec2{ 0, 1 },
-								.flexibleWeight = 1.0,
-							},
-							IsHitTargetYN::No);
-						parentKeyNode->emplaceComponent<Label>(
-							parentKeyDisplay,
-							U"",
-							13,
-							ColorF{ Palette::Cyan, 0.9 },
-							HorizontalAlign::Left,
-							VerticalAlign::Middle)
-							->setSizingMode(LabelSizingMode::AutoShrink);
-
-						if (isFolded)
-						{
-							bindingNode->setActive(false);
-						}
-					}
-				}
-
-				// パラメータ紐付けが設定されていない場合
-				if (!hasBindings)
-				{
-					auto noBindingsNode = paramsContainerNode->emplaceChild(
-						U"NoBindings",
-						InlineRegion
-						{
-							.sizeRatio = Vec2{ 1, 0 },
-							.sizeDelta = Vec2{ 0, 24 },
-							.margin = LRTB{ 12, 12, 4, 0 },
-						});
-					noBindingsNode->emplaceComponent<Label>(
-						U"(設定なし)",
-						U"",
-						13,
-						ColorF{ 0.7, 0.7, 0.7 },
-						HorizontalAlign::Center,
-						VerticalAlign::Middle);
-				}
-
-				auto editBindingsButton = paramsContainerNode->addChild(CreateButtonNode(
-					U"パラメータ紐付けを設定...",
-					InlineRegion
-					{
-						.sizeRatio = Vec2{ 0, 0 },
-						.sizeDelta = Vec2{ 280, 24 },
-						.margin = LRTB{ 0, 0, 4, 8 },
-					},
-					[this, subCanvas](const std::shared_ptr<Node>&)
-					{
-						m_dialogOpener->openDialog(
-							std::make_shared<SubCanvasParamBindingsEditDialog>(
-								subCanvas,
-								m_canvas,
-								[this] { refreshInspector(); },
-								m_dialogOpener));
-					}));
 
 				// コンテナの高さを子要素に合わせる
 				paramsContainerNode->setInlineRegionToFitToChildren(FitTarget::HeightOnly);

@@ -13,9 +13,6 @@ namespace noco::editor
 		std::shared_ptr<TextBox> m_textBoxB;
 		std::function<void(const LRTB&)> m_fnOnValueChanged;
 		LRTB m_value;
-		std::weak_ptr<Label> m_propertyLabelWeak;
-		HasInteractivePropertyValueYN m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-		HasParameterRefYN m_hasParamRef = HasParameterRefYN::No;
 
 	public:
 		LRTBPropertyTextBox(
@@ -24,10 +21,7 @@ namespace noco::editor
 			const std::shared_ptr<TextBox>& textBoxT,
 			const std::shared_ptr<TextBox>& textBoxB,
 			std::function<void(const LRTB&)> fnOnValueChanged,
-			const LRTB& initialValue,
-			std::weak_ptr<Label> propertyLabelWeak = {},
-			HasInteractivePropertyValueYN hasInteractivePropertyValue = HasInteractivePropertyValueYN::No,
-			HasParameterRefYN hasParamRef = HasParameterRefYN::No)
+			const LRTB& initialValue)
 			: ComponentBase{ {} }
 			, m_textBoxL(textBoxL)
 			, m_textBoxR(textBoxR)
@@ -35,9 +29,6 @@ namespace noco::editor
 			, m_textBoxB(textBoxB)
 			, m_fnOnValueChanged(std::move(fnOnValueChanged))
 			, m_value(initialValue)
-			, m_propertyLabelWeak(propertyLabelWeak)
-			, m_hasInteractivePropertyValue(hasInteractivePropertyValue)
-			, m_hasParamRef(hasParamRef)
 		{
 		}
 
@@ -50,16 +41,6 @@ namespace noco::editor
 			const LRTB newValue{ l, r, t, b };
 			if (newValue != m_value)
 			{
-				// ステート値がある状態で編集した場合、即時に黄色下線を消す（パラメータ参照がある場合は保持）
-				if (m_hasInteractivePropertyValue && !m_hasParamRef)
-				{
-					if (const auto label = m_propertyLabelWeak.lock())
-					{
-						label->setUnderlineStyle(LabelUnderlineStyle::None);
-					}
-					m_hasInteractivePropertyValue = HasInteractivePropertyValueYN::No;
-				}
-				
 				// コールバック内でInspectorを再構成する場合があるためコールバックは最後に実行
 				m_value = newValue;
 				if (m_fnOnValueChanged)
