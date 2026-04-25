@@ -620,17 +620,17 @@ namespace noco::editor
 			}
 			m_subCanvas->setSerializedParamBindingsJSON(bindingsJSON.formatMinimum());
 
-			// serializedParamBindingModesJSONを更新(未選択またはNormalの場合はエントリ削除)
+			// serializedParamBindingModesJSONを更新
 			JSON modesJSON;
 			{
 				const String s = m_subCanvas->serializedParamBindingModesJSON();
-				modesJSON = (s.isEmpty() || s == U"{}") ? JSON::Parse(U"{}") : JSON::Parse(s);
+				modesJSON = s.isEmpty() || s == U"{}" ? JSON::Parse(U"{}") : JSON::Parse(s);
 				if (!modesJSON.isObject())
 				{
 					modesJSON = JSON::Parse(U"{}");
 				}
 			}
-			if (m_selectedParamName.isEmpty() || m_selectedMode == ParamRefMode::Normal)
+			if (m_selectedParamName.isEmpty())
 			{
 				modesJSON.erase(m_childParamName);
 			}
