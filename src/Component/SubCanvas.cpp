@@ -322,7 +322,7 @@ namespace noco
 							}
 						}
 
-						if (auto result = ApplyParamMode(base, parentIt->second, mode, type))
+						if (auto result = ApplyParamRefMode(base, parentIt->second, mode, type))
 						{
 							m_canvas->setParamValue(subCanvasParamName, *result);
 						}

@@ -351,7 +351,7 @@ namespace noco
 					if constexpr (IsParamSupportedType<T>())
 					{
 						const T base = propValue.defaultValue();
-						if (auto resolved = ApplyParamMode<T>(base, paramValue, mode))
+						if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
 						{
 							return Format(*resolved);
 						}

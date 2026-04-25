@@ -532,7 +532,7 @@ namespace noco::editor
 
 			// モード適用後の値を計算
 			const ParamValue base = resolveBaseValue();
-			if (auto applied = ApplyParamMode(base, *param, m_selectedMode, m_childParamType))
+			if (auto applied = ApplyParamRefMode(base, *param, m_selectedMode, m_childParamType))
 			{
 				m_appliedValueLabel->setText(ParamValueToString(*applied));
 			}

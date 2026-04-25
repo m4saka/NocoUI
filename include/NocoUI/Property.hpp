@@ -253,7 +253,7 @@ namespace noco
 			if constexpr (IsParamSupportedType<T>())
 			{
 				const T& base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-				if (auto resolved = ApplyParamMode<T>(base, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
 				{
 					if constexpr (std::is_enum_v<T>)
 					{
@@ -338,7 +338,7 @@ namespace noco
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
 						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
-						if (auto resolved = ApplyParamMode<T>(base, it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(base, it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = std::move(*resolved);
 						}
@@ -613,7 +613,7 @@ namespace noco
 			if constexpr (IsParamSupportedType<T>())
 			{
 				const T& base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-				if (auto resolved = ApplyParamMode<T>(base, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
 				{
 					return Format(*resolved);
 				}
@@ -673,7 +673,7 @@ namespace noco
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto resolved = ApplyParamMode<T>(m_smoothing.currentValue(), it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(m_smoothing.currentValue(), it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = *resolved;
 						}
@@ -951,7 +951,7 @@ namespace noco
 		{
 			if constexpr (IsParamSupportedType<T>())
 			{
-				if (auto resolved = ApplyParamMode<T>(m_value, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(m_value, paramValue, mode))
 				{
 					if constexpr (std::is_enum_v<T>)
 					{
@@ -1041,7 +1041,7 @@ namespace noco
 				{
 					if (auto it = params.find(m_paramRef); it != params.end())
 					{
-						if (auto resolved = ApplyParamMode<T>(m_value, it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(m_value, it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = std::move(*resolved);
 						}
@@ -1343,7 +1343,7 @@ namespace noco
 		Optional<String> previewParamRefAppliedString(const ParamValue& paramValue, ParamRefMode mode) const override
 		{
 			const Color base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-			if (auto resolved = ApplyParamMode<Color>(base, paramValue, mode))
+			if (auto resolved = ApplyParamRefMode<Color>(base, paramValue, mode))
 			{
 				return Format(*resolved);
 			}
@@ -1402,7 +1402,7 @@ namespace noco
 			{
 				if (auto it = params.find(m_paramRef); it != params.end())
 				{
-					if (auto applied = ApplyParamMode<Color>(Color{ m_smoothing.currentValue() }, it->second, m_paramRefMode))
+					if (auto applied = ApplyParamRefMode<Color>(Color{ m_smoothing.currentValue() }, it->second, m_paramRefMode))
 					{
 						m_paramRefOverride = *applied;
 					}
