@@ -1290,7 +1290,7 @@ namespace noco
 				{
 					property->clearParamRefIfInvalid(m_params, clearedParamsSet);
 				}
-				// SubCanvasの無効な紐付けを解除
+				// SubCanvasの無効な紐付け解除と反映モード正規化
 				if (const auto subCanvas = std::dynamic_pointer_cast<SubCanvas>(component))
 				{
 					const auto clearedFromBindings = subCanvas->removeInvalidParamBindingRefs(*node);
@@ -1298,6 +1298,7 @@ namespace noco
 					{
 						clearedParamsSet.insert(paramName);
 					}
+					subCanvas->normalizeParamBindingModes();
 				}
 			}
 

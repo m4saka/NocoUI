@@ -185,6 +185,9 @@ namespace noco
 		/// @return 削除したパラメータ参照の名前の配列
 		Array<String> removeInvalidParamBindingRefs(const Node& node);
 
+		/// @brief パラメータ紐付けの反映モード指定を正規化(紐付けがあるがモード指定が空のものをNormalで埋める)
+		void normalizeParamBindingModes();
+
 		/// @brief 紐付けで参照しているパラメータ名を列挙
 		/// @param pParamRefs 挿入先のハッシュセットのポインタ
 		void populateParamBindingRefs(HashSet<String>* pParamRefs) const;

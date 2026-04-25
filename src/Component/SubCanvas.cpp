@@ -603,4 +603,33 @@ namespace noco
 	{
 		replaceParamBindingRefs(oldName, newName);
 	}
+
+	void SubCanvas::normalizeParamBindingModes()
+	{
+		const JSON bindingsJSON = ParseBindingsJSON(m_serializedParamBindingsJSON.value());
+		if (bindingsJSON.isEmpty())
+		{
+			const String& currentModes = m_serializedParamBindingModesJSON.value();
+			if (!currentModes.isEmpty() && currentModes != U"{}")
+			{
+				setSerializedParamBindingModesJSON(U"{}");
+			}
+			return;
+		}
+		const JSON modesJSON = ParseBindingsJSON(m_serializedParamBindingModesJSON.value());
+		JSON newModesJSON = modesJSON.isEmpty() ? JSON::Parse(U"{}") : modesJSON;
+		bool changed = false;
+		for (const auto& [subCanvasParamName, parentParamNameJSON] : bindingsJSON)
+		{
+			if (!newModesJSON.hasElement(subCanvasParamName))
+			{
+				newModesJSON[subCanvasParamName] = EnumToString(ParamRefMode::Normal);
+				changed = true;
+			}
+		}
+		if (changed)
+		{
+			setSerializedParamBindingModesJSON(newModesJSON.formatMinimum());
+		}
+	}
 }
