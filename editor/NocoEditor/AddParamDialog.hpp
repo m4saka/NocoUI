@@ -26,8 +26,18 @@ namespace noco::editor
 		
 		String m_selectedType = U"Double";
 		std::variant<bool, int32, double, String, Color, Vec2, LRTB> m_value = 0.0;
-		
-		Optional<ParamType> m_fixedType;
+
+		// 選択可能な型のリスト
+		Array<ParamType> m_compatibleTypes
+		{
+			ParamType::Bool,
+			ParamType::Int,
+			ParamType::Double,
+			ParamType::String,
+			ParamType::Color,
+			ParamType::Vec2,
+			ParamType::LRTB,
+		};
 		Optional<String> m_initialName;
 
 	public:
@@ -44,16 +54,16 @@ namespace noco::editor
 		{
 		}
 		
-		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, ParamType fixedType, const String& currentValueString, std::function<void(const String&)> onParamCreated, const std::shared_ptr<DialogOpener>& dialogOpener, const Optional<String>& initialName = none)
+		explicit AddParamDialog(const std::shared_ptr<Canvas>& canvas, std::function<void()> onComplete, Array<ParamType> compatibleTypes, ParamType defaultType, const String& currentValueString, std::function<void(const String&)> onParamCreated, const std::shared_ptr<DialogOpener>& dialogOpener, const Optional<String>& initialName = none)
 			: m_canvas(canvas)
 			, m_onComplete(std::move(onComplete))
 			, m_onParamCreated(std::move(onParamCreated))
 			, m_dialogOpener(dialogOpener)
-			, m_fixedType(fixedType)
+			, m_compatibleTypes(std::move(compatibleTypes))
 			, m_initialName(initialName)
 		{
-			m_selectedType = ParamTypeToString(fixedType);
-			m_value = StringToParamValue(currentValueString, fixedType);
+			m_selectedType = ParamTypeToString(defaultType);
+			m_value = StringToParamValue(currentValueString, defaultType);
 		}
 		
 		double dialogWidth() const override
@@ -192,7 +202,8 @@ namespace noco::editor
 					.sizeDelta = Vec2{ 120, 26 },
 				});
 			
-			if (m_fixedType.has_value())
+			const bool isTypeFixed = m_compatibleTypes.size() == 1;
+			if (isTypeFixed)
 			{
 				m_typeComboBox->setInteractable(false);
 			}
@@ -212,7 +223,7 @@ namespace noco::editor
 				VerticalAlign::Middle,
 				LRTB{ 8, 25, 0, 0 });
 			
-			if (!m_fixedType.has_value())
+			if (!isTypeFixed)
 			{
 				m_typeComboBox->emplaceComponent<Label>(
 					U"▼",
@@ -238,27 +249,16 @@ namespace noco::editor
 		void onTypeComboBoxClick(const std::shared_ptr<ContextMenu>& dialogContextMenu)
 		{
 			Array<MenuElement> menuElements;
-			
-			const Array<String> types = {
-				U"Bool",
-				U"Int",
-				U"Double",
-				U"String",
-				U"Color",
-				U"Vec2",
-				U"LRTB"
-			};
-			
-			for (const auto& type : types)
+			for (const auto paramType : m_compatibleTypes)
 			{
+				const String type = ParamTypeToString(paramType);
 				menuElements.push_back(MenuItem{
 					.text = type,
 					.hotKeyText = U"",
 					.mnemonicInput = none,
-					.onClick = [this, type = type]() { selectType(type); }
+					.onClick = [this, type]() { selectType(type); }
 				});
 			}
-			
 			dialogContextMenu->show(m_typeComboBox->regionRect().bl(), menuElements);
 		}
 		

@@ -103,6 +103,9 @@ namespace noco
 		}
 	}
 
+	/// @brief paramTypeがeditTypeのプロパティからパラメータ参照可能か
+	/// @param paramType 参照元のParamType
+	/// @param editType 参照先プロパティのPropertyEditType
 	[[nodiscard]]
 	inline bool IsParamTypeCompatibleWith(ParamType paramType, PropertyEditType editType)
 	{
@@ -127,6 +130,30 @@ namespace noco
 			return paramType == ParamType::LRTB;
 		}
 		return false;
+	}
+
+	/// @brief editTypeのプロパティがパラメータ参照可能な全ParamTypeのリストを返す
+	[[nodiscard]]
+	inline Array<ParamType> CompatibleParamTypes(PropertyEditType editType)
+	{
+		constexpr ParamType AllTypes[] = {
+			ParamType::Bool,
+			ParamType::Int,
+			ParamType::Double,
+			ParamType::String,
+			ParamType::Color,
+			ParamType::Vec2,
+			ParamType::LRTB,
+		};
+		Array<ParamType> result;
+		for (const auto t : AllTypes)
+		{
+			if (IsParamTypeCompatibleWith(t, editType))
+			{
+				result.push_back(t);
+			}
+		}
+		return result;
 	}
 
 	template <class T>

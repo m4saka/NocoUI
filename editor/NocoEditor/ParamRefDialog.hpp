@@ -524,21 +524,28 @@ namespace noco::editor
 		
 		void onCreateNewParamButtonClick()
 		{
-			const auto propertyType = getPropertyParamType();
-			if (!propertyType)
+			if (!m_pProperty)
 			{
 				return;
 			}
-			
-			const String currentValueString = m_pProperty ? m_pProperty->propertyValueStringOfDefault() : U"";
-			
+			const PropertyEditType editType = m_pProperty->editType();
+			Array<ParamType> compatibleTypes = CompatibleParamTypes(editType);
+			if (compatibleTypes.isEmpty())
+			{
+				return;
+			}
+			const ParamType defaultType = PropertyEditTypeToParamType(editType);
+
+			const String currentValueString = m_pProperty->propertyValueStringOfDefault();
+
 			auto addParamDialog = std::make_shared<AddParamDialog>(
 				m_canvas,
 				[this]()
 				{
 					filterAvailableParams();
 				},
-				*propertyType,
+				std::move(compatibleTypes),
+				defaultType,
 				currentValueString,
 				[this](const String& createdParamName)
 				{
@@ -546,7 +553,7 @@ namespace noco::editor
 					selectParam(createdParamName);
 				},
 				m_dialogOpener);
-			
+
 			m_dialogOpener->openDialog(addParamDialog);
 		}
 		

@@ -71,6 +71,30 @@ namespace noco
 		}
 	}
 
+	/// @brief targetTypeに紐付け元として使用可能な全ParamTypeのリストを返す
+	[[nodiscard]]
+	inline Array<ParamType> CompatibleParamTypes(ParamType targetType)
+	{
+		constexpr ParamType AllTypes[] = {
+			ParamType::Bool,
+			ParamType::Int,
+			ParamType::Double,
+			ParamType::String,
+			ParamType::Color,
+			ParamType::Vec2,
+			ParamType::LRTB,
+		};
+		Array<ParamType> result;
+		for (const auto t : AllTypes)
+		{
+			if (IsParamTypeCompatibleWith(t, targetType))
+			{
+				result.push_back(t);
+			}
+		}
+		return result;
+	}
+
 	// ParamValueから型情報を取得
 	[[nodiscard]]
 	inline ParamType GetParamType(const ParamValue& value)

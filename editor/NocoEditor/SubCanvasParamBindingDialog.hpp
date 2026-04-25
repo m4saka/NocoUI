@@ -567,12 +567,19 @@ namespace noco::editor
 
 		void onCreateNewParamButtonClick()
 		{
+			Array<ParamType> compatibleTypes = CompatibleParamTypes(m_childParamType);
+			if (compatibleTypes.isEmpty())
+			{
+				return;
+			}
+
 			auto addParamDialog = std::make_shared<AddParamDialog>(
 				m_parentCanvas,
 				[this]()
 				{
 					filterAvailableParams();
 				},
+				std::move(compatibleTypes),
 				m_childParamType,
 				ParamValueToString(m_childParamDefaultValue),
 				[this](const String& createdParamName)
