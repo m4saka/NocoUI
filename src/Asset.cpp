@@ -1,4 +1,5 @@
 ﻿#include "NocoUI/Asset.hpp"
+#include <exception>
 #include <filesystem>
 
 namespace noco
@@ -18,7 +19,24 @@ namespace noco
 				return false;
 			}
 
-			return std::filesystem::path(path.toUTF8()).is_absolute();
+			try
+			{
+#ifdef _WIN32
+				return std::filesystem::path(path.toWstr()).is_absolute();
+#else
+				return std::filesystem::path(path.toUTF8()).is_absolute();
+#endif
+			}
+			catch (const std::exception& e)
+			{
+				Logger << U"[NocoUI warning] Failed to check whether path is absolute. Treating as relative path: '{}' ({})"_fmt(path, Unicode::Widen(e.what()));
+				return false;
+			}
+			catch (...)
+			{
+				Logger << U"[NocoUI warning] Failed to check whether path is absolute. Treating as relative path: '{}'"_fmt(path);
+				return false;
+			}
 		}
 	}
 
