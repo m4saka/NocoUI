@@ -667,6 +667,9 @@ namespace noco
 		m_parentTransformMat = parentTransformMat;
 		m_parentHitTestMat = parentHitTestMat;
 
+		// AutoFitModeによるサイズ・スケール更新
+		updateAutoFitIfNeeded(sceneSize);
+
 		// 親の変換行列とCanvas自身の変換行列を合成
 		const Mat3x2 rootMat = rootPosScaleMat();
 		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
@@ -889,9 +892,6 @@ namespace noco
 		{
 			child->postLateUpdate(Scene::DeltaTime(), combinedTransformMat, combinedHitTestMat, m_params);
 		}
-
-		// AutoFitModeによるサイズ・スケールの更新
-		updateAutoFitIfNeeded(sceneSize);
 
 		// 同一フレーム内でのレイアウト更新はまとめて1回遅延実行
 		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
