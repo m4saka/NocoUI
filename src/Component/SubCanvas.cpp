@@ -7,7 +7,11 @@ namespace noco
 {
 	namespace
 	{
-		thread_local Array<FilePath> t_loadingPaths;
+		Array<FilePath>& LoadingPaths()
+		{
+			static thread_local Array<FilePath> loadingPaths;
+			return loadingPaths;
+		}
 
 		class LoadingPathGuard
 		{
@@ -18,14 +22,14 @@ namespace noco
 			LoadingPathGuard(const FilePath& path)
 				: m_pushed(true)
 			{
-				t_loadingPaths.push_back(path);
+				LoadingPaths().push_back(path);
 			}
 
 			~LoadingPathGuard()
 			{
 				if (m_pushed)
 				{
-					t_loadingPaths.pop_back();
+					LoadingPaths().pop_back();
 				}
 			}
 
@@ -118,7 +122,8 @@ namespace noco
 
 		// 最大ネストレベルチェック
 		constexpr int32 kMaxNestLevel = 10;
-		if (t_loadingPaths.size() >= kMaxNestLevel)
+		const auto& loadingPaths = LoadingPaths();
+		if (loadingPaths.size() >= kMaxNestLevel)
 		{
 			Logger << U"[NocoUI error] SubCanvas load aborted due to exceeding maximum nest level ({}): {}"_fmt(kMaxNestLevel, path);
 			m_canvas.reset();
@@ -128,7 +133,7 @@ namespace noco
 		}
 
 		// 循環参照チェック
-		if (t_loadingPaths.contains(normalizedFullPath))
+		if (loadingPaths.contains(normalizedFullPath))
 		{
 			Logger << U"[NocoUI error] SubCanvas load aborted due to circular reference detected: {}"_fmt(path);
 			m_canvas.reset();

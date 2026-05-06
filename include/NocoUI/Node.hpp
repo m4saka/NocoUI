@@ -1758,6 +1758,9 @@ namespace noco
 	void HorizontalLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
+		static thread_local Array<SizeF> t_tempSizes;
+		static thread_local Array<LRTB> t_tempMargins;
+
 		t_tempSizes.clear();
 		t_tempMargins.clear();
 		t_tempSizes.reserve(children.size());
@@ -1916,6 +1919,9 @@ namespace noco
 	void VerticalLayout::execute(const RectF& parentRect, const Array<std::shared_ptr<Node>>& children, Fty fnSetRect) const
 		requires std::invocable<Fty, const std::shared_ptr<Node>&, const RectF&>
 	{
+		static thread_local Array<SizeF> t_tempSizes;
+		static thread_local Array<LRTB> t_tempMargins;
+
 		t_tempSizes.clear();
 		t_tempMargins.clear();
 		t_tempSizes.reserve(children.size());

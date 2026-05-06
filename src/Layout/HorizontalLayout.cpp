@@ -3,9 +3,6 @@
 
 namespace noco
 {
-	thread_local Array<SizeF> HorizontalLayout::t_tempSizes;
-	thread_local Array<LRTB> HorizontalLayout::t_tempMargins;
-
 	JSON HorizontalLayout::toJSON() const
 	{
 		return JSON

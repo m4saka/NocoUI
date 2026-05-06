@@ -6,7 +6,16 @@ namespace noco
 {
 	namespace
 	{
-		FilePath s_baseDirectoryPath = U"";
+		FilePath& BaseDirectoryPath()
+		{
+			static FilePath baseDirectoryPath;
+			return baseDirectoryPath;
+		}
+
+		const FilePath& BaseDirectoryPathConst()
+		{
+			return BaseDirectoryPath();
+		}
 
 		/// @brief パスが絶対パスかどうかを判定
 		/// @param path 判定するパス
@@ -42,7 +51,7 @@ namespace noco
 
 	const FilePath& Asset::GetBaseDirectoryPath()
 	{
-		return s_baseDirectoryPath;
+		return BaseDirectoryPathConst();
 	}
 
 	void Asset::SetBaseDirectoryPath(FilePathView baseDirectoryPath)
@@ -50,14 +59,14 @@ namespace noco
 		UnloadAllTextures();
 		UnloadAllAudios();
 		UnloadAllJSONs();
-		s_baseDirectoryPath = baseDirectoryPath;
+		BaseDirectoryPath() = baseDirectoryPath;
 	}
 
 	FilePath Asset::GetFullPath(FilePathView filePath)
 	{
 		return IsAbsolutePath(filePath)
 			? FilePath{ filePath }
-			: FileSystem::PathAppend(s_baseDirectoryPath, filePath);
+			: FileSystem::PathAppend(BaseDirectoryPathConst(), filePath);
 	}
 
 	const Texture& Asset::GetOrLoadTexture(FilePathView filePath)
