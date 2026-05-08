@@ -1391,6 +1391,10 @@ namespace noco::editor
 			.tooltipDetail = U"Canvasの幅と高さを設定します\nすべての子要素のレイアウト計算の基準となります",
 			.dragValueChangeStep = 1.0,
 		};
+		metadata[PropertyKey{ U"Canvas", U"autoFitMode" }] = PropertyMetadata{
+			.tooltip = U"自動フィットモード",
+			.tooltipDetail = U"Canvasのサイズ、スケール、位置を自動調整します\n\n・None: 自動調整しません\n・Contain: アスペクト比を維持してシーン内に収めます\n・Cover: アスペクト比を維持してシーン全体を覆います\n・FitWidth: シーンと同じ幅になるよう横方向にスケーリングします\n・FitHeight: シーンと同じ高さになるよう縦方向にスケーリングします\n・FitWidthMatchHeight: 幅はシーンと同じ幅になるよう横方向にスケーリングし、高さはシーンと同じ大きさに変更します\n・FitHeightMatchWidth: シーンと同じ高さになるよう縦方向にスケーリングし、横幅はシーンと同じ大きさに変更します\n・MatchSize: Canvasサイズをシーンサイズと同じサイズに変更します\n・ResizeToContent: Canvasサイズを直下の子ノード全体を囲む矩形と同じサイズに変更します(孫以下のノードは含みません)\n\n※Canvas直下のノードに親のサイズに影響を受けるアンカー設定やsizeRatioを指定しないよう注意してください。設定した場合、\n　Canvasが拡大または縮小し続ける挙動となります。\n\n※エディタ上のプレビューではMatchSizeとResizeToContentのみ反映されます",
+		};
 		metadata[PropertyKey{ U"Canvas", U"autoScaleMode" }] = PropertyMetadata{
 			.tooltip = U"自動スケールモード",
 			.tooltipDetail = U"シーンサイズに応じた自動スケール調整を設定します\n\nNone: スケールしない\nShrinkToFit: Canvas全体がシーン内に収まるよう縮小拡大\nExpandToFill: シーン全体をCanvasで埋めるよう縮小拡大\nFitHeight: シーンの高さに合わせる\nFitWidth: シーンの幅に合わせる\n\n※エディタ上のプレビューには反映されません",
@@ -1408,6 +1412,10 @@ namespace noco::editor
 		metadata[PropertyKey{ U"SubCanvas", U"propagateEvents" }] = PropertyMetadata{
 			.tooltip = U"イベントを親Canvasに伝播するかどうか",
 			.tooltipDetail = U"有効にすると、子Canvas内で発火したイベントを親Canvasに伝播します\nCanvas::getFiredEventsAll()などで取得できるようになります",
+		};
+		metadata[PropertyKey{ U"SubCanvas", U"autoFitModeOverride" }] = PropertyMetadata{
+			.tooltip = U"子CanvasのAutoFitModeの上書き設定",
+			.tooltipDetail = U"子CanvasのAutoFitModeを上書きします\n\n・NoOverride: 上書きしません(子Canvasファイル側の設定を使用)\n・None: 自動調整しません\n・Contain: アスペクト比を維持してノード内に収めます\n・Cover: アスペクト比を維持してノード全体を覆います\n・FitWidth: ノードと同じ幅になるよう横方向にスケーリングします\n・FitHeight: ノードと同じ高さになるよう縦方向にスケーリングします\n・FitWidthMatchHeight: 幅はノードと同じ幅になるよう横方向にスケーリングし、高さはノードと同じ大きさに変更します\n・FitHeightMatchWidth: ノードと同じ高さになるよう縦方向にスケーリングし、横幅はノードと同じ大きさに変更します\n・MatchSize: 子Canvasのサイズをノードサイズと同じサイズに変更します\n・ResizeToContent: 子Canvasのサイズを直下の子ノード全体を囲む矩形と同じサイズに変更します(孫以下のノードは含みません)\n\n※AutoFitModeがResizeToContentの場合、ノードサイズは子Canvasのサイズに合わせて自動的にリサイズされます",
 		};
 		metadata[PropertyKey{ U"SubCanvas", U"serializedParamsJSON" }] = PropertyMetadata{
 			.tooltip = U"子Canvasに渡すパラメータ(JSON形式)",

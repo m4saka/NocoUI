@@ -13,6 +13,38 @@ namespace noco
 			return loadingPaths;
 		}
 
+		[[nodiscard]]
+		AutoFitMode ToAutoFitMode(SubCanvasAutoFitModeOverride mode, AutoFitMode loadedCanvasMode)
+		{
+			if (mode == SubCanvasAutoFitModeOverride::NoOverride)
+			{
+				return loadedCanvasMode;
+			}
+			switch (mode)
+			{
+			case SubCanvasAutoFitModeOverride::None:
+				return AutoFitMode::None;
+			case SubCanvasAutoFitModeOverride::Contain:
+				return AutoFitMode::Contain;
+			case SubCanvasAutoFitModeOverride::Cover:
+				return AutoFitMode::Cover;
+			case SubCanvasAutoFitModeOverride::FitWidth:
+				return AutoFitMode::FitWidth;
+			case SubCanvasAutoFitModeOverride::FitHeight:
+				return AutoFitMode::FitHeight;
+			case SubCanvasAutoFitModeOverride::FitWidthMatchHeight:
+				return AutoFitMode::FitWidthMatchHeight;
+			case SubCanvasAutoFitModeOverride::FitHeightMatchWidth:
+				return AutoFitMode::FitHeightMatchWidth;
+			case SubCanvasAutoFitModeOverride::MatchSize:
+				return AutoFitMode::MatchSize;
+			case SubCanvasAutoFitModeOverride::ResizeToContent:
+				return AutoFitMode::ResizeToContent;
+			default:
+				return loadedCanvasMode;
+			}
+		}
+
 		class LoadingPathGuard
 		{
 		private:
@@ -95,6 +127,7 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath.clear();
 			m_loadedAssetBasePath.clear();
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
@@ -114,6 +147,7 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath.clear();
 			m_loadedAssetBasePath.clear();
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
@@ -129,6 +163,7 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath = path; // 再読み込みさせないため、既に読み込み済み扱いとする
 			m_loadedAssetBasePath = currentBasePath;
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
@@ -139,6 +174,7 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath = path; // 再読み込みさせないため、既に読み込み済み扱いとする
 			m_loadedAssetBasePath = currentBasePath;
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
@@ -150,6 +186,7 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath = path;
 			m_loadedAssetBasePath = currentBasePath;
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
@@ -159,12 +196,14 @@ namespace noco
 			m_canvas.reset();
 			m_loadedPath = path;
 			m_loadedAssetBasePath = currentBasePath;
+			m_loadedCanvasAutoFitMode = AutoFitMode::None;
 			return;
 		}
 
 		m_canvas = canvas;
 		m_loadedPath = path;
 		m_loadedAssetBasePath = currentBasePath;
+		m_loadedCanvasAutoFitMode = canvas->autoFitMode();
 
 		// Canvas読み込み後はパラメータ再反映が必要なのでクリア
 		m_appliedSerializedParamsJSON.clear();
@@ -338,16 +377,51 @@ namespace noco
 			// 親のinteractableを子Canvasに伝播
 			m_canvas->setInteractable(node->interactable());
 
+			const AutoFitMode effectiveAutoFitMode = ToAutoFitMode(m_autoFitModeOverride.value(), m_loadedCanvasAutoFitMode);
+			if (m_canvas->autoFitMode() != effectiveAutoFitMode)
+			{
+				m_canvas->setAutoFitMode(effectiveAutoFitMode);
+			}
+
 			// 親ノードの変換行列を子Canvasに伝播
 			// transformMatInHierarchyにはregionRect.posが含まれていないため、別途加算する
 			// hitTestはコンポーネントのhitTestで別途実行されるためNoを指定
-			const Vec2 centerOffset = (node->regionRect().size - m_canvas->size() * m_canvas->scale()) / 2.0;
+			const bool resizeNodeToCanvas = (effectiveAutoFitMode == AutoFitMode::ResizeToContent);
+
+			// AutoFitMode有効時はCanvas側がノードサイズを基準に配置するため、SubCanvas側ではセンタリングしない
+			const Vec2 centerOffset = (effectiveAutoFitMode != AutoFitMode::None)
+				? Vec2::Zero()
+				: (node->regionRect().size - m_canvas->size() * m_canvas->scale()) / 2.0;
 			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos + centerOffset);
 			m_canvas->update(
 				node->regionRect().size,
 				posTranslate * node->transformMatInHierarchy(),
 				posTranslate * node->hitTestMatInHierarchy(),
 				HitTestEnabledYN::No);
+
+			// ResizeToContent時は親ノードのRegionサイズを子Canvasサイズに合わせる
+			if (resizeNodeToCanvas)
+			{
+				const SizeF size = m_canvas->size();
+				if (node->regionRect().size != size)
+				{
+					if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
+					{
+						AnchorRegion newRegion = *pAnchorRegion;
+						newRegion.sizeDelta = size;
+						newRegion.anchorMax = newRegion.anchorMin;
+						node->setRegion(newRegion);
+					}
+					else if (const InlineRegion* pInlineRegion = node->inlineRegion())
+					{
+						InlineRegion newRegion = *pInlineRegion;
+						newRegion.sizeDelta = size;
+						newRegion.sizeRatio = Vec2::Zero();
+						newRegion.flexibleWeight = 0.0;
+						node->setRegion(newRegion);
+					}
+				}
+			}
 
 			// イベント伝播が有効な場合、子Canvasのイベントを親Canvasに伝播
 			if (m_propagateEvents.value())

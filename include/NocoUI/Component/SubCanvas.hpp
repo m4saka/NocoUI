@@ -9,6 +9,21 @@ namespace noco
 {
 	class Canvas;
 	class Node;
+	enum class AutoFitMode : uint8;
+
+	enum class SubCanvasAutoFitModeOverride : uint8
+	{
+		NoOverride, // 上書きしない
+		None, // None(自動フィットなし)への上書き
+		Contain,
+		Cover,
+		FitWidth,
+		FitHeight,
+		FitWidthMatchHeight,
+		FitHeightMatchWidth,
+		MatchSize,
+		ResizeToContent,
+	};
 
 	/// @brief 入れ子でCanvas利用できるようにするためのコンポーネント
 	class SubCanvas : public SerializableComponentBase, public std::enable_shared_from_this<SubCanvas>
@@ -16,6 +31,7 @@ namespace noco
 	private:
 		Property<String> m_canvasPath;
 		Property<bool> m_propagateEvents;
+		Property<SubCanvasAutoFitModeOverride> m_autoFitModeOverride;
 		PropertyNonInteractive<String> m_serializedParamsJSON;
 		PropertyNonInteractive<String> m_serializedParamBindingsJSON;
 		PropertyNonInteractive<String> m_serializedParamBindingModesJSON;
@@ -24,6 +40,7 @@ namespace noco
 		/* NonSerialized */ std::shared_ptr<Canvas> m_canvas;
 		/* NonSerialized */ String m_loadedPath;
 		/* NonSerialized */ String m_loadedAssetBasePath;
+		/* NonSerialized */ AutoFitMode m_loadedCanvasAutoFitMode{};
 		/* NonSerialized */ String m_appliedSerializedParamsJSON;
 		/* NonSerialized */ String m_appliedSerializedParamBindingsJSON;
 		/* NonSerialized */ String m_appliedSerializedParamBindingModesJSON;
@@ -49,9 +66,10 @@ namespace noco
 
 	public:
 		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"")
-			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_serializedParamBindingModesJSON, &m_tag } }
+			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_autoFitModeOverride, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_serializedParamBindingModesJSON, &m_tag } }
 			, m_canvasPath{ U"canvasPath", canvasPath }
 			, m_propagateEvents{ U"propagateEvents", true }
+			, m_autoFitModeOverride{ U"autoFitModeOverride", SubCanvasAutoFitModeOverride::NoOverride }
 			, m_serializedParamsJSON{ U"serializedParamsJSON", U"{}" }
 			, m_serializedParamBindingsJSON{ U"serializedParamBindingsJSON", U"{}" }
 			, m_serializedParamBindingModesJSON{ U"serializedParamBindingModesJSON", U"{}" }
@@ -98,6 +116,18 @@ namespace noco
 		std::shared_ptr<SubCanvas> setPropagateEvents(const PropertyValue<bool>& propagateEvents)
 		{
 			m_propagateEvents.setPropertyValue(propagateEvents);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<SubCanvasAutoFitModeOverride>& autoFitModeOverride() const
+		{
+			return m_autoFitModeOverride.propertyValue();
+		}
+
+		std::shared_ptr<SubCanvas> setAutoFitModeOverride(const PropertyValue<SubCanvasAutoFitModeOverride>& autoFitModeOverride)
+		{
+			m_autoFitModeOverride.setPropertyValue(autoFitModeOverride);
 			return shared_from_this();
 		}
 

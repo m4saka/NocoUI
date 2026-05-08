@@ -397,6 +397,7 @@ namespace noco
 		FitWidthMatchHeight,  // 幅はスケール、高さはサイズ変更
 		FitHeightMatchWidth,  // 高さはスケール、幅はサイズ変更
 		MatchSize,            // Canvasサイズをシーンサイズに変更
+		ResizeToContent,      // Canvasサイズを直下の子ノード全体を囲む矩形に変更
 	};
 
 	enum class EventTriggerType : uint8
@@ -458,6 +459,7 @@ namespace noco
 		/* NonSerialized */ SizeF m_size = DefaultSize;
 		/* NonSerialized */ Vec2 m_position = Vec2::Zero();
 		/* NonSerialized */ Vec2 m_scale = Vec2::One();
+		/* NonSerialized */ Vec2 m_contentOriginOffset = Vec2::Zero();
 		/* NonSerialized */ double m_rotation = 0.0;
 		/* NonSerialized */ EventRegistry m_eventRegistry;
 		/* NonSerialized */ bool m_prevDragScrollingWithThresholdExceeded = false;
@@ -472,6 +474,14 @@ namespace noco
 
 		[[nodiscard]]
 		Mat3x2 rootPosScaleMat() const;
+
+		[[nodiscard]]
+		Mat3x2 rootChildrenTransformMat() const;
+
+		[[nodiscard]]
+		Optional<RectF> computeRootContentBounds() const;
+
+		void updateSizingToResizeToContent(const SizeF& sceneSize, bool preserveTransform = false);
 
 		void updateAutoFitIfNeeded(const SizeF& sceneSize, bool force = false);
 

@@ -210,6 +210,166 @@ TEST_CASE("Canvas center methods", "[Canvas]")
 	}
 }
 
+TEST_CASE("Canvas AutoFitMode ResizeToContent", "[Canvas][AutoFit]")
+{
+	SECTION("Matches root node bounds and centers content")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setAutoFitMode(noco::AutoFitMode::ResizeToContent);
+
+		auto node1 = noco::Node::Create(
+			U"Node1",
+			noco::AnchorRegion
+			{
+				.anchorMin = noco::Anchor::TopLeft,
+				.anchorMax = noco::Anchor::TopLeft,
+				.posDelta = Vec2{ -50, 20 },
+				.sizeDelta = Vec2{ 100, 80 },
+				.sizeDeltaPivot = noco::Anchor::TopLeft,
+			});
+		auto node2 = noco::Node::Create(
+			U"Node2",
+			noco::AnchorRegion
+			{
+				.anchorMin = noco::Anchor::TopLeft,
+				.anchorMax = noco::Anchor::TopLeft,
+				.posDelta = Vec2{ 120, 150 },
+				.sizeDelta = Vec2{ 30, 40 },
+				.sizeDeltaPivot = noco::Anchor::TopLeft,
+			});
+		canvas->addChild(node1);
+		canvas->addChild(node2);
+
+		canvas->update(SizeF{ 1000, 800 }, noco::HitTestEnabledYN::No);
+
+		REQUIRE(canvas->size().x == Approx(200.0));
+		REQUIRE(canvas->size().y == Approx(170.0));
+		REQUIRE(canvas->center().x == Approx(500.0));
+		REQUIRE(canvas->center().y == Approx(400.0));
+
+		const Quad canvasQuad = canvas->quad();
+		REQUIRE(canvasQuad.p0.x == Approx(400.0));
+		REQUIRE(canvasQuad.p0.y == Approx(315.0));
+		REQUIRE(canvasQuad.p2.x == Approx(600.0));
+		REQUIRE(canvasQuad.p2.y == Approx(485.0));
+
+		const Quad node1Quad = node1->transformedQuad();
+		REQUIRE(node1Quad.p0.x == Approx(400.0));
+		REQUIRE(node1Quad.p0.y == Approx(315.0));
+
+		const Quad node2Quad = node2->transformedQuad();
+		REQUIRE(node2Quad.p0.x == Approx(570.0));
+		REQUIRE(node2Quad.p0.y == Approx(445.0));
+	}
+
+	SECTION("Ignores descendant bounds")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setAutoFitMode(noco::AutoFitMode::ResizeToContent);
+
+		auto root = noco::Node::Create(
+			U"Root",
+			noco::AnchorRegion
+			{
+				.anchorMin = noco::Anchor::TopLeft,
+				.anchorMax = noco::Anchor::TopLeft,
+				.posDelta = Vec2{ 10, 20 },
+				.sizeDelta = Vec2{ 30, 40 },
+				.sizeDeltaPivot = noco::Anchor::TopLeft,
+			});
+		root->emplaceChild(
+			U"Grandchild",
+			noco::AnchorRegion
+			{
+				.anchorMin = noco::Anchor::TopLeft,
+				.anchorMax = noco::Anchor::TopLeft,
+				.posDelta = Vec2{ 500, 600 },
+				.sizeDelta = Vec2{ 700, 800 },
+				.sizeDeltaPivot = noco::Anchor::TopLeft,
+			});
+		canvas->addChild(root);
+
+		canvas->update(SizeF{ 1000, 800 }, noco::HitTestEnabledYN::No);
+
+		REQUIRE(canvas->size().x == Approx(30.0));
+		REQUIRE(canvas->size().y == Approx(40.0));
+		REQUIRE(canvas->center().x == Approx(500.0));
+		REQUIRE(canvas->center().y == Approx(400.0));
+	}
+
+	SECTION("Empty canvas becomes zero size")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setAutoFitMode(noco::AutoFitMode::ResizeToContent);
+
+		canvas->update(SizeF{ 1000, 800 }, noco::HitTestEnabledYN::No);
+
+		REQUIRE(canvas->size().x == Approx(0.0));
+		REQUIRE(canvas->size().y == Approx(0.0));
+		REQUIRE(canvas->center().x == Approx(500.0));
+		REQUIRE(canvas->center().y == Approx(400.0));
+	}
+
+	SECTION("ResizeToContent is applied in editor preview")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setEditorPreviewInternal(true);
+		canvas->setPositionScale(Vec2{ 10, 20 }, Vec2{ 2, 3 });
+		canvas->setAutoFitMode(noco::AutoFitMode::ResizeToContent);
+
+		auto node = noco::Node::Create(
+			U"Node",
+			noco::AnchorRegion
+			{
+				.anchorMin = noco::Anchor::TopLeft,
+				.anchorMax = noco::Anchor::TopLeft,
+				.posDelta = Vec2{ 20, 30 },
+				.sizeDelta = Vec2{ 50, 60 },
+				.sizeDeltaPivot = noco::Anchor::TopLeft,
+			});
+		canvas->addChild(node);
+
+		canvas->update(SizeF{ 1000, 800 }, noco::HitTestEnabledYN::No);
+
+		REQUIRE(canvas->size().x == Approx(50.0));
+		REQUIRE(canvas->size().y == Approx(60.0));
+		REQUIRE(canvas->position().x == Approx(10.0));
+		REQUIRE(canvas->position().y == Approx(20.0));
+		REQUIRE(canvas->scale().x == Approx(2.0));
+		REQUIRE(canvas->scale().y == Approx(3.0));
+	}
+
+	SECTION("MatchSize is applied in editor preview without resetting view transform")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setEditorPreviewInternal(true);
+		canvas->setPositionScale(Vec2{ 10, 20 }, Vec2{ 2, 3 });
+		canvas->setAutoFitMode(noco::AutoFitMode::MatchSize);
+
+		canvas->update(SizeF{ 1000, 800 }, noco::HitTestEnabledYN::No);
+
+		REQUIRE(canvas->size().x == Approx(1000.0));
+		REQUIRE(canvas->size().y == Approx(800.0));
+		REQUIRE(canvas->position().x == Approx(10.0));
+		REQUIRE(canvas->position().y == Approx(20.0));
+		REQUIRE(canvas->scale().x == Approx(2.0));
+		REQUIRE(canvas->scale().y == Approx(3.0));
+	}
+
+	SECTION("Serializes auto fit mode")
+	{
+		auto canvas = noco::Canvas::Create(400, 300);
+		canvas->setAutoFitMode(noco::AutoFitMode::ResizeToContent);
+
+		const JSON json = canvas->toJSON();
+		REQUIRE(json[U"autoFitMode"].get<String>() == U"ResizeToContent");
+
+		auto restored = noco::Canvas::CreateFromJSON(json);
+		REQUIRE(restored != nullptr);
+		REQUIRE(restored->autoFitMode() == noco::AutoFitMode::ResizeToContent);
+	}
+}
+
 // Canvasのレイアウトテスト
 TEST_CASE("Canvas children layout", "[Canvas][Layout]")
 {

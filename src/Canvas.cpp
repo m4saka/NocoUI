@@ -92,8 +92,46 @@ namespace noco
 
 	void Canvas::updateAutoFitIfNeeded(const SizeF& sceneSize, bool force)
 	{
-		if (m_autoFitMode == AutoFitMode::None || m_isEditorPreview)
+		if (m_autoFitMode == AutoFitMode::None)
 		{
+			m_contentOriginOffset = Vec2::Zero();
+			m_lastAutoFitSceneSize = sceneSize;
+			return;
+		}
+
+		if (m_autoFitMode == AutoFitMode::ResizeToContent)
+		{
+			updateSizingToResizeToContent(sceneSize, m_isEditorPreview);
+			m_lastAutoFitSceneSize = sceneSize;
+			return;
+		}
+
+		if (m_isEditorPreview)
+		{
+			if (m_autoFitMode == AutoFitMode::MatchSize)
+			{
+				const SizeF oldSize = m_size;
+				m_size = sceneSize;
+				m_contentOriginOffset = Vec2::Zero();
+
+				if (!m_children.isEmpty())
+				{
+					const Mat3x2 rootMat = rootChildrenTransformMat();
+					const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+					const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
+					for (const auto& child : m_children)
+					{
+						child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
+					}
+				}
+
+				if (oldSize != m_size)
+				{
+					refreshLayoutImmediately(OnlyIfDirtyYN::No);
+				}
+			}
+
+			m_contentOriginOffset = Vec2::Zero();
 			m_lastAutoFitSceneSize = sceneSize;
 			return;
 		}
@@ -181,12 +219,15 @@ namespace noco
 			default:
 				break;
 		}
+
+		m_contentOriginOffset = Vec2::Zero();
 		
 		// シーンサイズが変わったので必ず変換行列を更新
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
@@ -209,6 +250,76 @@ namespace noco
 			return Mat3x2::Identity();
 		}
 		return Mat3x2::Scale(m_scale) * Mat3x2::Rotate(m_rotation) * Mat3x2::Translate(m_position);
+	}
+
+	Mat3x2 Canvas::rootChildrenTransformMat() const
+	{
+		if (m_contentOriginOffset == Vec2::Zero())
+		{
+			return rootPosScaleMat();
+		}
+		return Mat3x2::Translate(m_contentOriginOffset) * rootPosScaleMat();
+	}
+
+	Optional<RectF> Canvas::computeRootContentBounds() const
+	{
+		Optional<RectF> bounds;
+		for (const auto& child : m_children)
+		{
+			if (!child->activeSelf())
+			{
+				continue;
+			}
+
+			const RectF rect = child->regionRectWithMargin();
+			if (!bounds)
+			{
+				bounds = rect;
+				continue;
+			}
+
+			const double left = Min(bounds->x, rect.x);
+			const double top = Min(bounds->y, rect.y);
+			const double right = Max(bounds->x + bounds->w, rect.x + rect.w);
+			const double bottom = Max(bounds->y + bounds->h, rect.y + rect.h);
+			*bounds = RectF{ left, top, right - left, bottom - top };
+		}
+		return bounds;
+	}
+
+	void Canvas::updateSizingToResizeToContent(const SizeF& sceneSize, bool preserveTransform)
+	{
+		if (!preserveTransform)
+		{
+			m_scale = Vec2::One();
+		}
+
+		const auto applyBounds = [this, &sceneSize, preserveTransform](const Optional<RectF>& bounds)
+		{
+			if (!bounds)
+			{
+				m_size = SizeF{ 0, 0 };
+				if (!preserveTransform)
+				{
+					m_position = sceneSize / 2.0;
+				}
+				m_contentOriginOffset = Vec2::Zero();
+			}
+			else
+			{
+				m_size = bounds->size;
+				if (!preserveTransform)
+				{
+					m_position = (sceneSize - m_size) / 2.0;
+				}
+				m_contentOriginOffset = -bounds->pos;
+			}
+		};
+
+		refreshLayoutImmediately(OnlyIfDirtyYN::No);
+		applyBounds(computeRootContentBounds());
+
+		refreshLayoutImmediately(OnlyIfDirtyYN::No);
 	}
 
 	std::shared_ptr<Node> Canvas::findNodeByInstanceIdRecursive(const std::shared_ptr<Node>& node, uint64 instanceId) const
@@ -286,8 +397,9 @@ namespace noco
 
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshChildrenLayout();
@@ -635,6 +747,7 @@ namespace noco
 			child->resetScrollOffset(RecursiveYN::Yes);
 		}
 
+		m_contentOriginOffset = Vec2::Zero();
 		m_lastAutoFitSceneSize = none;
 
 		return true;
@@ -658,11 +771,6 @@ namespace noco
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();
 
-		if (m_children.empty())
-		{
-			return;
-		}
-
 		// 親の変換行列をレイアウト更新時用に保持
 		m_parentTransformMat = parentTransformMat;
 		m_parentHitTestMat = parentHitTestMat;
@@ -670,8 +778,13 @@ namespace noco
 		// AutoFitModeによるサイズ・スケール更新
 		updateAutoFitIfNeeded(sceneSize);
 
+		if (m_children.empty())
+		{
+			return;
+		}
+
 		// 親の変換行列とCanvas自身の変換行列を合成
-		const Mat3x2 rootMat = rootPosScaleMat();
+		const Mat3x2 rootMat = rootChildrenTransformMat();
 		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
 		const Mat3x2 combinedHitTestMat = rootMat * parentHitTestMat;
 
@@ -970,6 +1083,9 @@ namespace noco
 		m_children.clear();
 		m_referenceSize = DefaultSize;
 		m_size = DefaultSize;
+		m_position = Vec2::Zero();
+		m_scale = Vec2::One();
+		m_contentOriginOffset = Vec2::Zero();
 		m_autoFitMode = AutoFitMode::None;
 		m_defaultFontAssetName = U"";
 		m_params.clear();
@@ -987,8 +1103,9 @@ namespace noco
 		m_position = position;
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
@@ -1008,8 +1125,9 @@ namespace noco
 		m_scale = scale;
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
@@ -1030,8 +1148,9 @@ namespace noco
 		m_scale = scale;
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);
@@ -1045,8 +1164,9 @@ namespace noco
 		m_rotation = rotation;
 		if (!m_children.isEmpty())
 		{
-			const Mat3x2 combinedTransformMat = rootPosScaleMat() * m_parentTransformMat;
-			const Mat3x2 combinedHitTestMat = rootPosScaleMat() * m_parentHitTestMat;
+			const Mat3x2 rootMat = rootChildrenTransformMat();
+			const Mat3x2 combinedTransformMat = rootMat * m_parentTransformMat;
+			const Mat3x2 combinedHitTestMat = rootMat * m_parentHitTestMat;
 			for (const auto& child : m_children)
 			{
 				child->refreshTransformMat(RecursiveYN::Yes, combinedTransformMat, combinedHitTestMat, m_params);

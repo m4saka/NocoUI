@@ -1313,6 +1313,29 @@ TEST_CASE("IsParamTypeCompatibleWith(ParamType, ParamType) matrix", "[Param][Par
 	}
 }
 
+TEST_CASE("SubCanvas autoFitModeOverride getter/setter", "[Param][SubCanvas]")
+{
+	auto subCanvas = std::make_shared<SubCanvas>();
+
+	SECTION("Default value is NoOverride")
+	{
+		REQUIRE(subCanvas->autoFitModeOverride().defaultValue() == SubCanvasAutoFitModeOverride::NoOverride);
+	}
+
+	SECTION("Serialized JSON roundtrip via toJSON")
+	{
+		subCanvas->setAutoFitModeOverride(SubCanvasAutoFitModeOverride::ResizeToContent);
+
+		const JSON json = subCanvas->toJSON();
+		REQUIRE(json.hasElement(U"autoFitModeOverride"));
+		REQUIRE(json[U"autoFitModeOverride"].getString() == U"ResizeToContent");
+
+		auto restored = std::make_shared<SubCanvas>();
+		REQUIRE(restored->tryReadFromJSON(json));
+		REQUIRE(restored->autoFitModeOverride().defaultValue() == SubCanvasAutoFitModeOverride::ResizeToContent);
+	}
+}
+
 TEST_CASE("SubCanvas serializedParamBindingModesJSON getter/setter", "[Param][SubCanvas]")
 {
 	auto subCanvas = std::make_shared<SubCanvas>();
