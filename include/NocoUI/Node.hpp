@@ -240,6 +240,7 @@ namespace noco
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @param withInstanceId 入力内容からインスタンスIDを読み込むどうか(NocoEditorの内部実装向けのため、通常は指定不要)
 		/// @return 生成されたノード
+		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
@@ -414,6 +415,7 @@ namespace noco
 		/// @param json JSON
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたノード
+		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
 		/// @brief JSONから子ノードを指定したインデックスに追加

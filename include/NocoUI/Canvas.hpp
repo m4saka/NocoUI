@@ -543,6 +543,7 @@ namespace noco
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @param withInstanceId 入力内容からインスタンスIDを読み込むどうか(NocoEditorの内部実装向けのため、通常は指定不要)
 		/// @return 生成されたCanvas
+		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
@@ -560,6 +561,7 @@ namespace noco
 		/// @param allowExceptions 例外を発生させるか
 		/// @return 読み込まれたCanvas。AllowExceptions::Noで読み込みに失敗した場合はnullptrを返す
 		/// @throws AllowExceptions::Yesで読み込みに失敗した場合は例外を送出する
+		/// @note factoryはこのCanvasから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		[[nodiscard]]
 		static std::shared_ptr<Canvas> LoadFromFile(FilePathView path, const ComponentFactory& factory, AllowExceptions allowExceptions = AllowExceptions::No);
 
@@ -574,6 +576,7 @@ namespace noco
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @param withInstanceId 入力内容からインスタンスIDを読み込むどうか(NocoEditorの内部実装向けのため、通常は指定不要)
 		/// @return 読み込みに成功した場合はtrue、失敗した場合はfalseを返す
+		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		bool tryReadFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
 
 		/// @brief 毎フレームの更新処理
@@ -1086,6 +1089,7 @@ namespace noco
 		/// @param json JSON
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたノード
+		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
 		/// @brief SubCanvasを持つノードを子として追加
