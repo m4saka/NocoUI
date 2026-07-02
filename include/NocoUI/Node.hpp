@@ -46,7 +46,10 @@ namespace noco
 		ScrollMethodFlags m_scrollMethodFlags = ScrollMethodFlags::Wheel | ScrollMethodFlags::Drag;
 		double m_decelerationRate = 0.2; // 慣性スクロールの減衰率
 		RubberBandScrollEnabledYN m_rubberBandScrollEnabled = RubberBandScrollEnabledYN::Yes; // ラバーバンドスクロールを有効にするか
-		ScrollBarType m_scrollBarType = ScrollBarType::Overlay;
+		ScrollBarType m_scrollBarType = ScrollBarType::Interactive;
+		Color m_scrollBarHandleColor{ 255, 255, 255, 160 }; // スクロールバーのハンドル色
+		double m_scrollBarThickness = 8.0; // スクロールバーのハンドルの太さ
+		LRTB m_scrollBarMargin{ 2.0, 2.0, 2.0, 2.0 }; // スクロールバー周囲の余白
 		ClippingEnabledYN m_clippingEnabled = ClippingEnabledYN::No;
 		PropertyNonInteractive<bool> m_activeSelf{ U"activeSelf", true };
 		Property<int32> m_zOrderInSiblings{ U"zOrderInSiblings", 0 };
@@ -59,6 +62,9 @@ namespace noco
 		/* NonSerialized */ Quad m_hitQuadWithPadding{ Vec2::Zero(), Vec2::Zero(), Vec2::Zero(), Vec2::Zero() };
 		/* NonSerialized */ Vec2 m_scrollOffset{ 0.0, 0.0 };
 		/* NonSerialized */ Smoothing<double> m_scrollBarAlpha{ 0.0 };
+		/* NonSerialized */ LRTB m_childrenRectInset = LRTB::Zero(); // 子ノードから見た親領域の縮小量(Interactiveスクロールバーの占有分)
+		/* NonSerialized */ Optional<double> m_scrollBarHGrabOffset; // 横スクロールバーのドラッグ中に掴んだハンドル先端からの距離(値がある場合はドラッグ中)
+		/* NonSerialized */ Optional<double> m_scrollBarVGrabOffset; // 縦スクロールバーのドラッグ中に掴んだハンドル先端からの距離(値がある場合はドラッグ中)
 		/* NonSerialized */ MouseTracker m_mouseLTracker;
 		/* NonSerialized */ MouseTracker m_mouseRTracker;
 		/* NonSerialized */ ActiveYN m_activeInHierarchy = ActiveYN::No;
@@ -90,6 +96,28 @@ namespace noco
 
 		[[nodiscard]]
 		Mat3x2 calculateHitTestMat(const Mat3x2& parentHitTestMat) const;
+
+		struct ScrollBarGeometry
+		{
+			RectF trackRect;
+			RectF handleRect;
+			double trackStart;
+			double trackLength;
+			double handleLength;
+			double minScroll;
+			double scrollRange;
+			double currentScroll;
+		};
+
+		/// @brief スクロールバーの配置情報を計算(バーが不要な場合はnone)
+		[[nodiscard]]
+		Optional<ScrollBarGeometry> scrollBarGeometry(bool horizontal) const;
+
+		/// @brief Interactiveスクロールバーの表示状態更新とドラッグ操作処理
+		void updateInteractiveScrollBar();
+
+		/// @brief スクロールバーのハンドル描画(alphaFactorはハンドル色に乗算する不透明度)
+		void drawScrollBar(double alphaFactor) const;
 
 		[[nodiscard]]
 		explicit Node(uint64 instanceId, StringView name, const RegionVariant& region, IsHitTargetYN isHitTarget, InheritChildrenStateFlags inheritChildrenStateFlags)
@@ -637,6 +665,10 @@ namespace noco
 		[[nodiscard]]
 		Vec2 scrollOffset() const;
 
+		/// @brief スクロールオフセットを設定(スクロール可能な範囲内に制限される)
+		/// @param offset スクロールオフセット
+		void setScrollOffset(const Vec2& offset);
+
 		/// @brief スクロールオフセットをリセット
 		/// @param recursive 子孫ノードも対象とするかどうか
 		/// @param includeSubCanvas SubCanvas配下のノードも対象とするかどうか
@@ -728,6 +760,16 @@ namespace noco
 		/// @return 矩形
 		[[nodiscard]]
 		RectF regionRectWithMargin() const;
+
+		/// @brief 子ノードから見た親領域の縮小量を取得(Interactiveスクロールバーの占有分)
+		/// @return 縮小量
+		[[nodiscard]]
+		const LRTB& childrenRectInset() const;
+
+		/// @brief 子ノードの配置基準となる領域を取得(regionRectからchildrenRectInsetを除いた領域)
+		/// @return 矩形
+		[[nodiscard]]
+		RectF childrenRect() const;
 
 		/// @brief トランスフォームの行列(祖先ノードの変換も再帰的に適用したもの)を取得
 		/// @return 行列
@@ -981,6 +1023,36 @@ namespace noco
 		/// @param scrollBarType スクロールバー表示の種類
 		/// @return ノード自身(メソッドチェーンのため)
 		std::shared_ptr<Node> setScrollBarType(ScrollBarType scrollBarType);
+
+		/// @brief スクロールバーのハンドル色を取得
+		/// @return ハンドル色
+		[[nodiscard]]
+		const Color& scrollBarHandleColor() const;
+
+		/// @brief スクロールバーのハンドル色を設定
+		/// @param scrollBarHandleColor ハンドル色
+		/// @return ノード自身(メソッドチェーンのため)
+		std::shared_ptr<Node> setScrollBarHandleColor(const Color& scrollBarHandleColor);
+
+		/// @brief スクロールバーの太さを取得
+		/// @return 太さ
+		[[nodiscard]]
+		double scrollBarThickness() const;
+
+		/// @brief スクロールバーの太さを設定
+		/// @param scrollBarThickness 太さ
+		/// @return ノード自身(メソッドチェーンのため)
+		std::shared_ptr<Node> setScrollBarThickness(double scrollBarThickness);
+
+		/// @brief スクロールバー周囲の余白を取得
+		/// @return 余白
+		[[nodiscard]]
+		const LRTB& scrollBarMargin() const;
+
+		/// @brief スクロールバー周囲の余白を設定
+		/// @param scrollBarMargin 余白
+		/// @return ノード自身(メソッドチェーンのため)
+		std::shared_ptr<Node> setScrollBarMargin(const LRTB& scrollBarMargin);
 
 		/// @brief ドラッグスクロールを離す
 		void preventDragScroll();

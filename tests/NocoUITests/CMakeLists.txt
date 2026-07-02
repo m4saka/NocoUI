@@ -50,6 +50,7 @@ add_executable(${TARGET_NAME}
     TestComponentFactory.cpp
     TestTween.cpp
     TestToggle.cpp
+    TestNodeScrollBar.cpp
 )
 
 if(APPLE)

@@ -65,6 +65,21 @@ namespace noco::editor
 			.tooltip = U"ラバーバンドスクロールの有効/無効",
 			.tooltipDetail = U"有効にすると、スクロール範囲外でも一時的にドラッグでき、離すと自動的に範囲内に戻ります",
 		};
+		metadata[PropertyKey{ U"Node", U"scrollBarType" }] = PropertyMetadata{
+			.tooltip = U"スクロールバーの種類",
+			.tooltipDetail = U"・Hidden: スクロールバーを表示しません\n・Overlay: スクロール操作中のみ、中身の要素の上から重ねてスクロールバーを表示します\n・Interactive: スクロール可能な場合、ドラッグ操作可能なスクロールバーを常時表示します(バーの太さ分だけ子要素の領域が狭まります)",
+		};
+		metadata[PropertyKey{ U"Node", U"scrollBarHandleColor" }] = PropertyMetadata{
+			.tooltip = U"スクロールバーのハンドル色",
+		};
+		metadata[PropertyKey{ U"Node", U"scrollBarThickness" }] = PropertyMetadata{
+			.tooltip = U"スクロールバーのハンドルの太さ",
+			.tooltipDetail = U"Interactiveの場合、太さとscrollBarMarginの合計分だけ子要素の領域が狭まります",
+			.dragValueChangeStep = 1.0,
+		};
+		metadata[PropertyKey{ U"Node", U"scrollBarMargin" }] = PropertyMetadata{
+			.tooltip = U"スクロールバー周囲の余白",
+		};
 		metadata[PropertyKey{ U"Node", U"clippingEnabled" }] = PropertyMetadata{
 			.tooltip = U"クリッピングの有効/無効",
 			.tooltipDetail = U"有効にすると、コンポーネントや子要素の描画内容が要素の矩形範囲で切り取られます",

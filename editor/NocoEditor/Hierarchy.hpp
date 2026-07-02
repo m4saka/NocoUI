@@ -705,7 +705,7 @@ namespace noco::editor
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
 					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ -10, -14 },
+					.sizeDelta = Vec2{ 0, -14 },
 					.sizeDeltaPivot = Anchor::MiddleCenter,
 				}))
 			, m_editorCanvas(editorCanvas)
@@ -729,8 +729,9 @@ namespace noco::editor
 						#endif
 						KeyP, [this] { onClickPaste(); }, [this] { return canPaste(); } },
 				});
-			m_hierarchyRootNode->setChildrenLayout(VerticalLayout{ .padding = 2 });
+			m_hierarchyRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 7, 7, 2, 2 } });
 			m_hierarchyRootNode->setVerticalScrollable(true);
+			m_hierarchyRootNode->setScrollBarMargin(LRTB{ 2, 7, 2, 2 });
 
 			refreshNodeList();
 		}

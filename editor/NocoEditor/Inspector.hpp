@@ -322,7 +322,7 @@ namespace noco::editor
 					.anchorMin = Anchor::TopLeft,
 					.anchorMax = Anchor::BottomRight,
 					.posDelta = Vec2{ 0, 0 },
-					.sizeDelta = Vec2{ -10, -10 },
+					.sizeDelta = Vec2{ 0, -10 },
 					.sizeDeltaPivot = Anchor::MiddleCenter,
 				},
 				IsHitTargetYN::Yes))
@@ -338,8 +338,9 @@ namespace noco::editor
 		{
 			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
 			m_inspectorInnerFrameNode->emplaceComponent<RectRenderer>(EditorColor::ControlBackgroundColor, Palette::Black, 0.0, 0.0, 10.0);
-			m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 0, 0, 4, 4 } });
+			m_inspectorRootNode->setChildrenLayout(VerticalLayout{ .padding = LRTB{ 5, 5, 4, 4 } });
 			m_inspectorRootNode->setVerticalScrollable(true);
+			m_inspectorRootNode->setScrollBarMargin(LRTB{ 2, 5, 2, 2 });
 		}
 
 		// thisをキャプチャしているのでコピー・ムーブ不可
@@ -2628,8 +2629,14 @@ namespace noco::editor
 				
 				propertyNode->emplaceComponent<ContextMenuOpener>(m_contextMenu, menuElements, nullptr, RecursiveYN::Yes);
 			}
-			fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [node](bool value) { node->setHorizontalScrollable(value); });
-			fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [node](bool value) { node->setVerticalScrollable(value); });
+			fnAddBoolChild(U"horizontalScrollable", node->horizontalScrollable(), [this, node](bool value) {
+				node->setHorizontalScrollable(value);
+				refreshInspector();
+			});
+			fnAddBoolChild(U"verticalScrollable", node->verticalScrollable(), [this, node](bool value) {
+				node->setVerticalScrollable(value);
+				refreshInspector();
+			});
 			fnAddBoolChild(U"wheelScrollEnabled", node->wheelScrollEnabled(), [this, node](bool value) { 
 				node->setWheelScrollEnabled(value); 
 				refreshInspector();
@@ -2652,6 +2659,32 @@ namespace noco::editor
 			if (node->wheelScrollEnabled() || node->dragScrollEnabled())
 			{
 				fnAddBoolChild(U"rubberBandScrollEnabled", node->rubberBandScrollEnabled(), [node](bool value) { node->setRubberBandScrollEnabled(value); });
+			}
+			// いずれかの方向がスクロール可能な場合のみ表示
+			if (node->horizontalScrollable() || node->verticalScrollable())
+			{
+				const auto propertyNode = nodeSettingNode->addChild(createEnumPropertyNodeWithTooltip(
+					U"Node",
+					U"scrollBarType",
+					EnumToString(node->scrollBarType()),
+					[this, node](StringView value)
+					{
+						node->setScrollBarType(StringToEnum<ScrollBarType>(value, ScrollBarType::Interactive));
+						refreshInspector();
+					},
+					m_contextMenu,
+					EnumNames<ScrollBarType>()));
+				propertyNode->setActive(!m_isFoldedNodeSetting.getBool());
+				// スクロールバーを表示する場合のみハンドル色・太さ・余白を表示
+				if (node->scrollBarType() != ScrollBarType::Hidden)
+				{
+					const auto handleColorNode = nodeSettingNode->addChild(createColorPropertyNodeWithTooltip(U"Node", U"scrollBarHandleColor", node->scrollBarHandleColor(), [node](const Color& value) { node->setScrollBarHandleColor(value); }));
+					handleColorNode->setActive(!m_isFoldedNodeSetting.getBool());
+					const auto thicknessNode = nodeSettingNode->addChild(createPropertyNodeWithTooltip(U"Node", U"scrollBarThickness", Format(node->scrollBarThickness()), [node](StringView value) { node->setScrollBarThickness(Max(ParseOpt<double>(value).value_or(8.0), 0.0)); }, HasInteractivePropertyValueYN::No, HasParameterRefYN::No, nullptr));
+					thicknessNode->setActive(!m_isFoldedNodeSetting.getBool());
+					const auto marginNode = nodeSettingNode->addChild(createLRTBPropertyNodeWithTooltip(U"Node", U"scrollBarMargin", node->scrollBarMargin(), [node](const LRTB& value) { node->setScrollBarMargin(value); }));
+					marginNode->setActive(!m_isFoldedNodeSetting.getBool());
+				}
 			}
 			fnAddBoolChild(U"clippingEnabled", node->clippingEnabled(), [node](bool value) { node->setClippingEnabled(value); });
 			

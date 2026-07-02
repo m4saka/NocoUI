@@ -86,5 +86,6 @@ namespace noco
 	{
 		Hidden,
 		Overlay,
+		Interactive,
 	};
 }

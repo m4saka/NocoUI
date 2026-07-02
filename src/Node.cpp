@@ -12,6 +12,12 @@
 
 namespace noco
 {
+	namespace
+	{
+		// スクロールバーの外観設定
+		constexpr double ScrollBarHandleMinLength = 20.0;
+	}
+
 	InteractionState Node::updateForCurrentInteractionState(const std::shared_ptr<Node>& hoveredNode, InteractableYN parentInteractable, IsScrollingYN isAncestorScrolling, const HashTable<String, ParamValue>& params)
 	{
 		const InteractableYN interactable{ m_interactable.value() && parentInteractable };
@@ -260,13 +266,14 @@ namespace noco
 
 		const RectF& contentRect = *contentRectOpt;
 
-		const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
+		const RectF childrenRectValue = childrenRect();
+		const double maxScrollX = Max(contentRect.w - childrenRectValue.w, 0.0);
 		if (maxScrollX <= 0.0)
 		{
 			// 横スクロール不要なのでリセット
 			m_scrollOffset.x = 0.0;
 		}
-		const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
+		const double maxScrollY = Max(contentRect.h - childrenRectValue.h, 0.0);
 		if (maxScrollY <= 0.0)
 		{
 			// 縦スクロール不要なのでリセット
@@ -373,13 +380,13 @@ namespace noco
 
 	SizeF Node::getFittingSizeToChildren() const
 	{
-		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(m_regionRect, m_children); }, m_childrenLayout);
+		return std::visit([this](const auto& layout) { return layout.getFittingSizeToChildren(childrenRect(), m_children); }, m_childrenLayout);
 	}
 
 	std::shared_ptr<Node> Node::setInlineRegionToFitToChildren(FitTarget fitTarget)
 	{
 		refreshContainedCanvasLayoutImmediately();
-		std::visit([this, fitTarget](auto& layout) { layout.setInlineRegionToFitToChildren(m_regionRect, m_children, *this, fitTarget); }, m_childrenLayout);
+		std::visit([this, fitTarget](auto& layout) { layout.setInlineRegionToFitToChildren(childrenRect(), m_children, *this, fitTarget); }, m_childrenLayout);
 		return shared_from_this();
 	}
 
@@ -425,6 +432,9 @@ namespace noco
 			{ U"decelerationRate", m_decelerationRate },
 			{ U"rubberBandScrollEnabled", m_rubberBandScrollEnabled.getBool() },
 			{ U"scrollBarType", EnumToString(m_scrollBarType) },
+			{ U"scrollBarHandleColor", ToArrayJSON(m_scrollBarHandleColor) },
+			{ U"scrollBarThickness", m_scrollBarThickness },
+			{ U"scrollBarMargin", m_scrollBarMargin.toJSON() },
 			{ U"clippingEnabled", m_clippingEnabled.getBool() },
 		};
 		
@@ -592,7 +602,19 @@ namespace noco
 		}
 		if (json.contains(U"scrollBarType"))
 		{
-			node->setScrollBarType(StringToEnum<ScrollBarType>(json[U"scrollBarType"].getOr<String>(U"Overlay"), ScrollBarType::Overlay));
+			node->setScrollBarType(StringToEnum<ScrollBarType>(json[U"scrollBarType"].getOr<String>(U"Interactive"), ScrollBarType::Interactive));
+		}
+		if (json.contains(U"scrollBarHandleColor"))
+		{
+			node->setScrollBarHandleColor(FromArrayJSON(json[U"scrollBarHandleColor"], Color{ 255, 255, 255, 160 }));
+		}
+		if (json.contains(U"scrollBarThickness"))
+		{
+			node->setScrollBarThickness(json[U"scrollBarThickness"].getOr<double>(8.0));
+		}
+		if (json.contains(U"scrollBarMargin"))
+		{
+			node->setScrollBarMargin(LRTB::FromJSON(json[U"scrollBarMargin"], LRTB{ 2.0, 2.0, 2.0, 2.0 }));
 		}
 		if (json.contains(U"clippingEnabled"))
 		{
@@ -1198,7 +1220,7 @@ namespace noco
 	{
 		std::visit([this](const auto& layout)
 			{
-				layout.execute(m_regionRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
+				layout.execute(childrenRect(), m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 					{
 						child->m_regionRect = rect;
 						if (child->hasInlineRegion())
@@ -1220,7 +1242,7 @@ namespace noco
 		{
 			std::visit([this](const auto& layout)
 				{
-					layout.execute(m_regionRect, m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
+					layout.execute(childrenRect(), m_children, [this](const std::shared_ptr<Node>& child, const RectF& rect)
 						{
 							child->m_regionRect = rect;
 							if (child->hasInlineRegion())
@@ -1351,8 +1373,9 @@ namespace noco
 				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
-					if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
-						(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
+					const RectF childrenRectValue = childrenRect();
+					if ((horizontalScrollable() && contentRectLocal.w > childrenRectValue.w) ||
+						(verticalScrollable() && contentRectLocal.h > childrenRectValue.h))
 					{
 						return shared_from_this();
 					}
@@ -1411,8 +1434,9 @@ namespace noco
 				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
 				{
 					const RectF& contentRectLocal = *contentRectOpt;
-					if ((horizontalScrollable() && contentRectLocal.w > m_regionRect.w) ||
-						(verticalScrollable() && contentRectLocal.h > m_regionRect.h))
+					const RectF childrenRectValue = childrenRect();
+					if ((horizontalScrollable() && contentRectLocal.w > childrenRectValue.w) ||
+						(verticalScrollable() && contentRectLocal.h > childrenRectValue.h))
 					{
 						return shared_from_this();
 					}
@@ -1708,12 +1732,15 @@ namespace noco
 			(dragScrollingNode == thisNode && dragScrollingNode->m_dragThresholdExceeded) ||
 			isInertialScrolling)
 		{
-			m_scrollBarAlpha.update(0.5, 0.1, deltaTime);
+			m_scrollBarAlpha.update(1.0, 0.1, deltaTime);
 		}
 		else
 		{
 			m_scrollBarAlpha.update(0.0, 0.1, deltaTime);
 		}
+
+		// Interactiveスクロールバーの表示状態更新とドラッグ操作処理
+		updateInteractiveScrollBar();
 
 		if (m_activeInHierarchyForLifecycle) // update内で変更される場合があるため上にある「if (m_activeInHierarchyForLifecycle)」とは統合できない点に注意
 		{
@@ -1975,6 +2002,22 @@ namespace noco
 		return m_scrollOffset;
 	}
 
+	void Node::setScrollOffset(const Vec2& offset)
+	{
+		// スクロール範囲の計算前にレイアウトを即座に更新
+		refreshContainedCanvasLayoutImmediately();
+
+		// clampScrollOffsetはラバーバンドスクロール有効時に範囲外の値を許容するため、ここでは常に範囲内に制限する
+		const auto [minScroll, maxScroll] = validScrollRange();
+		const Vec2 newOffset{ Clamp(offset.x, minScroll.x, maxScroll.x), Clamp(offset.y, minScroll.y, maxScroll.y) };
+		if (m_scrollOffset == newOffset)
+		{
+			return;
+		}
+		m_scrollOffset = newOffset;
+		markLayoutAsDirty();
+	}
+
 	void Node::resetScrollOffset(RecursiveYN recursive, IncludeSubCanvasYN includeSubCanvas)
 	{
 		if (m_children.empty())
@@ -2026,8 +2069,9 @@ namespace noco
 				if (contentRectOpt)
 				{
 					const RectF& contentRect = *contentRectOpt;
-					const double maxScrollX = Max(contentRect.w - m_regionRect.w, 0.0);
-					const double maxScrollY = Max(contentRect.h - m_regionRect.h, 0.0);
+					const RectF childrenRectValue = childrenRect();
+					const double maxScrollX = Max(contentRect.w - childrenRectValue.w, 0.0);
+					const double maxScrollY = Max(contentRect.h - childrenRectValue.h, 0.0);
 
 					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
 
@@ -2174,111 +2218,13 @@ namespace noco
 		}
 
 		// スクロールバー描画
-		if (m_scrollBarType == ScrollBarType::Overlay && m_scrollBarAlpha.currentValue() > 0.0)
+		if (m_scrollBarType == ScrollBarType::Interactive)
 		{
-			// スクロールバーは回転を適用
-			Optional<Transformer2D> transformer;
-			const double currentRotation = extractRotationFromTransformMat();
-			if (Math::Abs(currentRotation) > 0.0001)
-			{
-				const Vec2 pivotPos = transformPivotPos();
-				const Mat3x2 rotationMat = Mat3x2::Rotate(currentRotation, pivotPos);
-				transformer.emplace(rotationMat);
-			}
-
-			const bool needHorizontalScrollBar = horizontalScrollable();
-			const bool needVerticalScrollBar = verticalScrollable();
-			if (needHorizontalScrollBar || needVerticalScrollBar)
-			{
-				if (const Optional<RectF> contentRectOpt = getChildrenContentRectWithPadding())
-				{
-					const RectF& contentRectLocal = *contentRectOpt;
-					const Vec2 scrollOffsetAnchor = std::visit([](const auto& layout) { return layout.scrollOffsetAnchor(); }, m_childrenLayout);
-					const double roundRadius = 2.0;
-
-					// 背景より手前にするためにハンドル部分は後で描画
-					Optional<RectF> horizontalHandleRect = none;
-					Optional<RectF> verticalHandleRect = none;
-					
-					const Vec2 scale = transformScaleInHierarchy();
-
-					// 横スクロールバー
-					if (needHorizontalScrollBar)
-					{
-						const double viewWidth = m_regionRect.w * scale.x;
-						const double contentWidth = contentRectLocal.w * scale.x;
-						const double maxScrollX = (contentWidth > viewWidth) ? (contentWidth - viewWidth) : 0.0;
-						if (maxScrollX > 0.0)
-						{
-							const double w = (viewWidth * viewWidth) / contentWidth;
-							const double scrolledRatio = (m_scrollOffset.x * scale.x + maxScrollX * scrollOffsetAnchor.x) / maxScrollX;
-							const double x = scrolledRatio * (viewWidth - w);
-							const double thickness = 4.0 * scale.y;
-
-							const RectF unrotated = unrotatedTransformedRect();
-							const RectF backgroundRect
-							{
-								unrotated.x,
-								unrotated.y + unrotated.h - thickness,
-								unrotated.w,
-								thickness
-							};
-							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
-
-							horizontalHandleRect = RectF
-							{
-								unrotated.x + x,
-								unrotated.y + unrotated.h - thickness,
-								w,
-								thickness
-							};
-						}
-					}
-
-					// 縦スクロールバー
-					if (needVerticalScrollBar)
-					{
-						const double viewHeight = m_regionRect.h * scale.y;
-						const double contentHeight = contentRectLocal.h * scale.y;
-						const double maxScrollY = (contentHeight > viewHeight) ? (contentHeight - viewHeight) : 0.0;
-						if (maxScrollY > 0.0)
-						{
-							const double h = (viewHeight * viewHeight) / contentHeight;
-							const double scrolledRatio = (m_scrollOffset.y * scale.y + maxScrollY * scrollOffsetAnchor.y) / maxScrollY;
-							const double y = scrolledRatio * (viewHeight - h);
-							const double thickness = 4.0 * scale.x;
-
-							const RectF unrotated = unrotatedTransformedRect();
-							const RectF backgroundRect
-							{
-								unrotated.x + unrotated.w - thickness,
-								unrotated.y,
-								thickness,
-								unrotated.h
-							};
-							backgroundRect.rounded(roundRadius).draw(ColorF{ 0.0, m_scrollBarAlpha.currentValue() });
-
-							verticalHandleRect = RectF
-							{
-								unrotated.x + unrotated.w - thickness,
-								unrotated.y + y,
-								thickness,
-								h
-							};
-						}
-					}
-
-					// ハンドル部分を描画
-					if (horizontalHandleRect)
-					{
-						horizontalHandleRect->rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
-					}
-					if (verticalHandleRect)
-					{
-						verticalHandleRect->rounded(roundRadius).draw(ColorF{ 1.0, m_scrollBarAlpha.currentValue() });
-					}
-				}
-			}
+			drawScrollBar(1.0);
+		}
+		else if (m_scrollBarType == ScrollBarType::Overlay && m_scrollBarAlpha.currentValue() > 0.0)
+		{
+			drawScrollBar(m_scrollBarAlpha.currentValue());
 		}
 	}
 
@@ -2460,6 +2406,22 @@ namespace noco
 		{
 			return m_regionRect;
 		}
+	}
+
+	const LRTB& Node::childrenRectInset() const
+	{
+		return m_childrenRectInset;
+	}
+
+	RectF Node::childrenRect() const
+	{
+		return RectF
+		{
+			m_regionRect.x + m_childrenRectInset.left,
+			m_regionRect.y + m_childrenRectInset.top,
+			Max(m_regionRect.w - m_childrenRectInset.totalWidth(), 0.0),
+			Max(m_regionRect.h - m_childrenRectInset.totalHeight(), 0.0),
+		};
 	}
 
 	bool Node::hasChildren() const
@@ -2800,6 +2762,250 @@ namespace noco
 	{
 		m_scrollBarType = scrollBarType;
 		return shared_from_this();
+	}
+
+	const Color& Node::scrollBarHandleColor() const
+	{
+		return m_scrollBarHandleColor;
+	}
+
+	std::shared_ptr<Node> Node::setScrollBarHandleColor(const Color& scrollBarHandleColor)
+	{
+		m_scrollBarHandleColor = scrollBarHandleColor;
+		return shared_from_this();
+	}
+
+	double Node::scrollBarThickness() const
+	{
+		return m_scrollBarThickness;
+	}
+
+	std::shared_ptr<Node> Node::setScrollBarThickness(double scrollBarThickness)
+	{
+		m_scrollBarThickness = scrollBarThickness;
+		return shared_from_this();
+	}
+
+	const LRTB& Node::scrollBarMargin() const
+	{
+		return m_scrollBarMargin;
+	}
+
+	std::shared_ptr<Node> Node::setScrollBarMargin(const LRTB& scrollBarMargin)
+	{
+		m_scrollBarMargin = scrollBarMargin;
+		return shared_from_this();
+	}
+
+	Optional<Node::ScrollBarGeometry> Node::scrollBarGeometry(bool horizontal) const
+	{
+		if (m_scrollBarType == ScrollBarType::Hidden)
+		{
+			return none;
+		}
+		if (horizontal ? !horizontalScrollable() : !verticalScrollable())
+		{
+			return none;
+		}
+		const auto [minScrollVec, maxScrollVec] = validScrollRange();
+		const double minScroll = horizontal ? minScrollVec.x : minScrollVec.y;
+		const double maxScroll = horizontal ? maxScrollVec.x : maxScrollVec.y;
+		const double scrollRange = maxScroll - minScroll;
+		if (scrollRange <= 0.0)
+		{
+			return none;
+		}
+
+		// トラックはノード右端/下端からmargin分内側の帯(もう一方のバーの占有分とは重ならないように短くする)
+		const double thickness = m_scrollBarThickness;
+		const LRTB& margin = m_scrollBarMargin;
+		RectF trackRect;
+		if (horizontal)
+		{
+			const double left = m_regionRect.x + margin.left;
+			const double right = m_regionRect.x + m_regionRect.w - Max(margin.right, m_childrenRectInset.right);
+			trackRect = RectF{ left, m_regionRect.y + m_regionRect.h - margin.bottom - thickness, right - left, thickness };
+		}
+		else
+		{
+			const double top = m_regionRect.y + margin.top;
+			const double bottom = m_regionRect.y + m_regionRect.h - Max(margin.bottom, m_childrenRectInset.bottom);
+			trackRect = RectF{ m_regionRect.x + m_regionRect.w - margin.right - thickness, top, thickness, bottom - top };
+		}
+
+		const double trackStart = horizontal ? trackRect.x : trackRect.y;
+		const double trackLength = horizontal ? trackRect.w : trackRect.h;
+		if (trackLength <= 0.0 || thickness <= 0.0)
+		{
+			return none;
+		}
+
+		// ハンドルの長さは表示領域と中身全体の比率から決定
+		// (ラバーバンドスクロールで範囲外までスクロールしている場合、はみ出した分だけハンドルが縮む)
+		const double rawScroll = horizontal ? m_scrollOffset.x : m_scrollOffset.y;
+		const double overshoot = Max(minScroll - rawScroll, 0.0) + Max(rawScroll - maxScroll, 0.0);
+		const RectF childrenRectValue = childrenRect();
+		const double viewLength = horizontal ? childrenRectValue.w : childrenRectValue.h;
+		const double contentLength = viewLength + scrollRange + overshoot;
+		double handleLength = contentLength > 0.0 ? trackLength * viewLength / contentLength : trackLength;
+		handleLength = Clamp(handleLength, Min(ScrollBarHandleMinLength, trackLength), trackLength);
+
+		const double currentScroll = Clamp(rawScroll, minScroll, maxScroll);
+		const double scrolledRatio = (currentScroll - minScroll) / scrollRange;
+		const double handleStart = trackStart + scrolledRatio * (trackLength - handleLength);
+		const RectF handleRect = horizontal
+			? RectF{ handleStart, trackRect.y, handleLength, thickness }
+			: RectF{ trackRect.x, handleStart, thickness, handleLength };
+
+		return ScrollBarGeometry
+		{
+			.trackRect = trackRect,
+			.handleRect = handleRect,
+			.trackStart = trackStart,
+			.trackLength = trackLength,
+			.handleLength = handleLength,
+			.minScroll = minScroll,
+			.scrollRange = scrollRange,
+			.currentScroll = currentScroll,
+		};
+	}
+
+	void Node::updateInteractiveScrollBar()
+	{
+		if (m_scrollBarType != ScrollBarType::Interactive || !m_activeInHierarchyForLifecycle)
+		{
+			// バーが無効になった場合は占有分とドラッグ状態を解除
+			if (m_childrenRectInset != LRTB::Zero())
+			{
+				m_childrenRectInset = LRTB::Zero();
+				markLayoutAsDirty();
+			}
+			m_scrollBarHGrabOffset = none;
+			m_scrollBarVGrabOffset = none;
+			return;
+		}
+
+		// スクロール可能な軸のバーのみ表示し、表示中のバーの太さ分だけ子領域を占有する
+		const auto [minScroll, maxScroll] = validScrollRange();
+		const bool horizontalBarVisible = horizontalScrollable() && maxScroll.x - minScroll.x > 0.0;
+		const bool verticalBarVisible = verticalScrollable() && maxScroll.y - minScroll.y > 0.0;
+		LRTB newInset = LRTB::Zero();
+		if (verticalBarVisible)
+		{
+			newInset.right = m_scrollBarMargin.left + m_scrollBarThickness + m_scrollBarMargin.right;
+		}
+		if (horizontalBarVisible)
+		{
+			newInset.bottom = m_scrollBarMargin.top + m_scrollBarThickness + m_scrollBarMargin.bottom;
+		}
+		if (m_childrenRectInset != newInset)
+		{
+			m_childrenRectInset = newInset;
+			markLayoutAsDirty();
+		}
+
+		// マウスを離したらドラッグ終了
+		if ((m_scrollBarHGrabOffset || m_scrollBarVGrabOffset) && !MouseL.pressed())
+		{
+			m_scrollBarHGrabOffset = none;
+			m_scrollBarVGrabOffset = none;
+		}
+
+		const Vec2 localCursor = inverseTransformHitTestPoint(Cursor::PosF());
+
+		// バー上での押下開始
+		if (isMouseDown())
+		{
+			for (const bool horizontal : { false, true })
+			{
+				const auto geometryOpt = scrollBarGeometry(horizontal);
+				if (!geometryOpt || !geometryOpt->trackRect.contains(localCursor))
+				{
+					continue;
+				}
+				const ScrollBarGeometry& geometry = *geometryOpt;
+
+				// バー上での押下開始時は内容のドラッグスクロールを行わない
+				preventDragScroll();
+
+				const double cursorPos = horizontal ? localCursor.x : localCursor.y;
+				const double handleStart = horizontal ? geometry.handleRect.x : geometry.handleRect.y;
+				Optional<double>& grabOffset = horizontal ? m_scrollBarHGrabOffset : m_scrollBarVGrabOffset;
+				if (handleStart <= cursorPos && cursorPos <= handleStart + geometry.handleLength)
+				{
+					grabOffset = cursorPos - handleStart;
+				}
+				else
+				{
+					// トラック上で押下した場合はクリック位置がハンドル中央になるよう掴む
+					grabOffset = geometry.handleLength * 0.5;
+				}
+				break;
+			}
+		}
+
+		// ドラッグ中のスクロール反映
+		for (const bool horizontal : { false, true })
+		{
+			const Optional<double>& grabOffset = horizontal ? m_scrollBarHGrabOffset : m_scrollBarVGrabOffset;
+			if (!grabOffset)
+			{
+				continue;
+			}
+			preventDragScroll();
+
+			const auto geometryOpt = scrollBarGeometry(horizontal);
+			if (!geometryOpt)
+			{
+				continue;
+			}
+			const ScrollBarGeometry& geometry = *geometryOpt;
+			const double movableLength = geometry.trackLength - geometry.handleLength;
+			if (movableLength <= 0.0)
+			{
+				continue;
+			}
+			const double cursorPos = horizontal ? localCursor.x : localCursor.y;
+			const double scrolledRatio = Clamp((cursorPos - geometry.trackStart - *grabOffset) / movableLength, 0.0, 1.0);
+			const double newScroll = geometry.minScroll + scrolledRatio * geometry.scrollRange;
+			if (newScroll == geometry.currentScroll)
+			{
+				continue;
+			}
+			Vec2 newOffset = m_scrollOffset;
+			if (horizontal)
+			{
+				newOffset.x = newScroll;
+			}
+			else
+			{
+				newOffset.y = newScroll;
+			}
+			setScrollOffset(newOffset);
+		}
+	}
+
+	void Node::drawScrollBar(double alphaFactor) const
+	{
+		Optional<Transformer2D> transformer;
+		if (m_transformMatInHierarchy != Mat3x2::Identity())
+		{
+			transformer.emplace(m_transformMatInHierarchy);
+		}
+		ColorF handleColor{ m_scrollBarHandleColor };
+		handleColor.a *= alphaFactor;
+		for (const bool horizontal : { false, true })
+		{
+			const auto geometryOpt = scrollBarGeometry(horizontal);
+			if (!geometryOpt)
+			{
+				continue;
+			}
+			const RectF& handleRect = geometryOpt->handleRect;
+			// 角丸はハンドルの太さの半分(端が丸くなる形)
+			const double cornerRadius = Min(handleRect.w, handleRect.h) / 2;
+			handleRect.rounded(cornerRadius).draw(handleColor);
+		}
 	}
 
 	void Node::preventDragScroll()
