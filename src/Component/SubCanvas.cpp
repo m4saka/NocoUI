@@ -433,7 +433,10 @@ namespace noco
 					{
 						for (const auto& event : events)
 						{
-							parentCanvas->fireEvent(event);
+							// 受け取り側Canvasから発火元を辿れるよう、SubCanvasを持つノードを記録して伝播
+							Event propagatedEvent = event;
+							propagatedEvent.containedSubCanvasOwner = node;
+							parentCanvas->fireEvent(propagatedEvent);
 						}
 					}
 				}

@@ -417,9 +417,17 @@ namespace noco
 
 	struct Event
 	{
+		// イベントを発火させた操作の種類
 		EventTriggerType triggerType = EventTriggerType::None;
+
+		// EventTriggerに設定されたタグ名
 		String tag;
+
+		// イベントを発火したノード
 		std::weak_ptr<Node> sourceNode;
+
+		// このイベントを伝播したSubCanvasを持つノード(SubCanvas経由で伝播していない場合は空)
+		std::weak_ptr<Node> containedSubCanvasOwner;
 	};
 
 	class Canvas : public INodeContainer, public std::enable_shared_from_this<Canvas>

@@ -326,3 +326,62 @@ TEST_CASE("EventTrigger PressRepeat", "[Events][Serialization]")
 		REQUIRE(!canvas->isEventFiredWithTag(U"repeatTest"));
 	}
 }
+
+TEST_CASE("Event containedSubCanvasOwner", "[Events][SubCanvas]")
+{
+	SECTION("Direct event has empty containedSubCanvasOwner")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		node->emplaceComponent<noco::EventTrigger>(U"directEvent", noco::EventTriggerType::Click);
+		canvas->addChild(node);
+
+		node->requestClick();
+		canvas->update();
+
+		auto event = canvas->getFiredEventWithTag(U"directEvent");
+		REQUIRE(event.has_value());
+		REQUIRE(event->containedSubCanvasOwner.expired());
+	}
+
+	SECTION("Propagated event has SubCanvas owner node")
+	{
+		// 子Canvasを一時ファイルに保存
+		auto childCanvas = noco::Canvas::Create(SizeF{ 100, 100 });
+		auto childNode = noco::Node::Create(U"Child");
+		childNode->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		childNode->emplaceComponent<noco::EventTrigger>(U"childEvent", noco::EventTriggerType::Click);
+		childCanvas->addChild(childNode);
+		const FilePath tempPath = FileSystem::PathAppend(FileSystem::TemporaryDirectoryPath(), U"noco_test_contained_sub_canvas_owner.noco");
+		REQUIRE(childCanvas->toJSON().save(tempPath));
+
+		// SubCanvasを持つノードのある親Canvasを作成
+		auto parentCanvas = noco::Canvas::Create();
+		auto ownerNode = noco::Node::Create(U"Owner");
+		ownerNode->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		ownerNode->emplaceComponent<noco::SubCanvas>(tempPath);
+		parentCanvas->addChild(ownerNode);
+
+		// 初回updateで子Canvasを読み込み
+		parentCanvas->update();
+		auto subCanvas = ownerNode->getComponent<noco::SubCanvas>();
+		REQUIRE(subCanvas != nullptr);
+		auto loadedChildCanvas = subCanvas->canvas();
+		REQUIRE(loadedChildCanvas != nullptr);
+
+		// 子Canvas内のノードのクリックで発火したイベントに、SubCanvasを持つノードが記録されて伝播されることを確認
+		auto loadedChildNode = loadedChildCanvas->findByName(U"Child");
+		REQUIRE(loadedChildNode != nullptr);
+		loadedChildNode->requestClick();
+		parentCanvas->update();
+
+		REQUIRE(parentCanvas->isEventFiredWithTag(U"childEvent"));
+		auto event = parentCanvas->getFiredEventWithTag(U"childEvent");
+		REQUIRE(event.has_value());
+		REQUIRE(event->sourceNode.lock() == loadedChildNode);
+		REQUIRE(event->containedSubCanvasOwner.lock() == ownerNode);
+
+		FileSystem::Remove(tempPath);
+	}
+}
