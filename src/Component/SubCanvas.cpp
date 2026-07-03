@@ -429,14 +429,11 @@ namespace noco
 				const auto& events = m_canvas->getFiredEventsAll();
 				if (!events.isEmpty())
 				{
-					if (auto parentNode = node->parentNode())
+					if (auto parentCanvas = node->containedCanvas())
 					{
-						if (auto parentCanvas = parentNode->containedCanvas())
+						for (const auto& event : events)
 						{
-							for (const auto& event : events)
-							{
-								parentCanvas->fireEvent(event);
-							}
+							parentCanvas->fireEvent(event);
 						}
 					}
 				}
