@@ -13,6 +13,8 @@ namespace noco
 		PropertyNonInteractive<String> m_tag;
 		PropertyNonInteractive<EventTriggerType> m_triggerType;
 		PropertyNonInteractive<bool> m_recursive;
+		PropertyNonInteractive<double> m_repeatIntervalSec;
+		PropertyNonInteractive<double> m_repeatIntervalSecFirst;
 
 		// Hoveredのみ初期値はfalseとする
 		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他triggerTypeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)
@@ -22,16 +24,28 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevHoveredRecursive = false;
 		/* NonSerialized */ Optional<bool> m_prevPressedRecursive = none;
 		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
+		/* NonSerialized */ Stopwatch m_pressRepeatStopwatch;
+		/* NonSerialized */ double m_prevPressRepeatTimeSec = 0.0;
+		/* NonSerialized */ Stopwatch m_rightPressRepeatStopwatch;
+		/* NonSerialized */ double m_prevRightPressRepeatTimeSec = 0.0;
 
 	public:
-		explicit EventTrigger(StringView tag = U"", EventTriggerType triggerType = EventTriggerType::Click, RecursiveYN recursive = RecursiveYN::No)
-			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_recursive } }
+		explicit EventTrigger(StringView tag = U"", EventTriggerType triggerType = EventTriggerType::Click, RecursiveYN recursive = RecursiveYN::No, double repeatIntervalSec = 0.1, double repeatIntervalSecFirst = 0.5)
+			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_recursive, &m_repeatIntervalSec, &m_repeatIntervalSecFirst } }
 			, m_tag{ U"tag", tag }
 			, m_triggerType{ U"triggerType", triggerType }
 			, m_recursive{ U"recursive", recursive.getBool() }
+			, m_repeatIntervalSec{ U"repeatIntervalSec", repeatIntervalSec }
+			, m_repeatIntervalSecFirst{ U"repeatIntervalSecFirst", repeatIntervalSecFirst }
 		{
 		}
 
 		void update(const std::shared_ptr<Node>& node) override;
+
+		[[nodiscard]]
+		EventTriggerType triggerType() const
+		{
+			return m_triggerType.value();
+		}
 	};
 }

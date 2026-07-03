@@ -2,6 +2,41 @@
 
 namespace noco
 {
+	namespace
+	{
+		/// @brief 押下状態からリピート発火の有無を判定
+		[[nodiscard]]
+		bool DetectPressRepeatFire(bool pressedHover, double intervalSec, double intervalSecFirst, Stopwatch* pStopwatch, double* pPrevTimeSec)
+		{
+			if (!pressedHover)
+			{
+				pStopwatch->reset();
+				*pPrevTimeSec = 0.0;
+				return false;
+			}
+
+			if (!pStopwatch->isRunning())
+			{
+				// 押下開始フレームで1回目を発火
+				pStopwatch->restart();
+				*pPrevTimeSec = 0.0;
+				return true;
+			}
+
+			if (intervalSec <= 0.0)
+			{
+				return false;
+			}
+
+			const double effectiveIntervalSecFirst = intervalSecFirst <= 0.0 ? intervalSec : intervalSecFirst;
+			const double timeSec = pStopwatch->sF();
+			const int32 tickCount = static_cast<int32>(Max((timeSec - effectiveIntervalSecFirst + intervalSec) / intervalSec, 0.0));
+			const int32 tickCountPrev = static_cast<int32>(Max((*pPrevTimeSec - effectiveIntervalSecFirst + intervalSec) / intervalSec, 0.0));
+			*pPrevTimeSec = timeSec;
+			return tickCount > tickCountPrev;
+		}
+	}
+
 	void EventTrigger::update(const std::shared_ptr<Node>& node)
 	{
 		std::shared_ptr<Canvas> canvas = node->containedCanvas();
@@ -297,6 +332,32 @@ namespace noco
 				m_prevPressedRecursive = none;
 				m_prevRightPressedRecursive = none;
 			}
+			break;
+
+		case EventTriggerType::PressRepeat:
+			if (DetectPressRepeatFire(node->isPressedHover(RecursiveYN{ recursive }), m_repeatIntervalSec.value(), m_repeatIntervalSecFirst.value(), &m_pressRepeatStopwatch, &m_prevPressRepeatTimeSec))
+			{
+				canvas->fireEvent({ .triggerType = EventTriggerType::PressRepeat, .tag = m_tag.value(), .sourceNode = node });
+			}
+			m_prevHovered = none;
+			m_prevHoveredRecursive = none;
+			m_prevPressed = none;
+			m_prevPressedRecursive = none;
+			m_prevRightPressed = none;
+			m_prevRightPressedRecursive = none;
+			break;
+
+		case EventTriggerType::RightPressRepeat:
+			if (DetectPressRepeatFire(node->isRightPressedHover(RecursiveYN{ recursive }), m_repeatIntervalSec.value(), m_repeatIntervalSecFirst.value(), &m_rightPressRepeatStopwatch, &m_prevRightPressRepeatTimeSec))
+			{
+				canvas->fireEvent({ .triggerType = EventTriggerType::RightPressRepeat, .tag = m_tag.value(), .sourceNode = node });
+			}
+			m_prevHovered = none;
+			m_prevHoveredRecursive = none;
+			m_prevPressed = none;
+			m_prevPressedRecursive = none;
+			m_prevRightPressed = none;
+			m_prevRightPressedRecursive = none;
 			break;
 
 		default:

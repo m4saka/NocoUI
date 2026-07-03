@@ -409,8 +409,10 @@ namespace noco
 		HoverEnd,
 		PressStart,
 		PressEnd,
+		PressRepeat,
 		RightPressStart,
 		RightPressEnd,
+		RightPressRepeat,
 	};
 
 	struct Event

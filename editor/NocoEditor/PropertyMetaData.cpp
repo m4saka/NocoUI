@@ -1149,9 +1149,33 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"EventTrigger", U"triggerType" }] = PropertyMetadata{
 			.tooltip = U"イベントを発火させる操作の種類",
+			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"EventTrigger", U"recursive" }] = PropertyMetadata{
 			.tooltip = U"子孫要素の操作でもイベント発火するかどうか",
+		};
+		metadata[PropertyKey{ U"EventTrigger", U"repeatIntervalSec" }] = PropertyMetadata{
+			.tooltip = U"2回目以降の発火間隔(秒)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* eventTrigger = dynamic_cast<const EventTrigger*>(&component))
+				{
+					return eventTrigger->triggerType() == EventTriggerType::PressRepeat || eventTrigger->triggerType() == EventTriggerType::RightPressRepeat;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"EventTrigger", U"repeatIntervalSecFirst" }] = PropertyMetadata{
+			.tooltip = U"1回目から2回目までの発火間隔(秒)",
+			.tooltipDetail = U"0以下の場合はrepeatIntervalSecと同じ値として扱われます",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* eventTrigger = dynamic_cast<const EventTrigger*>(&component))
+				{
+					return eventTrigger->triggerType() == EventTriggerType::PressRepeat || eventTrigger->triggerType() == EventTriggerType::RightPressRepeat;
+				}
+				return false;
+			},
 		};
 		
 		// CursorChanger
