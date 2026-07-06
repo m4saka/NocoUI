@@ -1682,6 +1682,7 @@ void Main()
 {
 	noco::Init();
 	noco::detail::SetEditorMode(true);
+	noco::SetWindowFocusClickIgnored(false); // エディタではウィンドウをアクティブ化するためのクリックもそのまま入力として扱う
 
 	Window::SetTitle(U"NocoEditor v{}"_fmt(NocoUIVersion));
 	Window::SetStyle(WindowStyle::Sizable);

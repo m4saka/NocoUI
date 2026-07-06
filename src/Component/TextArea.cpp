@@ -637,7 +637,7 @@ namespace noco
 			}
 			else if (MouseL.down() || MouseM.down() || MouseR.down())
 			{
-				// 領域外をクリックした場合は選択解除
+				// 領域外をクリックした場合は選択解除(ウィンドウをアクティブ化するためのクリックも意図的に対象としている)
 				CurrentFrame::UnfocusNodeIfFocused(node);
 				if (auto editingTextBox = detail::s_canvasUpdateContext.editingTextBox.lock(); editingTextBox && editingTextBox.get() == static_cast<ITextBox*>(this))
 				{

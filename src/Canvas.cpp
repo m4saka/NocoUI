@@ -788,7 +788,10 @@ namespace noco
 		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
 		const Mat3x2 combinedHitTestMat = rootMat * parentHitTestMat;
 
-		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused;
+		// ウィンドウをアクティブ化するためのクリックを入力として扱わない設定の場合、ウィンドウがアクティブ化されたフレームはマウス入力を無視する
+		const bool ignoreMouseInput = detail::s_windowFocusedThisFrame && IsWindowFocusClickIgnored();
+
+		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused && !ignoreMouseInput;
 		std::shared_ptr<Node> hoveredNode = nullptr;
 		if (canHover)
 		{
@@ -1013,7 +1016,7 @@ namespace noco
 
 		// ドラッグスクロール開始判定
 		// (ドラッグアンドドロップと競合しないよう、フレームの最後に実施)
-		if (!IsDraggingNode() && scrollableHoveredNode && scrollableHoveredNode->dragScrollEnabled() && detail::s_canvasUpdateContext.dragScrollingNode.expired() && MouseL.down())
+		if (!IsDraggingNode() && scrollableHoveredNode && scrollableHoveredNode->dragScrollEnabled() && detail::s_canvasUpdateContext.dragScrollingNode.expired() && MouseL.down() && !ignoreMouseInput)
 		{
 			scrollableHoveredNode->m_dragStartPos = Cursor::PosF();
 			scrollableHoveredNode->m_dragStartScrollOffset = scrollableHoveredNode->scrollOffset();

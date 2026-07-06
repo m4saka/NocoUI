@@ -42,9 +42,30 @@ namespace noco
 		inline CanvasUpdateContext s_canvasUpdateContext;
 		inline CanvasUpdateContext s_prevCanvasUpdateContext;
 		inline bool s_isEditorMode = false;
+		inline bool s_windowFocusClickIgnored = true;
+		inline int32 s_lastUpdatedWindowFocusFrameCount = -1;
+		inline bool s_prevWindowFocused = true;
+		inline bool s_windowFocusedThisFrame = false;
+
+		inline void UpdateWindowFocusedThisFrameIfNeeded()
+		{
+			const int32 currentFrameCount = Scene::FrameCount();
+			if (s_lastUpdatedWindowFocusFrameCount == currentFrameCount)
+			{
+				return;
+			}
+			s_lastUpdatedWindowFocusFrameCount = currentFrameCount;
+
+			// ウィンドウがアクティブ化されたフレームを検出(ウィンドウをアクティブ化するためのクリックを入力として扱わないための判定に使用)
+			const bool windowFocused = Window::GetState().focused;
+			s_windowFocusedThisFrame = windowFocused && !s_prevWindowFocused;
+			s_prevWindowFocused = windowFocused;
+		}
 
 		inline void ClearCanvasUpdateContextIfNeeded()
 		{
+			UpdateWindowFocusedThisFrameIfNeeded();
+
 			const int32 currentFrameCount = Scene::FrameCount();
 			if (s_lastCopiedCanvasUpdateContextToPrevFrameCount == currentFrameCount)
 			{
@@ -58,6 +79,19 @@ namespace noco
 			// 現在のフレームの状態をクリア
 			s_canvasUpdateContext.clear();
 		}
+	}
+
+	/// @brief ウィンドウをアクティブ化するためのクリックを入力として無視するかどうかを設定(デフォルトは無視する)
+	inline void SetWindowFocusClickIgnored(bool ignored)
+	{
+		detail::s_windowFocusClickIgnored = ignored;
+	}
+
+	/// @brief ウィンドウをアクティブ化するためのクリックを入力として無視するかどうかを取得
+	[[nodiscard]]
+	inline bool IsWindowFocusClickIgnored()
+	{
+		return detail::s_windowFocusClickIgnored;
 	}
 
 	namespace CurrentFrame
