@@ -16,6 +16,16 @@ namespace noco::editor
 			}
 			return true;
 		};
+
+		// ミップマップ関連プロパティの表示条件
+		const auto mipmapVisibilityCondition = [](const ComponentBase& component) -> bool
+		{
+			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+			{
+				return HasAnyTrueState(sprite->mipmapEnabled());
+			}
+			return true;
+		};
 		
 		// Nodeのプロパティ
 		metadata[PropertyKey{ U"Node", U"activeSelf" }] = PropertyMetadata{
@@ -1026,6 +1036,18 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Sprite", U"textureAddressMode" }] = PropertyMetadata{
 			.tooltip = U"テクスチャアドレスモード",
 			.tooltipDetail = U"テクスチャ座標が範囲外の時の動作\nDefault: 現在の設定を使用\nRepeat: 繰り返し\nMirror: ミラー繰り返し\nClamp: 端の色で埋める\nBorderColor: 境界色で埋める",
+		};
+
+		metadata[PropertyKey{ U"Sprite", U"mipmapEnabled" }] = PropertyMetadata{
+			.tooltip = U"ミップマップを有効にするか",
+			.tooltipDetail = U"大きい画像を縮小表示する際のジャギー(縮小エイリアシング)を軽減します\n有効にするとロード時にミップマップを生成します(VRAM使用量が増加)\n※等倍〜拡大表示や小さい画像では効果がなく、無効のままで問題ありません",
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"Sprite", U"mipmapLodBias" }] = PropertyMetadata{
+			.tooltip = U"ミップマップのLODバイアス",
+			.tooltipDetail = U"ミップマップ有効時のミップ選択を鮮鋭側/ぼかし側へずらします(0がSiv3D標準)\n負の値: 軽度の縮小でmip0を維持し鮮鋭に(ただし大縮小でジャギーが戻りやすい)\n正の値: よりぼかす\n※Web(WebGPU)版ではこの設定は無視されます",
+			.dragValueChangeStep = 0.1,
+			.visibilityCondition = mipmapVisibilityCondition,
 		};
 
 		metadata[PropertyKey{ U"Sprite", U"pixelShaderAssetName" }] = PropertyMetadata{

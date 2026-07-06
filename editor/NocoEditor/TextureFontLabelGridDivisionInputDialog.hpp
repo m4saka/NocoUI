@@ -61,7 +61,7 @@ namespace noco::editor
 			const String texturePath = m_textureFontLabel->textureFilePath().defaultValue();
 			if (!texturePath.isEmpty())
 			{
-				Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
+				Texture texture = noco::Asset::GetOrLoadTexture(texturePath, noco::MipmapEnabledYN::No);
 				if (texture)
 				{
 					m_textureSize = texture.size();

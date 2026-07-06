@@ -15,7 +15,7 @@ namespace noco
 			{
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath);
+					return noco::Asset::GetOrLoadTexture(textureFilePath, MipmapEnabledYN::No);
 				}
 			}
 			else
@@ -26,7 +26,7 @@ namespace noco
 				}
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath);
+					return noco::Asset::GetOrLoadTexture(textureFilePath, MipmapEnabledYN::No);
 				}
 			}
 			return Texture{};

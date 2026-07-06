@@ -122,14 +122,14 @@ namespace noco
 
 	namespace
 	{
-		Texture GetTexture(const String& textureFilePath, const String& textureAssetName)
+		Texture GetTexture(const String& textureFilePath, const String& textureAssetName, MipmapEnabledYN mipmapEnabled)
 		{
 			if (detail::IsEditorMode())
 			{
 				// エディタモードではアセット名は無視してファイル名のみを使用
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath);
+					return noco::Asset::GetOrLoadTexture(textureFilePath, mipmapEnabled);
 				}
 			}
 			else
@@ -142,7 +142,7 @@ namespace noco
 				}
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath);
+					return noco::Asset::GetOrLoadTexture(textureFilePath, mipmapEnabled);
 				}
 			}
 			return Texture{};
@@ -359,7 +359,7 @@ namespace noco
 		{
 			const String& textureFilePath = m_textureFilePath.value();
 			const String& textureAssetName = m_textureAssetName.value();
-			texture = GetTexture(textureFilePath, textureAssetName);
+			texture = GetTexture(textureFilePath, textureAssetName, MipmapEnabledYN{ m_mipmapEnabled.value() });
 		}
 		
 		const RectF rect = node.regionRect();
@@ -408,8 +408,12 @@ namespace noco
 		Optional<ScopedRenderStates2D> samplerState;
 		const SpriteTextureFilter filterMode = m_textureFilter.value();
 		const SpriteTextureAddressMode addressMode = m_textureAddressMode.value();
+		const bool mipmapEnabled = m_mipmapEnabled.value();
+		const double mipmapLodBias = m_mipmapLodBias.value();
+		// LODバイアスはミップマップ使用時のみ意味を持ち、0のときはSiv3D標準のサンプラーをそのまま使う
+		const bool applyLodBias = mipmapEnabled && mipmapLodBias != 0.0;
 
-		if (filterMode != SpriteTextureFilter::Default || addressMode != SpriteTextureAddressMode::Default)
+		if (filterMode != SpriteTextureFilter::Default || addressMode != SpriteTextureAddressMode::Default || applyLodBias)
 		{
 			// 現在のSamplerStateを取得してベースにする
 			SamplerState currentState = Graphics2D::GetSamplerState(ShaderStage::Pixel, 0);
@@ -467,6 +471,13 @@ namespace noco
 				default:
 					break;
 				}
+			}
+
+			// LODバイアスの設定
+			if (applyLodBias)
+			{
+				// 負の値でLODを鮮鋭側へバイアスする(軽度の縮小ではmip0を維持しつつ、大きな縮小でのみミップを使う)
+				currentState.lodBias = static_cast<float>(mipmapLodBias);
 			}
 
 			samplerState.emplace(currentState);

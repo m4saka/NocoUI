@@ -69,7 +69,7 @@ namespace noco
 			: FileSystem::PathAppend(BaseDirectoryPathConst(), filePath);
 	}
 
-	const Texture& Asset::GetOrLoadTexture(FilePathView filePath)
+	const Texture& Asset::GetOrLoadTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled)
 	{
 		static const Texture EmptyTexture{};
 
@@ -78,7 +78,7 @@ namespace noco
 			return EmptyTexture;
 		}
 
-		auto& table = detail::TextureAssetTable();
+		auto& table = mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
 		if (!table.isRegistered(filePath))
 		{
 			const FilePath fullPath = GetFullPath(filePath);
@@ -86,7 +86,7 @@ namespace noco
 			{
 				return EmptyTexture;
 			}
-			table.registerAsset(filePath, Texture{ fullPath });
+			table.registerAsset(filePath, Texture{ fullPath, mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped });
 		}
 
 		return table.get(filePath);
@@ -94,31 +94,55 @@ namespace noco
 
 	const Texture& Asset::ReloadTexture(FilePathView filePath)
 	{
+		// Unmipped版とMipped版が両方キャッシュされている可能性があるため、登録済みのものをそれぞれ再読み込みする
+		const FilePath fullPath = GetFullPath(filePath);
 		auto& table = detail::TextureAssetTable();
-		if (table.isRegistered(filePath))
+		auto& mippedTable = detail::MipmappedTextureAssetTable();
+		const bool hasUnmipped = table.isRegistered(filePath);
+		const bool hasMipped = mippedTable.isRegistered(filePath);
+		if (hasUnmipped)
 		{
 			table.unregister(filePath);
-			const FilePath fullPath = GetFullPath(filePath);
-			table.registerAsset(filePath, Texture{ fullPath });
+			table.registerAsset(filePath, Texture{ fullPath, TextureDesc::Unmipped });
+		}
+		if (hasMipped)
+		{
+			mippedTable.unregister(filePath);
+			mippedTable.registerAsset(filePath, Texture{ fullPath, TextureDesc::Mipped });
+		}
+		if (hasUnmipped)
+		{
 			return table.get(filePath);
 		}
-		return Asset::GetOrLoadTexture(filePath);
+		if (hasMipped)
+		{
+			return mippedTable.get(filePath);
+		}
+		return Asset::GetOrLoadTexture(filePath, MipmapEnabledYN::No);
 	}
 
 	bool Asset::UnloadTexture(FilePathView filePath)
 	{
+		bool unloaded = false;
 		auto& table = detail::TextureAssetTable();
 		if (table.isRegistered(filePath))
 		{
 			table.unregister(filePath);
-			return true;
+			unloaded = true;
 		}
-		return false;
+		auto& mippedTable = detail::MipmappedTextureAssetTable();
+		if (mippedTable.isRegistered(filePath))
+		{
+			mippedTable.unregister(filePath);
+			unloaded = true;
+		}
+		return unloaded;
 	}
 
 	void Asset::UnloadAllTextures()
 	{
 		detail::TextureAssetTable().clear();
+		detail::MipmappedTextureAssetTable().clear();
 	}
 
 	const Audio& Asset::GetOrLoadAudio(FilePathView filePath)

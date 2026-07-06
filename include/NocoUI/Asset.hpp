@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
+#include "YN.hpp"
 
 namespace noco
 {
@@ -67,6 +68,13 @@ namespace noco
 			return table;
 		}
 
+		// ミップマップありで読み込んだテクスチャは、同一パスでもUnmipped版とは別のテクスチャなので専用テーブルで管理する
+		inline AssetTable<Texture>& MipmappedTextureAssetTable()
+		{
+			static AssetTable<Texture> table;
+			return table;
+		}
+
 		inline AssetTable<Audio>& AudioAssetTable()
 		{
 			static AssetTable<Audio> table;
@@ -99,9 +107,10 @@ namespace noco
 
 		/// @brief テクスチャを取得(未読み込みの場合はロードする)
 		/// @param filePath テクスチャファイルのパス
+		/// @param mipmapEnabled ミップマップを生成するか(同一パスでもUnmipped版とMipped版は別々にキャッシュされる)
 		/// @return テクスチャ
 		[[nodiscard]]
-		const Texture& GetOrLoadTexture(FilePathView filePath);
+		const Texture& GetOrLoadTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled);
 
 		/// @brief テクスチャを再読み込み
 		/// @param filePath テクスチャファイルのパス
@@ -121,7 +130,8 @@ namespace noco
 		template <class Pred>
 		void UnloadTexturesIf(Pred&& predicate)
 		{
-			detail::TextureAssetTable().eraseIf(std::forward<Pred>(predicate));
+			detail::TextureAssetTable().eraseIf(predicate);
+			detail::MipmappedTextureAssetTable().eraseIf(predicate);
 		}
 
 		/// @brief オーディオを取得(未読み込みの場合はロードする)

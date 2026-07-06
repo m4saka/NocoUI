@@ -257,7 +257,7 @@ namespace noco::editor
 					return;
 				}
 
-				Texture texture = noco::Asset::GetOrLoadTexture(texturePath);
+				Texture texture = noco::Asset::GetOrLoadTexture(texturePath, noco::MipmapEnabledYN::No);
 				if (!texture)
 				{
 					return;
