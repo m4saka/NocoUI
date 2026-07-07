@@ -21,7 +21,12 @@ namespace noco
 			RightPressEnd,
 		};
 
+		/// @brief 音声再生処理を差し替えるコールバック(設定されている場合、デフォルトのSiv3DのAudioによる再生の代わりに呼ばれる)
+		using PlayAudioCallback = std::function<void(const String& audioFilePath, const String& audioAssetName, double volume)>;
+
 	private:
+		static PlayAudioCallback s_playAudioCallback;
+
 		Property<String> m_audioFilePath;
 		Property<String> m_audioAssetName;
 		PropertyNonInteractive<TriggerType> m_triggerType;
@@ -37,6 +42,9 @@ namespace noco
 		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
 
 	public:
+		/// @brief 音声再生処理を差し替えるコールバックを設定(別の音声再生バックエンドを使用したい場合に利用)
+		static void SetPlayAudioCallback(PlayAudioCallback callback);
+
 		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No)
 			: SerializableComponentBase{ U"UISound", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
 			, m_audioFilePath{ U"audioFilePath", audioFilePath }

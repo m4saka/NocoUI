@@ -33,6 +33,13 @@ namespace noco
 		}
 	}
 
+	UISound::PlayAudioCallback UISound::s_playAudioCallback;
+
+	void UISound::SetPlayAudioCallback(PlayAudioCallback callback)
+	{
+		s_playAudioCallback = std::move(callback);
+	}
+
 	void UISound::update(const std::shared_ptr<Node>& node)
 	{
 		const auto triggerType = m_triggerType.value();
@@ -42,10 +49,19 @@ namespace noco
 		auto play = [&]() {
 			const String& audioFilePath = m_audioFilePath.value();
 			const String& audioAssetName = m_audioAssetName.value();
+			const double volume = m_volume.value();
+
+			// コールバックが設定されている場合はデフォルトの再生処理の代わりにコールバックを呼ぶ
+			if (s_playAudioCallback)
+			{
+				s_playAudioCallback(audioFilePath, audioAssetName, volume);
+				return;
+			}
+
 			Audio audio = GetAudio(audioFilePath, audioAssetName);
 			if (audio)
 			{
-				audio.playOneShot(m_volume.value());
+				audio.playOneShot(volume);
 			}
 		};
 
