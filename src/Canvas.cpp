@@ -783,6 +783,9 @@ namespace noco
 			return;
 		}
 
+		// レイアウトが未確定の場合はヒットテスト前に確定させる
+		refreshLayoutImmediately(OnlyIfDirtyYN::Yes);
+
 		// 親の変換行列とCanvas自身の変換行列を合成
 		const Mat3x2 rootMat = rootChildrenTransformMat();
 		const Mat3x2 combinedTransformMat = rootMat * parentTransformMat;
