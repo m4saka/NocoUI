@@ -828,6 +828,15 @@ namespace noco::editor
 			.tooltip = U"アスペクト比を保持",
 			.tooltipDetail = U"有効にすると、テクスチャの縦横比を保持してノードの領域内に収まるように描画されます",
 		};
+		metadata[PropertyKey{ U"Sprite", U"fillDirection" }] = PropertyMetadata{
+			.tooltip = U"表示領域が広がる方向",
+			.tooltipDetail = U"fillAmountを増やした時に表示領域が広がる方向\nBottomToTop: 下から上へ\nTopToBottom: 上から下へ\nLeftToRight: 左から右へ\nRightToLeft: 右から左へ",
+		};
+		metadata[PropertyKey{ U"Sprite", U"fillAmount" }] = PropertyMetadata{
+			.tooltip = U"表示する割合 (0〜1)",
+			.tooltipDetail = U"描画結果をfillDirectionの方向に指定した割合だけ表示します(1で全体を表示)\nゲージなどのプログレスバー表現に使用できます",
+			.dragValueChangeStep = 0.01,
+		};
 		metadata[PropertyKey{ U"Sprite", U"hideIfTextureEmpty" }] = PropertyMetadata{
 			.tooltip = U"テクスチャが空の場合に非表示にするか",
 			.tooltipDetail = U"有効の場合、テクスチャ未設定または読み込み失敗時のダミーテクスチャ(黄色)を表示しません\n※Spriteのダミーテクスチャが描画されなくなるのみで、要素自体の有効状態には影響しません",

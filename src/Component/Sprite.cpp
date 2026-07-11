@@ -147,9 +147,70 @@ namespace noco
 			}
 			return Texture{};
 		}
+
+		// 描画先矩形をクリップ矩形で切り詰め、切り詰め後の描画先に対応するソース領域(テクスチャピクセル座標)を線形対応で切り出して描画
+		void DrawTextureRegionClipped(const Texture& texture, const RectF& sourceRect, const RectF& destRect, const Optional<RectF>& clipRect, const Color& color)
+		{
+			if (!clipRect)
+			{
+				texture(sourceRect).resized(destRect.size).draw(destRect.pos, color);
+				return;
+			}
+			if (destRect.w <= 0.0 || destRect.h <= 0.0)
+			{
+				return;
+			}
+			const RectF clippedDestRect = destRect.getOverlap(*clipRect);
+			if (clippedDestRect.isEmpty())
+			{
+				return;
+			}
+			const double scaleX = sourceRect.w / destRect.w;
+			const double scaleY = sourceRect.h / destRect.h;
+			const RectF clippedSourceRect{
+				sourceRect.x + (clippedDestRect.x - destRect.x) * scaleX,
+				sourceRect.y + (clippedDestRect.y - destRect.y) * scaleY,
+				clippedDestRect.w * scaleX,
+				clippedDestRect.h * scaleY };
+			texture(clippedSourceRect).resized(clippedDestRect.size).draw(clippedDestRect.pos, color);
+		}
+
+		// preserveAspect有効時のfittedと同等の描画先矩形を計算
+		RectF CalculateFittedRect(const RectF& rect, const SizeF& sourceSize)
+		{
+			if (sourceSize.x <= 0.0 || sourceSize.y <= 0.0)
+			{
+				return rect;
+			}
+			const double scale = Min(rect.w / sourceSize.x, rect.h / sourceSize.y);
+			const SizeF fittedSize = sourceSize * scale;
+			return RectF{ rect.center() - fittedSize / 2, fittedSize };
+		}
 	}
 
-	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Color& color) const
+	Optional<RectF> Sprite::fillRectOpt(const RectF& rect) const
+	{
+		const double fillAmount = Clamp(m_fillAmount.value(), 0.0, 1.0);
+		if (fillAmount >= 1.0)
+		{
+			return none;
+		}
+		switch (m_fillDirection.value())
+		{
+		case SpriteFillDirection::BottomToTop:
+			return RectF{ rect.x, rect.y + rect.h * (1.0 - fillAmount), rect.w, rect.h * fillAmount };
+		case SpriteFillDirection::TopToBottom:
+			return RectF{ rect.x, rect.y, rect.w, rect.h * fillAmount };
+		case SpriteFillDirection::LeftToRight:
+			return RectF{ rect.x, rect.y, rect.w * fillAmount, rect.h };
+		case SpriteFillDirection::RightToLeft:
+			return RectF{ rect.x + rect.w * (1.0 - fillAmount), rect.y, rect.w * fillAmount, rect.h };
+		default:
+			return none;
+		}
+	}
+
+	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
 		const Size textureSize = texture.size();
@@ -167,30 +228,31 @@ namespace noco
 		// 中央領域が無効な場合は通常描画にフォールバック
 		if (centerWidth <= 0 || centerHeight <= 0)
 		{
+			const RectF sourceRect{ Vec2::Zero(), Vec2{ textureSize } };
 			if (m_preserveAspect.value())
 			{
-				texture.fitted(rect.size).drawAt(rect.center(), color);
+				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, Vec2{ textureSize }), clipRect, color);
 			}
 			else
 			{
-				texture.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
 			}
 			return;
 		}
-		
+
 		const Vec2& nineSliceScale = m_nineSliceScale.value();
-		
+
 		const double drawLeftMargin = leftMargin * nineSliceScale.x;
 		const double drawRightMargin = rightMargin * nineSliceScale.x;
 		const double drawTopMargin = topMargin * nineSliceScale.y;
 		const double drawBottomMargin = bottomMargin * nineSliceScale.y;
-		
+
 		if (m_nineSliceFallback.value())
 		{
 			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
 			{
 				// サイズが小さすぎる場合は通常描画
-				texture.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ textureSize } }, rect, clipRect, color);
 				return;
 			}
 		}
@@ -218,131 +280,131 @@ namespace noco
 		const bool bottomTiled = m_nineSliceBottomTiled.value();
 		
 		// 四隅を描画(常に伸縮)
-		texture(srcTopLeft).resized(drawLeftMargin, drawTopMargin).draw(rect.pos, color);
-		texture(srcTopRight).resized(drawRightMargin, drawTopMargin).draw(rect.x + rect.w - drawRightMargin, rect.y, color);
-		texture(srcBottomLeft).resized(drawLeftMargin, drawBottomMargin).draw(rect.x, rect.y + rect.h - drawBottomMargin, color);
-		texture(srcBottomRight).resized(drawRightMargin, drawBottomMargin).draw(rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, color);
-		
+		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, color);
+
 		// 上辺を描画
 		if (topTiled)
 		{
 			// タイル描画
-			const TextureRegion topRegion = texture(srcTop);
 			const double tileWidth = centerWidth * nineSliceScale.x;
-			
+
 			// tileWidthが0以下の場合はスキップ
 			if (tileWidth > 0)
 			{
 				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 				{
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-					const double uvWidth = width / nineSliceScale.x;
-					topRegion.resized(uvWidth, topMargin).resized(width, drawTopMargin).draw(x, rect.y, color);
+					const double srcWidth = width / nineSliceScale.x;
+					const RectF partialSrc{ srcTop.x, srcTop.y, srcWidth, topMargin };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcTop).resized(centerDrawWidth, drawTopMargin).draw(rect.x + drawLeftMargin, rect.y, color);
+			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, color);
 		}
-		
+
 		// 下辺を描画
 		if (bottomTiled)
 		{
 			// タイル描画
-			const TextureRegion bottomRegion = texture(srcBottom);
 			const double tileWidth = centerWidth * nineSliceScale.x;
-			
+
 			// tileWidthが0以下の場合はスキップ
 			if (tileWidth > 0)
 			{
 				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 				{
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-					const double uvWidth = width / nineSliceScale.x;
-					bottomRegion.resized(uvWidth, bottomMargin).resized(width, drawBottomMargin).draw(x, rect.y + rect.h - drawBottomMargin, color);
+					const double srcWidth = width / nineSliceScale.x;
+					const RectF partialSrc{ srcBottom.x, srcBottom.y, srcWidth, bottomMargin };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcBottom).resized(centerDrawWidth, drawBottomMargin).draw(rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, color);
+			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, color);
 		}
-		
+
 		// 左辺を描画
 		if (leftTiled)
 		{
 			// タイル描画
-			const TextureRegion leftRegion = texture(srcLeft);
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			// tileHeightが0以下の場合はスキップ
 			if (tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					leftRegion.resized(leftMargin, uvHeight).resized(drawLeftMargin, height).draw(rect.x, y, color);
+					const double srcHeight = height / nineSliceScale.y;
+					const RectF partialSrc{ srcLeft.x, srcLeft.y, leftMargin, srcHeight };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcLeft).resized(drawLeftMargin, centerDrawHeight).draw(rect.x, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, color);
 		}
-		
+
 		// 右辺を描画
 		if (rightTiled)
 		{
 			// タイル描画
-			const TextureRegion rightRegion = texture(srcRight);
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			// tileHeightが0以下の場合はスキップ
 			if (tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					rightRegion.resized(rightMargin, uvHeight).resized(drawRightMargin, height).draw(rect.x + rect.w - drawRightMargin, y, color);
+					const double srcHeight = height / nineSliceScale.y;
+					const RectF partialSrc{ srcRight.x, srcRight.y, rightMargin, srcHeight };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcRight).resized(drawRightMargin, centerDrawHeight).draw(rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, color);
 		}
-		
+
 		// 中央を描画
 		if (centerTiled)
 		{
 			// タイル描画
-			const TextureRegion centerRegion = texture(srcCenter);
 			const double tileWidth = centerWidth * nineSliceScale.x;
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			// tileWidthまたはtileHeightが0以下の場合はスキップ
 			if (tileWidth > 0 && tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					
+					const double srcHeight = height / nineSliceScale.y;
+
 					for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 					{
 						const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-						const double uvWidth = width / nineSliceScale.x;
-						centerRegion.resized(uvWidth, uvHeight).resized(width, height).draw(x, y, color);
+						const double srcWidth = width / nineSliceScale.x;
+						const RectF partialSrc{ srcCenter.x, srcCenter.y, srcWidth, srcHeight };
+						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, color);
 					}
 				}
 			}
 		}
 		else
 		{
-			texture(srcCenter).resized(centerDrawWidth, centerDrawHeight).draw(rect.x + drawLeftMargin, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, color);
 		}
 	}
 
@@ -363,6 +425,15 @@ namespace noco
 		}
 		
 		const RectF rect = node.regionRect();
+
+		// fillAmountによるクリップ矩形(1未満の場合のみ値あり)
+		const Optional<RectF> clipRect = fillRectOpt(rect);
+		if (clipRect && clipRect->isEmpty())
+		{
+			// 完全にクリップされている場合は描画しない
+			return;
+		}
+
 		const Color& color = m_color.value();
 		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
@@ -515,19 +586,18 @@ namespace noco
 			const Vec2 actualSize = (size.x > 0 && size.y > 0) ? size : Vec2{ texture.size() };
 			
 			const RectF textureRect{ offset.x, offset.y, actualSize.x, actualSize.y };
-			TextureRegion region = texture(textureRect);
-			
+
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSliceFromRegion(texture, textureRect, rect, color);
+				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, color);
 			}
 			else if (m_preserveAspect.value())
 			{
-				region.fitted(rect.size).drawAt(rect.center(), color);
+				DrawTextureRegionClipped(texture, textureRect, CalculateFittedRect(rect, actualSize), clipRect, color);
 			}
 			else
 			{
-				region.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, textureRect, rect, clipRect, color);
 			}
 		}
 		else if (textureRegionModeValue == TextureRegionMode::Grid)
@@ -573,11 +643,9 @@ namespace noco
 				cellSize.y - trim.top - trim.bottom
 			};
 
-			TextureRegion region = texture(textureRect);
-
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSliceFromRegion(texture, textureRect, rect, color);
+				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, color);
 			}
 			else if (m_preserveAspect.value())
 			{
@@ -604,7 +672,7 @@ namespace noco
 				}
 
 				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
-				region.resized(drawSize).draw(drawPos, color);
+				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, color);
 			}
 			else
 			{
@@ -619,67 +687,66 @@ namespace noco
 				// 中央揃え
 				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
 
-				region.resized(drawSize).draw(drawPos, color);
+				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, color);
 			}
 		}
 		else
 		{
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSlice(texture, rect, color);
+				drawNineSlice(texture, rect, clipRect, color);
 			}
 			else if (m_preserveAspect.value())
 			{
-				texture.fitted(rect.size).drawAt(rect.center(), color);
+				const Vec2 textureSize{ texture.size() };
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), textureSize }, CalculateFittedRect(rect, textureSize), clipRect, color);
 			}
 			else
 			{
-				texture.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ texture.size() } }, rect, clipRect, color);
 			}
 		}
 	}
 
-	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Color& color) const
+	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
-		
+
 		const double leftMargin = margin.left;
 		const double rightMargin = margin.right;
 		const double topMargin = margin.top;
 		const double bottomMargin = margin.bottom;
-		
+
 		const double centerWidth = sourceRect.w - leftMargin - rightMargin;
 		const double centerHeight = sourceRect.h - topMargin - bottomMargin;
-		
+
 		// 中央領域が無効な場合は通常描画にフォールバック
 		if (centerWidth <= 0 || centerHeight <= 0)
 		{
-			const TextureRegion region = texture(sourceRect);
 			if (m_preserveAspect.value())
 			{
-				region.fitted(rect.size).drawAt(rect.center(), color);
+				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, sourceRect.size), clipRect, color);
 			}
 			else
 			{
-				region.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
 			}
 			return;
 		}
-		
+
 		const Vec2& nineSliceScale = m_nineSliceScale.value();
-		
+
 		const double drawLeftMargin = leftMargin * nineSliceScale.x;
 		const double drawRightMargin = rightMargin * nineSliceScale.x;
 		const double drawTopMargin = topMargin * nineSliceScale.y;
 		const double drawBottomMargin = bottomMargin * nineSliceScale.y;
-		
+
 		if (m_nineSliceFallback.value())
 		{
 			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
 			{
 				// サイズが小さすぎる場合は通常描画
-				const TextureRegion region = texture(sourceRect);
-				region.resized(rect.size).draw(rect.pos, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
 				return;
 			}
 		}
@@ -709,121 +776,121 @@ namespace noco
 		const bool bottomTiled = m_nineSliceBottomTiled.value();
 		
 		// 四隅を描画(常に伸縮)
-		texture(srcTopLeft).resized(drawLeftMargin, drawTopMargin).draw(rect.pos, color);
-		texture(srcTopRight).resized(drawRightMargin, drawTopMargin).draw(rect.x + rect.w - drawRightMargin, rect.y, color);
-		texture(srcBottomLeft).resized(drawLeftMargin, drawBottomMargin).draw(rect.x, rect.y + rect.h - drawBottomMargin, color);
-		texture(srcBottomRight).resized(drawRightMargin, drawBottomMargin).draw(rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, color);
-		
+		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, color);
+
 		// 上辺を描画
 		if (topTiled)
 		{
 			const double tileWidth = centerWidth * nineSliceScale.x;
-			
+
 			if (tileWidth > 0)
 			{
 				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 				{
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-					const double uvWidth = width / nineSliceScale.x;
-					const RectF partialSrc{ srcTop.x, srcTop.y, uvWidth, topMargin };
-					texture(partialSrc).resized(width, drawTopMargin).draw(x, rect.y, color);
+					const double srcWidth = width / nineSliceScale.x;
+					const RectF partialSrc{ srcTop.x, srcTop.y, srcWidth, topMargin };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcTop).resized(centerDrawWidth, drawTopMargin).draw(rect.x + drawLeftMargin, rect.y, color);
+			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, color);
 		}
-		
+
 		// 下辺を描画
 		if (bottomTiled)
 		{
 			const double tileWidth = centerWidth * nineSliceScale.x;
-			
+
 			if (tileWidth > 0)
 			{
 				for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 				{
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-					const double uvWidth = width / nineSliceScale.x;
-					const RectF partialSrc{ srcBottom.x, srcBottom.y, uvWidth, bottomMargin };
-					texture(partialSrc).resized(width, drawBottomMargin).draw(x, rect.y + rect.h - drawBottomMargin, color);
+					const double srcWidth = width / nineSliceScale.x;
+					const RectF partialSrc{ srcBottom.x, srcBottom.y, srcWidth, bottomMargin };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcBottom).resized(centerDrawWidth, drawBottomMargin).draw(rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, color);
+			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, color);
 		}
-		
+
 		// 左辺を描画
 		if (leftTiled)
 		{
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			if (tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					const RectF partialSrc{ srcLeft.x, srcLeft.y, leftMargin, uvHeight };
-					texture(partialSrc).resized(drawLeftMargin, height).draw(rect.x, y, color);
+					const double srcHeight = height / nineSliceScale.y;
+					const RectF partialSrc{ srcLeft.x, srcLeft.y, leftMargin, srcHeight };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcLeft).resized(drawLeftMargin, centerDrawHeight).draw(rect.x, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, color);
 		}
-		
+
 		// 右辺を描画
 		if (rightTiled)
 		{
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			if (tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					const RectF partialSrc{ srcRight.x, srcRight.y, rightMargin, uvHeight };
-					texture(partialSrc).resized(drawRightMargin, height).draw(rect.x + rect.w - drawRightMargin, y, color);
+					const double srcHeight = height / nineSliceScale.y;
+					const RectF partialSrc{ srcRight.x, srcRight.y, rightMargin, srcHeight };
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, color);
 				}
 			}
 		}
 		else
 		{
-			texture(srcRight).resized(drawRightMargin, centerDrawHeight).draw(rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, color);
 		}
-		
+
 		// 中央を描画
 		if (centerTiled)
 		{
 			const double tileWidth = centerWidth * nineSliceScale.x;
 			const double tileHeight = centerHeight * nineSliceScale.y;
-			
+
 			if (tileWidth > 0 && tileHeight > 0)
 			{
 				for (double y = rect.y + drawTopMargin; y < rect.y + rect.h - drawBottomMargin; y += tileHeight)
 				{
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
-					const double uvHeight = height / nineSliceScale.y;
-					
+					const double srcHeight = height / nineSliceScale.y;
+
 					for (double x = rect.x + drawLeftMargin; x < rect.x + rect.w - drawRightMargin; x += tileWidth)
 					{
 						const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
-						const double uvWidth = width / nineSliceScale.x;
-						const RectF partialSrc{ srcCenter.x, srcCenter.y, uvWidth, uvHeight };
-						texture(partialSrc).resized(width, height).draw(x, y, color);
+						const double srcWidth = width / nineSliceScale.x;
+						const RectF partialSrc{ srcCenter.x, srcCenter.y, srcWidth, srcHeight };
+						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, color);
 					}
 				}
 			}
 		}
 		else
 		{
-			texture(srcCenter).resized(centerDrawWidth, centerDrawHeight).draw(rect.x + drawLeftMargin, rect.y + drawTopMargin, color);
+			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, color);
 		}
 	}
 }

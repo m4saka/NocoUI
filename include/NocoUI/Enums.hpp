@@ -82,6 +82,14 @@ namespace noco
 		BorderColor,
 	};
 
+	enum class SpriteFillDirection : uint8
+	{
+		BottomToTop,
+		TopToBottom,
+		LeftToRight,
+		RightToLeft,
+	};
+
 	enum class ScrollBarType : uint8
 	{
 		Hidden,

@@ -399,3 +399,34 @@ TEST_CASE("LRTB Serialization", "[LRTB][JSON][Serialization]")
 		REQUIRE(invalidMargin.margin == noco::LRTB::Zero());
 	}
 }
+
+TEST_CASE("Sprite fill properties serialization", "[Sprite][JSON][Serialization]")
+{
+	SECTION("Default values")
+	{
+		auto node = noco::Node::Create(U"SpriteNode");
+		node->emplaceComponent<noco::Sprite>();
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
+		REQUIRE(restoredSprite != nullptr);
+		REQUIRE(restoredSprite->fillDirection().defaultValue() == noco::SpriteFillDirection::BottomToTop);
+		REQUIRE(restoredSprite->fillAmount().defaultValue() == 1.0);
+	}
+
+	SECTION("Custom values")
+	{
+		auto node = noco::Node::Create(U"SpriteNode");
+		auto sprite = node->emplaceComponent<noco::Sprite>();
+		sprite->setFillDirection(noco::SpriteFillDirection::LeftToRight);
+		sprite->setFillAmount(0.25);
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
+		REQUIRE(restoredSprite != nullptr);
+		REQUIRE(restoredSprite->fillDirection().defaultValue() == noco::SpriteFillDirection::LeftToRight);
+		REQUIRE(restoredSprite->fillAmount().defaultValue() == Approx(0.25));
+	}
+}
