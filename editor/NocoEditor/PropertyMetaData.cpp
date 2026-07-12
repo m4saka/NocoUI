@@ -1055,8 +1055,8 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Sprite", U"mipmapLodBias" }] = PropertyMetadata{
 			.tooltip = U"ミップマップのLODバイアス",
 			.tooltipDetail = U"ミップマップ有効時のミップ選択を鮮鋭側/ぼかし側へずらします(0がSiv3D標準)\n負の値: 軽度の縮小でmip0を維持し鮮鋭に(ただし大縮小でジャギーが戻りやすい)\n正の値: よりぼかす\n※Web(WebGPU)版ではこの設定は無視されます",
-			.dragValueChangeStep = 0.1,
 			.visibilityCondition = mipmapVisibilityCondition,
+			.dragValueChangeStep = 0.1,
 		};
 
 		metadata[PropertyKey{ U"Sprite", U"pixelShaderAssetName" }] = PropertyMetadata{
