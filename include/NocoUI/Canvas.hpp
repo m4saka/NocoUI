@@ -444,9 +444,11 @@ namespace noco
 		PressStart,
 		PressEnd,
 		PressRepeat,
+		PressHold,
 		RightPressStart,
 		RightPressEnd,
 		RightPressRepeat,
+		RightPressHold,
 	};
 
 	struct Event
