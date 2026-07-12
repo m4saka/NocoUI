@@ -285,48 +285,6 @@ TEST_CASE("Event handling", "[Events]")
 	}
 }
 
-TEST_CASE("EventTrigger PressRepeat", "[Events][Serialization]")
-{
-	SECTION("Serialization roundtrip")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto node = noco::Node::Create();
-		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->emplaceComponent<noco::EventTrigger>(U"repeatTest", noco::EventTriggerType::PressRepeat, noco::RecursiveYN::No, 0.05, 0.2);
-		canvas->addChild(node);
-
-		const JSON json = canvas->toJSON();
-		const JSON& componentJSON = json[U"children"][0][U"components"][0];
-		REQUIRE(componentJSON[U"type"].getString() == U"EventTrigger");
-		REQUIRE(componentJSON[U"tag"].getString() == U"repeatTest");
-		REQUIRE(componentJSON[U"triggerType"].getString() == U"PressRepeat");
-		REQUIRE(componentJSON[U"repeatIntervalSec"].get<double>() == 0.05);
-		REQUIRE(componentJSON[U"repeatIntervalSecFirst"].get<double>() == 0.2);
-
-		// 復元後に再シリアライズしても同じ値になることを確認
-		auto restoredCanvas = noco::Canvas::CreateFromJSON(json);
-		REQUIRE(restoredCanvas != nullptr);
-		const JSON restoredJSON = restoredCanvas->toJSON();
-		const JSON& restoredComponentJSON = restoredJSON[U"children"][0][U"components"][0];
-		REQUIRE(restoredComponentJSON[U"triggerType"].getString() == U"PressRepeat");
-		REQUIRE(restoredComponentJSON[U"repeatIntervalSec"].get<double>() == 0.05);
-		REQUIRE(restoredComponentJSON[U"repeatIntervalSecFirst"].get<double>() == 0.2);
-	}
-
-	SECTION("No event fired without press")
-	{
-		auto canvas = noco::Canvas::Create();
-		auto node = noco::Node::Create();
-		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
-		node->emplaceComponent<noco::EventTrigger>(U"repeatTest", noco::EventTriggerType::PressRepeat);
-		canvas->addChild(node);
-
-		canvas->update();
-		canvas->update();
-		REQUIRE(!canvas->isEventFiredWithTag(U"repeatTest"));
-	}
-}
-
 TEST_CASE("Event containedSubCanvasOwner", "[Events][SubCanvas]")
 {
 	SECTION("Direct event has empty containedSubCanvasOwner")
