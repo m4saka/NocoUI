@@ -1208,7 +1208,18 @@ namespace noco::editor
 				return false;
 			},
 		};
-		
+		metadata[PropertyKey{ U"EventTrigger", U"holdDurationSec" }] = PropertyMetadata{
+			.tooltip = U"発火までの長押し時間(秒)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* eventTrigger = dynamic_cast<const EventTrigger*>(&component))
+				{
+					return eventTrigger->triggerType() == EventTriggerType::PressHold || eventTrigger->triggerType() == EventTriggerType::RightPressHold;
+				}
+				return false;
+			},
+		};
+
 		// CursorChanger
 		metadata[PropertyKey{ U"CursorChanger", U"cursorStyle" }] = PropertyMetadata{
 			.tooltip = U"マウスカーソルのスタイル",
@@ -1413,19 +1424,29 @@ namespace noco::editor
 		{
 			if (const auto* tween = dynamic_cast<const Tween*>(&component))
 			{
-				return !HasAnyTrueState(tween->manualMode());
+				// トリガー再生時は無視されるため非表示
+				return !HasAnyTrueState(tween->manualMode()) && tween->triggerType() == EventTriggerType::None;
 			}
 			return true;
 		};
 		metadata[PropertyKey{ U"Tween", U"restartOnActive" }] = PropertyMetadata{
 			.tooltip = U"アクティブ時に最初から再生",
-			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか",
+			.tooltipDetail = U"activeプロパティがfalse→trueになった時、またはノード自体のアクティブ状態がfalse→trueになった時に、アニメーションを最初から再生し直すかどうか\n※triggerTypeがNone以外の場合は無視されます",
 			.visibilityCondition = tweenRestartsVisibilityCondition,
 		};
 		
 		metadata[PropertyKey{ U"Tween", U"manualMode" }] = PropertyMetadata{
 			.tooltip = U"手動制御モード",
-			.tooltipDetail = U"有効にすると、時間経過ではなくmanualTimeプロパティの値(0.0〜1.0)でアニメーションの進行を制御します",
+			.tooltipDetail = U"有効にすると、時間経過ではなくmanualTimeプロパティの値(0.0〜1.0)でアニメーションの進行を制御します\n※triggerTypeがNone以外の場合は無視されます",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					// トリガー再生時は無視されるため非表示
+					return tween->triggerType() == EventTriggerType::None;
+				}
+				return true;
+			},
 			.refreshInspectorOnChange = true,
 		};
 		
@@ -1438,7 +1459,8 @@ namespace noco::editor
 		{
 			if (const auto* tween = dynamic_cast<const Tween*>(&component))
 			{
-				return HasAnyTrueState(tween->manualMode());
+				// トリガー再生時は無視されるため非表示
+				return HasAnyTrueState(tween->manualMode()) && tween->triggerType() == EventTriggerType::None;
 			}
 			return false;
 		};
@@ -1453,6 +1475,57 @@ namespace noco::editor
 		metadata[PropertyKey{ U"Tween", U"tag" }] = PropertyMetadata{
 			.tooltip = U"タグ",
 			.tooltipDetail = U"Tweenを一括制御するためのタグ文字列です\nCanvas::setTweenActiveByTag()で同じタグを持つ\nTweenを一括でアクティブ/非アクティブにできます",
+		};
+
+		metadata[PropertyKey{ U"Tween", U"triggerType" }] = PropertyMetadata{
+			.tooltip = U"再生を開始する操作の種類",
+			.tooltipDetail = U"None以外を指定すると、要素へのインタラクションに応じてアニメーションを最初から再生します\n※restartOnActive、manualModeは無視されます",
+			.refreshInspectorOnChange = true,
+		};
+		metadata[PropertyKey{ U"Tween", U"triggerRecursive" }] = PropertyMetadata{
+			.tooltip = U"子孫要素の操作でも再生するかどうか",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->triggerType() != EventTriggerType::None;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Tween", U"triggerRepeatIntervalSec" }] = PropertyMetadata{
+			.tooltip = U"2回目以降の再生間隔(秒)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->triggerType() == EventTriggerType::PressRepeat || tween->triggerType() == EventTriggerType::RightPressRepeat;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Tween", U"triggerRepeatIntervalSecFirst" }] = PropertyMetadata{
+			.tooltip = U"1回目から2回目までの再生間隔(秒)",
+			.tooltipDetail = U"0以下の場合はtriggerRepeatIntervalSecと同じ値として扱われます",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->triggerType() == EventTriggerType::PressRepeat || tween->triggerType() == EventTriggerType::RightPressRepeat;
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Tween", U"triggerHoldDurationSec" }] = PropertyMetadata{
+			.tooltip = U"再生までの長押し時間(秒)",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* tween = dynamic_cast<const Tween*>(&component))
+				{
+					return tween->triggerType() == EventTriggerType::PressHold || tween->triggerType() == EventTriggerType::RightPressHold;
+				}
+				return false;
+			},
 		};
 
 		// Canvasのプロパティ

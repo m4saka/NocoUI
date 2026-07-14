@@ -4,6 +4,7 @@
 #include "../Node.hpp"
 #include "../Canvas.hpp"
 #include "../YN.hpp"
+#include "../detail/TriggerFireDetector.hpp"
 
 namespace noco
 {
@@ -17,22 +18,7 @@ namespace noco
 		PropertyNonInteractive<double> m_repeatIntervalSecFirst;
 		PropertyNonInteractive<double> m_holdDurationSec;
 
-		// Hoveredのみ初期値はfalseとする
-		// (初回update時に既にホバーしている場合もイベントを発火させたいため。ただし、他triggerTypeからの変更タイミングで発火させてはいけないため、HoveredもOptionalを利用する必要がある)
-		/* NonSerialized */ Optional<bool> m_prevHovered = false;
-		/* NonSerialized */ Optional<bool> m_prevPressed = none;
-		/* NonSerialized */ Optional<bool> m_prevRightPressed = none;
-		/* NonSerialized */ Optional<bool> m_prevHoveredRecursive = false;
-		/* NonSerialized */ Optional<bool> m_prevPressedRecursive = none;
-		/* NonSerialized */ Optional<bool> m_prevRightPressedRecursive = none;
-		/* NonSerialized */ Stopwatch m_pressRepeatStopwatch;
-		/* NonSerialized */ double m_prevPressRepeatTimeSec = 0.0;
-		/* NonSerialized */ Stopwatch m_rightPressRepeatStopwatch;
-		/* NonSerialized */ double m_prevRightPressRepeatTimeSec = 0.0;
-		/* NonSerialized */ Stopwatch m_pressHoldStopwatch;
-		/* NonSerialized */ bool m_pressHoldFired = false;
-		/* NonSerialized */ Stopwatch m_rightPressHoldStopwatch;
-		/* NonSerialized */ bool m_rightPressHoldFired = false;
+		/* NonSerialized */ detail::TriggerFireDetector m_fireDetector;
 
 	public:
 		explicit EventTrigger(StringView tag = U"", EventTriggerType triggerType = EventTriggerType::Click, RecursiveYN recursive = RecursiveYN::No, double repeatIntervalSec = 0.1, double repeatIntervalSecFirst = 0.5, double holdDurationSec = 0.5)

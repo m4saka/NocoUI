@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include "ComponentBase.hpp"
+#include "../Canvas.hpp"
+#include "../detail/TriggerFireDetector.hpp"
 
 namespace noco
 {
@@ -82,8 +84,18 @@ namespace noco
 		SmoothProperty<double> m_manualTime;
 		PropertyNonInteractive<String> m_tag;
 
+		// トリガー再生用プロパティ(triggerTypeがNone以外の場合、インタラクションに応じて最初から再生する)
+		PropertyNonInteractive<EventTriggerType> m_triggerType;
+		PropertyNonInteractive<bool> m_triggerRecursive;
+		PropertyNonInteractive<double> m_triggerRepeatIntervalSec;
+		PropertyNonInteractive<double> m_triggerRepeatIntervalSecFirst;
+		PropertyNonInteractive<double> m_triggerHoldDurationSec;
+
 		/* NonSerialized */ Stopwatch m_stopwatch;
 		/* NonSerialized */ Optional<bool> m_prevActive = none;
+		/* NonSerialized */ bool m_triggerFired = false;
+		/* NonSerialized */ bool m_triggerFinished = false;
+		/* NonSerialized */ detail::TriggerFireDetector m_triggerFireDetector;
 
 		[[nodiscard]]
 		double applyEasing(double t) const;
@@ -92,6 +104,12 @@ namespace noco
 		void updateScale(const std::shared_ptr<Node>& node, double progress);
 		void updateRotation(const std::shared_ptr<Node>& node, double progress);
 		void updateColor(const std::shared_ptr<Node>& node, double progress);
+
+		/// @brief 指定時間の値を各プロパティへ適用
+		void applyAtTime(const std::shared_ptr<Node>& node, double time);
+
+		/// @brief トリガー再生の更新(triggerTypeがNone以外の場合)
+		void updateWithTrigger(const std::shared_ptr<Node>& node);
 
 	public:
 		explicit Tween(
@@ -105,7 +123,8 @@ namespace noco
 				&m_rotationEnabled, &m_rotationFrom, &m_rotationTo,
 				&m_colorEnabled, &m_colorFrom, &m_colorTo,
 				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
-				&m_applyDuringDelay, &m_manualMode, &m_manualTime, &m_tag
+				&m_applyDuringDelay, &m_manualMode, &m_manualTime, &m_tag,
+				&m_triggerType, &m_triggerRecursive, &m_triggerRepeatIntervalSec, &m_triggerRepeatIntervalSecFirst, &m_triggerHoldDurationSec
 			} }
 			, m_active{ U"active", active }
 			, m_translateEnabled{ U"translateEnabled", false }
@@ -130,6 +149,11 @@ namespace noco
 			, m_manualMode{ U"manualMode", false }
 			, m_manualTime{ U"manualTime", 0.0 }
 			, m_tag{ U"tag", U"" }
+			, m_triggerType{ U"triggerType", EventTriggerType::None }
+			, m_triggerRecursive{ U"triggerRecursive", false }
+			, m_triggerRepeatIntervalSec{ U"triggerRepeatIntervalSec", 0.1 }
+			, m_triggerRepeatIntervalSecFirst{ U"triggerRepeatIntervalSecFirst", 0.5 }
+			, m_triggerHoldDurationSec{ U"triggerHoldDurationSec", 0.5 }
 		{
 		}
 
@@ -412,6 +436,66 @@ namespace noco
 		std::shared_ptr<Tween> setTag(const String& tag)
 		{
 			m_tag.setValue(tag);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		EventTriggerType triggerType() const
+		{
+			return m_triggerType.value();
+		}
+
+		std::shared_ptr<Tween> setTriggerType(EventTriggerType triggerType)
+		{
+			m_triggerType.setValue(triggerType);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		RecursiveYN triggerRecursive() const
+		{
+			return RecursiveYN{ m_triggerRecursive.value() };
+		}
+
+		std::shared_ptr<Tween> setTriggerRecursive(RecursiveYN recursive)
+		{
+			m_triggerRecursive.setValue(recursive.getBool());
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double triggerRepeatIntervalSec() const
+		{
+			return m_triggerRepeatIntervalSec.value();
+		}
+
+		std::shared_ptr<Tween> setTriggerRepeatIntervalSec(double intervalSec)
+		{
+			m_triggerRepeatIntervalSec.setValue(intervalSec);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double triggerRepeatIntervalSecFirst() const
+		{
+			return m_triggerRepeatIntervalSecFirst.value();
+		}
+
+		std::shared_ptr<Tween> setTriggerRepeatIntervalSecFirst(double intervalSec)
+		{
+			m_triggerRepeatIntervalSecFirst.setValue(intervalSec);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		double triggerHoldDurationSec() const
+		{
+			return m_triggerHoldDurationSec.value();
+		}
+
+		std::shared_ptr<Tween> setTriggerHoldDurationSec(double durationSec)
+		{
+			m_triggerHoldDurationSec.setValue(durationSec);
 			return shared_from_this();
 		}
 	};

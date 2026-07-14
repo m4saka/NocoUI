@@ -134,6 +134,7 @@
     <ClCompile Include="src\Component\TextBox.cpp" />
     <ClCompile Include="src\Component\Toggle.cpp" />
     <ClCompile Include="src\Component\Tween.cpp" />
+    <ClCompile Include="src\detail\TriggerFireDetector.cpp" />
     <ClCompile Include="src\Init.cpp" />
     <ClCompile Include="src\Layout\FlowLayout.cpp" />
     <ClCompile Include="src\Layout\HorizontalLayout.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="include\NocoUI\Region\Region.hpp" />
     <ClInclude Include="include\NocoUI\detail\Input.hpp" />
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp" />
+    <ClInclude Include="include\NocoUI\detail\TriggerFireDetector.hpp" />
     <ClInclude Include="include\NocoUI\Enums.hpp" />
     <ClInclude Include="include\NocoUI\FirstActiveLifecycleCompletedFlags.hpp" />
     <ClInclude Include="include\NocoUI\INodeContainer.hpp" />

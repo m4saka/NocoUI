@@ -430,3 +430,43 @@ TEST_CASE("Sprite fill properties serialization", "[Sprite][JSON][Serialization]
 		REQUIRE(restoredSprite->fillAmount().defaultValue() == Approx(0.25));
 	}
 }
+
+TEST_CASE("Tween trigger properties serialization", "[Tween][JSON][Serialization]")
+{
+	SECTION("Default values")
+	{
+		auto node = noco::Node::Create(U"TweenNode");
+		node->emplaceComponent<noco::Tween>();
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredTween = restoredNode->getComponent<noco::Tween>();
+		REQUIRE(restoredTween != nullptr);
+		REQUIRE(restoredTween->triggerType() == noco::EventTriggerType::None);
+		REQUIRE(restoredTween->triggerRecursive().getBool() == false);
+		REQUIRE(restoredTween->triggerRepeatIntervalSec() == 0.1);
+		REQUIRE(restoredTween->triggerRepeatIntervalSecFirst() == 0.5);
+		REQUIRE(restoredTween->triggerHoldDurationSec() == 0.5);
+	}
+
+	SECTION("Custom values")
+	{
+		auto node = noco::Node::Create(U"TweenNode");
+		auto tween = node->emplaceComponent<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::PressRepeat);
+		tween->setTriggerRecursive(noco::RecursiveYN::Yes);
+		tween->setTriggerRepeatIntervalSec(0.2);
+		tween->setTriggerRepeatIntervalSecFirst(0.8);
+		tween->setTriggerHoldDurationSec(1.5);
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredTween = restoredNode->getComponent<noco::Tween>();
+		REQUIRE(restoredTween != nullptr);
+		REQUIRE(restoredTween->triggerType() == noco::EventTriggerType::PressRepeat);
+		REQUIRE(restoredTween->triggerRecursive().getBool() == true);
+		REQUIRE(restoredTween->triggerRepeatIntervalSec() == Approx(0.2));
+		REQUIRE(restoredTween->triggerRepeatIntervalSecFirst() == Approx(0.8));
+		REQUIRE(restoredTween->triggerHoldDurationSec() == Approx(1.5));
+	}
+}

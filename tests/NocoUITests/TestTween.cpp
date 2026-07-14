@@ -869,3 +869,221 @@ TEST_CASE("Tween component", "[Tween]")
 		CHECK(canvas->isTweenPlayingByTag(U"test") == true);
 	}
 }
+
+TEST_CASE("Tween trigger playback", "[Tween]")
+{
+	SECTION("Click trigger starts playback")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		// 発火前は何も適用されず、再生中でもない
+		canvas->update();
+		CHECK(node->transform().translate().value() == Vec2{ 0.0, 0.0 });
+		CHECK(tween->isPlaying() == false);
+
+		// クリックで再生開始、開始値が適用される
+		node->requestClick();
+		canvas->update();
+		CHECK(node->transform().translate().value().x == Approx(50.0).margin(1.0));
+		CHECK(node->transform().translate().value().y == Approx(50.0).margin(1.0));
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("RightClick trigger starts playback")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::RightClick)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		// 通常のクリックでは再生されない
+		node->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// 右クリックで再生開始
+		node->requestRightClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("Click trigger with zero duration finishes immediately")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(0.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		// クリックで発火し、最終値が適用されて即座に終了
+		node->requestClick();
+		canvas->update();
+		CHECK(node->transform().translate().value() == Vec2{ 100.0, 100.0 });
+		CHECK(tween->isPlaying() == false);
+
+		// 再クリックで再度発火する
+		node->requestClick();
+		canvas->update();
+		CHECK(node->transform().translate().value() == Vec2{ 100.0, 100.0 });
+	}
+
+	SECTION("Click trigger on non-hit-target node reacts to ancestor click")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parentNode = noco::Node::Create(U"Parent");
+		parentNode->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(parentNode);
+
+		// ヒットテスト対象でない子ノードにTweenを付ける
+		auto childNode = noco::Node::Create(U"Child", noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } }, noco::IsHitTargetYN::No);
+		parentNode->addChild(childNode);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		childNode->addComponent(tween);
+
+		// 親のクリックで子のTweenが再生開始する
+		parentNode->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("Recursive trigger reacts to descendant click")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto parentNode = noco::Node::Create(U"Parent");
+		parentNode->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(parentNode);
+
+		// ヒットテスト対象の子ノード
+		auto childNode = noco::Node::Create(U"Child", noco::InlineRegion{ .sizeDelta = Vec2{ 50, 50 } });
+		parentNode->addChild(childNode);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		parentNode->addComponent(tween);
+
+		// triggerRecursiveが無効の場合、子のクリックでは再生されない
+		childNode->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// triggerRecursiveが有効の場合、子のクリックで再生開始する
+		tween->setTriggerRecursive(noco::RecursiveYN::Yes);
+		childNode->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("Trigger playback ignores fire while inactive")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setActive(false)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		// 非アクティブ中の発火は無視される
+		node->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// アクティブに戻しただけでは再生されない
+		tween->setActive(true);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// アクティブ後のクリックで再生開始する
+		node->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+
+	SECTION("Trigger playback restarts after node reactivation")
+	{
+		auto canvas = noco::Canvas::Create();
+		auto node = noco::Node::Create();
+		node->setRegion(noco::InlineRegion{ .sizeDelta = Vec2{ 100, 100 } });
+		canvas->addChild(node);
+
+		auto tween = std::make_shared<noco::Tween>();
+		tween->setTriggerType(noco::EventTriggerType::Click)
+			->setTranslateEnabled(true)
+			->setTranslateFrom(Vec2{ 50.0, 50.0 })
+			->setTranslateTo(Vec2{ 100.0, 100.0 })
+			->setDuration(10.0)
+			->setEasing(noco::TweenEasing::Linear)
+			->setLoopType(noco::TweenLoopType::None);
+		node->addComponent(tween);
+
+		node->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+
+		// 非アクティブ化で発火待ちの状態に戻る
+		node->setActive(false);
+		canvas->update();
+		node->setActive(true);
+		canvas->update();
+		CHECK(tween->isPlaying() == false);
+
+		// 再度クリックで再生開始する
+		node->requestClick();
+		canvas->update();
+		CHECK(tween->isPlaying() == true);
+	}
+}

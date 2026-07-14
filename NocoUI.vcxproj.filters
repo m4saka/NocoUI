@@ -34,8 +34,14 @@
     <Filter Include="Header Files\NocoUI\Region">
       <UniqueIdentifier>{95f10eaf-a1e6-491a-a360-2b0280f11d2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\detail">
+      <UniqueIdentifier>{c3a5c8de-91f4-4b26-8f0a-52e4d9a7b310}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\detail\TriggerFireDetector.cpp">
+      <Filter>Source Files\detail</Filter>
+    </ClCompile>
     <ClCompile Include="src\Component\UISound.cpp">
       <Filter>Source Files\Component</Filter>
     </ClCompile>
@@ -231,7 +237,7 @@
       <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\detail\Input.hpp">
-      <Filter>Header Files\NocoUI</Filter>
+      <Filter>Header Files\NocoUI\detail</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\InteractionState.hpp">
       <Filter>Header Files\NocoUI</Filter>
@@ -267,7 +273,10 @@
       <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp">
-      <Filter>Header Files\NocoUI</Filter>
+      <Filter>Header Files\NocoUI\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\detail\TriggerFireDetector.hpp">
+      <Filter>Header Files\NocoUI\detail</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\ScrollableAxisFlags.hpp">
       <Filter>Header Files\NocoUI</Filter>
