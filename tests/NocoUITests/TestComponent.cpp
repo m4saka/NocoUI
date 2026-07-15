@@ -175,6 +175,25 @@ TEST_CASE("Label rich text", "[Component][Label]")
 		REQUIRE(richSize.y == Approx(plainSize.y * 2.0));
 	}
 
+	SECTION("Small size tag shrinks line height")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+		plainLabel->setFontSize(24.0);
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<size=50%>Hello</size>");
+		richLabel->setFontSize(24.0);
+
+		// 行内の全ての文字が小さい場合は行の高さも縮む
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x * 0.5));
+		REQUIRE(richSize.y == Approx(plainSize.y * 0.5));
+	}
+
 	SECTION("Gradient color tag is excluded from content size")
 	{
 		auto node = noco::Node::Create();

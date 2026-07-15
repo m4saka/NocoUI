@@ -98,11 +98,15 @@ namespace noco
 				const auto fnPushLine =
 					[&]() -> bool
 					{
-						// 行の高さは行内で最も大きい文字のスケールに合わせる
+						// 行の高さは行内で最も大きい文字のスケールに合わせる(空行は基準サイズに合わせる)
 						double lineMaxScale = 1.0;
-						for (const auto& style : lineGlyphStyles)
+						if (!lineGlyphStyles.isEmpty())
 						{
-							lineMaxScale = Max(lineMaxScale, style.scale);
+							lineMaxScale = 0.0;
+							for (const auto& style : lineGlyphStyles)
+							{
+								lineMaxScale = Max(lineMaxScale, style.scale);
+							}
 						}
 						const double currentLineHeight = this->lineHeight * lineMaxScale;
 						const double currentLineBottom = offset.y + currentLineHeight;
@@ -505,15 +509,9 @@ namespace noco
 						const ColorF glyphOutlineColor = ColorF{ glyphStyle.outlineColor.value_or(m_outlineColor.value()) } * colorMul;
 						if (glyphOutlineColor != appliedOutlineColor)
 						{
-							TextStyle glyphTextStyle = TextStyle::Default();
-							if (hasShadow)
-							{
-								glyphTextStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, glyphOutlineColor, m_shadowOffset.value(), ColorF{ m_shadowColor.value() } * colorMul);
-							}
-							else
-							{
-								glyphTextStyle = TextStyle::Outline(outlineFactorInner, outlineFactorOuter, glyphOutlineColor);
-							}
+							// アウトライン色のみ差し替え
+							TextStyle glyphTextStyle = textStyle;
+							glyphTextStyle.outlineColor = glyphOutlineColor.toFloat4();
 							if (isSDF)
 							{
 								Graphics2D::SetSDFParameters(glyphTextStyle);
@@ -530,19 +528,25 @@ namespace noco
 					const Vec2 drawPos = pos + (glyph.getOffset(drawScale) + Vec2{ 0.0, glyphStyle.yOffset }) * Vec2{ autoShrinkWidthScale, 1.0 };
 					const auto scaledTexture = glyph.texture.scaled(drawScale * autoShrinkWidthScale, drawScale);
 
+					// 上下グラデーションでの行内の上端・下端位置(0～1)を計算
+					const auto fnScaledVerticalTs =
+						[&]() -> std::pair<double, double>
+						{
+							const double lineGradationHeight = Max(lineCache.height, 1e-6);
+							const double glyphTop = glyph.getOffset(drawScale).y + glyphStyle.yOffset;
+							const double topT = Clamp(glyphTop / lineGradationHeight, 0.0, 1.0);
+							const double bottomT = Clamp((glyphTop + glyph.texture.size.y * drawScale) / lineGradationHeight, 0.0, 1.0);
+							const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
+							return { (topT - lineCache.minTopT) / minMaxTAbsDiff, (bottomT - lineCache.minTopT) / minMaxTAbsDiff };
+						};
+
 					// colorタグによる色指定はグラデーションより優先
 					if (glyphStyle.color.has_value())
 					{
 						if (glyphStyle.color->isGradation())
 						{
 							// 2色指定時は行内の文字の上端から下端にかけての上下グラデーション
-							const double lineGradationHeight = Max(lineCache.height, 1e-6);
-							const double glyphTop = glyph.getOffset(drawScale).y + glyphStyle.yOffset;
-							const double topT = Clamp(glyphTop / lineGradationHeight, 0.0, 1.0);
-							const double bottomT = Clamp((glyphTop + glyph.texture.size.y * drawScale) / lineGradationHeight, 0.0, 1.0);
-							const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
-							const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
-							const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
+							const auto [scaledTopT, scaledBottomT] = fnScaledVerticalTs();
 							const ColorF tagColor1{ glyphStyle.color->color1 };
 							const ColorF tagColor2{ *glyphStyle.color->color2 };
 							const ColorF topColor = tagColor1.lerp(tagColor2, scaledTopT);
@@ -560,13 +564,7 @@ namespace noco
 						{
 						case LabelGradationType::TopBottom:
 						{
-							const double lineGradationHeight = Max(lineCache.height, 1e-6);
-							const double glyphTop = glyph.getOffset(drawScale).y + glyphStyle.yOffset;
-							const double topT = Clamp(glyphTop / lineGradationHeight, 0.0, 1.0);
-							const double bottomT = Clamp((glyphTop + glyph.texture.size.y * drawScale) / lineGradationHeight, 0.0, 1.0);
-							const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
-							const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
-							const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
+							const auto [scaledTopT, scaledBottomT] = fnScaledVerticalTs();
 							const ColorF topColor = gradationColor1.lerp(gradationColor2, scaledTopT);
 							const ColorF bottomColor = gradationColor1.lerp(gradationColor2, scaledBottomT);
 							scaledTexture.draw(drawPos, Arg::top = topColor, Arg::bottom = bottomColor);
