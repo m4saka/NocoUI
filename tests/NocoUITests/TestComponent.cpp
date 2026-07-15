@@ -247,6 +247,39 @@ TEST_CASE("Label rich text", "[Component][Label]")
 		REQUIRE(richSize.y == Approx(plainSize.y));
 	}
 
+	SECTION("Outline color tag is excluded from content size")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<outlinecolor=#FF0000>Hello</outlinecolor>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Outline color tag does not accept comma-separated values")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<outlinecolor=#FF0000,#0000FF>Hello</outlinecolor>");
+
+		// アウトライン色はグラデーション非対応のため、カンマ区切りの指定はタグごと無視される
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
 	SECTION("Named color value is not applied")
 	{
 		auto node = noco::Node::Create();

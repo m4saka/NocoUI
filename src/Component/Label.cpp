@@ -18,6 +18,7 @@ namespace noco
 		{
 			double sizeScale = 1.0;
 			Optional<detail::RichTextColor> color = none;
+			Optional<Color> outlineColor = none;
 		};
 
 		/// @brief リッチテキストのパース結果(タグ除去後のテキストと文字ごとの装飾情報)
@@ -107,6 +108,7 @@ namespace noco
 			// タグ種別ごとに独立したスタックを持つ(交差したタグも許容するため)
 			Array<double> sizeScaleStack;
 			Array<detail::RichTextColor> colorStack;
+			Array<Color> outlineColorStack;
 
 			// 現在のスタイルで1文字追加
 			const auto fnPushChar =
@@ -116,6 +118,7 @@ namespace noco
 					result.charStyles.push_back(RichTextCharStyle{
 						.sizeScale = sizeScaleStack.isEmpty() ? 1.0 : sizeScaleStack.back(),
 						.color = colorStack.isEmpty() ? Optional<detail::RichTextColor>{ none } : Optional<detail::RichTextColor>{ colorStack.back() },
+						.outlineColor = outlineColorStack.isEmpty() ? Optional<Color>{ none } : Optional<Color>{ outlineColorStack.back() },
 					});
 				};
 
@@ -224,6 +227,20 @@ namespace noco
 								// 3個以上の指定や不正な色はタグを無視
 							}
 						}
+						else if (name == U"outlinecolor")
+						{
+							if (isClosing)
+							{
+								if (!outlineColorStack.isEmpty())
+								{
+									outlineColorStack.pop_back();
+								}
+							}
+							else if (const auto colorOpt = ParseRichTextColor(value))
+							{
+								outlineColorStack.push_back(*colorOpt);
+							}
+						}
 						// 未知のタグは効果なしで読み飛ばす(表示もしない)
 
 						i = closePos + 1;
@@ -320,6 +337,11 @@ namespace noco
 			richTextParseResult = ParseRichText(text, fontSize);
 		}
 		const String& displayText = richTextEnabled ? richTextParseResult.text : text;
+		richTextHasOutlineColor = richTextParseResult.charStyles.any(
+			[](const RichTextCharStyle& style)
+			{
+				return style.outlineColor.has_value();
+			});
 
 		auto refreshCacheAndGetRegionSize = [&](double targetFontSize, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
 			{
@@ -451,6 +473,7 @@ namespace noco
 							.scale = charStyle.sizeScale,
 							.yOffset = 0.0,
 							.color = charStyle.color,
+							.outlineColor = charStyle.outlineColor,
 						});
 					}
 				}
@@ -643,11 +666,12 @@ namespace noco
 		const bool isSDF = m_cache.fontMethod == FontMethod::SDF;
 		const bool isMSDF = m_cache.fontMethod == FontMethod::MSDF;
 
+		// SDFアウトラインの色にはScopedColorMul2Dの色が自動では乗らないため乗算が必要
+		const ColorF colorMul{ Graphics2D::GetColorMul() };
+
 		TextStyle textStyle = TextStyle::Default();
 		if (isSDF || isMSDF)
 		{
-			// SDFアウトラインの色にはScopedColorMul2Dの色が自動では乗らないため乗算が必要
-			const ColorF colorMul{ Graphics2D::GetColorMul() };
 			if (hasOutline && hasShadow)
 			{
 				textStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, ColorF{ m_outlineColor.value() } *colorMul, m_shadowOffset.value(), ColorF{ m_shadowColor.value() } *colorMul);
@@ -661,6 +685,9 @@ namespace noco
 				textStyle = TextStyle::Shadow(m_shadowOffset.value(), ColorF{ m_shadowColor.value() } *colorMul);
 			}
 		}
+
+		// リッチテキストのタグによるアウトライン色変更を適用するのはアウトラインが有効な場合のみ
+		const bool hasTagOutlineColor = hasOutline && (isSDF || isMSDF) && m_cache.richTextHasOutlineColor;
 
 		const double autoShrinkWidthScale = (m_sizingMode.value() == LabelSizingMode::AutoShrinkWidth || m_sizingMode.value() == LabelSizingMode::AutoShrinkWidthResizeHeight)
 			? m_cache.effectiveAutoShrinkWidthScale
@@ -680,6 +707,9 @@ namespace noco
 					Graphics2D::SetMSDFParameters(textStyle);
 				}
 			}
+
+			// 現在適用中のアウトライン色(タグで色が変わる場合、変わり目でのみSDFパラメータを更新する)
+			ColorF appliedOutlineColor = ColorF{ m_outlineColor.value() } * colorMul;
 
 			const double horizontalGradationWidth = m_cache.regionSize.x <= 0.0 ? 1.0 : m_cache.regionSize.x;
 			const double gradientLeft = [&rect, horizontalAlign, horizontalGradationWidth]()
@@ -736,6 +766,32 @@ namespace noco
 						glyphStyle = lineCache.glyphStyles[glyphIndex];
 					}
 					const double drawScale = m_cache.assetFontSizeScale * glyphStyle.scale;
+
+					if (hasTagOutlineColor)
+					{
+						const ColorF glyphOutlineColor = ColorF{ glyphStyle.outlineColor.value_or(m_outlineColor.value()) } * colorMul;
+						if (glyphOutlineColor != appliedOutlineColor)
+						{
+							TextStyle glyphTextStyle = TextStyle::Default();
+							if (hasShadow)
+							{
+								glyphTextStyle = TextStyle::OutlineShadow(outlineFactorInner, outlineFactorOuter, glyphOutlineColor, m_shadowOffset.value(), ColorF{ m_shadowColor.value() } * colorMul);
+							}
+							else
+							{
+								glyphTextStyle = TextStyle::Outline(outlineFactorInner, outlineFactorOuter, glyphOutlineColor);
+							}
+							if (isSDF)
+							{
+								Graphics2D::SetSDFParameters(glyphTextStyle);
+							}
+							else
+							{
+								Graphics2D::SetMSDFParameters(glyphTextStyle);
+							}
+							appliedOutlineColor = glyphOutlineColor;
+						}
+					}
 
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
 					const Vec2 drawPos = pos + (glyph.getOffset(drawScale) + Vec2{ 0.0, glyphStyle.yOffset }) * Vec2{ autoShrinkWidthScale, 1.0 };

@@ -133,6 +133,7 @@ namespace noco
 				double scale = 1.0;
 				double yOffset = 0.0;
 				Optional<detail::RichTextColor> color = none;
+				Optional<Color> outlineColor = none;
 			};
 
 			struct LineCache
@@ -147,6 +148,7 @@ namespace noco
 			};
 
 			Array<LineCache> lineCaches;
+			bool richTextHasOutlineColor = false; // リッチテキストのタグでアウトライン色が指定されているか
 			double assetFontSizeScale = 1.0;
 			double lineHeight = 0.0;
 			SizeF regionSize = SizeF::Zero();
