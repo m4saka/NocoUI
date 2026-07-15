@@ -108,6 +108,17 @@ namespace noco
 			Array<double> sizeScaleStack;
 			Array<detail::RichTextColor> colorStack;
 
+			// 現在のスタイルで1文字追加
+			const auto fnPushChar =
+				[&](char32 ch)
+				{
+					result.text.push_back(ch);
+					result.charStyles.push_back(RichTextCharStyle{
+						.sizeScale = sizeScaleStack.isEmpty() ? 1.0 : sizeScaleStack.back(),
+						.color = colorStack.isEmpty() ? Optional<detail::RichTextColor>{ none } : Optional<detail::RichTextColor>{ colorStack.back() },
+					});
+				};
+
 			for (size_t i = 0; i < text.size();)
 			{
 				if (text[i] == U'<')
@@ -159,7 +170,15 @@ namespace noco
 							value = value.substr(1, value.size() - 2);
 						}
 
-						if (name == U"size")
+						if (name == U"lt" || name == U"gt")
+						{
+							// リテラルの'<'または'>'を出力する置換型エスケープ(閉じタグ形式は効果なし)
+							if (!isClosing)
+							{
+								fnPushChar(name == U"lt" ? U'<' : U'>');
+							}
+						}
+						else if (name == U"size")
 						{
 							if (isClosing)
 							{
@@ -212,15 +231,33 @@ namespace noco
 					}
 				}
 
-				result.text.push_back(text[i]);
-				result.charStyles.push_back(RichTextCharStyle{
-					.sizeScale = sizeScaleStack.isEmpty() ? 1.0 : sizeScaleStack.back(),
-					.color = colorStack.isEmpty() ? Optional<detail::RichTextColor>{ none } : Optional<detail::RichTextColor>{ colorStack.back() },
-				});
+				fnPushChar(text[i]);
 				++i;
 			}
 			return result;
 		}
+	}
+
+	String EscapeRichText(const StringView text)
+	{
+		String result;
+		result.reserve(text.size());
+		for (const char32 ch : text)
+		{
+			if (ch == U'<')
+			{
+				result += U"<lt>";
+			}
+			else if (ch == U'>')
+			{
+				result += U"<gt>";
+			}
+			else
+			{
+				result.push_back(ch);
+			}
+		}
+		return result;
 	}
 
 	bool Label::Cache::refreshIfDirty(const String& text, bool richTextEnabled, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)

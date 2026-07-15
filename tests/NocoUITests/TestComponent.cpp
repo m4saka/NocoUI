@@ -207,6 +207,46 @@ TEST_CASE("Label rich text", "[Component][Label]")
 		REQUIRE(richSize.y == Approx(plainSize.y));
 	}
 
+	SECTION("Lt/gt tags are drawn as literal characters")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"<b>");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<lt>b<gt>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("EscapeRichText escapes angle brackets")
+	{
+		REQUIRE(noco::EscapeRichText(U"a<b>c") == U"a<lt>b<gt>c");
+		REQUIRE(noco::EscapeRichText(U"no brackets") == U"no brackets");
+		REQUIRE(noco::EscapeRichText(U"") == U"");
+	}
+
+	SECTION("Escaped text is not parsed as tags")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"<size=48>x");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(noco::EscapeRichText(U"<size=48>x"));
+
+		// エスケープ済みの文字列はタグとして解釈されず、そのまま表示される
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
 	SECTION("Named color value is not applied")
 	{
 		auto node = noco::Node::Create();

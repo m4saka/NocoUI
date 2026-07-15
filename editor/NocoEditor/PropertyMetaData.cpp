@@ -560,7 +560,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"richTextEnabled" }] = PropertyMetadata{
 			.tooltip = U"リッチテキストを有効にするか",
-			.tooltipDetail = U"有効にすると、テキスト内のタグで装飾を指定できます\n<size=数値>～</size>: フォントサイズをピクセル数で変更します\n<size=数値%>～</size>: フォントサイズを割合で変更します\n<color=#RRGGBB>～</color>: 色を変更します(#RRGGBBAA形式も使用可能)\n<color=#RRGGBB,#RRGGBB>～</color>: 上下グラデーションで色を変更します\n※閉じタグの省略や不明なタグはエラーにならず、不明なタグは表示されません",
+			.tooltipDetail = U"有効にすると、テキスト内のタグで装飾を指定できます\n<size=数値>～</size>: フォントサイズをピクセル数で変更します\n<size=数値%>～</size>: フォントサイズを割合で変更します\n<color=#RRGGBB>～</color>: 色を変更します(#RRGGBBAA形式も使用可能)\n<color=#RRGGBB,#RRGGBB>～</color>: 上下グラデーションで色を変更します\n<lt>: 文字「<」を表示します\n<gt>: 文字「>」を表示します\n※閉じタグの省略や不明なタグはエラーにならず、不明なタグは表示されません",
 		};
 		metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
