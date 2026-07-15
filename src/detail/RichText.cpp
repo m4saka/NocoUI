@@ -51,6 +51,35 @@ namespace noco::detail
 			return Color{ static_cast<uint8>((parsed >> 24) & 0xFF), static_cast<uint8>((parsed >> 16) & 0xFF), static_cast<uint8>((parsed >> 8) & 0xFF), static_cast<uint8>(parsed & 0xFF) };
 		}
 
+		/// @brief 数値文字列(数字、小数点のみ)かどうか
+		/// @remark 指数表記(1e3など)は受け付けない
+		[[nodiscard]]
+		bool IsStrictNumber(StringView s)
+		{
+			bool hasDigit = false;
+			bool hasDot = false;
+			for (const char32 ch : s)
+			{
+				if (U'0' <= ch && ch <= U'9')
+				{
+					hasDigit = true;
+				}
+				else if (ch == U'.')
+				{
+					if (hasDot)
+					{
+						return false;
+					}
+					hasDot = true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return hasDigit;
+		}
+
 		/// @brief sizeタグの値をパースしてスケール値を返す(数値はピクセル指定、%付きは割合指定。解釈できない場合はnone)
 		[[nodiscard]]
 		Optional<double> ParseRichTextSizeScale(const String& value, double baseFontSize)
@@ -59,22 +88,26 @@ namespace noco::detail
 			{
 				return none;
 			}
-			if (value.ends_with(U'%'))
+
+			const bool isPercent = value.ends_with(U'%');
+			const StringView numberPart = StringView{ value }.substr(0, isPercent ? value.size() - 1 : value.size());
+
+			// 数値以外の文字を含む値は不正
+			if (!IsStrictNumber(numberPart))
 			{
-				// ParseOptは"inf"等も数値として受理するため有限値のみ許容する
-				const auto percentOpt = ParseOpt<double>(value.substr(0, value.size() - 1));
-				if (percentOpt && std::isfinite(*percentOpt) && *percentOpt > 0.0)
-				{
-					return *percentOpt / 100.0;
-				}
 				return none;
 			}
-			const auto sizeOpt = ParseOpt<double>(value);
-			if (sizeOpt && std::isfinite(*sizeOpt) && *sizeOpt > 0.0)
+
+			const auto parsedOpt = ParseOpt<double>(numberPart);
+			if (!parsedOpt || !std::isfinite(*parsedOpt) || *parsedOpt <= 0.0)
 			{
-				return *sizeOpt / baseFontSize;
+				return none;
 			}
-			return none;
+			if (isPercent)
+			{
+				return *parsedOpt / 100.0;
+			}
+			return *parsedOpt / baseFontSize;
 		}
 	}
 
@@ -131,7 +164,7 @@ namespace noco::detail
 						tagContent = tagContent.substr(1);
 					}
 
-					// '='で名前と値に分割
+					// タグ名と値に分割
 					String name;
 					String value;
 					if (const size_t eqPos = tagContent.indexOf(U'='); eqPos != String::npos)
@@ -142,14 +175,6 @@ namespace noco::detail
 					else
 					{
 						name = tagContent;
-					}
-					name = name.trimmed().lowercased();
-					value = value.trimmed();
-
-					// 引用符で囲まれた値を許容
-					if (value.size() >= 2 && value.starts_with(U'"') && value.ends_with(U'"'))
-					{
-						value = value.substr(1, value.size() - 2);
 					}
 
 					if (name == U"lt" || name == U"gt")
@@ -189,15 +214,15 @@ namespace noco::detail
 							const Array<String> colorValues = value.split(U',');
 							if (colorValues.size() == 1)
 							{
-								if (const auto colorOpt = ParseRichTextColor(colorValues[0].trimmed()))
+								if (const auto colorOpt = ParseRichTextColor(colorValues[0]))
 								{
 									colorStack.push_back(RichTextColor{ .color1 = *colorOpt });
 								}
 							}
 							else if (colorValues.size() == 2)
 							{
-								const auto color1Opt = ParseRichTextColor(colorValues[0].trimmed());
-								const auto color2Opt = ParseRichTextColor(colorValues[1].trimmed());
+								const auto color1Opt = ParseRichTextColor(colorValues[0]);
+								const auto color2Opt = ParseRichTextColor(colorValues[1]);
 								if (color1Opt && color2Opt)
 								{
 									colorStack.push_back(RichTextColor{ .color1 = *color1Opt, .color2 = *color2Opt });

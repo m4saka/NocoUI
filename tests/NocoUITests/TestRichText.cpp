@@ -207,6 +207,60 @@ TEST_CASE("ParseRichText", "[RichText]")
 		REQUIRE(!result.charStyles[0].color.has_value());
 	}
 
+	SECTION("Strict tag syntax")
+	{
+		// タグ名や値の空白文字は許容せず未知タグとして除去
+		const auto spaced = noco::detail::ParseRichText(U"< size = 48 >A", 24.0);
+		REQUIRE(spaced.text == U"A");
+		REQUIRE(spaced.charStyles[0].sizeScale == 1.0);
+
+		// タグ名は小文字のみ有効
+		const auto upper = noco::detail::ParseRichText(U"<SIZE=48>A", 24.0);
+		REQUIRE(upper.text == U"A");
+		REQUIRE(upper.charStyles[0].sizeScale == 1.0);
+
+		// 引用符で囲まれた値は許容しない
+		const auto quoted = noco::detail::ParseRichText(U"<color=\"#FF0000\">A", 24.0);
+		REQUIRE(quoted.text == U"A");
+		REQUIRE(!quoted.charStyles[0].color.has_value());
+
+		// 色コードのカンマ区切りの空白も許容しない
+		const auto spacedGradation = noco::detail::ParseRichText(U"<color=#FF0000, #0000FF>A", 24.0);
+		REQUIRE(spacedGradation.text == U"A");
+		REQUIRE(!spacedGradation.charStyles[0].color.has_value());
+
+		// サイズの値の先頭の空白も許容しない
+		const auto spacedSize = noco::detail::ParseRichText(U"<size= 48>A", 24.0);
+		REQUIRE(spacedSize.text == U"A");
+		REQUIRE(spacedSize.charStyles[0].sizeScale == 1.0);
+
+		const auto spacedPercent = noco::detail::ParseRichText(U"<size= 200%>A", 24.0);
+		REQUIRE(spacedPercent.text == U"A");
+		REQUIRE(spacedPercent.charStyles[0].sizeScale == 1.0);
+
+		// サイズの値は余分なsuffix等を受け付けない
+		const auto trailingGarbage = noco::detail::ParseRichText(U"<size=48px>A", 24.0);
+		REQUIRE(trailingGarbage.text == U"A");
+		REQUIRE(trailingGarbage.charStyles[0].sizeScale == 1.0);
+
+		const auto trailingSpace = noco::detail::ParseRichText(U"<size=48 >A", 24.0);
+		REQUIRE(trailingSpace.text == U"A");
+		REQUIRE(trailingSpace.charStyles[0].sizeScale == 1.0);
+
+		const auto exponent = noco::detail::ParseRichText(U"<size=1e2>A", 24.0);
+		REQUIRE(exponent.text == U"A");
+		REQUIRE(exponent.charStyles[0].sizeScale == 1.0);
+
+		const auto plusSign = noco::detail::ParseRichText(U"<size=+48>A", 24.0);
+		REQUIRE(plusSign.text == U"A");
+		REQUIRE(plusSign.charStyles[0].sizeScale == 1.0);
+
+		// 小数はそのまま有効
+		const auto decimal = noco::detail::ParseRichText(U"<size=12.5>A", 24.0);
+		REQUIRE(decimal.text == U"A");
+		REQUIRE(decimal.charStyles[0].sizeScale == Approx(12.5 / 24.0));
+	}
+
 	SECTION("Lone angle bracket is kept as literal")
 	{
 		const auto result = noco::detail::ParseRichText(U"a < b", 24.0);
