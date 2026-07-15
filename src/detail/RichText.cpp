@@ -5,9 +5,6 @@ namespace noco::detail
 {
 	namespace
 	{
-		// リッチテキストのタグ長上限('<'の次の文字から'>'までの文字数)
-		constexpr size_t MaxRichTextTagLength = 64;
-
 		/// @brief colorタグの値をパース(#RRGGBBまたは#RRGGBBAAのみ対応。解釈できない場合はnone)
 		[[nodiscard]]
 		Optional<Color> ParseRichTextColor(const String& value)
@@ -138,118 +135,105 @@ namespace noco::detail
 		{
 			if (text[i] == U'<')
 			{
-				// 上限文字数以内に'>'があればタグとして解釈(見つからなければ'<'を通常文字として扱う)
-				size_t closePos = 0;
-				bool hasClose = false;
-				const size_t searchEnd = Min(text.size(), i + 1 + MaxRichTextTagLength + 1);
-				for (size_t j = i + 1; j < searchEnd; ++j)
+				const size_t closePos = text.indexOf(U'>', i + 1);
+				if (closePos == String::npos)
 				{
-					if (text[j] == U'>')
+					// '>'で閉じられていない'<'以降は不正なタグとして除去
+					break;
+				}
+
+				String tagContent = text.substr(i + 1, closePos - i - 1);
+				const bool isClosing = tagContent.starts_with(U'/');
+				if (isClosing)
+				{
+					tagContent = tagContent.substr(1);
+				}
+
+				// タグ名と値に分割
+				String name;
+				String value;
+				if (const size_t eqPos = tagContent.indexOf(U'='); eqPos != String::npos)
+				{
+					name = tagContent.substr(0, eqPos);
+					value = tagContent.substr(eqPos + 1);
+				}
+				else
+				{
+					name = tagContent;
+				}
+
+				if (name == U"lt" || name == U"gt")
+				{
+					// リテラルの'<'または'>'を出力する置換型エスケープ(閉じタグ形式は効果なし)
+					if (!isClosing)
 					{
-						closePos = j;
-						hasClose = true;
-						break;
-					}
-					if (text[j] == U'<')
-					{
-						break;
+						fnPushChar(name == U"lt" ? U'<' : U'>');
 					}
 				}
-				if (hasClose)
+				else if (name == U"size")
 				{
-					String tagContent = text.substr(i + 1, closePos - i - 1);
-					const bool isClosing = tagContent.starts_with(U'/');
 					if (isClosing)
 					{
-						tagContent = tagContent.substr(1);
+						if (!sizeScaleStack.isEmpty())
+						{
+							sizeScaleStack.pop_back();
+						}
 					}
-
-					// タグ名と値に分割
-					String name;
-					String value;
-					if (const size_t eqPos = tagContent.indexOf(U'='); eqPos != String::npos)
+					else if (const auto scaleOpt = ParseRichTextSizeScale(value, baseFontSize))
 					{
-						name = tagContent.substr(0, eqPos);
-						value = tagContent.substr(eqPos + 1);
+						sizeScaleStack.push_back(*scaleOpt);
+					}
+				}
+				else if (name == U"color")
+				{
+					if (isClosing)
+					{
+						if (!colorStack.isEmpty())
+						{
+							colorStack.pop_back();
+						}
 					}
 					else
 					{
-						name = tagContent;
-					}
-
-					if (name == U"lt" || name == U"gt")
-					{
-						// リテラルの'<'または'>'を出力する置換型エスケープ(閉じタグ形式は効果なし)
-						if (!isClosing)
+						// カンマ区切りで2色指定した場合は上下グラデーション
+						const Array<String> colorValues = value.split(U',');
+						if (colorValues.size() == 1)
 						{
-							fnPushChar(name == U"lt" ? U'<' : U'>');
-						}
-					}
-					else if (name == U"size")
-					{
-						if (isClosing)
-						{
-							if (!sizeScaleStack.isEmpty())
+							if (const auto colorOpt = ParseRichTextColor(colorValues[0]))
 							{
-								sizeScaleStack.pop_back();
+								colorStack.push_back(RichTextColor{ .color1 = *colorOpt });
 							}
 						}
-						else if (const auto scaleOpt = ParseRichTextSizeScale(value, baseFontSize))
+						else if (colorValues.size() == 2)
 						{
-							sizeScaleStack.push_back(*scaleOpt);
+							const auto color1Opt = ParseRichTextColor(colorValues[0]);
+							const auto color2Opt = ParseRichTextColor(colorValues[1]);
+							if (color1Opt && color2Opt)
+							{
+								colorStack.push_back(RichTextColor{ .color1 = *color1Opt, .color2 = *color2Opt });
+							}
 						}
+						// 3個以上の指定や不正な色はタグを無視
 					}
-					else if (name == U"color")
-					{
-						if (isClosing)
-						{
-							if (!colorStack.isEmpty())
-							{
-								colorStack.pop_back();
-							}
-						}
-						else
-						{
-							// カンマ区切りで2色指定した場合は上下グラデーション
-							const Array<String> colorValues = value.split(U',');
-							if (colorValues.size() == 1)
-							{
-								if (const auto colorOpt = ParseRichTextColor(colorValues[0]))
-								{
-									colorStack.push_back(RichTextColor{ .color1 = *colorOpt });
-								}
-							}
-							else if (colorValues.size() == 2)
-							{
-								const auto color1Opt = ParseRichTextColor(colorValues[0]);
-								const auto color2Opt = ParseRichTextColor(colorValues[1]);
-								if (color1Opt && color2Opt)
-								{
-									colorStack.push_back(RichTextColor{ .color1 = *color1Opt, .color2 = *color2Opt });
-								}
-							}
-							// 3個以上の指定や不正な色はタグを無視
-						}
-					}
-					else if (name == U"outlinecolor")
-					{
-						if (isClosing)
-						{
-							if (!outlineColorStack.isEmpty())
-							{
-								outlineColorStack.pop_back();
-							}
-						}
-						else if (const auto colorOpt = ParseRichTextColor(value))
-						{
-							outlineColorStack.push_back(*colorOpt);
-						}
-					}
-					// 未知のタグは効果なしで読み飛ばす(表示もしない)
-
-					i = closePos + 1;
-					continue;
 				}
+				else if (name == U"outlinecolor")
+				{
+					if (isClosing)
+					{
+						if (!outlineColorStack.isEmpty())
+						{
+							outlineColorStack.pop_back();
+						}
+					}
+					else if (const auto colorOpt = ParseRichTextColor(value))
+					{
+						outlineColorStack.push_back(*colorOpt);
+					}
+				}
+				// 未知のタグは無視して読み飛ばす(表示もしない)
+
+				i = closePos + 1;
+				continue;
 			}
 
 			fnPushChar(text[i]);

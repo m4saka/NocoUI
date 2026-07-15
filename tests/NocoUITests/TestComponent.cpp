@@ -122,16 +122,17 @@ TEST_CASE("Label rich text", "[Component][Label]")
 		REQUIRE(richSize.y == Approx(plainSize.y));
 	}
 
-	SECTION("Lone angle bracket is drawn as plain text")
+	SECTION("Unterminated tag hides rest of text")
 	{
 		auto node = noco::Node::Create();
 		auto plainLabel = node->emplaceComponent<noco::Label>();
-		plainLabel->setText(U"a < b");
+		plainLabel->setText(U"a ");
 
 		auto richLabel = node->emplaceComponent<noco::Label>();
 		richLabel->setRichTextEnabled(true);
 		richLabel->setText(U"a < b");
 
+		// '>'で閉じられていない'<'以降は表示されない
 		const SizeF plainSize = plainLabel->getContentSize();
 		const SizeF richSize = richLabel->getContentSize();
 		REQUIRE(richSize.x == Approx(plainSize.x));

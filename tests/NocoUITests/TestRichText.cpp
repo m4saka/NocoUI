@@ -261,10 +261,22 @@ TEST_CASE("ParseRichText", "[RichText]")
 		REQUIRE(decimal.charStyles[0].sizeScale == Approx(12.5 / 24.0));
 	}
 
-	SECTION("Lone angle bracket is kept as literal")
+	SECTION("Unterminated tag removes rest of text")
 	{
-		const auto result = noco::detail::ParseRichText(U"a < b", 24.0);
-		REQUIRE(result.text == U"a < b");
+		const auto result = noco::detail::ParseRichText(U"AB<color", 24.0);
+		REQUIRE(result.text == U"AB");
+
+		const auto loneBracket = noco::detail::ParseRichText(U"a < b", 24.0);
+		REQUIRE(loneBracket.text == U"a ");
+	}
+
+	SECTION("Angle bracket inside tag is consumed as part of the tag")
+	{
+		// タグ内にさらに'<'があった場合も'>'までを1つの不正タグとして除去
+		const auto result = noco::detail::ParseRichText(U"a<b<size=48>c", 24.0);
+		REQUIRE(result.text == U"ac");
+		REQUIRE(result.charStyles[0].sizeScale == 1.0);
+		REQUIRE(result.charStyles[1].sizeScale == 1.0);
 	}
 
 	SECTION("Newline keeps styles aligned with text")
