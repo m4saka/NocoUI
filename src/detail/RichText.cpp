@@ -152,10 +152,12 @@ namespace noco::detail
 				// タグ名と値に分割
 				String name;
 				String value;
+				bool hasValue = false;
 				if (const size_t eqPos = tagContent.indexOf(U'='); eqPos != String::npos)
 				{
 					name = tagContent.substr(0, eqPos);
 					value = tagContent.substr(eqPos + 1);
+					hasValue = true;
 				}
 				else
 				{
@@ -165,7 +167,7 @@ namespace noco::detail
 				if (name == U"lt" || name == U"gt")
 				{
 					// リテラルの'<'または'>'を出力する置換型エスケープ(閉じタグ形式は効果なし)
-					if (!isClosing)
+					if (!isClosing && !hasValue)
 					{
 						fnPushChar(name == U"lt" ? U'<' : U'>');
 					}
@@ -174,7 +176,7 @@ namespace noco::detail
 				{
 					if (isClosing)
 					{
-						if (!sizeScaleStack.isEmpty())
+						if (!hasValue && !sizeScaleStack.isEmpty())
 						{
 							sizeScaleStack.pop_back();
 						}
@@ -188,7 +190,7 @@ namespace noco::detail
 				{
 					if (isClosing)
 					{
-						if (!colorStack.isEmpty())
+						if (!hasValue && !colorStack.isEmpty())
 						{
 							colorStack.pop_back();
 						}
@@ -220,7 +222,7 @@ namespace noco::detail
 				{
 					if (isClosing)
 					{
-						if (!outlineColorStack.isEmpty())
+						if (!hasValue && !outlineColorStack.isEmpty())
 						{
 							outlineColorStack.pop_back();
 						}

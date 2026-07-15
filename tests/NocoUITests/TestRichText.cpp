@@ -184,6 +184,47 @@ TEST_CASE("ParseRichText", "[RichText]")
 		REQUIRE(!result.charStyles[0].color.has_value());
 	}
 
+	SECTION("Value-less tags do not accept values")
+	{
+		// 値付きのlt/gtは不正タグとして除去され、文字は出力されない
+		const auto ltWithValue = noco::detail::ParseRichText(U"A<lt=invalid>B", 24.0);
+		REQUIRE(ltWithValue.text == U"AB");
+
+		const auto gtWithValue = noco::detail::ParseRichText(U"A<gt=invalid>B", 24.0);
+		REQUIRE(gtWithValue.text == U"AB");
+	}
+
+	SECTION("Malformed close tags do not change styles")
+	{
+		// 値付きの閉じタグは不正タグとして無視され、popは行われない
+		const auto color = noco::detail::ParseRichText(U"<color=#FF0000>A</color=invalid>B</color>C", 24.0);
+		REQUIRE(color.text == U"ABC");
+		REQUIRE(color.charStyles[0].color.has_value());
+		REQUIRE(color.charStyles[1].color.has_value());
+		REQUIRE(!color.charStyles[2].color.has_value());
+
+		const auto size = noco::detail::ParseRichText(U"<size=200%>A</size=invalid>B</size>C", 24.0);
+		REQUIRE(size.text == U"ABC");
+		REQUIRE(size.charStyles[0].sizeScale == Approx(2.0));
+		REQUIRE(size.charStyles[1].sizeScale == Approx(2.0));
+		REQUIRE(size.charStyles[2].sizeScale == 1.0);
+
+		const auto outline = noco::detail::ParseRichText(U"<outlinecolor=#00FF00>A</outlinecolor=invalid>B", 24.0);
+		REQUIRE(outline.text == U"AB");
+		REQUIRE(outline.charStyles[0].outlineColor.has_value());
+		REQUIRE(outline.charStyles[1].outlineColor.has_value());
+	}
+
+	SECTION("Invalid open tag does not consume close tag")
+	{
+		// 不正な開始タグは存在しなかったものとして扱われ、次の閉じタグは外側の有効なタグを閉じる
+		const auto result = noco::detail::ParseRichText(U"<color=#FF0000>A<color=invalid>B</color>C</color>", 24.0);
+		REQUIRE(result.text == U"ABC");
+		REQUIRE(result.charStyles[0].color.has_value());
+		REQUIRE(result.charStyles[1].color.has_value());
+		REQUIRE(!result.charStyles[2].color.has_value());
+	}
+
 	SECTION("Crossed tags are tolerated")
 	{
 		// タグ種別ごとに独立したスタックのため、交差した閉じ順でも各範囲が正しく適用される
