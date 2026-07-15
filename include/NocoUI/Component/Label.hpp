@@ -29,10 +29,28 @@ namespace noco
 		LeftRight,
 	};
 
+	namespace detail
+	{
+		/// @brief リッチテキストのcolorタグの色指定(単色または上下グラデーション)
+		struct RichTextColor
+		{
+			Color color1;
+			Optional<Color> color2 = none; // 2色指定時の下端色(上下グラデーション)
+
+			/// @brief 上下グラデーション指定かどうか
+			[[nodiscard]]
+			bool isGradation() const
+			{
+				return color2.has_value();
+			}
+		};
+	}
+
 	class Label : public SerializableComponentBase, public detail::IFontCachedComponent, public std::enable_shared_from_this<Label>
 	{
 	private:
 		Property<String> m_text;
+		Property<bool> m_richTextEnabled;
 		Property<String> m_fontAssetName;
 		SmoothProperty<double> m_fontSize;
 		Property<LabelGradationType> m_gradationType;
@@ -61,6 +79,7 @@ namespace noco
 		struct CacheParams
 		{
 			String text;
+			bool richTextEnabled;
 			String fontAssetName;
 			double fontSize;
 			double minFontSize;
@@ -75,6 +94,7 @@ namespace noco
 			[[nodiscard]]
 			bool isDirty(
 				const String& newText,
+				bool newRichTextEnabled,
 				const String& newFontAssetName,
 				double newFontSize,
 				double newMinFontSize,
@@ -87,6 +107,7 @@ namespace noco
 				LabelSizingMode newSizingMode) const
 			{
 				return text != newText
+					|| richTextEnabled != newRichTextEnabled
 					|| fontAssetName != newFontAssetName
 					|| fontSize != newFontSize
 					|| minFontSize != newMinFontSize
@@ -102,11 +123,21 @@ namespace noco
 
 		struct Cache
 		{
+			/// @brief リッチテキスト有効時のグリフごとの装飾情報
+			struct GlyphStyle
+			{
+				double scale = 1.0;
+				double yOffset = 0.0;
+				Optional<detail::RichTextColor> color = none;
+			};
+
 			struct LineCache
 			{
 				Array<Glyph> glyphs;
+				Array<GlyphStyle> glyphStyles; // リッチテキスト有効時のみ使用(glyphsと同じ要素数)
 				double width = 0.0;
 				double offsetY = 0.0;
+				double height = 0.0;
 				double minTopT = 0.0;
 				double maxBottomT = 1.0;
 			};
@@ -128,7 +159,7 @@ namespace noco
 
 			Cache() = default;
 
-			bool refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
+			bool refreshIfDirty(const String& text, bool richTextEnabled, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode);
 		};
 
 		/* NonSerialized */ mutable Cache m_cache;
@@ -158,8 +189,9 @@ namespace noco
 			const PropertyValue<Color>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
 			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_fontAssetName, &m_fontSize, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
+			: SerializableComponentBase{ U"Label", { &m_text, &m_richTextEnabled, &m_fontAssetName, &m_fontSize, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
 			, m_text{ U"text", text }
+			, m_richTextEnabled{ U"richTextEnabled", false }
 			, m_fontAssetName{ U"fontAssetName", fontAssetName }
 			, m_fontSize{ U"fontSize", fontSize }
 			, m_gradationType{ U"gradationType", LabelGradationType::None }
@@ -198,6 +230,18 @@ namespace noco
 		std::shared_ptr<Label> setText(const PropertyValue<String>& text)
 		{
 			m_text.setPropertyValue(text);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<bool>& richTextEnabled() const
+		{
+			return m_richTextEnabled.propertyValue();
+		}
+
+		std::shared_ptr<Label> setRichTextEnabled(const PropertyValue<bool>& richTextEnabled)
+		{
+			m_richTextEnabled.setPropertyValue(richTextEnabled);
 			return shared_from_this();
 		}
 

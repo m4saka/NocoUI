@@ -45,9 +45,199 @@ TEST_CASE("Label component", "[Component][Label]")
 	{
 		auto node = noco::Node::Create();
 		auto label = node->emplaceComponent<noco::Label>();
-		
+
 		label->setText(U"Hello, World!");
 		REQUIRE(label->text().defaultValue() == U"Hello, World!");
+	}
+}
+
+// Labelのリッチテキストのテスト
+TEST_CASE("Label rich text", "[Component][Label]")
+{
+	SECTION("Disabled by default")
+	{
+		auto node = noco::Node::Create();
+		auto label = node->emplaceComponent<noco::Label>();
+
+		REQUIRE(label->richTextEnabled().defaultValue() == false);
+	}
+
+	SECTION("Tags are excluded from content size when enabled")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<color=#FF0000>Hello</color>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Tags are drawn as plain text when disabled")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto taggedLabel = node->emplaceComponent<noco::Label>();
+		taggedLabel->setText(U"<color=#FF0000>Hello</color>");
+
+		REQUIRE(taggedLabel->getContentSize().x > plainLabel->getContentSize().x);
+	}
+
+	SECTION("Unknown tags are hidden")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<unknown>Hello</unknown>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Unclosed tags are tolerated")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<color=red>Hello");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Lone angle bracket is drawn as plain text")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"a < b");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"a < b");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Size tag scales content size")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+		plainLabel->setFontSize(24.0);
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<size=48>Hello</size>");
+		richLabel->setFontSize(24.0);
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x * 2.0));
+		REQUIRE(richSize.y == Approx(plainSize.y * 2.0));
+	}
+
+	SECTION("Percent size tag scales content size")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+		plainLabel->setFontSize(24.0);
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<size=200%>Hello</size>");
+		richLabel->setFontSize(24.0);
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x * 2.0));
+		REQUIRE(richSize.y == Approx(plainSize.y * 2.0));
+	}
+
+	SECTION("Gradient color tag is excluded from content size")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<color=#FF0000,#0000FF>Hello</color>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Invalid gradient color value is tolerated")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<color=#FF0000,#0000FF,#00FF00>Hello</color>");
+
+		// 3色以上の指定はタグを無視し、テキストのみ表示される
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Named color value is not applied")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<color=red>Hello</color>");
+
+		// タグ自体は消費され、テキストのみ表示される
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
+	}
+
+	SECTION("Invalid size tag value is ignored")
+	{
+		auto node = noco::Node::Create();
+		auto plainLabel = node->emplaceComponent<noco::Label>();
+		plainLabel->setText(U"Hello");
+
+		auto richLabel = node->emplaceComponent<noco::Label>();
+		richLabel->setRichTextEnabled(true);
+		richLabel->setText(U"<size=abc>Hello</size>");
+
+		const SizeF plainSize = plainLabel->getContentSize();
+		const SizeF richSize = richLabel->getContentSize();
+		REQUIRE(richSize.x == Approx(plainSize.x));
+		REQUIRE(richSize.y == Approx(plainSize.y));
 	}
 }
 

@@ -1,4 +1,5 @@
-﻿#include "NocoUI/Component/Label.hpp"
+﻿#include <cmath>
+#include "NocoUI/Component/Label.hpp"
 #include "NocoUI/Node.hpp"
 #include "NocoUI/Canvas.hpp"
 #include "NocoUI/DefaultFont.hpp"
@@ -8,9 +9,221 @@ namespace noco
 	namespace
 	{
 		static const String EmptyString = U"";
+
+		// リッチテキストのタグ長上限('<'の次の文字から'>'までの文字数)
+		constexpr size_t MaxRichTextTagLength = 64;
+
+		/// @brief リッチテキストの1文字分の装飾情報
+		struct RichTextCharStyle
+		{
+			double sizeScale = 1.0;
+			Optional<detail::RichTextColor> color = none;
+		};
+
+		/// @brief リッチテキストのパース結果(タグ除去後のテキストと文字ごとの装飾情報)
+		struct RichTextParseResult
+		{
+			String text;
+			Array<RichTextCharStyle> charStyles;
+		};
+
+		/// @brief colorタグの値をパース(#RRGGBBまたは#RRGGBBAAのみ対応。解釈できない場合はnone)
+		[[nodiscard]]
+		Optional<Color> ParseRichTextColor(const String& value)
+		{
+			if (!value.starts_with(U'#'))
+			{
+				return none;
+			}
+			const size_t hexLength = value.size() - 1;
+			if (hexLength != 6 && hexLength != 8)
+			{
+				return none;
+			}
+			uint32 parsed = 0;
+			for (size_t i = 1; i < value.size(); ++i)
+			{
+				const char32 ch = value[i];
+				uint32 digit;
+				if (U'0' <= ch && ch <= U'9')
+				{
+					digit = ch - U'0';
+				}
+				else if (U'a' <= ch && ch <= U'f')
+				{
+					digit = ch - U'a' + 10;
+				}
+				else if (U'A' <= ch && ch <= U'F')
+				{
+					digit = ch - U'A' + 10;
+				}
+				else
+				{
+					return none;
+				}
+				parsed = parsed * 16 + digit;
+			}
+			if (hexLength == 6)
+			{
+				return Color{ static_cast<uint8>((parsed >> 16) & 0xFF), static_cast<uint8>((parsed >> 8) & 0xFF), static_cast<uint8>(parsed & 0xFF) };
+			}
+			return Color{ static_cast<uint8>((parsed >> 24) & 0xFF), static_cast<uint8>((parsed >> 16) & 0xFF), static_cast<uint8>((parsed >> 8) & 0xFF), static_cast<uint8>(parsed & 0xFF) };
+		}
+
+		/// @brief sizeタグの値をパースしてスケール値を返す(数値はピクセル指定、%付きは割合指定。解釈できない場合はnone)
+		[[nodiscard]]
+		Optional<double> ParseRichTextSizeScale(const String& value, double baseFontSize)
+		{
+			if (baseFontSize <= 0.0)
+			{
+				return none;
+			}
+			if (value.ends_with(U'%'))
+			{
+				// ParseOptは"inf"等も数値として受理するため有限値のみ許容する
+				const auto percentOpt = ParseOpt<double>(value.substr(0, value.size() - 1));
+				if (percentOpt && std::isfinite(*percentOpt) && *percentOpt > 0.0)
+				{
+					return *percentOpt / 100.0;
+				}
+				return none;
+			}
+			const auto sizeOpt = ParseOpt<double>(value);
+			if (sizeOpt && std::isfinite(*sizeOpt) && *sizeOpt > 0.0)
+			{
+				return *sizeOpt / baseFontSize;
+			}
+			return none;
+		}
+
+		/// @brief リッチテキストをパースしてタグ除去後のテキストと文字ごとの装飾情報を返す(不正なタグは黙って無視する)
+		[[nodiscard]]
+		RichTextParseResult ParseRichText(const String& text, double baseFontSize)
+		{
+			RichTextParseResult result;
+			result.text.reserve(text.size());
+			result.charStyles.reserve(text.size());
+
+			// タグ種別ごとに独立したスタックを持つ(交差したタグも許容するため)
+			Array<double> sizeScaleStack;
+			Array<detail::RichTextColor> colorStack;
+
+			for (size_t i = 0; i < text.size();)
+			{
+				if (text[i] == U'<')
+				{
+					// 上限文字数以内に'>'があればタグとして解釈(見つからなければ'<'を通常文字として扱う)
+					size_t closePos = 0;
+					bool hasClose = false;
+					const size_t searchEnd = Min(text.size(), i + 1 + MaxRichTextTagLength + 1);
+					for (size_t j = i + 1; j < searchEnd; ++j)
+					{
+						if (text[j] == U'>')
+						{
+							closePos = j;
+							hasClose = true;
+							break;
+						}
+						if (text[j] == U'<')
+						{
+							break;
+						}
+					}
+					if (hasClose)
+					{
+						String tagContent = text.substr(i + 1, closePos - i - 1);
+						const bool isClosing = tagContent.starts_with(U'/');
+						if (isClosing)
+						{
+							tagContent = tagContent.substr(1);
+						}
+
+						// '='で名前と値に分割
+						String name;
+						String value;
+						if (const size_t eqPos = tagContent.indexOf(U'='); eqPos != String::npos)
+						{
+							name = tagContent.substr(0, eqPos);
+							value = tagContent.substr(eqPos + 1);
+						}
+						else
+						{
+							name = tagContent;
+						}
+						name = name.trimmed().lowercased();
+						value = value.trimmed();
+
+						// 引用符で囲まれた値を許容
+						if (value.size() >= 2 && value.starts_with(U'"') && value.ends_with(U'"'))
+						{
+							value = value.substr(1, value.size() - 2);
+						}
+
+						if (name == U"size")
+						{
+							if (isClosing)
+							{
+								if (!sizeScaleStack.isEmpty())
+								{
+									sizeScaleStack.pop_back();
+								}
+							}
+							else if (const auto scaleOpt = ParseRichTextSizeScale(value, baseFontSize))
+							{
+								sizeScaleStack.push_back(*scaleOpt);
+							}
+						}
+						else if (name == U"color")
+						{
+							if (isClosing)
+							{
+								if (!colorStack.isEmpty())
+								{
+									colorStack.pop_back();
+								}
+							}
+							else
+							{
+								// カンマ区切りで2色指定した場合は上下グラデーション
+								const Array<String> colorValues = value.split(U',');
+								if (colorValues.size() == 1)
+								{
+									if (const auto colorOpt = ParseRichTextColor(colorValues[0].trimmed()))
+									{
+										colorStack.push_back(detail::RichTextColor{ .color1 = *colorOpt });
+									}
+								}
+								else if (colorValues.size() == 2)
+								{
+									const auto color1Opt = ParseRichTextColor(colorValues[0].trimmed());
+									const auto color2Opt = ParseRichTextColor(colorValues[1].trimmed());
+									if (color1Opt && color2Opt)
+									{
+										colorStack.push_back(detail::RichTextColor{ .color1 = *color1Opt, .color2 = *color2Opt });
+									}
+								}
+								// 3個以上の指定や不正な色はタグを無視
+							}
+						}
+						// 未知のタグは効果なしで読み飛ばす(表示もしない)
+
+						i = closePos + 1;
+						continue;
+					}
+				}
+
+				result.text.push_back(text[i]);
+				result.charStyles.push_back(RichTextCharStyle{
+					.sizeScale = sizeScaleStack.isEmpty() ? 1.0 : sizeScaleStack.back(),
+					.color = colorStack.isEmpty() ? Optional<detail::RichTextColor>{ none } : Optional<detail::RichTextColor>{ colorStack.back() },
+				});
+				++i;
+			}
+			return result;
+		}
 	}
 
-	bool Label::Cache::refreshIfDirty(const String& text, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
+	bool Label::Cache::refreshIfDirty(const String& text, bool richTextEnabled, const Optional<Font>& fontOpt, const String& fontAssetName, const String& canvasDefaultFontAssetName, double fontSize, double minFontSize, const Vec2& spacing, HorizontalOverflow horizontalOverflow, VerticalOverflow verticalOverflow, const SizeF& rectSize, LabelSizingMode newSizingMode)
 	{
 		const bool hasCustomFont = fontOpt.has_value();
 		const Font newFont = [&]() -> Font {
@@ -38,7 +251,7 @@ namespace noco
 		}();
 
 		if (prevParams.has_value() &&
-			!prevParams->isDirty(text, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
+			!prevParams->isDirty(text, richTextEnabled, fontAssetName, fontSize, minFontSize, horizontalOverflow, verticalOverflow, spacing, rectSize, hasCustomFont, newFont, newSizingMode))
 		{
 			return false;
 		}
@@ -46,6 +259,7 @@ namespace noco
 		prevParams = CacheParams
 		{
 			.text = text,
+			.richTextEnabled = richTextEnabled,
 			.fontAssetName = fontAssetName,
 			.fontSize = fontSize,
 			.minFontSize = minFontSize,
@@ -61,6 +275,14 @@ namespace noco
 		currentFont = newFont;
 		fontMethod = newFont.method();
 		assetFontSize = newFont.fontSize();
+
+		// リッチテキストが有効な場合はタグを解釈して文字ごとの装飾情報を作成
+		RichTextParseResult richTextParseResult;
+		if (richTextEnabled)
+		{
+			richTextParseResult = ParseRichText(text, fontSize);
+		}
+		const String& displayText = richTextEnabled ? richTextParseResult.text : text;
 
 		auto refreshCacheAndGetRegionSize = [&](double targetFontSize, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
 			{
@@ -79,13 +301,19 @@ namespace noco
 				double maxWidth = 0.0;
 				Vec2 offset = Vec2::Zero();
 				Array<Glyph> lineGlyphs;
-				double minTopT = 1.0;
-				double maxBottomT = 0.0;
+				Array<GlyphStyle> lineGlyphStyles;
 
 				const auto fnPushLine =
 					[&]() -> bool
 					{
-						const double currentLineBottom = offset.y + this->lineHeight;
+						// 行の高さは行内で最も大きい文字のスケールに合わせる
+						double lineMaxScale = 1.0;
+						for (const auto& style : lineGlyphStyles)
+						{
+							lineMaxScale = Max(lineMaxScale, style.scale);
+						}
+						const double currentLineHeight = this->lineHeight * lineMaxScale;
+						const double currentLineBottom = offset.y + currentLineHeight;
 
 						if (vov == VerticalOverflow::Clip && currentLineBottom > rectSize.y)
 						{
@@ -100,6 +328,27 @@ namespace noco
 							offset.x -= spacing.x * spacingScale;
 						}
 
+						// ベースライン揃えのためのYオフセットを確定
+						const double scaledAscender = currentFont.ascender() * this->assetFontSizeScale;
+						for (auto& style : lineGlyphStyles)
+						{
+							style.yOffset = (lineMaxScale - style.scale) * scaledAscender;
+						}
+
+						// グラデーション用に行内の文字の上端・下端の割合を計算
+						double minTopT = 1.0;
+						double maxBottomT = 0.0;
+						const double normalizeHeight = Max(currentLineHeight, 1.0);
+						for (size_t glyphIndex = 0; glyphIndex < lineGlyphs.size(); ++glyphIndex)
+						{
+							const auto& glyph = lineGlyphs[glyphIndex];
+							const double glyphScale = glyphIndex < lineGlyphStyles.size() ? lineGlyphStyles[glyphIndex].scale : 1.0;
+							const double glyphYOffset = glyphIndex < lineGlyphStyles.size() ? lineGlyphStyles[glyphIndex].yOffset : 0.0;
+							const double effectiveScale = this->assetFontSizeScale * glyphScale;
+							const double glyphTop = glyph.getOffset(effectiveScale).y + glyphYOffset;
+							minTopT = Min(minTopT, glyphTop / normalizeHeight);
+							maxBottomT = Max(maxBottomT, (glyphTop + glyph.texture.size.y * effectiveScale) / normalizeHeight);
+						}
 						if (minTopT > maxBottomT)
 						{
 							// 行内に文字がない場合
@@ -109,25 +358,26 @@ namespace noco
 
 						lineCaches.push_back({
 							.glyphs = lineGlyphs,
+							.glyphStyles = lineGlyphStyles,
 							.width = offset.x,
 							.offsetY = offset.y,
+							.height = currentLineHeight,
 							.minTopT = minTopT,
 							.maxBottomT = maxBottomT,
 						});
 						lineGlyphs.clear();
+						lineGlyphStyles.clear();
 						maxWidth = Max(maxWidth, offset.x);
 						offset.x = 0;
-						minTopT = 1.0;
-						maxBottomT = 0.0;
 
 						offset.y = currentLineBottom + spacing.y;
 						return true;
 					};
 
-				const double fontHeight = Max(currentFont.height(targetFontSize), 1.0);
-				const Array<Glyph> glyphs = currentFont.getGlyphs(text);
-				for (const auto& glyph : glyphs)
+				const Array<Glyph> glyphs = currentFont.getGlyphs(displayText);
+				for (size_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex)
 				{
+					const auto& glyph = glyphs[glyphIndex];
 					if (glyph.codePoint == U'\n')
 					{
 						if (!fnPushLine())
@@ -137,11 +387,17 @@ namespace noco
 						continue;
 					}
 
+					RichTextCharStyle charStyle;
+					if (richTextEnabled && glyphIndex < richTextParseResult.charStyles.size())
+					{
+						charStyle = richTextParseResult.charStyles[glyphIndex];
+					}
+
 					// AutoShrinkの場合はスケールを適用
 					// (AutoShrinkWidthの場合、通常スケールで計算したサイズとノード幅を元にスケールを決めるため、ここではスケールを適用しない)
 					const double spacingScale = newSizingMode == LabelSizingMode::AutoShrink ? targetFontSize / fontSize : 1.0;
 
-					const double xAdvance = glyph.xAdvance * this->assetFontSizeScale + spacing.x * spacingScale;
+					const double xAdvance = glyph.xAdvance * this->assetFontSizeScale * charStyle.sizeScale + spacing.x * spacingScale;
 					if (hov == HorizontalOverflow::Wrap && offset.x + xAdvance > rectSize.x)
 					{
 						if (!fnPushLine())
@@ -152,10 +408,14 @@ namespace noco
 
 					offset.x += xAdvance;
 					lineGlyphs.push_back(glyph);
-
-					const double glyphTop = glyph.getOffset(this->assetFontSizeScale).y;
-					minTopT = Min(minTopT, glyphTop / fontHeight);
-					maxBottomT = Max(maxBottomT, (glyphTop + glyph.texture.size.y * this->assetFontSizeScale) / fontHeight);
+					if (richTextEnabled)
+					{
+						lineGlyphStyles.push_back(GlyphStyle{
+							.scale = charStyle.sizeScale,
+							.yOffset = 0.0,
+							.color = charStyle.color,
+						});
+					}
 				}
 
 				fnPushLine();
@@ -253,6 +513,7 @@ namespace noco
 
 		m_autoResizeCache.refreshIfDirty(
 			m_text.value(),
+			m_richTextEnabled.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
 			canvasDefaultFontAssetName,
@@ -308,6 +569,7 @@ namespace noco
 
 		m_cache.refreshIfDirty(
 			text,
+			m_richTextEnabled.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
 			canvasDefaultFontAssetName,
@@ -423,50 +685,86 @@ namespace noco
 
 				double x = 0;
 
-				for (const auto& glyph : lineCache.glyphs)
+				for (size_t glyphIndex = 0; glyphIndex < lineCache.glyphs.size(); ++glyphIndex)
 				{
+					const auto& glyph = lineCache.glyphs[glyphIndex];
 					if (glyph.codePoint == U'\n')
 					{
 						continue;
 					}
 
+					Cache::GlyphStyle glyphStyle;
+					if (glyphIndex < lineCache.glyphStyles.size())
+					{
+						glyphStyle = lineCache.glyphStyles[glyphIndex];
+					}
+					const double drawScale = m_cache.assetFontSizeScale * glyphStyle.scale;
+
 					const Vec2 pos{ startX + x, startY + lineCache.offsetY };
-					const Vec2 drawPos = pos + glyph.getOffset(m_cache.assetFontSizeScale) * Vec2{ autoShrinkWidthScale, 1.0 };
-					const auto scaledTexture = glyph.texture.scaled(m_cache.assetFontSizeScale * autoShrinkWidthScale, m_cache.assetFontSizeScale);
+					const Vec2 drawPos = pos + (glyph.getOffset(drawScale) + Vec2{ 0.0, glyphStyle.yOffset }) * Vec2{ autoShrinkWidthScale, 1.0 };
+					const auto scaledTexture = glyph.texture.scaled(drawScale * autoShrinkWidthScale, drawScale);
 
-					switch (gradationType)
+					// colorタグによる色指定はグラデーションより優先
+					if (glyphStyle.color.has_value())
 					{
-					case LabelGradationType::TopBottom:
-					{
-						const double lineGradationHeight = Max(m_cache.lineHeight, 1e-6);
-						const double topT = Clamp(glyph.getOffset(m_cache.assetFontSizeScale).y / lineGradationHeight, 0.0, 1.0);
-						const double bottomT = Clamp((glyph.getOffset(m_cache.assetFontSizeScale).y + glyph.texture.size.y * m_cache.assetFontSizeScale) / lineGradationHeight, 0.0, 1.0);
-						const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
-						const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
-						const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
-						const ColorF topColor = gradationColor1.lerp(gradationColor2, scaledTopT);
-						const ColorF bottomColor = gradationColor1.lerp(gradationColor2, scaledBottomT);
-						scaledTexture.draw(drawPos, Arg::top = topColor, Arg::bottom = bottomColor);
-						break;
+						if (glyphStyle.color->isGradation())
+						{
+							// 2色指定時は行内の文字の上端から下端にかけての上下グラデーション
+							const double lineGradationHeight = Max(lineCache.height, 1e-6);
+							const double glyphTop = glyph.getOffset(drawScale).y + glyphStyle.yOffset;
+							const double topT = Clamp(glyphTop / lineGradationHeight, 0.0, 1.0);
+							const double bottomT = Clamp((glyphTop + glyph.texture.size.y * drawScale) / lineGradationHeight, 0.0, 1.0);
+							const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
+							const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
+							const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
+							const ColorF tagColor1{ glyphStyle.color->color1 };
+							const ColorF tagColor2{ *glyphStyle.color->color2 };
+							const ColorF topColor = tagColor1.lerp(tagColor2, scaledTopT);
+							const ColorF bottomColor = tagColor1.lerp(tagColor2, scaledBottomT);
+							scaledTexture.draw(drawPos, Arg::top = topColor, Arg::bottom = bottomColor);
+						}
+						else
+						{
+							scaledTexture.draw(drawPos, ColorF{ glyphStyle.color->color1 });
+						}
 					}
-
-					case LabelGradationType::LeftRight:
+					else
 					{
-						const double glyphLeft = drawPos.x;
-						const double glyphWidth = static_cast<double>(glyph.texture.size.x) * m_cache.assetFontSizeScale * autoShrinkWidthScale;
-						const double glyphRight = glyphLeft + glyphWidth;
-						const double leftT = Clamp((glyphLeft - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
-						const double rightT = Clamp((glyphRight - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
-						const ColorF leftColor = gradationColor1.lerp(gradationColor2, leftT);
-						const ColorF rightColor = gradationColor1.lerp(gradationColor2, rightT);
-						scaledTexture.draw(drawPos, Arg::left = leftColor, Arg::right = rightColor);
-						break;
-					}
+						switch (gradationType)
+						{
+						case LabelGradationType::TopBottom:
+						{
+							const double lineGradationHeight = Max(lineCache.height, 1e-6);
+							const double glyphTop = glyph.getOffset(drawScale).y + glyphStyle.yOffset;
+							const double topT = Clamp(glyphTop / lineGradationHeight, 0.0, 1.0);
+							const double bottomT = Clamp((glyphTop + glyph.texture.size.y * drawScale) / lineGradationHeight, 0.0, 1.0);
+							const double minMaxTAbsDiff = Max(lineCache.maxBottomT - lineCache.minTopT, 1e-6);
+							const double scaledTopT = (topT - lineCache.minTopT) / minMaxTAbsDiff;
+							const double scaledBottomT = (bottomT - lineCache.minTopT) / minMaxTAbsDiff;
+							const ColorF topColor = gradationColor1.lerp(gradationColor2, scaledTopT);
+							const ColorF bottomColor = gradationColor1.lerp(gradationColor2, scaledBottomT);
+							scaledTexture.draw(drawPos, Arg::top = topColor, Arg::bottom = bottomColor);
+							break;
+						}
 
-					case LabelGradationType::None:
-					default:
-						scaledTexture.draw(drawPos, color);
-						break;
+						case LabelGradationType::LeftRight:
+						{
+							const double glyphLeft = drawPos.x;
+							const double glyphWidth = static_cast<double>(glyph.texture.size.x) * drawScale * autoShrinkWidthScale;
+							const double glyphRight = glyphLeft + glyphWidth;
+							const double leftT = Clamp((glyphLeft - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
+							const double rightT = Clamp((glyphRight - gradientLeft) / horizontalGradationWidth, 0.0, 1.0);
+							const ColorF leftColor = gradationColor1.lerp(gradationColor2, leftT);
+							const ColorF rightColor = gradationColor1.lerp(gradationColor2, rightT);
+							scaledTexture.draw(drawPos, Arg::left = leftColor, Arg::right = rightColor);
+							break;
+						}
+
+						case LabelGradationType::None:
+						default:
+							scaledTexture.draw(drawPos, color);
+							break;
+						}
 					}
 
 					double spacingScale;
@@ -486,7 +784,7 @@ namespace noco
 						spacingScale = 1.0;
 						break;
 					}
-					x += (glyph.xAdvance * m_cache.assetFontSizeScale * autoShrinkWidthScale + characterSpacing.x * spacingScale);
+					x += (glyph.xAdvance * drawScale * autoShrinkWidthScale + characterSpacing.x * spacingScale);
 				}
 			}
 		}
@@ -512,7 +810,7 @@ namespace noco
 					}();
 
 				const double thickness = m_underlineThickness.value();
-				const double y = startY + (lineCache.offsetY + m_cache.lineHeight);
+				const double y = startY + (lineCache.offsetY + lineCache.height);
 				Line{ startX, y, startX + effectiveLineWidth, y }.draw(thickness, m_underlineColor.value());
 			}
 		}
@@ -529,6 +827,7 @@ namespace noco
 
 		m_cache.refreshIfDirty(
 			m_text.value(),
+			m_richTextEnabled.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
 			canvasDefaultFontAssetName,
@@ -547,6 +846,7 @@ namespace noco
 	{
 		m_cache.refreshIfDirty(
 			m_text.value(),
+			m_richTextEnabled.value(),
 			m_fontOpt,
 			m_fontAssetName.value(),
 			canvasDefaultFontAssetName,

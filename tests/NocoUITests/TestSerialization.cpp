@@ -23,6 +23,7 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 		// コンポーネントを追加
 		auto label = node->emplaceComponent<noco::Label>();
 		label->setText(U"Test Label");
+		label->setRichTextEnabled(true);
 		
 		// JSONに変換
 		JSON json = node->toJSON();
@@ -53,6 +54,7 @@ TEST_CASE("Serialization", "[Node][Canvas][JSON]")
 		auto restoredLabel = restoredNode->getComponent<noco::Label>();
 		REQUIRE(restoredLabel != nullptr);
 		REQUIRE(restoredLabel->text().defaultValue() == U"Test Label");
+		REQUIRE(restoredLabel->richTextEnabled().defaultValue() == true);
 	}
 }
 
