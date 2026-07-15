@@ -40,11 +40,28 @@ TEST_CASE("ParseRichText", "[RichText]")
 
 	SECTION("Nested size tags use inner value")
 	{
+		// %指定は外側の実効サイズに対する割合として計算
 		const auto result = noco::detail::ParseRichText(U"<size=200%>A<size=50%>B</size>C</size>", 24.0);
 		REQUIRE(result.text == U"ABC");
 		REQUIRE(result.charStyles[0].sizeScale == Approx(2.0));
-		REQUIRE(result.charStyles[1].sizeScale == Approx(0.5));
+		REQUIRE(result.charStyles[1].sizeScale == Approx(1.0));
 		REQUIRE(result.charStyles[2].sizeScale == Approx(2.0));
+	}
+
+	SECTION("Percent size tag is relative to outer absolute size")
+	{
+		// 絶対指定の内側の%はそのサイズに対する割合として計算
+		const auto result = noco::detail::ParseRichText(U"<size=48><size=50%>A</size>B</size>", 24.0);
+		REQUIRE(result.text == U"AB");
+		REQUIRE(result.charStyles[0].sizeScale == Approx(1.0));
+		REQUIRE(result.charStyles[1].sizeScale == Approx(2.0));
+	}
+
+	SECTION("Nested percent size tags are cumulative")
+	{
+		const auto result = noco::detail::ParseRichText(U"<size=200%><size=200%>A</size></size>", 24.0);
+		REQUIRE(result.text == U"A");
+		REQUIRE(result.charStyles[0].sizeScale == Approx(4.0));
 	}
 
 	SECTION("Invalid size values are ignored")

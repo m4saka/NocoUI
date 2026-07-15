@@ -77,9 +77,9 @@ namespace noco::detail
 			return hasDigit;
 		}
 
-		/// @brief sizeタグの値をパースしてスケール値を返す(数値はピクセル指定、%付きは割合指定。解釈できない場合はnone)
+		/// @brief sizeタグの値をパースしてスケール値を返す(数値指定はピクセル数、%指定は現在のサイズに対する割合。解釈できない場合はnone)
 		[[nodiscard]]
-		Optional<double> ParseRichTextSizeScale(const String& value, double baseFontSize)
+		Optional<double> ParseRichTextSizeScale(const String& value, double baseFontSize, double currentScale)
 		{
 			if (baseFontSize <= 0.0)
 			{
@@ -102,7 +102,7 @@ namespace noco::detail
 			}
 			if (isPercent)
 			{
-				return *parsedOpt / 100.0;
+				return currentScale * *parsedOpt / 100.0;
 			}
 			return *parsedOpt / baseFontSize;
 		}
@@ -181,9 +181,14 @@ namespace noco::detail
 							sizeScaleStack.pop_back();
 						}
 					}
-					else if (const auto scaleOpt = ParseRichTextSizeScale(value, baseFontSize))
+					else
 					{
-						sizeScaleStack.push_back(*scaleOpt);
+						// %指定は現在のサイズに対する割合として計算
+						const double currentScale = sizeScaleStack.isEmpty() ? 1.0 : sizeScaleStack.back();
+						if (const auto scaleOpt = ParseRichTextSizeScale(value, baseFontSize, currentScale))
+						{
+							sizeScaleStack.push_back(*scaleOpt);
+						}
 					}
 				}
 				else if (name == U"color")
