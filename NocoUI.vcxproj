@@ -134,6 +134,7 @@
     <ClCompile Include="src\Component\TextBox.cpp" />
     <ClCompile Include="src\Component\Toggle.cpp" />
     <ClCompile Include="src\Component\Tween.cpp" />
+    <ClCompile Include="src\detail\RichText.cpp" />
     <ClCompile Include="src\detail\TriggerFireDetector.cpp" />
     <ClCompile Include="src\Init.cpp" />
     <ClCompile Include="src\Layout\FlowLayout.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="include\NocoUI\Region\InlineRegion.hpp" />
     <ClInclude Include="include\NocoUI\Region\Region.hpp" />
     <ClInclude Include="include\NocoUI\detail\Input.hpp" />
+    <ClInclude Include="include\NocoUI\detail\RichText.hpp" />
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp" />
     <ClInclude Include="include\NocoUI\detail\TriggerFireDetector.hpp" />
     <ClInclude Include="include\NocoUI\Enums.hpp" />
@@ -201,6 +203,7 @@
     <ClInclude Include="include\NocoUI\Property.hpp" />
     <ClInclude Include="include\NocoUI\PropertyUtils.hpp" />
     <ClInclude Include="include\NocoUI\PropertyValue.hpp" />
+    <ClInclude Include="include\NocoUI\RichTextUtils.hpp" />
     <ClInclude Include="include\NocoUI\ScrollableAxisFlags.hpp" />
     <ClInclude Include="include\NocoUI\Serialization.hpp" />
     <ClInclude Include="include\NocoUI\Smoothing.hpp" />

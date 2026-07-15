@@ -3,6 +3,7 @@
 #include "ComponentBase.hpp"
 #include "IFontCachedComponent.hpp"
 #include "../Enums.hpp"
+#include "../detail/RichText.hpp"
 
 namespace noco
 {
@@ -28,27 +29,6 @@ namespace noco
 		TopBottom,
 		LeftRight,
 	};
-
-	namespace detail
-	{
-		/// @brief リッチテキストのcolorタグの色指定(単色または上下グラデーション)
-		struct RichTextColor
-		{
-			Color color1;
-			Optional<Color> color2 = none; // 2色指定時の下端色(上下グラデーション)
-
-			/// @brief 上下グラデーション指定かどうか
-			[[nodiscard]]
-			bool isGradation() const
-			{
-				return color2.has_value();
-			}
-		};
-	}
-
-	/// @brief リッチテキストのタグとして解釈されないよう'<'と'>'をエスケープした文字列を返す(外部由来の文字列をリッチテキストに埋め込む場合に使用)
-	[[nodiscard]]
-	String EscapeRichText(StringView text);
 
 	class Label : public SerializableComponentBase, public detail::IFontCachedComponent, public std::enable_shared_from_this<Label>
 	{

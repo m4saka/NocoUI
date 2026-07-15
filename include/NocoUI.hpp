@@ -10,4 +10,5 @@
 #include "NocoUI/Asset.hpp"
 #include "NocoUI/PropertyUtils.hpp"
 #include "NocoUI/ParamUtils.hpp"
+#include "NocoUI/RichTextUtils.hpp"
 #include "NocoUI/Version.hpp"

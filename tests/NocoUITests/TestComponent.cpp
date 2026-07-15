@@ -223,13 +223,6 @@ TEST_CASE("Label rich text", "[Component][Label]")
 		REQUIRE(richSize.y == Approx(plainSize.y));
 	}
 
-	SECTION("EscapeRichText escapes angle brackets")
-	{
-		REQUIRE(noco::EscapeRichText(U"a<b>c") == U"a<lt>b<gt>c");
-		REQUIRE(noco::EscapeRichText(U"no brackets") == U"no brackets");
-		REQUIRE(noco::EscapeRichText(U"") == U"");
-	}
-
 	SECTION("Escaped text is not parsed as tags")
 	{
 		auto node = noco::Node::Create();

@@ -39,6 +39,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\detail\RichText.cpp">
+      <Filter>Source Files\detail</Filter>
+    </ClCompile>
     <ClCompile Include="src\detail\TriggerFireDetector.cpp">
       <Filter>Source Files\detail</Filter>
     </ClCompile>
@@ -272,11 +275,17 @@
     <ClInclude Include="include\NocoUI\PropertyValue.hpp">
       <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
+    <ClInclude Include="include\NocoUI\detail\RichText.hpp">
+      <Filter>Header Files\NocoUI\detail</Filter>
+    </ClInclude>
     <ClInclude Include="include\NocoUI\detail\ScopedScissorRect.hpp">
       <Filter>Header Files\NocoUI\detail</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\detail\TriggerFireDetector.hpp">
       <Filter>Header Files\NocoUI\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NocoUI\RichTextUtils.hpp">
+      <Filter>Header Files\NocoUI</Filter>
     </ClInclude>
     <ClInclude Include="include\NocoUI\ScrollableAxisFlags.hpp">
       <Filter>Header Files\NocoUI</Filter>

@@ -51,6 +51,7 @@ add_executable(${TARGET_NAME}
     TestTween.cpp
     TestToggle.cpp
     TestNodeScrollBar.cpp
+    TestRichText.cpp
 )
 
 if(APPLE)
