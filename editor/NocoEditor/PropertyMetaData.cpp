@@ -564,7 +564,7 @@ namespace noco::editor
 		};
 		metadata[PropertyKey{ U"Label", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、nocoファイルと同じ階層か上の階層に作成した.nocoui/FontAssets内、またはエディタ本体のCustom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"Label", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
@@ -1065,13 +1065,13 @@ namespace noco::editor
 
 		metadata[PropertyKey{ U"Sprite", U"pixelShaderAssetName" }] = PropertyMetadata{
 			.tooltip = U"PixelShaderAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、描画時にこのキー名をもとに取得したPixelShaderAssetのシェーダーを適用します\n※エディタ上でプレビューするには、Custom/PixelShaders内にJSONファイルを作成してください",
+			.tooltipDetail = U"指定されている場合、描画時にこのキー名をもとに取得したPixelShaderAssetのシェーダーを適用します\n※エディタ上でプレビューするには、nocoファイルと同じ階層か上の階層に作成した.nocoui/PixelShaders内、またはエディタ本体のCustom/PixelShaders内にJSONファイルを作成してください",
 		};
 
 		// TextBox
 		metadata[PropertyKey{ U"TextBox", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、nocoファイルと同じ階層か上の階層に作成した.nocoui/FontAssets内、またはエディタ本体のCustom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"TextBox", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",
@@ -1122,7 +1122,7 @@ namespace noco::editor
 		// TextArea
 		metadata[PropertyKey{ U"TextArea", U"fontAssetName" }] = PropertyMetadata{
 			.tooltip = U"FontAssetのキー名 (任意)",
-			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、Custom/FontAssets内にJSONファイルを作成してください",
+			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したFontAssetのフォントを使用します\n※エディタ上でプレビューするには、nocoファイルと同じ階層か上の階層に作成した.nocoui/FontAssets内、またはエディタ本体のCustom/FontAssets内にJSONファイルを作成してください",
 		};
 		metadata[PropertyKey{ U"TextArea", U"fontSize" }] = PropertyMetadata{
 			.tooltip = U"フォントサイズ",

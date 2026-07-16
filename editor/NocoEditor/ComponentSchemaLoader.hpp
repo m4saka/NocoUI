@@ -10,7 +10,8 @@ namespace noco::editor
 		static HashTable<String, ComponentSchema> s_schemas;
 		
 	public:
-		static void LoadFromDirectory(const FilePath& directory);
+		/// @brief 複数ディレクトリからスキーマを読み込み(先頭のディレクトリほど優先され、同名typeは優先度の高い方を採用)
+		static void LoadFromDirectories(const Array<FilePath>& directories);
 		
 		static Optional<ComponentSchema> LoadSchemaFile(const FilePath& path);
 		

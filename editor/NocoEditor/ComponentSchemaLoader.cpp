@@ -5,16 +5,18 @@ namespace noco::editor
 {
 	HashTable<String, ComponentSchema> ComponentSchemaLoader::s_schemas;
 	
-	void ComponentSchemaLoader::LoadFromDirectory(const FilePath& directory)
+	void ComponentSchemaLoader::LoadFromDirectories(const Array<FilePath>& directories)
 	{
 		s_schemas.clear();
-		
-		if (!FileSystem::Exists(directory))
+
+		for (const auto& directory : directories)
 		{
-			return;
+			if (!FileSystem::Exists(directory))
+			{
+				continue;
+			}
+			LoadFromDirectoryRecursive(directory);
 		}
-		
-		LoadFromDirectoryRecursive(directory);
 	}
 	
 	void ComponentSchemaLoader::LoadFromDirectoryRecursive(const FilePath& directory)
@@ -29,7 +31,15 @@ namespace noco::editor
 			{
 				if (auto schema = LoadSchemaFile(path))
 				{
-					s_schemas[schema->type] = *schema;
+					if (s_schemas.contains(schema->type))
+					{
+						// 優先度の高いディレクトリで同名typeのスキーマが読み込み済みの場合はスキップ
+						Logger << U"[NocoUI warning] Component schema '{}' is already loaded. Skipping: {}"_fmt(schema->type, path);
+					}
+					else
+					{
+						s_schemas[schema->type] = *schema;
+					}
 				}
 			}
 		}
