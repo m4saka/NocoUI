@@ -138,6 +138,11 @@ namespace noco
 						for (size_t glyphIndex = 0; glyphIndex < lineGlyphs.size(); ++glyphIndex)
 						{
 							const auto& glyph = lineGlyphs[glyphIndex];
+							if (glyph.texture.size.y <= 0.0)
+							{
+								// 空白文字は-32768が来るので除外
+								continue;
+							}
 							const double glyphScale = glyphIndex < lineGlyphStyles.size() ? lineGlyphStyles[glyphIndex].scale : 1.0;
 							const double glyphYOffset = glyphIndex < lineGlyphStyles.size() ? lineGlyphStyles[glyphIndex].yOffset : 0.0;
 							const double effectiveScale = this->assetFontSizeScale * glyphScale;
