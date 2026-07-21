@@ -478,10 +478,15 @@ namespace noco
 	
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+		return CreateFromJSONImpl(json, detail::GetGlobalComponentFactory(), withInstanceId);
 	}
-	
+
 	std::shared_ptr<Canvas> Canvas::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	{
+		return CreateFromJSONImpl(json, componentFactory, withInstanceId);
+	}
+
+	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"version"))
 		{
@@ -508,7 +513,7 @@ namespace noco
 		}
 		
 		std::shared_ptr<Canvas> canvas{ new Canvas{} };
-		
+
 		// serializedVersionが将来のバージョンの場合は警告を出す
 		canvas->m_serializedVersion = json[U"serializedVersion"].get<int32>();
 		if (canvas->m_serializedVersion > CurrentSerializedVersion)
@@ -547,7 +552,7 @@ namespace noco
 		
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, componentFactory, withInstanceId))
 			{
 				canvas->addChild(child);
 			}
@@ -609,15 +614,20 @@ namespace noco
 		{
 			return nullptr;
 		}
-		return Canvas::CreateFromJSON(json, componentFactory);
+		return Canvas::CreateFromJSONImpl(json, componentFactory, detail::WithInstanceIdYN::No);
 	}
-	
+
 	bool Canvas::tryReadFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return tryReadFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+		return tryReadFromJSONImpl(json, detail::GetGlobalComponentFactory(), withInstanceId);
 	}
-	
+
 	bool Canvas::tryReadFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	{
+		return tryReadFromJSONImpl(json, componentFactory, withInstanceId);
+	}
+
+	bool Canvas::tryReadFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		if (!json.contains(U"serializedVersion"))
 		{
@@ -661,7 +671,7 @@ namespace noco
 
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
-			if (auto child = Node::CreateFromJSON(childJson, componentFactory, withInstanceId))
+			if (auto child = Node::CreateFromJSONImpl(childJson, componentFactory, withInstanceId))
 			{
 				addChild(child);
 			}
@@ -1548,7 +1558,7 @@ namespace noco
 	
 	const std::shared_ptr<Node>& Canvas::addChildFromJSON(const JSON& json, const ComponentFactory& factory)
 	{
-		auto child = Node::CreateFromJSON(json, factory);
+		auto child = Node::CreateFromJSONImpl(json, factory, detail::WithInstanceIdYN::No);
 		child->setCanvasRecursive(shared_from_this());
 		child->m_parent.reset();
 		child->refreshActiveInHierarchy();

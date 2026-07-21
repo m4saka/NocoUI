@@ -131,6 +131,9 @@ namespace noco
 		{
 		}
 
+		[[nodiscard]]
+		static std::shared_ptr<Node> CreateFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId);
+
 		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId);
 
 		std::shared_ptr<ComponentBase> addComponentFromJSONImpl(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId);
@@ -268,7 +271,8 @@ namespace noco
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @param withInstanceId 入力内容からインスタンスIDを読み込むどうか(NocoEditorの内部実装向けのため、通常は指定不要)
 		/// @return 生成されたノード
-		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		[[nodiscard]]
 		static std::shared_ptr<Node> CreateFromJSON(const JSON& json, const ComponentFactory& factory, detail::WithInstanceIdYN withInstanceId = detail::WithInstanceIdYN::No);
 
@@ -356,6 +360,8 @@ namespace noco
 		/// @param json JSON
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたコンポーネント
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		std::shared_ptr<ComponentBase> addComponentFromJSON(const JSON& json, const ComponentFactory& factory);
 
 		/// @brief JSONからコンポーネントを指定したインデックスに追加
@@ -370,6 +376,8 @@ namespace noco
 		/// @param index 追加先のインデックス
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたコンポーネント
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		std::shared_ptr<ComponentBase> addComponentAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& factory);
 
 		/// @brief コンポーネントを削除
@@ -443,7 +451,8 @@ namespace noco
 		/// @param json JSON
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたノード
-		/// @note factoryはこのJSONから直接生成されるコンポーネントにのみ使用され、SubCanvasが読み込む入れ子Canvasには伝播しません。
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		const std::shared_ptr<Node>& addChildFromJSON(const JSON& json, const ComponentFactory& factory) override;
 
 		/// @brief JSONから子ノードを指定したインデックスに追加
@@ -459,6 +468,8 @@ namespace noco
 		/// @param factory コンポーネントを生成するためのファクトリ
 		/// @return 追加されたノード
 		/// @note indexが範囲外の場合は末尾に追加される
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		const std::shared_ptr<Node>& addChildAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& factory);
 
 		/// @brief 子ノードを指定したインデックスに追加

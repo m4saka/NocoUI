@@ -1,6 +1,8 @@
 ﻿#include <catch2/catch.hpp>
 #include <NocoUI/ComponentFactory.hpp>
 #include <NocoUI/Component/Component.hpp>
+#include <NocoUI/Canvas.hpp>
+#include <NocoUI/Node.hpp>
 
 // ========================================
 // ComponentFactoryのテスト
@@ -165,4 +167,106 @@ TEST_CASE("ComponentFactory handler configuration", "[ComponentFactory]")
 		REQUIRE_FALSE(handlerCalled);
 		REQUIRE(component == nullptr);
 	}
+}
+
+namespace
+{
+	// グローバル登録テスト用の独自コンポーネント
+	class FactoryTestComponent : public noco::SerializableComponentBase
+	{
+	private:
+		noco::Property<String> m_text{ U"text", U"" };
+
+	public:
+		FactoryTestComponent()
+			: noco::SerializableComponentBase{ U"FactoryTestComponent", { &m_text } }
+		{
+		}
+	};
+}
+
+TEST_CASE("RegisterSerializableComponent global registration", "[ComponentFactory][SubCanvas]")
+{
+	// 独自コンポーネントを含む子Canvasを一時ファイルに保存
+	auto childCanvas = noco::Canvas::Create(SizeF{ 100, 100 });
+	auto childNode = noco::Node::Create(U"Child");
+	childNode->emplaceComponent<FactoryTestComponent>();
+	childCanvas->addChild(childNode);
+	const FilePath tempPath = FileSystem::PathAppend(FileSystem::TemporaryDirectoryPath(), U"noco_test_factory_propagation.noco");
+	REQUIRE(childCanvas->toJSON().save(tempPath));
+
+	// SubCanvasを持つ親CanvasのJSONを作成
+	auto sourceCanvas = noco::Canvas::Create();
+	auto ownerNode = noco::Node::Create(U"Owner");
+	ownerNode->emplaceComponent<noco::SubCanvas>(tempPath);
+	sourceCanvas->addChild(ownerNode);
+	const JSON parentJSON = sourceCanvas->toJSON();
+
+	SECTION("Registered custom component is resolved on Canvas load")
+	{
+		noco::RegisterSerializableComponent<FactoryTestComponent>(U"FactoryTestComponent");
+
+		auto canvas = noco::Canvas::CreateFromJSON(parentJSON);
+		REQUIRE(canvas != nullptr);
+		canvas->update();
+
+		auto owner = canvas->findByName(U"Owner");
+		REQUIRE(owner != nullptr);
+		auto subCanvas = owner->getComponent<noco::SubCanvas>();
+		REQUIRE(subCanvas != nullptr);
+		auto loadedChildCanvas = subCanvas->canvas();
+		REQUIRE(loadedChildCanvas != nullptr);
+
+		// SubCanvasが読み込む入れ子Canvasでも独自コンポーネントが解決される
+		auto loadedChildNode = loadedChildCanvas->findByName(U"Child");
+		REQUIRE(loadedChildNode != nullptr);
+		REQUIRE(loadedChildNode->getComponent<FactoryTestComponent>() != nullptr);
+
+		noco::ResetSerializableComponents();
+	}
+
+	SECTION("Unregistered custom component is dropped")
+	{
+		auto canvas = noco::Canvas::CreateFromJSON(parentJSON);
+		REQUIRE(canvas != nullptr);
+		canvas->update();
+
+		auto subCanvas = canvas->findByName(U"Owner")->getComponent<noco::SubCanvas>();
+		REQUIRE(subCanvas != nullptr);
+		auto loadedChildCanvas = subCanvas->canvas();
+		REQUIRE(loadedChildCanvas != nullptr);
+
+		auto loadedChildNode = loadedChildCanvas->findByName(U"Child");
+		REQUIRE(loadedChildNode != nullptr);
+		REQUIRE(loadedChildNode->getComponent<FactoryTestComponent>() == nullptr);
+	}
+
+	SECTION("SetUnknownComponentHandler is used for unregistered types")
+	{
+		bool handlerCalled = false;
+		noco::SetUnknownComponentHandler(
+			[&handlerCalled](const String&, const JSON&, noco::detail::WithInstanceIdYN) -> std::shared_ptr<noco::ComponentBase>
+			{
+				handlerCalled = true;
+				return nullptr;
+			});
+
+		auto canvas = noco::Canvas::CreateFromJSON(parentJSON);
+		REQUIRE(canvas != nullptr);
+		canvas->update();
+		REQUIRE(handlerCalled);
+
+		noco::ResetSerializableComponents();
+	}
+
+	SECTION("ResetSerializableComponents removes registration")
+	{
+		noco::RegisterSerializableComponent<FactoryTestComponent>(U"FactoryTestComponent");
+		REQUIRE(noco::detail::GetGlobalComponentFactory().hasType(U"FactoryTestComponent"));
+
+		noco::ResetSerializableComponents();
+		REQUIRE_FALSE(noco::detail::GetGlobalComponentFactory().hasType(U"FactoryTestComponent"));
+	}
+
+	FileSystem::Remove(tempPath);
 }

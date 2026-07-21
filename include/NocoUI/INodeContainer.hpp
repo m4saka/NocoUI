@@ -67,7 +67,9 @@ namespace noco
 
 		virtual const std::shared_ptr<Node>& addChildFromJSON(
 			const JSON& json) = 0;
-		
+
+		/// @deprecated 独自コンポーネントの登録にはnoco::RegisterSerializableComponentを使用してください
+		[[deprecated("Use noco::RegisterSerializableComponent to register custom components globally")]]
 		virtual const std::shared_ptr<Node>& addChildFromJSON(
 			const JSON& json, const ComponentFactory& factory) = 0;
 

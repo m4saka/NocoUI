@@ -405,16 +405,13 @@ public:
 
 ![独自コンポーネントの追加](./docs/readme_custom_component_editor.png)
 
-プログラムで独自コンポーネントを利用するには、`ComponentFactory`を取得してコンポーネントを登録し、`Canvas::LoadFromFile`の第2引数に渡します。
+プログラムで独自コンポーネントを利用するには、Canvasを読み込む前に`noco::RegisterSerializableComponent`でコンポーネントを登録します。
 ```cpp
-// 標準コンポーネントを含むComponentFactoryを取得
-noco::ComponentFactory factory = noco::ComponentFactory::GetBuiltinFactory();
+// 独自コンポーネントを登録(起動時などCanvasを読み込む前に1回呼ぶ)
+noco::RegisterSerializableComponent<CustomButton>(U"CustomButton");
 
-// 独自コンポーネントを登録
-factory.registerComponentType<CustomButton>(U"CustomButton");
-
-// Canvasを読み込む際にfactoryを渡す
-const auto canvas = noco::Canvas::LoadFromFile(U"canvas.noco", factory);
+// 以後のCanvas読み込みで独自コンポーネントが利用可能
+const auto canvas = noco::Canvas::LoadFromFile(U"canvas.noco");
 ```
 
 ### 方法2: `ComponentBase`を継承してプログラム上で使用

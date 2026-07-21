@@ -41,8 +41,7 @@ namespace noco::editor
 		std::function<void()> m_onChangeNodeActive;
 		std::function<void(const SizeF&, const SizeF&)> m_onChangeCanvasSize;
 		std::function<void()> m_onRefreshNodeList;
-		std::shared_ptr<ComponentFactory> m_componentFactory;
-		
+
 		void renameParam(const String& oldName, const String& newName)
 		{
 			if (!m_canvas)
@@ -191,13 +190,9 @@ namespace noco::editor
 			// クリップボードのJSONからコンポーネントを作成
 			auto componentJSON = *m_copiedComponentJSON;
 			componentJSON[U"type"] = *m_copiedComponentType;
-			if (m_componentFactory)
+			if (const auto component = node->addComponentFromJSON(componentJSON))
 			{
-				if (const auto component = m_componentFactory->createComponentFromJSON(componentJSON))
-				{
-					node->addComponent(component);
-					refreshInspector();
-				}
+				refreshInspector();
 			}
 		}
 		
@@ -289,7 +284,7 @@ namespace noco::editor
 		}
 
 	public:
-		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, const std::shared_ptr<ComponentFactory>& componentFactory, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive, std::function<void(const SizeF&, const SizeF&)> onChangeCanvasSize, std::function<void()> onRefreshNodeList)
+		explicit Inspector(const std::shared_ptr<Canvas>& canvas, const std::shared_ptr<Canvas>& editorCanvas, const std::shared_ptr<Canvas>& editorOverlayCanvas, const std::shared_ptr<ContextMenu>& contextMenu, const std::shared_ptr<Defaults>& defaults, const std::shared_ptr<DialogOpener>& dialogOpener, std::function<void()> onChangeNodeName, std::function<void()> onChangeNodeActive, std::function<void(const SizeF&, const SizeF&)> onChangeCanvasSize, std::function<void()> onRefreshNodeList)
 			: m_canvas(canvas)
 			, m_editorCanvas(editorCanvas)
 			, m_editorOverlayCanvas(editorOverlayCanvas)
@@ -333,7 +328,6 @@ namespace noco::editor
 			, m_onChangeNodeActive(std::move(onChangeNodeActive))
 			, m_onChangeCanvasSize(std::move(onChangeCanvasSize))
 			, m_onRefreshNodeList(std::move(onRefreshNodeList))
-			, m_componentFactory(componentFactory)
 			, m_propertyMetadata(InitPropertyMetadata())
 		{
 			m_inspectorFrameNode->emplaceComponent<RectRenderer>(ColorF{ 0.5, 0.4 }, Palette::Black, 0.0, 0.0, 10.0);
@@ -5653,7 +5647,7 @@ namespace noco::editor
 										{
 											for (const auto& childJSON : canvasJSON[U"children"].arrayView())
 											{
-												node->addChildFromJSON(childJSON, *m_componentFactory);
+												node->addChildFromJSON(childJSON);
 											}
 										}
 

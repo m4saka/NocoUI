@@ -505,10 +505,15 @@ namespace noco
 
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return CreateFromJSON(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+		return CreateFromJSONImpl(json, detail::GetGlobalComponentFactory(), withInstanceId);
 	}
-	
+
 	std::shared_ptr<Node> Node::CreateFromJSON(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	{
+		return CreateFromJSONImpl(json, componentFactory, withInstanceId);
+	}
+
+	std::shared_ptr<Node> Node::CreateFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
 	{
 		auto node = Node::Create();
 		if (json.contains(U"name"))
@@ -641,7 +646,7 @@ namespace noco
 		{
 			for (const auto& childJSON : json[U"children"].arrayView())
 			{
-				auto child = CreateFromJSON(childJSON, componentFactory, withInstanceId);
+				auto child = CreateFromJSONImpl(childJSON, componentFactory, withInstanceId);
 				node->addChild(child);
 			}
 		}
@@ -822,7 +827,7 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json)
 	{
-		return addComponentFromJSON(json, ComponentFactory::GetBuiltinFactory());
+		return addComponentFromJSONImpl(json, detail::GetGlobalComponentFactory(), detail::WithInstanceIdYN::No);
 	}
 	
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSON(const JSON& json, const ComponentFactory& componentFactory)
@@ -832,7 +837,7 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index)
 	{
-		return addComponentAtIndexFromJSON(json, index, ComponentFactory::GetBuiltinFactory());
+		return addComponentAtIndexFromJSONImpl(json, index, detail::GetGlobalComponentFactory(), detail::WithInstanceIdYN::No);
 	}
 	
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSON(const JSON& json, size_t index, const ComponentFactory& componentFactory)
@@ -842,7 +847,7 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, detail::WithInstanceIdYN withInstanceId)
 	{
-		return addComponentFromJSONImpl(json, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+		return addComponentFromJSONImpl(json, detail::GetGlobalComponentFactory(), withInstanceId);
 	}
 	
 	std::shared_ptr<ComponentBase> Node::addComponentFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
@@ -857,7 +862,7 @@ namespace noco
 
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, detail::WithInstanceIdYN withInstanceId)
 	{
-		return addComponentAtIndexFromJSONImpl(json, index, ComponentFactory::GetBuiltinFactory(), withInstanceId);
+		return addComponentAtIndexFromJSONImpl(json, index, detail::GetGlobalComponentFactory(), withInstanceId);
 	}
 	
 	std::shared_ptr<ComponentBase> Node::addComponentAtIndexFromJSONImpl(const JSON& json, size_t index, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
@@ -1040,7 +1045,7 @@ namespace noco
 	
 	const std::shared_ptr<Node>& Node::addChildFromJSON(const JSON& json, const ComponentFactory& factory)
 	{
-		auto child = CreateFromJSON(json, factory);
+		auto child = CreateFromJSONImpl(json, factory, detail::WithInstanceIdYN::No);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();
@@ -1074,7 +1079,7 @@ namespace noco
 			index = m_children.size();
 		}
 
-		auto child = CreateFromJSON(json, factory);
+		auto child = CreateFromJSONImpl(json, factory, detail::WithInstanceIdYN::No);
 		child->setCanvasRecursive(m_canvas);
 		child->m_parent = shared_from_this();
 		child->refreshActiveInHierarchy();

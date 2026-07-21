@@ -95,8 +95,30 @@ namespace noco
 		
 		[[nodiscard]]
 		static ComponentFactory CreateWithBuiltinComponents();
-		
+
 		[[nodiscard]]
 		static const ComponentFactory& GetBuiltinFactory();
 	};
+
+	namespace detail
+	{
+		/// @brief グローバルComponentFactoryを取得(ライブラリ内部実装向け)
+		[[nodiscard]]
+		ComponentFactory& GetGlobalComponentFactory();
+	}
+
+	/// @brief シリアライズ対応の独自コンポーネントをグローバルに登録(SubCanvasが読み込む入れ子Canvasにも適用される)
+	/// @remark Canvasを読み込む前(起動時など)に登録しておく必要がある
+	template <typename TComponent>
+	void RegisterSerializableComponent(const String& typeName)
+		requires std::derived_from<TComponent, SerializableComponentBase>
+	{
+		detail::GetGlobalComponentFactory().registerComponentType<TComponent>(typeName);
+	}
+
+	/// @brief 未知のコンポーネントtypeを読み込んだ際に呼ばれるハンドラをグローバルに設定(nullptrで解除)
+	void SetUnknownComponentHandler(const ComponentFactory::UnknownComponentHandler& handler);
+
+	/// @brief グローバルなコンポーネント登録と未知コンポーネントハンドラを組み込みコンポーネントのみの初期状態に戻す
+	void ResetSerializableComponents();
 }

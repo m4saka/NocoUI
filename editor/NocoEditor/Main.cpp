@@ -46,7 +46,6 @@ private:
 	std::shared_ptr<ContextMenu> m_dialogContextMenu;
 	std::shared_ptr<DialogOpener> m_dialogOpener;
 	std::shared_ptr<Defaults> m_defaults = std::make_shared<Defaults>();
-	std::shared_ptr<ComponentFactory> m_componentFactory;
 	bool m_isConfirmDialogShowing = false;
 	Hierarchy m_hierarchy;
 	Inspector m_inspector;
@@ -109,19 +108,19 @@ public:
 		, m_dialogOverlayCanvas(Canvas::Create(Scene::Size())->setAutoFitMode(AutoFitMode::MatchSize))
 		, m_dialogContextMenu(std::make_shared<ContextMenu>(m_dialogOverlayCanvas, U"DialogContextMenu"))
 		, m_dialogOpener(std::make_shared<DialogOpener>(m_dialogCanvas, m_dialogContextMenu))
-		, m_componentFactory(std::make_shared<ComponentFactory>(ComponentFactory::GetBuiltinFactory()))
-		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this](const std::shared_ptr<Node>& node) { onExportAsSubCanvas(node); })
-		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, m_componentFactory, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); }, [this] { m_hierarchy.refreshNodeList(); })
+		, m_hierarchy(m_canvas, m_editorCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this](const std::shared_ptr<Node>& node) { onExportAsSubCanvas(node); })
+		, m_inspector(m_canvas, m_editorCanvas, m_editorOverlayCanvas, m_contextMenu, m_defaults, m_dialogOpener, [this] { m_hierarchy.refreshNodeNames(); }, [this] { m_hierarchy.refreshNodeActiveStates(); }, [this](const SizeF& prevSize, const SizeF& newSize) { keepCenterPositionOnCanvasResize(prevSize, newSize); }, [this] { m_hierarchy.refreshNodeList(); })
 		, m_menuBar(m_editorCanvas, m_contextMenu)
 		, m_toolbar(m_editorCanvas, m_editorOverlayCanvas)
 		, m_prevSceneSize(Scene::Size())
 	{
-		m_componentFactory->setUnknownComponentHandler(
+		// 未知のコンポーネントはPlaceholderComponentとして読み込む(SubCanvasが読み込む入れ子Canvasにも適用される)
+		noco::SetUnknownComponentHandler(
 			[](const String& type, const JSON& json, noco::detail::WithInstanceIdYN withInstanceId) -> std::shared_ptr<ComponentBase>
 			{
 				return PlaceholderComponent::Create(type, json, withInstanceId);
 			});
-		
+
 		// カスタム定義(コンポーネントスキーマ・フォント・シェーダー)を読み込み
 		m_customAssetLoader.reload(none);
 
@@ -954,7 +953,7 @@ public:
 			warningMessages.push_back(U"新しいバージョンのNocoEditor({})で作成されたファイルを開きました。\n上書き保存すると、ファイル内容が一部欠損する可能性があります。"_fmt(fileVersion));
 		}
 		
-		if (!m_canvas->tryReadFromJSON(json, *m_componentFactory, WithInstanceIdYN::No))
+		if (!m_canvas->tryReadFromJSON(json, WithInstanceIdYN::No))
 		{
 			if (showMessageBoxOnError)
 			{
@@ -1132,7 +1131,7 @@ public:
 		exportCanvas->setDefaultFontAssetName(m_canvas->defaultFontAssetName());
 
 		const JSON nodeJSON = selectedNode->toJSON();
-		exportCanvas->addChildFromJSON(nodeJSON, *m_componentFactory);
+		exportCanvas->addChildFromJSON(nodeJSON);
 
 		// 書き出し先のルートノードのRegionとTransformは初期化
 		// （書き出し元Canvas側にもTransformがあるため二重になるのを防ぐ）
@@ -1296,7 +1295,7 @@ public:
 		// childrenを新規ノードの子として追加
 		for (const auto& childJSON : canvasJSON[U"children"].arrayView())
 		{
-			wrapperNode->addChildFromJSON(childJSON, *m_componentFactory);
+			wrapperNode->addChildFromJSON(childJSON);
 		}
 
 		m_canvas->refreshLayoutImmediately();
@@ -1314,7 +1313,7 @@ public:
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSON(*undoState, *m_componentFactory, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*undoState, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元
@@ -1338,7 +1337,7 @@ public:
 			// 現在選択中のノードのinstanceIdを保存
 			const auto selectedNodeIds = saveSelectedNodeIds();
 			
-			m_canvas->tryReadFromJSON(*redoState, *m_componentFactory, WithInstanceIdYN::Yes);
+			m_canvas->tryReadFromJSON(*redoState, WithInstanceIdYN::Yes);
 			refresh();
 			
 			// 選択を復元

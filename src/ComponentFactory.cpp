@@ -29,4 +29,23 @@ namespace noco
 		static ComponentFactory builtinFactory = CreateWithBuiltinComponents();
 		return builtinFactory;
 	}
+
+	namespace detail
+	{
+		ComponentFactory& GetGlobalComponentFactory()
+		{
+			static ComponentFactory globalFactory = ComponentFactory::CreateWithBuiltinComponents();
+			return globalFactory;
+		}
+	}
+
+	void SetUnknownComponentHandler(const ComponentFactory::UnknownComponentHandler& handler)
+	{
+		detail::GetGlobalComponentFactory().setUnknownComponentHandler(handler);
+	}
+
+	void ResetSerializableComponents()
+	{
+		detail::GetGlobalComponentFactory() = ComponentFactory::CreateWithBuiltinComponents();
+	}
 }
