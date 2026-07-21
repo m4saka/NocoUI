@@ -17,6 +17,12 @@ namespace noco
 			return BaseDirectoryPath();
 		}
 
+		std::function<Texture(FilePathView, MipmapEnabledYN)>& TextureLoader()
+		{
+			static std::function<Texture(FilePathView, MipmapEnabledYN)> loader;
+			return loader;
+		}
+
 		/// @brief パスが絶対パスかどうかを判定
 		/// @param path 判定するパス
 		/// @return 絶対パスの場合true
@@ -86,10 +92,22 @@ namespace noco
 			{
 				return EmptyTexture;
 			}
-			table.registerAsset(filePath, Texture{ fullPath, mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped });
+			if (const auto& loader = TextureLoader())
+			{
+				table.registerAsset(filePath, loader(filePath, mipmapEnabled));
+			}
+			else
+			{
+				table.registerAsset(filePath, Texture{ fullPath, mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped });
+			}
 		}
 
 		return table.get(filePath);
+	}
+
+	void Asset::SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader)
+	{
+		TextureLoader() = std::move(loader);
 	}
 
 	const Texture& Asset::ReloadTexture(FilePathView filePath)

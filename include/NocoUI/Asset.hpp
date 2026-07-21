@@ -112,6 +112,9 @@ namespace noco
 		[[nodiscard]]
 		const Texture& GetOrLoadTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled);
 
+		/// @brief テクスチャの読み込み処理を差し替える(nullptrで既定の読み込みに戻す)
+		void SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader);
+
 		/// @brief テクスチャを再読み込み
 		/// @param filePath テクスチャファイルのパス
 		/// @return 再読み込みしたテクスチャ
