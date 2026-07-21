@@ -47,6 +47,17 @@ namespace noco
 		inline bool s_prevWindowFocused = true;
 		inline bool s_windowFocusedThisFrame = false;
 
+		[[nodiscard]]
+		inline bool IsWindowFocused()
+		{
+#ifdef __EMSCRIPTEN__
+			// Web版ではemscriptenのGLFW実装の制限でWindow::GetState().focusedが常にfalseになるため、常にフォーカスありとして扱う
+			return true;
+#else
+			return Window::GetState().focused;
+#endif
+		}
+
 		inline void UpdateWindowFocusedThisFrameIfNeeded()
 		{
 			const int32 currentFrameCount = Scene::FrameCount();
@@ -57,7 +68,7 @@ namespace noco
 			s_lastUpdatedWindowFocusFrameCount = currentFrameCount;
 
 			// ウィンドウがアクティブ化されたフレームを検出(ウィンドウをアクティブ化するためのクリックを入力として扱わないための判定に使用)
-			const bool windowFocused = Window::GetState().focused;
+			const bool windowFocused = IsWindowFocused();
 			s_windowFocusedThisFrame = windowFocused && !s_prevWindowFocused;
 			s_prevWindowFocused = windowFocused;
 		}

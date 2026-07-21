@@ -794,7 +794,7 @@ namespace noco
 		// ウィンドウをアクティブ化するためのクリックを入力として扱わない設定の場合、ウィンドウがアクティブ化されたフレームはマウス入力を無視する
 		const bool ignoreMouseInput = detail::s_windowFocusedThisFrame && IsWindowFocusClickIgnored();
 
-		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && Window::GetState().focused && !ignoreMouseInput;
+		const bool canHover = hitTestEnabled && !CurrentFrame::AnyNodeHovered() && detail::IsWindowFocused() && !ignoreMouseInput;
 		std::shared_ptr<Node> hoveredNode = nullptr;
 		if (canHover)
 		{
