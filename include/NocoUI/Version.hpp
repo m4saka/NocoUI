@@ -3,7 +3,7 @@
 
 namespace noco
 {
-	constexpr StringView NocoUIVersion = U"0.5.1-beta1";
+	constexpr StringView NocoUIVersion = U"0.5.1";
 
 	constexpr int32 CurrentSerializedVersion = 12;
 
