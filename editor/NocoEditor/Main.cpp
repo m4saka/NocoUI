@@ -946,10 +946,10 @@ public:
 		Array<String> warningMessages;
 		
 		// serializedVersionのチェック
-		const int32 fileSerializedVersion = json.contains(U"serializedVersion") ? json[U"serializedVersion"].get<int32>() : 0;
+		const int32 fileSerializedVersion = json.contains(U"serializedVersion") ? json[U"serializedVersion"].getOr<int32>(0) : 0;
 		if (fileSerializedVersion > noco::CurrentSerializedVersion)
 		{
-			const String fileVersion = json.contains(U"version") ? json[U"version"].get<String>() : U"unknown";
+			const String fileVersion = json.contains(U"version") ? json[U"version"].getOr<String>(U"unknown") : U"unknown";
 			warningMessages.push_back(U"新しいバージョンのNocoEditor({})で作成されたファイルを開きました。\n上書き保存すると、ファイル内容が一部欠損する可能性があります。"_fmt(fileVersion));
 		}
 		

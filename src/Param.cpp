@@ -72,7 +72,8 @@ namespace noco
 		{
 			return ParamValue{ json.getString() };
 		}
-		else if (type == ParamType::Color && json.isArray() && json.size() == 4)
+		// Color・Vec2・LRTBは要素が数値でない場合にget<T>()がs3d::Errorを送出するため、要素の型も確認する(不正な場合はnoneを返す)
+		else if (type == ParamType::Color && json.isArray() && json.size() == 4 && json[0].isNumber() && json[1].isNumber() && json[2].isNumber() && json[3].isNumber())
 		{
 			const int32 r = json[0].get<int32>();
 			const int32 g = json[1].get<int32>();
@@ -80,13 +81,13 @@ namespace noco
 			const int32 a = json[3].get<int32>();
 			return ParamValue{ Color{ static_cast<uint8>(Clamp(r, 0, 255)), static_cast<uint8>(Clamp(g, 0, 255)), static_cast<uint8>(Clamp(b, 0, 255)), static_cast<uint8>(Clamp(a, 0, 255)) } };
 		}
-		else if (type == ParamType::Vec2 && json.isArray() && json.size() == 2)
+		else if (type == ParamType::Vec2 && json.isArray() && json.size() == 2 && json[0].isNumber() && json[1].isNumber())
 		{
 			const double x = json[0].get<double>();
 			const double y = json[1].get<double>();
 			return ParamValue{ Vec2{ x, y } };
 		}
-		else if (type == ParamType::LRTB && json.isArray() && json.size() == 4)
+		else if (type == ParamType::LRTB && json.isArray() && json.size() == 4 && json[0].isNumber() && json[1].isNumber() && json[2].isNumber() && json[3].isNumber())
 		{
 			const double left = json[0].get<double>();
 			const double right = json[1].get<double>();

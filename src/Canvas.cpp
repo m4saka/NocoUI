@@ -487,6 +487,8 @@ namespace noco
 	}
 
 	std::shared_ptr<Canvas> Canvas::CreateFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	// 不正な型の値を含むJSONではget<T>()等がs3d::Errorを送出するため、関数全体で捕捉してnullptrを返す
+	try
 	{
 		if (!json.contains(U"version"))
 		{
@@ -596,6 +598,11 @@ namespace noco
 
 		return canvas;
 	}
+	catch (const Error& e)
+	{
+		Logger << U"[NocoUI error] Canvas::CreateFromJSON: Failed to parse JSON: {}"_fmt(e.what());
+		return nullptr;
+	}
 
 	std::shared_ptr<Canvas> Canvas::LoadFromFile(FilePathView path, AllowExceptions allowExceptions)
 	{
@@ -628,6 +635,8 @@ namespace noco
 	}
 
 	bool Canvas::tryReadFromJSONImpl(const JSON& json, const ComponentFactory& componentFactory, detail::WithInstanceIdYN withInstanceId)
+	// 不正な型の値を含むJSONではget<T>()等がs3d::Errorを送出するため、関数全体で捕捉してfalseを返す
+	try
 	{
 		if (!json.contains(U"serializedVersion"))
 		{
@@ -647,37 +656,30 @@ namespace noco
 			return false;
 		}
 
+		// 途中で例外が送出されても状態が中途半端に変更されないよう、すべての値を変数に読み込んでから最後にまとめて反映
+
 		// 旧バージョンの互換性対応に使うためserializedVersionは先に読み込む
-		m_serializedVersion = json[U"serializedVersion"].get<int32>();
-		if (m_serializedVersion > CurrentSerializedVersion)
+		const int32 serializedVersion = json[U"serializedVersion"].get<int32>();
+		if (serializedVersion > CurrentSerializedVersion)
 		{
 			const String version = json.contains(U"version") ? json[U"version"].get<String>() : U"unknown";
 			Logger << U"[NocoUI warning] Opening file created with newer NocoUI version (version: {}, serializedVersion: {}). Current serializedVersion: {}"_fmt(
-				version, m_serializedVersion, CurrentSerializedVersion);
+				version, serializedVersion, CurrentSerializedVersion);
 		}
 		
 		// referenceSizeの読み込み(必須フィールド)
 		const SizeF referenceSize = FromArrayJSON<Vec2>(json[U"referenceSize"], SizeF{ 800, 600 });
-		m_referenceSize = referenceSize;
-		m_size = referenceSize;  // 初期サイズとしても使用
 
-		for (const auto& child : m_children)
-		{
-			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
-			child->m_parent.reset();
-			child->refreshActiveInHierarchy();
-		}
-		m_children.clear();
-
+		Array<std::shared_ptr<Node>> newChildren;
 		for (const auto& childJson : json[U"children"].arrayView())
 		{
 			if (auto child = Node::CreateFromJSONImpl(childJson, componentFactory, withInstanceId))
 			{
-				addChild(child);
+				newChildren.push_back(std::move(child));
 			}
 		}
 
-		m_params.clear();
+		HashTable<String, ParamValue> newParams;
 		if (json.contains(U"params"))
 		{
 			if (json[U"params"].isObject())
@@ -691,64 +693,72 @@ namespace noco
 						continue;
 					}
 					const auto& paramObjectJSON = member.value;
-					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON, m_serializedVersion))
+					if (auto value = ParamValueFromParamObjectJSON(paramObjectJSON, serializedVersion))
 					{
-						m_params[name] = *value;
+						newParams[name] = *value;
 					}
 				}
 			}
 		}
 
+		AutoFitMode autoFitMode = AutoFitMode::None;
 		if (json.contains(U"autoFitMode"))
 		{
 			if (const auto modeOpt = StringToValueOpt<AutoFitMode>(json[U"autoFitMode"].get<String>()))
 			{
-				m_autoFitMode = *modeOpt;
+				autoFitMode = *modeOpt;
 			}
-			else
-			{
-				m_autoFitMode = AutoFitMode::None;
-			}
-		}
-		else
-		{
-			m_autoFitMode = AutoFitMode::None;
 		}
 
+		String defaultFontAssetName = U"";
 		if (json.contains(U"defaultFontAssetName"))
 		{
-			m_defaultFontAssetName = json[U"defaultFontAssetName"].get<String>();
-		}
-		else
-		{
-			m_defaultFontAssetName = U"";
+			defaultFontAssetName = json[U"defaultFontAssetName"].get<String>();
 		}
 
+		LayoutVariant childrenLayout = FlowLayout{};
 		if (json.contains(U"childrenLayout") && json[U"childrenLayout"].contains(U"type"))
 		{
 			const auto type = json[U"childrenLayout"][U"type"].getString();
 			if (type == U"FlowLayout")
 			{
-				m_childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
+				childrenLayout = FlowLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"HorizontalLayout")
 			{
-				m_childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
+				childrenLayout = HorizontalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else if (type == U"VerticalLayout")
 			{
-				m_childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
+				childrenLayout = VerticalLayout::FromJSON(json[U"childrenLayout"]);
 			}
 			else
 			{
 				Logger << U"[NocoUI warning] Unknown children layout type: '{}'"_fmt(type);
-				m_childrenLayout = FlowLayout{};
 			}
 		}
-		else
+
+		m_serializedVersion = serializedVersion;
+		m_referenceSize = referenceSize;
+		m_size = referenceSize;  // 初期サイズとしても使用
+
+		for (const auto& child : m_children)
 		{
-			m_childrenLayout = FlowLayout{};
+			child->setCanvasRecursive(std::weak_ptr<Canvas>{});
+			child->m_parent.reset();
+			child->refreshActiveInHierarchy();
 		}
+		m_children.clear();
+
+		for (const auto& child : newChildren)
+		{
+			addChild(child);
+		}
+
+		m_params = std::move(newParams);
+		m_autoFitMode = autoFitMode;
+		m_defaultFontAssetName = std::move(defaultFontAssetName);
+		m_childrenLayout = std::move(childrenLayout);
 
 		markLayoutAsDirty();
 
@@ -761,6 +771,11 @@ namespace noco
 		m_lastAutoFitSceneSize = none;
 
 		return true;
+	}
+	catch (const Error& e)
+	{
+		Logger << U"[NocoUI error] Canvas::tryReadFromJSON: Failed to parse JSON: {}"_fmt(e.what());
+		return false;
 	}
 	
 	void Canvas::update(HitTestEnabledYN hitTestEnabled)
