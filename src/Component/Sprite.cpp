@@ -614,8 +614,8 @@ namespace noco
 				return;
 			}
 			
-			// 範囲チェック
-			const int32 maxIndex = columns * rows;
+			// 範囲チェック(int32同士の乗算で範囲を超えないようint64で計算)
+			const int64 maxIndex = static_cast<int64>(columns) * rows;
 			if (index < 0 || index >= maxIndex)
 			{
 				// インデックスが範囲外の場合は描画しない

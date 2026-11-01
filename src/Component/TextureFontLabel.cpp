@@ -109,7 +109,8 @@ namespace noco
 			}
 		}
 
-		const int32 maxIndex = textureGridColumns * textureGridRows;
+		// int32同士の乗算で範囲を超えないようint64で計算
+		const int64 maxIndex = static_cast<int64>(textureGridColumns) * textureGridRows;
 		size_t normalizedIndex = 0;
 
 		for (char32 ch : characterSet)
@@ -119,7 +120,7 @@ namespace noco
 				continue;
 			}
 
-			if (static_cast<int32>(normalizedIndex) >= maxIndex)
+			if (static_cast<int64>(normalizedIndex) >= maxIndex)
 			{
 				break;
 			}
