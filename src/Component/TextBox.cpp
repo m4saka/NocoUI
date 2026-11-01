@@ -364,6 +364,13 @@ namespace noco
 	{
 		m_isChanged = false;
 
+		// paramRef等によりsetTextを経由せずテキストが短くなった場合に範囲外アクセスしないよう、カーソル位置をテキスト長に丸める
+		{
+			const size_t textSize = m_text.value().size();
+			m_cursorIndex = Min(m_cursorIndex, textSize);
+			m_selectionAnchor = Min(m_selectionAnchor, textSize);
+		}
+
 		// Interactableがfalseの場合、または他のテキストボックスが編集中の場合は選択解除
 		if (m_isEditing && (!node->interactable() || GetEditingTextBox().get() != static_cast<ITextBox*>(this)))
 		{
