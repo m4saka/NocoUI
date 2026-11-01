@@ -777,6 +777,9 @@ namespace noco
 	{
 		static const Array<String> EmptyStringArray{};
 
+		// ユーザーコード内でCanvasの最後の参照が解放されても更新処理中に破棄されないよう、自身を保持
+		const auto thisCanvas = shared_from_this();
+
 		m_eventRegistry.clear();
 
 		noco::detail::ClearCanvasUpdateContextIfNeeded();

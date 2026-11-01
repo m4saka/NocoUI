@@ -220,7 +220,9 @@ namespace noco
 		}
 
 		// Canvasを更新
-		if (m_canvas)
+		// (更新中のユーザーコードでsetCanvasPath等によりm_canvasが差し替えられても破棄されないよう、参照を保持)
+		const std::shared_ptr<Canvas> canvas = m_canvas;
+		if (canvas)
 		{
 			// serializedParamsJSONが変更されていたらパースして適用
 			const String& currentSerializedParamsJSON = m_serializedParamsJSON.value();
@@ -233,10 +235,10 @@ namespace noco
 					const JSON json = JSON::Parse(currentSerializedParamsJSON);
 					if (json.isObject())
 					{
-						m_canvas->setParamsByJSON(json);
+						canvas->setParamsByJSON(json);
 
 						// 元となる上書き値が必要なモードで使う静的な値キャッシュを構築
-						const auto& subCanvasParams = m_canvas->params();
+						const auto& subCanvasParams = canvas->params();
 						for (const auto& [key, valueJSON] : json)
 						{
 							const auto it = subCanvasParams.find(key);
@@ -287,7 +289,7 @@ namespace noco
 					const JSON json = JSON::Parse(currentParamBindingModesJSON);
 					if (json.isObject())
 					{
-						const auto& subCanvasParams = m_canvas->params();
+						const auto& subCanvasParams = canvas->params();
 						for (const auto& [subCanvasParamName, modeJSON] : json)
 						{
 							if (!modeJSON.isString())
@@ -329,7 +331,7 @@ namespace noco
 				if (auto parentCanvas = node->containedCanvas())
 				{
 					const auto& parentParams = parentCanvas->params();
-					const auto& subCanvasParams = m_canvas->params();
+					const auto& subCanvasParams = canvas->params();
 					for (const auto& [subCanvasParamName, parentParamName] : m_paramBindingMappingCache)
 					{
 						const auto parentIt = parentParams.find(parentParamName);
@@ -368,19 +370,19 @@ namespace noco
 
 						if (auto result = ApplyParamRefMode(base, parentIt->second, mode, type))
 						{
-							m_canvas->setParamValue(subCanvasParamName, *result);
+							canvas->setParamValue(subCanvasParamName, *result);
 						}
 					}
 				}
 			}
 
 			// 親のinteractableを子Canvasに伝播
-			m_canvas->setInteractable(node->interactable());
+			canvas->setInteractable(node->interactable());
 
 			const AutoFitMode effectiveAutoFitMode = ToAutoFitMode(m_autoFitModeOverride.value(), m_loadedCanvasAutoFitMode);
-			if (m_canvas->autoFitMode() != effectiveAutoFitMode)
+			if (canvas->autoFitMode() != effectiveAutoFitMode)
 			{
-				m_canvas->setAutoFitMode(effectiveAutoFitMode);
+				canvas->setAutoFitMode(effectiveAutoFitMode);
 			}
 
 			// 親ノードの変換行列を子Canvasに伝播
@@ -391,9 +393,9 @@ namespace noco
 			// AutoFitMode有効時はCanvas側がノードサイズを基準に配置するため、SubCanvas側ではセンタリングしない
 			const Vec2 centerOffset = (effectiveAutoFitMode != AutoFitMode::None)
 				? Vec2::Zero()
-				: (node->regionRect().size - m_canvas->size() * m_canvas->scale()) / 2.0;
+				: (node->regionRect().size - canvas->size() * canvas->scale()) / 2.0;
 			const Mat3x2 posTranslate = Mat3x2::Translate(node->regionRect().pos + centerOffset);
-			m_canvas->update(
+			canvas->update(
 				node->regionRect().size,
 				posTranslate * node->transformMatInHierarchy(),
 				posTranslate * node->hitTestMatInHierarchy(),
@@ -402,7 +404,7 @@ namespace noco
 			// ResizeToContent時は親ノードのRegionサイズを子Canvasサイズに合わせる
 			if (resizeNodeToCanvas)
 			{
-				const SizeF size = m_canvas->size();
+				const SizeF size = canvas->size();
 				if (node->regionRect().size != size)
 				{
 					if (const AnchorRegion* pAnchorRegion = node->anchorRegion())
@@ -426,7 +428,7 @@ namespace noco
 			// イベント伝播が有効な場合、子Canvasのイベントを親Canvasに伝播
 			if (m_propagateEvents.value())
 			{
-				const auto& events = m_canvas->getFiredEventsAll();
+				const auto& events = canvas->getFiredEventsAll();
 				if (!events.isEmpty())
 				{
 					if (auto parentCanvas = node->containedCanvas())
@@ -446,10 +448,11 @@ namespace noco
 
 	void SubCanvas::draw(const Node&) const
 	{
-		if (m_canvas)
+		const std::shared_ptr<Canvas> canvas = m_canvas;
+		if (canvas)
 		{
 			const Transformer2D transform{ Mat3x2::Identity(), Transformer2D::Target::SetLocal };
-			m_canvas->draw();
+			canvas->draw();
 		}
 	}
 
