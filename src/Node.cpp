@@ -1344,20 +1344,18 @@ namespace noco
 		// (クリッピング有効の場合は座標が自身の領域(※hitPaddingを含まない)内である場合のみ実行)
 		if (!m_clippingEnabled || m_hitQuad.contains(point))
 		{
-			m_tempChildrenBuffer.clear();
-			m_tempChildrenBuffer.reserve(m_children.size());
-			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortByZOrderInSiblings(m_tempChildrenBuffer, usePrevZOrderInSiblings);
+			// update中のユーザーコードからも呼ばれうるため、メンバの一時バッファではなく関数内で確保した一時バッファを使用
+			Array<std::shared_ptr<Node>> childrenBuffer(m_children.begin(), m_children.end());
+			SortByZOrderInSiblings(childrenBuffer, usePrevZOrderInSiblings);
 
 			// hitTestはzOrder降順で実行(手前から奥へ)
-			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
+			for (auto it = childrenBuffer.rbegin(); it != childrenBuffer.rend(); ++it)
 			{
 				if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 				{
 					return hoveredNode;
 				}
 			}
-			m_tempChildrenBuffer.clear();
 
 			// コンポーネント側でのhitTestを実行(SubCanvas等)
 			for (const auto& component : m_components)
@@ -1414,20 +1412,18 @@ namespace noco
 		// (クリッピング有効の場合は座標が自身の領域(※hitPaddingを含まない)内である場合のみ実行)
 		if (!m_clippingEnabled || m_hitQuad.contains(point))
 		{
-			m_tempChildrenBuffer.clear();
-			m_tempChildrenBuffer.reserve(m_children.size());
-			m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-			SortByZOrderInSiblings(m_tempChildrenBuffer, usePrevZOrderInSiblings);
+			// update中のユーザーコードからも呼ばれうるため、メンバの一時バッファではなく関数内で確保した一時バッファを使用
+			Array<std::shared_ptr<Node>> childrenBuffer(m_children.begin(), m_children.end());
+			SortByZOrderInSiblings(childrenBuffer, usePrevZOrderInSiblings);
 
 			// hitTestはzOrder降順で実行(手前から奥へ)
-			for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
+			for (auto it = childrenBuffer.rbegin(); it != childrenBuffer.rend(); ++it)
 			{
 				if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 				{
 					return hoveredNode;
 				}
 			}
-			m_tempChildrenBuffer.clear();
 		}
 
 		// 自身のヒットテスト実行

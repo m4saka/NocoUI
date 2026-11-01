@@ -1048,19 +1048,16 @@ namespace noco
 	std::shared_ptr<Node> Canvas::hitTest(const Vec2& point, OnlyScrollableYN onlyScrollable, detail::UsePrevZOrderInSiblingsYN usePrevZOrderInSiblings) const
 	{
 		// hitTestはzOrder降順で実行(手前から奥へ)
-		m_tempChildrenBuffer.clear();
-		m_tempChildrenBuffer.reserve(m_children.size());
-		m_tempChildrenBuffer.assign(m_children.begin(), m_children.end());
-		SortByZOrderInSiblings(m_tempChildrenBuffer);
-		for (auto it = m_tempChildrenBuffer.rbegin(); it != m_tempChildrenBuffer.rend(); ++it)
+		// update中のユーザーコードからも呼ばれうるため、メンバの一時バッファではなく関数内で確保した一時バッファを使用
+		Array<std::shared_ptr<Node>> childrenBuffer(m_children.begin(), m_children.end());
+		SortByZOrderInSiblings(childrenBuffer);
+		for (auto it = childrenBuffer.rbegin(); it != childrenBuffer.rend(); ++it)
 		{
 			if (const auto hoveredNode = (*it)->hitTest(point, onlyScrollable, usePrevZOrderInSiblings))
 			{
-				m_tempChildrenBuffer.clear();
 				return hoveredNode;
 			}
 		}
-		m_tempChildrenBuffer.clear();
 		return nullptr;
 	}
 	
