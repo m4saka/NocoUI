@@ -309,7 +309,8 @@ namespace noco
 
 					// 個別のトリミング指定があれば適用、なければ共通の幅を使用
 					double charWidth = targetCharacterSize.x + targetCharacterSpacing.x;
-					if (auto it = textureFontCache.metricsMap.find(ch); it != textureFontCache.metricsMap.end())
+					// (描画側と同様、textureCellSizeに0が含まれる場合はゼロ除算になるため、共通の幅を使用)
+					if (auto it = textureFontCache.metricsMap.find(ch); it != textureFontCache.metricsMap.end() && newTextureCellSize.x != 0.0 && newTextureCellSize.y != 0.0)
 					{
 						const double widthRatio = it->second.effectiveSize.x / newTextureCellSize.x;
 						charWidth = targetCharacterSize.x * widthRatio + targetCharacterSpacing.x;
