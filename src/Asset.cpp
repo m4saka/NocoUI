@@ -136,6 +136,24 @@ namespace noco
 			return texture.isEmpty() ? &texture : nullptr;
 		}
 
+		// 読み込みが完了するまでキャッシュに登録しておく空のテクスチャを削除(読み込み済みのテクスチャに置き換わっている場合は何もしない)
+		void RemoveAsyncTextureLoadPlaceholder(const AsyncTextureLoadRequest& request)
+		{
+			if (!FindAsyncTextureLoadPlaceholder(request))
+			{
+				return;
+			}
+
+			if (request.downscaleLevel)
+			{
+				detail::DownscaledTextureAssetTable().get(request.filePath).textures.erase(*request.downscaleLevel);
+				return;
+			}
+
+			auto& table = request.mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
+			table.unregister(request.filePath);
+		}
+
 		Texture CreateTexture(const Image& image, const AsyncTextureLoadRequest& request)
 		{
 			return Texture{ image, request.mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped };
@@ -367,6 +385,16 @@ namespace noco
 		// 読み込みが完了するまでは空のテクスチャを登録しておく
 		textures.emplace(downscaleLevel, Texture{});
 		RequestAsyncTextureLoad(AsyncTextureLoadRequest{ .filePath = FilePath{ filePath }, .downscaleLevel = downscaleLevel });
+	}
+
+	void Asset::CancelPendingAsyncTextureLoads()
+	{
+		auto& pending = PendingAsyncTextureLoads();
+		for (const auto& request : pending)
+		{
+			RemoveAsyncTextureLoadPlaceholder(request);
+		}
+		pending.clear();
 	}
 
 	void Asset::SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader)

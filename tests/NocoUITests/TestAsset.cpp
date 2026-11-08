@@ -134,3 +134,56 @@ TEST_CASE("Asset PrewarmTextureAsync", "[Asset]")
 	noco::Asset::UnloadAllTextures();
 	FileSystem::Remove(tempPath);
 }
+
+TEST_CASE("Asset CancelPendingAsyncTextureLoads", "[Asset]")
+{
+	// 同時に読み込む数の上限(2)を超える要求を出し、3つ目を待機中にする
+	Array<FilePath> tempPaths;
+	for (int32 i = 0; i < 3; ++i)
+	{
+		tempPaths.push_back(FileSystem::PathAppend(FileSystem::TemporaryDirectoryPath(), U"noco_test_cancel_pending_{}.png"_fmt(i)));
+		REQUIRE(Image{ 64, 64, Palette::White }.save(tempPaths.back()));
+	}
+	noco::Asset::UnloadAllTextures();
+
+	SECTION("Cancel removes placeholders of pending loads only")
+	{
+		noco::Asset::PrewarmTextureAsync(tempPaths[0], noco::MipmapEnabledYN::No);
+		noco::Asset::PrewarmDownscaledTextureAsync(tempPaths[1], SizeF{ 16, 16 }, noco::PreserveAspectYN::No);
+		noco::Asset::PrewarmTextureAsync(tempPaths[2], noco::MipmapEnabledYN::No);
+		REQUIRE(noco::detail::TextureAssetTable().isRegistered(tempPaths[2]));
+
+		noco::Asset::CancelPendingAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPaths[2]));
+		REQUIRE(noco::detail::TextureAssetTable().isRegistered(tempPaths[0]));
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPaths[1]).textures.contains(2));
+
+		WaitAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(noco::detail::TextureAssetTable().isRegistered(tempPaths[0]));
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPaths[1]).textures.contains(2));
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPaths[2]));
+	}
+
+	SECTION("Cancelled downscaled load can be requested again")
+	{
+		noco::Asset::PrewarmTextureAsync(tempPaths[0], noco::MipmapEnabledYN::No);
+		noco::Asset::PrewarmTextureAsync(tempPaths[1], noco::MipmapEnabledYN::No);
+		noco::Asset::PrewarmDownscaledTextureAsync(tempPaths[2], SizeF{ 16, 16 }, noco::PreserveAspectYN::No);
+		noco::Asset::CancelPendingAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::DownscaledTextureAssetTable().get(tempPaths[2]).textures.contains(2));
+
+		noco::Asset::PrewarmDownscaledTextureAsync(tempPaths[2], SizeF{ 16, 16 }, noco::PreserveAspectYN::No);
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPaths[2]).textures.contains(2));
+
+		WaitAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPaths[2]).textures.contains(2));
+	}
+
+	noco::Asset::UnloadAllTextures();
+	for (const auto& tempPath : tempPaths)
+	{
+		FileSystem::Remove(tempPath);
+	}
+}

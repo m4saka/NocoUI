@@ -186,6 +186,10 @@ namespace noco
 		/// @note SetTextureLoaderで読み込み処理を差し替えている場合は、別スレッドを使わずに読み込む
 		void PrewarmDownscaledTextureAsync(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect);
 
+		/// @brief 待機中の別スレッドでのテクスチャ読み込みを取り消す(実行中のものは継続する)
+		/// @note 取り消した読み込みの空のテクスチャはキャッシュから削除される
+		void CancelPendingAsyncTextureLoads();
+
 		/// @brief テクスチャの読み込み処理を差し替える(nullptrで既定の読み込みに戻す)
 		void SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader);
 
