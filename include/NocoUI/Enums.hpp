@@ -82,6 +82,13 @@ namespace noco
 		BorderColor,
 	};
 
+	enum class SpriteTextureDownscaleMode : uint8
+	{
+		None,
+		Mipmap,
+		Resize,
+	};
+
 	enum class SpriteFillDirection : uint8
 	{
 		BottomToTop,

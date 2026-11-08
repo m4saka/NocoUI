@@ -40,6 +40,11 @@ namespace noco
 				return *m_table.at(filePath);
 			}
 
+			T& get(FilePathView filePath)
+			{
+				return *m_table.at(filePath);
+			}
+
 			void clear()
 			{
 				m_table.clear();
@@ -72,6 +77,23 @@ namespace noco
 		inline AssetTable<Texture>& MipmappedTextureAssetTable()
 		{
 			static AssetTable<Texture> table;
+			return table;
+		}
+
+		// 描画サイズに合わせて縮小したテクスチャを、元画像のパス毎にまとめたもの
+		struct DownscaledTextureSet
+		{
+			// 元画像のサイズ(ヘッダから取得できなかった場合はnone)
+			Optional<Size> imageSize;
+
+			// 縦横を1/√2に縮小した回数毎のテクスチャ
+			HashTable<int32, Texture> textures;
+		};
+
+		// 縮小したテクスチャは、同一パスでも元のテクスチャとは別のテクスチャなので専用テーブルで管理する
+		inline AssetTable<DownscaledTextureSet>& DownscaledTextureAssetTable()
+		{
+			static AssetTable<DownscaledTextureSet> table;
 			return table;
 		}
 
@@ -112,6 +134,21 @@ namespace noco
 		[[nodiscard]]
 		const Texture& GetOrLoadTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled);
 
+		/// @brief 画像ファイルの縦横のピクセル数を取得
+		/// @param filePath 画像ファイルのパス
+		/// @return 縦横のピクセル数(ファイルが存在しない場合や取得できない場合はnone)
+		[[nodiscard]]
+		Optional<Size> GetImageSize(FilePathView filePath);
+
+		/// @brief 描画サイズに合わせて縮小したテクスチャを取得(未読み込みの場合はロードする)
+		/// @param filePath テクスチャファイルのパス
+		/// @param drawSize 画面上の描画サイズ
+		/// @param preserveAspect アスペクト比を保持するか
+		/// @return テクスチャ(縮小が不要な場合は元のテクスチャ)
+		/// @note SetTextureLoaderで読み込み処理を差し替えている場合は縮小しない
+		[[nodiscard]]
+		const Texture& GetOrLoadDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect);
+
 		/// @brief テクスチャの読み込み処理を差し替える(nullptrで既定の読み込みに戻す)
 		void SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader);
 
@@ -135,6 +172,7 @@ namespace noco
 		{
 			detail::TextureAssetTable().eraseIf(predicate);
 			detail::MipmappedTextureAssetTable().eraseIf(predicate);
+			detail::DownscaledTextureAssetTable().eraseIf(predicate);
 		}
 
 		/// @brief オーディオを取得(未読み込みの場合はロードする)

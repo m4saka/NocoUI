@@ -122,14 +122,24 @@ namespace noco
 
 	namespace
 	{
-		Texture GetTexture(const String& textureFilePath, const String& textureAssetName, MipmapEnabledYN mipmapEnabled)
+		// downscaleDrawSize指定時は描画サイズに合わせて縮小したテクスチャを取得
+		Texture GetTextureFromFilePath(const String& textureFilePath, MipmapEnabledYN mipmapEnabled, const Optional<Vec2>& downscaleDrawSize, bool preserveAspect)
+		{
+			if (downscaleDrawSize)
+			{
+				return noco::Asset::GetOrLoadDownscaledTexture(textureFilePath, *downscaleDrawSize, PreserveAspectYN{ preserveAspect });
+			}
+			return noco::Asset::GetOrLoadTexture(textureFilePath, mipmapEnabled);
+		}
+
+		Texture GetTexture(const String& textureFilePath, const String& textureAssetName, MipmapEnabledYN mipmapEnabled, const Optional<Vec2>& downscaleDrawSize, bool preserveAspect)
 		{
 			if (detail::IsEditorMode())
 			{
 				// エディタモードではアセット名は無視してファイル名のみを使用
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath, mipmapEnabled);
+					return GetTextureFromFilePath(textureFilePath, mipmapEnabled, downscaleDrawSize, preserveAspect);
 				}
 			}
 			else
@@ -142,7 +152,7 @@ namespace noco
 				}
 				if (!textureFilePath.empty())
 				{
-					return noco::Asset::GetOrLoadTexture(textureFilePath, mipmapEnabled);
+					return GetTextureFromFilePath(textureFilePath, mipmapEnabled, downscaleDrawSize, preserveAspect);
 				}
 			}
 			return Texture{};
@@ -408,8 +418,25 @@ namespace noco
 		}
 	}
 
+	bool Sprite::tryReadFromJSONOverrideInternal(const JSON& json, detail::WithInstanceIdYN withInstanceId)
+	{
+		if (!SerializableComponentBase::tryReadFromJSONOverrideInternal(json, withInstanceId))
+		{
+			return false;
+		}
+
+		// 旧バージョンのmipmapEnabledをMipmapとして読み込む
+		if (!json.contains(U"textureDownscaleMode") && json.contains(U"mipmapEnabled") && json[U"mipmapEnabled"].isBool() && json[U"mipmapEnabled"].get<bool>())
+		{
+			m_textureDownscaleMode.setPropertyValue(SpriteTextureDownscaleMode::Mipmap);
+		}
+		return true;
+	}
+
 	void Sprite::draw(const Node& node) const
 	{
+		const RectF rect = node.regionRect();
+
 		Texture texture;
 		
 		// m_textureOptが設定されている場合は優先的に使用
@@ -421,10 +448,25 @@ namespace noco
 		{
 			const String& textureFilePath = m_textureFilePath.value();
 			const String& textureAssetName = m_textureAssetName.value();
-			texture = GetTexture(textureFilePath, textureAssetName, MipmapEnabledYN{ m_mipmapEnabled.value() });
+
+			const SpriteTextureDownscaleMode downscaleMode = m_textureDownscaleMode.value();
+
+			// 縮小したテクスチャはテクスチャ全体を描画する場合のみ使用
+			Optional<Vec2> downscaleDrawSize;
+			if (downscaleMode == SpriteTextureDownscaleMode::Resize && m_textureRegionMode.value() == TextureRegionMode::Full && !m_nineSliceEnabled.value())
+			{
+				// 拡大縮小などの変換を反映した画面上のサイズ
+				const Vec2 drawSize = rect.size * Graphics2D::GetMaxScaling();
+				if (drawSize.x <= 0.0 || drawSize.y <= 0.0)
+				{
+					// 何も描画されないため、テクスチャを読み込まない
+					return;
+				}
+				downscaleDrawSize = drawSize;
+			}
+
+			texture = GetTexture(textureFilePath, textureAssetName, MipmapEnabledYN{ downscaleMode == SpriteTextureDownscaleMode::Mipmap }, downscaleDrawSize, m_preserveAspect.value());
 		}
-		
-		const RectF rect = node.regionRect();
 
 		// fillAmountによるクリップ矩形(1未満の場合のみ値あり)
 		const Optional<RectF> clipRect = fillRectOpt(rect);
@@ -479,7 +521,7 @@ namespace noco
 		Optional<ScopedRenderStates2D> samplerState;
 		const SpriteTextureFilter filterMode = m_textureFilter.value();
 		const SpriteTextureAddressMode addressMode = m_textureAddressMode.value();
-		const bool mipmapEnabled = m_mipmapEnabled.value();
+		const bool mipmapEnabled = m_textureDownscaleMode.value() == SpriteTextureDownscaleMode::Mipmap;
 		const double mipmapLodBias = m_mipmapLodBias.value();
 		// LODバイアスはミップマップ使用時のみ意味を持ち、0のときはSiv3D標準のサンプラーをそのまま使う
 		const bool applyLodBias = mipmapEnabled && mipmapLodBias != 0.0;

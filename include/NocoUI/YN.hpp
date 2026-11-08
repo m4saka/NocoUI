@@ -30,6 +30,7 @@ namespace noco
 	using OnlyScrollableYN = YesNo<struct OnlyScrollableYN_tag>;
 	using IncludeSubCanvasYN = YesNo<struct IncludeSubCanvasYN_tag>;
 	using MipmapEnabledYN = YesNo<struct MipmapEnabledYN_tag>;
+	using PreserveAspectYN = YesNo<struct PreserveAspectYN_tag>;
 
 	namespace detail
 	{

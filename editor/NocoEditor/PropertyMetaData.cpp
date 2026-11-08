@@ -22,7 +22,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return HasAnyTrueState(sprite->mipmapEnabled());
+				return sprite->textureDownscaleMode().hasAnyStateEqualTo(SpriteTextureDownscaleMode::Mipmap);
 			}
 			return true;
 		};
@@ -1051,14 +1051,14 @@ namespace noco::editor
 			.tooltipDetail = U"テクスチャ座標が範囲外の時の動作\nDefault: 現在の設定を使用\nRepeat: 繰り返し\nMirror: ミラー繰り返し\nClamp: 端の色で埋める\nBorderColor: 境界色で埋める",
 		};
 
-		metadata[PropertyKey{ U"Sprite", U"mipmapEnabled" }] = PropertyMetadata{
-			.tooltip = U"ミップマップを有効にするか",
-			.tooltipDetail = U"大きい画像を縮小表示する際のジャギー(縮小エイリアシング)を軽減します\n有効にするとロード時にミップマップを生成します(VRAM使用量が増加)\n※等倍〜拡大表示や小さい画像では効果がなく、無効のままで問題ありません",
+		metadata[PropertyKey{ U"Sprite", U"textureDownscaleMode" }] = PropertyMetadata{
+			.tooltip = U"テクスチャの縮小方法",
+			.tooltipDetail = U"大きい画像を縮小表示する際のジャギー(縮小エイリアシング)の軽減方法\nNone: 軽減しない\nMipmap: ロード時にミップマップを生成(VRAM使用量が増加)\nResize: 描画サイズに合わせてCPUで縮小したテクスチャを使用\n　※Resizeは、textureRegionModeがFullかつnineSliceEnabledが無効の場合のみ有効です\n　※Resizeでは描画サイズが大きく変わると新たにテクスチャを作成します\n※MipmapとResizeはtextureFilePath指定時のみ有効です(textureAssetNameの場合、ミップマップの有無はTextureAssetの登録時の設定に従います)\n※等倍〜拡大表示や小さい画像では効果がなく、Noneのままで問題ありません",
 			.refreshInspectorOnChange = true,
 		};
 		metadata[PropertyKey{ U"Sprite", U"mipmapLodBias" }] = PropertyMetadata{
 			.tooltip = U"ミップマップのLODバイアス",
-			.tooltipDetail = U"ミップマップ有効時のミップ選択を鮮鋭側/ぼかし側へずらします(0がSiv3D標準)\n負の値: 軽度の縮小でmip0を維持し鮮鋭に(ただし大縮小でジャギーが戻りやすい)\n正の値: よりぼかす\n※Web(WebGPU)版ではこの設定は無視されます",
+			.tooltipDetail = U"textureDownscaleModeがMipmapの場合に、使用するミップマップのレベルをずらします(0がSiv3Dの標準)\n負の値: より鮮明に表示(ただし大きく縮小するとジャギーが出やすい)\n正の値: よりぼかして表示\n※Web(WebGPU)版ではこの設定は無視されます",
 			.visibilityCondition = mipmapVisibilityCondition,
 			.dragValueChangeStep = 0.1,
 		};

@@ -23,6 +23,33 @@ namespace noco
 			return loader;
 		}
 
+		// 描画サイズを下回らない範囲で、縦横を1/√2に縮小する回数を計算
+		int32 CalculateDownscaleLevel(const Size& imageSize, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+		{
+			if (drawSize.x <= 0.0 || drawSize.y <= 0.0)
+			{
+				return 0;
+			}
+
+			// 元画像が描画サイズの何倍あるかを縦横それぞれで計算
+			const double ratioX = imageSize.x / drawSize.x;
+			const double ratioY = imageSize.y / drawSize.y;
+
+			// アスペクト比を保持する場合は縦横同じ倍率で描画されるため大きい方に合わせる
+			// 保持しない場合は縦横とも描画サイズを下回らないよう小さい方に合わせる
+			const double ratio = preserveAspect ? Max(ratioX, ratioY) : Min(ratioX, ratioY);
+
+			// 描画サイズに近すぎるとバイリニア補間でぼやけるため、描画サイズの√2倍より大きく2倍以下に縮小する
+			const double level = Math::Ceil(2.0 * Math::Log2(ratio) - 2.0);
+			if (level < 1.0)
+			{
+				return 0;
+			}
+
+			// 描画サイズが極端に小さい場合でもint32に変換できるよう制限
+			return static_cast<int32>(Min(level, 60.0));
+		}
+
 		/// @brief パスが絶対パスかどうかを判定
 		/// @param path 判定するパス
 		/// @return 絶対パスの場合true
@@ -105,6 +132,66 @@ namespace noco
 		return table.get(filePath);
 	}
 
+	Optional<Size> Asset::GetImageSize(FilePathView filePath)
+	{
+		if (filePath.isEmpty())
+		{
+			return none;
+		}
+
+		auto& table = detail::DownscaledTextureAssetTable();
+		if (!table.isRegistered(filePath))
+		{
+			const FilePath fullPath = GetFullPath(filePath);
+			if (!FileSystem::IsFile(fullPath))
+			{
+				return none;
+			}
+
+			// 毎フレーム読み直さないよう、取得できなかった場合もnoneとして登録する
+			Optional<Size> imageSize;
+			if (const Optional<ImageInfo> imageInfo = ImageDecoder::GetImageInfo(fullPath))
+			{
+				imageSize = imageInfo->size;
+			}
+			table.registerAsset(filePath, detail::DownscaledTextureSet{ .imageSize = imageSize });
+		}
+
+		return table.get(filePath).imageSize;
+	}
+
+	const Texture& Asset::GetOrLoadDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+	{
+		int32 downscaleLevel = 0;
+		if (!TextureLoader())
+		{
+			if (const Optional<Size> imageSize = GetImageSize(filePath))
+			{
+				downscaleLevel = CalculateDownscaleLevel(*imageSize, drawSize, preserveAspect);
+			}
+		}
+
+		if (downscaleLevel <= 0)
+		{
+			return GetOrLoadTexture(filePath, MipmapEnabledYN::No);
+		}
+
+		auto& textures = detail::DownscaledTextureAssetTable().get(filePath).textures;
+		if (!textures.contains(downscaleLevel))
+		{
+			Texture texture;
+			if (const Image image{ GetFullPath(filePath) })
+			{
+				const double scale = Math::Pow(2.0, -downscaleLevel / 2.0);
+				const Size size{ Max(static_cast<int32>(Math::Round(image.width() * scale)), 1), Max(static_cast<int32>(Math::Round(image.height() * scale)), 1) };
+				texture = Texture{ image.scaled(size, InterpolationAlgorithm::Area), TextureDesc::Unmipped };
+			}
+			textures.emplace(downscaleLevel, std::move(texture));
+		}
+
+		return textures.at(downscaleLevel);
+	}
+
 	void Asset::SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader)
 	{
 		TextureLoader() = std::move(loader);
@@ -112,6 +199,9 @@ namespace noco
 
 	const Texture& Asset::ReloadTexture(FilePathView filePath)
 	{
+		// 縮小したテクスチャは次に使われた時に作り直す
+		detail::DownscaledTextureAssetTable().unregister(filePath);
+
 		// Unmipped版とMipped版が両方キャッシュされている可能性があるため、登録済みのものをそれぞれ再読み込みする
 		const FilePath fullPath = GetFullPath(filePath);
 		auto& table = detail::TextureAssetTable();
@@ -154,6 +244,12 @@ namespace noco
 			mippedTable.unregister(filePath);
 			unloaded = true;
 		}
+		auto& downscaledTable = detail::DownscaledTextureAssetTable();
+		if (downscaledTable.isRegistered(filePath))
+		{
+			downscaledTable.unregister(filePath);
+			unloaded = true;
+		}
 		return unloaded;
 	}
 
@@ -161,6 +257,7 @@ namespace noco
 	{
 		detail::TextureAssetTable().clear();
 		detail::MipmappedTextureAssetTable().clear();
+		detail::DownscaledTextureAssetTable().clear();
 	}
 
 	const Audio& Asset::GetOrLoadAudio(FilePathView filePath)

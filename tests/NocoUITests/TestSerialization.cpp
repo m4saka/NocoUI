@@ -433,6 +433,56 @@ TEST_CASE("Sprite fill properties serialization", "[Sprite][JSON][Serialization]
 	}
 }
 
+TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serialization]")
+{
+	SECTION("Custom value")
+	{
+		auto node = noco::Node::Create(U"SpriteNode");
+		auto sprite = node->emplaceComponent<noco::Sprite>();
+		sprite->setTextureDownscaleMode(noco::SpriteTextureDownscaleMode::Resize);
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
+		REQUIRE(restoredSprite != nullptr);
+		REQUIRE(restoredSprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Resize);
+	}
+
+	SECTION("mipmapEnabled is read as Mipmap")
+	{
+		JSON json;
+		json[U"type"] = U"Sprite";
+		json[U"mipmapEnabled"] = true;
+
+		auto sprite = std::make_shared<noco::Sprite>();
+		REQUIRE(sprite->tryReadFromJSON(json));
+		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Mipmap);
+	}
+
+	SECTION("mipmapEnabled false is read as None")
+	{
+		JSON json;
+		json[U"type"] = U"Sprite";
+		json[U"mipmapEnabled"] = false;
+
+		auto sprite = std::make_shared<noco::Sprite>();
+		REQUIRE(sprite->tryReadFromJSON(json));
+		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::None);
+	}
+
+	SECTION("textureDownscaleMode takes precedence over mipmapEnabled")
+	{
+		JSON json;
+		json[U"type"] = U"Sprite";
+		json[U"textureDownscaleMode"] = U"Resize";
+		json[U"mipmapEnabled"] = true;
+
+		auto sprite = std::make_shared<noco::Sprite>();
+		REQUIRE(sprite->tryReadFromJSON(json));
+		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Resize);
+	}
+}
+
 TEST_CASE("Tween trigger properties serialization", "[Tween][JSON][Serialization]")
 {
 	SECTION("Default values")

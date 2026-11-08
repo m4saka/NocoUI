@@ -43,7 +43,7 @@ namespace noco
 		PropertyNonInteractive<Vec2> m_offsetAnimationSpeed;
 		Property<SpriteTextureFilter> m_textureFilter;
 		Property<SpriteTextureAddressMode> m_textureAddressMode;
-		Property<bool> m_mipmapEnabled;
+		Property<SpriteTextureDownscaleMode> m_textureDownscaleMode;
 		Property<double> m_mipmapLodBias;
 		Property<String> m_pixelShaderAssetName;
 
@@ -59,9 +59,11 @@ namespace noco
 		void drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const;
 		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const;
 
+		bool tryReadFromJSONOverrideInternal(const JSON& json, detail::WithInstanceIdYN withInstanceId) override;
+
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<Color>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_fillDirection, &m_fillAmount, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_hideIfTextureEmpty, &m_textureAddressMode, &m_mipmapEnabled, &m_mipmapLodBias, &m_pixelShaderAssetName } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_fillDirection, &m_fillAmount, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_hideIfTextureEmpty, &m_textureAddressMode, &m_textureDownscaleMode, &m_mipmapLodBias, &m_pixelShaderAssetName } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
 			, m_color{ U"color", color }
@@ -96,7 +98,7 @@ namespace noco
 			, m_offsetAnimationSpeed{ U"offsetAnimationSpeed", Vec2{ 0.0, 0.0 } }
 			, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
 			, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
-			, m_mipmapEnabled{ U"mipmapEnabled", false }
+			, m_textureDownscaleMode{ U"textureDownscaleMode", SpriteTextureDownscaleMode::None }
 			, m_mipmapLodBias{ U"mipmapLodBias", 0.0 }
 			, m_pixelShaderAssetName{ U"pixelShaderAssetName", String{} }
 		{
@@ -536,14 +538,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<bool>& mipmapEnabled() const
+		const PropertyValue<SpriteTextureDownscaleMode>& textureDownscaleMode() const
 		{
-			return m_mipmapEnabled.propertyValue();
+			return m_textureDownscaleMode.propertyValue();
 		}
 
-		std::shared_ptr<Sprite> setMipmapEnabled(const PropertyValue<bool>& mipmapEnabled)
+		std::shared_ptr<Sprite> setTextureDownscaleMode(const PropertyValue<SpriteTextureDownscaleMode>& textureDownscaleMode)
 		{
-			m_mipmapEnabled.setPropertyValue(mipmapEnabled);
+			m_textureDownscaleMode.setPropertyValue(textureDownscaleMode);
 			return shared_from_this();
 		}
 
