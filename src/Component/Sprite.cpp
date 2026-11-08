@@ -425,10 +425,10 @@ namespace noco
 			return false;
 		}
 
-		// 旧バージョンのmipmapEnabledをMipmapとして読み込む
-		if (!json.contains(U"textureDownscaleMode") && json.contains(U"mipmapEnabled") && json[U"mipmapEnabled"].isBool() && json[U"mipmapEnabled"].get<bool>())
+		// 旧バージョンのmipmapEnabledをMipmapとして読み込む(状態毎の値を持つ場合はdefaultの値のみ使用)
+		if (!json.contains(U"textureDownscaleMode") && json.contains(U"mipmapEnabled") && PropertyValue<bool>::FromJSON(json[U"mipmapEnabled"], false).defaultValue())
 		{
-			m_textureDownscaleMode.setPropertyValue(SpriteTextureDownscaleMode::Mipmap);
+			m_textureDownscaleMode.setValue(SpriteTextureDownscaleMode::Mipmap);
 		}
 		return true;
 	}

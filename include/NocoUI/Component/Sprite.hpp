@@ -43,7 +43,7 @@ namespace noco
 		PropertyNonInteractive<Vec2> m_offsetAnimationSpeed;
 		Property<SpriteTextureFilter> m_textureFilter;
 		Property<SpriteTextureAddressMode> m_textureAddressMode;
-		Property<SpriteTextureDownscaleMode> m_textureDownscaleMode;
+		PropertyNonInteractive<SpriteTextureDownscaleMode> m_textureDownscaleMode;
 		Property<double> m_mipmapLodBias;
 		Property<String> m_pixelShaderAssetName;
 
@@ -538,14 +538,14 @@ namespace noco
 		}
 
 		[[nodiscard]]
-		const PropertyValue<SpriteTextureDownscaleMode>& textureDownscaleMode() const
+		SpriteTextureDownscaleMode textureDownscaleMode() const
 		{
-			return m_textureDownscaleMode.propertyValue();
+			return m_textureDownscaleMode.value();
 		}
 
-		std::shared_ptr<Sprite> setTextureDownscaleMode(const PropertyValue<SpriteTextureDownscaleMode>& textureDownscaleMode)
+		std::shared_ptr<Sprite> setTextureDownscaleMode(SpriteTextureDownscaleMode textureDownscaleMode)
 		{
-			m_textureDownscaleMode.setPropertyValue(textureDownscaleMode);
+			m_textureDownscaleMode.setValue(textureDownscaleMode);
 			return shared_from_this();
 		}
 

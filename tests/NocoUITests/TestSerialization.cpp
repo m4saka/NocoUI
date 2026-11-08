@@ -445,7 +445,7 @@ TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serializa
 		auto restoredNode = noco::Node::CreateFromJSON(json);
 		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
 		REQUIRE(restoredSprite != nullptr);
-		REQUIRE(restoredSprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Resize);
+		REQUIRE(restoredSprite->textureDownscaleMode() == noco::SpriteTextureDownscaleMode::Resize);
 	}
 
 	SECTION("mipmapEnabled is read as Mipmap")
@@ -456,7 +456,19 @@ TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serializa
 
 		auto sprite = std::make_shared<noco::Sprite>();
 		REQUIRE(sprite->tryReadFromJSON(json));
-		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Mipmap);
+		REQUIRE(sprite->textureDownscaleMode() == noco::SpriteTextureDownscaleMode::Mipmap);
+	}
+
+	SECTION("mipmapEnabled with interaction values is read by its default value")
+	{
+		JSON json;
+		json[U"type"] = U"Sprite";
+		json[U"mipmapEnabled"][U"default"] = true;
+		json[U"mipmapEnabled"][U"hovered"] = false;
+
+		auto sprite = std::make_shared<noco::Sprite>();
+		REQUIRE(sprite->tryReadFromJSON(json));
+		REQUIRE(sprite->textureDownscaleMode() == noco::SpriteTextureDownscaleMode::Mipmap);
 	}
 
 	SECTION("mipmapEnabled false is read as None")
@@ -467,7 +479,7 @@ TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serializa
 
 		auto sprite = std::make_shared<noco::Sprite>();
 		REQUIRE(sprite->tryReadFromJSON(json));
-		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::None);
+		REQUIRE(sprite->textureDownscaleMode() == noco::SpriteTextureDownscaleMode::None);
 	}
 
 	SECTION("textureDownscaleMode takes precedence over mipmapEnabled")
@@ -479,7 +491,7 @@ TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serializa
 
 		auto sprite = std::make_shared<noco::Sprite>();
 		REQUIRE(sprite->tryReadFromJSON(json));
-		REQUIRE(sprite->textureDownscaleMode().defaultValue() == noco::SpriteTextureDownscaleMode::Resize);
+		REQUIRE(sprite->textureDownscaleMode() == noco::SpriteTextureDownscaleMode::Resize);
 	}
 }
 

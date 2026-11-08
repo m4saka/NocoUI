@@ -22,7 +22,7 @@ namespace noco::editor
 		{
 			if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
 			{
-				return sprite->textureDownscaleMode().hasAnyStateEqualTo(SpriteTextureDownscaleMode::Mipmap);
+				return sprite->textureDownscaleMode() == SpriteTextureDownscaleMode::Mipmap;
 			}
 			return true;
 		};
