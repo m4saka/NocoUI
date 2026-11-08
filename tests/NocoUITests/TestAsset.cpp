@@ -44,3 +44,34 @@ TEST_CASE("Asset GetOrLoadDownscaledTexture", "[Asset]")
 	FileSystem::Remove(squarePath);
 	FileSystem::Remove(widePath);
 }
+
+TEST_CASE("Asset PrewarmTexture", "[Asset]")
+{
+	const FilePath tempPath = FileSystem::PathAppend(FileSystem::TemporaryDirectoryPath(), U"noco_test_prewarm.png");
+	REQUIRE(Image{ 64, 64, Palette::White }.save(tempPath));
+	noco::Asset::UnloadAllTextures();
+
+	SECTION("PrewarmTexture")
+	{
+		noco::Asset::PrewarmTexture(tempPath, noco::MipmapEnabledYN::No);
+		REQUIRE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+		REQUIRE_FALSE(noco::detail::MipmappedTextureAssetTable().isRegistered(tempPath));
+	}
+
+	SECTION("PrewarmTexture with mipmap")
+	{
+		noco::Asset::PrewarmTexture(tempPath, noco::MipmapEnabledYN::Yes);
+		REQUIRE(noco::detail::MipmappedTextureAssetTable().isRegistered(tempPath));
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+	}
+
+	SECTION("PrewarmDownscaledTexture")
+	{
+		noco::Asset::PrewarmDownscaledTexture(tempPath, SizeF{ 16, 16 }, noco::PreserveAspectYN::No);
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPath).textures.contains(2));
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+	}
+
+	noco::Asset::UnloadAllTextures();
+	FileSystem::Remove(tempPath);
+}

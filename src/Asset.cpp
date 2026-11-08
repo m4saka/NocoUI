@@ -132,6 +132,11 @@ namespace noco
 		return table.get(filePath);
 	}
 
+	void Asset::PrewarmTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled)
+	{
+		static_cast<void>(GetOrLoadTexture(filePath, mipmapEnabled));
+	}
+
 	Optional<Size> Asset::GetImageSize(FilePathView filePath)
 	{
 		if (filePath.isEmpty())
@@ -190,6 +195,11 @@ namespace noco
 		}
 
 		return textures.at(downscaleLevel);
+	}
+
+	void Asset::PrewarmDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+	{
+		static_cast<void>(GetOrLoadDownscaledTexture(filePath, drawSize, preserveAspect));
 	}
 
 	void Asset::SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader)
