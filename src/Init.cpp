@@ -1,8 +1,27 @@
 ﻿#include "NocoUI/Init.hpp"
+#include "NocoUI/Asset.hpp"
 
 namespace
 {
 	bool s_initialized = false;
+
+	// 別スレッドでのテクスチャ読み込みを毎フレーム進めるアドオン
+	class AsyncTextureLoadAddon : public IAddon
+	{
+	public:
+		static constexpr StringView AddonName{ U"noco::AsyncTextureLoadAddon" };
+
+		~AsyncTextureLoadAddon() override
+		{
+			noco::detail::ShutdownAsyncTextureLoads();
+		}
+
+		bool update() override
+		{
+			noco::detail::UpdateAsyncTextureLoads();
+			return true;
+		}
+	};
 }
 
 namespace noco
@@ -22,6 +41,8 @@ namespace noco
 		{
 			AddMagicEnumLicense();
 		}
+
+		Addon::Register(AsyncTextureLoadAddon::AddonName, std::make_unique<AsyncTextureLoadAddon>());
 
 		s_initialized = true;
 	}

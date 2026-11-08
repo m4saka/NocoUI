@@ -75,3 +75,62 @@ TEST_CASE("Asset PrewarmTexture", "[Asset]")
 	noco::Asset::UnloadAllTextures();
 	FileSystem::Remove(tempPath);
 }
+
+namespace
+{
+	// 別スレッドでのテクスチャ読み込みがすべて終わるまで進める
+	void WaitAsyncTextureLoads()
+	{
+		const Stopwatch stopwatch{ StartImmediately::Yes };
+		while (noco::detail::HasAsyncTextureLoads() && stopwatch.s() < 10)
+		{
+			noco::detail::UpdateAsyncTextureLoads();
+			System::Sleep(1);
+		}
+	}
+}
+
+TEST_CASE("Asset PrewarmTextureAsync", "[Asset]")
+{
+	const FilePath tempPath = FileSystem::PathAppend(FileSystem::TemporaryDirectoryPath(), U"noco_test_prewarm_async.png");
+	REQUIRE(Image{ 64, 64, Palette::White }.save(tempPath));
+	noco::Asset::UnloadAllTextures();
+
+	SECTION("PrewarmTextureAsync")
+	{
+		noco::Asset::PrewarmTextureAsync(tempPath, noco::MipmapEnabledYN::No);
+
+		// 読み込み中は空のテクスチャが登録され、GetOrLoadTextureはそれを返す
+		REQUIRE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(&noco::Asset::GetOrLoadTexture(tempPath, noco::MipmapEnabledYN::No) == &noco::detail::TextureAssetTable().get(tempPath));
+
+		WaitAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+	}
+
+	SECTION("PrewarmDownscaledTextureAsync")
+	{
+		noco::Asset::PrewarmDownscaledTextureAsync(tempPath, SizeF{ 16, 16 }, noco::PreserveAspectYN::No);
+		REQUIRE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPath).textures.contains(2));
+
+		WaitAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE(noco::detail::DownscaledTextureAssetTable().get(tempPath).textures.contains(2));
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+	}
+
+	SECTION("Unload while loading discards the result")
+	{
+		noco::Asset::PrewarmTextureAsync(tempPath, noco::MipmapEnabledYN::No);
+		noco::Asset::UnloadTexture(tempPath);
+
+		WaitAsyncTextureLoads();
+		REQUIRE_FALSE(noco::detail::HasAsyncTextureLoads());
+		REQUIRE_FALSE(noco::detail::TextureAssetTable().isRegistered(tempPath));
+	}
+
+	noco::Asset::UnloadAllTextures();
+	FileSystem::Remove(tempPath);
+}

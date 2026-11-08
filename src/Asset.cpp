@@ -50,6 +50,131 @@ namespace noco
 			return static_cast<int32>(Min(level, 60.0));
 		}
 
+		// 描画サイズに合わせて縦横を1/√2に縮小する回数を取得(縮小しない場合は0)
+		int32 GetDownscaleLevel(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+		{
+			// SetTextureLoaderで読み込み処理を差し替えている場合は縮小しない
+			if (TextureLoader())
+			{
+				return 0;
+			}
+
+			if (const Optional<Size> imageSize = Asset::GetImageSize(filePath))
+			{
+				return CalculateDownscaleLevel(*imageSize, drawSize, preserveAspect);
+			}
+			return 0;
+		}
+
+		// 画像を読み込み、downscaleLevelが指定されている場合は縦横を1/√2に縮小する
+		Image DecodeImage(FilePathView fullPath, const Optional<int32>& downscaleLevel)
+		{
+			Image image{ fullPath };
+			if (image && downscaleLevel)
+			{
+				const double scale = Math::Pow(2.0, -*downscaleLevel / 2.0);
+				const Size size{ Max(static_cast<int32>(Math::Round(image.width() * scale)), 1), Max(static_cast<int32>(Math::Round(image.height() * scale)), 1) };
+				image = image.scaled(size, InterpolationAlgorithm::Area);
+			}
+			return image;
+		}
+
+		// 同時に別スレッドで読み込むテクスチャの数の上限
+		constexpr size_t MaxAsyncTextureLoads = 2;
+
+		// 別スレッドでのテクスチャ読み込みの要求
+		struct AsyncTextureLoadRequest
+		{
+			FilePath filePath;
+
+			MipmapEnabledYN mipmapEnabled = MipmapEnabledYN::No;
+
+			// 縮小したテクスチャの場合は縦横を1/√2に縮小する回数
+			Optional<int32> downscaleLevel;
+		};
+
+		struct AsyncTextureLoad
+		{
+			AsyncTextureLoadRequest request;
+
+			AsyncTask<Image> task;
+		};
+
+		Array<AsyncTextureLoadRequest>& PendingAsyncTextureLoads()
+		{
+			static Array<AsyncTextureLoadRequest> requests;
+			return requests;
+		}
+
+		Array<AsyncTextureLoad>& RunningAsyncTextureLoads()
+		{
+			static Array<AsyncTextureLoad> loads;
+			return loads;
+		}
+
+		// 読み込みが完了するまでキャッシュに登録しておく空のテクスチャを取得(キャッシュから削除された場合はnullptr)
+		Texture* FindAsyncTextureLoadPlaceholder(const AsyncTextureLoadRequest& request)
+		{
+			if (request.downscaleLevel)
+			{
+				auto& table = detail::DownscaledTextureAssetTable();
+				if (!table.isRegistered(request.filePath))
+				{
+					return nullptr;
+				}
+				auto& textures = table.get(request.filePath).textures;
+				const auto it = textures.find(*request.downscaleLevel);
+				return (it != textures.end() && it->second.isEmpty()) ? &it->second : nullptr;
+			}
+
+			auto& table = request.mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
+			if (!table.isRegistered(request.filePath))
+			{
+				return nullptr;
+			}
+			Texture& texture = table.get(request.filePath);
+			return texture.isEmpty() ? &texture : nullptr;
+		}
+
+		Texture CreateTexture(const Image& image, const AsyncTextureLoadRequest& request)
+		{
+			return Texture{ image, request.mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped };
+		}
+
+		void StartPendingAsyncTextureLoads()
+		{
+			auto& pending = PendingAsyncTextureLoads();
+			auto& running = RunningAsyncTextureLoads();
+			while (running.size() < MaxAsyncTextureLoads && !pending.isEmpty())
+			{
+				AsyncTextureLoadRequest request = std::move(pending.front());
+				pending.pop_front();
+
+				// 開始前にキャッシュから削除された場合は読み込まない
+				Texture* placeholder = FindAsyncTextureLoadPlaceholder(request);
+				if (!placeholder)
+				{
+					continue;
+				}
+
+				const FilePath fullPath = Asset::GetFullPath(request.filePath);
+				AsyncTask<Image> task = Async(DecodeImage, fullPath, request.downscaleLevel);
+				if (!task.isValid())
+				{
+					// 別スレッドを使用できない環境(pthread無効のWeb版)では、このスレッドで読み込む
+					*placeholder = CreateTexture(DecodeImage(fullPath, request.downscaleLevel), request);
+					continue;
+				}
+				running.push_back(AsyncTextureLoad{ .request = std::move(request), .task = std::move(task) });
+			}
+		}
+
+		void RequestAsyncTextureLoad(AsyncTextureLoadRequest&& request)
+		{
+			PendingAsyncTextureLoads().push_back(std::move(request));
+			StartPendingAsyncTextureLoads();
+		}
+
 		/// @brief パスが絶対パスかどうかを判定
 		/// @param path 判定するパス
 		/// @return 絶対パスの場合true
@@ -137,6 +262,36 @@ namespace noco
 		static_cast<void>(GetOrLoadTexture(filePath, mipmapEnabled));
 	}
 
+	void Asset::PrewarmTextureAsync(FilePathView filePath, MipmapEnabledYN mipmapEnabled)
+	{
+		if (TextureLoader())
+		{
+			PrewarmTexture(filePath, mipmapEnabled);
+			return;
+		}
+
+		if (filePath.isEmpty())
+		{
+			return;
+		}
+
+		// 読み込み済みまたは読み込み中の場合は何もしない
+		auto& table = mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
+		if (table.isRegistered(filePath))
+		{
+			return;
+		}
+
+		if (!FileSystem::IsFile(GetFullPath(filePath)))
+		{
+			return;
+		}
+
+		// 読み込みが完了するまでは空のテクスチャを登録しておく
+		table.registerAsset(filePath, Texture{});
+		RequestAsyncTextureLoad(AsyncTextureLoadRequest{ .filePath = FilePath{ filePath }, .mipmapEnabled = mipmapEnabled });
+	}
+
 	Optional<Size> Asset::GetImageSize(FilePathView filePath)
 	{
 		if (filePath.isEmpty())
@@ -167,15 +322,7 @@ namespace noco
 
 	const Texture& Asset::GetOrLoadDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
 	{
-		int32 downscaleLevel = 0;
-		if (!TextureLoader())
-		{
-			if (const Optional<Size> imageSize = GetImageSize(filePath))
-			{
-				downscaleLevel = CalculateDownscaleLevel(*imageSize, drawSize, preserveAspect);
-			}
-		}
-
+		const int32 downscaleLevel = GetDownscaleLevel(filePath, drawSize, preserveAspect);
 		if (downscaleLevel <= 0)
 		{
 			return GetOrLoadTexture(filePath, MipmapEnabledYN::No);
@@ -184,14 +331,7 @@ namespace noco
 		auto& textures = detail::DownscaledTextureAssetTable().get(filePath).textures;
 		if (!textures.contains(downscaleLevel))
 		{
-			Texture texture;
-			if (const Image image{ GetFullPath(filePath) })
-			{
-				const double scale = Math::Pow(2.0, -downscaleLevel / 2.0);
-				const Size size{ Max(static_cast<int32>(Math::Round(image.width() * scale)), 1), Max(static_cast<int32>(Math::Round(image.height() * scale)), 1) };
-				texture = Texture{ image.scaled(size, InterpolationAlgorithm::Area), TextureDesc::Unmipped };
-			}
-			textures.emplace(downscaleLevel, std::move(texture));
+			textures.emplace(downscaleLevel, Texture{ DecodeImage(GetFullPath(filePath), downscaleLevel), TextureDesc::Unmipped });
 		}
 
 		return textures.at(downscaleLevel);
@@ -200,6 +340,33 @@ namespace noco
 	void Asset::PrewarmDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
 	{
 		static_cast<void>(GetOrLoadDownscaledTexture(filePath, drawSize, preserveAspect));
+	}
+
+	void Asset::PrewarmDownscaledTextureAsync(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+	{
+		if (TextureLoader())
+		{
+			PrewarmDownscaledTexture(filePath, drawSize, preserveAspect);
+			return;
+		}
+
+		const int32 downscaleLevel = GetDownscaleLevel(filePath, drawSize, preserveAspect);
+		if (downscaleLevel <= 0)
+		{
+			PrewarmTextureAsync(filePath, MipmapEnabledYN::No);
+			return;
+		}
+
+		// 読み込み済みまたは読み込み中の場合は何もしない
+		auto& textures = detail::DownscaledTextureAssetTable().get(filePath).textures;
+		if (textures.contains(downscaleLevel))
+		{
+			return;
+		}
+
+		// 読み込みが完了するまでは空のテクスチャを登録しておく
+		textures.emplace(downscaleLevel, Texture{});
+		RequestAsyncTextureLoad(AsyncTextureLoadRequest{ .filePath = FilePath{ filePath }, .downscaleLevel = downscaleLevel });
 	}
 
 	void Asset::SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader)
@@ -377,5 +544,44 @@ namespace noco
 	void Asset::UnloadAllJSONs()
 	{
 		detail::JSONAssetTable().clear();
+	}
+
+	void detail::UpdateAsyncTextureLoads()
+	{
+		auto& running = RunningAsyncTextureLoads();
+		for (auto it = running.begin(); it != running.end();)
+		{
+			if (!it->task.isReady())
+			{
+				++it;
+				continue;
+			}
+
+			const Image image = it->task.get();
+
+			// 読み込み中にキャッシュから削除されていなければ、空のテクスチャを読み込んだものに置き換える
+			if (Texture* placeholder = FindAsyncTextureLoadPlaceholder(it->request))
+			{
+				*placeholder = CreateTexture(image, it->request);
+			}
+			it = running.erase(it);
+		}
+
+		StartPendingAsyncTextureLoads();
+	}
+
+	bool detail::HasAsyncTextureLoads()
+	{
+		return !PendingAsyncTextureLoads().isEmpty() || !RunningAsyncTextureLoads().isEmpty();
+	}
+
+	void detail::ShutdownAsyncTextureLoads()
+	{
+		PendingAsyncTextureLoads().clear();
+		for (auto& load : RunningAsyncTextureLoads())
+		{
+			load.task.wait();
+		}
+		RunningAsyncTextureLoads().clear();
 	}
 }

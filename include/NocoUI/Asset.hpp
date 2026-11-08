@@ -108,6 +108,17 @@ namespace noco
 			static AssetTable<JSON> table;
 			return table;
 		}
+
+		/// @brief 別スレッドでのテクスチャ読み込みを進める(完了したものをキャッシュに登録し、待機中のものを開始する)
+		/// @note noco::Initで登録されるアドオンから毎フレーム呼ばれる
+		void UpdateAsyncTextureLoads();
+
+		/// @brief 別スレッドでのテクスチャ読み込みが待機中または実行中か
+		[[nodiscard]]
+		bool HasAsyncTextureLoads();
+
+		/// @brief 別スレッドでのテクスチャ読み込みを終了する(待機中のものは破棄し、実行中のものは完了を待つ)
+		void ShutdownAsyncTextureLoads();
 	}
 
 	namespace Asset
@@ -139,6 +150,13 @@ namespace noco
 		/// @param mipmapEnabled ミップマップを生成するか
 		void PrewarmTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled);
 
+		/// @brief テクスチャを別スレッドで事前に読み込む
+		/// @param filePath テクスチャファイルのパス
+		/// @param mipmapEnabled ミップマップを生成するか
+		/// @note 読み込みが完了するまで、GetOrLoadTextureは空のテクスチャを返す
+		/// @note SetTextureLoaderで読み込み処理を差し替えている場合は、別スレッドを使わずに読み込む
+		void PrewarmTextureAsync(FilePathView filePath, MipmapEnabledYN mipmapEnabled);
+
 		/// @brief 画像ファイルの縦横のピクセル数を取得
 		/// @param filePath 画像ファイルのパス
 		/// @return 縦横のピクセル数(ファイルが存在しない場合や取得できない場合はnone)
@@ -159,6 +177,14 @@ namespace noco
 		/// @param drawSize 画面上の描画サイズ
 		/// @param preserveAspect アスペクト比を保持するか
 		void PrewarmDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect);
+
+		/// @brief 描画サイズに合わせて縮小したテクスチャを別スレッドで事前に読み込む
+		/// @param filePath テクスチャファイルのパス
+		/// @param drawSize 画面上の描画サイズ
+		/// @param preserveAspect アスペクト比を保持するか
+		/// @note 読み込みが完了するまで、GetOrLoadDownscaledTextureは空のテクスチャを返す
+		/// @note SetTextureLoaderで読み込み処理を差し替えている場合は、別スレッドを使わずに読み込む
+		void PrewarmDownscaledTextureAsync(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect);
 
 		/// @brief テクスチャの読み込み処理を差し替える(nullptrで既定の読み込みに戻す)
 		void SetTextureLoader(std::function<Texture(FilePathView, MipmapEnabledYN)> loader);
