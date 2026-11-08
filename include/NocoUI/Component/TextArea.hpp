@@ -78,6 +78,7 @@ namespace noco
 
 		struct Cache
 		{
+			Font font;
 			Array<LineCache> lines;
 			double scale = 1.0;
 			double lineHeight = 0.0;

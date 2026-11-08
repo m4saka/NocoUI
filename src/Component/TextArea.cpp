@@ -24,7 +24,7 @@ namespace noco
 			.rectSize = rectSize,
 		};
 
-		const Font font = [&]() -> Font {
+		font = [&]() -> Font {
 			if (!fontAssetName.empty() && FontAsset::IsRegistered(fontAssetName))
 			{
 				return FontAsset(fontAssetName);
@@ -1072,14 +1072,11 @@ namespace noco
 
 			if (!m_isEditing && m_text.value().isEmpty() && !m_placeholderText.value().isEmpty())
 			{
-				const Font font = (!m_fontAssetName.value().empty() && FontAsset::IsRegistered(m_fontAssetName.value()))
-					? FontAsset(m_fontAssetName.value())
-					: SimpleGUI::GetFont();
-
-				const int32 baseFontSize = font.fontSize();
-				const double scale = (baseFontSize == 0) ? 1.0 : (m_fontSize.value() / baseFontSize);
+				// プレースホルダは本文と同じフォントで描画する
+				const Font& font = m_cache.font;
+				const double scale = m_cache.scale;
 				const Array<Glyph> placeholderGlyphs = font.getGlyphs(m_placeholderText.value());
-				const double lineHeight = font.height(m_fontSize.value());
+				const double lineHeight = m_cache.lineHeight;
 
 				Vec2 placeholderPos = rect.pos;
 				{
