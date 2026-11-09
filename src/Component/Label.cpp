@@ -76,6 +76,8 @@ namespace noco
 				return style.outlineColor.has_value();
 			});
 
+		const Array<Glyph> glyphs = currentFont.getGlyphs(displayText);
+
 		auto refreshCacheAndGetRegionSize = [&](double targetFontSize, HorizontalOverflow hov, VerticalOverflow vov) -> SizeF
 			{
 				if (assetFontSize == 0)
@@ -175,7 +177,6 @@ namespace noco
 						return true;
 					};
 
-				const Array<Glyph> glyphs = currentFont.getGlyphs(displayText);
 				for (size_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex)
 				{
 					const auto& glyph = glyphs[glyphIndex];
