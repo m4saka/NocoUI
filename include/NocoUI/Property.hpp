@@ -21,6 +21,20 @@ namespace noco
 		LRTB,
 	};
 
+	namespace detail
+	{
+		/// @brief パラメータ参照名のハッシュ値を保持してパラメータを取得
+		[[nodiscard]]
+		inline HashTable<String, ParamValue>::const_iterator FindParam(const HashTable<String, ParamValue>& params, const String& paramRef, Optional<size_t>& paramRefHash)
+		{
+			if (!paramRefHash.has_value())
+			{
+				paramRefHash = params.hash(paramRef);
+			}
+			return params.find(paramRef, *paramRefHash);
+		}
+	}
+
 	class IProperty
 	{
 	public:
@@ -166,6 +180,7 @@ namespace noco
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
@@ -222,6 +237,7 @@ namespace noco
 		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
+			m_paramRefHash.reset();
 		}
 
 		[[nodiscard]]
@@ -280,6 +296,7 @@ namespace noco
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
+				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
 			}
 		}
@@ -328,14 +345,17 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
-			m_activeStyleStates = activeStyleStates;
+			if (m_activeStyleStates != activeStyleStates)
+			{
+				m_activeStyleStates = activeStyleStates;
+			}
 
 			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
-					if (auto it = params.find(m_paramRef); it != params.end())
+					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
 						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
 						if (auto resolved = ApplyParamRefMode<T>(base, it->second, m_paramRefMode))
@@ -387,6 +407,7 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+				m_paramRefHash.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
@@ -524,6 +545,7 @@ namespace noco
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
@@ -582,6 +604,7 @@ namespace noco
 		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
+			m_paramRefHash.reset();
 		}
 
 		[[nodiscard]]
@@ -633,6 +656,7 @@ namespace noco
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
+				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
 			}
 		}
@@ -654,7 +678,10 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
 		{
 			m_interactionState = interactionState;
-			m_activeStyleStates = activeStyleStates;
+			if (m_activeStyleStates != activeStyleStates)
+			{
+				m_activeStyleStates = activeStyleStates;
+			}
 
 			// スムージング適用
 			if (skipSmoothing)
@@ -671,7 +698,7 @@ namespace noco
 			{
 				if (!m_paramRef.isEmpty())
 				{
-					if (auto it = params.find(m_paramRef); it != params.end())
+					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
 						if (auto resolved = ApplyParamRefMode<T>(m_smoothing.currentValue(), it->second, m_paramRefMode))
 						{
@@ -751,6 +778,7 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+				m_paramRefHash.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
@@ -877,6 +905,7 @@ namespace noco
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
@@ -921,6 +950,7 @@ namespace noco
 		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
+			m_paramRefHash.reset();
 		}
 
 		[[nodiscard]]
@@ -978,6 +1008,7 @@ namespace noco
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
+				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
 			}
 		}
@@ -1032,14 +1063,17 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
-			m_activeStyleStates = activeStyleStates;
+			if (m_activeStyleStates != activeStyleStates)
+			{
+				m_activeStyleStates = activeStyleStates;
+			}
 
 			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
 				if (!m_paramRef.isEmpty())
 				{
-					if (auto it = params.find(m_paramRef); it != params.end())
+					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
 						if (auto resolved = ApplyParamRefMode<T>(m_value, it->second, m_paramRefMode))
 						{
@@ -1107,6 +1141,7 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+				m_paramRefHash.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
@@ -1257,6 +1292,7 @@ namespace noco
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
+		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Smoothing<ColorF> m_smoothing; // ColorFで補間
 		/*NonSerialized*/ Optional<Color> m_paramRefOverride; // パラメータ参照による値
 		/*NonSerialized*/ Optional<Color> m_currentFrameOverride;
@@ -1314,6 +1350,7 @@ namespace noco
 		void setParamRef(const String& paramRef) override
 		{
 			m_paramRef = paramRef;
+			m_paramRefHash.reset();
 		}
 
 		[[nodiscard]]
@@ -1362,6 +1399,7 @@ namespace noco
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
+				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
 			}
 		}
@@ -1383,7 +1421,10 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
 		{
 			m_interactionState = interactionState;
-			m_activeStyleStates = activeStyleStates;
+			if (m_activeStyleStates != activeStyleStates)
+			{
+				m_activeStyleStates = activeStyleStates;
+			}
 
 			// スムージング適用
 			const Color targetColor = m_propertyValue.value(interactionState, activeStyleStates);
@@ -1400,7 +1441,7 @@ namespace noco
 			// パラメータ参照適用
 			if (!m_paramRef.isEmpty())
 			{
-				if (auto it = params.find(m_paramRef); it != params.end())
+				if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 				{
 					if (auto applied = ApplyParamRefMode<Color>(Color{ m_smoothing.currentValue() }, it->second, m_paramRefMode))
 					{
@@ -1478,6 +1519,7 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+				m_paramRefHash.reset();
 			}
 			const String paramRefModeKey = String{ m_name } + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
