@@ -20,14 +20,26 @@ namespace noco
 				return m_table.contains(filePath);
 			}
 
-			void registerAsset(FilePathView filePath, const T& asset)
+			const T* find(FilePathView filePath) const
 			{
-				m_table.emplace(filePath, std::make_shared<T>(asset));
+				const auto it = m_table.find(filePath);
+				return it != m_table.end() ? it->second.get() : nullptr;
 			}
 
-			void registerAsset(FilePathView filePath, T&& asset)
+			T* find(FilePathView filePath)
 			{
-				m_table.emplace(filePath, std::make_shared<T>(std::move(asset)));
+				const auto it = m_table.find(filePath);
+				return it != m_table.end() ? it->second.get() : nullptr;
+			}
+
+			T& registerAsset(FilePathView filePath, const T& asset)
+			{
+				return *m_table.emplace(filePath, std::make_shared<T>(asset)).first->second;
+			}
+
+			T& registerAsset(FilePathView filePath, T&& asset)
+			{
+				return *m_table.emplace(filePath, std::make_shared<T>(std::move(asset))).first->second;
 			}
 
 			void unregister(FilePathView filePath)

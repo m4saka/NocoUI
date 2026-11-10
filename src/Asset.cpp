@@ -50,20 +50,65 @@ namespace noco
 			return static_cast<int32>(Min(level, 60.0));
 		}
 
-		// 描画サイズに合わせて縦横を1/√2に縮小する回数を取得(縮小しない場合は0)
-		int32 GetDownscaleLevel(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
+		// 元画像のパスに対応するDownscaledTextureSetを取得(未登録の場合は画像サイズを取得して登録する。ファイルが存在しない場合はnullptr)
+		detail::DownscaledTextureSet* FindOrRegisterDownscaledTextureSet(FilePathView filePath)
+		{
+			if (filePath.isEmpty())
+			{
+				return nullptr;
+			}
+
+			auto& table = detail::DownscaledTextureAssetTable();
+			if (const auto pTextureSet = table.find(filePath))
+			{
+				return pTextureSet;
+			}
+
+			const FilePath fullPath = Asset::GetFullPath(filePath);
+			if (!FileSystem::IsFile(fullPath))
+			{
+				return nullptr;
+			}
+
+			// 毎フレーム読み直さないよう、取得できなかった場合もnoneとして登録する
+			Optional<Size> imageSize;
+			if (const Optional<ImageInfo> imageInfo = ImageDecoder::GetImageInfo(fullPath))
+			{
+				imageSize = imageInfo->size;
+			}
+			return &table.registerAsset(filePath, detail::DownscaledTextureSet{ .imageSize = imageSize });
+		}
+
+		struct DownscaleInfo
+		{
+			// 元画像のパスに対応するDownscaledTextureSet
+			detail::DownscaledTextureSet* pTextureSet;
+
+			// 縦横を1/√2に縮小する回数
+			int32 downscaleLevel;
+		};
+
+		// 描画サイズに合わせて縮小する場合の情報を取得(縮小しない場合はnone)
+		Optional<DownscaleInfo> GetDownscaleInfo(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
 		{
 			// SetTextureLoaderで読み込み処理を差し替えている場合は縮小しない
 			if (TextureLoader())
 			{
-				return 0;
+				return none;
 			}
 
-			if (const Optional<Size> imageSize = Asset::GetImageSize(filePath))
+			const auto pTextureSet = FindOrRegisterDownscaledTextureSet(filePath);
+			if (pTextureSet == nullptr || !pTextureSet->imageSize)
 			{
-				return CalculateDownscaleLevel(*imageSize, drawSize, preserveAspect);
+				return none;
 			}
-			return 0;
+
+			const int32 downscaleLevel = CalculateDownscaleLevel(*pTextureSet->imageSize, drawSize, preserveAspect);
+			if (downscaleLevel <= 0)
+			{
+				return none;
+			}
+			return DownscaleInfo{ .pTextureSet = pTextureSet, .downscaleLevel = downscaleLevel };
 		}
 
 		// 画像を読み込み、downscaleLevelが指定されている場合は縦横を1/√2に縮小する
@@ -117,23 +162,19 @@ namespace noco
 		{
 			if (request.downscaleLevel)
 			{
-				auto& table = detail::DownscaledTextureAssetTable();
-				if (!table.isRegistered(request.filePath))
+				const auto pTextureSet = detail::DownscaledTextureAssetTable().find(request.filePath);
+				if (pTextureSet == nullptr)
 				{
 					return nullptr;
 				}
-				auto& textures = table.get(request.filePath).textures;
+				auto& textures = pTextureSet->textures;
 				const auto it = textures.find(*request.downscaleLevel);
 				return (it != textures.end() && it->second.isEmpty()) ? &it->second : nullptr;
 			}
 
 			auto& table = request.mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
-			if (!table.isRegistered(request.filePath))
-			{
-				return nullptr;
-			}
-			Texture& texture = table.get(request.filePath);
-			return texture.isEmpty() ? &texture : nullptr;
+			const auto pTexture = table.find(request.filePath);
+			return (pTexture != nullptr && pTexture->isEmpty()) ? pTexture : nullptr;
 		}
 
 		// 読み込みが完了するまでキャッシュに登録しておく空のテクスチャを削除(読み込み済みのテクスチャに置き換わっている場合は何もしない)
@@ -255,24 +296,21 @@ namespace noco
 		}
 
 		auto& table = mipmapEnabled ? detail::MipmappedTextureAssetTable() : detail::TextureAssetTable();
-		if (!table.isRegistered(filePath))
+		if (const auto pTexture = table.find(filePath))
 		{
-			const FilePath fullPath = GetFullPath(filePath);
-			if (!FileSystem::IsFile(fullPath))
-			{
-				return EmptyTexture;
-			}
-			if (const auto& loader = TextureLoader())
-			{
-				table.registerAsset(filePath, loader(filePath, mipmapEnabled));
-			}
-			else
-			{
-				table.registerAsset(filePath, Texture{ fullPath, mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped });
-			}
+			return *pTexture;
 		}
 
-		return table.get(filePath);
+		const FilePath fullPath = GetFullPath(filePath);
+		if (!FileSystem::IsFile(fullPath))
+		{
+			return EmptyTexture;
+		}
+		if (const auto& loader = TextureLoader())
+		{
+			return table.registerAsset(filePath, loader(filePath, mipmapEnabled));
+		}
+		return table.registerAsset(filePath, Texture{ fullPath, mipmapEnabled ? TextureDesc::Mipped : TextureDesc::Unmipped });
 	}
 
 	void Asset::PrewarmTexture(FilePathView filePath, MipmapEnabledYN mipmapEnabled)
@@ -312,41 +350,23 @@ namespace noco
 
 	Optional<Size> Asset::GetImageSize(FilePathView filePath)
 	{
-		if (filePath.isEmpty())
+		if (const auto pTextureSet = FindOrRegisterDownscaledTextureSet(filePath))
 		{
-			return none;
+			return pTextureSet->imageSize;
 		}
-
-		auto& table = detail::DownscaledTextureAssetTable();
-		if (!table.isRegistered(filePath))
-		{
-			const FilePath fullPath = GetFullPath(filePath);
-			if (!FileSystem::IsFile(fullPath))
-			{
-				return none;
-			}
-
-			// 毎フレーム読み直さないよう、取得できなかった場合もnoneとして登録する
-			Optional<Size> imageSize;
-			if (const Optional<ImageInfo> imageInfo = ImageDecoder::GetImageInfo(fullPath))
-			{
-				imageSize = imageInfo->size;
-			}
-			table.registerAsset(filePath, detail::DownscaledTextureSet{ .imageSize = imageSize });
-		}
-
-		return table.get(filePath).imageSize;
+		return none;
 	}
 
 	const Texture& Asset::GetOrLoadDownscaledTexture(FilePathView filePath, const SizeF& drawSize, PreserveAspectYN preserveAspect)
 	{
-		const int32 downscaleLevel = GetDownscaleLevel(filePath, drawSize, preserveAspect);
-		if (downscaleLevel <= 0)
+		const Optional<DownscaleInfo> downscaleInfo = GetDownscaleInfo(filePath, drawSize, preserveAspect);
+		if (!downscaleInfo)
 		{
 			return GetOrLoadTexture(filePath, MipmapEnabledYN::No);
 		}
 
-		auto& textures = detail::DownscaledTextureAssetTable().get(filePath).textures;
+		const int32 downscaleLevel = downscaleInfo->downscaleLevel;
+		auto& textures = downscaleInfo->pTextureSet->textures;
 		if (!textures.contains(downscaleLevel))
 		{
 			textures.emplace(downscaleLevel, Texture{ DecodeImage(GetFullPath(filePath), downscaleLevel), TextureDesc::Unmipped });
@@ -368,15 +388,16 @@ namespace noco
 			return;
 		}
 
-		const int32 downscaleLevel = GetDownscaleLevel(filePath, drawSize, preserveAspect);
-		if (downscaleLevel <= 0)
+		const Optional<DownscaleInfo> downscaleInfo = GetDownscaleInfo(filePath, drawSize, preserveAspect);
+		if (!downscaleInfo)
 		{
 			PrewarmTextureAsync(filePath, MipmapEnabledYN::No);
 			return;
 		}
 
 		// 読み込み済みまたは読み込み中の場合は何もしない
-		auto& textures = detail::DownscaledTextureAssetTable().get(filePath).textures;
+		const int32 downscaleLevel = downscaleInfo->downscaleLevel;
+		auto& textures = downscaleInfo->pTextureSet->textures;
 		if (textures.contains(downscaleLevel))
 		{
 			return;
@@ -475,16 +496,17 @@ namespace noco
 		}
 
 		auto& table = detail::AudioAssetTable();
-		if (!table.isRegistered(filePath))
+		if (const auto pAudio = table.find(filePath))
 		{
-			const FilePath fullPath = GetFullPath(filePath);
-			if (!FileSystem::IsFile(fullPath))
-			{
-				return EmptyAudio;
-			}
-			table.registerAsset(filePath, Audio{ fullPath });
+			return *pAudio;
 		}
-		return table.get(filePath);
+
+		const FilePath fullPath = GetFullPath(filePath);
+		if (!FileSystem::IsFile(fullPath))
+		{
+			return EmptyAudio;
+		}
+		return table.registerAsset(filePath, Audio{ fullPath });
 	}
 
 	const Audio& Asset::ReloadAudio(FilePathView filePath)
