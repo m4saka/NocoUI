@@ -34,7 +34,7 @@ namespace noco
 			return params.find(paramRef, *paramRefHash);
 		}
 
-		// パラメータ参照・currentFrameOverrideの値
+		// パラメータ参照・currentFrameOverride・activeStyleStatesの値
 		template <class T>
 		struct PropertyDetail
 		{
@@ -45,6 +45,7 @@ namespace noco
 			/*NonSerialized*/ Optional<T> paramRefOverride; // パラメータ参照による上書き
 			/*NonSerialized*/ Optional<T> currentFrameOverride;
 			/*NonSerialized*/ int32 currentFrameOverrideFrameCount = 0;
+			/*NonSerialized*/ Array<String> activeStyleStates;
 		};
 	}
 
@@ -222,8 +223,7 @@ namespace noco
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
-		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
 
 		[[nodiscard]]
 		detail::PropertyDetail<T>& ensurePropertyDetail()
@@ -233,6 +233,13 @@ namespace noco
 				m_propertyDetail = std::make_unique<detail::PropertyDetail<T>>();
 			}
 			return *m_propertyDetail;
+		}
+
+		[[nodiscard]]
+		const Array<String>& currentActiveStyleStates() const
+		{
+			static const Array<String> EmptyStringArray;
+			return m_propertyDetail ? m_propertyDetail->activeStyleStates : EmptyStringArray;
 		}
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
@@ -427,7 +434,7 @@ namespace noco
 					return *m_propertyDetail->paramRefOverride;
 				}
 			}
-			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
+			return m_propertyValue.value(m_interactionState, currentActiveStyleStates());
 		}
 
 		const Optional<T>& currentFrameOverride() const
@@ -465,9 +472,13 @@ namespace noco
 		{
 			m_interactionState = interactionState;
 			// 両方とも空の場合は比較不要
-			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
+			if (!activeStyleStates.empty() || (m_propertyDetail && !m_propertyDetail->activeStyleStates.empty()))
 			{
-				m_activeStyleStates = activeStyleStates;
+				auto& propertyDetail = ensurePropertyDetail();
+				if (propertyDetail.activeStyleStates != activeStyleStates)
+				{
+					propertyDetail.activeStyleStates = activeStyleStates;
+				}
 			}
 
 			// パラメータ参照を反映
@@ -674,8 +685,7 @@ namespace noco
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
-		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
 
 		[[nodiscard]]
 		detail::PropertyDetail<T>& ensurePropertyDetail()
@@ -687,6 +697,13 @@ namespace noco
 			return *m_propertyDetail;
 		}
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
+
+		[[nodiscard]]
+		const Array<String>& currentActiveStyleStates() const
+		{
+			static const Array<String> EmptyStringArray;
+			return m_propertyDetail ? m_propertyDetail->activeStyleStates : EmptyStringArray;
+		}
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
@@ -735,7 +752,7 @@ namespace noco
 			if (m_propertyValue.smoothTime() <= 0.0)
 			{
 				// Canvas更新より後にsetPropertyValueされた場合に1フレーム遅れが発生しないよう、smoothTimeが0なら即座に反映
-				m_smoothing.setCurrentValue(m_propertyValue.value(m_interactionState, m_activeStyleStates));
+				m_smoothing.setCurrentValue(m_propertyValue.value(m_interactionState, currentActiveStyleStates()));
 			}
 		}
 
@@ -874,9 +891,13 @@ namespace noco
 		{
 			m_interactionState = interactionState;
 			// 両方とも空の場合は比較不要
-			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
+			if (!activeStyleStates.empty() || (m_propertyDetail && !m_propertyDetail->activeStyleStates.empty()))
 			{
-				m_activeStyleStates = activeStyleStates;
+				auto& propertyDetail = ensurePropertyDetail();
+				if (propertyDetail.activeStyleStates != activeStyleStates)
+				{
+					propertyDetail.activeStyleStates = activeStyleStates;
+				}
 			}
 
 			// スムージング適用
@@ -1579,8 +1600,7 @@ namespace noco
 		const char32_t* m_name;
 		PropertyValue<Color> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
-		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		std::unique_ptr<detail::PropertyDetail<Color>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+		std::unique_ptr<detail::PropertyDetail<Color>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
 
 		[[nodiscard]]
 		detail::PropertyDetail<Color>& ensurePropertyDetail()
@@ -1592,6 +1612,13 @@ namespace noco
 			return *m_propertyDetail;
 		}
 		/*NonSerialized*/ Smoothing<ColorF> m_smoothing; // ColorFで補間
+
+		[[nodiscard]]
+		const Array<String>& currentActiveStyleStates() const
+		{
+			static const Array<String> EmptyStringArray;
+			return m_propertyDetail ? m_propertyDetail->activeStyleStates : EmptyStringArray;
+		}
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
@@ -1639,7 +1666,7 @@ namespace noco
 			m_propertyValue = propertyValue;
 			if (m_propertyValue.smoothTime() <= 0.0)
 			{
-				m_smoothing.setCurrentValue(ColorF{ m_propertyValue.value(m_interactionState, m_activeStyleStates) });
+				m_smoothing.setCurrentValue(ColorF{ m_propertyValue.value(m_interactionState, currentActiveStyleStates()) });
 			}
 		}
 
@@ -1775,9 +1802,13 @@ namespace noco
 		{
 			m_interactionState = interactionState;
 			// 両方とも空の場合は比較不要
-			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
+			if (!activeStyleStates.empty() || (m_propertyDetail && !m_propertyDetail->activeStyleStates.empty()))
 			{
-				m_activeStyleStates = activeStyleStates;
+				auto& propertyDetail = ensurePropertyDetail();
+				if (propertyDetail.activeStyleStates != activeStyleStates)
+				{
+					propertyDetail.activeStyleStates = activeStyleStates;
+				}
 			}
 
 			// スムージング適用
