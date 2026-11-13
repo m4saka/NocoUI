@@ -816,9 +816,46 @@ namespace noco::editor
 			.tooltip = U"TextureAssetのキー名 (任意)",
 			.tooltipDetail = U"指定されている場合、プログラム上ではこのキー名をもとに取得したTextureAssetのテクスチャを使用します\n※プレビューには反映されません\n※これを使用しなくてもライブラリ側で内部的にファイルパスをもとにしたHashTableでアセットが管理されるため、\n　パフォーマンス上の利点は特にありません。TextureAssetのキー名を手動で管理したい場合のみ使用してください",
 		};
+		metadata[PropertyKey{ U"Sprite", U"gradationType" }] = PropertyMetadata{
+			.tooltip = U"スプライトの色のグラデーションタイプ",
+			.tooltipDetail = U"None: 単色を乗算します\nTopBottom: 上下にグラデーションをかけます\nLeftRight: 左右にグラデーションをかけます",
+			.refreshInspectorOnChange = true,
+		};
 		metadata[PropertyKey{ U"Sprite", U"color" }] = PropertyMetadata{
 			.tooltip = U"スプライトの色",
 			.tooltipDetail = U"テクスチャの色に乗算されます\nアルファ値は透明度を制御します",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return sprite->gradationType().hasAnyStateEqualTo(SpriteGradationType::None);
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Sprite", U"gradationColor1" }] = PropertyMetadata{
+			.tooltip = U"グラデーション色 1",
+			.tooltipDetail = U"テクスチャの色に乗算されます\nTopBottom: 上側の色\nLeftRight: 左側の色",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return !sprite->gradationType().hasAnyStateEqualTo(SpriteGradationType::None);
+				}
+				return false;
+			},
+		};
+		metadata[PropertyKey{ U"Sprite", U"gradationColor2" }] = PropertyMetadata{
+			.tooltip = U"グラデーション色 2",
+			.tooltipDetail = U"テクスチャの色に乗算されます\nTopBottom: 下側の色\nLeftRight: 右側の色",
+			.visibilityCondition = [](const ComponentBase& component)
+			{
+				if (const auto* sprite = dynamic_cast<const Sprite*>(&component))
+				{
+					return !sprite->gradationType().hasAnyStateEqualTo(SpriteGradationType::None);
+				}
+				return false;
+			},
 		};
 		metadata[PropertyKey{ U"Sprite", U"addColor" }] = PropertyMetadata{
 			.tooltip = U"加算カラー",

@@ -158,33 +158,6 @@ namespace noco
 			return Texture{};
 		}
 
-		// 描画先矩形をクリップ矩形で切り詰め、切り詰め後の描画先に対応するソース領域(テクスチャピクセル座標)を線形対応で切り出して描画
-		void DrawTextureRegionClipped(const Texture& texture, const RectF& sourceRect, const RectF& destRect, const Optional<RectF>& clipRect, const Color& color)
-		{
-			if (!clipRect)
-			{
-				texture(sourceRect).resized(destRect.size).draw(destRect.pos, color);
-				return;
-			}
-			if (destRect.w <= 0.0 || destRect.h <= 0.0)
-			{
-				return;
-			}
-			const RectF clippedDestRect = destRect.getOverlap(*clipRect);
-			if (clippedDestRect.isEmpty())
-			{
-				return;
-			}
-			const double scaleX = sourceRect.w / destRect.w;
-			const double scaleY = sourceRect.h / destRect.h;
-			const RectF clippedSourceRect{
-				sourceRect.x + (clippedDestRect.x - destRect.x) * scaleX,
-				sourceRect.y + (clippedDestRect.y - destRect.y) * scaleY,
-				clippedDestRect.w * scaleX,
-				clippedDestRect.h * scaleY };
-			texture(clippedSourceRect).resized(clippedDestRect.size).draw(clippedDestRect.pos, color);
-		}
-
 		// preserveAspect有効時のfittedと同等の描画先矩形を計算
 		RectF CalculateFittedRect(const RectF& rect, const SizeF& sourceSize)
 		{
@@ -196,6 +169,69 @@ namespace noco
 			const SizeF fittedSize = sourceSize * scale;
 			return RectF{ rect.center() - fittedSize / 2, fittedSize };
 		}
+	}
+
+	// グラデーションの場合はgradationRect内でのdestRectの位置に応じた色で描画
+	void Sprite::DrawTextureRegion(const TextureRegion& textureRegion, const RectF& destRect, const DrawColor& drawColor)
+	{
+		const TextureRegion resizedTextureRegion = textureRegion.resized(destRect.size);
+		const RectF& gradationRect = drawColor.gradationRect;
+		switch (drawColor.gradationType)
+		{
+		case SpriteGradationType::TopBottom:
+			{
+				const double gradationHeight = gradationRect.h <= 0.0 ? 1.0 : gradationRect.h;
+				const double topT = Clamp((destRect.y - gradationRect.y) / gradationHeight, 0.0, 1.0);
+				const double bottomT = Clamp((destRect.y + destRect.h - gradationRect.y) / gradationHeight, 0.0, 1.0);
+				const ColorF topColor = drawColor.gradationColor1.lerp(drawColor.gradationColor2, topT);
+				const ColorF bottomColor = drawColor.gradationColor1.lerp(drawColor.gradationColor2, bottomT);
+				resizedTextureRegion.draw(destRect.pos, Arg::top = topColor, Arg::bottom = bottomColor);
+			}
+			break;
+
+		case SpriteGradationType::LeftRight:
+			{
+				const double gradationWidth = gradationRect.w <= 0.0 ? 1.0 : gradationRect.w;
+				const double leftT = Clamp((destRect.x - gradationRect.x) / gradationWidth, 0.0, 1.0);
+				const double rightT = Clamp((destRect.x + destRect.w - gradationRect.x) / gradationWidth, 0.0, 1.0);
+				const ColorF leftColor = drawColor.gradationColor1.lerp(drawColor.gradationColor2, leftT);
+				const ColorF rightColor = drawColor.gradationColor1.lerp(drawColor.gradationColor2, rightT);
+				resizedTextureRegion.draw(destRect.pos, Arg::left = leftColor, Arg::right = rightColor);
+			}
+			break;
+
+		case SpriteGradationType::None:
+		default:
+			resizedTextureRegion.draw(destRect.pos, drawColor.color);
+			break;
+		}
+	}
+
+	// 描画先矩形をクリップ矩形で切り詰め、切り詰め後の描画先に対応するソース領域(テクスチャピクセル座標)を線形対応で切り出して描画
+	void Sprite::DrawTextureRegionClipped(const Texture& texture, const RectF& sourceRect, const RectF& destRect, const Optional<RectF>& clipRect, const DrawColor& drawColor)
+	{
+		if (!clipRect)
+		{
+			DrawTextureRegion(texture(sourceRect), destRect, drawColor);
+			return;
+		}
+		if (destRect.w <= 0.0 || destRect.h <= 0.0)
+		{
+			return;
+		}
+		const RectF clippedDestRect = destRect.getOverlap(*clipRect);
+		if (clippedDestRect.isEmpty())
+		{
+			return;
+		}
+		const double scaleX = sourceRect.w / destRect.w;
+		const double scaleY = sourceRect.h / destRect.h;
+		const RectF clippedSourceRect{
+			sourceRect.x + (clippedDestRect.x - destRect.x) * scaleX,
+			sourceRect.y + (clippedDestRect.y - destRect.y) * scaleY,
+			clippedDestRect.w * scaleX,
+			clippedDestRect.h * scaleY };
+		DrawTextureRegion(texture(clippedSourceRect), clippedDestRect, drawColor);
 	}
 
 	Optional<RectF> Sprite::fillRectOpt(const RectF& rect) const
@@ -220,7 +256,7 @@ namespace noco
 		}
 	}
 
-	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const
+	void Sprite::drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const DrawColor& drawColor) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
 		const Size textureSize = texture.size();
@@ -241,11 +277,11 @@ namespace noco
 			const RectF sourceRect{ Vec2::Zero(), Vec2{ textureSize } };
 			if (m_preserveAspect.value())
 			{
-				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, Vec2{ textureSize }), clipRect, color);
+				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, Vec2{ textureSize }), clipRect, drawColor);
 			}
 			else
 			{
-				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, drawColor);
 			}
 			return;
 		}
@@ -262,7 +298,7 @@ namespace noco
 			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
 			{
 				// サイズが小さすぎる場合は通常描画
-				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ textureSize } }, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ textureSize } }, rect, clipRect, drawColor);
 				return;
 			}
 		}
@@ -290,10 +326,10 @@ namespace noco
 		const bool bottomTiled = m_nineSliceBottomTiled.value();
 		
 		// 四隅を描画(常に伸縮)
-		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, drawColor);
 
 		// 上辺を描画
 		if (topTiled)
@@ -309,13 +345,13 @@ namespace noco
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 					const double srcWidth = width / nineSliceScale.x;
 					const RectF partialSrc{ srcTop.x, srcTop.y, srcWidth, topMargin };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, drawColor);
 		}
 
 		// 下辺を描画
@@ -332,13 +368,13 @@ namespace noco
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 					const double srcWidth = width / nineSliceScale.x;
 					const RectF partialSrc{ srcBottom.x, srcBottom.y, srcWidth, bottomMargin };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, drawColor);
 		}
 
 		// 左辺を描画
@@ -355,13 +391,13 @@ namespace noco
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
 					const double srcHeight = height / nineSliceScale.y;
 					const RectF partialSrc{ srcLeft.x, srcLeft.y, leftMargin, srcHeight };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, drawColor);
 		}
 
 		// 右辺を描画
@@ -378,13 +414,13 @@ namespace noco
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
 					const double srcHeight = height / nineSliceScale.y;
 					const RectF partialSrc{ srcRight.x, srcRight.y, rightMargin, srcHeight };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, drawColor);
 		}
 
 		// 中央を描画
@@ -407,14 +443,14 @@ namespace noco
 						const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 						const double srcWidth = width / nineSliceScale.x;
 						const RectF partialSrc{ srcCenter.x, srcCenter.y, srcWidth, srcHeight };
-						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, color);
+						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, drawColor);
 					}
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, drawColor);
 		}
 	}
 
@@ -476,7 +512,14 @@ namespace noco
 			return;
 		}
 
-		const Color& color = m_color.value();
+		const DrawColor drawColor
+		{
+			.gradationType = m_gradationType.value(),
+			.color = m_color.value(),
+			.gradationColor1 = m_gradationColor1.value(),
+			.gradationColor2 = m_gradationColor2.value(),
+			.gradationRect = rect,
+		};
 		const Color& addColorValue = m_addColor.value();
 		const BlendMode blendModeValue = m_blendMode.value();
 		const TextureRegionMode textureRegionModeValue = m_textureRegionMode.value();
@@ -612,7 +655,7 @@ namespace noco
 				return;
 			}
 			// 空のテクスチャ(黄色になる)をそのまま描画
-			texture.resized(rect.size).draw(rect.pos, color);
+			DrawTextureRegion(texture, rect, drawColor);
 			return;
 		}
 		
@@ -631,15 +674,15 @@ namespace noco
 
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, color);
+				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, drawColor);
 			}
 			else if (m_preserveAspect.value())
 			{
-				DrawTextureRegionClipped(texture, textureRect, CalculateFittedRect(rect, actualSize), clipRect, color);
+				DrawTextureRegionClipped(texture, textureRect, CalculateFittedRect(rect, actualSize), clipRect, drawColor);
 			}
 			else
 			{
-				DrawTextureRegionClipped(texture, textureRect, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, textureRect, rect, clipRect, drawColor);
 			}
 		}
 		else if (textureRegionModeValue == TextureRegionMode::Grid)
@@ -687,7 +730,7 @@ namespace noco
 
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, color);
+				drawNineSliceFromRegion(texture, textureRect, rect, clipRect, drawColor);
 			}
 			else if (m_preserveAspect.value())
 			{
@@ -714,7 +757,7 @@ namespace noco
 				}
 
 				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
-				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, color);
+				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, drawColor);
 			}
 			else
 			{
@@ -729,28 +772,28 @@ namespace noco
 				// 中央揃え
 				const Vec2 drawPos = rect.pos + (rect.size - drawSize) * 0.5;
 
-				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, color);
+				DrawTextureRegionClipped(texture, textureRect, RectF{ drawPos, drawSize }, clipRect, drawColor);
 			}
 		}
 		else
 		{
 			if (m_nineSliceEnabled.value())
 			{
-				drawNineSlice(texture, rect, clipRect, color);
+				drawNineSlice(texture, rect, clipRect, drawColor);
 			}
 			else if (m_preserveAspect.value())
 			{
 				const Vec2 textureSize{ texture.size() };
-				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), textureSize }, CalculateFittedRect(rect, textureSize), clipRect, color);
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), textureSize }, CalculateFittedRect(rect, textureSize), clipRect, drawColor);
 			}
 			else
 			{
-				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ texture.size() } }, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, RectF{ Vec2::Zero(), Vec2{ texture.size() } }, rect, clipRect, drawColor);
 			}
 		}
 	}
 
-	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const
+	void Sprite::drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const DrawColor& drawColor) const
 	{
 		const LRTB& margin = m_nineSliceMargin.value();
 
@@ -767,11 +810,11 @@ namespace noco
 		{
 			if (m_preserveAspect.value())
 			{
-				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, sourceRect.size), clipRect, color);
+				DrawTextureRegionClipped(texture, sourceRect, CalculateFittedRect(rect, sourceRect.size), clipRect, drawColor);
 			}
 			else
 			{
-				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, drawColor);
 			}
 			return;
 		}
@@ -788,7 +831,7 @@ namespace noco
 			if (rect.w < drawLeftMargin + drawRightMargin || rect.h < drawTopMargin + drawBottomMargin)
 			{
 				// サイズが小さすぎる場合は通常描画
-				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, color);
+				DrawTextureRegionClipped(texture, sourceRect, rect, clipRect, drawColor);
 				return;
 			}
 		}
@@ -818,10 +861,10 @@ namespace noco
 		const bool bottomTiled = m_nineSliceBottomTiled.value();
 		
 		// 四隅を描画(常に伸縮)
-		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, color);
-		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, color);
+		DrawTextureRegionClipped(texture, srcTopLeft, RectF{ rect.pos, drawLeftMargin, drawTopMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcTopRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y, drawRightMargin, drawTopMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcBottomLeft, RectF{ rect.x, rect.y + rect.h - drawBottomMargin, drawLeftMargin, drawBottomMargin }, clipRect, drawColor);
+		DrawTextureRegionClipped(texture, srcBottomRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + rect.h - drawBottomMargin, drawRightMargin, drawBottomMargin }, clipRect, drawColor);
 
 		// 上辺を描画
 		if (topTiled)
@@ -835,13 +878,13 @@ namespace noco
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 					const double srcWidth = width / nineSliceScale.x;
 					const RectF partialSrc{ srcTop.x, srcTop.y, srcWidth, topMargin };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y, width, drawTopMargin }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcTop, RectF{ rect.x + drawLeftMargin, rect.y, centerDrawWidth, drawTopMargin }, clipRect, drawColor);
 		}
 
 		// 下辺を描画
@@ -856,13 +899,13 @@ namespace noco
 					const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 					const double srcWidth = width / nineSliceScale.x;
 					const RectF partialSrc{ srcBottom.x, srcBottom.y, srcWidth, bottomMargin };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ x, rect.y + rect.h - drawBottomMargin, width, drawBottomMargin }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcBottom, RectF{ rect.x + drawLeftMargin, rect.y + rect.h - drawBottomMargin, centerDrawWidth, drawBottomMargin }, clipRect, drawColor);
 		}
 
 		// 左辺を描画
@@ -877,13 +920,13 @@ namespace noco
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
 					const double srcHeight = height / nineSliceScale.y;
 					const RectF partialSrc{ srcLeft.x, srcLeft.y, leftMargin, srcHeight };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x, y, drawLeftMargin, height }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcLeft, RectF{ rect.x, rect.y + drawTopMargin, drawLeftMargin, centerDrawHeight }, clipRect, drawColor);
 		}
 
 		// 右辺を描画
@@ -898,13 +941,13 @@ namespace noco
 					const double height = Min(tileHeight, rect.y + rect.h - drawBottomMargin - y);
 					const double srcHeight = height / nineSliceScale.y;
 					const RectF partialSrc{ srcRight.x, srcRight.y, rightMargin, srcHeight };
-					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, color);
+					DrawTextureRegionClipped(texture, partialSrc, RectF{ rect.x + rect.w - drawRightMargin, y, drawRightMargin, height }, clipRect, drawColor);
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcRight, RectF{ rect.x + rect.w - drawRightMargin, rect.y + drawTopMargin, drawRightMargin, centerDrawHeight }, clipRect, drawColor);
 		}
 
 		// 中央を描画
@@ -925,14 +968,14 @@ namespace noco
 						const double width = Min(tileWidth, rect.x + rect.w - drawRightMargin - x);
 						const double srcWidth = width / nineSliceScale.x;
 						const RectF partialSrc{ srcCenter.x, srcCenter.y, srcWidth, srcHeight };
-						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, color);
+						DrawTextureRegionClipped(texture, partialSrc, RectF{ x, y, width, height }, clipRect, drawColor);
 					}
 				}
 			}
 		}
 		else
 		{
-			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, color);
+			DrawTextureRegionClipped(texture, srcCenter, RectF{ rect.x + drawLeftMargin, rect.y + drawTopMargin, centerDrawWidth, centerDrawHeight }, clipRect, drawColor);
 		}
 	}
 }

@@ -433,6 +433,39 @@ TEST_CASE("Sprite fill properties serialization", "[Sprite][JSON][Serialization]
 	}
 }
 
+TEST_CASE("Sprite gradation properties serialization", "[Sprite][JSON][Serialization]")
+{
+	SECTION("Default values")
+	{
+		auto node = noco::Node::Create(U"SpriteNode");
+		node->emplaceComponent<noco::Sprite>();
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
+		REQUIRE(restoredSprite != nullptr);
+		REQUIRE(restoredSprite->gradationType().defaultValue() == noco::SpriteGradationType::None);
+		REQUIRE(restoredSprite->gradationColor1().defaultValue() == Palette::White);
+		REQUIRE(restoredSprite->gradationColor2().defaultValue() == Palette::White);
+	}
+
+	SECTION("Custom values")
+	{
+		auto node = noco::Node::Create(U"SpriteNode");
+		auto sprite = node->emplaceComponent<noco::Sprite>();
+		sprite->setGradationType(noco::SpriteGradationType::TopBottom);
+		sprite->setGradationColors(Color{ 255, 255, 255, 255 }, Color{ 255, 255, 255, 0 });
+
+		JSON json = node->toJSON();
+		auto restoredNode = noco::Node::CreateFromJSON(json);
+		auto restoredSprite = restoredNode->getComponent<noco::Sprite>();
+		REQUIRE(restoredSprite != nullptr);
+		REQUIRE(restoredSprite->gradationType().defaultValue() == noco::SpriteGradationType::TopBottom);
+		REQUIRE(restoredSprite->gradationColor1().defaultValue() == Color{ 255, 255, 255, 255 });
+		REQUIRE(restoredSprite->gradationColor2().defaultValue() == Color{ 255, 255, 255, 0 });
+	}
+}
+
 TEST_CASE("Sprite textureDownscaleMode serialization", "[Sprite][JSON][Serialization]")
 {
 	SECTION("Custom value")

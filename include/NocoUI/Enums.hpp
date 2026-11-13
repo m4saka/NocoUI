@@ -89,6 +89,13 @@ namespace noco
 		Resize,
 	};
 
+	enum class SpriteGradationType : uint8
+	{
+		None,
+		TopBottom,
+		LeftRight,
+	};
+
 	enum class SpriteFillDirection : uint8
 	{
 		BottomToTop,

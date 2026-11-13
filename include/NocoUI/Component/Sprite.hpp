@@ -11,7 +11,10 @@ namespace noco
 	private:
 		Property<String> m_textureFilePath;
 		Property<String> m_textureAssetName;
+		Property<SpriteGradationType> m_gradationType;
 		SmoothProperty<Color> m_color;
+		SmoothProperty<Color> m_gradationColor1;
+		SmoothProperty<Color> m_gradationColor2;
 		SmoothProperty<Color> m_addColor;
 		Property<BlendMode> m_blendMode;
 		Property<bool> m_preserveAspect;
@@ -53,20 +56,35 @@ namespace noco
 		/* NonSerialized */ bool m_gridAnimationFinished = false;
 		/* NonSerialized */ Vec2 m_currentOffsetAnimation = Vec2::Zero();
 
+		struct DrawColor
+		{
+			SpriteGradationType gradationType;
+			ColorF color;
+			ColorF gradationColor1;
+			ColorF gradationColor2;
+			RectF gradationRect; // グラデーションの基準となる矩形
+		};
+
+		static void DrawTextureRegion(const TextureRegion& textureRegion, const RectF& destRect, const DrawColor& drawColor);
+		static void DrawTextureRegionClipped(const Texture& texture, const RectF& sourceRect, const RectF& destRect, const Optional<RectF>& clipRect, const DrawColor& drawColor);
+
 		[[nodiscard]]
 		Optional<RectF> fillRectOpt(const RectF& rect) const;
 
-		void drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const;
-		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const Color& color) const;
+		void drawNineSlice(const Texture& texture, const RectF& rect, const Optional<RectF>& clipRect, const DrawColor& drawColor) const;
+		void drawNineSliceFromRegion(const Texture& texture, const RectF& sourceRect, const RectF& rect, const Optional<RectF>& clipRect, const DrawColor& drawColor) const;
 
 		bool tryReadFromJSONOverrideInternal(const JSON& json, detail::WithInstanceIdYN withInstanceId) override;
 
 	public:
 		explicit Sprite(const PropertyValue<String>& textureFilePath = String{}, const PropertyValue<String>& textureAssetName = String{}, const PropertyValue<Color>& color = Palette::White, const PropertyValue<bool>& preserveAspect = false)
-			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_color, &m_addColor, &m_blendMode, &m_preserveAspect, &m_fillDirection, &m_fillAmount, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_hideIfTextureEmpty, &m_textureAddressMode, &m_textureDownscaleMode, &m_mipmapLodBias, &m_pixelShaderAssetName } }
+			: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_addColor, &m_blendMode, &m_preserveAspect, &m_fillDirection, &m_fillAmount, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_hideIfTextureEmpty, &m_textureAddressMode, &m_textureDownscaleMode, &m_mipmapLodBias, &m_pixelShaderAssetName } }
 			, m_textureFilePath{ U"textureFilePath", textureFilePath }
 			, m_textureAssetName{ U"textureAssetName", textureAssetName }
+			, m_gradationType{ U"gradationType", SpriteGradationType::None }
 			, m_color{ U"color", color }
+			, m_gradationColor1{ U"gradationColor1", color }
+			, m_gradationColor2{ U"gradationColor2", color }
 			, m_addColor{ U"addColor", Color{ 0, 0, 0, 0 } }
 			, m_blendMode{ U"blendMode", BlendMode::Normal }
 			, m_preserveAspect{ U"preserveAspect", preserveAspect }
@@ -133,6 +151,18 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const PropertyValue<SpriteGradationType>& gradationType() const
+		{
+			return m_gradationType.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setGradationType(const PropertyValue<SpriteGradationType>& gradationType)
+		{
+			m_gradationType.setPropertyValue(gradationType);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
 		const PropertyValue<Color>& color() const
 		{
 			return m_color.propertyValue();
@@ -141,6 +171,37 @@ namespace noco
 		std::shared_ptr<Sprite> setColor(const PropertyValue<Color>& color)
 		{
 			m_color.setPropertyValue(color);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& gradationColor1() const
+		{
+			return m_gradationColor1.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setGradationColor1(const PropertyValue<Color>& gradationColor1)
+		{
+			m_gradationColor1.setPropertyValue(gradationColor1);
+			return shared_from_this();
+		}
+
+		[[nodiscard]]
+		const PropertyValue<Color>& gradationColor2() const
+		{
+			return m_gradationColor2.propertyValue();
+		}
+
+		std::shared_ptr<Sprite> setGradationColor2(const PropertyValue<Color>& gradationColor2)
+		{
+			m_gradationColor2.setPropertyValue(gradationColor2);
+			return shared_from_this();
+		}
+
+		std::shared_ptr<Sprite> setGradationColors(const PropertyValue<Color>& color1, const PropertyValue<Color>& color2)
+		{
+			m_gradationColor1.setPropertyValue(color1);
+			m_gradationColor2.setPropertyValue(color2);
 			return shared_from_this();
 		}
 
