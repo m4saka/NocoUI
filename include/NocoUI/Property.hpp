@@ -1113,8 +1113,6 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
-		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
-		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
 
 		[[nodiscard]]
@@ -1346,15 +1344,8 @@ namespace noco
 			return m_propertyDetail && m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
-		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
+		void update(InteractionState, const Array<String>&, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
-			m_interactionState = interactionState;
-			// 両方とも空の場合は比較不要
-			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
-			{
-				m_activeStyleStates = activeStyleStates;
-			}
-
 			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
