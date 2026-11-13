@@ -33,6 +33,19 @@ namespace noco
 			}
 			return params.find(paramRef, *paramRefHash);
 		}
+
+		// パラメータ参照・currentFrameOverrideの値
+		template <class T>
+		struct PropertyDetail
+		{
+			String paramRef; // パラメータ参照名
+			ParamRefMode paramRefMode = ParamRefMode::Normal;
+			Optional<T> paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
+			/*NonSerialized*/ Optional<size_t> paramRefHash; // パラメータ参照名のハッシュ値
+			/*NonSerialized*/ Optional<T> paramRefOverride; // パラメータ参照による上書き
+			/*NonSerialized*/ Optional<T> currentFrameOverride;
+			/*NonSerialized*/ int32 currentFrameOverrideFrameCount = 0;
+		};
 	}
 
 	class IProperty
@@ -208,21 +221,25 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
-		String m_paramRef; // パラメータ参照名
-		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
-		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
-		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
-		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
-		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+
+		[[nodiscard]]
+		detail::PropertyDetail<T>& ensurePropertyDetail()
+		{
+			if (!m_propertyDetail)
+			{
+				m_propertyDetail = std::make_unique<detail::PropertyDetail<T>>();
+			}
+			return *m_propertyDetail;
+		}
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
 		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
 		{
-			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+			return (ParamRefModeRequiresBoolParam(mode) && m_propertyDetail && m_propertyDetail->paramRefValue) ? *m_propertyDetail->paramRefValue : value;
 		}
 
 	public:
@@ -271,57 +288,72 @@ namespace noco
 		[[nodiscard]]
 		const String& paramRef() const override
 		{
-			return m_paramRef;
+			static const String EmptyString;
+			return m_propertyDetail ? m_propertyDetail->paramRef : EmptyString;
 		}
 
 		void setParamRef(const String& paramRef) override
 		{
-			m_paramRef = paramRef;
-			m_paramRefHash.reset();
+			if (!m_propertyDetail && paramRef.isEmpty())
+			{
+				return;
+			}
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.paramRef = paramRef;
+			propertyDetail.paramRefHash.reset();
 		}
 
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
-			return !m_paramRef.isEmpty();
+			return m_propertyDetail && !m_propertyDetail->paramRef.isEmpty();
 		}
 
 		[[nodiscard]]
 		ParamRefMode paramRefMode() const override
 		{
-			return m_paramRefMode;
+			return m_propertyDetail ? m_propertyDetail->paramRefMode : ParamRefMode::Normal;
 		}
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
-			m_paramRefMode = mode;
+			if (!m_propertyDetail && mode == ParamRefMode::Normal)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefMode = mode;
 		}
 
 		[[nodiscard]]
 		const Optional<T>& paramRefValue() const
 		{
-			return m_paramRefValue;
+			static const Optional<T> NoneValue = none;
+			return m_propertyDetail ? m_propertyDetail->paramRefValue : NoneValue;
 		}
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
-			m_paramRefValue = paramRefValue;
+			if (!m_propertyDetail && !paramRefValue)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefValue = paramRefValue;
 		}
 
 		[[nodiscard]]
 		Optional<String> paramRefValueString() const override
 		{
-			if (!m_paramRefValue)
+			if (!m_propertyDetail || !m_propertyDetail->paramRefValue)
 			{
 				return none;
 			}
 			if constexpr (std::is_enum_v<T>)
 			{
-				return EnumToString(*m_paramRefValue);
+				return EnumToString(*m_propertyDetail->paramRefValue);
 			}
 			else
 			{
-				return Format(*m_paramRefValue);
+				return Format(*m_propertyDetail->paramRefValue);
 			}
 		}
 
@@ -332,7 +364,7 @@ namespace noco
 			{
 				return false;
 			}
-			m_paramRefValue = *parsedValue;
+			ensurePropertyDetail().paramRefValue = *parsedValue;
 			return true;
 		}
 
@@ -365,32 +397,35 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (m_paramRef.isEmpty())
+			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
 			}
 
-			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
+			const auto it = validParams.find(m_propertyDetail->paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_propertyDetail->paramRefMode))
 			{
-				clearedParams.insert(m_paramRef);
-				m_paramRef = U"";
-				m_paramRefHash.reset();
-				m_paramRefMode = ParamRefMode::Normal;
-				m_paramRefValue.reset();
+				clearedParams.insert(m_propertyDetail->paramRef);
+				m_propertyDetail->paramRef = U"";
+				m_propertyDetail->paramRefHash.reset();
+				m_propertyDetail->paramRefMode = ParamRefMode::Normal;
+				m_propertyDetail->paramRefValue.reset();
 			}
 		}
 
 		[[nodiscard]]
 		const T& value() const
 		{
-			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			if (m_propertyDetail)
 			{
-				return *m_currentFrameOverride;
-			}
-			if (m_paramRefOverride.has_value())
-			{
-				return *m_paramRefOverride;
+				if (m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount())
+				{
+					return *m_propertyDetail->currentFrameOverride;
+				}
+				if (m_propertyDetail->paramRefOverride.has_value())
+				{
+					return *m_propertyDetail->paramRefOverride;
+				}
 			}
 			return m_propertyValue.value(m_interactionState, m_activeStyleStates);
 		}
@@ -402,24 +437,28 @@ namespace noco
 			{
 				return NoneValue;
 			}
-			return m_currentFrameOverride;
+			return m_propertyDetail->currentFrameOverride;
 		}
 		
 		void setCurrentFrameOverride(const T& value)
 		{
-			m_currentFrameOverride = value;
-			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.currentFrameOverride = value;
+			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 		
 		void clearCurrentFrameOverride() override
 		{
-			m_currentFrameOverride.reset();
+			if (m_propertyDetail)
+			{
+				m_propertyDetail->currentFrameOverride.reset();
+			}
 		}
 		
 		[[nodiscard]]
 		bool hasCurrentFrameOverride() const
 		{
-			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
+			return m_propertyDetail && m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
@@ -433,31 +472,31 @@ namespace noco
 			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
-				if (!m_paramRef.isEmpty())
+				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
-					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
+					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
 						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
-						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(base, m_paramRefMode), it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(base, m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
 						{
-							m_paramRefOverride = std::move(*resolved);
+							m_propertyDetail->paramRefOverride = std::move(*resolved);
 						}
 						else
 						{
 							// パラメータの型が合わない場合はクリア
-							m_paramRefOverride.reset();
+							m_propertyDetail->paramRefOverride.reset();
 						}
 					}
 					else
 					{
 						// パラメータが見つからない場合はクリア
-						m_paramRefOverride.reset();
+						m_propertyDetail->paramRefOverride.reset();
 					}
 				}
-				else
+				else if (m_propertyDetail)
 				{
 					// パラメータ参照がない場合はクリア
-					m_paramRefOverride.reset();
+					m_propertyDetail->paramRefOverride.reset();
 				}
 			}
 		}
@@ -465,16 +504,16 @@ namespace noco
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
-			if (!m_paramRef.isEmpty())
+			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
-				json[String(m_name) + U"_paramRef"] = m_paramRef;
-				if (m_paramRefMode != ParamRefMode::Normal)
+				json[String(m_name) + U"_paramRef"] = m_propertyDetail->paramRef;
+				if (m_propertyDetail->paramRefMode != ParamRefMode::Normal)
 				{
-					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_propertyDetail->paramRefMode);
 				}
-				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				if (ParamRefModeRequiresBoolParam(m_propertyDetail->paramRefMode) && m_propertyDetail->paramRefValue)
 				{
-					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_propertyDetail->paramRefValue }.toJSON();
 				}
 			}
 		}
@@ -490,29 +529,28 @@ namespace noco
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))
 			{
-				m_paramRef = json[paramRefKey].getString();
-				m_paramRefHash.reset();
+				setParamRef(json[paramRefKey].getString());
 			}
 			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
 			if (json.contains(paramRefValueKey))
 			{
-				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+				ensurePropertyDetail().paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
 			}
-			else
+			else if (m_propertyDetail)
 			{
-				m_paramRefValue.reset();
+				m_propertyDetail->paramRefValue.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
+					setParamRefMode(ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name()));
 				}
 			}
 			else
 			{
-				m_paramRefMode = ParamRefMode::Normal;
+				setParamRefMode(ParamRefMode::Normal);
 			}
 		}
 
@@ -634,22 +672,26 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		PropertyValue<T> m_propertyValue;
-		String m_paramRef; // パラメータ参照名
-		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
-		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
+		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+
+		[[nodiscard]]
+		detail::PropertyDetail<T>& ensurePropertyDetail()
+		{
+			if (!m_propertyDetail)
+			{
+				m_propertyDetail = std::make_unique<detail::PropertyDetail<T>>();
+			}
+			return *m_propertyDetail;
+		}
 		/*NonSerialized*/ Smoothing<T> m_smoothing;
-		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
-		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
-		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
 		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
 		{
-			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+			return (ParamRefModeRequiresBoolParam(mode) && m_propertyDetail && m_propertyDetail->paramRefValue) ? *m_propertyDetail->paramRefValue : value;
 		}
 
 	public:
@@ -699,51 +741,66 @@ namespace noco
 		[[nodiscard]]
 		const String& paramRef() const override
 		{
-			return m_paramRef;
+			static const String EmptyString;
+			return m_propertyDetail ? m_propertyDetail->paramRef : EmptyString;
 		}
 
 		void setParamRef(const String& paramRef) override
 		{
-			m_paramRef = paramRef;
-			m_paramRefHash.reset();
+			if (!m_propertyDetail && paramRef.isEmpty())
+			{
+				return;
+			}
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.paramRef = paramRef;
+			propertyDetail.paramRefHash.reset();
 		}
 
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
-			return !m_paramRef.isEmpty();
+			return m_propertyDetail && !m_propertyDetail->paramRef.isEmpty();
 		}
 
 		[[nodiscard]]
 		ParamRefMode paramRefMode() const override
 		{
-			return m_paramRefMode;
+			return m_propertyDetail ? m_propertyDetail->paramRefMode : ParamRefMode::Normal;
 		}
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
-			m_paramRefMode = mode;
+			if (!m_propertyDetail && mode == ParamRefMode::Normal)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefMode = mode;
 		}
 
 		[[nodiscard]]
 		const Optional<T>& paramRefValue() const
 		{
-			return m_paramRefValue;
+			static const Optional<T> NoneValue = none;
+			return m_propertyDetail ? m_propertyDetail->paramRefValue : NoneValue;
 		}
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
-			m_paramRefValue = paramRefValue;
+			if (!m_propertyDetail && !paramRefValue)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefValue = paramRefValue;
 		}
 
 		[[nodiscard]]
 		Optional<String> paramRefValueString() const override
 		{
-			if (!m_paramRefValue)
+			if (!m_propertyDetail || !m_propertyDetail->paramRefValue)
 			{
 				return none;
 			}
-			return Format(*m_paramRefValue);
+			return Format(*m_propertyDetail->paramRefValue);
 		}
 
 		bool trySetParamRefValueString(StringView value) override
@@ -753,7 +810,7 @@ namespace noco
 			{
 				return false;
 			}
-			m_paramRefValue = *parsedValue;
+			ensurePropertyDetail().paramRefValue = *parsedValue;
 			return true;
 		}
 
@@ -779,32 +836,35 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (m_paramRef.isEmpty())
+			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
 			}
 
-			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
+			const auto it = validParams.find(m_propertyDetail->paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_propertyDetail->paramRefMode))
 			{
-				clearedParams.insert(m_paramRef);
-				m_paramRef = U"";
-				m_paramRefHash.reset();
-				m_paramRefMode = ParamRefMode::Normal;
-				m_paramRefValue.reset();
+				clearedParams.insert(m_propertyDetail->paramRef);
+				m_propertyDetail->paramRef = U"";
+				m_propertyDetail->paramRefHash.reset();
+				m_propertyDetail->paramRefMode = ParamRefMode::Normal;
+				m_propertyDetail->paramRefValue.reset();
 			}
 		}
 
 		[[nodiscard]]
 		const T& value() const
 		{
-			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			if (m_propertyDetail)
 			{
-				return *m_currentFrameOverride;
-			}
-			if (m_paramRefOverride.has_value())
-			{
-				return *m_paramRefOverride;
+				if (m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount())
+				{
+					return *m_propertyDetail->currentFrameOverride;
+				}
+				if (m_propertyDetail->paramRefOverride.has_value())
+				{
+					return *m_propertyDetail->paramRefOverride;
+				}
 			}
 			return m_smoothing.currentValue();
 		}
@@ -830,30 +890,30 @@ namespace noco
 			// パラメータ参照適用
 			if constexpr (IsParamSupportedType<T>())
 			{
-				if (!m_paramRef.isEmpty())
+				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
-					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
+					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
-						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_smoothing.currentValue(), m_paramRefMode), it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_smoothing.currentValue(), m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
 						{
-							m_paramRefOverride = *resolved;
+							m_propertyDetail->paramRefOverride = *resolved;
 						}
 						else
 						{
 							// パラメータの型が合わない場合はクリア
-							m_paramRefOverride.reset();
+							m_propertyDetail->paramRefOverride.reset();
 						}
 					}
 					else
 					{
 						// パラメータが見つからない場合はクリア
-						m_paramRefOverride.reset();
+						m_propertyDetail->paramRefOverride.reset();
 					}
 				}
-				else
+				else if (m_propertyDetail)
 				{
 					// パラメータ参照がない場合はクリア
-					m_paramRefOverride.reset();
+					m_propertyDetail->paramRefOverride.reset();
 				}
 			}
 		}
@@ -865,40 +925,44 @@ namespace noco
 			{
 				return NoneValue;
 			}
-			return m_currentFrameOverride;
+			return m_propertyDetail->currentFrameOverride;
 		}
 
 		void setCurrentFrameOverride(const T& value)
 		{
-			m_currentFrameOverride = value;
-			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.currentFrameOverride = value;
+			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
 			m_smoothing.setCurrentValue(value);
 		}
 		
 		void clearCurrentFrameOverride() override
 		{
-			m_currentFrameOverride.reset();
+			if (m_propertyDetail)
+			{
+				m_propertyDetail->currentFrameOverride.reset();
+			}
 		}
 		
 		[[nodiscard]]
 		bool hasCurrentFrameOverride() const
 		{
-			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
+			return m_propertyDetail && m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
-			if (!m_paramRef.isEmpty())
+			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
-				json[String(m_name) + U"_paramRef"] = m_paramRef;
-				if (m_paramRefMode != ParamRefMode::Normal)
+				json[String(m_name) + U"_paramRef"] = m_propertyDetail->paramRef;
+				if (m_propertyDetail->paramRefMode != ParamRefMode::Normal)
 				{
-					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_propertyDetail->paramRefMode);
 				}
-				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				if (ParamRefModeRequiresBoolParam(m_propertyDetail->paramRefMode) && m_propertyDetail->paramRefValue)
 				{
-					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_propertyDetail->paramRefValue }.toJSON();
 				}
 			}
 		}
@@ -915,29 +979,28 @@ namespace noco
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))
 			{
-				m_paramRef = json[paramRefKey].getString();
-				m_paramRefHash.reset();
+				setParamRef(json[paramRefKey].getString());
 			}
 			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
 			if (json.contains(paramRefValueKey))
 			{
-				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+				ensurePropertyDetail().paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
 			}
-			else
+			else if (m_propertyDetail)
 			{
-				m_paramRefValue.reset();
+				m_propertyDetail->paramRefValue.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
+					setParamRefMode(ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name()));
 				}
 			}
 			else
 			{
-				m_paramRefMode = ParamRefMode::Normal;
+				setParamRefMode(ParamRefMode::Normal);
 			}
 		}
 
@@ -1048,21 +1111,25 @@ namespace noco
 	private:
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
-		String m_paramRef; // パラメータ参照名
-		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
-		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
-		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
-		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
-		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+
+		[[nodiscard]]
+		detail::PropertyDetail<T>& ensurePropertyDetail()
+		{
+			if (!m_propertyDetail)
+			{
+				m_propertyDetail = std::make_unique<detail::PropertyDetail<T>>();
+			}
+			return *m_propertyDetail;
+		}
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
 		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
 		{
-			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+			return (ParamRefModeRequiresBoolParam(mode) && m_propertyDetail && m_propertyDetail->paramRefValue) ? *m_propertyDetail->paramRefValue : value;
 		}
 
 	public:
@@ -1099,57 +1166,72 @@ namespace noco
 		[[nodiscard]]
 		const String& paramRef() const override
 		{
-			return m_paramRef;
+			static const String EmptyString;
+			return m_propertyDetail ? m_propertyDetail->paramRef : EmptyString;
 		}
 
 		void setParamRef(const String& paramRef) override
 		{
-			m_paramRef = paramRef;
-			m_paramRefHash.reset();
+			if (!m_propertyDetail && paramRef.isEmpty())
+			{
+				return;
+			}
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.paramRef = paramRef;
+			propertyDetail.paramRefHash.reset();
 		}
 
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
-			return !m_paramRef.isEmpty();
+			return m_propertyDetail && !m_propertyDetail->paramRef.isEmpty();
 		}
 
 		[[nodiscard]]
 		ParamRefMode paramRefMode() const override
 		{
-			return m_paramRefMode;
+			return m_propertyDetail ? m_propertyDetail->paramRefMode : ParamRefMode::Normal;
 		}
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
-			m_paramRefMode = mode;
+			if (!m_propertyDetail && mode == ParamRefMode::Normal)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefMode = mode;
 		}
 
 		[[nodiscard]]
 		const Optional<T>& paramRefValue() const
 		{
-			return m_paramRefValue;
+			static const Optional<T> NoneValue = none;
+			return m_propertyDetail ? m_propertyDetail->paramRefValue : NoneValue;
 		}
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
-			m_paramRefValue = paramRefValue;
+			if (!m_propertyDetail && !paramRefValue)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefValue = paramRefValue;
 		}
 
 		[[nodiscard]]
 		Optional<String> paramRefValueString() const override
 		{
-			if (!m_paramRefValue)
+			if (!m_propertyDetail || !m_propertyDetail->paramRefValue)
 			{
 				return none;
 			}
 			if constexpr (std::is_enum_v<T>)
 			{
-				return EnumToString(*m_paramRefValue);
+				return EnumToString(*m_propertyDetail->paramRefValue);
 			}
 			else
 			{
-				return Format(*m_paramRefValue);
+				return Format(*m_propertyDetail->paramRefValue);
 			}
 		}
 
@@ -1160,7 +1242,7 @@ namespace noco
 			{
 				return false;
 			}
-			m_paramRefValue = *parsedValue;
+			ensurePropertyDetail().paramRefValue = *parsedValue;
 			return true;
 		}
 
@@ -1192,32 +1274,35 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (m_paramRef.isEmpty())
+			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
 			}
 
-			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
+			const auto it = validParams.find(m_propertyDetail->paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_propertyDetail->paramRefMode))
 			{
-				clearedParams.insert(m_paramRef);
-				m_paramRef = U"";
-				m_paramRefHash.reset();
-				m_paramRefMode = ParamRefMode::Normal;
-				m_paramRefValue.reset();
+				clearedParams.insert(m_propertyDetail->paramRef);
+				m_propertyDetail->paramRef = U"";
+				m_propertyDetail->paramRefHash.reset();
+				m_propertyDetail->paramRefMode = ParamRefMode::Normal;
+				m_propertyDetail->paramRefValue.reset();
 			}
 		}
 
 		[[nodiscard]]
 		const T& value() const
 		{
-			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			if (m_propertyDetail)
 			{
-				return *m_currentFrameOverride;
-			}
-			if (m_paramRefOverride.has_value())
-			{
-				return *m_paramRefOverride;
+				if (m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount())
+				{
+					return *m_propertyDetail->currentFrameOverride;
+				}
+				if (m_propertyDetail->paramRefOverride.has_value())
+				{
+					return *m_propertyDetail->paramRefOverride;
+				}
 			}
 			return m_value;
 		}
@@ -1235,24 +1320,28 @@ namespace noco
 			{
 				return NoneValue;
 			}
-			return m_currentFrameOverride;
+			return m_propertyDetail->currentFrameOverride;
 		}
 
 		void setCurrentFrameOverride(const T& value)
 		{
-			m_currentFrameOverride = value;
-			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.currentFrameOverride = value;
+			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 		
 		void clearCurrentFrameOverride() override
 		{
-			m_currentFrameOverride.reset();
+			if (m_propertyDetail)
+			{
+				m_propertyDetail->currentFrameOverride.reset();
+			}
 		}
 		
 		[[nodiscard]]
 		bool hasCurrentFrameOverride() const
 		{
-			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
+			return m_propertyDetail && m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
@@ -1266,30 +1355,30 @@ namespace noco
 			// パラメータ参照を反映
 			if constexpr (IsParamSupportedType<T>())
 			{
-				if (!m_paramRef.isEmpty())
+				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
-					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
+					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
-						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_value, m_paramRefMode), it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_value, m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
 						{
-							m_paramRefOverride = std::move(*resolved);
+							m_propertyDetail->paramRefOverride = std::move(*resolved);
 						}
 						else
 						{
 							// パラメータの型が合わない場合はクリア
-							m_paramRefOverride.reset();
+							m_propertyDetail->paramRefOverride.reset();
 						}
 					}
 					else
 					{
 						// パラメータが見つからない場合はクリア
-						m_paramRefOverride.reset();
+						m_propertyDetail->paramRefOverride.reset();
 					}
 				}
-				else
+				else if (m_propertyDetail)
 				{
 					// パラメータ参照がない場合はクリア
-					m_paramRefOverride.reset();
+					m_propertyDetail->paramRefOverride.reset();
 				}
 			}
 		}
@@ -1312,16 +1401,16 @@ namespace noco
 			{
 				json[m_name] = m_value;
 			}
-			if (!m_paramRef.isEmpty())
+			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
-				json[String(m_name) + U"_paramRef"] = m_paramRef;
-				if (m_paramRefMode != ParamRefMode::Normal)
+				json[String(m_name) + U"_paramRef"] = m_propertyDetail->paramRef;
+				if (m_propertyDetail->paramRefMode != ParamRefMode::Normal)
 				{
-					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_propertyDetail->paramRefMode);
 				}
-				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				if (ParamRefModeRequiresBoolParam(m_propertyDetail->paramRefMode) && m_propertyDetail->paramRefValue)
 				{
-					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_propertyDetail->paramRefValue }.toJSON();
 				}
 			}
 		}
@@ -1339,29 +1428,28 @@ namespace noco
 			const String paramRefKey = String(m_name) + U"_paramRef";
 			if (json.contains(paramRefKey))
 			{
-				m_paramRef = json[paramRefKey].getString();
-				m_paramRefHash.reset();
+				setParamRef(json[paramRefKey].getString());
 			}
 			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
 			if (json.contains(paramRefValueKey))
 			{
-				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+				ensurePropertyDetail().paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
 			}
-			else
+			else if (m_propertyDetail)
 			{
-				m_paramRefValue.reset();
+				m_propertyDetail->paramRefValue.reset();
 			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
+					setParamRefMode(ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name()));
 				}
 			}
 			else
 			{
-				m_paramRefMode = ParamRefMode::Normal;
+				setParamRefMode(ParamRefMode::Normal);
 			}
 		}
 
@@ -1496,22 +1584,26 @@ namespace noco
 	private:
 		const char32_t* m_name;
 		PropertyValue<Color> m_propertyValue;
-		String m_paramRef;
-		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
-		Optional<Color> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
-		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
+		std::unique_ptr<detail::PropertyDetail<Color>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+
+		[[nodiscard]]
+		detail::PropertyDetail<Color>& ensurePropertyDetail()
+		{
+			if (!m_propertyDetail)
+			{
+				m_propertyDetail = std::make_unique<detail::PropertyDetail<Color>>();
+			}
+			return *m_propertyDetail;
+		}
 		/*NonSerialized*/ Smoothing<ColorF> m_smoothing; // ColorFで補間
-		/*NonSerialized*/ Optional<Color> m_paramRefOverride; // パラメータ参照による値
-		/*NonSerialized*/ Optional<Color> m_currentFrameOverride;
-		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
 
 		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
 		[[nodiscard]]
 		const Color& paramRefBaseValue(const Color& value, ParamRefMode mode) const
 		{
-			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+			return (ParamRefModeRequiresBoolParam(mode) && m_propertyDetail && m_propertyDetail->paramRefValue) ? *m_propertyDetail->paramRefValue : value;
 		}
 
 	public:
@@ -1560,51 +1652,66 @@ namespace noco
 		[[nodiscard]]
 		const String& paramRef() const override
 		{
-			return m_paramRef;
+			static const String EmptyString;
+			return m_propertyDetail ? m_propertyDetail->paramRef : EmptyString;
 		}
 
 		void setParamRef(const String& paramRef) override
 		{
-			m_paramRef = paramRef;
-			m_paramRefHash.reset();
+			if (!m_propertyDetail && paramRef.isEmpty())
+			{
+				return;
+			}
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.paramRef = paramRef;
+			propertyDetail.paramRefHash.reset();
 		}
 
 		[[nodiscard]]
 		bool hasParamRef() const override
 		{
-			return !m_paramRef.isEmpty();
+			return m_propertyDetail && !m_propertyDetail->paramRef.isEmpty();
 		}
 
 		[[nodiscard]]
 		ParamRefMode paramRefMode() const override
 		{
-			return m_paramRefMode;
+			return m_propertyDetail ? m_propertyDetail->paramRefMode : ParamRefMode::Normal;
 		}
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
-			m_paramRefMode = mode;
+			if (!m_propertyDetail && mode == ParamRefMode::Normal)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefMode = mode;
 		}
 
 		[[nodiscard]]
 		const Optional<Color>& paramRefValue() const
 		{
-			return m_paramRefValue;
+			static const Optional<Color> NoneValue = none;
+			return m_propertyDetail ? m_propertyDetail->paramRefValue : NoneValue;
 		}
 
 		void setParamRefValue(const Optional<Color>& paramRefValue)
 		{
-			m_paramRefValue = paramRefValue;
+			if (!m_propertyDetail && !paramRefValue)
+			{
+				return;
+			}
+			ensurePropertyDetail().paramRefValue = paramRefValue;
 		}
 
 		[[nodiscard]]
 		Optional<String> paramRefValueString() const override
 		{
-			if (!m_paramRefValue)
+			if (!m_propertyDetail || !m_propertyDetail->paramRefValue)
 			{
 				return none;
 			}
-			return Format(*m_paramRefValue);
+			return Format(*m_propertyDetail->paramRefValue);
 		}
 
 		bool trySetParamRefValueString(StringView value) override
@@ -1614,7 +1721,7 @@ namespace noco
 			{
 				return false;
 			}
-			m_paramRefValue = *parsedValue;
+			ensurePropertyDetail().paramRefValue = *parsedValue;
 			return true;
 		}
 
@@ -1637,32 +1744,35 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
-			if (m_paramRef.isEmpty())
+			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
 			}
 
-			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
+			const auto it = validParams.find(m_propertyDetail->paramRef);
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_propertyDetail->paramRefMode))
 			{
-				clearedParams.insert(m_paramRef);
-				m_paramRef = U"";
-				m_paramRefHash.reset();
-				m_paramRefMode = ParamRefMode::Normal;
-				m_paramRefValue.reset();
+				clearedParams.insert(m_propertyDetail->paramRef);
+				m_propertyDetail->paramRef = U"";
+				m_propertyDetail->paramRefHash.reset();
+				m_propertyDetail->paramRefMode = ParamRefMode::Normal;
+				m_propertyDetail->paramRefValue.reset();
 			}
 		}
 
 		[[nodiscard]]
 		Color value() const
 		{
-			if (m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount())
+			if (m_propertyDetail)
 			{
-				return *m_currentFrameOverride;
-			}
-			if (m_paramRefOverride.has_value())
-			{
-				return *m_paramRefOverride;
+				if (m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount())
+				{
+					return *m_propertyDetail->currentFrameOverride;
+				}
+				if (m_propertyDetail->paramRefOverride.has_value())
+				{
+					return *m_propertyDetail->paramRefOverride;
+				}
 			}
 			return Color{ m_smoothing.currentValue() };
 		}
@@ -1688,30 +1798,30 @@ namespace noco
 			}
 
 			// パラメータ参照適用
-			if (!m_paramRef.isEmpty())
+			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
-				if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
+				if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 				{
-					if (auto applied = ApplyParamRefMode<Color>(paramRefBaseValue(Color{ m_smoothing.currentValue() }, m_paramRefMode), it->second, m_paramRefMode))
+					if (auto applied = ApplyParamRefMode<Color>(paramRefBaseValue(Color{ m_smoothing.currentValue() }, m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
 					{
-						m_paramRefOverride = *applied;
+						m_propertyDetail->paramRefOverride = *applied;
 					}
 					else
 					{
 						// パラメータの型が合わない場合はクリア
-						m_paramRefOverride.reset();
+						m_propertyDetail->paramRefOverride.reset();
 					}
 				}
 				else
 				{
 					// パラメータが見つからない場合はクリア
-					m_paramRefOverride.reset();
+					m_propertyDetail->paramRefOverride.reset();
 				}
 			}
-			else
+			else if (m_propertyDetail)
 			{
 				// パラメータ参照がない場合はクリア
-				m_paramRefOverride.reset();
+				m_propertyDetail->paramRefOverride.reset();
 			}
 		}
 
@@ -1722,39 +1832,43 @@ namespace noco
 			{
 				return NoneValue;
 			}
-			return m_currentFrameOverride;
+			return m_propertyDetail->currentFrameOverride;
 		}
 
 		void setCurrentFrameOverride(const Color& value)
 		{
-			m_currentFrameOverride = value;
-			m_currentFrameOverrideFrameCount = Scene::FrameCount();
+			auto& propertyDetail = ensurePropertyDetail();
+			propertyDetail.currentFrameOverride = value;
+			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
 		}
 
 		[[nodiscard]]
 		bool hasCurrentFrameOverride() const
 		{
-			return m_currentFrameOverride.has_value() && m_currentFrameOverrideFrameCount == Scene::FrameCount();
+			return m_propertyDetail && m_propertyDetail->currentFrameOverride.has_value() && m_propertyDetail->currentFrameOverrideFrameCount == Scene::FrameCount();
 		}
 
 		void clearCurrentFrameOverride() override
 		{
-			m_currentFrameOverride = none;
+			if (m_propertyDetail)
+			{
+				m_propertyDetail->currentFrameOverride.reset();
+			}
 		}
 
 		void appendJSON(JSON& json) const override
 		{
 			json[m_name] = m_propertyValue.toJSON();
-			if (!m_paramRef.isEmpty())
+			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
-				json[String{ m_name } + U"_paramRef"] = m_paramRef;
-				if (m_paramRefMode != ParamRefMode::Normal)
+				json[String{ m_name } + U"_paramRef"] = m_propertyDetail->paramRef;
+				if (m_propertyDetail->paramRefMode != ParamRefMode::Normal)
 				{
-					json[String{ m_name } + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+					json[String{ m_name } + U"_paramRefMode"] = EnumToString(m_propertyDetail->paramRefMode);
 				}
-				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				if (ParamRefModeRequiresBoolParam(m_propertyDetail->paramRefMode) && m_propertyDetail->paramRefValue)
 				{
-					json[String{ m_name } + U"_paramRefValue"] = PropertyValue<Color>{ *m_paramRefValue }.toJSON();
+					json[String{ m_name } + U"_paramRefValue"] = PropertyValue<Color>{ *m_propertyDetail->paramRefValue }.toJSON();
 				}
 			}
 		}
@@ -1771,29 +1885,28 @@ namespace noco
 			const String paramRefKey = String{ m_name } + U"_paramRef";
 			if (json.contains(paramRefKey))
 			{
-				m_paramRef = json[paramRefKey].getString();
-				m_paramRefHash.reset();
+				setParamRef(json[paramRefKey].getString());
 			}
 			const String paramRefValueKey = String{ m_name } + U"_paramRefValue";
 			if (json.contains(paramRefValueKey))
 			{
-				m_paramRefValue = PropertyValue<Color>::FromJSON(json[paramRefValueKey]).defaultValue();
+				ensurePropertyDetail().paramRefValue = PropertyValue<Color>::FromJSON(json[paramRefValueKey]).defaultValue();
 			}
-			else
+			else if (m_propertyDetail)
 			{
-				m_paramRefValue.reset();
+				m_propertyDetail->paramRefValue.reset();
 			}
 			const String paramRefModeKey = String{ m_name } + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<Color>(), name());
+					setParamRefMode(ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<Color>(), name()));
 				}
 			}
 			else
 			{
-				m_paramRefMode = ParamRefMode::Normal;
+				setParamRefMode(ParamRefMode::Normal);
 			}
 		}
 
