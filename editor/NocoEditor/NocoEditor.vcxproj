@@ -119,6 +119,7 @@
     <ClCompile Include="CustomAssetLoader.cpp" />
     <ClCompile Include="EditorButton.cpp" />
     <ClCompile Include="EditorDialog.cpp" />
+    <ClCompile Include="ParamRefDialog.cpp" />
     <ClCompile Include="PropertyLabelDragger.cpp" />
     <ClCompile Include="PropertyMetaData.cpp" />
     <ClCompile Include="ResizableHandle.cpp" />

@@ -282,7 +282,7 @@ namespace noco
 				return;
 			}
 			const auto it = validParams.find(prop.paramRef());
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), expectedType))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), expectedType, prop.paramRefMode()))
 			{
 				clearedParamsSet.insert(prop.paramRef());
 				prop.setParamRef(U"");

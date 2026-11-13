@@ -57,6 +57,7 @@ namespace noco
 		PropertyVariant m_propertyValue;
 		String m_paramRef;
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
+		Optional<PropertyVariant> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 
 	public:
 		PlaceholderProperty(const String& name, PropertyEditType editType = PropertyEditType::Text)
@@ -91,6 +92,12 @@ namespace noco
 				if (m_paramRefMode != ParamRefMode::Normal)
 				{
 					json[m_name + U"_paramRefMode"] = EnumToString(m_paramRefMode);
+				}
+				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				{
+					std::visit([&](const auto& propValue) {
+						json[m_name + U"_paramRefValue"] = propValue.toJSON();
+					}, *m_paramRefValue);
 				}
 			}
 		}
@@ -141,6 +148,20 @@ namespace noco
 			if (json.contains(paramRefKey))
 			{
 				m_paramRef = json[paramRefKey].getString();
+			}
+			const String paramRefValueKey = m_name + U"_paramRefValue";
+			if (json.contains(paramRefValueKey))
+			{
+				PropertyVariant paramRefValue = MakePropertyValueOfEditType(m_editType);
+				std::visit([&](auto& propValue) {
+					using T = std::decay_t<decltype(propValue)>;
+					propValue = T{ T::FromJSON(json[paramRefValueKey]).defaultValue() };
+				}, paramRefValue);
+				m_paramRefValue = std::move(paramRefValue);
+			}
+			else
+			{
+				m_paramRefValue.reset();
 			}
 			const String paramRefModeKey = m_name + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
@@ -299,11 +320,12 @@ namespace noco
 			}
 
 			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), m_editType))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), m_editType, m_paramRefMode))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef.clear();
 				m_paramRefMode = ParamRefMode::Normal;
+				m_paramRefValue.reset();
 			}
 		}
 
@@ -319,25 +341,51 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		Optional<String> paramRefValueString() const override
+		{
+			if (!m_paramRefValue)
+			{
+				return none;
+			}
+			return std::visit([](const auto& propValue) {
+				return propValue.getValueStringOfDefault();
+			}, *m_paramRefValue);
+		}
+
+		bool trySetParamRefValueString(StringView value) override
+		{
+			PropertyVariant paramRefValue = MakePropertyValueOfEditType(m_editType);
+			const bool succeeded = std::visit([&](auto& propValue) {
+				return propValue.trySetValueString(value);
+			}, paramRefValue);
+			if (!succeeded)
+			{
+				return false;
+			}
+			m_paramRefValue = std::move(paramRefValue);
+			return true;
+		}
+
+		[[nodiscard]]
 		Array<ParamRefMode> availableParamRefModes() const override
 		{
 			switch (m_editType)
 			{
 			case PropertyEditType::Bool:
-				return AvailableParamRefModesFor<bool>();
+				return AvailableParamRefModesForProperty<bool>();
 			case PropertyEditType::Int:
-				return AvailableParamRefModesFor<int32>();
+				return AvailableParamRefModesForProperty<int32>();
 			case PropertyEditType::Double:
-				return AvailableParamRefModesFor<double>();
+				return AvailableParamRefModesForProperty<double>();
 			case PropertyEditType::Text:
 			case PropertyEditType::Enum:
-				return AvailableParamRefModesFor<String>();
+				return AvailableParamRefModesForProperty<String>();
 			case PropertyEditType::Color:
-				return AvailableParamRefModesFor<Color>();
+				return AvailableParamRefModesForProperty<Color>();
 			case PropertyEditType::Vec2:
-				return AvailableParamRefModesFor<Vec2>();
+				return AvailableParamRefModesForProperty<Vec2>();
 			case PropertyEditType::LRTB:
-				return AvailableParamRefModesFor<LRTB>();
+				return AvailableParamRefModesForProperty<LRTB>();
 			}
 			return { ParamRefMode::Normal };
 		}
@@ -350,7 +398,9 @@ namespace noco
 					using T = std::decay_t<decltype(propValue.defaultValue())>;
 					if constexpr (IsParamSupportedType<T>())
 					{
-						const T base = propValue.defaultValue();
+						const T base = (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue)
+							? std::get<PropertyValue<T>>(*m_paramRefValue).defaultValue()
+							: propValue.defaultValue();
 						if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
 						{
 							return Format(*resolved);

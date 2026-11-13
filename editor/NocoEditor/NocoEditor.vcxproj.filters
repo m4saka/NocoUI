@@ -93,6 +93,9 @@
     <ClCompile Include="EditorDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParamRefDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="PropertyMetaData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

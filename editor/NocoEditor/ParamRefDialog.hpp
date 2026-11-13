@@ -22,9 +22,11 @@ namespace noco::editor
 		std::shared_ptr<Node> m_warningNode;
 		std::shared_ptr<Node> m_modeComboBox;
 		std::shared_ptr<Label> m_modeComboLabel;
+		std::shared_ptr<Node> m_paramRefValueRow;
 
 		String m_selectedParamName;
 		ParamRefMode m_selectedMode = ParamRefMode::Normal;
+		String m_paramRefValueString; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		Array<std::pair<String, ParamValue>> m_availableParams;
 		
 		// ダイアログ管理
@@ -49,11 +51,9 @@ namespace noco::editor
 			{
 				return;
 			}
-			const PropertyEditType editType = m_pProperty->editType();
-
 			for (const auto& [name, value] : m_canvas->params())
 			{
-				if (IsParamTypeCompatibleWith(GetParamType(value), editType))
+				if (!availableModesFor(GetParamType(value)).empty())
 				{
 					m_availableParams.push_back({ name, value });
 				}
@@ -71,6 +71,62 @@ namespace noco::editor
 			}
 		}
 		
+		// paramTypeのパラメータを参照する場合に選択可能な反映モード一覧
+		Array<ParamRefMode> availableModesFor(ParamType paramType) const
+		{
+			if (!m_pProperty)
+			{
+				return {};
+			}
+			const PropertyEditType editType = m_pProperty->editType();
+			return m_pProperty->availableParamRefModes().filter([paramType, editType](ParamRefMode mode)
+				{
+					return IsParamTypeCompatibleWith(paramType, editType, mode);
+				});
+		}
+
+		// 選択中のパラメータで選択可能な反映モード一覧(パラメータ未選択の場合は全ての反映モード)
+		Array<ParamRefMode> availableModesForSelectedParam() const
+		{
+			if (!m_pProperty)
+			{
+				return {};
+			}
+			if (!m_selectedParamName.isEmpty())
+			{
+				if (const auto param = m_canvas->paramValueOpt(m_selectedParamName))
+				{
+					return availableModesFor(GetParamType(*param));
+				}
+			}
+			return m_pProperty->availableParamRefModes();
+		}
+
+		void createParamRefValueRow(const std::shared_ptr<Node>& contentRootNode, const std::shared_ptr<ContextMenu>& dialogContextMenu);
+
+		void setParamRefValueString(StringView value)
+		{
+			m_paramRefValueString = value;
+			updateValueLabels();
+		}
+
+		void updateParamRefValueRowActive()
+		{
+			if (!m_paramRefValueRow)
+			{
+				return;
+			}
+			const bool active = ParamRefModeRequiresBoolParam(m_selectedMode);
+			if (m_paramRefValueRow->activeSelf() != active)
+			{
+				m_paramRefValueRow->setActive(active);
+				if (m_fnRefreshLayoutForContent)
+				{
+					m_fnRefreshLayoutForContent();
+				}
+			}
+		}
+
 		String getParamValueString(const ParamValue& value) const
 		{
 			return ParamValueToString(value);
@@ -83,6 +139,7 @@ namespace noco::editor
 			, m_onComplete(std::move(onComplete))
 			, m_selectedParamName(m_pProperty->paramRef())
 			, m_selectedMode(m_pProperty->paramRefMode())
+			, m_paramRefValueString(m_pProperty->paramRefValueString().value_or(m_pProperty->propertyValueStringOfDefault()))
 			, m_dialogOpener(dialogOpener)
 		{
 		}
@@ -306,6 +363,10 @@ namespace noco::editor
 				});
 			}
 
+			// 上書きする値の入力
+			createParamRefValueRow(contentRootNode, dialogContextMenu);
+			m_paramRefValueRow->setActive(ParamRefModeRequiresBoolParam(m_selectedMode));
+
 			// パラメータの値表示
 			const auto valueRow = contentRootNode->emplaceChild(
 				U"ValueRow",
@@ -463,6 +524,14 @@ namespace noco::editor
 			const String displayText = paramName.isEmpty() ? U"(なし)" : paramName;
 			m_comboLabel->setText(displayText);
 
+			// 選択中の反映モードがパラメータの型に対応しない場合は対応する反映モードへ変更
+			const Array<ParamRefMode> modes = availableModesForSelectedParam();
+			if (!modes.empty() && !modes.contains(m_selectedMode))
+			{
+				selectMode(modes.front());
+				return;
+			}
+
 			updateValueLabels();
 		}
 
@@ -483,7 +552,19 @@ namespace noco::editor
 			}
 			m_valueLabel->setText(getParamValueString(*param));
 
-			if (m_pProperty)
+			if (m_pProperty && ParamRefModeRequiresBoolParam(m_selectedMode))
+			{
+				if (const auto boolValue = GetParamValueAs<bool>(*param))
+				{
+					const bool overrides = *boolValue == (m_selectedMode == ParamRefMode::OverrideIfTrue);
+					m_appliedValueLabel->setText(overrides ? m_paramRefValueString : m_pProperty->propertyValueStringOfDefault());
+				}
+				else
+				{
+					m_appliedValueLabel->setText(U"(適用不可)");
+				}
+			}
+			else if (m_pProperty)
 			{
 				const auto applied = m_pProperty->previewParamRefAppliedString(*param, m_selectedMode);
 				m_appliedValueLabel->setText(applied.value_or(U"(適用不可)"));
@@ -500,7 +581,7 @@ namespace noco::editor
 			{
 				return;
 			}
-			const Array<ParamRefMode> candidates = m_pProperty->availableParamRefModes();
+			const Array<ParamRefMode> candidates = availableModesForSelectedParam();
 			Array<MenuElement> menuElements;
 			for (const auto mode : candidates)
 			{
@@ -519,6 +600,7 @@ namespace noco::editor
 		{
 			m_selectedMode = mode;
 			m_modeComboLabel->setText(String{ ParamRefModeToDisplayString(mode) });
+			updateParamRefValueRowActive();
 			updateValueLabels();
 		}
 		
@@ -530,6 +612,10 @@ namespace noco::editor
 			}
 			const PropertyEditType editType = m_pProperty->editType();
 			Array<ParamType> compatibleTypes = CompatibleParamTypes(editType);
+			if (!compatibleTypes.contains(ParamType::Bool) && !availableModesFor(ParamType::Bool).empty())
+			{
+				compatibleTypes.push_back(ParamType::Bool);
+			}
 			if (compatibleTypes.isEmpty())
 			{
 				return;
@@ -565,6 +651,10 @@ namespace noco::editor
 				if (!m_selectedParamName.isEmpty())
 				{
 					SetPropertyParamRefMode(m_pProperty, m_selectedMode);
+					if (ParamRefModeRequiresBoolParam(m_selectedMode))
+					{
+						SetPropertyParamRefValueString(m_pProperty, m_paramRefValueString);
+					}
 				}
 
 				if (m_onComplete)

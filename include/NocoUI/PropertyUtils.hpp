@@ -67,6 +67,16 @@ namespace noco
 		return true;
 	}
 
+	/// @brief IPropertyのOverrideIfTrue/OverrideIfFalseで上書きする値を設定
+	inline bool SetPropertyParamRefValueString(IProperty* prop, StringView value)
+	{
+		if (!prop)
+		{
+			return false;
+		}
+		return prop->trySetParamRefValueString(value);
+	}
+
 	// プロパティの型に基づいて処理を実行する統一関数
 	template <typename Visitor>
 	inline bool VisitPropertyType(IProperty* prop, Visitor&& visitor)

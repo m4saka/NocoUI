@@ -1207,6 +1207,196 @@ TEST_CASE("Parameter reference modes", "[Param]")
 		canvas->update();
 		REQUIRE(prop->value() == Format(true));
 	}
+
+	SECTION("OverrideIfTrue/OverrideIfFalse")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"default");
+		auto* prop = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(prop != nullptr);
+
+		canvas->setParamValue(U"flag", true);
+		prop->setParamRef(U"flag");
+		prop->setParamRefValue(String{ U"overridden" });
+
+		prop->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		canvas->update();
+		REQUIRE(prop->value() == U"overridden");
+
+		prop->setParamRefMode(ParamRefMode::OverrideIfFalse);
+		canvas->update();
+		REQUIRE(prop->value() == U"default");
+
+		canvas->setParamValue(U"flag", false);
+		canvas->update();
+		REQUIRE(prop->value() == U"overridden");
+
+		prop->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		canvas->update();
+		REQUIRE(prop->value() == U"default");
+	}
+
+	SECTION("OverrideIfTrue with non-Bool param does not override")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"default");
+		auto* prop = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		REQUIRE(prop != nullptr);
+
+		canvas->setParamValue(U"str", U"true");
+		prop->setParamRef(U"str");
+		prop->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		prop->setParamRefValue(String{ U"overridden" });
+		canvas->update();
+		REQUIRE(prop->value() == U"default");
+	}
+
+	SECTION("OverrideIfTrue for styleState")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		canvas->setParamValue(U"flag", false);
+		auto& prop = node->styleStateProperty();
+		prop.setParamRef(U"flag");
+		prop.setParamRefMode(ParamRefMode::OverrideIfTrue);
+		prop.setParamRefValue(String{ U"visible" });
+
+		canvas->update();
+		REQUIRE(node->styleState() == U"");
+
+		canvas->setParamValue(U"flag", true);
+		canvas->update();
+		REQUIRE(node->styleState() == U"visible");
+	}
+
+	SECTION("OverrideIfTrue for SmoothProperty")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"Text");
+		label->setFontSize(20.0);
+		label->setColor(Color{ 255, 255, 255, 255 });
+		auto* fontSizeProp = dynamic_cast<SmoothProperty<double>*>(label->getPropertyByName(U"fontSize"));
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(fontSizeProp != nullptr);
+		REQUIRE(colorProp != nullptr);
+
+		canvas->setParamValue(U"flag", true);
+		fontSizeProp->setParamRef(U"flag");
+		fontSizeProp->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		fontSizeProp->setParamRefValue(40.0);
+		colorProp->setParamRef(U"flag");
+		colorProp->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		colorProp->setParamRefValue(Color{ 255, 0, 0, 255 });
+
+		canvas->update();
+		REQUIRE(fontSizeProp->value() == Approx(40.0));
+		REQUIRE(colorProp->value() == Color{ 255, 0, 0, 255 });
+
+		canvas->setParamValue(U"flag", false);
+		canvas->update();
+		REQUIRE(fontSizeProp->value() == Approx(20.0));
+		REQUIRE(colorProp->value() == Color{ 255, 255, 255, 255 });
+	}
+
+	SECTION("OverrideIfTrue serializes and restores")
+	{
+		auto canvas1 = Canvas::Create();
+		auto node1 = Node::Create();
+		canvas1->addChild(node1);
+
+		auto label = node1->emplaceComponent<Label>(U"default");
+		auto* textProp = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(textProp != nullptr);
+		REQUIRE(colorProp != nullptr);
+		canvas1->setParamValue(U"flag", true);
+		textProp->setParamRef(U"flag");
+		textProp->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		textProp->setParamRefValue(String{ U"overridden" });
+		colorProp->setParamRef(U"flag");
+		colorProp->setParamRefMode(ParamRefMode::OverrideIfFalse);
+		colorProp->setParamRefValue(Color{ 255, 0, 0, 255 });
+		node1->styleStateProperty().setParamRef(U"flag");
+		node1->styleStateProperty().setParamRefMode(ParamRefMode::OverrideIfTrue);
+		node1->styleStateProperty().setParamRefValue(String{ U"visible" });
+
+		const JSON json = canvas1->toJSON();
+
+		auto canvas2 = Canvas::Create();
+		canvas2->tryReadFromJSON(json);
+		canvas2->update();
+
+		auto restoredNode = canvas2->children()[0];
+		auto restoredLabel = restoredNode->getComponent<Label>();
+		REQUIRE(restoredLabel != nullptr);
+		auto* restoredTextProp = dynamic_cast<Property<String>*>(restoredLabel->getPropertyByName(U"text"));
+		auto* restoredColorProp = dynamic_cast<SmoothProperty<Color>*>(restoredLabel->getPropertyByName(U"color"));
+		REQUIRE(restoredTextProp != nullptr);
+		REQUIRE(restoredColorProp != nullptr);
+		REQUIRE(restoredTextProp->paramRefMode() == ParamRefMode::OverrideIfTrue);
+		REQUIRE(restoredTextProp->paramRefValue() == String{ U"overridden" });
+		REQUIRE(restoredTextProp->value() == U"overridden");
+		REQUIRE(restoredColorProp->paramRefMode() == ParamRefMode::OverrideIfFalse);
+		REQUIRE(restoredColorProp->paramRefValue() == Color{ 255, 0, 0, 255 });
+		REQUIRE(restoredNode->styleStateProperty().paramRefMode() == ParamRefMode::OverrideIfTrue);
+		REQUIRE(restoredNode->styleState() == U"visible");
+	}
+
+	SECTION("removeInvalidParamRefs keeps Bool param reference of OverrideIfTrue")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+
+		auto label = node->emplaceComponent<Label>(U"Text");
+		auto* fontSizeProp = dynamic_cast<SmoothProperty<double>*>(label->getPropertyByName(U"fontSize"));
+		REQUIRE(fontSizeProp != nullptr);
+
+		canvas->setParamValue(U"flag", true);
+		canvas->setParamValue(U"size", 30.0);
+		fontSizeProp->setParamRef(U"flag");
+		fontSizeProp->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		fontSizeProp->setParamRefValue(40.0);
+		node->transform().color().setParamRef(U"flag");
+		node->transform().color().setParamRefMode(ParamRefMode::OverrideIfTrue);
+		node->transform().color().setParamRefValue(Color{ 255, 0, 0, 255 });
+
+		REQUIRE(canvas->removeInvalidParamRefs().empty());
+		REQUIRE(fontSizeProp->paramRef() == U"flag");
+		REQUIRE(node->transform().color().paramRef() == U"flag");
+
+		// Bool以外のパラメータは参照できない
+		fontSizeProp->setParamRef(U"size");
+		REQUIRE(canvas->removeInvalidParamRefs() == Array<String>{ U"size" });
+		REQUIRE(fontSizeProp->paramRef() == U"");
+		REQUIRE(fontSizeProp->paramRefMode() == ParamRefMode::Normal);
+		REQUIRE(!fontSizeProp->paramRefValue().has_value());
+	}
+
+	SECTION("paramRefValueString")
+	{
+		auto node = Node::Create();
+		auto label = node->emplaceComponent<Label>(U"default");
+		IProperty* prop = label->getPropertyByName(U"fontSize");
+		REQUIRE(prop != nullptr);
+
+		REQUIRE(!prop->paramRefValueString().has_value());
+		REQUIRE(prop->trySetParamRefValueString(U"40"));
+		REQUIRE(prop->paramRefValueString() == Format(40.0));
+		REQUIRE(!prop->trySetParamRefValueString(U"abc"));
+		REQUIRE(prop->paramRefValueString() == Format(40.0));
+	}
 }
 
 // ========================================
@@ -1223,6 +1413,8 @@ TEST_CASE("ParamRefMode helpers", "[Param][ParamRefMode]")
 		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Subtract) == U"減算");
 		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Multiply) == U"乗算");
 		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::Format) == U"フォーマット");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::OverrideIfTrue) == U"true時上書き");
+		REQUIRE(ParamRefModeToShortDisplayString(ParamRefMode::OverrideIfFalse) == U"false時上書き");
 	}
 
 	SECTION("ParamRefModeRequiresBaseValue")
@@ -1233,6 +1425,37 @@ TEST_CASE("ParamRefMode helpers", "[Param][ParamRefMode]")
 		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Subtract) == true);
 		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Multiply) == true);
 		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::Format) == true);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::OverrideIfTrue) == false);
+		REQUIRE(ParamRefModeRequiresBaseValue(ParamRefMode::OverrideIfFalse) == false);
+	}
+
+	SECTION("ParamRefModeRequiresBoolParam")
+	{
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Normal) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Inverted) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Add) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Subtract) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Multiply) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::Format) == false);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::OverrideIfTrue) == true);
+		REQUIRE(ParamRefModeRequiresBoolParam(ParamRefMode::OverrideIfFalse) == true);
+	}
+
+	SECTION("AvailableParamRefModesForProperty")
+	{
+		const auto boolModes = AvailableParamRefModesForProperty<bool>();
+		REQUIRE(!boolModes.contains(ParamRefMode::OverrideIfTrue));
+		REQUIRE(!boolModes.contains(ParamRefMode::OverrideIfFalse));
+
+		const auto strModes = AvailableParamRefModesForProperty<String>();
+		REQUIRE(strModes.contains(ParamRefMode::Format));
+		REQUIRE(strModes.contains(ParamRefMode::OverrideIfTrue));
+		REQUIRE(strModes.contains(ParamRefMode::OverrideIfFalse));
+
+		const auto colorModes = AvailableParamRefModesForProperty<Color>();
+		REQUIRE(colorModes.contains(ParamRefMode::Multiply));
+		REQUIRE(colorModes.contains(ParamRefMode::OverrideIfTrue));
+		REQUIRE(colorModes.contains(ParamRefMode::OverrideIfFalse));
 	}
 
 	SECTION("AvailableParamRefModesFor(ParamType) runtime dispatch")

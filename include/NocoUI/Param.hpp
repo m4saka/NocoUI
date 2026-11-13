@@ -352,6 +352,8 @@ namespace noco
 		Subtract, // Int/Double/Color/Vec2/LRTB用
 		Multiply, // Int/Double/Color/Vec2/LRTB用
 		Format, // String用
+		OverrideIfTrue, // Bool以外のプロパティ用(Boolパラメータを参照)
+		OverrideIfFalse, // Bool以外のプロパティ用(Boolパラメータを参照)
 	};
 
 	/// @brief paramRefモードのUI表示用文字列
@@ -372,6 +374,10 @@ namespace noco
 			return U"乗算値として反映";
 		case ParamRefMode::Format:
 			return U"フォーマット文字列に適用して反映";
+		case ParamRefMode::OverrideIfTrue:
+			return U"trueの場合のみ上書き";
+		case ParamRefMode::OverrideIfFalse:
+			return U"falseの場合のみ上書き";
 		}
 		return U"";
 	}
@@ -394,6 +400,10 @@ namespace noco
 			return U"乗算";
 		case ParamRefMode::Format:
 			return U"フォーマット";
+		case ParamRefMode::OverrideIfTrue:
+			return U"true時上書き";
+		case ParamRefMode::OverrideIfFalse:
+			return U"false時上書き";
 		}
 		return U"";
 	}
@@ -408,6 +418,20 @@ namespace noco
 		case ParamRefMode::Subtract:
 		case ParamRefMode::Multiply:
 		case ParamRefMode::Format:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	/// @brief paramRefモードがBoolパラメータを条件として使用するか判定
+	[[nodiscard]]
+	constexpr bool ParamRefModeRequiresBoolParam(ParamRefMode mode) noexcept
+	{
+		switch (mode)
+		{
+		case ParamRefMode::OverrideIfTrue:
+		case ParamRefMode::OverrideIfFalse:
 			return true;
 		default:
 			return false;
@@ -480,6 +504,17 @@ namespace noco
 	[[nodiscard]]
 	inline Optional<T> ApplyParamRefMode(const T& base, const ParamValue& paramValue, ParamRefMode mode)
 	{
+		if (ParamRefModeRequiresBoolParam(mode))
+		{
+			// 条件を満たす場合のみbaseの値で上書き
+			const auto v = GetParamValueAs<bool>(paramValue);
+			if (!v || *v != (mode == ParamRefMode::OverrideIfTrue))
+			{
+				return none;
+			}
+			return base;
+		}
+
 		if constexpr (std::same_as<T, bool>)
 		{
 			auto v = GetParamValueAs<bool>(paramValue);

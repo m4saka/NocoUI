@@ -71,6 +71,9 @@ namespace noco
 		virtual ParamRefMode paramRefMode() const = 0;
 		virtual void setParamRefMode(ParamRefMode mode) = 0;
 		virtual Array<ParamRefMode> availableParamRefModes() const = 0;
+		/// @brief OverrideIfTrue/OverrideIfFalseで上書きする値の文字列を取得(未設定ならnone)
+		virtual Optional<String> paramRefValueString() const = 0;
+		virtual bool trySetParamRefValueString(StringView value) = 0;
 		/// @brief 反映後の値の文字列プレビューを取得(現在のデフォルト値に対して指定モードで指定パラメータ値を適用)。適用不可ならnone
 		virtual Optional<String> previewParamRefAppliedString(const ParamValue& paramValue, ParamRefMode mode) const = 0;
 		virtual void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) = 0;
@@ -146,6 +149,35 @@ namespace noco
 		return false;
 	}
 
+	/// @brief paramTypeがeditTypeのプロパティから指定paramRefモードでパラメータ参照可能か
+	/// @param paramType 参照元のParamType
+	/// @param editType 参照先プロパティのPropertyEditType
+	/// @param mode paramRefモード
+	[[nodiscard]]
+	inline bool IsParamTypeCompatibleWith(ParamType paramType, PropertyEditType editType, ParamRefMode mode)
+	{
+		if (ParamRefModeRequiresBoolParam(mode))
+		{
+			return paramType == ParamType::Bool;
+		}
+		return IsParamTypeCompatibleWith(paramType, editType);
+	}
+
+	/// @brief 型Tのプロパティで利用可能なparamRefモード一覧
+	template <typename T>
+	[[nodiscard]]
+	inline Array<ParamRefMode> AvailableParamRefModesForProperty()
+	{
+		Array<ParamRefMode> modes = AvailableParamRefModesFor<T>();
+		if constexpr (!std::is_same_v<T, bool>)
+		{
+			// Boolプロパティでは通常反映・反転して反映と同じ結果になるため対象外
+			modes.push_back(ParamRefMode::OverrideIfTrue);
+			modes.push_back(ParamRefMode::OverrideIfFalse);
+		}
+		return modes;
+	}
+
 	/// @brief editTypeのプロパティがパラメータ参照可能な全ParamTypeのリストを返す
 	[[nodiscard]]
 	inline Array<ParamType> CompatibleParamTypes(PropertyEditType editType)
@@ -178,12 +210,20 @@ namespace noco
 		PropertyValue<T> m_propertyValue;
 		String m_paramRef; // パラメータ参照名
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
+		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+
+		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
+		[[nodiscard]]
+		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
+		{
+			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+		}
 
 	public:
 		Property(const char32_t* name, const PropertyValue<T>& propertyValue)
@@ -258,9 +298,48 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const Optional<T>& paramRefValue() const
+		{
+			return m_paramRefValue;
+		}
+
+		void setParamRefValue(const Optional<T>& paramRefValue)
+		{
+			m_paramRefValue = paramRefValue;
+		}
+
+		[[nodiscard]]
+		Optional<String> paramRefValueString() const override
+		{
+			if (!m_paramRefValue)
+			{
+				return none;
+			}
+			if constexpr (std::is_enum_v<T>)
+			{
+				return EnumToString(*m_paramRefValue);
+			}
+			else
+			{
+				return Format(*m_paramRefValue);
+			}
+		}
+
+		bool trySetParamRefValueString(StringView value) override
+		{
+			const Optional<T> parsedValue = StringToValueOpt<T>(value);
+			if (!parsedValue)
+			{
+				return false;
+			}
+			m_paramRefValue = *parsedValue;
+			return true;
+		}
+
+		[[nodiscard]]
 		Array<ParamRefMode> availableParamRefModes() const override
 		{
-			return AvailableParamRefModesFor<T>();
+			return AvailableParamRefModesForProperty<T>();
 		}
 
 		[[nodiscard]]
@@ -269,7 +348,7 @@ namespace noco
 			if constexpr (IsParamSupportedType<T>())
 			{
 				const T& base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-				if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(base, mode), paramValue, mode))
 				{
 					if constexpr (std::is_enum_v<T>)
 					{
@@ -292,12 +371,13 @@ namespace noco
 			}
 
 			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
 				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
+				m_paramRefValue.reset();
 			}
 		}
 
@@ -358,7 +438,7 @@ namespace noco
 					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
 						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
-						if (auto resolved = ApplyParamRefMode<T>(base, it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(base, m_paramRefMode), it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = std::move(*resolved);
 						}
@@ -392,6 +472,10 @@ namespace noco
 				{
 					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
 				}
+				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				{
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+				}
 			}
 		}
 
@@ -409,12 +493,21 @@ namespace noco
 				m_paramRef = json[paramRefKey].getString();
 				m_paramRefHash.reset();
 			}
+			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
+			if (json.contains(paramRefValueKey))
+			{
+				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+			}
+			else
+			{
+				m_paramRefValue.reset();
+			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesFor<T>(), name());
+					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
 				}
 			}
 			else
@@ -543,6 +636,7 @@ namespace noco
 		PropertyValue<T> m_propertyValue;
 		String m_paramRef; // パラメータ参照名
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
+		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
@@ -550,6 +644,13 @@ namespace noco
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+
+		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
+		[[nodiscard]]
+		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
+		{
+			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+		}
 
 	public:
 		SmoothProperty(const char32_t* name, const PropertyValue<T>& propertyValue)
@@ -625,9 +726,41 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const Optional<T>& paramRefValue() const
+		{
+			return m_paramRefValue;
+		}
+
+		void setParamRefValue(const Optional<T>& paramRefValue)
+		{
+			m_paramRefValue = paramRefValue;
+		}
+
+		[[nodiscard]]
+		Optional<String> paramRefValueString() const override
+		{
+			if (!m_paramRefValue)
+			{
+				return none;
+			}
+			return Format(*m_paramRefValue);
+		}
+
+		bool trySetParamRefValueString(StringView value) override
+		{
+			const Optional<T> parsedValue = StringToValueOpt<T>(value);
+			if (!parsedValue)
+			{
+				return false;
+			}
+			m_paramRefValue = *parsedValue;
+			return true;
+		}
+
+		[[nodiscard]]
 		Array<ParamRefMode> availableParamRefModes() const override
 		{
-			return AvailableParamRefModesFor<T>();
+			return AvailableParamRefModesForProperty<T>();
 		}
 
 		[[nodiscard]]
@@ -636,7 +769,7 @@ namespace noco
 			if constexpr (IsParamSupportedType<T>())
 			{
 				const T& base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-				if (auto resolved = ApplyParamRefMode<T>(base, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(base, mode), paramValue, mode))
 				{
 					return Format(*resolved);
 				}
@@ -652,12 +785,13 @@ namespace noco
 			}
 
 			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
 				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
+				m_paramRefValue.reset();
 			}
 		}
 
@@ -700,7 +834,7 @@ namespace noco
 				{
 					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
-						if (auto resolved = ApplyParamRefMode<T>(m_smoothing.currentValue(), it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_smoothing.currentValue(), m_paramRefMode), it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = *resolved;
 						}
@@ -762,6 +896,10 @@ namespace noco
 				{
 					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
 				}
+				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				{
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+				}
 			}
 		}
 
@@ -780,12 +918,21 @@ namespace noco
 				m_paramRef = json[paramRefKey].getString();
 				m_paramRefHash.reset();
 			}
+			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
+			if (json.contains(paramRefValueKey))
+			{
+				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+			}
+			else
+			{
+				m_paramRefValue.reset();
+			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesFor<T>(), name());
+					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
 				}
 			}
 			else
@@ -903,12 +1050,20 @@ namespace noco
 		T m_value;
 		String m_paramRef; // パラメータ参照名
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
+		Optional<T> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
 		/*NonSerialized*/ Optional<T> m_paramRefOverride; // パラメータ参照による上書き
 		/*NonSerialized*/ Optional<T> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+
+		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
+		[[nodiscard]]
+		const T& paramRefBaseValue(const T& value, ParamRefMode mode) const
+		{
+			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+		}
 
 	public:
 		template <class U>
@@ -971,9 +1126,48 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const Optional<T>& paramRefValue() const
+		{
+			return m_paramRefValue;
+		}
+
+		void setParamRefValue(const Optional<T>& paramRefValue)
+		{
+			m_paramRefValue = paramRefValue;
+		}
+
+		[[nodiscard]]
+		Optional<String> paramRefValueString() const override
+		{
+			if (!m_paramRefValue)
+			{
+				return none;
+			}
+			if constexpr (std::is_enum_v<T>)
+			{
+				return EnumToString(*m_paramRefValue);
+			}
+			else
+			{
+				return Format(*m_paramRefValue);
+			}
+		}
+
+		bool trySetParamRefValueString(StringView value) override
+		{
+			const Optional<T> parsedValue = StringToValueOpt<T>(value);
+			if (!parsedValue)
+			{
+				return false;
+			}
+			m_paramRefValue = *parsedValue;
+			return true;
+		}
+
+		[[nodiscard]]
 		Array<ParamRefMode> availableParamRefModes() const override
 		{
-			return AvailableParamRefModesFor<T>();
+			return AvailableParamRefModesForProperty<T>();
 		}
 
 		[[nodiscard]]
@@ -981,7 +1175,7 @@ namespace noco
 		{
 			if constexpr (IsParamSupportedType<T>())
 			{
-				if (auto resolved = ApplyParamRefMode<T>(m_value, paramValue, mode))
+				if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_value, mode), paramValue, mode))
 				{
 					if constexpr (std::is_enum_v<T>)
 					{
@@ -1004,12 +1198,13 @@ namespace noco
 			}
 
 			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
 				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
+				m_paramRefValue.reset();
 			}
 		}
 
@@ -1075,7 +1270,7 @@ namespace noco
 				{
 					if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 					{
-						if (auto resolved = ApplyParamRefMode<T>(m_value, it->second, m_paramRefMode))
+						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_value, m_paramRefMode), it->second, m_paramRefMode))
 						{
 							m_paramRefOverride = std::move(*resolved);
 						}
@@ -1124,6 +1319,10 @@ namespace noco
 				{
 					json[String(m_name) + U"_paramRefMode"] = EnumToString(m_paramRefMode);
 				}
+				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				{
+					json[String(m_name) + U"_paramRefValue"] = PropertyValue<T>{ *m_paramRefValue }.toJSON();
+				}
 			}
 		}
 
@@ -1143,12 +1342,21 @@ namespace noco
 				m_paramRef = json[paramRefKey].getString();
 				m_paramRefHash.reset();
 			}
+			const String paramRefValueKey = String(m_name) + U"_paramRefValue";
+			if (json.contains(paramRefValueKey))
+			{
+				m_paramRefValue = PropertyValue<T>::FromJSON(json[paramRefValueKey]).defaultValue();
+			}
+			else
+			{
+				m_paramRefValue.reset();
+			}
 			const String paramRefModeKey = String(m_name) + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesFor<T>(), name());
+					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<T>(), name());
 				}
 			}
 			else
@@ -1290,6 +1498,7 @@ namespace noco
 		PropertyValue<Color> m_propertyValue;
 		String m_paramRef;
 		ParamRefMode m_paramRefMode = ParamRefMode::Normal;
+		Optional<Color> m_paramRefValue; // OverrideIfTrue/OverrideIfFalseで上書きする値
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		/*NonSerialized*/ Array<String> m_activeStyleStates{};
 		/*NonSerialized*/ Optional<size_t> m_paramRefHash; // パラメータ参照名のハッシュ値
@@ -1297,6 +1506,13 @@ namespace noco
 		/*NonSerialized*/ Optional<Color> m_paramRefOverride; // パラメータ参照による値
 		/*NonSerialized*/ Optional<Color> m_currentFrameOverride;
 		/*NonSerialized*/ int32 m_currentFrameOverrideFrameCount = 0;
+
+		// OverrideIfTrue/OverrideIfFalseの場合は上書きする値、それ以外の場合はvalueを返す
+		[[nodiscard]]
+		const Color& paramRefBaseValue(const Color& value, ParamRefMode mode) const
+		{
+			return (ParamRefModeRequiresBoolParam(mode) && m_paramRefValue) ? *m_paramRefValue : value;
+		}
 
 	public:
 		SmoothProperty(const char32_t* name, const PropertyValue<Color>& propertyValue)
@@ -1371,16 +1587,48 @@ namespace noco
 		}
 
 		[[nodiscard]]
+		const Optional<Color>& paramRefValue() const
+		{
+			return m_paramRefValue;
+		}
+
+		void setParamRefValue(const Optional<Color>& paramRefValue)
+		{
+			m_paramRefValue = paramRefValue;
+		}
+
+		[[nodiscard]]
+		Optional<String> paramRefValueString() const override
+		{
+			if (!m_paramRefValue)
+			{
+				return none;
+			}
+			return Format(*m_paramRefValue);
+		}
+
+		bool trySetParamRefValueString(StringView value) override
+		{
+			const Optional<Color> parsedValue = StringToValueOpt<Color>(value);
+			if (!parsedValue)
+			{
+				return false;
+			}
+			m_paramRefValue = *parsedValue;
+			return true;
+		}
+
+		[[nodiscard]]
 		Array<ParamRefMode> availableParamRefModes() const override
 		{
-			return AvailableParamRefModesFor<Color>();
+			return AvailableParamRefModesForProperty<Color>();
 		}
 
 		[[nodiscard]]
 		Optional<String> previewParamRefAppliedString(const ParamValue& paramValue, ParamRefMode mode) const override
 		{
 			const Color base = m_propertyValue.value(InteractionState::Default, Array<String>{});
-			if (auto resolved = ApplyParamRefMode<Color>(base, paramValue, mode))
+			if (auto resolved = ApplyParamRefMode<Color>(paramRefBaseValue(base, mode), paramValue, mode))
 			{
 				return Format(*resolved);
 			}
@@ -1395,12 +1643,13 @@ namespace noco
 			}
 
 			const auto it = validParams.find(m_paramRef);
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType()))
+			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), editType(), m_paramRefMode))
 			{
 				clearedParams.insert(m_paramRef);
 				m_paramRef = U"";
 				m_paramRefHash.reset();
 				m_paramRefMode = ParamRefMode::Normal;
+				m_paramRefValue.reset();
 			}
 		}
 
@@ -1443,7 +1692,7 @@ namespace noco
 			{
 				if (auto it = detail::FindParam(params, m_paramRef, m_paramRefHash); it != params.end())
 				{
-					if (auto applied = ApplyParamRefMode<Color>(Color{ m_smoothing.currentValue() }, it->second, m_paramRefMode))
+					if (auto applied = ApplyParamRefMode<Color>(paramRefBaseValue(Color{ m_smoothing.currentValue() }, m_paramRefMode), it->second, m_paramRefMode))
 					{
 						m_paramRefOverride = *applied;
 					}
@@ -1503,6 +1752,10 @@ namespace noco
 				{
 					json[String{ m_name } + U"_paramRefMode"] = EnumToString(m_paramRefMode);
 				}
+				if (ParamRefModeRequiresBoolParam(m_paramRefMode) && m_paramRefValue)
+				{
+					json[String{ m_name } + U"_paramRefValue"] = PropertyValue<Color>{ *m_paramRefValue }.toJSON();
+				}
 			}
 		}
 
@@ -1521,12 +1774,21 @@ namespace noco
 				m_paramRef = json[paramRefKey].getString();
 				m_paramRefHash.reset();
 			}
+			const String paramRefValueKey = String{ m_name } + U"_paramRefValue";
+			if (json.contains(paramRefValueKey))
+			{
+				m_paramRefValue = PropertyValue<Color>::FromJSON(json[paramRefValueKey]).defaultValue();
+			}
+			else
+			{
+				m_paramRefValue.reset();
+			}
 			const String paramRefModeKey = String{ m_name } + U"_paramRefMode";
 			if (json.contains(paramRefModeKey))
 			{
 				if (auto opt = StringToEnumOpt<ParamRefMode>(json[paramRefModeKey].getString()))
 				{
-					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesFor<Color>(), name());
+					m_paramRefMode = ValidateParamRefModeFromJSON(*opt, AvailableParamRefModesForProperty<Color>(), name());
 				}
 			}
 			else

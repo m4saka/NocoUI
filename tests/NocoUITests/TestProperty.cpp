@@ -342,4 +342,32 @@ TEST_CASE("IsParamTypeCompatibleWith matrix", "[Property][Param]")
 		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, PropertyEditType::LRTB));
 		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, PropertyEditType::LRTB));
 	}
+
+	SECTION("OverrideIfTrue/OverrideIfFalse accept only Bool for any editType")
+	{
+		using noco::ParamRefMode;
+		for (const auto editType : { PropertyEditType::Text, PropertyEditType::Int, PropertyEditType::Double, PropertyEditType::Enum, PropertyEditType::Vec2, PropertyEditType::Color, PropertyEditType::LRTB })
+		{
+			for (const auto mode : { ParamRefMode::OverrideIfTrue, ParamRefMode::OverrideIfFalse })
+			{
+				REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Int, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Double, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::String, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Color, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Vec2, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::LRTB, editType, mode));
+				REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Unknown, editType, mode));
+			}
+		}
+	}
+
+	SECTION("Other modes are the same as without mode")
+	{
+		using noco::ParamRefMode;
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Color, PropertyEditType::Color, ParamRefMode::Normal));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Color, ParamRefMode::Normal));
+		REQUIRE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Text, ParamRefMode::Format));
+		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Double, ParamRefMode::Add));
+	}
 }
