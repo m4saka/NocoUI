@@ -464,7 +464,8 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
-			if (m_activeStyleStates != activeStyleStates)
+			// 両方とも空の場合は比較不要
+			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
 			{
 				m_activeStyleStates = activeStyleStates;
 			}
@@ -872,7 +873,8 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
 		{
 			m_interactionState = interactionState;
-			if (m_activeStyleStates != activeStyleStates)
+			// 両方とも空の場合は比較不要
+			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
 			{
 				m_activeStyleStates = activeStyleStates;
 			}
@@ -1347,7 +1349,8 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double, const HashTable<String, ParamValue>& params, SkipSmoothingYN) override
 		{
 			m_interactionState = interactionState;
-			if (m_activeStyleStates != activeStyleStates)
+			// 両方とも空の場合は比較不要
+			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
 			{
 				m_activeStyleStates = activeStyleStates;
 			}
@@ -1780,7 +1783,8 @@ namespace noco
 		void update(InteractionState interactionState, const Array<String>& activeStyleStates, double deltaTime, const HashTable<String, ParamValue>& params, SkipSmoothingYN skipSmoothing) override
 		{
 			m_interactionState = interactionState;
-			if (m_activeStyleStates != activeStyleStates)
+			// 両方とも空の場合は比較不要
+			if (m_activeStyleStates.size() != activeStyleStates.size() || (!activeStyleStates.empty() && m_activeStyleStates != activeStyleStates))
 			{
 				m_activeStyleStates = activeStyleStates;
 			}
