@@ -275,26 +275,12 @@ namespace noco
 	{
 		HashSet<String> clearedParamsSet;
 
-		const auto fnCheckAndClear = [&](auto& prop, PropertyEditType expectedType)
-		{
-			if (prop.paramRef().isEmpty())
-			{
-				return;
-			}
-			const auto it = validParams.find(prop.paramRef());
-			if (it == validParams.end() || !IsParamTypeCompatibleWith(GetParamType(it->second), expectedType, prop.paramRefMode()))
-			{
-				clearedParamsSet.insert(prop.paramRef());
-				prop.setParamRef(U"");
-			}
-		};
-
-		fnCheckAndClear(m_translate, PropertyEditType::Vec2);
-		fnCheckAndClear(m_scale, PropertyEditType::Vec2);
-		fnCheckAndClear(m_pivot, PropertyEditType::Vec2);
-		fnCheckAndClear(m_rotation, PropertyEditType::Double);
-		fnCheckAndClear(m_hitTestAffected, PropertyEditType::Bool);
-		fnCheckAndClear(m_color, PropertyEditType::Color);
+		m_translate.clearParamRefIfInvalid(validParams, clearedParamsSet);
+		m_scale.clearParamRefIfInvalid(validParams, clearedParamsSet);
+		m_pivot.clearParamRefIfInvalid(validParams, clearedParamsSet);
+		m_rotation.clearParamRefIfInvalid(validParams, clearedParamsSet);
+		m_hitTestAffected.clearParamRefIfInvalid(validParams, clearedParamsSet);
+		m_color.clearParamRefIfInvalid(validParams, clearedParamsSet);
 
 		return Array<String>(clearedParamsSet.begin(), clearedParamsSet.end());
 	}

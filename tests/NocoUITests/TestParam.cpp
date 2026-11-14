@@ -1382,6 +1382,50 @@ TEST_CASE("Parameter reference modes", "[Param]")
 		REQUIRE(fontSizeProp->paramRef() == U"");
 		REQUIRE(fontSizeProp->paramRefMode() == ParamRefMode::Normal);
 		REQUIRE(!fontSizeProp->paramRefValue().has_value());
+
+		node->transform().color().setParamRef(U"size");
+		REQUIRE(canvas->removeInvalidParamRefs() == Array<String>{ U"size" });
+		REQUIRE(node->transform().color().paramRef() == U"");
+		REQUIRE(node->transform().color().paramRefMode() == ParamRefMode::Normal);
+		REQUIRE(!node->transform().color().paramRefValue().has_value());
+	}
+
+	SECTION("OverrideIfTrue for enum property")
+	{
+		auto canvas1 = Canvas::Create();
+		auto node1 = Node::Create();
+		canvas1->addChild(node1);
+
+		auto label = node1->emplaceComponent<Label>(U"text");
+		auto* alignProp = dynamic_cast<Property<HorizontalAlign>*>(label->getPropertyByName(U"horizontalAlign"));
+		REQUIRE(alignProp != nullptr);
+		const HorizontalAlign defaultAlign = alignProp->value();
+		REQUIRE(defaultAlign != HorizontalAlign::Right);
+
+		canvas1->setParamValue(U"flag", true);
+		alignProp->setParamRef(U"flag");
+		alignProp->setParamRefMode(ParamRefMode::OverrideIfTrue);
+		REQUIRE(alignProp->trySetParamRefValueString(U"Right"));
+		REQUIRE(alignProp->paramRefValueString() == U"Right");
+		canvas1->update();
+		REQUIRE(alignProp->value() == HorizontalAlign::Right);
+
+		const JSON json = canvas1->toJSON();
+		auto canvas2 = Canvas::Create();
+		canvas2->tryReadFromJSON(json);
+		canvas2->update();
+		auto restoredLabel = canvas2->children()[0]->getComponent<Label>();
+		REQUIRE(restoredLabel != nullptr);
+		auto* restoredProp = dynamic_cast<Property<HorizontalAlign>*>(restoredLabel->getPropertyByName(U"horizontalAlign"));
+		REQUIRE(restoredProp != nullptr);
+		REQUIRE(restoredProp->paramRefMode() == ParamRefMode::OverrideIfTrue);
+		REQUIRE(restoredProp->paramRefValue().has_value());
+		REQUIRE(*restoredProp->paramRefValue() == HorizontalAlign::Right);
+		REQUIRE(restoredProp->value() == HorizontalAlign::Right);
+
+		canvas2->setParamValue(U"flag", false);
+		canvas2->update();
+		REQUIRE(restoredProp->value() == defaultAlign);
 	}
 
 	SECTION("paramRefValueString")
