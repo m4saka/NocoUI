@@ -261,6 +261,12 @@ namespace noco
 		}
 
 	public:
+		// コンポーネントのフラグへのポインタを持つのでコピー・ムーブ不可
+		Property(const Property&) = delete;
+		Property(Property&&) = delete;
+		Property& operator=(const Property&) = delete;
+		Property& operator=(Property&&) = delete;
+
 		Property(const char32_t* name, const PropertyValue<T>& propertyValue)
 			: m_name{ name }
 			, m_propertyValue{ propertyValue }
@@ -752,6 +758,12 @@ namespace noco
 		}
 
 	public:
+		// コンポーネントのフラグへのポインタを持つのでコピー・ムーブ不可
+		SmoothProperty(const SmoothProperty&) = delete;
+		SmoothProperty(SmoothProperty&&) = delete;
+		SmoothProperty& operator=(const SmoothProperty&) = delete;
+		SmoothProperty& operator=(SmoothProperty&&) = delete;
+
 		SmoothProperty(const char32_t* name, const PropertyValue<T>& propertyValue)
 			: m_name{ name }
 			, m_propertyValue{ propertyValue }
@@ -1228,6 +1240,12 @@ namespace noco
 		}
 
 	public:
+		// コンポーネントのフラグへのポインタを持つのでコピー・ムーブ不可
+		PropertyNonInteractive(const PropertyNonInteractive&) = delete;
+		PropertyNonInteractive(PropertyNonInteractive&&) = delete;
+		PropertyNonInteractive& operator=(const PropertyNonInteractive&) = delete;
+		PropertyNonInteractive& operator=(PropertyNonInteractive&&) = delete;
+
 		template <class U>
 		PropertyNonInteractive(const char32_t* name, const U& value) requires std::convertible_to<U, T>
 			: m_name{ name }
@@ -1728,6 +1746,12 @@ namespace noco
 		}
 
 	public:
+		// コンポーネントのフラグへのポインタを持つのでコピー・ムーブ不可
+		SmoothProperty(const SmoothProperty&) = delete;
+		SmoothProperty(SmoothProperty&&) = delete;
+		SmoothProperty& operator=(const SmoothProperty&) = delete;
+		SmoothProperty& operator=(SmoothProperty&&) = delete;
+
 		SmoothProperty(const char32_t* name, const PropertyValue<Color>& propertyValue)
 			: m_name{ name }
 			, m_propertyValue{ propertyValue }

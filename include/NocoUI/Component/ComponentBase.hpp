@@ -41,6 +41,12 @@ namespace noco
 		{
 		}
 
+		// プロパティへのポインタを持つのでコピー・ムーブ不可
+		ComponentBase(const ComponentBase&) = delete;
+		ComponentBase(ComponentBase&&) = delete;
+		ComponentBase& operator=(const ComponentBase&) = delete;
+		ComponentBase& operator=(ComponentBase&&) = delete;
+
 		virtual ~ComponentBase() = 0;
 
 		virtual void updateKeyInput(const std::shared_ptr<Node>&)
