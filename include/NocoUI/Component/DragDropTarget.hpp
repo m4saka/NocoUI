@@ -20,13 +20,7 @@ namespace noco
 		explicit DragDropTarget(
 			std::function<void(const Array<std::shared_ptr<Node>>&)> onDrop,
 			std::function<bool(const Array<std::shared_ptr<Node>>&)> isDroppableNodeList = nullptr,
-			std::function<void(const Node&)> dragFocusedDrawer = nullptr)
-			: ComponentBase{ {} }
-			, m_onDrop{ std::move(onDrop) }
-			, m_isDroppableNodeList{ std::move(isDroppableNodeList) }
-			, m_dragFocusedDrawer{ std::move(dragFocusedDrawer) }
-		{
-		}
+			std::function<void(const Node&)> dragFocusedDrawer = nullptr);
 
 		void lateUpdate(const std::shared_ptr<Node>& targetNode) override;
 

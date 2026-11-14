@@ -23,13 +23,7 @@ namespace noco
 		Array<std::shared_ptr<Node>> onStartDragging(const std::shared_ptr<Node>& node) const;
 
 	public:
-		explicit DragDropSource(std::function<Array<std::shared_ptr<Node>>()> onStartDragging = nullptr, double dragThreshold = 5.0, bool movesTransformTranslate = true)
-			: ComponentBase{ {} }
-			, m_dragThreshold{ dragThreshold }
-			, m_movesTransformTranslate{ movesTransformTranslate }
-			, m_onStartDragging{ std::move(onStartDragging) }
-		{
-		}
+		explicit DragDropSource(std::function<Array<std::shared_ptr<Node>>()> onStartDragging = nullptr, double dragThreshold = 5.0, bool movesTransformTranslate = true);
 
 		void update(const std::shared_ptr<Node>& sourceNode) override;
 

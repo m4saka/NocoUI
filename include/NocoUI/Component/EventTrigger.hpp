@@ -21,16 +21,7 @@ namespace noco
 		/* NonSerialized */ detail::TriggerFireDetector m_fireDetector;
 
 	public:
-		explicit EventTrigger(StringView tag = U"", EventTriggerType triggerType = EventTriggerType::Click, RecursiveYN recursive = RecursiveYN::No, double repeatIntervalSec = 0.1, double repeatIntervalSecFirst = 0.5, double holdDurationSec = 0.5)
-			: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_recursive, &m_repeatIntervalSec, &m_repeatIntervalSecFirst, &m_holdDurationSec } }
-			, m_tag{ U"tag", tag }
-			, m_triggerType{ U"triggerType", triggerType }
-			, m_recursive{ U"recursive", recursive.getBool() }
-			, m_repeatIntervalSec{ U"repeatIntervalSec", repeatIntervalSec }
-			, m_repeatIntervalSecFirst{ U"repeatIntervalSecFirst", repeatIntervalSecFirst }
-			, m_holdDurationSec{ U"holdDurationSec", holdDurationSec }
-		{
-		}
+		explicit EventTrigger(StringView tag = U"", EventTriggerType triggerType = EventTriggerType::Click, RecursiveYN recursive = RecursiveYN::No, double repeatIntervalSec = 0.1, double repeatIntervalSecFirst = 0.5, double holdDurationSec = 0.5);
 
 		void update(const std::shared_ptr<Node>& node) override;
 

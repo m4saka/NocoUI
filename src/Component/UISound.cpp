@@ -4,6 +4,17 @@
 
 namespace noco
 {
+	UISound::UISound(const PropertyValue<String>& audioFilePath, const PropertyValue<String>& audioAssetName, TriggerType triggerType, const PropertyValue<double>& volume, RecursiveYN recursive)
+		: SerializableComponentBase{ U"UISound", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
+		, m_audioFilePath{ U"audioFilePath", audioFilePath }
+		, m_audioAssetName{ U"audioAssetName", audioAssetName }
+		, m_triggerType{ U"triggerType", triggerType }
+		, m_volume{ U"volume", volume }
+		, m_recursive{ U"recursive", recursive.getBool() }
+		, m_includingDisabled{ U"includingDisabled", false }
+	{
+	}
+
 	namespace
 	{
 		Audio GetAudio(const String& audioFilePath, const String& audioAssetName)

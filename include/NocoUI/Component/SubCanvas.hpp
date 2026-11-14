@@ -65,18 +65,7 @@ namespace noco
 		void replaceAdditionalParamRefsInternal(StringView oldName, StringView newName) override;
 
 	public:
-		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"")
-			: SerializableComponentBase{ U"SubCanvas", { &m_canvasPath, &m_propagateEvents, &m_autoFitModeOverride, &m_serializedParamsJSON, &m_serializedParamBindingsJSON, &m_serializedParamBindingModesJSON, &m_tag } }
-			, m_canvasPath{ U"canvasPath", canvasPath }
-			, m_propagateEvents{ U"propagateEvents", true }
-			, m_autoFitModeOverride{ U"autoFitModeOverride", SubCanvasAutoFitModeOverride::NoOverride }
-			, m_serializedParamsJSON{ U"serializedParamsJSON", U"{}" }
-			, m_serializedParamBindingsJSON{ U"serializedParamBindingsJSON", U"{}" }
-			, m_serializedParamBindingModesJSON{ U"serializedParamBindingModesJSON", U"{}" }
-			, m_tag{ U"tag", U"" }
-		{
-			loadCanvasInternal();
-		}
+		explicit SubCanvas(const PropertyValue<String>& canvasPath = U"");
 
 		void update(const std::shared_ptr<Node>& node) override;
 

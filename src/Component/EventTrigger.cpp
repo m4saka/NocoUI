@@ -2,6 +2,17 @@
 
 namespace noco
 {
+	EventTrigger::EventTrigger(StringView tag, EventTriggerType triggerType, RecursiveYN recursive, double repeatIntervalSec, double repeatIntervalSecFirst, double holdDurationSec)
+		: SerializableComponentBase{ U"EventTrigger", { &m_tag, &m_triggerType, &m_recursive, &m_repeatIntervalSec, &m_repeatIntervalSecFirst, &m_holdDurationSec } }
+		, m_tag{ U"tag", tag }
+		, m_triggerType{ U"triggerType", triggerType }
+		, m_recursive{ U"recursive", recursive.getBool() }
+		, m_repeatIntervalSec{ U"repeatIntervalSec", repeatIntervalSec }
+		, m_repeatIntervalSecFirst{ U"repeatIntervalSecFirst", repeatIntervalSecFirst }
+		, m_holdDurationSec{ U"holdDurationSec", holdDurationSec }
+	{
+	}
+
 	void EventTrigger::update(const std::shared_ptr<Node>& node)
 	{
 		std::shared_ptr<Canvas> canvas = node->containedCanvas();

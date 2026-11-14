@@ -6,6 +6,34 @@
 
 namespace noco
 {
+	TextBox::TextBox(
+		const PropertyValue<String>& fontAssetName,
+		const PropertyValue<double>& fontSize,
+		const PropertyValue<Color>& color,
+		const PropertyValue<Vec2>& horizontalPadding,
+		const PropertyValue<Vec2>& verticalPadding,
+		const PropertyValue<HorizontalAlign>& horizontalAlign,
+		const PropertyValue<VerticalAlign>& verticalAlign,
+		const Optional<PropertyValue<Color>>& cursorColor,
+		const PropertyValue<Color>& selectionColor)
+		: SerializableComponentBase{ U"TextBox", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_horizontalAlign, &m_verticalAlign, &m_placeholderText, &m_placeholderColor, &m_readOnly, &m_tag } }
+		, m_text{ U"text", U"" }
+		, m_fontAssetName{ U"fontAssetName", fontAssetName }
+		, m_fontSize{ U"fontSize", fontSize }
+		, m_color{ U"color", color }
+		, m_horizontalPadding{ U"horizontalPadding", horizontalPadding }
+		, m_verticalPadding{ U"verticalPadding", verticalPadding }
+		, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
+		, m_verticalAlign{ U"verticalAlign", verticalAlign }
+		, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
+		, m_selectionColor{ U"selectionColor", selectionColor }
+		, m_placeholderText{ U"placeholderText", U"" }
+		, m_placeholderColor{ U"placeholderColor", Color{ 0, 0, 0, 96 } }
+		, m_readOnly{ U"readOnly", false }
+		, m_tag{ U"tag", U"" }
+	{
+	}
+
 	namespace
 	{
 		static const String EmptyString = U"";

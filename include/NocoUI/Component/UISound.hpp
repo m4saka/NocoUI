@@ -45,16 +45,7 @@ namespace noco
 		/// @brief 音声再生処理を差し替えるコールバックを設定(別の音声再生バックエンドを使用したい場合に利用)
 		static void SetPlayAudioCallback(PlayAudioCallback callback);
 
-		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No)
-			: SerializableComponentBase{ U"UISound", { &m_audioFilePath, &m_audioAssetName, &m_triggerType, &m_volume, &m_recursive, &m_includingDisabled } }
-			, m_audioFilePath{ U"audioFilePath", audioFilePath }
-			, m_audioAssetName{ U"audioAssetName", audioAssetName }
-			, m_triggerType{ U"triggerType", triggerType }
-			, m_volume{ U"volume", volume }
-			, m_recursive{ U"recursive", recursive.getBool() }
-			, m_includingDisabled{ U"includingDisabled", false }
-		{
-		}
+		UISound(const PropertyValue<String>& audioFilePath = String{}, const PropertyValue<String>& audioAssetName = String{}, TriggerType triggerType = TriggerType::Click, const PropertyValue<double>& volume = 1.0, RecursiveYN recursive = RecursiveYN::No);
 
 		void update(const std::shared_ptr<Node>& node) override;
 

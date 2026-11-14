@@ -3,6 +3,14 @@
 
 namespace noco
 {
+	Toggle::Toggle(
+		bool initialValue)
+		: SerializableComponentBase{ U"Toggle", { &m_value, &m_tag } }
+		, m_value{ U"value", initialValue }
+		, m_tag{ U"tag", U"" }
+	{
+	}
+
 	void Toggle::update(const std::shared_ptr<Node>& node)
 	{
 		if (node->isClicked())

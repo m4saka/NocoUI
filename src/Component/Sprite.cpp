@@ -6,6 +6,51 @@
 
 namespace noco
 {
+	Sprite::Sprite(const PropertyValue<String>& textureFilePath, const PropertyValue<String>& textureAssetName, const PropertyValue<Color>& color, const PropertyValue<bool>& preserveAspect)
+		: SerializableComponentBase{ U"Sprite", { &m_textureFilePath, &m_textureAssetName, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_addColor, &m_blendMode, &m_preserveAspect, &m_fillDirection, &m_fillAmount, &m_nineSliceEnabled, &m_nineSliceMargin, &m_nineSliceScale, &m_nineSliceCenterTiled, &m_nineSliceLeftTiled, &m_nineSliceRightTiled, &m_nineSliceTopTiled, &m_nineSliceBottomTiled, &m_nineSliceFallback, &m_textureRegionMode, &m_textureOffset, &m_textureSize, &m_textureGridCellSize, &m_textureGridColumns, &m_textureGridRows, &m_textureGridIndex, &m_textureGridCellTrim, &m_gridAnimationType, &m_gridAnimationFPS, &m_gridAnimationStartIndex, &m_gridAnimationEndIndex, &m_offsetAnimationType, &m_offsetAnimationSpeed, &m_textureFilter, &m_hideIfTextureEmpty, &m_textureAddressMode, &m_textureDownscaleMode, &m_mipmapLodBias, &m_pixelShaderAssetName } }
+		, m_textureFilePath{ U"textureFilePath", textureFilePath }
+		, m_textureAssetName{ U"textureAssetName", textureAssetName }
+		, m_gradationType{ U"gradationType", SpriteGradationType::None }
+		, m_color{ U"color", color }
+		, m_gradationColor1{ U"gradationColor1", color }
+		, m_gradationColor2{ U"gradationColor2", color }
+		, m_addColor{ U"addColor", Color{ 0, 0, 0, 0 } }
+		, m_blendMode{ U"blendMode", BlendMode::Normal }
+		, m_preserveAspect{ U"preserveAspect", preserveAspect }
+		, m_fillDirection{ U"fillDirection", SpriteFillDirection::BottomToTop }
+		, m_fillAmount{ U"fillAmount", 1.0 }
+		, m_hideIfTextureEmpty{ U"hideIfTextureEmpty", false }
+		, m_nineSliceEnabled{ U"nineSliceEnabled", false }
+		, m_nineSliceMargin{ U"nineSliceMargin", LRTB::Zero() }
+		, m_nineSliceScale{ U"nineSliceScale", Vec2::One() }
+		, m_nineSliceCenterTiled{ U"nineSliceCenterTiled", false }
+		, m_nineSliceLeftTiled{ U"nineSliceLeftTiled", false }
+		, m_nineSliceRightTiled{ U"nineSliceRightTiled", false }
+		, m_nineSliceTopTiled{ U"nineSliceTopTiled", false }
+		, m_nineSliceBottomTiled{ U"nineSliceBottomTiled", false }
+		, m_nineSliceFallback{ U"nineSliceFallback", true }
+		, m_textureRegionMode{ U"textureRegionMode", TextureRegionMode::Full }
+		, m_textureOffset{ U"textureOffset", Vec2::Zero() }
+		, m_textureSize{ U"textureSize", Vec2{ 100, 100 } }
+		, m_textureGridCellSize{ U"textureGridCellSize", Vec2{ 32, 32 } }
+		, m_textureGridColumns{ U"textureGridColumns", 1 }
+		, m_textureGridRows{ U"textureGridRows", 1 }
+		, m_textureGridIndex{ U"textureGridIndex", 0 }
+		, m_textureGridCellTrim{ U"textureGridCellTrim", LRTB::Zero() }
+		, m_gridAnimationType{ U"gridAnimationType", SpriteGridAnimationType::None }
+		, m_gridAnimationFPS{ U"gridAnimationFPS", 10.0 }
+		, m_gridAnimationStartIndex{ U"gridAnimationStartIndex", 0 }
+		, m_gridAnimationEndIndex{ U"gridAnimationEndIndex", 0 }
+		, m_offsetAnimationType{ U"offsetAnimationType", SpriteOffsetAnimationType::None }
+		, m_offsetAnimationSpeed{ U"offsetAnimationSpeed", Vec2{ 0.0, 0.0 } }
+		, m_textureFilter{ U"textureFilter", SpriteTextureFilter::Default }
+		, m_textureAddressMode{ U"textureAddressMode", SpriteTextureAddressMode::Default }
+		, m_textureDownscaleMode{ U"textureDownscaleMode", SpriteTextureDownscaleMode::None }
+		, m_mipmapLodBias{ U"mipmapLodBias", 0.0 }
+		, m_pixelShaderAssetName{ U"pixelShaderAssetName", String{} }
+	{
+	}
+
 	void Sprite::onActivated(const std::shared_ptr<Node>&)
 	{
 		restartAnimation();

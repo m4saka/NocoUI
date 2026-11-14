@@ -39,23 +39,7 @@ namespace noco
 			const PropertyValue<Color>& shadowColor = Color{ 0, 0, 0, 0 },
 			const PropertyValue<Vec2>& shadowOffset = Vec2{ 2.0, 2.0 },
 			const PropertyValue<double>& shadowBlur = 0.0,
-			const PropertyValue<double>& shadowSpread = 0.0)
-			: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_blendMode, &m_outlineColor, &m_outlineThicknessInner, &m_outlineThicknessOuter, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
-			, m_fillGradationType{ U"fillGradationType", RectFillGradationType::None }
-			, m_fillColor{ U"fillColor", fillColor }
-			, m_fillGradationColor1{ U"fillGradationColor1", fillColor }
-			, m_fillGradationColor2{ U"fillGradationColor2", fillColor }
-			, m_blendMode{ U"blendMode", BlendMode::Normal }
-			, m_outlineColor{ U"outlineColor", outlineColor }
-			, m_outlineThicknessInner{ U"outlineThicknessInner", outlineThicknessInner }
-			, m_outlineThicknessOuter{ U"outlineThicknessOuter", outlineThicknessOuter }
-			, m_cornerRadius{ U"cornerRadius", cornerRadius }
-			, m_shadowColor{ U"shadowColor", shadowColor }
-			, m_shadowOffset{ U"shadowOffset", shadowOffset }
-			, m_shadowBlur{ U"shadowBlur", shadowBlur }
-			, m_shadowSpread{ U"shadowSpread", shadowSpread }
-		{
-		}
+			const PropertyValue<double>& shadowSpread = 0.0);
 
 		void draw(const Node& node) const override;
 

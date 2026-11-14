@@ -3,6 +3,14 @@
 
 namespace noco
 {
+	DragDropSource::DragDropSource(std::function<Array<std::shared_ptr<Node>>()> onStartDragging, double dragThreshold, bool movesTransformTranslate)
+		: ComponentBase{ {} }
+		, m_dragThreshold{ dragThreshold }
+		, m_movesTransformTranslate{ movesTransformTranslate }
+		, m_onStartDragging{ std::move(onStartDragging) }
+	{
+	}
+
 	Array<std::shared_ptr<Node>> DragDropSource::onStartDragging(const std::shared_ptr<Node>& node) const
 	{
 		if (m_onStartDragging)

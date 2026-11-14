@@ -142,22 +142,7 @@ namespace noco
 			const PropertyValue<Vec2>& horizontalPadding = Vec2{ 8.0, 8.0 },
 			const PropertyValue<Vec2>& verticalPadding = Vec2{ 4.0, 4.0 },
 			const Optional<PropertyValue<Color>>& cursorColor = unspecified,
-			const PropertyValue<Color>& selectionColor = Color{ 0, 26, 77, 128 })
-			: SerializableComponentBase{ U"TextArea", { &m_text, &m_fontAssetName, &m_fontSize, &m_color, &m_horizontalPadding, &m_verticalPadding, &m_cursorColor, &m_selectionColor, &m_placeholderText, &m_placeholderColor, &m_readOnly, &m_tag } }
-			, m_text{ U"text", U"" }
-			, m_fontAssetName{ U"fontAssetName", fontAssetName }
-			, m_fontSize{ U"fontSize", fontSize }
-			, m_color{ U"color", color }
-			, m_horizontalPadding{ U"horizontalPadding", horizontalPadding }
-			, m_verticalPadding{ U"verticalPadding", verticalPadding }
-			, m_cursorColor{ U"cursorColor", cursorColor.value_or(color) }
-			, m_selectionColor{ U"selectionColor", selectionColor }
-			, m_placeholderText{ U"placeholderText", U"" }
-			, m_placeholderColor{ U"placeholderColor", Color{ 0, 0, 0, 96 } }
-			, m_readOnly{ U"readOnly", false }
-			, m_tag{ U"tag", U"" }
-		{
-		}
+			const PropertyValue<Color>& selectionColor = Color{ 0, 26, 77, 128 });
 
 		void updateKeyInput(const std::shared_ptr<Node>& node) override;
 

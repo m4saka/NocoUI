@@ -3,6 +3,37 @@
 
 namespace noco
 {
+	ShapeRenderer::ShapeRenderer(
+		ShapeType shapeType,
+		const PropertyValue<Color>& fillColor,
+		const PropertyValue<Color>& outlineColor,
+		const PropertyValue<double>& outlineThickness)
+		: SerializableComponentBase{ U"ShapeRenderer", { 
+			&m_shapeType, &m_preserveAspect, &m_thickness, &m_sides, &m_points, &m_innerRatio,
+			&m_startPoint, &m_endPoint, &m_arrowHeadSize, &m_targetPoint,
+			&m_tailRatio, &m_stairCount, &m_upStairs, &m_squircleQuality,
+			&m_fillColor, &m_outlineColor, &m_outlineThickness, &m_blendMode, } }
+		, m_shapeType{ U"shapeType", shapeType }
+		, m_preserveAspect{ U"preserveAspect", true }
+		, m_thickness{ U"thickness", 10.0 }
+		, m_sides{ U"sides", 6 }
+		, m_points{ U"points", 5 }
+		, m_innerRatio{ U"innerRatio", 0.5 }
+		, m_startPoint{ U"startPoint", Vec2{ 0.0, 0.0 } }
+		, m_endPoint{ U"endPoint", Vec2{ 1.0, 1.0 } }
+		, m_arrowHeadSize{ U"arrowHeadSize", Vec2{ 16.0, 16.0 } }
+		, m_targetPoint{ U"targetPoint", Vec2{ 0.5, 1.2 } }
+		, m_tailRatio{ U"tailRatio", 0.5 }
+		, m_stairCount{ U"stairCount", 5 }
+		, m_upStairs{ U"upStairs", true }
+		, m_squircleQuality{ U"squircleQuality", 64 }
+		, m_fillColor{ U"fillColor", fillColor }
+		, m_outlineColor{ U"outlineColor", outlineColor }
+		, m_outlineThickness{ U"outlineThickness", outlineThickness }
+		, m_blendMode{ U"blendMode", BlendMode::Normal }
+	{
+	}
+
 	bool ShapeRenderer::Cache::refreshIfDirty(
 		ShapeType shapeType,
 		bool preserveAspect,

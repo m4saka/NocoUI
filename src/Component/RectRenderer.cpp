@@ -3,6 +3,33 @@
 
 namespace noco
 {
+	RectRenderer::RectRenderer(
+		const PropertyValue<Color>& fillColor,
+		const PropertyValue<Color>& outlineColor,
+		const PropertyValue<double>& outlineThicknessInner,
+		const PropertyValue<double>& outlineThicknessOuter,
+		const PropertyValue<double>& cornerRadius,
+		const PropertyValue<Color>& shadowColor,
+		const PropertyValue<Vec2>& shadowOffset,
+		const PropertyValue<double>& shadowBlur,
+		const PropertyValue<double>& shadowSpread)
+		: SerializableComponentBase{ U"RectRenderer", { &m_fillGradationType, &m_fillColor, &m_fillGradationColor1, &m_fillGradationColor2, &m_blendMode, &m_outlineColor, &m_outlineThicknessInner, &m_outlineThicknessOuter, &m_cornerRadius, &m_shadowColor, &m_shadowOffset, &m_shadowBlur, &m_shadowSpread } }
+		, m_fillGradationType{ U"fillGradationType", RectFillGradationType::None }
+		, m_fillColor{ U"fillColor", fillColor }
+		, m_fillGradationColor1{ U"fillGradationColor1", fillColor }
+		, m_fillGradationColor2{ U"fillGradationColor2", fillColor }
+		, m_blendMode{ U"blendMode", BlendMode::Normal }
+		, m_outlineColor{ U"outlineColor", outlineColor }
+		, m_outlineThicknessInner{ U"outlineThicknessInner", outlineThicknessInner }
+		, m_outlineThicknessOuter{ U"outlineThicknessOuter", outlineThicknessOuter }
+		, m_cornerRadius{ U"cornerRadius", cornerRadius }
+		, m_shadowColor{ U"shadowColor", shadowColor }
+		, m_shadowOffset{ U"shadowOffset", shadowOffset }
+		, m_shadowBlur{ U"shadowBlur", shadowBlur }
+		, m_shadowSpread{ U"shadowSpread", shadowSpread }
+	{
+	}
+
 	void RectRenderer::draw(const Node& node) const
 	{
 		const RectFillGradationType fillGradationType = m_fillGradationType.value();

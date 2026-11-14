@@ -3,6 +3,17 @@
 
 namespace noco
 {
+	DragDropTarget::DragDropTarget(
+		std::function<void(const Array<std::shared_ptr<Node>>&)> onDrop,
+		std::function<bool(const Array<std::shared_ptr<Node>>&)> isDroppableNodeList,
+		std::function<void(const Node&)> dragFocusedDrawer)
+		: ComponentBase{ {} }
+		, m_onDrop{ std::move(onDrop) }
+		, m_isDroppableNodeList{ std::move(isDroppableNodeList) }
+		, m_dragFocusedDrawer{ std::move(dragFocusedDrawer) }
+	{
+	}
+
 	bool DragDropTarget::isDroppableNodeList(const Array<std::shared_ptr<Node>>& nodes) const
 	{
 		if (m_isDroppableNodeList)

@@ -174,34 +174,7 @@ namespace noco
 			const PropertyValue<LabelUnderlineStyle>& underlineStyle = LabelUnderlineStyle::None,
 			const PropertyValue<Color>& underlineColor = Palette::White,
 			const PropertyValue<double>& underlineThickness = 1.0,
-			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed)
-			: SerializableComponentBase{ U"Label", { &m_text, &m_richTextEnabled, &m_fontAssetName, &m_fontSize, &m_gradationType, &m_color, &m_gradationColor1, &m_gradationColor2, &m_sizingMode, &m_minFontSize, &m_horizontalAlign, &m_verticalAlign, &m_padding, &m_horizontalOverflow, &m_verticalOverflow, &m_characterSpacing, &m_underlineStyle, &m_underlineColor, &m_underlineThickness, &m_outlineColor, &m_outlineFactorInner, &m_outlineFactorOuter, &m_shadowColor, &m_shadowOffset } }
-			, m_text{ U"text", text }
-			, m_richTextEnabled{ U"richTextEnabled", false }
-			, m_fontAssetName{ U"fontAssetName", fontAssetName }
-			, m_fontSize{ U"fontSize", fontSize }
-			, m_gradationType{ U"gradationType", LabelGradationType::None }
-			, m_color{ U"color", color }
-			, m_gradationColor1{ U"gradationColor1", color }
-			, m_gradationColor2{ U"gradationColor2", color }
-			, m_sizingMode{ U"sizingMode", sizingMode }
-			, m_minFontSize{ U"minFontSize", 1.0 }
-			, m_horizontalAlign{ U"horizontalAlign", horizontalAlign }
-			, m_verticalAlign{ U"verticalAlign", verticalAlign }
-			, m_padding{ U"padding", padding }
-			, m_horizontalOverflow{ U"horizontalOverflow", horizontalOverflow }
-			, m_verticalOverflow{ U"verticalOverflow", verticalOverflow }
-			, m_characterSpacing{ U"characterSpacing", characterSpacing }
-			, m_underlineStyle{ U"underlineStyle", underlineStyle }
-			, m_underlineColor{ U"underlineColor", underlineColor }
-			, m_underlineThickness{ U"underlineThickness", underlineThickness }
-			, m_outlineColor{ U"outlineColor", Palette::Black }
-			, m_outlineFactorInner{ U"outlineFactorInner", 0.0 }
-			, m_outlineFactorOuter{ U"outlineFactorOuter", 0.0 }
-			, m_shadowColor{ U"shadowColor", Color{ 0, 0, 0, 0 } }
-			, m_shadowOffset{ U"shadowOffset", Vec2{ 1.0, 1.0 } }
-		{
-		}
+			const PropertyValue<LabelSizingMode>& sizingMode = LabelSizingMode::Fixed);
 
 		void update(const std::shared_ptr<Node>& node) override;
 

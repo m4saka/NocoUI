@@ -13,12 +13,7 @@ namespace noco
 
 	public:
 		explicit Toggle(
-			bool initialValue = false)
-			: SerializableComponentBase{ U"Toggle", { &m_value, &m_tag } }
-			, m_value{ U"value", initialValue }
-			, m_tag{ U"tag", U"" }
-		{
-		}
+			bool initialValue = false);
 
 		void update(const std::shared_ptr<Node>& node) override;
 

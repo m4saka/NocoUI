@@ -115,47 +115,7 @@ namespace noco
 		explicit Tween(
 			const PropertyValue<bool>& active = true,
 			TweenEasing easing = TweenEasing::EaseOutQuad,
-			double duration = 1.0)
-			: SerializableComponentBase{ U"Tween", {
-				&m_active,
-				&m_translateEnabled, &m_translateFrom, &m_translateTo,
-				&m_scaleEnabled, &m_scaleFrom, &m_scaleTo,
-				&m_rotationEnabled, &m_rotationFrom, &m_rotationTo,
-				&m_colorEnabled, &m_colorFrom, &m_colorTo,
-				&m_easing, &m_duration, &m_delay, &m_loopType, &m_loopDuration, &m_restartOnActive,
-				&m_applyDuringDelay, &m_manualMode, &m_manualTime, &m_tag,
-				&m_triggerType, &m_triggerRecursive, &m_triggerRepeatIntervalSec, &m_triggerRepeatIntervalSecFirst, &m_triggerHoldDurationSec
-			} }
-			, m_active{ U"active", active }
-			, m_translateEnabled{ U"translateEnabled", false }
-			, m_translateFrom{ U"translateFrom", Vec2{ 0.0, 0.0 } }
-			, m_translateTo{ U"translateTo", Vec2{ 0.0, 0.0 } }
-			, m_scaleEnabled{ U"scaleEnabled", false }
-			, m_scaleFrom{ U"scaleFrom", Vec2{ 1.0, 1.0 } }
-			, m_scaleTo{ U"scaleTo", Vec2{ 1.0, 1.0 } }
-			, m_rotationEnabled{ U"rotationEnabled", false }
-			, m_rotationFrom{ U"rotationFrom", 0.0 }
-			, m_rotationTo{ U"rotationTo", 0.0 }
-			, m_colorEnabled{ U"colorEnabled", false }
-			, m_colorFrom{ U"colorFrom", Color{ 255, 255, 255, 255 } }
-			, m_colorTo{ U"colorTo", Color{ 255, 255, 255, 255 } }
-			, m_easing{ U"easing", easing }
-			, m_duration{ U"duration", duration }
-			, m_delay{ U"delay", 0.0 }
-			, m_loopType{ U"loopType", TweenLoopType::None }
-			, m_loopDuration{ U"loopDuration", 0.0 }
-			, m_restartOnActive{ U"restartOnActive", true }
-			, m_applyDuringDelay{ U"applyDuringDelay", false }
-			, m_manualMode{ U"manualMode", false }
-			, m_manualTime{ U"manualTime", 0.0 }
-			, m_tag{ U"tag", U"" }
-			, m_triggerType{ U"triggerType", EventTriggerType::None }
-			, m_triggerRecursive{ U"triggerRecursive", false }
-			, m_triggerRepeatIntervalSec{ U"triggerRepeatIntervalSec", 0.1 }
-			, m_triggerRepeatIntervalSecFirst{ U"triggerRepeatIntervalSecFirst", 0.5 }
-			, m_triggerHoldDurationSec{ U"triggerHoldDurationSec", 0.5 }
-		{
-		}
+			double duration = 1.0);
 
 		void onActivated(const std::shared_ptr<Node>& node) override;
 		void update(const std::shared_ptr<Node>& node) override;
