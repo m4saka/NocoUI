@@ -371,3 +371,163 @@ TEST_CASE("IsParamTypeCompatibleWith matrix", "[Property][Param]")
 		REQUIRE_FALSE(IsParamTypeCompatibleWith(ParamType::Bool, PropertyEditType::Double, ParamRefMode::Add));
 	}
 }
+
+TEST_CASE("Component property update after no change", "[Property][Component]")
+{
+	using namespace noco;
+
+	// 変化がない間はコンポーネントのプロパティ更新がスキップされるため、変更が次の更新で反映されることを確認
+
+	SECTION("setter of SmoothProperty")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+		auto label = node->emplaceComponent<Label>(U"text");
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		auto* fontSizeProp = dynamic_cast<SmoothProperty<double>*>(label->getPropertyByName(U"fontSize"));
+		REQUIRE(colorProp != nullptr);
+		REQUIRE(fontSizeProp != nullptr);
+
+		canvas->update();
+		canvas->update();
+
+		label->setColor(Color{ 255, 0, 0, 255 });
+		label->setFontSize(40.0);
+		canvas->update();
+		REQUIRE(colorProp->value() == Color{ 255, 0, 0, 255 });
+		REQUIRE(fontSizeProp->value() == Approx(40.0));
+	}
+
+	SECTION("trySetPropertyValueString")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+		auto label = node->emplaceComponent<Label>(U"text");
+		auto* fontSizeProp = dynamic_cast<SmoothProperty<double>*>(label->getPropertyByName(U"fontSize"));
+		REQUIRE(fontSizeProp != nullptr);
+
+		canvas->update();
+		canvas->update();
+
+		IProperty* prop = fontSizeProp;
+		REQUIRE(prop->trySetPropertyValueString(U"40"));
+		canvas->update();
+		REQUIRE(fontSizeProp->value() == Approx(40.0));
+	}
+
+	SECTION("setParamRef and param value change")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+		auto label = node->emplaceComponent<Label>(U"text");
+		auto* textProp = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(textProp != nullptr);
+		REQUIRE(colorProp != nullptr);
+		canvas->setParamValue(U"str", U"a");
+		canvas->setParamValue(U"col", Color{ 0, 255, 0, 255 });
+
+		canvas->update();
+		canvas->update();
+
+		textProp->setParamRef(U"str");
+		colorProp->setParamRef(U"col");
+		canvas->update();
+		REQUIRE(textProp->value() == U"a");
+		REQUIRE(colorProp->value() == Color{ 0, 255, 0, 255 });
+
+		canvas->update();
+		canvas->setParamValue(U"str", U"b");
+		canvas->setParamValue(U"col", Color{ 0, 0, 255, 255 });
+		canvas->update();
+		REQUIRE(textProp->value() == U"b");
+		REQUIRE(colorProp->value() == Color{ 0, 0, 255, 255 });
+
+		// 参照の解除後は元の値に戻る
+		textProp->setParamRef(U"");
+		colorProp->setParamRef(U"");
+		canvas->update();
+		REQUIRE(textProp->value() == U"text");
+		REQUIRE(colorProp->value() == Palette::White);
+	}
+
+	SECTION("styleState change")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+		auto label = node->emplaceComponent<Label>(U"text");
+		auto* textProp = dynamic_cast<Property<String>*>(label->getPropertyByName(U"text"));
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(textProp != nullptr);
+		REQUIRE(colorProp != nullptr);
+		REQUIRE(textProp->trySetPropertyValueStringOf(U"selected text", InteractionState::Default, U"selected"));
+		REQUIRE(colorProp->trySetPropertyValueStringOf(Format(Color{ 255, 0, 0, 255 }), InteractionState::Default, U"selected"));
+
+		canvas->update();
+		canvas->update();
+		REQUIRE(textProp->value() == U"text");
+		REQUIRE(colorProp->value() == Palette::White);
+
+		node->setStyleState(U"selected");
+		canvas->update();
+		REQUIRE(textProp->value() == U"selected text");
+		REQUIRE(colorProp->value() == Color{ 255, 0, 0, 255 });
+
+		canvas->update();
+		node->setStyleState(U"");
+		canvas->update();
+		REQUIRE(textProp->value() == U"text");
+		REQUIRE(colorProp->value() == Palette::White);
+	}
+
+	SECTION("setter of component created from JSON")
+	{
+		auto canvas1 = Canvas::Create();
+		auto node1 = Node::Create();
+		canvas1->addChild(node1);
+		node1->emplaceComponent<Label>(U"text");
+		const JSON json = canvas1->toJSON();
+
+		auto canvas = Canvas::Create();
+		REQUIRE(canvas->tryReadFromJSON(json));
+		auto label = canvas->children()[0]->getComponent<Label>();
+		REQUIRE(label != nullptr);
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(colorProp != nullptr);
+
+		canvas->update();
+		canvas->update();
+
+		label->setColor(Color{ 255, 0, 0, 255 });
+		canvas->update();
+		REQUIRE(colorProp->value() == Color{ 255, 0, 0, 255 });
+	}
+
+	SECTION("value of style state changed after no change")
+	{
+		auto canvas = Canvas::Create();
+		auto node = Node::Create();
+		canvas->addChild(node);
+		node->setStyleState(U"selected");
+		auto label = node->emplaceComponent<Label>(U"text");
+		auto* colorProp = dynamic_cast<SmoothProperty<Color>*>(label->getPropertyByName(U"color"));
+		REQUIRE(colorProp != nullptr);
+
+		canvas->update();
+		canvas->update();
+		REQUIRE(colorProp->value() == Palette::White);
+
+		REQUIRE(colorProp->trySetPropertyValueStringOf(Format(Color{ 255, 0, 0, 255 }), InteractionState::Default, U"selected"));
+		canvas->update();
+		REQUIRE(colorProp->value() == Color{ 255, 0, 0, 255 });
+
+		canvas->update();
+		REQUIRE(colorProp->trySetPropertyValueStringOf(Format(Color{ 0, 0, 255, 255 }), InteractionState::Default, U"selected"));
+		canvas->update();
+		REQUIRE(colorProp->value() == Color{ 0, 0, 255, 255 });
+	}
+}

@@ -79,6 +79,11 @@ namespace noco
 			// エディタ専用型なのでupdate処理は不要
 		}
 
+		void setOwnerDirtyFlag(bool*) override
+		{
+			// エディタ専用型なので変更の通知は不要
+		}
+
 		void appendJSON(JSON& json) const override
 		{
 			std::visit([&](const auto& propValue) {

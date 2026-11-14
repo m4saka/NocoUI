@@ -17,13 +17,22 @@ namespace noco
 
 	class ComponentBase
 	{
+		friend class Node;
+
 	private:
 		Array<IProperty*> m_properties;
+		/* NonSerialized */ bool m_isPropertiesDirty = true; // プロパティ更新が必要かどうか
+		/* NonSerialized */ InteractionState m_prevInteractionState = InteractionState::Default;
+		/* NonSerialized */ Array<String> m_prevActiveStyleStates;
+
+		// コンストラクタの時点では派生クラスのプロパティが初期化されていないため、Nodeへの追加時に呼ぶ
+		void setOwnerDirtyFlagToProperties();
 
 	protected:
 		void setProperties(const Array<IProperty*>& properties)
 		{
 			m_properties = properties;
+			setOwnerDirtyFlagToProperties();
 		}
 
 	public:

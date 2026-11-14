@@ -92,6 +92,8 @@ namespace noco
 		virtual Optional<String> previewParamRefAppliedString(const ParamValue& paramValue, ParamRefMode mode) const = 0;
 		virtual void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) = 0;
 		virtual void clearCurrentFrameOverride() = 0;
+		/// @brief プロパティの変更時にtrueを設定するフラグを指定
+		virtual void setOwnerDirtyFlag(bool* ownerDirtyFlag) = 0;
 	};
 
 	template <typename T>
@@ -224,6 +226,15 @@ namespace noco
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
+		/*NonSerialized*/ bool* m_ownerDirtyFlag = nullptr; // プロパティの変更時にtrueを設定するフラグ
+
+		void notifyOwner()
+		{
+			if (m_ownerDirtyFlag)
+			{
+				*m_ownerDirtyFlag = true;
+			}
+		}
 
 		[[nodiscard]]
 		detail::PropertyDetail<T>& ensurePropertyDetail()
@@ -289,7 +300,13 @@ namespace noco
 
 		void setPropertyValue(const PropertyValue<T>& propertyValue)
 		{
+			notifyOwner();
 			m_propertyValue = propertyValue;
+		}
+
+		void setOwnerDirtyFlag(bool* ownerDirtyFlag) override
+		{
+			m_ownerDirtyFlag = ownerDirtyFlag;
 		}
 
 		[[nodiscard]]
@@ -301,6 +318,7 @@ namespace noco
 
 		void setParamRef(const String& paramRef) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && paramRef.isEmpty())
 			{
 				return;
@@ -324,6 +342,7 @@ namespace noco
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && mode == ParamRefMode::Normal)
 			{
 				return;
@@ -340,6 +359,7 @@ namespace noco
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
+			notifyOwner();
 			if (!m_propertyDetail && !paramRefValue)
 			{
 				return;
@@ -366,6 +386,7 @@ namespace noco
 
 		bool trySetParamRefValueString(StringView value) override
 		{
+			notifyOwner();
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
 			if (!parsedValue)
 			{
@@ -404,6 +425,7 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
@@ -486,6 +508,9 @@ namespace noco
 			{
 				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
+					// パラメータの値が変わる場合があるため、次回も更新が必要
+					notifyOwner();
+
 					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
 						const T& base = m_propertyValue.value(interactionState, activeStyleStates);
@@ -532,6 +557,7 @@ namespace noco
 
 		void readFromJSON(const JSON& json) override
 		{
+			notifyOwner();
 			if (!json.contains(m_name))
 			{
 				return;
@@ -586,16 +612,19 @@ namespace noco
 
 		bool trySetPropertyValueString(StringView value) override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueString(value);
 		}
 
 		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
 		}
 
 		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			m_propertyValue.unsetValueOf(interactionState, styleState);
 		}
 
@@ -650,6 +679,7 @@ namespace noco
 
 		bool trySetSmoothTime(double smoothTime) override
 		{
+			notifyOwner();
 			m_propertyValue.setSmoothTime(smoothTime);
 			return true;
 		}
@@ -686,6 +716,15 @@ namespace noco
 		PropertyValue<T> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
+		/*NonSerialized*/ bool* m_ownerDirtyFlag = nullptr; // プロパティの変更時にtrueを設定するフラグ
+
+		void notifyOwner()
+		{
+			if (m_ownerDirtyFlag)
+			{
+				*m_ownerDirtyFlag = true;
+			}
+		}
 
 		[[nodiscard]]
 		detail::PropertyDetail<T>& ensurePropertyDetail()
@@ -748,12 +787,18 @@ namespace noco
 
 		void setPropertyValue(const PropertyValue<T>& propertyValue)
 		{
+			notifyOwner();
 			m_propertyValue = propertyValue;
 			if (m_propertyValue.smoothTime() <= 0.0)
 			{
 				// Canvas更新より後にsetPropertyValueされた場合に1フレーム遅れが発生しないよう、smoothTimeが0なら即座に反映
 				m_smoothing.setCurrentValue(m_propertyValue.value(m_interactionState, currentActiveStyleStates()));
 			}
+		}
+
+		void setOwnerDirtyFlag(bool* ownerDirtyFlag) override
+		{
+			m_ownerDirtyFlag = ownerDirtyFlag;
 		}
 
 		[[nodiscard]]
@@ -765,6 +810,7 @@ namespace noco
 
 		void setParamRef(const String& paramRef) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && paramRef.isEmpty())
 			{
 				return;
@@ -788,6 +834,7 @@ namespace noco
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && mode == ParamRefMode::Normal)
 			{
 				return;
@@ -804,6 +851,7 @@ namespace noco
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
+			notifyOwner();
 			if (!m_propertyDetail && !paramRefValue)
 			{
 				return;
@@ -823,6 +871,7 @@ namespace noco
 
 		bool trySetParamRefValueString(StringView value) override
 		{
+			notifyOwner();
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
 			if (!parsedValue)
 			{
@@ -854,6 +903,7 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
@@ -901,13 +951,19 @@ namespace noco
 			}
 
 			// スムージング適用
+			const T& targetValue = m_propertyValue.value(interactionState, activeStyleStates);
 			if (skipSmoothing)
 			{
-				m_smoothing.setCurrentValue(m_propertyValue.value(interactionState, activeStyleStates));
+				m_smoothing.setCurrentValue(targetValue);
 			}
 			else
 			{
-				m_smoothing.update(m_propertyValue.value(interactionState, activeStyleStates), m_propertyValue.smoothTime(), deltaTime);
+				m_smoothing.update(targetValue, m_propertyValue.smoothTime(), deltaTime);
+			}
+			if (m_smoothing.currentValue() != targetValue)
+			{
+				// スムージング中は次回も更新が必要
+				notifyOwner();
 			}
 
 			// パラメータ参照適用
@@ -915,6 +971,9 @@ namespace noco
 			{
 				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
+					// パラメータの値が変わる場合があるため、次回も更新が必要
+					notifyOwner();
+
 					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
 						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_smoothing.currentValue(), m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
@@ -953,6 +1012,7 @@ namespace noco
 
 		void setCurrentFrameOverride(const T& value)
 		{
+			notifyOwner();
 			auto& propertyDetail = ensurePropertyDetail();
 			propertyDetail.currentFrameOverride = value;
 			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
@@ -992,6 +1052,7 @@ namespace noco
 
 		void readFromJSON(const JSON& json) override
 		{
+			notifyOwner();
 			if (!json.contains(m_name))
 			{
 				return;
@@ -1047,16 +1108,19 @@ namespace noco
 
 		bool trySetPropertyValueString(StringView value) override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueString(value);
 		}
 
 		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
 		}
 
 		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			m_propertyValue.unsetValueOf(interactionState, styleState);
 		}
 
@@ -1104,6 +1168,7 @@ namespace noco
 
 		bool trySetSmoothTime(double smoothTime) override
 		{
+			notifyOwner();
 			m_propertyValue.setSmoothTime(smoothTime);
 			return true;
 		}
@@ -1135,6 +1200,15 @@ namespace noco
 		const char32_t* m_name; // 数が多く、基本的にリテラルのみのため、Stringではなくconst char32_t*で持つ
 		T m_value;
 		std::unique_ptr<detail::PropertyDetail<T>> m_propertyDetail; // パラメータ参照・currentFrameOverrideを使用していない場合はnullptr
+		/*NonSerialized*/ bool* m_ownerDirtyFlag = nullptr; // プロパティの変更時にtrueを設定するフラグ
+
+		void notifyOwner()
+		{
+			if (m_ownerDirtyFlag)
+			{
+				*m_ownerDirtyFlag = true;
+			}
+		}
 
 		[[nodiscard]]
 		detail::PropertyDetail<T>& ensurePropertyDetail()
@@ -1176,12 +1250,19 @@ namespace noco
 		template <typename U>
 		void setValue(const U& value) requires std::convertible_to<U, T>
 		{
+			notifyOwner();
 			m_value = value;
 		}
 
 		void setValue(StringView value) requires std::same_as<T, String>
 		{
+			notifyOwner();
 			m_value = String{ value };
+		}
+
+		void setOwnerDirtyFlag(bool* ownerDirtyFlag) override
+		{
+			m_ownerDirtyFlag = ownerDirtyFlag;
 		}
 
 		[[nodiscard]]
@@ -1193,6 +1274,7 @@ namespace noco
 
 		void setParamRef(const String& paramRef) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && paramRef.isEmpty())
 			{
 				return;
@@ -1216,6 +1298,7 @@ namespace noco
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && mode == ParamRefMode::Normal)
 			{
 				return;
@@ -1232,6 +1315,7 @@ namespace noco
 
 		void setParamRefValue(const Optional<T>& paramRefValue)
 		{
+			notifyOwner();
 			if (!m_propertyDetail && !paramRefValue)
 			{
 				return;
@@ -1258,6 +1342,7 @@ namespace noco
 
 		bool trySetParamRefValueString(StringView value) override
 		{
+			notifyOwner();
 			const Optional<T> parsedValue = StringToValueOpt<T>(value);
 			if (!parsedValue)
 			{
@@ -1295,6 +1380,7 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
@@ -1372,6 +1458,9 @@ namespace noco
 			{
 				if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 				{
+					// パラメータの値が変わる場合があるため、次回も更新が必要
+					notifyOwner();
+
 					if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 					{
 						if (auto resolved = ApplyParamRefMode<T>(paramRefBaseValue(m_value, m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
@@ -1432,6 +1521,7 @@ namespace noco
 
 		void readFromJSON(const JSON& json) override
 		{
+			notifyOwner();
 			if (!json.contains(m_name))
 			{
 				return;
@@ -1502,6 +1592,7 @@ namespace noco
 
 		bool trySetPropertyValueString(StringView value) override
 		{
+			notifyOwner();
 			if (const auto valueOpt = StringToValueOpt<T>(value))
 			{
 				m_value = *valueOpt;
@@ -1601,6 +1692,15 @@ namespace noco
 		PropertyValue<Color> m_propertyValue;
 		/*NonSerialized*/ InteractionState m_interactionState = InteractionState::Default;
 		std::unique_ptr<detail::PropertyDetail<Color>> m_propertyDetail; // パラメータ参照・currentFrameOverride・activeStyleStatesを使用していない場合はnullptr
+		/*NonSerialized*/ bool* m_ownerDirtyFlag = nullptr; // プロパティの変更時にtrueを設定するフラグ
+
+		void notifyOwner()
+		{
+			if (m_ownerDirtyFlag)
+			{
+				*m_ownerDirtyFlag = true;
+			}
+		}
 
 		[[nodiscard]]
 		detail::PropertyDetail<Color>& ensurePropertyDetail()
@@ -1663,11 +1763,17 @@ namespace noco
 
 		void setPropertyValue(const PropertyValue<Color>& propertyValue)
 		{
+			notifyOwner();
 			m_propertyValue = propertyValue;
 			if (m_propertyValue.smoothTime() <= 0.0)
 			{
 				m_smoothing.setCurrentValue(ColorF{ m_propertyValue.value(m_interactionState, currentActiveStyleStates()) });
 			}
+		}
+
+		void setOwnerDirtyFlag(bool* ownerDirtyFlag) override
+		{
+			m_ownerDirtyFlag = ownerDirtyFlag;
 		}
 
 		[[nodiscard]]
@@ -1679,6 +1785,7 @@ namespace noco
 
 		void setParamRef(const String& paramRef) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && paramRef.isEmpty())
 			{
 				return;
@@ -1702,6 +1809,7 @@ namespace noco
 
 		void setParamRefMode(ParamRefMode mode) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail && mode == ParamRefMode::Normal)
 			{
 				return;
@@ -1718,6 +1826,7 @@ namespace noco
 
 		void setParamRefValue(const Optional<Color>& paramRefValue)
 		{
+			notifyOwner();
 			if (!m_propertyDetail && !paramRefValue)
 			{
 				return;
@@ -1737,6 +1846,7 @@ namespace noco
 
 		bool trySetParamRefValueString(StringView value) override
 		{
+			notifyOwner();
 			const Optional<Color> parsedValue = StringToValueOpt<Color>(value);
 			if (!parsedValue)
 			{
@@ -1765,6 +1875,7 @@ namespace noco
 
 		void clearParamRefIfInvalid(const HashTable<String, ParamValue>& validParams, HashSet<String>& clearedParams) override
 		{
+			notifyOwner();
 			if (!m_propertyDetail || m_propertyDetail->paramRef.isEmpty())
 			{
 				return;
@@ -1822,10 +1933,18 @@ namespace noco
 			{
 				m_smoothing.update(targetColorF, m_propertyValue.smoothTime(), deltaTime);
 			}
+			if (m_smoothing.currentValue() != targetColorF)
+			{
+				// スムージング中は次回も更新が必要
+				notifyOwner();
+			}
 
 			// パラメータ参照適用
 			if (m_propertyDetail && !m_propertyDetail->paramRef.isEmpty())
 			{
+				// パラメータの値が変わる場合があるため、次回も更新が必要
+				notifyOwner();
+
 				if (auto it = detail::FindParam(params, m_propertyDetail->paramRef, m_propertyDetail->paramRefHash); it != params.end())
 				{
 					if (auto applied = ApplyParamRefMode<Color>(paramRefBaseValue(Color{ m_smoothing.currentValue() }, m_propertyDetail->paramRefMode), it->second, m_propertyDetail->paramRefMode))
@@ -1863,6 +1982,7 @@ namespace noco
 
 		void setCurrentFrameOverride(const Color& value)
 		{
+			notifyOwner();
 			auto& propertyDetail = ensurePropertyDetail();
 			propertyDetail.currentFrameOverride = value;
 			propertyDetail.currentFrameOverrideFrameCount = Scene::FrameCount();
@@ -1901,6 +2021,7 @@ namespace noco
 
 		void readFromJSON(const JSON& json) override
 		{
+			notifyOwner();
 			if (!json.contains(m_name))
 			{
 				return;
@@ -1953,16 +2074,19 @@ namespace noco
 
 		bool trySetPropertyValueString(StringView value) override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueString(value);
 		}
 
 		bool trySetPropertyValueStringOf(StringView value, InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			return m_propertyValue.trySetValueStringOf(value, interactionState, styleState);
 		}
 
 		void unsetPropertyValueOf(InteractionState interactionState, StringView styleState = U"") override
 		{
+			notifyOwner();
 			m_propertyValue.unsetValueOf(interactionState, styleState);
 		}
 
@@ -1998,6 +2122,7 @@ namespace noco
 
 		bool trySetSmoothTime(double smoothTime) override
 		{
+			notifyOwner();
 			m_propertyValue.setSmoothTime(smoothTime);
 			return true;
 		}

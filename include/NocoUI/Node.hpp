@@ -1526,6 +1526,7 @@ namespace noco
 		requires std::derived_from<TComponent, ComponentBase>
 	{
 		m_components.push_back(component);
+		component->setOwnerDirtyFlagToProperties();
 		
 		if (m_activeInHierarchy)
 		{
@@ -1544,6 +1545,7 @@ namespace noco
 			index = m_components.size();
 		}
 		m_components.insert(m_components.begin() + index, component);
+		component->setOwnerDirtyFlagToProperties();
 		
 		if (m_activeInHierarchy)
 		{
